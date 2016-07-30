@@ -32,7 +32,6 @@ package com.cfar.swim.worldwind.geom;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
 import gov.nasa.worldwind.geom.Box;
@@ -57,10 +56,17 @@ public class RegularGrid extends Box {
 	/**
 	 * the children of this regular grid
 	 */
-	private RegularGrid[][][] cells = null;
+	protected RegularGrid[][][] cells = null;
+
+	/**
+	 * the drawing color of this regular grid
+	 */
+	private float[] color = {1.0f, 1.0f, 1.0f, 1.0f};
 	
-	// TODO: data, occurrences and drawing based on data and severity
-	private double cost = Math.random();
+	/**
+	 * the visibility state of this regular grid
+	 */
+	private boolean visible = true;
 	
 	/**
 	 * Constructs a new regular grid from a geometric box without any children.
@@ -152,6 +158,14 @@ public class RegularGrid extends Box {
 		this.addChildren(rCells, sCells, tCells);
 	}
 	
+	protected RegularGrid newInstance(
+			Vec4[] axes,
+			double rMin, double rMax,
+			double sMin, double sMax,
+			double tMin, double tMax) {
+		return new RegularGrid(axes, rMin, rMax, sMin, sMax, tMin, tMax);
+	}
+	
 	/**
 	 * Adds the specified number of children on each axis to this regular grid.
 	 * 
@@ -180,7 +194,7 @@ public class RegularGrid extends Box {
 				for (int t = 0; t < tCells; t++) {
 					// translate the left-most planes of each axis to form the new
 					// left- and right-most planes of each axis for each child cell
-					this.cells[r][s][t] = new RegularGrid(
+					this.cells[r][s][t] = this.newInstance(
 							axes,
 							rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r)),
 							rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r + 1)),
@@ -489,7 +503,7 @@ public class RegularGrid extends Box {
 	 * 
 	 * @return the cells containing the specified point
 	 */
-	public List<RegularGrid> lookupCells(Vec4 modelPoint) {
+	public List<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
 		List<RegularGrid> lookedUpCells = new ArrayList<RegularGrid>(8);
 		
 		// transform point to cell (body) coordinates
@@ -526,20 +540,21 @@ public class RegularGrid extends Box {
 	/**
 	 * Renders this regular grid. If a grid cell has children, then only the
 	 * children are rendered.
+	 * 
+	 * @param dc the drawing context
 	 */
 	@Override
 	public void render(DrawContext dc) {
-		if (this.hasChildren()) {
-			for (int r = 0; r < this.cells.length; r++) {
-				for(int s = 0; s < this.cells[r].length; s++) {
-					for (int t = 0; t < this.cells[r][s].length; t++) {
-						this.cells[r][s][t].render(dc);
+		if (this.visible) {
+			if (this.hasChildren()) {
+				for (int r = 0; r < this.cells.length; r++) {
+					for(int s = 0; s < this.cells[r].length; s++) {
+						for (int t = 0; t < this.cells[r][s].length; t++) {
+							this.cells[r][s][t].render(dc);
+						}
 					}
 				}
-			}
-		} else {
-			// TODO: drawing should depend on cell transition cost threshold
-			if (cost > .75) {
+			} else {
 				super.render(dc);
 			}
 		}
@@ -562,11 +577,7 @@ public class RegularGrid extends Box {
         ogsh.pushModelview(gl);
         try
         {
-        	// TODO: color should reflect cell transition cost
-        	//gl.glColor3f(1f, 0f, 0f);
-        	gl.glColor3d(cost, 1.0 - cost, 0d);
-        	gl.glEnable(GL.GL_CULL_FACE);
-            //gl.glFrontFace(GL.GL_CCW);
+        	gl.glColor4f(this.color[0], this.color[1], this.color[2], this.color[3]);
         	this.drawOutline(dc, a, b, c, d);
         	gl.glTranslated(r.x, r.y, r.z);
         	this.drawOutline(dc, a, b, c, d);
@@ -582,6 +593,30 @@ public class RegularGrid extends Box {
             dc.getView().popReferenceCenter(dc);
         }
     }
+	
+	/**
+	 * Sets the drawing color of this regular grid.
+	 * 
+	 * @param red the red color component between 0.0 and 1.0
+	 * @param green the green color component between 0.0 and 1.0
+	 * @param blue the blue color component between 0.0 and 1.0
+	 * @param alpha the alpha component between 0.0 and 1.0
+	 */
+	public void setColor(float red, float green, float blue, float alpha) {
+		this.color[0] = red;
+		this.color[1] = green;
+		this.color[2] = blue;
+		this.color[3] = alpha;
+	}
+	
+	/**
+	 * Sets the visibility state of this regular grid.
+	 * 
+	 * @param visible true if this regular grid is visible, false otherwise
+	 */
+	public void setVisible(boolean visible) {
+		this.visible = visible;
+	}
 	
 	protected void drawQuad(DrawContext dc, Vec4 a, Vec4 b, Vec4 c, Vec4 d) {
 		GL2 gl = dc.getGL().getGL2();
