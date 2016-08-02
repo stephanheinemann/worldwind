@@ -44,16 +44,16 @@ import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
 
 import gov.nasa.worldwind.BasicModel;
+import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Sector;
-import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
 
 public class RegularGridTest {
 	
-	static Globe globe;
+	static Model model;
 	static NonUniformCostIntervalGrid uvicGrid;
 	
 	// TODO: proper initialization with a sequence of tests
@@ -67,7 +67,7 @@ public class RegularGridTest {
             this.getContentPane().add(wwd, java.awt.BorderLayout.CENTER);
             this.pack();
             wwd.setModel(new BasicModel());
-            globe = wwd.getModel().getGlobe();
+            model = wwd.getModel();
         
             // TODO: separate test procedures
             Sector uvic = new Sector(
@@ -78,7 +78,7 @@ public class RegularGridTest {
             	);
             gov.nasa.worldwind.geom.Box uvicBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, uvic, 0.0, 150.0);
             uvicGrid = new NonUniformCostIntervalGrid(uvicBox);
-            uvicGrid.setThresholdCost(50);
+            uvicGrid.setThresholdCost(0);
             uvicGrid.addChildren(uvicBox.getTLength() / 5.0);
             //uvicGrid.setThresholdCost(50);
             RenderableLayer renderableLayer = new RenderableLayer();
@@ -106,7 +106,7 @@ public class RegularGridTest {
 		AppFrame frame = new AppFrame();
 		frame.setVisible(true);
 		
-		IwxxmUpdater iwxxmUpdater = new IwxxmUpdater(globe, uvicGrid);
+		IwxxmUpdater iwxxmUpdater = new IwxxmUpdater(model, uvicGrid);
 		iwxxmUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 	
 		while (frame.isVisible()) {
