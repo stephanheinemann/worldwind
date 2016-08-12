@@ -1,5 +1,6 @@
 package com.cfar.swim.worldwind.data;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +27,12 @@ import net.opengis.om.OMObservationType;
 public class OmData {
 	
 	public static ZonedDateTime getPhenomenonTime(OMObservationType observation) {
-		ZonedDateTime phenomenonTime = ZonedDateTime.now();
-		Object time = observation.getPhenomenonTime().getAbstractTimeObject().getValue();
+		ZonedDateTime phenomenonTime = ZonedDateTime.now(ZoneId.of("UTC"));
+		Object time = observation.getPhenomenonTime().getAbstractTimeObject();
+		
+		if (null != time) {
+			time = ((JAXBElement<?>) time).getValue();
+		}
 		
 		// TODO: implement other concrete types
 		if (time instanceof TimeTopologyComplexType) {

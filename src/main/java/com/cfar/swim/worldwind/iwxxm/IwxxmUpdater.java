@@ -32,94 +32,40 @@ package com.cfar.swim.worldwind.iwxxm;
 import java.io.InputStream;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 
 import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
-import com.cfar.swim.worldwind.data.GmlData;
 import com.cfar.swim.worldwind.data.IwxxmData;
 import com.cfar.swim.worldwind.data.OmData;
-import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.planning.CostMap;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
-import com.cfar.swim.worldwind.planning.TimeInterval;
+import com.cfar.swim.worldwind.render.VerticalCylinder;
 
-import aero.aixm.AirspaceVolumeType;
-import aero.aixm.SurfaceType;
-import aero.aixm.ValDistanceVerticalType;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.LatLon;
-import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
-import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
-import gov.nasa.worldwind.render.AbstractSurfaceShape;
-import gov.nasa.worldwind.render.Cylinder;
-import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.render.RigidShape;
-import gov.nasa.worldwind.render.SurfaceCircle;
-import gov.nasa.worldwind.render.SurfacePolygon;
-import icao.iwxxm.EvolvingMeteorologicalConditionType;
-import icao.iwxxm.MeteorologicalPositionCollectionPropertyType;
-import icao.iwxxm.MeteorologicalPositionCollectionType;
-import icao.iwxxm.MeteorologicalPositionPropertyType;
-import icao.iwxxm.MeteorologicalPositionType;
-import icao.iwxxm.ObjectFactory;
 import icao.iwxxm.SIGMETType;
-import icao.iwxxm.TAFType;
-import net.opengis.gml.AbstractCurveSegmentType;
-import net.opengis.gml.AbstractCurveType;
-import net.opengis.gml.AbstractRingType;
-import net.opengis.gml.AbstractSurfacePatchType;
-import net.opengis.gml.ArcByBulgeType;
-import net.opengis.gml.ArcByCenterPointType;
-import net.opengis.gml.ArcStringByBulgeType;
-import net.opengis.gml.ArcStringType;
-import net.opengis.gml.ArcType;
-import net.opengis.gml.BSplineType;
-import net.opengis.gml.BezierType;
 import net.opengis.gml.CircleByCenterPointType;
-import net.opengis.gml.CircleType;
-import net.opengis.gml.ClothoidType;
-import net.opengis.gml.CompositeCurveType;
-import net.opengis.gml.ConeType;
-import net.opengis.gml.CubicSplineType;
-import net.opengis.gml.CurvePropertyType;
-import net.opengis.gml.CurveType;
-import net.opengis.gml.CylinderType;
-import net.opengis.gml.GeodesicStringType;
-import net.opengis.gml.GeodesicType;
-import net.opengis.gml.LineStringSegmentType;
-import net.opengis.gml.LineStringType;
-import net.opengis.gml.LinearRingType;
-import net.opengis.gml.OffsetCurveType;
-import net.opengis.gml.OrientableCurveType;
-import net.opengis.gml.PolygonPatchType;
-import net.opengis.gml.RectangleType;
-import net.opengis.gml.RingType;
-import net.opengis.gml.SphereType;
-import net.opengis.gml.TimeInstantType;
-import net.opengis.gml.TimePeriodType;
-import net.opengis.gml.TimePositionType;
-import net.opengis.gml.TriangleType;
-import net.opengis.om.OMObservationPropertyType;
+import net.opengis.om.OMObservationType;
 
 public class IwxxmUpdater implements Runnable {
 	
+	CostMap costMap = new CostMap();
 	XMLInputFactory xif = XMLInputFactory.newFactory();
 	XMLStreamReader xsr;
 	
@@ -188,10 +134,43 @@ public class IwxxmUpdater implements Runnable {
 		// result/EvolvingMeteorologicalCondition/geometry
 		// result/MeteorologicalPositionCollection/member/MeteorologicalPosition/geometry
 		
-		List<RigidShape> sigmetShapes = IwxxmData.getRigidShapes(sigmet, iwxxmUnmarshaller);
-		System.out.println("found shapes = " + sigmetShapes.size());
-		List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
-		((RenderableLayer) renderableLayers.get(0)).addRenderables(sigmetShapes);
+		String phenomenom = IwxxmData.getPhenomenon(sigmet);
+		// TODO: things like quantification (weakening), spacial and temporal distance
+		// observation and analysis methods could be taken into account
+		int cost = this.costMap.get(phenomenom);
+		
+		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
+		//List<RigidShape> sigmetShapes = IwxxmData.getRigidShapes(sigmet, iwxxmUnmarshaller);
+		
+		for (OMObservationType observation : observations) {
+			// phenomenonTime is now if not specified
+			ZonedDateTime phenomenonTime = OmData.getPhenomenonTime(observation);
+			ZonedDateTime resultTime = OmData.getResultTime(observation);
+			
+			// only future times are actually relevant
+			// phenomenon time can be a forecasted time
+			// should the interval be the same as the time step interval?
+			CostInterval costInterval = new CostInterval(phenomenonTime, phenomenonTime.plusMinutes(30));
+			costInterval.setCost(cost);
+			
+			List<RigidShape> sigmetShapes = OmData.getRigidShapes(observation, iwxxmUnmarshaller);
+			System.out.println("found shapes = " + sigmetShapes.size());
+			List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
+			((RenderableLayer) renderableLayers.get(0)).addRenderables(sigmetShapes);
+		
+			// cylinder embedding test
+			for (RigidShape shape : sigmetShapes) {
+				if (shape instanceof VerticalCylinder) {
+					VerticalCylinder verticalCylinder = (VerticalCylinder) shape;
+					Cylinder cylinder = verticalCylinder.toGeometricCylinder(model.getGlobe());
+					
+					((RenderableLayer) renderableLayers.get(0)).removeRenderable(shape);
+					((RenderableLayer) renderableLayers.get(0)).addRenderable(cylinder);
+					
+					this.grid.embed(cylinder, costInterval); // identify affected cells
+				}
+			}
+		}
 	}
 	
 	public void update(Cylinder cylinder) {
@@ -232,7 +211,4 @@ public class IwxxmUpdater implements Runnable {
 			index = (index + 1) % 2;
 		}
 	}
-	
-	
-	
 }

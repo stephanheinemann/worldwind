@@ -18,6 +18,7 @@ import icao.iwxxm.MeteorologicalPositionType;
 import icao.iwxxm.SIGMETType;
 import icao.iwxxm.TAFType;
 import net.opengis.om.OMObservationPropertyType;
+import net.opengis.om.OMObservationType;
 
 public class IwxxmData {
 	
@@ -39,6 +40,18 @@ public class IwxxmData {
 	
 	public static TimeInterval getCancelledValidPeriod(SIGMETType sigmet) {
 		return GmlData.getTimeInterval(sigmet.getCancelledValidPeriod().getTimePeriod());
+	}
+	
+	public static String getPhenomenon(SIGMETType sigmet) {
+		return sigmet.getPhenomenon().getHref();
+	}
+	
+	public static List<OMObservationType> getObservations(SIGMETType sigmet) {
+		List<OMObservationType> observations = new ArrayList<OMObservationType>();
+		for (OMObservationPropertyType analysis : sigmet.getAnalysis()) {
+			observations.add(analysis.getOMObservation());
+		}
+		return observations;
 	}
 	
 	public static List<RigidShape> getRigidShapes(SIGMETType sigmet, IwxxmUnmarshaller unmarshaller) throws JAXBException {

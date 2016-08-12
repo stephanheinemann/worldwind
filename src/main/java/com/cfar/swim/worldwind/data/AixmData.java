@@ -5,13 +5,14 @@ import java.util.List;
 
 import javax.xml.bind.JAXBElement;
 
+import com.cfar.swim.worldwind.render.VerticalCylinder;
+
 import aero.aixm.AirspaceVolumeType;
 import aero.aixm.SurfaceType;
 import aero.aixm.ValDistanceVerticalType;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.AbstractSurfaceShape;
-import gov.nasa.worldwind.render.Cylinder;
 import gov.nasa.worldwind.render.RigidShape;
 import gov.nasa.worldwind.render.SurfaceCircle;
 import net.opengis.gml.AbstractSurfacePatchType;
@@ -43,11 +44,11 @@ public class AixmData {
 					LatLon location = ((SurfaceCircle) surfaceShape).getCenter();
 					double radius = ((SurfaceCircle) surfaceShape).getRadius();
 					Position center = new Position(location, altitude);
+					// TODO: previous reports may have indicated vertical limits that are to be used
 					if (0 == height) {
 						height++;
 					}
-					System.out.println("cyl = " + center + ":" + height + ":" + radius);
-					rigidShapes.add(new Cylinder(center, height, radius));
+					rigidShapes.add(new VerticalCylinder(center, height, radius));
 				}
 			}
 		}	

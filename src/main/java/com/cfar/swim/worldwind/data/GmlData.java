@@ -88,7 +88,9 @@ public class GmlData {
 		if (!timeInstances.isEmpty()) {
 			String timeInstance = timeInstances.get(0);
 			// TODO: check other valid formats
-			time = ZonedDateTime.parse(timeInstance, DateTimeFormatter.ISO_INSTANT);
+			// 2012-08-25T16:00:00Z
+			//time = ZonedDateTime.parse(timeInstance, DateTimeFormatter.ISO_INSTANT);
+			time = ZonedDateTime.parse(timeInstance);
 		}
 		
 		return time;

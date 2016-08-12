@@ -10,6 +10,7 @@ public class Conversions {
 	public static final String UOM_NAUTICAL_MILE = "[nmi_i]";
 	public static final String UOM_RADIAN = "rad";
 	
+	// TODO: gov.nasa.worldwind.util.WWMath
 	public static final double METER_PER_FOOT = 0.3048;
 	public static final double METER_PER_NAUTICAL_MILE = 1852;
 	public static final double METER_PER_SECOND_PER_KNOT = 0.514444;

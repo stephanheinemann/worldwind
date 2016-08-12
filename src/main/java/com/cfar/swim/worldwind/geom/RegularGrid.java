@@ -34,8 +34,6 @@ import java.util.List;
 
 import javax.media.opengl.GL2;
 
-import gov.nasa.worldwind.geom.Box;
-import gov.nasa.worldwind.geom.Matrix;
 import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
@@ -49,11 +47,6 @@ import gov.nasa.worldwind.util.OGLStackHandler;
 public class RegularGrid extends Box {
 
 	/**
-	 * the epsilon used compensate for numerical inaccuracies
-	 */
-	private static final double EPSILON = 1E-8;
-	
-	/**
 	 * the children of this regular grid
 	 */
 	protected RegularGrid[][][] cells = null;
@@ -66,7 +59,7 @@ public class RegularGrid extends Box {
 	/**
 	 * the visibility state of this regular grid
 	 */
-	private boolean visible = true;
+	protected boolean visible = true;
 	
 	/**
 	 * Constructs a new regular grid from a geometric box without any children.
@@ -76,21 +69,7 @@ public class RegularGrid extends Box {
 	 * @see gov.nasa.worldwind.geom.Box
 	 */
 	public RegularGrid(Box box) {
-		super(
-			box.getBottomCenter(),
-			box.getTopCenter(),
-			box.getCenter(),
-			box.getRAxis(),
-			box.getSAxis(),
-			box.getTAxis(),
-			box.getUnitRAxis(),
-			box.getUnitSAxis(),
-			box.getUnitTAxis(),
-			box.getRLength(),
-			box.getSLength(),
-			box.getTLength(),
-			box.getPlanes()
-			);
+		super(box);
 	}
 	
 	/**
@@ -345,120 +324,6 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not two values are equal considering numerical
-	 * inaccuracies.
-	 * 
-	 * @param a the first value
-	 * @param b the second value
-	 * 
-	 * @return true if two values are equal considering numerical inaccuracies,
-	 *         false otherwise
-	 */
-	private static boolean equalsEpsilon(double a, double b) {
-		return Math.abs(a - b) < EPSILON;
-	}
-	
-	/**
-	 * Indicates whether or not a value lies is within a range considering
-	 * numerical inaccuracies.
-	 * 
-	 * @param d the value
-	 * @param l the lower bound of the range
-	 * @param u the upper bound of the range
-	 * 
-	 * @return true if the value lies within the range considering numerical
-	 *         inaccuracies, false otherwise
-	 */
-	private static boolean isInRangeEpsilon(double d, double l, double u) {
-		return ((l - EPSILON) <= d) && ((u + EPSILON) >= d);
-	}
-	
-	/**
-	 * Transforms a Cartesian world model vector into a regular grid vector
-	 * using the first corner of this regular grid as origin.
-	 * 
-	 * @param modelPoint the world model vector
-	 * 
-	 * @return the regular grid vector
-	 */
-	public Vec4 transformModelToGrid(Vec4 modelPoint) {
-		Vec4[] unitAxes = {ru, su, tu};
-		Vec4 origin = this.getCorners()[0];
-		Matrix transformMatrix = Matrix.fromLocalOrientation(origin , unitAxes).getInverse();
-		return modelPoint.transformBy4(transformMatrix);
-	}
-	
-	/**
-	 * Indicates whether or not a value lies on the <code>R</code> axis of this
-	 * regular grid considering numerical inaccuracies.
-	 * 
-	 * @param r the value
-	 * 
-	 * @return true if the value lies on the <code>R</code> axis considering
-	 *         numerical inaccuracies, false otherwise
-	 */
-	private boolean containsREpsilon(double r) {
-		return RegularGrid.isInRangeEpsilon(r, 0.0, this.rLength);
-	}
-	
-	/**
-	 * Indicates whether or not a value lies on the <code>S</code> axis of this
-	 * regular grid considering numerical inaccuracies.
-	 * 
-	 * @param s the value
-	 * 
-	 * @return true if the value lies on the <code>S</code> axis considering
-	 *         numerical inaccuracies, false otherwise
-	 */
-	private boolean containsSEpsilon(double s) {
-		return RegularGrid.isInRangeEpsilon(s, 0.0, this.sLength);
-	}
-	
-	/**
-	 * Indicates whether or not a value lies on the <code>T</code> axis of this
-	 * regular grid considering numerical inaccuracies.
-	 * 
-	 * @param t the value
-	 * 
-	 * @return true if the value lies on the <code>T</code> axis considering
-	 *         numerical inaccuracies, false otherwise
-	 */
-	private boolean containsTEpsilon(double t) {
-		return RegularGrid.isInRangeEpsilon(t, 0.0, this.tLength);
-	}
-	
-	/**
-	 * Indicates whether or not a vector in regular grid coordinates is contained
-	 * in this regular grid considering numerical inaccuracies.
-	 * 
-	 * @param v the vector in regular grid coordinates
-	 * 
-	 * @return true if this regular grid contains the vector, false otherwise
-	 */
-	private boolean containsV(Vec4 v) {
-		return this.containsREpsilon(v.x) && this.containsSEpsilon(v.y) && this.containsTEpsilon(v.z);
-	}
-	
-	/**
-	 * Indicates whether or not a point in world model coordinates is
-	 * contained in this regular grid.
-	 * 
-	 * @param modelPoint the point in world model coordinates
-	 * 
-	 * @return true if this regular grid contains the point, false otherwise
-	 */
-	public boolean contains(Vec4 modelPoint) {
-		boolean contains = false;
-		
-		Vec4 localPoint = this.transformModelToGrid(modelPoint);
-		if (this.containsV(localPoint)) {
-			contains = true;
-		}
-		
-		return contains;
-	}
-	
-	/**
 	 * Gets the cell indices (maximum two) that are associated with child cells
 	 * along the specified axis parameters considering numerical inaccuracies.
 	 * 
@@ -471,16 +336,16 @@ public class RegularGrid extends Box {
 	private static int[] getCellIndices(double value, double length, int cells) {
 		int index[] = {-1, -1};
 		
-		if (RegularGrid.isInRangeEpsilon(value, 0.0, length)) {
+		if (Box.isInRangeEpsilon(value, 0.0, length)) {
 			double cellLength = length / cells;
 			double cellSegment = value / cellLength;
 			double cellIndex = Math.ceil(cellSegment);
 			
-			if (!RegularGrid.equalsEpsilon(cellSegment, cellIndex)) {
+			if (!Box.equalsEpsilon(cellSegment, cellIndex)) {
 				cellIndex =  Math.floor(cellSegment);
 			}
 			
-			if (RegularGrid.equalsEpsilon(cellSegment, cellIndex)) {
+			if (Box.equalsEpsilon(cellSegment, cellIndex)) {
 				// two neighboring cells are affected
 				index[0] = (int) cellIndex - 1;
 				if (cellIndex < cells) {
@@ -507,7 +372,7 @@ public class RegularGrid extends Box {
 		List<RegularGrid> lookedUpCells = new ArrayList<RegularGrid>(8);
 		
 		// transform point to cell (body) coordinates
-		Vec4 cellPoint = this.transformModelToGrid(modelPoint);
+		Vec4 cellPoint = this.transformModelToBoxOrigin(modelPoint);
 		
 		if (this.containsV(cellPoint)) {
 			if (this.hasChildren()) {
