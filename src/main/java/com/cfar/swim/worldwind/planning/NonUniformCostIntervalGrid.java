@@ -197,7 +197,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 	
 	@Override
 	public void render(DrawContext dc) {
-		//super.render(dc);
+		super.render(dc);
 		/*
 		super.render(dc);
 		if (!this.hasChildren()) {
@@ -206,6 +206,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 			}
 		}
 		*/
+		/*
 		if (this.visible) {
 			if (this.hasChildren()) {
 				for (int r = 0; r < this.cells.length; r++) {
@@ -218,18 +219,23 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 			} else {
 				if (null != this.sphere) {
 					super.render(dc);
-					//this.sphere.render(dc);
-				}/* else {
+					this.sphere.render(dc);
+				} else {
 					super.render(dc);
-				}*/
+				}
 			}
 		}
+		*/
 	}
 	
 	public void embed(Cylinder cylinder, CostInterval costInterval) {
-		
 		if (this.intersectsCylinder(cylinder)) {
+			
+			// TODO: remove sphere
 			this.sphere = new Sphere(this.getCenter(), this.getRadius() / 4.0);
+			
+			this.addCostInterval(costInterval);
+			
 			if (this.hasChildren()) {
 				for (int r = 0; r < this.cells.length; r++) {
 					for (int s = 0; s < this.cells[r].length; s++) {
@@ -240,66 +246,6 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 				}
 			}
 		}
-		
-		/*
-		Vec4 axis = cylinder.getAxisUnitDirection();
-		Vec4 center = cylinder.getCenter();
-		Vec4 bottom = cylinder.getBottomCenter();
-		Vec4 top = cylinder.getTopCenter();
-		double radius = cylinder.getCylinderRadius();
-		
-		this.getCorners();
-		*/
-		//cylinder.
-		
-		
-		
-		
-		
-		
-		//cylinder.intersectFace(line, index, renderMatrix)
-		// TODO: check if cylinder intersects with this box
-		// TODO: assume vertical cylinder?! (VerticalCylinder extends gov.nasa.worldwind.render.Cylinder, hide all angles)
-		
-		// TODO: problem the regular grid is not aligned with the earth surface
-		// ---> Cylinder intersection with lines (faces) of the box?
-		// http://math.stackexchange.com/questions/166863/intersection-between-a-cylinder-and-an-axis-aligned-bounding-box
-		// the Cylinder coordinates could be transfered to grid coordinates
-		// each grid box would then be axis-aligned
-		
-		// TODO: four cases:
-		// - cyclinder entirely inside box (match and propagate - cylinder center inside)
-		// - box entirely inside cylinder (match and propagate)
-		// - cylinder entirely outside (skip - cylinder center outside)
-		// - cylinder partially outside (match propagate)
-		// only check if cylinder center position, radius and
-		// vertical extension compared to box center position and
-		// side lengths imply an intersection
-		
-		// model positions and distances have to be converted to
-		// Vec4 data types (or vice versa)
-		// circle equation: sq(x - h) + sq(y - k) = sq(d) = sq(r)
-		// c = (h, k) ... circle center position
-		// p = (x, y) ... any position on the circle that fulfills the equation
-		// if abs(sq(d)) > sq(r) then outside
-		// if abs(sq(d)) <= sq(r) then on or inside
-		
-		// http://stackoverflow.com/questions/401847/circle-rectangle-collision-detection-intersection
-		// first check: circle center within rectangle (cylinder center within box)
-		// second check: intersection of circle with any rectangle side (implemented line intersection)
-		// AND vertical extensions overlap
-		
-		
-		/*
-		this.getCenter();
-		this.getCorners();
-		this.rLength;
-		this.sLength;
-		this.tLength;
-		cylinder.getCenterPosition();
-		cylinder.getEastWestRadius();
-		cylinder.getVerticalRadius();
-		*/
 	}
 	
 	// TODO: embed all relevant kinds of (airspace) rigid shapes

@@ -152,6 +152,9 @@ public class IwxxmUpdater implements Runnable {
 			// should the interval be the same as the time step interval?
 			CostInterval costInterval = new CostInterval(phenomenonTime, phenomenonTime.plusMinutes(30));
 			costInterval.setCost(cost);
+			System.out.println("cost interval = " + phenomenonTime + " ... " + phenomenonTime.plusMinutes(30));
+			System.out.println("cost = " + cost);
+			System.out.println("time = " + ZonedDateTime.now(ZoneId.of("UTC")));
 			
 			List<RigidShape> sigmetShapes = OmData.getRigidShapes(observation, iwxxmUnmarshaller);
 			System.out.println("found shapes = " + sigmetShapes.size());

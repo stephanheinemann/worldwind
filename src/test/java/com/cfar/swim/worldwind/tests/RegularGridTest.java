@@ -82,6 +82,7 @@ public class RegularGridTest {
             uvicGrid.setThresholdCost(0);
             uvicGrid.addChildren(uvicBox.getTLength() / 5.0);
             //uvicGrid.setThresholdCost(50);
+            
             RenderableLayer renderableLayer = new RenderableLayer();
             renderableLayer.addRenderable(uvicGrid);
             LayerList layers = wwd.getModel().getLayers();

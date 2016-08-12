@@ -61,12 +61,18 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
         <om:OM_Observation gml:id="analysis-20120825T1600Z">
             <om:type xlink:href="http://codes.wmo.int/49-2/observation-type/IWXXM/2.0/SIGMETEvolvingConditionAnalysis"/>
             <!-- time of FCST conditions - if missing there is no FCST or OBS time -->
-            <om:phenomenonTime nilReason="missing"/>
+            <!--om:phenomenonTime nilReason="missing"/-->
+
+			<om:phenomenonTime>
+                <gml:TimeInstant gml:id="ti-20160812T2330Z">
+                    <gml:timePosition>2016-08-12T23:30:00Z</gml:timePosition>
+                </gml:TimeInstant>
+            </om:phenomenonTime>
 
             <!-- time at which the results of the observation were made available -->
             <om:resultTime>
                 <gml:TimeInstant gml:id="ti-201208251600Z">
-                    <gml:timePosition>2012-08-25T16:00:00Z</gml:timePosition>
+                    <gml:timePosition>2016-08-12T23:31:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:resultTime>
             <!-- The valid period for this observation is the period of the entire SIGMET -->
@@ -146,13 +152,13 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
             <!-- time of forecast conditions -->
             <om:phenomenonTime>
                 <gml:TimeInstant gml:id="ti-20120825T1600Z2">
-                    <gml:timePosition>2012-08-25T22:00:00Z</gml:timePosition>
+                    <gml:timePosition>2016-08-12T23:30:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:phenomenonTime>
             <!-- time at which the results of the observation were made available -->
             <om:resultTime>
                 <gml:TimeInstant gml:id="ti-201208251600Z3">
-                    <gml:timePosition>2012-08-25T16:00:00Z</gml:timePosition>
+                    <gml:timePosition>2016-08-12T23:31:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:resultTime>
             <!-- The valid period for this observation is the period of the entire SIGMET -->
