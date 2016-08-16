@@ -42,13 +42,12 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
+import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
+import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
-import com.cfar.swim.worldwind.planning.PlanningTimePicker;
-import com.cfar.swim.worldwind.planning.ThresholdCostSlider;
 
 import gov.nasa.worldwind.BasicModel;
 import gov.nasa.worldwind.Model;
-import gov.nasa.worldwind.SceneController;
 import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
@@ -58,10 +57,8 @@ import gov.nasa.worldwind.layers.RenderableLayer;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Group;
 import javafx.scene.Scene;
-import javafx.scene.paint.Color;
-import javafx.scene.control.Slider;
 import javafx.scene.control.Label;
-import jfxtras.scene.control.LocalDateTimePicker;
+import javafx.scene.paint.Color;
 
 public class RegularGridTest {
 	
@@ -128,7 +125,7 @@ public class RegularGridTest {
 		protected Scene createScene(WorldWindow worldWindow) {
         	Group group = new Group();
         	Scene scene = new Scene(group, Color.GREY);
-        	PlanningTimePicker ptp = new PlanningTimePicker(largeGrid, worldWindow);
+        	PlanningTimePicker ptp = new PlanningTimePicker(worldWindow);
         	group.getChildren().add(ptp);
         	
         	Label label = new Label("Threshold Cost");
@@ -136,7 +133,7 @@ public class RegularGridTest {
         	label.setLayoutX(20);
         	group.getChildren().add(label);
         	
-        	ThresholdCostSlider slider = new ThresholdCostSlider(largeGrid, worldWindow);
+        	ThresholdCostSlider slider = new ThresholdCostSlider(worldWindow);
         	slider.setShowTickMarks(true);
         	slider.setBlockIncrement(1.0);
         	slider.setLayoutY(300);

@@ -42,9 +42,7 @@ import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
 import gov.nasa.worldwind.geom.Cylinder;
-import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.Vec4;
-import gov.nasa.worldwind.render.DrawContext;
 
 public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRenderable, ThresholdRenderable {
 
