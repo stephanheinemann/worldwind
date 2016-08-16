@@ -38,13 +38,15 @@ import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.RegularGrid;
+import com.cfar.swim.worldwind.render.ThresholdRenderable;
+import com.cfar.swim.worldwind.render.TimedRenderable;
 
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
 
-public class NonUniformCostIntervalGrid extends RegularGrid {
+public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRenderable, ThresholdRenderable {
 
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
 	
@@ -90,7 +92,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 		NonUniformCostIntervalGrid grid = new NonUniformCostIntervalGrid(
 				axes, rMin, rMax, sMin, sMax, tMin, tMax);
 		grid.setTime(this.time);
-		grid.setThresholdCost(this.thresholdCost);
+		grid.setThreshold(this.thresholdCost);
 		grid.update();
 		return grid;
 	}
@@ -123,10 +125,18 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 		return this.costIntervals.searchInterval(new CostInterval(start, end));
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.cfar.swim.worldwind.render.TimedRenderable#getTime()
+	 */
+	@Override
 	public ZonedDateTime getTime() {
 		return this.time;
 	}
 	
+	/* (non-Javadoc)
+	 * @see com.cfar.swim.worldwind.render.TimedRenderable#setTime(java.time.ZonedDateTime)
+	 */
+	@Override
 	public void setTime(ZonedDateTime time) {
 		this.time = time;
 		this.update();
@@ -135,14 +145,18 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 			for (int r = 0; r < this.cells.length; r++) {
 				for (int s = 0; s < this.cells[r].length; s++) {
 					for (int t = 0; t < this.cells[r][s].length; t++) {
-						((NonUniformCostIntervalGrid) this.cells[r][s][t]).setTime(time);
+						((TimedRenderable) this.cells[r][s][t]).setTime(time);
 					}
 				}
 			}
 		}
 	}
 	
-	public void setThresholdCost(int thresholdCost) {
+	/* (non-Javadoc)
+	 * @see com.cfar.swim.worldwind.render.ThresholdRenderable#setThreshold(int)
+	 */
+	@Override
+	public void setThreshold(int thresholdCost) {
 		this.thresholdCost = thresholdCost;
 		this.updateVisibility();
 		
@@ -150,14 +164,18 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 			for (int r = 0; r < this.cells.length; r++) {
 				for (int s = 0; s < this.cells[r].length; s++) {
 					for (int t = 0; t < this.cells[r][s].length; t++) {
-						((NonUniformCostIntervalGrid) this.cells[r][s][t]).setThresholdCost(thresholdCost);
+						((ThresholdRenderable) this.cells[r][s][t]).setThreshold(thresholdCost);
 					}
 				}
 			}
 		}
 	}
 	
-	public int getThresholdCost() {
+	/* (non-Javadoc)
+	 * @see com.cfar.swim.worldwind.render.ThresholdRenderable#getThreshold()
+	 */
+	@Override
+	public int getThreshold() {
 		return this.thresholdCost;
 	}
 	
@@ -191,49 +209,8 @@ public class NonUniformCostIntervalGrid extends RegularGrid {
 		// TODO: implement proper color coding
 	}
 	
-	
-	// TODO: remove intersection test
-	private Sphere sphere = null;
-	
-	@Override
-	public void render(DrawContext dc) {
-		super.render(dc);
-		/*
-		super.render(dc);
-		if (!this.hasChildren()) {
-			if (null != this.sphere) {
-				this.sphere.render(dc);
-			}
-		}
-		*/
-		/*
-		if (this.visible) {
-			if (this.hasChildren()) {
-				for (int r = 0; r < this.cells.length; r++) {
-					for(int s = 0; s < this.cells[r].length; s++) {
-						for (int t = 0; t < this.cells[r][s].length; t++) {
-							this.cells[r][s][t].render(dc);
-						}
-					}
-				}
-			} else {
-				if (null != this.sphere) {
-					super.render(dc);
-					this.sphere.render(dc);
-				} else {
-					super.render(dc);
-				}
-			}
-		}
-		*/
-	}
-	
 	public void embed(Cylinder cylinder, CostInterval costInterval) {
 		if (this.intersectsCylinder(cylinder)) {
-			
-			// TODO: remove sphere
-			this.sphere = new Sphere(this.getCenter(), this.getRadius() / 4.0);
-			
 			this.addCostInterval(costInterval);
 			
 			if (this.hasChildren()) {

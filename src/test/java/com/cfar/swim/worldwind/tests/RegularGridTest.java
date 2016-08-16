@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.tests;
 
 import static org.junit.Assert.assertTrue;
 
+import java.awt.BorderLayout;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
@@ -42,14 +43,25 @@ import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
+import com.cfar.swim.worldwind.planning.PlanningTimePicker;
+import com.cfar.swim.worldwind.planning.ThresholdCostSlider;
 
 import gov.nasa.worldwind.BasicModel;
 import gov.nasa.worldwind.Model;
+import gov.nasa.worldwind.SceneController;
+import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
+import javafx.embed.swing.JFXPanel;
+import javafx.scene.Group;
+import javafx.scene.Scene;
+import javafx.scene.paint.Color;
+import javafx.scene.control.Slider;
+import javafx.scene.control.Label;
+import jfxtras.scene.control.LocalDateTimePicker;
 
 public class RegularGridTest {
 	
@@ -61,6 +73,8 @@ public class RegularGridTest {
 	private static class AppFrame extends javax.swing.JFrame {
         
 		private static final long serialVersionUID = 1L;
+		
+		protected JFXPanel timePanel;
 
 		public AppFrame() {
         	WorldWindowGLCanvas wwd = new WorldWindowGLCanvas();
@@ -79,7 +93,7 @@ public class RegularGridTest {
             	);
             gov.nasa.worldwind.geom.Box uvicBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, uvic, 0.0, 150.0);
             uvicGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(uvicBox));
-            uvicGrid.setThresholdCost(0);
+            uvicGrid.setThreshold(0);
             uvicGrid.addChildren(uvicBox.getTLength() / 5.0);
             //uvicGrid.setThresholdCost(50);
             
@@ -96,14 +110,42 @@ public class RegularGridTest {
             	Angle.fromDegrees(90.0));
             gov.nasa.worldwind.geom.Box largeBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, large, 0.0, 500000.0);
             largeGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(largeBox));
-            largeGrid.setThresholdCost(0);
+            largeGrid.setThreshold(0);
             largeGrid.addChildren(largeBox.getTLength() / 4.0);
             largeGrid.addChildren(0, 8, 3, 2, 2, 2);
             largeGrid.addChildren(1, 9, 3, 2, 2, 2);
             largeGrid.addChildren(0, 9, 1, 2, 2, 2);
             largeGrid.addChildren(2, 9, 1, 2, 2, 2);
             renderableLayer.addRenderable(largeGrid);
+            
+            // TODO: add time slider with steps between min and max time (set using calender-like input)
+            this.timePanel = new JFXPanel();
+        	this.timePanel.setSize(300, 400);
+        	this.timePanel.setScene(createScene(wwd));
+        	this.getContentPane().add(this.timePanel, BorderLayout.WEST);
 		}
+		
+		protected Scene createScene(WorldWindow worldWindow) {
+        	Group group = new Group();
+        	Scene scene = new Scene(group, Color.GREY);
+        	PlanningTimePicker ptp = new PlanningTimePicker(largeGrid, worldWindow);
+        	group.getChildren().add(ptp);
+        	
+        	Label label = new Label("Threshold Cost");
+        	label.setLayoutY(280);
+        	label.setLayoutX(20);
+        	group.getChildren().add(label);
+        	
+        	ThresholdCostSlider slider = new ThresholdCostSlider(largeGrid, worldWindow);
+        	slider.setShowTickMarks(true);
+        	slider.setBlockIncrement(1.0);
+        	slider.setLayoutY(300);
+        	slider.setLayoutX(20);
+        	slider.setPrefWidth(260);
+        	group.getChildren().add(slider);
+        	
+        	return scene;
+        }
 		
 		
     }
