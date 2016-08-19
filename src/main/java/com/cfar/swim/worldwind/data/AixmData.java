@@ -5,7 +5,7 @@ import java.util.List;
 
 import javax.xml.bind.JAXBElement;
 
-import com.cfar.swim.worldwind.render.VerticalCylinder;
+import com.cfar.swim.worldwind.render.CostIntervalCylinder;
 
 import aero.aixm.AirspaceVolumeType;
 import aero.aixm.SurfaceType;
@@ -48,7 +48,11 @@ public class AixmData {
 					if (0 == height) {
 						height++;
 					}
-					rigidShapes.add(new VerticalCylinder(center, height, radius));
+					// TODO: previous reports may have indicated a radius that is to be used
+					if (0 == radius) {
+						radius++;
+					}
+					rigidShapes.add(new CostIntervalCylinder(center, height, radius));
 				}
 			}
 		}	

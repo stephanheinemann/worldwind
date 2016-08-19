@@ -65,6 +65,7 @@ public class RegularGridTest {
 	static Model model;
 	static NonUniformCostIntervalGrid uvicGrid;
 	static NonUniformCostIntervalGrid largeGrid;
+	static NonUniformCostIntervalGrid tcGrid;
 	
 	// TODO: proper initialization with a sequence of tests
 	private static class AppFrame extends javax.swing.JFrame {
@@ -115,6 +116,17 @@ public class RegularGridTest {
             largeGrid.addChildren(2, 9, 1, 2, 2, 2);
             renderableLayer.addRenderable(largeGrid);
             
+            Sector tc = new Sector(
+                	Angle.fromDegrees(50.0),
+                	Angle.fromDegrees(60.0),
+                	Angle.fromDegrees(-15.0),
+                	Angle.fromDegrees(-5.0));
+                gov.nasa.worldwind.geom.Box tcBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, tc, 0.0, 500000.0);
+                tcGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tcBox));
+                tcGrid.setThreshold(0);
+                tcGrid.addChildren(tcGrid.getTLength() / 4.0);
+                renderableLayer.addRenderable(tcGrid);
+            
             // TODO: add time slider with steps between min and max time (set using calender-like input)
             this.timePanel = new JFXPanel();
         	this.timePanel.setSize(300, 400);
@@ -128,11 +140,6 @@ public class RegularGridTest {
         	PlanningTimePicker ptp = new PlanningTimePicker(worldWindow);
         	group.getChildren().add(ptp);
         	
-        	Label label = new Label("Threshold Cost");
-        	label.setLayoutY(280);
-        	label.setLayoutX(20);
-        	group.getChildren().add(label);
-        	
         	ThresholdCostSlider slider = new ThresholdCostSlider(worldWindow);
         	slider.setShowTickMarks(true);
         	slider.setBlockIncrement(1.0);
@@ -140,6 +147,11 @@ public class RegularGridTest {
         	slider.setLayoutX(20);
         	slider.setPrefWidth(260);
         	group.getChildren().add(slider);
+        	
+        	Label label = new Label("Threshold Cost"/*, slider*/);
+        	label.setLayoutY(280);
+        	label.setLayoutX(20);
+        	group.getChildren().add(label);
         	
         	return scene;
         }
@@ -163,11 +175,11 @@ public class RegularGridTest {
 		AppFrame frame = new AppFrame();
 		frame.setVisible(true);
 		
-		IwxxmUpdater iwxxmUpdater = new IwxxmUpdater(model, uvicGrid);
-		iwxxmUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
-	
 		IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
 		largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
+		
+		IwxxmUpdater iwxxmUpdater = new IwxxmUpdater(model, tcGrid);
+		iwxxmUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		
 		while (frame.isVisible()) {
 			Thread.sleep(1000);

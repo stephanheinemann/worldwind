@@ -47,7 +47,7 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
 
     <!-- Valid period for this report -->
     <iwxxm:validPeriod>
-        <gml:TimePeriod gml:id="tp-20120810T1200Z-20120810T1600Z">
+        <gml:TimePeriod gml:id="tp-20120825T1600Z-20120825T2200Z">
             <gml:beginPosition>2012-08-10T12:00:00Z</gml:beginPosition>
             <gml:endPosition>2012-08-10T16:00:00Z</gml:endPosition>
         </gml:TimePeriod>
@@ -58,19 +58,19 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
 
     <!-- FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN -->
     <iwxxm:analysis>
-        <om:OM_Observation gml:id="analysis-20120810T1200Z">
+        <om:OM_Observation gml:id="analysis-20120825T1600Z">
             <om:type xlink:href="http://codes.wmo.int/49-2/observation-type/IWXXM/2.0/SIGMETEvolvingConditionAnalysis"/>
             <!-- time of FCST conditions - if missing there is no FCST or OBS time -->
             <om:phenomenonTime nilReason="missing"/>
 
             <!-- time at which the results of the observation were made available -->
             <om:resultTime>
-                <gml:TimeInstant gml:id="ti-201208101200Z">
-                    <gml:timePosition>2012-08-10T12:00:00Z</gml:timePosition>
+                <gml:TimeInstant gml:id="ti-201208251600Z">
+                    <gml:timePosition>2012-08-25T16:00:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:resultTime>
             <!-- The valid period for this observation is the period of the entire SIGMET -->
-            <om:validTime xlink:href="#tp-20120810T1200Z-20120810T1600Z"/>
+            <om:validTime xlink:href="#tp-20120825T1600Z-20120825T2200Z"/>
             <om:procedure>
                 <metce:Process gml:id="p-49-2-sigmet">
                     <gml:description>WMO No. 49 Volume 2 Meteorological Service for International Air Navigation APPENDIX 6-1 TECHNICAL SPECIFICATIONS RELATED TO SIGMET INFORMATION</gml:description>
@@ -100,10 +100,11 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
             <om:result>
                 <iwxxm:EvolvingMeteorologicalCondition gml:id="tc-obs-N2706" intensityChange="WEAKEN">
                     <iwxxm:directionOfMotion uom="deg">90</iwxxm:directionOfMotion>
-                    <!-- This shape describes: N5390 W01190 CB TOP FL390 WI 150NM OF CENTRE -->
+                    <!-- This shape describes:
+                        N2706 W07306 CB TOP FL500 WI 150NM OF CENTRE i.e., a 150NM radius around -73.06 (lon), 27.06 (lat) -->
                     <iwxxm:geometry>
                         <aixm:AirspaceVolume gml:id="as1">
-                            <aixm:upperLimit uom="FL">390</aixm:upperLimit>
+                            <aixm:upperLimit uom="m">150</aixm:upperLimit>
                             <aixm:upperLimitReference>STD</aixm:upperLimitReference>
                             <aixm:horizontalProjection>
                                 <aixm:Surface gml:id="tc-obs-N2706-sfc" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
@@ -115,8 +116,8 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
                                                         <gml:Curve gml:id="curve01">
                                                             <gml:segments>
                                                                 <gml:CircleByCenterPoint numArc="1">
-                                                                    <gml:pos>53.9 -11.9</gml:pos>
-                                                                    <gml:radius uom="[nmi_i]">150</gml:radius>
+                                                                    <gml:pos>48.463223 -123.311468</gml:pos>
+                                                                    <gml:radius uom="[nmi_i]">0.01</gml:radius>
                                                                 </gml:CircleByCenterPoint>
                                                             </gml:segments>
                                                         </gml:Curve>
@@ -129,41 +130,43 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
                             </aixm:horizontalProjection>
                         </aixm:AirspaceVolume>
                     </iwxxm:geometry>
-                    <iwxxm:speedOfMotion uom="[kn_i]">18</iwxxm:speedOfMotion>
+                    <iwxxm:speedOfMotion uom="[kn_i]">10</iwxxm:speedOfMotion>
                 </iwxxm:EvolvingMeteorologicalCondition>
             </om:result>
         </om:OM_Observation>
     </iwxxm:analysis>
-    
-    <!-- FCST 1600Z S OF N54 AND E OF W010 -->
+
+    <!-- FCST 2200Z TC CENTRE N2740 W07345 -->
     <iwxxm:analysis>
-        <om:OM_Observation gml:id="analysis-20120810T1200Z2">
+        <om:OM_Observation gml:id="analysis-20120825T1600Z2">
             <om:type xlink:href="http://codes.wmo.int/49-2/observation-type/IWXXM/2.0/SIGMETPositionAnalysis"/>
             <!-- time of forecast conditions -->
             <om:phenomenonTime>
-                <gml:TimeInstant gml:id="ti-20120810T1600Z2">
-                    <gml:timePosition>2012-08-10T16:00:00Z</gml:timePosition>
+                <gml:TimeInstant gml:id="ti-20120825T1600Z2">
+                    <gml:timePosition>2012-08-25T22:00:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:phenomenonTime>
             <!-- time at which the results of the observation were made available -->
             <om:resultTime>
-                <gml:TimeInstant gml:id="ti-201208101200Z3">
-                    <gml:timePosition>2012-08-10T12:00:00Z</gml:timePosition>
+                <gml:TimeInstant gml:id="ti-201208251600Z3">
+                    <gml:timePosition>2012-08-25T16:00:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:resultTime>
             <!-- The valid period for this observation is the period of the entire SIGMET -->
-            <om:validTime xlink:href="#tp-20120810T1200Z-20120810T1600Z"/>
+            <om:validTime xlink:href="#tp-20120825T1600Z-20120825T2200Z"/>
             <om:procedure xlink:href="#p-49-2-sigmet"/>
             <om:observedProperty xlink:href="http://codes.wmo.int/49-2/observable-property/sigmet/positionAnalysis"/>
             <om:featureOfInterest xlink:href="#sampling-surface-shanlon"/>
             <om:result>
                 <iwxxm:MeteorologicalPositionCollection gml:id="position-collection-result-2">
                     <iwxxm:member>
+                        <!-- TC CENTRE N2740 W07345 -->
                         <iwxxm:MeteorologicalPosition gml:id="sigmet-fcst-N2706">
                             <iwxxm:geometry>
                                 <aixm:AirspaceVolume gml:id="as2">
-                                	<aixm:upperLimit uom="FL">5000</aixm:upperLimit>
-                            		<aixm:upperLimitReference>STD</aixm:upperLimitReference>
+                                	<!-- SH: limits added manually -->
+                                	<aixm:upperLimit uom="m">150</aixm:upperLimit>
+                                	<aixm:lowerLimit uom="m">100</aixm:lowerLimit>
                                     <aixm:horizontalProjection>
                                         <aixm:Surface gml:id="sfc002" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
                                             <gml:polygonPatches>
@@ -174,8 +177,8 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
                                                                 <gml:Curve gml:id="curve001">
                                                                     <gml:segments>
                                                                         <gml:CircleByCenterPoint numArc="1">
-                                                                            <gml:pos>53.9 -9.9</gml:pos>
-                                                                            <gml:radius uom="[nmi_i]">50</gml:radius>
+                                                                            <gml:pos>48.463 -123.311</gml:pos>
+                                                                            <gml:radius uom="[nmi_i]">0.005</gml:radius>
                                                                         </gml:CircleByCenterPoint>
                                                                     </gml:segments>
                                                                 </gml:Curve>

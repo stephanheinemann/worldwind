@@ -29,18 +29,47 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 public class CostInterval extends TimeInterval {
 	
-	private int cost = 1;
+	private String id = null;
+	private int cost = 0;
 	
-	public CostInterval(ZonedDateTime time) {
-		super(time);
+	public CostInterval(String id) {
+		this(
+			id,
+			ZonedDateTime.now(ZoneId.of("UTC")),
+			ZonedDateTime.now(ZoneId.of("UTC")).plusYears(1000));
 	}
 	
-	public CostInterval(ZonedDateTime start, ZonedDateTime end) {
+	public CostInterval(String id, ZonedDateTime time) {
+		super(time);
+		this.id = id;
+	}
+	
+	public CostInterval(String id, ZonedDateTime start, ZonedDateTime end) {
 		super(start, end);
+		this.id = id;
+	}
+	
+	public CostInterval(String id, ZonedDateTime start, ZonedDateTime end, int cost) {
+		this(id, start, end);
+		this.cost = cost;
+	}
+	
+	public CostInterval(String id, TimeInterval timeInterval) {
+		this(id, timeInterval.getLower(), timeInterval.getUpper());
+	}
+	
+	public CostInterval(String id, TimeInterval timeInterval, int cost) {
+		this(id, timeInterval);
+		this.cost = cost;
+	}
+	
+	public String getId() {
+		return this.id;
 	}
 	
 	public int getCost() {

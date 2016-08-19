@@ -33,6 +33,7 @@ import java.io.InputStream;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import javax.xml.bind.JAXBElement;
@@ -49,16 +50,21 @@ import com.cfar.swim.worldwind.data.OmData;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostMap;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
-import com.cfar.swim.worldwind.render.VerticalCylinder;
+import com.cfar.swim.worldwind.planning.TimeInterval;
+import com.cfar.swim.worldwind.render.CostIntervalCylinder;
+import com.cfar.swim.worldwind.render.CostIntervalPath;
 
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
+import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.render.RigidShape;
+import gov.nasa.worldwind.util.measure.LengthMeasurer;
 import icao.iwxxm.SIGMETType;
 import net.opengis.gml.CircleByCenterPointType;
 import net.opengis.om.OMObservationType;
@@ -133,6 +139,8 @@ public class IwxxmUpdater implements Runnable {
 		//sigmet.getPhenomenon(); // e.g. find thunderstorm
 		// result/EvolvingMeteorologicalCondition/geometry
 		// result/MeteorologicalPositionCollection/member/MeteorologicalPosition/geometry
+		List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
+		RenderableLayer renderableLayer = ((RenderableLayer) renderableLayers.get(0));
 		
 		String phenomenom = IwxxmData.getPhenomenon(sigmet);
 		// TODO: things like quantification (weakening), spacial and temporal distance
@@ -140,42 +148,112 @@ public class IwxxmUpdater implements Runnable {
 		int cost = this.costMap.get(phenomenom);
 		
 		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
+		List<RigidShape> observationShapes = new ArrayList<RigidShape>();
 		//List<RigidShape> sigmetShapes = IwxxmData.getRigidShapes(sigmet, iwxxmUnmarshaller);
 		
 		for (OMObservationType observation : observations) {
 			// phenomenonTime is now if not specified
 			ZonedDateTime phenomenonTime = OmData.getPhenomenonTime(observation);
 			ZonedDateTime resultTime = OmData.getResultTime(observation);
+			//TimeInterval validInterval = OmData.getValidTimeInterval(observation);
 			
 			// only future times are actually relevant
 			// phenomenon time can be a forecasted time
 			// should the interval be the same as the time step interval?
-			CostInterval costInterval = new CostInterval(phenomenonTime, phenomenonTime.plusMinutes(30));
+			
+			// if there is no forecast or observation time, take the time the data has been made available  
+			ZonedDateTime start = phenomenonTime;
+			if (null == start) {
+				start = resultTime;
+			}
+			
+			ZonedDateTime end = null;
+			// the end time should be the valid time of the observation
+			// if interpolation is done, then the final valid times have to be changed accordingly
+			TimeInterval validTimeInterval = OmData.getValidTimeInterval(observation);
+			if (null == validTimeInterval) {
+				end = IwxxmData.getValidPeriod(sigmet).getUpper();
+			} else {
+				end = validTimeInterval.getUpper();
+			}
+			
+			CostInterval costInterval = new CostInterval(sigmet.getId(), start, end.plusMinutes(30));
 			costInterval.setCost(cost);
-			System.out.println("cost interval = " + phenomenonTime + " ... " + phenomenonTime.plusMinutes(30));
+			System.out.println("cost interval = " + start + " ... " + end);
 			System.out.println("cost = " + cost);
 			System.out.println("time = " + ZonedDateTime.now(ZoneId.of("UTC")));
 			
 			List<RigidShape> sigmetShapes = OmData.getRigidShapes(observation, iwxxmUnmarshaller);
-			System.out.println("found shapes = " + sigmetShapes.size());
-			List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
-			((RenderableLayer) renderableLayers.get(0)).addRenderables(sigmetShapes);
+			observationShapes.addAll(sigmetShapes);
+			//System.out.println("found shapes = " + sigmetShapes.size());
+			//renderableLayer.addRenderables(sigmetShapes);
 		
 			// cylinder embedding test
+			
 			for (RigidShape shape : sigmetShapes) {
-				if (shape instanceof VerticalCylinder) {
-					VerticalCylinder verticalCylinder = (VerticalCylinder) shape;
-					Cylinder cylinder = verticalCylinder.toGeometricCylinder(model.getGlobe());
+				if (shape instanceof CostIntervalCylinder) {
+					CostIntervalCylinder costIntervalCylinder = (CostIntervalCylinder) shape;
+					costIntervalCylinder.setCostInterval(costInterval);
 					
-					((RenderableLayer) renderableLayers.get(0)).removeRenderable(shape);
-					((RenderableLayer) renderableLayers.get(0)).addRenderable(cylinder);
+					/*
+					Cylinder cylinder = costIntervalCylinder.toGeometricCylinder(model.getGlobe());
+					
+					renderableLayer.addRenderable(costIntervalCylinder);
+					//renderableLayer.removeRenderable(shape);
+					//renderableLayer.addRenderable(cylinder);
 					
 					this.grid.embed(cylinder, costInterval); // identify affected cells
+					*/
 				}
 			}
+			
 		}
+		
+		Iterator<RigidShape> osi = observationShapes.iterator();
+		RigidShape current = null;
+		if (osi.hasNext()) {
+			current = osi.next();
+		}
+		while (osi.hasNext()) {
+			RigidShape next = osi.next();
+			if ((current instanceof CostIntervalCylinder) && (next instanceof CostIntervalCylinder)) {
+				List<CostIntervalCylinder> interpolants = ((CostIntervalCylinder) current).interpolate((CostIntervalCylinder) next, 4);
+			
+				renderableLayer.addRenderable(current);
+				renderableLayer.addRenderables(interpolants);
+				
+				Cylinder cylinder = ((CostIntervalCylinder) current).toGeometricCylinder(model.getGlobe());
+				this.grid.embed(cylinder, ((CostIntervalCylinder) current).getCostInterval());
+			
+				for (CostIntervalCylinder interpolant : interpolants) {
+					cylinder = interpolant.toGeometricCylinder(model.getGlobe());
+					this.grid.embed(cylinder, interpolant.getCostInterval());
+				}
+			}
+			current = next;
+		}
+		renderableLayer.addRenderable(current);
+		Cylinder cylinder = ((CostIntervalCylinder) current).toGeometricCylinder(model.getGlobe());
+		this.grid.embed(cylinder, ((CostIntervalCylinder) current).getCostInterval());
+		
+		CostIntervalPath observationPath = (CostIntervalPath) OmData.getObservationPath(observationShapes);
+		// TODO: use valid times for path
+		CostInterval pathCostInverval = new CostInterval(sigmet.getId(), IwxxmData.getValidPeriod(sigmet), cost);
+		observationPath.setCostInterval(pathCostInverval);
+		if (1 < observationShapes.size()) {
+			renderableLayer.addRenderable(observationPath);
+		}
+		
+		ArrayList<Position> positions = new ArrayList<Position>();
+		for (Position position : observationPath.getPositions()) {
+			positions.add(position);
+		}
+		LengthMeasurer measurer = new LengthMeasurer(positions);
+		double meters = measurer.getLength(model.getGlobe());
+		System.out.println("observation path length = " + meters);
 	}
 	
+	/*
 	public void update(Cylinder cylinder) {
 		// TODO: cost, time interval..., direction, speed
 	}
@@ -214,4 +292,5 @@ public class IwxxmUpdater implements Runnable {
 			index = (index + 1) % 2;
 		}
 	}
+	*/
 }

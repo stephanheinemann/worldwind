@@ -29,15 +29,19 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import java.awt.Color;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.RegularGrid;
+import com.cfar.swim.worldwind.render.CostColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
@@ -116,11 +120,11 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 	}
 	
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		return this.costIntervals.searchInterval(new CostInterval(this.time));
+		return this.costIntervals.searchInterval(new CostInterval(null, this.time));
 	}
 	
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
-		return this.costIntervals.searchInterval(new CostInterval(start, end));
+		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
 	}
 	
 	/* (non-Javadoc)
@@ -180,7 +184,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 	protected void update() {
 		this.updateCostIntervals();
 		this.updateActiveCost();
-		this.updateColor();
+		this.updateAppearance();
 		this.updateVisibility();
 	}
 	
@@ -190,8 +194,16 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 	
 	protected void updateActiveCost() {
 		this.activeCost = 1; // default uniform cost
-		for (Interval<ChronoZonedDateTime<?>> costInterval : this.activeCostIntervals) {
-			this.activeCost += ((CostInterval) costInterval).getWeightedCost();
+		
+		Set<String> costIntervalIds = new HashSet<String>();
+		for (Interval<ChronoZonedDateTime<?>> interval : this.activeCostIntervals) {
+			CostInterval costInterval = (CostInterval) interval;
+			
+			// only add costs of different overlapping cost intervals
+			if (!costIntervalIds.contains(costInterval.getId())) {
+				costIntervalIds.add(costInterval.getId());
+				this.activeCost += ((CostInterval) costInterval).getWeightedCost();
+			}
 		}
 		// TODO: implement a proper weighted cost calculation normalized from 0 to 100
 		// TODO: the weight is affected by severity and currency (reporting time)
@@ -201,10 +213,13 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		this.setVisible(this.activeCost > this.thresholdCost);
 	}
 	
-	protected void updateColor() {
-		float colorComponent = ((float) this.activeCost / 100.0f);
-		this.setColor(colorComponent, 1.0f - colorComponent, colorComponent / 2.0f, 1.0f);
-		// TODO: implement proper color coding
+	protected void updateAppearance() {
+		Color activeColor = CostColor.getColor(activeCost);
+		float red = activeColor.getRed() / 255.0f;
+		float green = activeColor.getGreen() / 255.0f;
+		float blue = activeColor.getBlue() / 255.0f;
+		float alpha = activeColor.getAlpha() / 255.0f;
+		this.setColor(red, green, blue, alpha);
 	}
 	
 	public void embed(Cylinder cylinder, CostInterval costInterval) {

@@ -30,9 +30,23 @@ public class TimeInterval implements Interval<ChronoZonedDateTime<?>> {
 		return this.start;
 	}
 
+	public void setLower(ZonedDateTime start) {
+		this.start = start;
+	}
+	
 	@Override
 	public ZonedDateTime getUpper() {
 		return this.end;
+	}
+	
+	public void setUpper(ZonedDateTime end) {
+		this.end = end;
+	}
+	
+	public boolean contains(ZonedDateTime time) {
+		return
+			(this.start.isEqual(time) || this.start.isBefore(time)) &&
+			(this.end.isAfter(time) || this.end.isEqual(time));
 	}
 	
 	public static final Comparator<Interval<ChronoZonedDateTime<?>>> comparator = new Comparator<Interval<ChronoZonedDateTime<?>>>() {

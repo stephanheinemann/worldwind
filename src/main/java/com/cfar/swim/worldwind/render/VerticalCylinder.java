@@ -7,7 +7,7 @@ import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Cylinder;
 
 public class VerticalCylinder extends Cylinder {
-
+	
 	public VerticalCylinder(Position centerPosition, double height, double radius) {
 		super(centerPosition, height, radius);
 	}
@@ -22,6 +22,22 @@ public class VerticalCylinder extends Cylinder {
 	public void setNorthSouthRadius(double northSouthRadius) {
 		this.northSouthRadius = northSouthRadius;
 		this.eastWestRadius = northSouthRadius;
+	}
+	
+	public void setRadius(double radius) {
+		this.setEastWestRadius(radius);
+	}
+	
+	public double getRadius() {
+		return this.eastWestRadius;
+	}
+	
+	public void setHeight(double height) {
+		this.verticalRadius = height * 0.5d;
+	}
+	
+	public double getHeight() {
+		return (this.verticalRadius * 2d);
 	}
 	
 	@Override

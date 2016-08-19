@@ -1,6 +1,5 @@
 package com.cfar.swim.worldwind.data;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +11,11 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
+import com.cfar.swim.worldwind.planning.TimeInterval;
+import com.cfar.swim.worldwind.render.CostIntervalPath;
 
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.render.RigidShape;
 import icao.iwxxm.EvolvingMeteorologicalConditionType;
 import icao.iwxxm.MeteorologicalPositionCollectionType;
@@ -27,7 +30,7 @@ import net.opengis.om.OMObservationType;
 public class OmData {
 	
 	public static ZonedDateTime getPhenomenonTime(OMObservationType observation) {
-		ZonedDateTime phenomenonTime = ZonedDateTime.now(ZoneId.of("UTC"));
+		ZonedDateTime phenomenonTime = null;
 		Object time = observation.getPhenomenonTime().getAbstractTimeObject();
 		
 		if (null != time) {
@@ -54,6 +57,18 @@ public class OmData {
 		return GmlData.getTime(observation.getResultTime().getTimeInstant());
 	}
 	
+	public static TimeInterval getValidTimeInterval(OMObservationType observation) {
+		TimeInterval validTimeInterval = null;
+		
+		// TODO: deal with xlink:href (annotations? @XmlIdRef,@XmlId, XmlAdapter?)
+		if (null != observation.getValidTime().getTimePeriod()) {
+			validTimeInterval = GmlData.getTimeInterval(observation.getValidTime().getTimePeriod());
+		}
+		
+		return validTimeInterval;
+	}
+	
+	// TODO: RigidShapes and Paths should be TimedRenderable and ThresholdRenderable!
 	public static List<RigidShape> getRigidShapes(OMObservationType observation, IwxxmUnmarshaller unmarshaller) throws JAXBException {
 		List<RigidShape> rigidShapes = new ArrayList<RigidShape>();
 		
@@ -79,6 +94,21 @@ public class OmData {
 		}
 		
 		return rigidShapes;
+	}
+	
+	public static Path getObservationPath(OMObservationType observation, IwxxmUnmarshaller unmarshaller) throws JAXBException {
+		List<RigidShape> rigidShapes = OmData.getRigidShapes(observation, unmarshaller);
+		return OmData.getObservationPath(rigidShapes);
+	}
+	
+	public static Path getObservationPath(List<RigidShape> rigidShapes) {
+		List<Position> positions = new ArrayList<Position>();
+		
+		for (RigidShape rigidShape : rigidShapes) {
+			positions.add(rigidShape.getCenterPosition());
+		}
+		
+		return new CostIntervalPath(positions);
 	}
 	
 }
