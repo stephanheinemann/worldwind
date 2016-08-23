@@ -54,7 +54,7 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF E005 TOP FL390 MOV W WKN FCS
     </iwxxm:validPeriod>
 
     <!-- The significant meteorological phenomenon are listed in WMO No. 49 C.3.1. sub-clause 1.1.4 -->
-    <iwxxm:phenomenon xlink:href="http://codes.wmo.int/49-2/SigWxPhenomena/OBSC_TS"/>
+    <iwxxm:phenomenon xlink:href="http://codes.wmo.int/49-2/SigWxPhenomena/TC"/>
 
     <!-- FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN -->
     <iwxxm:analysis>

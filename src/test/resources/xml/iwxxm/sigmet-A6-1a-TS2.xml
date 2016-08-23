@@ -72,7 +72,7 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
             <!-- time at which the results of the observation were made available -->
             <om:resultTime>
                 <gml:TimeInstant gml:id="ti-201208251600Z">
-                    <gml:timePosition>2016-08-13T00:01:00Z</gml:timePosition>
+                    <gml:timePosition>2016-08-15T18:35:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:resultTime>
             <!-- The valid period for this observation is the period of the entire SIGMET -->
@@ -152,13 +152,13 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
             <!-- time of forecast conditions -->
             <om:phenomenonTime>
                 <gml:TimeInstant gml:id="ti-20120825T1600Z2">
-                    <gml:timePosition>2016-08-15T18:20:00Z</gml:timePosition>
+                    <gml:timePosition>2016-08-15T19:20:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:phenomenonTime>
             <!-- time at which the results of the observation were made available -->
             <om:resultTime>
                 <gml:TimeInstant gml:id="ti-201208251600Z3">
-                    <gml:timePosition>2016-08-15T18:21:00Z</gml:timePosition>
+                    <gml:timePosition>2016-08-15T19:25:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:resultTime>
             <!-- The valid period for this observation is the period of the entire SIGMET -->

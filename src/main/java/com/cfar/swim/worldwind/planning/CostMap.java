@@ -8,6 +8,7 @@ public class CostMap extends HashMap<String, Integer> {
 
 	public CostMap() {
 		this.put("http://codes.wmo.int/49-2/SigWxPhenomena/OBSC_TS", 40);
+		this.put("http://codes.wmo.int/49-2/SigWxPhenomena/TC", 60);
 	}
 	
 }
