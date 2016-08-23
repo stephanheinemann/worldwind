@@ -10,20 +10,20 @@ import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.render.Renderable;
 import javafx.event.EventHandler;
 import javafx.scene.control.Slider;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.input.InputEvent;
 
 public class ThresholdCostSlider extends Slider {
 
-	private class ThresholdCostHandler implements EventHandler<MouseEvent> {
+	private class ThresholdCostInputHandler implements EventHandler<InputEvent> {
 
 		ThresholdCostSlider slider = null;
 
-		public ThresholdCostHandler(ThresholdCostSlider slider) {
+		public ThresholdCostInputHandler(ThresholdCostSlider slider) {
 			this.slider = slider;
 		}
 
 		@Override
-		public void handle(MouseEvent event) {
+		public void handle(InputEvent event) {
 			List<Layer> renderableLayers = this.slider.worldWindow.getModel().getLayers().getLayersByClass(RenderableLayer.class);
 			for (Layer layer : renderableLayers) {
 				for (Renderable renderable : ((RenderableLayer) layer).getRenderables()) {
@@ -42,7 +42,8 @@ public class ThresholdCostSlider extends Slider {
 	public ThresholdCostSlider(WorldWindow worldWindow) {
 		super(0, 100, 0);
 		this.worldWindow = worldWindow;
-		this.setOnMouseReleased(new ThresholdCostHandler(this));
+		this.setOnMouseReleased(new ThresholdCostInputHandler(this));
+		this.setOnKeyPressed(new ThresholdCostInputHandler(this));
 	}
 
 }

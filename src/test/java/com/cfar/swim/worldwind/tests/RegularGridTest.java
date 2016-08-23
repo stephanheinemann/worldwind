@@ -120,7 +120,7 @@ public class RegularGridTest {
                 	Angle.fromDegrees(50.0),
                 	Angle.fromDegrees(60.0),
                 	Angle.fromDegrees(-15.0),
-                	Angle.fromDegrees(-5.0));
+                	Angle.fromDegrees(5.0));
                 gov.nasa.worldwind.geom.Box tcBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, tc, 0.0, 500000.0);
                 tcGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tcBox));
                 tcGrid.setThreshold(0);
@@ -180,6 +180,7 @@ public class RegularGridTest {
 		
 		IwxxmUpdater iwxxmUpdater = new IwxxmUpdater(model, tcGrid);
 		iwxxmUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
+		iwxxmUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
 		
 		while (frame.isVisible()) {
 			Thread.sleep(1000);

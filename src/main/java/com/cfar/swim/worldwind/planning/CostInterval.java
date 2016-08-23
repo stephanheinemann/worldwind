@@ -31,6 +31,10 @@ package com.cfar.swim.worldwind.planning;
 
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.Comparator;
+
+import com.binarydreamers.trees.Interval;
 
 public class CostInterval extends TimeInterval {
 	
@@ -84,5 +88,26 @@ public class CostInterval extends TimeInterval {
 		// TODO: costs could be weighted or a weight factor applied explicitly
 		return this.cost;
 	}
+	
+	public static final Comparator<Interval<ChronoZonedDateTime<?>>> comparator = new Comparator<Interval<ChronoZonedDateTime<?>>>() {
+		@Override
+		public int compare(Interval<ChronoZonedDateTime<?>> o1, Interval<ChronoZonedDateTime<?>> o2) {
+			int value = TimeInterval.comparator.compare(o1, o2);
+			
+			if (0 == value) {
+				if ((o1 instanceof CostInterval) && (o2 instanceof CostInterval)) {
+					CostInterval c1 = (CostInterval) o1;
+					CostInterval c2 = (CostInterval) o2;
+					value = Integer.compare(c1.cost, c2.cost);
+					
+					if (0 == value) {
+						value = c1.id.compareTo(c2.id);
+					}
+				}
+			}
+			
+			return value;
+		}
+	};
 	
 }
