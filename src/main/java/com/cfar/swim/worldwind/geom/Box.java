@@ -1,9 +1,45 @@
+/**
+ * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package com.cfar.swim.worldwind.geom;
 
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Matrix;
 import gov.nasa.worldwind.geom.Vec4;
 
+/**
+ * Realizes a geometric box that allows for convenient containment and
+ * intersection checks considering numerical inaccuracies.
+ * 
+ * @author Stephan Heinemann
+ * 
+ */
 public class Box extends gov.nasa.worldwind.geom.Box {
 
 	/**
@@ -12,14 +48,14 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	protected static final double EPSILON = 1E-8;
 	
 	/**
-	 * @see gov.nasa.worldwind.geom.Box
+	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4)
 	 */
 	public Box(Vec4 point) {
 		super(point);
 	}
 	
 	/**
-	 * @see gov.nasa.worldwind.geom.Box
+	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4[], double, double, double, double, double, double)
 	 */
 	public Box(
 			Vec4[] axes,
@@ -98,16 +134,15 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		return modelPoint.transformBy4(transformMatrix);
 	}
 	
-	// TODO: documentation
+	/**
+	 * Transforms a Cartesian world model vector into a box vector
+	 * using the center of this box as origin.
+	 * 
+	 * @param modelPoint the world model vector
+	 * @return the box vector
+	 */
 	public Vec4 transformModelToBoxCenter(Vec4 modelPoint) {
 		Vec4[] unitAxes = {ru, su, tu};
-		/*
-		Vec4 x = this.getCorners()[1].subtract3(this.getCorners()[0]);
-		Vec4 y = this.getCorners()[3].subtract3(this.getCorners()[0]);
-		Vec4 z = this.getCorners()[4].subtract3(this.getCorners()[0]);
-		Vec4[] unitAxes = {x, y, z};
-		*/
-		
 		Vec4 origin = this.getCenter();
 		Matrix transformMatrix = Matrix.fromLocalOrientation(origin , unitAxes).getInverse();
 		return modelPoint.transformBy4(transformMatrix);
@@ -183,6 +218,16 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		return contains;
 	}
 	
+	/**
+	 * Indicates whether or not a line segment intersects this box when
+	 * expanding its sides with an expansion vector.
+	 * 
+	 * @param p0 the first point of the line segment
+	 * @param p1 the second point of the line segment
+	 * @param expansion the expansion vector to expand the box
+	 * @return true if the line segment intersects this box when expanding its
+	 *         sides with the expansion vector, false otherwise
+	 */
 	protected boolean intersectsLineSegment(Vec4 p0, Vec4 p1, Vec4 expansion) {
 		// transform line segment end points to box coordinates 
 		p0 = this.transformModelToBoxCenter(p0);
@@ -225,10 +270,25 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		return true;
 	}
 	
+	/**
+	 * Indicates whether or not a line segment intersects this box.
+	 * 
+	 * @param p0 the first point of the line segment
+	 * @param p1 the second point of the line segment
+	 * @return true if the line segment intersects this box, false otherwise
+	 */
 	public boolean intersectsLineSegment(Vec4 p0, Vec4 p1) {
 		return this.intersectsLineSegment(p0, p1, Vec4.ZERO);
 	}
 	
+	/**
+	 * Indicates whether or not (the bounding box of) a cylinder intersects this
+	 * box. 
+	 * 
+	 * @param cylinder the cylinder
+	 * @return true if the (bounding box of the) cylinder intersects this box,
+	 *         false otherwise
+	 */
 	public boolean intersectsCylinder(Cylinder cylinder) {
 		// expand box by effective cylinder radii
 		double rx = cylinder.getEffectiveRadius(this.planes[0]); // r-min plane

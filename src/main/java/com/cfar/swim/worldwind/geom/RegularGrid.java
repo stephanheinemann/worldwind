@@ -40,9 +40,11 @@ import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
- * Realizes a regular three-dimensional grid that can be used motion planning.
+ * Realizes a regular three-dimensional grid that can be used for motion
+ * planning.
  * 
  * @author Stephan Heinemann
+ * 
  */
 public class RegularGrid extends Box {
 
@@ -66,7 +68,7 @@ public class RegularGrid extends Box {
 	 * 
 	 * @param box the geometric box
 	 * 
-	 * @see gov.nasa.worldwind.geom.Box
+	 * @see com.cfar.swim.worldwind.geom.Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
 	public RegularGrid(Box box) {
 		super(box);
@@ -81,7 +83,6 @@ public class RegularGrid extends Box {
 	 * @param sCells the number of children on the <code>S</code> axis
 	 * @param tCells the number of children on the <code>T</code> axis
 	 * 
-	 * @see gov.nasa.worldwind.geom.Box
 	 */
 	public RegularGrid(Box box, int rCells, int sCells, int tCells) {
 		this(box);
@@ -100,7 +101,7 @@ public class RegularGrid extends Box {
 	 * @param tMin the minimum distance on the <code>T</code> axis
 	 * @param tMax the maximum distance on the <code>T</code> axis
 	 * 
-	 * @see gov.nasa.worldwind.geom.Box
+	 * @see com.cfar.swim.worldwind.geom.Box#Box(Vec4[], double, double, double, double, double, double)
 	 */
 	public RegularGrid(
 			Vec4[] axes,
@@ -126,7 +127,6 @@ public class RegularGrid extends Box {
 	 * @param sCells the number of children on the <code>S</code> axis
 	 * @param tCells the number of children on the <code>T</code> axis
 	 * 
-	 * @see gov.nasa.worldwind.geom.Box
 	 */
 	public RegularGrid(Vec4[] axes,
 			double rMin, double rMax,
@@ -137,6 +137,15 @@ public class RegularGrid extends Box {
 		this.addChildren(rCells, sCells, tCells);
 	}
 	
+	/**
+	 * Constructs a new regular grid from three plane normals and six distances
+	 * for each of the six faces of a geometric box without any children.
+	 * 
+	 * This factory method is used during child construction and supposed to be
+	 * overridden by specializing classes.
+	 * 
+	 * @see RegularGrid#RegularGrid(Vec4[], double, double, double, double, double, double)
+	 */
 	protected RegularGrid newInstance(
 			Vec4[] axes,
 			double rMin, double rMax,
@@ -361,12 +370,12 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Looks up the cells (maximum eight) containing a specified point in
-	 * world model coordinates considering numerical inaccuracies.
+	 * Looks up the regular grid cells (maximum eight) containing a specified
+	 * point in world model coordinates considering numerical inaccuracies.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
-	 * @return the cells containing the specified point
+	 * @return the regular grid cells containing the specified point
 	 */
 	public List<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
 		List<RegularGrid> lookedUpCells = new ArrayList<RegularGrid>(8);
@@ -483,6 +492,7 @@ public class RegularGrid extends Box {
 		this.visible = visible;
 	}
 	
+	// TODO: remove if not needed
 	protected void drawQuad(DrawContext dc, Vec4 a, Vec4 b, Vec4 c, Vec4 d) {
 		GL2 gl = dc.getGL().getGL2();
 		gl.glBegin(GL2.GL_QUADS);

@@ -41,34 +41,79 @@ import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.RegularGrid;
-import com.cfar.swim.worldwind.render.CostColor;
+import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Vec4;
 
+/**
+ * Realizes a non-uniform cost interval grid that can encode spatial and
+ * temporal costs, and can be used for motion planning.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRenderable, ThresholdRenderable {
 
+	/** the cost interval tree encoding temporal costs */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
 	
-	// TODO: a runnable or slider could update the time, or renderCell itself depending on the mode
+	/** the current time of this non-uniform cost interval grid */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 	
+	/** the current active cost intervals of this non-uniform cost interval grid */
 	private List<Interval<ChronoZonedDateTime<?>>> activeCostIntervals = this.getCostIntervals(time);
 	
+	/** the current accumulated active cost of this non-uniform cost interval grid */ 
 	private int activeCost = 1;
-	// TODO: a slider to update threshold
+	
+	/** the threshold cost of this non-uniform cost interval grid */
 	private int thresholdCost = 0;
 	
+	/**
+	 * Constructs a non-uniform cost interval grid based on a geometric box
+	 * without any children.
+	 * 
+	 * @param box the geometric box
+	 * 
+	 * @see RegularGrid#RegularGrid(Box)
+	 */
 	public NonUniformCostIntervalGrid(Box box) {
 		super(box);
 	}
 	
+	/**
+	 * Constructs a non-uniform cost interval grid based on a geometric box
+	 * with the specified number of children on each axis.
+	 * 
+	 * @param box the geometric box
+	 * @param rCells the number of children on the <code>R</code> axis
+	 * @param sCells the number of children on the <code>S</code> axis
+	 * @param tCells the number of children on the <code>T</code> axis
+	 * 
+	 * @see RegularGrid#RegularGrid(Box, int, int, int)
+	 */
 	public NonUniformCostIntervalGrid(Box box, int rCells, int sCells, int tCells) {
 		super(box, rCells, sCells, tCells);
 	}
 	
+	/**
+	 * Constructs a non-uniform cost interval grid from three plane normals and
+	 * six distances for each of the six faces of a geometric box without any
+	 * children.
+	 * 
+	 * @param axes the three plane normals
+	 * @param rMin the minimum distance on the <code>R</code> axis
+	 * @param rMax the maximum distance on the <code>R</code> axis
+	 * @param sMin the minimum distance on the <code>S</code> axis
+	 * @param sMax the maximum distance on the <code>S</code> axis
+	 * @param tMin the minimum distance on the <code>T</code> axis
+	 * @param tMax the maximum distance on the <code>T</code> axis
+	 * 
+	 * @see RegularGrid#RegularGrid(Vec4[], double, double, double, double, double, double)
+	 */
 	public NonUniformCostIntervalGrid(
 			Vec4[] axes,
 			double rMin, double rMax,
@@ -77,6 +122,24 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		super(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 	}
 	
+	/**
+	 * Constructs a non-uniform cost interval grid from three plane normals and
+	 * six distances for each of the six faces of a geometric box with the
+	 * specified number of children on each axis.
+	 * 
+	 * @param axes the three plane normals
+	 * @param rMin the minimum distance on the <code>R</code> axis
+	 * @param rMax the maximum distance on the <code>R</code> axis
+	 * @param sMin the minimum distance on the <code>S</code> axis
+	 * @param sMax the maximum distance on the <code>S</code> axis
+	 * @param tMin the minimum distance on the <code>T</code> axis
+	 * @param tMax the maximum distance on the <code>T</code> axis
+	 * @param rCells the number of children on the <code>R</code> axis
+	 * @param sCells the number of children on the <code>S</code> axis
+	 * @param tCells the number of children on the <code>T</code> axis
+	 * 
+	 * @see RegularGrid#RegularGrid(Vec4[], double, double, double, double, double, double, int, int, int)
+	 */
 	public NonUniformCostIntervalGrid(Vec4[] axes,
 			double rMin, double rMax,
 			double sMin, double sMax,
@@ -85,6 +148,16 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		super(axes, rMin, rMax, sMin, sMax, tMin, tMax, rCells, sCells, tCells);
 	}
 	
+	/**
+	 * Constructs a non-uniform cost interval grid from three plane normals and
+	 * six distances for each of the six faces of a geometric box without any
+	 * children. The current time and threshold cost are propagated to the child.
+	 * 
+	 * This factory method is used during child construction and supposed to be
+	 * overridden by specializing classes.
+	 * 
+	 * @see NonUniformCostIntervalGrid#NonUniformCostIntervalGrid(Vec4[], double, double, double, double, double, double)
+	 */
 	@Override
 	protected NonUniformCostIntervalGrid newInstance(
 			Vec4[] axes,
@@ -99,44 +172,84 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		return grid;
 	}
 	
+	/**
+	 * Looks up the non-uniform cost interval grid cells (maximum eight)
+	 * containing a specified point in world model coordinates considering
+	 * numerical inaccuracies.
+	 * 
+	 * @param modelPoint the point in world model coordinates
+	 * 
+	 * @return the non-uniform cost interval grid cells containing the specified point
+	 */
 	@Override
 	@SuppressWarnings("unchecked")
 	public List<? extends NonUniformCostIntervalGrid> lookupCells(Vec4 modelPoint) {
 		return (List<NonUniformCostIntervalGrid>) super.lookupCells(modelPoint);
 	}
 	
+	/**
+	 * Adds a cost interval to this non-uniform cost interval grid.
+	 * 
+	 * @param costInterval the cost interval to be added
+	 */
 	public void addCostInterval(CostInterval costInterval) {
 		this.costIntervals.add(costInterval);
 		this.update();
-		// TODO: costs should be automatically propagated to the affected child cells?
-		// TODO: should added children costs propagated to parents?
-		// TODO: what happens if children are added and removed
-		// TODO: shall parents aggregate all costs?!
+		// TODO: Should costs be automatically propagated to the affected child cells?
+		// TODO: Should added children costs be propagated to parents?
+		// TODO: What happens if children are added and removed?
+		// TODO: Shall parents aggregate all costs?!
 	}
 	
+	/**
+	 * Removes a cost interval from this non-uniform cost interval grid.
+	 * 
+	 * @param costInterval the cost interval to be removed
+	 */
 	public void removeCostInterval(CostInterval costInterval) {
 		this.costIntervals.remove(costInterval);
 		this.update();
 	}
 	
+	/**
+	 * Gets all cost intervals that are active at a specified time instant.
+	 * 
+	 * @param time the time instant
+	 * @return all cost intervals that are active at the specified time instant
+	 */
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
 		return this.costIntervals.searchInterval(new CostInterval(null, this.time));
 	}
 	
+	/**
+	 * Gets all cost intervals that are active during a specified time interval.
+	 * 
+	 * @param start the start time of the time interval
+	 * @param end the end time of the time interval
+	 * @return all cost intervals that are active during the specified time interval 
+	 */
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
 		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.cfar.swim.worldwind.render.TimedRenderable#getTime()
+	/**
+	 * Gets the current time of this non-uniform cost interval grid.
+	 * 
+	 * @return the current time of this non-uniform cost interval grid
+	 * 
+	 * @see TimedRenderable#getTime()
 	 */
 	@Override
 	public ZonedDateTime getTime() {
 		return this.time;
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.cfar.swim.worldwind.render.TimedRenderable#setTime(java.time.ZonedDateTime)
+	/**
+	 * Sets the current time of this non-uniform cost interval grid.
+	 * 
+	 * @param time the current time of this non-uniform cost interval grid
+	 * 
+	 * @see TimedRenderable#setTime(ZonedDateTime)
 	 */
 	@Override
 	public void setTime(ZonedDateTime time) {
@@ -154,8 +267,24 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.cfar.swim.worldwind.render.ThresholdRenderable#setThreshold(int)
+	/**
+	 * Gets the threshold cost of this non-uniform cost interval grid.
+	 * 
+	 * @return the threshold cost of this non-uniform cost interval grid
+	 * 
+	 * @see ThresholdRenderable#setThreshold(int)
+	 */
+	@Override
+	public int getThreshold() {
+		return this.thresholdCost;
+	}
+	
+	/**
+	 * Sets the threshold cost of this non-uniform cost interval grid.
+	 * 
+	 * @param thresholdCost the threshold cost of this non-uniform cost interval grid
+	 * 
+	 * @see ThresholdRenderable#setThreshold(int)
 	 */
 	@Override
 	public void setThreshold(int thresholdCost) {
@@ -173,14 +302,9 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		}
 	}
 	
-	/* (non-Javadoc)
-	 * @see com.cfar.swim.worldwind.render.ThresholdRenderable#getThreshold()
+	/**
+	 * Updates this non-uniform cost interval grid.
 	 */
-	@Override
-	public int getThreshold() {
-		return this.thresholdCost;
-	}
-	
 	protected void update() {
 		this.updateCostIntervals();
 		this.updateActiveCost();
@@ -188,10 +312,16 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		this.updateVisibility();
 	}
 	
+	/**
+	 * Updates the active cost intervals of this non-uniform cost interval grid.
+	 */
 	protected void updateCostIntervals() {
 		this.activeCostIntervals = this.getCostIntervals(this.time);
 	}
 	
+	/**
+	 * Updates the accumulated active cost of this non-uniform cost interval grid.
+	 */
 	protected void updateActiveCost() {
 		this.activeCost = 1; // default uniform cost
 		
@@ -202,19 +332,25 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 			// only add costs of different overlapping cost intervals
 			if (!costIntervalIds.contains(costInterval.getId())) {
 				costIntervalIds.add(costInterval.getId());
-				this.activeCost += ((CostInterval) costInterval).getWeightedCost();
+				this.activeCost += ((CostInterval) costInterval).getCost();
 			}
 		}
 		// TODO: implement a proper weighted cost calculation normalized from 0 to 100
-		// TODO: the weight is affected by severity and currency (reporting time)
+		// TODO: the weight is affected by severity (reporting method) and currency (reporting time)
 	}
 	
+	/**
+	 * Updates the visibility of this non-uniform cost interval grid.
+	 */
 	protected void updateVisibility() {
 		this.setVisible(this.activeCost > this.thresholdCost);
 	}
 	
+	/**
+	 * Updates the appearance of this non-uniform cost interval grid.
+	 */
 	protected void updateAppearance() {
-		Color activeColor = CostColor.getColor(activeCost);
+		Color activeColor = ObstacleColor.getColor(activeCost);
 		float red = activeColor.getRed() / 255.0f;
 		float green = activeColor.getGreen() / 255.0f;
 		float blue = activeColor.getBlue() / 255.0f;
@@ -222,6 +358,13 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		this.setColor(red, green, blue, alpha);
 	}
 	
+	/**
+	 * Embeds a geometric cylinder with an associated cost interval into this
+	 * non-uniform cost interval grid.
+	 * 
+	 * @param cylinder the geometric cylinder to be embedded
+	 * @param costInterval the associated cost interval
+	 */
 	public void embed(Cylinder cylinder, CostInterval costInterval) {
 		if (this.intersectsCylinder(cylinder)) {
 			this.addCostInterval(costInterval);
@@ -238,9 +381,10 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 		}
 	}
 	
-	// TODO: embed all relevant kinds of (airspace) rigid shapes
+	// TODO: embed all relevant kinds of (airspace, aircraft) rigid shapes
 	// TODO: think about dynamically changing the resolution and embedded shapes
 	// TODO: embedding should be a recursive operation starting at the root grid cell
 	// TODO: only if parent grid is affected, propagation to children will occur
+	// TODO: performance can be substantially improved by only considering relevant children for propagation
 
 }

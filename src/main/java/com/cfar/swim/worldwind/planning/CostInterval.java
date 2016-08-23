@@ -29,67 +29,141 @@
  */
 package com.cfar.swim.worldwind.planning;
 
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Comparator;
 
 import com.binarydreamers.trees.Interval;
 
+/**
+ * Realizes a cost interval based on TimeInterval and a cost value.
+ * 
+ * @see TimeInterval
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class CostInterval extends TimeInterval {
 	
-	private String id = null;
-	private int cost = 0;
+	/** the unique identifier of this cost interval */
+	protected String id = null;
 	
+	/** the cost of this cost interval */
+	protected int cost = 0;
+	
+	/**
+	 * Constructs a cost (instant) interval based on the current UTC time for
+	 * start and end times with a specified identifier and a cost of zero.
+	 * 
+	 * @param id the identifier of this cost interval
+	 */
 	public CostInterval(String id) {
-		this(
-			id,
-			ZonedDateTime.now(ZoneId.of("UTC")),
-			ZonedDateTime.now(ZoneId.of("UTC")).plusYears(1000));
+		super();
+		this.id = id;
 	}
 	
+	/**
+	 * Constructs a cost (instant) interval based on a specified time for
+	 * start and end times with a specified identifier and a cost of zero.
+	 * 
+	 * @param id the identifier of this cost interval
+	 * @param time the start and end time of this cost interval
+	 */
 	public CostInterval(String id, ZonedDateTime time) {
 		super(time);
 		this.id = id;
 	}
 	
+	/**
+	 * Constructs a cost interval from specified start and end times with a
+	 * specified identifier and a cost of zero.
+	 * 
+	 * @param id the identifier of this cost interval
+	 * @param start the start time of this cost interval
+	 * @param end the end time of this cost interval
+	 */
 	public CostInterval(String id, ZonedDateTime start, ZonedDateTime end) {
 		super(start, end);
 		this.id = id;
 	}
 	
+	/**
+	 * Constructs a cost interval from specified start and end times with a
+	 * specified identifier and cost.
+	 * 
+	 * @param id the identifier of this cost interval
+	 * @param start the start time of this cost interval
+	 * @param end the end time of this cost interval
+	 * @param cost the cost of this cost interval
+	 */
 	public CostInterval(String id, ZonedDateTime start, ZonedDateTime end, int cost) {
 		this(id, start, end);
 		this.cost = cost;
 	}
 	
+	/**
+	 * Constructs a cost interval from a specified time interval with a
+	 * specified  identifier and a cost of zero.
+	 * 
+	 * @param id the identifier of this cost interval
+	 * @param timeInterval the time interval of this cost interval
+	 */
 	public CostInterval(String id, TimeInterval timeInterval) {
 		this(id, timeInterval.getLower(), timeInterval.getUpper());
 	}
 	
+	/**
+	 * Constructs a cost interval from a specified time interval with a
+	 * specified identifier and cost.
+	 * 
+	 * @param id the identifier of this cost interval
+	 * @param timeInterval the time interval of this cost interval
+	 * @param cost the cost of this cost interval
+	 */
 	public CostInterval(String id, TimeInterval timeInterval, int cost) {
 		this(id, timeInterval);
 		this.cost = cost;
 	}
 	
+	/**
+	 * Gets the identifier of this cost interval.
+	 * 
+	 * @return the identifier of this cost interval
+	 */
 	public String getId() {
 		return this.id;
 	}
 	
+	/**
+	 * Gets the cost of this cost interval.
+	 * 
+	 * @return the cost of this cost interval
+	 */
 	public int getCost() {
 		return this.cost;
 	}
 
+	/**
+	 * Sets the cost of this cost interval.
+	 * 
+	 * @param cost the cost of this cost interval
+	 */
 	public void setCost(int cost) {
 		this.cost = cost;
 	}
-
-	public int getWeightedCost() {
-		// TODO: costs could be weighted or a weight factor applied explicitly
-		return this.cost;
-	}
 	
+	/**
+	 * Realizes a cost interval comparator.
+	 */
 	public static final Comparator<Interval<ChronoZonedDateTime<?>>> comparator = new Comparator<Interval<ChronoZonedDateTime<?>>>() {
+		
+		/**
+		 * Compares two cost intervals using the start and end times as primary
+		 * and secondary keys, respectively. The costs and identifiers serve as
+		 * ternary and quaternary keys, respectively.
+		 * 
+		 * @see java.util.Comparator#compare(Object, Object)
+		 */
 		@Override
 		public int compare(Interval<ChronoZonedDateTime<?>> o1, Interval<ChronoZonedDateTime<?>> o2) {
 			int value = TimeInterval.comparator.compare(o1, o2);

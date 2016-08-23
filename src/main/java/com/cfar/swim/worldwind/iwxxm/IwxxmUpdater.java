@@ -51,8 +51,8 @@ import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostMap;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
 import com.cfar.swim.worldwind.planning.TimeInterval;
-import com.cfar.swim.worldwind.render.CostIntervalCylinder;
-import com.cfar.swim.worldwind.render.CostIntervalPath;
+import com.cfar.swim.worldwind.render.ObstacleCylinder;
+import com.cfar.swim.worldwind.render.ObstaclePath;
 
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.geom.Angle;
@@ -191,8 +191,8 @@ public class IwxxmUpdater implements Runnable {
 			// cylinder embedding test
 			
 			for (RigidShape shape : sigmetShapes) {
-				if (shape instanceof CostIntervalCylinder) {
-					CostIntervalCylinder costIntervalCylinder = (CostIntervalCylinder) shape;
+				if (shape instanceof ObstacleCylinder) {
+					ObstacleCylinder costIntervalCylinder = (ObstacleCylinder) shape;
 					costIntervalCylinder.setCostInterval(costInterval);
 					
 					/*
@@ -216,16 +216,16 @@ public class IwxxmUpdater implements Runnable {
 		}
 		while (osi.hasNext()) {
 			RigidShape next = osi.next();
-			if ((current instanceof CostIntervalCylinder) && (next instanceof CostIntervalCylinder)) {
-				List<CostIntervalCylinder> interpolants = ((CostIntervalCylinder) current).interpolate((CostIntervalCylinder) next, 4);
+			if ((current instanceof ObstacleCylinder) && (next instanceof ObstacleCylinder)) {
+				List<ObstacleCylinder> interpolants = ((ObstacleCylinder) current).interpolate((ObstacleCylinder) next, 4);
 			
 				renderableLayer.addRenderable(current);
 				renderableLayer.addRenderables(interpolants);
 				
-				Cylinder cylinder = ((CostIntervalCylinder) current).toGeometricCylinder(model.getGlobe());
-				this.grid.embed(cylinder, ((CostIntervalCylinder) current).getCostInterval());
+				Cylinder cylinder = ((ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
+				this.grid.embed(cylinder, ((ObstacleCylinder) current).getCostInterval());
 			
-				for (CostIntervalCylinder interpolant : interpolants) {
+				for (ObstacleCylinder interpolant : interpolants) {
 					cylinder = interpolant.toGeometricCylinder(model.getGlobe());
 					this.grid.embed(cylinder, interpolant.getCostInterval());
 				}
@@ -233,10 +233,10 @@ public class IwxxmUpdater implements Runnable {
 			current = next;
 		}
 		renderableLayer.addRenderable(current);
-		Cylinder cylinder = ((CostIntervalCylinder) current).toGeometricCylinder(model.getGlobe());
-		this.grid.embed(cylinder, ((CostIntervalCylinder) current).getCostInterval());
+		Cylinder cylinder = ((ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
+		this.grid.embed(cylinder, ((ObstacleCylinder) current).getCostInterval());
 		
-		CostIntervalPath observationPath = (CostIntervalPath) OmData.getObservationPath(observationShapes);
+		ObstaclePath observationPath = (ObstaclePath) OmData.getObservationPath(observationShapes);
 		// TODO: use valid times for path
 		CostInterval pathCostInverval = new CostInterval(sigmet.getId(), IwxxmData.getValidPeriod(sigmet), cost);
 		observationPath.setCostInterval(pathCostInverval);
