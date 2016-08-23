@@ -10,12 +10,15 @@ import com.cfar.swim.worldwind.planning.CostInterval;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
+import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.Material;
 
 public class CostIntervalCylinder extends VerticalCylinder implements TimedRenderable, ThresholdRenderable {
 
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 	private CostInterval costInterval = new CostInterval("");
+	private GlobeAnnotation annotation = null;
 	private int thresholdCost = 0;
 	private int activeCost = 0;
 	
@@ -34,6 +37,7 @@ public class CostIntervalCylinder extends VerticalCylinder implements TimedRende
 	
 	public void setCostInterval(CostInterval costInterval) {
 		this.costInterval = costInterval;
+		this.annotation = new GlobeAnnotation(costInterval.getId(), this.centerPosition);
 		this.update();
 	}
 	
@@ -75,11 +79,22 @@ public class CostIntervalCylinder extends VerticalCylinder implements TimedRende
 	
 	protected void updateVisibility() {
 		this.setVisible(this.activeCost > this.thresholdCost);
+		if (null != annotation) {
+			this.annotation.getAttributes().setVisible(this.activeCost > this.thresholdCost);
+		}
 	}
 	
 	// TODO: elements could change color, transparency or even an associated image/icon 
 	protected void updateAppearance() {
 		this.getAttributes().setInteriorMaterial(new Material(CostColor.getColor(activeCost)));
+	}
+	
+	@Override
+	public void render(DrawContext dc) {
+		super.render(dc);
+		if (null != this.annotation) {
+			this.annotation.render(dc);
+		}
 	}
 
 	public CostIntervalCylinder interpolate(CostIntervalCylinder other) {
