@@ -44,6 +44,7 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.AbstractSurfaceShape;
 import gov.nasa.worldwind.render.RigidShape;
 import gov.nasa.worldwind.render.SurfaceCircle;
+import gov.nasa.worldwind.render.airspaces.Airspace;
 import net.opengis.gml.AbstractSurfacePatchType;
 
 public class AixmData {
@@ -87,6 +88,47 @@ public class AixmData {
 		}	
 		
 		return rigidShapes;
+	}
+	
+	public static List<Airspace> getAirspaces(AirspaceVolumeType airspace) {
+		List<Airspace> airspaces = new ArrayList<Airspace>();
+		double lowerLimit = 0.0;
+		double upperLimit = 0.0;
+		
+		// TODO: incorporate references
+		if (null != airspace.getLowerLimit()) {
+			lowerLimit = AixmData.getHeight(airspace.getLowerLimit().getValue());
+		}
+		
+		if (null != airspace.getUpperLimit()) {
+			upperLimit = AixmData.getHeight(airspace.getUpperLimit().getValue());
+		}
+			
+		// TODO: implement other airspace volume elements
+		List<? extends AbstractSurfaceShape> surfaceShapes =
+				AixmData.getSurfaceShapes(airspace.getHorizontalProjection().getValue().getSurface().getValue());
+		for (AbstractSurfaceShape surfaceShape : surfaceShapes) {
+			if (surfaceShape instanceof SurfaceCircle) {
+				if (upperLimit >= lowerLimit) {
+					LatLon location = ((SurfaceCircle) surfaceShape).getCenter();
+					double height = upperLimit - lowerLimit;
+					double radius = ((SurfaceCircle) surfaceShape).getRadius();
+					
+					// NOTE: still required for geometric conversions
+					// TODO: previous reports may have indicated vertical limits that are to be used
+					if (0 == height) {
+						upperLimit++;
+					}
+					// TODO: previous reports may have indicated a radius that is to be used
+					if (0 == radius) {
+						radius++;
+					}
+					airspaces.add(new com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder(location, lowerLimit, upperLimit, radius));
+				}
+			}
+		}	
+		
+		return airspaces;
 	}
 	
 	public static double getHeight(ValDistanceVerticalType altitude) {

@@ -40,16 +40,26 @@ import com.cfar.swim.worldwind.planning.TimeInterval;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.render.RigidShape;
+import gov.nasa.worldwind.render.airspaces.Airspace;
 import icao.iwxxm.EvolvingMeteorologicalConditionType;
 import icao.iwxxm.MeteorologicalPositionCollectionType;
 import icao.iwxxm.MeteorologicalPositionPropertyType;
 import icao.iwxxm.MeteorologicalPositionType;
 import icao.iwxxm.SIGMETType;
 import icao.iwxxm.TAFType;
+import icao.iwxxm.TropicalCycloneSIGMETType;
 import net.opengis.om.OMObservationPropertyType;
 import net.opengis.om.OMObservationType;
 
 public class IwxxmData {
+	
+	public static int getSequenceNumber(SIGMETType sigmet) {
+		return Integer.parseInt(sigmet.getSequenceNumber());
+	}
+	
+	public static int getCancelledSequenceNumber(SIGMETType sigmet) {
+		return Integer.parseInt(sigmet.getCancelledSequenceNumber());
+	}
 	
 	public static ZonedDateTime getIssueTime(TAFType taf) {
 		return null;
@@ -80,6 +90,11 @@ public class IwxxmData {
 		for (OMObservationPropertyType analysis : sigmet.getAnalysis()) {
 			observations.add(analysis.getOMObservation());
 		}
+		if (sigmet instanceof TropicalCycloneSIGMETType) {
+			observations.add(((TropicalCycloneSIGMETType) sigmet).getForecastPositionAnalysis().getOMObservation());
+		}
+		// TODO: implement VolcanicAshSIGMETType
+		
 		return observations;
 	}
 	
@@ -105,6 +120,30 @@ public class IwxxmData {
 	
 	public static List<RigidShape> getRigidShapes(EvolvingMeteorologicalConditionType emc) {
 		return AixmData.getRigidShapes(emc.getGeometry().getAirspaceVolume());
+	}
+	
+	public static List<Airspace> getAirspaces(SIGMETType sigmet, IwxxmUnmarshaller unmarshaller) throws JAXBException {
+		List<Airspace> airspaces = new ArrayList<Airspace>();
+		for (OMObservationPropertyType analysis : sigmet.getAnalysis()) {
+			airspaces.addAll(OmData.getAirspaces(analysis.getOMObservation(), unmarshaller));
+		}
+		return airspaces;
+	}
+	
+	public static List<Airspace> getAirspaces(MeteorologicalPositionCollectionType mpc) {
+		List<Airspace> airspaces = new ArrayList<Airspace>();
+		for (MeteorologicalPositionPropertyType member : mpc.getMember()) {
+			airspaces.addAll(IwxxmData.getAirspaces(member.getMeteorologicalPosition()));
+		}
+		return airspaces;
+	}
+	
+	public static List<Airspace> getAirspaces(MeteorologicalPositionType mp) {
+		return AixmData.getAirspaces(mp.getGeometry().getAirspaceVolume());
+	}
+	
+	public static List<Airspace> getAirspaces(EvolvingMeteorologicalConditionType emc) {
+		return AixmData.getAirspaces(emc.getGeometry().getAirspaceVolume());
 	}
 	
 	public static Angle getDirectionOfMotion(EvolvingMeteorologicalConditionType emc) {

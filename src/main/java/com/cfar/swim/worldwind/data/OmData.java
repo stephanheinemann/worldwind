@@ -43,9 +43,12 @@ import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.render.ObstaclePath;
 
+import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.render.RigidShape;
+import gov.nasa.worldwind.render.airspaces.Airspace;
+import gov.nasa.worldwind.render.airspaces.CappedCylinder;
 import icao.iwxxm.EvolvingMeteorologicalConditionType;
 import icao.iwxxm.MeteorologicalPositionCollectionType;
 import icao.iwxxm.MeteorologicalPositionType;
@@ -125,6 +128,33 @@ public class OmData {
 		return rigidShapes;
 	}
 	
+	public static List<Airspace> getAirspaces(OMObservationType observation, IwxxmUnmarshaller unmarshaller) throws JAXBException {
+		List<Airspace> airspaces = new ArrayList<Airspace>();
+		
+		Node node = (Node) observation.getResult();
+		if (node.hasChildNodes()) {
+			NodeList children = node.getChildNodes();
+			int length = children.getLength();
+			for (int i = 0; i < length; i++) {
+				Node child = children.item(i);
+				
+				if (Node.ELEMENT_NODE == child.getNodeType()) {
+					JAXBElement<?> content = (JAXBElement<?>) unmarshaller.unmarshal(child);
+					Object object = content.getValue();
+					if (object instanceof MeteorologicalPositionCollectionType) {
+						airspaces.addAll(IwxxmData.getAirspaces((MeteorologicalPositionCollectionType) object));
+					} else if (object instanceof MeteorologicalPositionType) {
+						airspaces.addAll(IwxxmData.getAirspaces((MeteorologicalPositionType) object));
+					} else if (object instanceof EvolvingMeteorologicalConditionType) {
+						airspaces.addAll(IwxxmData.getAirspaces((EvolvingMeteorologicalConditionType) object));
+					}
+				}
+			}
+		}
+		
+		return airspaces;
+	}
+	
 	public static Path getObservationPath(OMObservationType observation, IwxxmUnmarshaller unmarshaller) throws JAXBException {
 		List<RigidShape> rigidShapes = OmData.getRigidShapes(observation, unmarshaller);
 		return OmData.getObservationPath(rigidShapes);
@@ -140,4 +170,22 @@ public class OmData {
 		return new ObstaclePath(positions);
 	}
 	
+	public static Path getAirspacePath(List<Airspace> airspaces) {
+		List<Position> positions = new ArrayList<Position>();
+		
+		for (Airspace airspace : airspaces) {
+			LatLon location = airspace.getGroundReference();
+			if (airspace instanceof CappedCylinder) {
+				location = ((CappedCylinder) airspace).getReferencePosition();
+			}
+			double bottom = airspace.getAltitudes()[0];
+			double top = airspace.getAltitudes()[1];
+			double middle = bottom + ((top - bottom) * 0.5);
+			positions.add(new Position(location, middle));
+		}
+		
+		// TODO: look at TrackAirspace (ObstacleTrack)
+		return new ObstaclePath(positions);
+	}
+
 }

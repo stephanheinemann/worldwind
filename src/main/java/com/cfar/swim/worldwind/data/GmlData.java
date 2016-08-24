@@ -30,7 +30,6 @@
 package com.cfar.swim.worldwind.data;
 
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 

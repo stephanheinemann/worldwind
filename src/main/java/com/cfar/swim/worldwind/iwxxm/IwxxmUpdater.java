@@ -58,6 +58,7 @@ import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.render.RigidShape;
+import gov.nasa.worldwind.render.airspaces.Airspace;
 import icao.iwxxm.SIGMETReportStatusType;
 import icao.iwxxm.SIGMETType;
 import net.opengis.om.OMObservationType;
@@ -111,12 +112,17 @@ public class IwxxmUpdater implements Runnable {
 		if (sigmet.getStatus().equals(SIGMETReportStatusType.CANCELLATION)) {
 			cancelSigmet(sigmet);
 		} else if (sigmet.getStatus().equals(SIGMETReportStatusType.NORMAL)) {
-			updateSigmet(sigmet);
+			try {
+				updateSigmet(sigmet);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
 	public void cancelSigmet(SIGMETType sigmet) {
-		
+		int csn = IwxxmData.getCancelledSequenceNumber(sigmet);
+		TimeInterval cvp = IwxxmData.getCancelledValidPeriod(sigmet);
 	}
 	
 	public void updateSigmet(SIGMETType sigmet) throws JAXBException {
@@ -132,7 +138,9 @@ public class IwxxmUpdater implements Runnable {
 		}
 			
 		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
-		List<RigidShape> sigmetShapes = new ArrayList<RigidShape>();
+		System.out.println("found " + observations.size() + " observations for sigmet " + sigmet.getId());
+		//List<RigidShape> sigmetShapes = new ArrayList<RigidShape>();
+		List<Airspace> sigmetAirspaces = new ArrayList<Airspace>();
 		
 		for (OMObservationType observation : observations) {
 			ZonedDateTime phenomenonTime = OmData.getPhenomenonTime(observation);
@@ -158,8 +166,10 @@ public class IwxxmUpdater implements Runnable {
 			}
 			
 			CostInterval costInterval = new CostInterval(sigmet.getId(), start, end, cost);
-			List<RigidShape> observationShapes = OmData.getRigidShapes(observation, iwxxmUnmarshaller);
+			//List<RigidShape> observationShapes = OmData.getRigidShapes(observation, iwxxmUnmarshaller);
+			List<Airspace> observationAirspaces = OmData.getAirspaces(observation, iwxxmUnmarshaller);
 			
+			/*
 			for (RigidShape shape : observationShapes) {
 				if (shape instanceof ObstacleCylinder) {
 					ObstacleCylinder obstacleCylinder = (ObstacleCylinder) shape;
@@ -168,29 +178,46 @@ public class IwxxmUpdater implements Runnable {
 			}
 			
 			sigmetShapes.addAll(observationShapes);
+			*/
+			
+			for (Airspace airspace : observationAirspaces) {
+				if (airspace instanceof com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) {
+					((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) airspace).setCostInterval(costInterval);
+				}
+			}
+			
+			sigmetAirspaces.addAll(observationAirspaces);
 		}
 		
 		// TODO: assuming all shapes are ordered and belong to the same phenomenon
 		// TODO: ensure ordering and related phenomenon
+		// System.out.println("interpolating " + sigmetShapes.size() + " sigmet shapes for " + sigmet.getId());
+		System.out.println("interpolating " + sigmetAirspaces.size() + " sigmet airspaces for " + sigmet.getId());
+		/*
 		Iterator<RigidShape> ssi = sigmetShapes.iterator();
 		RigidShape current = null;
+		*/
+		Iterator<Airspace> ssi = sigmetAirspaces.iterator();
+		Airspace current = null;
 		
 		if (ssi.hasNext()) {
 			current = ssi.next();
 		}
 		
 		while (ssi.hasNext()) {
-			RigidShape next = ssi.next();
-			if ((current instanceof ObstacleCylinder) && (next instanceof ObstacleCylinder)) {
-				List<ObstacleCylinder> interpolants = ((ObstacleCylinder) current).interpolate((ObstacleCylinder) next, 4);
+			//RigidShape next = ssi.next();
+			Airspace next = ssi.next();
+			if ((current instanceof com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) &&
+				(next instanceof com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder)) {
+				List<com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder> interpolants = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).interpolate((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) next, 4);
 			
 				renderableLayer.addRenderable(current);
 				renderableLayer.addRenderables(interpolants);
 				
-				Cylinder cylinder = ((ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
-				this.grid.embed(cylinder, ((ObstacleCylinder) current).getCostInterval());
+				Cylinder cylinder = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
+				this.grid.embed(cylinder, ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).getCostInterval());
 			
-				for (ObstacleCylinder interpolant : interpolants) {
+				for (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder interpolant : interpolants) {
 					cylinder = interpolant.toGeometricCylinder(model.getGlobe());
 					this.grid.embed(cylinder, interpolant.getCostInterval());
 				}
@@ -200,16 +227,18 @@ public class IwxxmUpdater implements Runnable {
 		
 		if (null != current) {
 			renderableLayer.addRenderable(current);
-			Cylinder cylinder = ((ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
-			this.grid.embed(cylinder, ((ObstacleCylinder) current).getCostInterval());
+			Cylinder cylinder = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
+			this.grid.embed(cylinder, ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).getCostInterval());
 		}
 		
 		// TODO: use valid times for path
-		ObstaclePath observationPath = (ObstaclePath) OmData.getObservationPath(sigmetShapes);
+		//ObstaclePath observationPath = (ObstaclePath) OmData.getObservationPath(sigmetShapes);
+		ObstaclePath observationPath = (ObstaclePath) OmData.getAirspacePath(sigmetAirspaces);
 		CostInterval pathCostInverval = new CostInterval(sigmet.getId(), IwxxmData.getValidPeriod(sigmet), cost);
 		observationPath.setCostInterval(pathCostInverval);
 		
-		if (1 < sigmetShapes.size()) {
+		//if (1 < sigmetShapes.size()) {
+		if (1 < sigmetAirspaces.size()) {
 			renderableLayer.addRenderable(observationPath);
 		}
 		
