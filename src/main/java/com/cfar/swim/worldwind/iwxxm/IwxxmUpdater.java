@@ -30,7 +30,6 @@
 package com.cfar.swim.worldwind.iwxxm;
 
 import java.io.InputStream;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -55,18 +54,12 @@ import com.cfar.swim.worldwind.render.ObstacleCylinder;
 import com.cfar.swim.worldwind.render.ObstaclePath;
 
 import gov.nasa.worldwind.Model;
-import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Cylinder;
-import gov.nasa.worldwind.geom.LatLon;
-import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
-import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.render.RigidShape;
-import gov.nasa.worldwind.util.measure.LengthMeasurer;
+import icao.iwxxm.SIGMETReportStatusType;
 import icao.iwxxm.SIGMETType;
-import net.opengis.gml.CircleByCenterPointType;
 import net.opengis.om.OMObservationType;
 
 public class IwxxmUpdater implements Runnable {
@@ -89,8 +82,6 @@ public class IwxxmUpdater implements Runnable {
 	
 	@Override
 	public void run() {
-		// TODO Auto-generated method stub
-		
 		// TODO: continuously check existing data for validity
 		// TODO: insert new data while possibly increasing the resolution
 		// TODO: remove obsolete data while possible decreasing the resolution
@@ -105,117 +96,91 @@ public class IwxxmUpdater implements Runnable {
 		// TODO: only observations that are contained in the grid are relevant
 		// TODO: both time and space could be filtered...
 		// TODO: jaxb-filtered-parsing
-		if (iwxxmElement.getDeclaredType().equals(SIGMETType.class)) {
+		if (iwxxmElement.getValue() instanceof SIGMETType) {
 			this.processSigmet((SIGMETType) iwxxmElement.getValue());
 		}
 	}
-	
-	public void remove() {}
 
 	public void process(InputStream iwxxmStream) throws XMLStreamException {
 		this.xsr = this.xif.createXMLStreamReader(iwxxmStream);
 		this.xsr = this.xif.createFilteredReader(this.xsr, new IwxxmPositionFilter());
 	}
 	
-	protected boolean isRelevant(SIGMETType sigment) {
-		return true;
-	}
-	
-	protected boolean isRelevantSpace(SIGMETType sigmet) {
-		return true;
-	}
-	
-	protected boolean isRelevantTime(SIGMETType sigmet) {
-		// the relevant duration is related to the radius
-		// of action at now
-		ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
-		System.out.println("UTC time now = " + now);
-		return true;
-	}
-	
 	public void processSigmet(SIGMETType sigmet) throws JAXBException {
-		//this.isRelevantTime(sigmet);
+		// TODO: consider sequence numbers
+		if (sigmet.getStatus().equals(SIGMETReportStatusType.CANCELLATION)) {
+			cancelSigmet(sigmet);
+		} else if (sigmet.getStatus().equals(SIGMETReportStatusType.NORMAL)) {
+			updateSigmet(sigmet);
+		}
+	}
+	
+	public void cancelSigmet(SIGMETType sigmet) {
 		
-		//sigmet.getPhenomenon(); // e.g. find thunderstorm
-		// result/EvolvingMeteorologicalCondition/geometry
-		// result/MeteorologicalPositionCollection/member/MeteorologicalPosition/geometry
+	}
+	
+	public void updateSigmet(SIGMETType sigmet) throws JAXBException {
 		List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
 		RenderableLayer renderableLayer = ((RenderableLayer) renderableLayers.get(0));
 		
 		String phenomenom = IwxxmData.getPhenomenon(sigmet);
-		// TODO: things like quantification (weakening), spacial and temporal distance
+		// TODO: things like quantification (weakening), spatial and temporal distance
 		// observation and analysis methods could be taken into account
-		int cost = this.costMap.get(phenomenom);
-		
+		int cost = 0;
+		if (null != phenomenom) {
+			cost = this.costMap.get(phenomenom);
+		}
+			
 		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
-		List<RigidShape> observationShapes = new ArrayList<RigidShape>();
-		//List<RigidShape> sigmetShapes = IwxxmData.getRigidShapes(sigmet, iwxxmUnmarshaller);
+		List<RigidShape> sigmetShapes = new ArrayList<RigidShape>();
 		
 		for (OMObservationType observation : observations) {
-			// phenomenonTime is now if not specified
 			ZonedDateTime phenomenonTime = OmData.getPhenomenonTime(observation);
 			ZonedDateTime resultTime = OmData.getResultTime(observation);
-			//TimeInterval validInterval = OmData.getValidTimeInterval(observation);
+			TimeInterval validTimeInterval = OmData.getValidTimeInterval(observation);
 			
-			// only future times are actually relevant
-			// phenomenon time can be a forecasted time
-			// should the interval be the same as the time step interval?
-			
-			// if there is no forecast or observation time, take the time the data has been made available  
+			// if there is no forecast or observation time, use the time the
+			// data has been made available  
 			ZonedDateTime start = phenomenonTime;
 			if (null == start) {
 				start = resultTime;
 			}
 			
+			// the end time should be the valid time of the observation or
+			// otherwise the valid time of the sigmet
+			// if interpolation is done, then the final valid times have to be
+			// changed accordingly
 			ZonedDateTime end = null;
-			// the end time should be the valid time of the observation
-			// if interpolation is done, then the final valid times have to be changed accordingly
-			TimeInterval validTimeInterval = OmData.getValidTimeInterval(observation);
 			if (null == validTimeInterval) {
 				end = IwxxmData.getValidPeriod(sigmet).getUpper();
 			} else {
 				end = validTimeInterval.getUpper();
 			}
 			
-			CostInterval costInterval = new CostInterval(sigmet.getId(), start, end.plusMinutes(30));
-			costInterval.setCost(cost);
-			System.out.println("cost interval = " + start + " ... " + end);
-			System.out.println("cost = " + cost);
-			System.out.println("time = " + ZonedDateTime.now(ZoneId.of("UTC")));
+			CostInterval costInterval = new CostInterval(sigmet.getId(), start, end, cost);
+			List<RigidShape> observationShapes = OmData.getRigidShapes(observation, iwxxmUnmarshaller);
 			
-			List<RigidShape> sigmetShapes = OmData.getRigidShapes(observation, iwxxmUnmarshaller);
-			observationShapes.addAll(sigmetShapes);
-			//System.out.println("found shapes = " + sigmetShapes.size());
-			//renderableLayer.addRenderables(sigmetShapes);
-		
-			// cylinder embedding test
-			
-			for (RigidShape shape : sigmetShapes) {
+			for (RigidShape shape : observationShapes) {
 				if (shape instanceof ObstacleCylinder) {
-					ObstacleCylinder costIntervalCylinder = (ObstacleCylinder) shape;
-					costIntervalCylinder.setCostInterval(costInterval);
-					
-					/*
-					Cylinder cylinder = costIntervalCylinder.toGeometricCylinder(model.getGlobe());
-					
-					renderableLayer.addRenderable(costIntervalCylinder);
-					//renderableLayer.removeRenderable(shape);
-					//renderableLayer.addRenderable(cylinder);
-					
-					this.grid.embed(cylinder, costInterval); // identify affected cells
-					*/
+					ObstacleCylinder obstacleCylinder = (ObstacleCylinder) shape;
+					obstacleCylinder.setCostInterval(costInterval);
 				}
 			}
 			
+			sigmetShapes.addAll(observationShapes);
 		}
 		
-		Iterator<RigidShape> osi = observationShapes.iterator();
+		// TODO: assuming all shapes are ordered and belong to the same phenomenon
+		// TODO: ensure ordering and related phenomenon
+		Iterator<RigidShape> ssi = sigmetShapes.iterator();
 		RigidShape current = null;
-		if (osi.hasNext()) {
-			current = osi.next();
+		
+		if (ssi.hasNext()) {
+			current = ssi.next();
 		}
-		while (osi.hasNext()) {
-			RigidShape next = osi.next();
+		
+		while (ssi.hasNext()) {
+			RigidShape next = ssi.next();
 			if ((current instanceof ObstacleCylinder) && (next instanceof ObstacleCylinder)) {
 				List<ObstacleCylinder> interpolants = ((ObstacleCylinder) current).interpolate((ObstacleCylinder) next, 4);
 			
@@ -232,18 +197,23 @@ public class IwxxmUpdater implements Runnable {
 			}
 			current = next;
 		}
-		renderableLayer.addRenderable(current);
-		Cylinder cylinder = ((ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
-		this.grid.embed(cylinder, ((ObstacleCylinder) current).getCostInterval());
 		
-		ObstaclePath observationPath = (ObstaclePath) OmData.getObservationPath(observationShapes);
+		if (null != current) {
+			renderableLayer.addRenderable(current);
+			Cylinder cylinder = ((ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
+			this.grid.embed(cylinder, ((ObstacleCylinder) current).getCostInterval());
+		}
+		
 		// TODO: use valid times for path
+		ObstaclePath observationPath = (ObstaclePath) OmData.getObservationPath(sigmetShapes);
 		CostInterval pathCostInverval = new CostInterval(sigmet.getId(), IwxxmData.getValidPeriod(sigmet), cost);
 		observationPath.setCostInterval(pathCostInverval);
-		if (1 < observationShapes.size()) {
+		
+		if (1 < sigmetShapes.size()) {
 			renderableLayer.addRenderable(observationPath);
 		}
 		
+		/*
 		ArrayList<Position> positions = new ArrayList<Position>();
 		for (Position position : observationPath.getPositions()) {
 			positions.add(position);
@@ -251,46 +221,7 @@ public class IwxxmUpdater implements Runnable {
 		LengthMeasurer measurer = new LengthMeasurer(positions);
 		double meters = measurer.getLength(model.getGlobe());
 		System.out.println("observation path length = " + meters);
+		*/
 	}
 	
-	/*
-	public void update(Cylinder cylinder) {
-		// TODO: cost, time interval..., direction, speed
-	}
-	
-	public void update(CircleByCenterPointType cbcp) {
-		// ...
-		Angle latitude = Angle.ZERO;
-		Angle longitude = Angle.ZERO;
-		int index = 0;
-		for (Double angle : cbcp.getPos().getValue()) {
-			System.out.println("angle = " + angle);
-			
-			// TODO: subList...
-			// TODO: spliterator...
-			if (0 == (index % 2)) {
-				latitude = Angle.fromDegrees(angle);
-			} else {
-				longitude = Angle.fromDegrees(angle);
-				LatLon location = new LatLon(latitude, longitude);
-				Vec4 modelPoint = model.getGlobe().computePointFromLocation(location);
-				if (grid.contains(modelPoint)) {
-					CostInterval costInterval = new CostInterval(
-							ZonedDateTime.now(ZoneId.of("UTC")),
-							ZonedDateTime.of(3000, 1, 1, 0, 0, 0, 0, ZoneId.of("UTC")));
-					costInterval.setCost(99);
-					// parent should aggregate any child costs
-					grid.addCostInterval(costInterval);
-					grid.setTime(ZonedDateTime.now(ZoneId.of("UTC")));
-					System.out.println("found matching cell...");
-					for (NonUniformCostIntervalGrid child : grid.lookupCells(modelPoint)) {	
-						child.addCostInterval(costInterval);
-					}
-				}
-			}
-			
-			index = (index + 1) % 2;
-		}
-	}
-	*/
 }

@@ -65,6 +65,7 @@ public class RegularGridTest {
 	static Model model;
 	static NonUniformCostIntervalGrid uvicGrid;
 	static NonUniformCostIntervalGrid largeGrid;
+	static NonUniformCostIntervalGrid tsGrid;
 	static NonUniformCostIntervalGrid tcGrid;
 	
 	// TODO: proper initialization with a sequence of tests
@@ -116,12 +117,23 @@ public class RegularGridTest {
             largeGrid.addChildren(2, 9, 1, 2, 2, 2);
             renderableLayer.addRenderable(largeGrid);
             
-            Sector tc = new Sector(
+            Sector ts = new Sector(
                 	Angle.fromDegrees(50.0),
                 	Angle.fromDegrees(60.0),
                 	Angle.fromDegrees(-15.0),
                 	Angle.fromDegrees(5.0));
-                gov.nasa.worldwind.geom.Box tcBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, tc, 0.0, 500000.0);
+                gov.nasa.worldwind.geom.Box tsBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, ts, 0.0, 500000.0);
+                tsGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tsBox));
+                tsGrid.setThreshold(0);
+                tsGrid.addChildren(tsGrid.getTLength() / 4.0);
+                renderableLayer.addRenderable(tsGrid);
+            
+            Sector tc = new Sector(
+                	Angle.fromDegrees(25.0),
+                	Angle.fromDegrees(30.0),
+                	Angle.fromDegrees(-75.0),
+                	Angle.fromDegrees(-70.0));
+                gov.nasa.worldwind.geom.Box tcBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, tc, 0.0, 50000.0);
                 tcGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tcBox));
                 tcGrid.setThreshold(0);
                 tcGrid.addChildren(tcGrid.getTLength() / 4.0);
@@ -178,9 +190,12 @@ public class RegularGridTest {
 		IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
 		largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
 		
-		IwxxmUpdater iwxxmUpdater = new IwxxmUpdater(model, tcGrid);
-		iwxxmUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
-		iwxxmUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
+		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
+		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
+		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
+		
+		IwxxmUpdater tcUpdater = new IwxxmUpdater(model, tcGrid);
+		tcUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-2-TC.xml")));
 		
 		while (frame.isVisible()) {
 			Thread.sleep(1000);

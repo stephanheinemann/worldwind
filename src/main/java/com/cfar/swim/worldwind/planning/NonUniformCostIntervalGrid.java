@@ -33,6 +33,8 @@ import java.awt.Color;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -46,6 +48,7 @@ import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
 import gov.nasa.worldwind.geom.Cylinder;
+import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
@@ -66,11 +69,17 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 	/** the current active cost intervals of this non-uniform cost interval grid */
 	private List<Interval<ChronoZonedDateTime<?>>> activeCostIntervals = this.getCostIntervals(time);
 	
-	/** the current accumulated active cost of this non-uniform cost interval grid */ 
+	/** the current accumulated active cost of this non-uniform cost interval grid */
 	private int activeCost = 1;
 	
 	/** the threshold cost of this non-uniform cost interval grid */
 	private int thresholdCost = 0;
+	
+	/** the embeddints of this non-uniform cost interval grid */
+	private HashMap<Extent, CostInterval> embeddings = new HashMap<Extent, CostInterval>();
+	
+	/** the affected children of cost interval embeddings */
+	private HashMap<CostInterval, List<NonUniformCostIntervalGrid>> affectedChildren = new HashMap<CostInterval, List<NonUniformCostIntervalGrid>>();
 	
 	/**
 	 * Constructs a non-uniform cost interval grid based on a geometric box
@@ -364,21 +373,31 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 	 * 
 	 * @param cylinder the geometric cylinder to be embedded
 	 * @param costInterval the associated cost interval
+	 * 
+	 * @return true if an embedding took place, false otherwise
 	 */
-	public void embed(Cylinder cylinder, CostInterval costInterval) {
+	public boolean embed(Cylinder cylinder, CostInterval costInterval) {
+		boolean embedded = false;
+		
 		if (this.intersectsCylinder(cylinder)) {
 			this.addCostInterval(costInterval);
+			this.embeddings.put(cylinder, costInterval);
 			
 			if (this.hasChildren()) {
 				for (int r = 0; r < this.cells.length; r++) {
 					for (int s = 0; s < this.cells[r].length; s++) {
 						for (int t = 0; t < this.cells[r][s].length; t++) {
-							((NonUniformCostIntervalGrid) this.cells[r][s][t]).embed(cylinder, costInterval);
+							NonUniformCostIntervalGrid child = (NonUniformCostIntervalGrid) this.cells[r][s][t];
+							if (child.embed(cylinder, costInterval)) {
+								this.addAffectedChild(costInterval, child);
+							}
 						}
 					}
 				}
 			}
+			embedded = true;
 		}
+		return embedded;
 	}
 	
 	// TODO: embed all relevant kinds of (airspace, aircraft) rigid shapes
@@ -386,5 +405,83 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRend
 	// TODO: embedding should be a recursive operation starting at the root grid cell
 	// TODO: only if parent grid is affected, propagation to children will occur
 	// TODO: performance can be substantially improved by only considering relevant children for propagation
+	
+	/**
+	 * Unembeds a geometric extent from this non-uniform cost interval grid.
+	 * 
+	 * @param extent the geometric extent to be unembedded
+	 */
+	public void unembed(Extent extent) {
+		if (this.embeddings.containsKey(extent)) {
+			CostInterval costInterval = this.embeddings.get(extent);
+			this.removeCostInterval(costInterval);
+			this.embeddings.remove(extent);
+			
+			if (this.affectedChildren.containsKey(costInterval)) {
+				for (NonUniformCostIntervalGrid child : this.affectedChildren.get(costInterval)) {
+					child.unembed(extent);
+				}
+				this.affectedChildren.remove(costInterval);
+			}
+		}
+	}
+	
+	/**
+	 * Adds an affected child to an embedding.
+	 * 
+	 * @param costInterval the cost interval of the embedding
+	 * @param child the affected child
+	 */
+	private void addAffectedChild(CostInterval costInterval, NonUniformCostIntervalGrid child) {
+		if (this.affectedChildren.containsKey(costInterval)) {
+			this.affectedChildren.get(costInterval).add(child);
+		} else {
+			ArrayList<NonUniformCostIntervalGrid> children = new ArrayList<NonUniformCostIntervalGrid>();
+			children.add(child);
+			this.affectedChildren.put(costInterval, children);
+		}
+	}
 
+	/**
+	 * Adds the specified number of children on each axis to this non-uniform
+	 * cost interval grid and propagates existing embeddings.
+	 * 
+	 * @param rCells the number of children on the <code>R</code> axis
+	 * @param sCells the number of children on the <code>S</code> axis
+	 * @param tCells the number of children on the <code>T</code> axis
+	 * 
+	 * @see RegularGrid#addChildren(int, int, int)
+	 */
+	@Override
+	public void addChildren(int rCells, int sCells, int tCells) {
+		super.addChildren(rCells, sCells, tCells);
+		
+		// propagate existing embeddings to children
+		for (Extent extent : this.embeddings.keySet()) {
+			for (int r = 0; r < this.cells.length; r++) {
+				for (int s = 0; s < this.cells[r].length; s++) {
+					for (int t = 0; t < this.cells[r][s].length; t++) {
+						NonUniformCostIntervalGrid child = (NonUniformCostIntervalGrid) this.cells[r][s][t];
+						if (extent instanceof Cylinder) {
+							if (child.embed((Cylinder) extent, this.embeddings.get(extent))) {
+								this.addAffectedChild(this.embeddings.get(extent), child);
+							}
+						}
+						// TODO: implement propagations for other extents
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Removes all children from this non-uniform cost interval grid.
+	 */
+	@Override
+	public void removeChildren() {
+		super.removeChildren();
+		// remove affected children of all embeddings
+		this.affectedChildren.clear();
+	}
+	
 }
