@@ -113,7 +113,7 @@ public class ObstacleColor {
 			return Color.DARK_GRAY;
 		}
 		
-		return Color.BLACK.brighter();
+		return Color.BLACK;
 	}
 	
 }

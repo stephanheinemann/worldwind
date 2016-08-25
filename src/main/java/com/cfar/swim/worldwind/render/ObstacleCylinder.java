@@ -182,9 +182,9 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle, Time
 	 * Updates the visibility of this obstacle cylinder.
 	 */
 	protected void updateVisibility() {
-		this.setVisible(this.activeCost > this.thresholdCost);
+		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		if (null != annotation) {
-			this.annotation.getAttributes().setVisible(this.activeCost > this.thresholdCost);
+			this.annotation.getAttributes().setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		}
 	}
 	
@@ -193,6 +193,11 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle, Time
 	 */
 	protected void updateAppearance() {
 		this.getAttributes().setInteriorMaterial(new Material(ObstacleColor.getColor(activeCost)));
+		if (0 > this.activeCost) {
+			this.getAttributes().setInteriorOpacity(1.0);
+		} else {
+			this.getAttributes().setInteriorOpacity(0.5);
+		}
 		// TODO: elements could change color, transparency or even an associated image/icon 
 	}
 	
