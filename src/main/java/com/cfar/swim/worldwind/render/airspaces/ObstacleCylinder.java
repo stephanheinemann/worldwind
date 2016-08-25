@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
@@ -57,7 +58,7 @@ import gov.nasa.worldwind.render.airspaces.CappedCylinder;
  * @author Stephan Heinemann
  *
  */
-public class ObstacleCylinder extends CappedCylinder implements TimedRenderable, ThresholdRenderable {
+public class ObstacleCylinder extends CappedCylinder implements Obstacle, TimedRenderable, ThresholdRenderable {
 
 	/** the current time of this obstacle cylinder */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));

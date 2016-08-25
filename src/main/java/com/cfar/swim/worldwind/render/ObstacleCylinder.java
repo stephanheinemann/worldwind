@@ -50,7 +50,7 @@ import gov.nasa.worldwind.render.Renderable;
  * @author Stephan Heinemann
  *
  */
-public class ObstacleCylinder extends VerticalCylinder implements TimedRenderable, ThresholdRenderable {
+public class ObstacleCylinder extends VerticalCylinder implements Obstacle, TimedRenderable, ThresholdRenderable {
 
 	/** the current time of this obstacle cylinder */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));

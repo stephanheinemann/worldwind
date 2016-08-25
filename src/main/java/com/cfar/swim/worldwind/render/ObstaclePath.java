@@ -47,7 +47,7 @@ import gov.nasa.worldwind.render.Path;
  * @author Stephan Heinemann
  *
  */
-public class ObstaclePath extends Path implements TimedRenderable, ThresholdRenderable {
+public class ObstaclePath extends Path implements Obstacle, TimedRenderable, ThresholdRenderable {
 
 	/** the current time of this obstacle path */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));

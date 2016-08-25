@@ -27,8 +27,54 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.data;
+package com.cfar.swim.worldwind.planning;
 
-public class SamData {
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.List;
+
+import com.binarydreamers.trees.Interval;
+
+import gov.nasa.worldwind.render.Renderable;
+
+/**
+ * Describes an environment as a renderable (spatial aspect) with associated
+ * cost intervals (temporal aspect).
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public interface Environment extends Renderable {
+
+	/**
+	 * Adds a cost interval to this environment.
+	 * 
+	 * @param costInterval the cost interval to be added to this environment
+	 */
+	public void addCostInterval(CostInterval costInterval);
+	
+	/**
+	 * Removes a cost interval from this environment.
+	 * 
+	 * @param costInterval the cost interval to be removed from this environment
+	 */
+	public void removeCostInterval(CostInterval costInterval);
+	
+	/**
+	 * Gets all (overlapping) cost intervals at a specified time instant.
+	 * 
+	 * @param time the time instant
+	 * @return the cost intervals at the specified time instant
+	 */
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time);
+	
+	/**
+	 * Gets all (overlapping) cost intervals within a specified time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * @return the cost intervals within the specified time span
+	 */
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end);
 
 }

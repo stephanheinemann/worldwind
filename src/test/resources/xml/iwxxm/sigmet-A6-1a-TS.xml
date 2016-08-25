@@ -43,7 +43,7 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
         </aixm:Unit>
     </iwxxm:originatingMeteorologicalWatchOffice>
 
-    <iwxxm:sequenceNumber>2</iwxxm:sequenceNumber>
+    <iwxxm:sequenceNumber>1</iwxxm:sequenceNumber>
 
     <!-- Valid period for this report -->
     <iwxxm:validPeriod>

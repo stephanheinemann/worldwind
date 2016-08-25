@@ -132,6 +132,49 @@ public class TimeInterval implements Interval<ChronoZonedDateTime<?>> {
 	}
 	
 	/**
+	 * Determines whether or not another time interval intersects this time
+	 * interval.
+	 * 
+	 * @param timeInterval the other time interval
+	 * @return true if the other time interval intersects this time interval,
+	 *         false, otherwise
+	 */
+	public boolean intersects(TimeInterval timeInterval) {
+		return (this.contains(timeInterval.start) ||
+				this.contains(timeInterval.end) ||
+				timeInterval.contains(this.start) ||
+				timeInterval.contains(this.end));
+	}
+	
+	/**
+	 * Computes the intersection between this and another time interval.
+	 * 
+	 * @param timeInterval the other time interval
+	 * @return the intersection between this and another time interval
+	 */
+	public TimeInterval intersect(TimeInterval timeInterval) {
+		TimeInterval intersection = null;
+		
+		if (this.intersects(timeInterval)) {
+			intersection = new TimeInterval();
+			if (this.contains(timeInterval.start)) {
+				intersection.setLower(timeInterval.start);
+			}
+			if (this.contains(timeInterval.end)) {
+				intersection.setUpper(timeInterval.end);
+			}
+			if (timeInterval.contains(this.start)) {
+				intersection.setLower(this.start);
+			}
+			if (timeInterval.contains(this.end)) {
+				intersection.setUpper(this.end);
+			}
+		}
+		
+		return intersection;
+	}
+	
+	/**
 	 * Realizes a time interval comparator.
 	 */
 	public static final Comparator<Interval<ChronoZonedDateTime<?>>> comparator = new Comparator<Interval<ChronoZonedDateTime<?>>>() {

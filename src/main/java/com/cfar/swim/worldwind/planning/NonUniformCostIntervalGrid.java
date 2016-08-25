@@ -58,7 +58,7 @@ import gov.nasa.worldwind.geom.Vec4;
  * @author Stephan Heinemann
  *
  */
-public class NonUniformCostIntervalGrid extends RegularGrid implements TimedRenderable, ThresholdRenderable {
+public class NonUniformCostIntervalGrid extends RegularGrid implements Environment, TimedRenderable, ThresholdRenderable {
 
 	/** the cost interval tree encoding temporal costs */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);

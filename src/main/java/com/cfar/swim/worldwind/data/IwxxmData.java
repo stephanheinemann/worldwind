@@ -36,8 +36,12 @@ import java.util.List;
 import javax.xml.bind.JAXBException;
 
 import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
+import com.cfar.swim.worldwind.iwxxm.IwxxmSigmetReference;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 
+import aero.aixm.AirspaceTimeSlicePropertyType;
+import aero.aixm.AirspaceTimeSliceType;
+import aero.aixm.AirspaceType;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.render.RigidShape;
 import gov.nasa.worldwind.render.airspaces.Airspace;
@@ -48,10 +52,46 @@ import icao.iwxxm.MeteorologicalPositionType;
 import icao.iwxxm.SIGMETType;
 import icao.iwxxm.TAFType;
 import icao.iwxxm.TropicalCycloneSIGMETType;
+import net.opengis.gml.FeaturePropertyType;
 import net.opengis.om.OMObservationPropertyType;
 import net.opengis.om.OMObservationType;
+import net.opengis.sampling.spatial.SFSpatialSamplingFeatureType;
 
 public class IwxxmData {
+	
+	public static IwxxmSigmetReference getSigmetReference(SIGMETType sigmet) {
+		IwxxmSigmetReference sigmetReference = null;
+		
+		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
+		if (0 < observations.size()) {
+			FeaturePropertyType feature = observations.get(0).getFeatureOfInterest();
+			if (null != feature) {
+				Object object = feature.getAbstractFeature().getValue();
+				if (object instanceof SFSpatialSamplingFeatureType) {
+					SFSpatialSamplingFeatureType spatialSamplingFeature = (SFSpatialSamplingFeatureType) object;
+					List<FeaturePropertyType> sampledFeatures = spatialSamplingFeature.getSampledFeature();
+					if (0 < sampledFeatures.size()) {
+						object = sampledFeatures.get(0).getAbstractFeature().getValue();
+						if (object instanceof AirspaceType) {
+							AirspaceType airspace = (AirspaceType) object;
+							List<AirspaceTimeSlicePropertyType> airspaceTimeSliceProperties = airspace.getTimeSlice(); 
+							if (0 < airspaceTimeSliceProperties.size()) {
+								AirspaceTimeSliceType airspaceTimeSlice = airspaceTimeSliceProperties.get(0).getAirspaceTimeSlice();
+								sigmetReference = new IwxxmSigmetReference(
+										AixmData.getAirspaceDesignator(airspaceTimeSlice),
+										AixmData.getAirspaceName(airspaceTimeSlice),
+										IwxxmData.getSequenceNumber(sigmet),
+										IwxxmData.getValidPeriod(sigmet).getLower(),
+										IwxxmData.getValidPeriod(sigmet).getUpper());
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		return sigmetReference;
+	}
 	
 	public static int getSequenceNumber(SIGMETType sigmet) {
 		return Integer.parseInt(sigmet.getSequenceNumber());

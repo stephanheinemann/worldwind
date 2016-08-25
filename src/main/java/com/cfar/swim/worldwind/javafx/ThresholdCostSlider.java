@@ -102,7 +102,7 @@ public class ThresholdCostSlider extends Slider {
 	 * @param worldWindow the world window the threshold cost is applied to
 	 */
 	public ThresholdCostSlider(WorldWindow worldWindow) {
-		super(0, 100, 0);
+		super(-100, 100, 0);
 		this.worldWindow = worldWindow;
 		this.setOnMouseReleased(new ThresholdCostInputHandler(this));
 		this.setOnKeyPressed(new ThresholdCostInputHandler(this));
