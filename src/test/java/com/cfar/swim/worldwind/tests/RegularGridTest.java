@@ -122,11 +122,12 @@ public class RegularGridTest {
                 	Angle.fromDegrees(60.0),
                 	Angle.fromDegrees(-15.0),
                 	Angle.fromDegrees(5.0));
-                gov.nasa.worldwind.geom.Box tsBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, ts, 0.0, 500000.0);
-                tsGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tsBox));
-                tsGrid.setThreshold(0);
-                tsGrid.addChildren(tsGrid.getTLength() / 4.0);
-                renderableLayer.addRenderable(tsGrid);
+            gov.nasa.worldwind.geom.Box tsBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, ts, 0.0, 500000.0);
+            tsGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tsBox));
+            tsGrid.setThreshold(0);
+            tsGrid.addChildren(tsGrid.getTLength() / 4.0);
+            tsGrid.addChildren(3, 3, 0, 2, 2, 2);
+            renderableLayer.addRenderable(tsGrid);
             
             Sector tc = new Sector(
                 	Angle.fromDegrees(25.0),
@@ -193,6 +194,7 @@ public class RegularGridTest {
 		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
+		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-CNL.xml")));
 		
 		IwxxmUpdater tcUpdater = new IwxxmUpdater(model, tcGrid);
 		tcUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-2-TC.xml")));

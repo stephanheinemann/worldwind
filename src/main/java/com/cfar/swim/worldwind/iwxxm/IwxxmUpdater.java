@@ -35,15 +35,19 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 
+import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 
 import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
+import com.cfar.swim.worldwind.data.AixmData;
 import com.cfar.swim.worldwind.data.IwxxmData;
 import com.cfar.swim.worldwind.data.OmData;
 import com.cfar.swim.worldwind.planning.CostInterval;
@@ -53,6 +57,8 @@ import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.render.ObstacleCylinder;
 import com.cfar.swim.worldwind.render.ObstaclePath;
 
+import aero.aixm.AirspaceTimeSlicePropertyType;
+import aero.aixm.AirspaceType;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.layers.Layer;
@@ -61,7 +67,10 @@ import gov.nasa.worldwind.render.RigidShape;
 import gov.nasa.worldwind.render.airspaces.Airspace;
 import icao.iwxxm.SIGMETReportStatusType;
 import icao.iwxxm.SIGMETType;
+import net.opengis.gml.FeaturePropertyType;
 import net.opengis.om.OMObservationType;
+import net.opengis.sampling.SFSamplingFeatureType;
+import net.opengis.sampling.spatial.SFSpatialSamplingFeatureType;
 
 public class IwxxmUpdater implements Runnable {
 	
@@ -70,12 +79,18 @@ public class IwxxmUpdater implements Runnable {
 	XMLStreamReader xsr;
 	
 	IwxxmUnmarshaller iwxxmUnmarshaller = null;
+	Unmarshaller unmarshaller = null;
 	//InputSource source = null;
 	Model model = null;
 	NonUniformCostIntervalGrid grid = null;
 	
 	public IwxxmUpdater(/*InputSource source,*/ Model model, NonUniformCostIntervalGrid grid) throws JAXBException {
 		this.iwxxmUnmarshaller = new IwxxmUnmarshaller();
+		// TODO: repair IwxxmUnmarshaller and others to include ALL object factories!
+		this.unmarshaller = JAXBContext.newInstance(
+				icao.iwxxm.ObjectFactory.class,
+				net.opengis.sampling.ObjectFactory.class,
+				net.opengis.sampling.spatial.ObjectFactory.class).createUnmarshaller();
 		//this.source = source;
 		this.model = model;
 		this.grid = grid;
@@ -90,7 +105,7 @@ public class IwxxmUpdater implements Runnable {
 	}
 	
 	public void add(InputSource source) throws JAXBException {
-		JAXBElement<?> iwxxmElement = (JAXBElement<?>) this.iwxxmUnmarshaller.unmarshal(source);
+		JAXBElement<?> iwxxmElement = (JAXBElement<?>) this.unmarshaller.unmarshal(source);
 		
 		// TODO: examine elements of the tree (position check)
 		// TODO: a filtered reader could be constructed from an XMLStreamReader
@@ -108,21 +123,45 @@ public class IwxxmUpdater implements Runnable {
 	}
 	
 	public void processSigmet(SIGMETType sigmet) throws JAXBException {
-		// TODO: consider sequence numbers
-		if (sigmet.getStatus().equals(SIGMETReportStatusType.CANCELLATION)) {
-			cancelSigmet(sigmet);
-		} else if (sigmet.getStatus().equals(SIGMETReportStatusType.NORMAL)) {
-			try {
+		try {
+			// TODO: consider sequence numbers
+			if (sigmet.getStatus().equals(SIGMETReportStatusType.CANCELLATION)) {
+				cancelSigmet(sigmet);
+			} else if (sigmet.getStatus().equals(SIGMETReportStatusType.NORMAL)) {
 				updateSigmet(sigmet);
-			} catch (Exception e) {
-				e.printStackTrace();
 			}
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 	
-	public void cancelSigmet(SIGMETType sigmet) {
+	public void cancelSigmet(SIGMETType sigmet) throws JAXBException {
+		// TODO: unfortunately a cancelled SIGMET is not referenced by identifier
 		int csn = IwxxmData.getCancelledSequenceNumber(sigmet);
 		TimeInterval cvp = IwxxmData.getCancelledValidPeriod(sigmet);
+		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
+		
+		if (0 < observations.size()) {
+			FeaturePropertyType feature = observations.get(0).getFeatureOfInterest();
+			if (null != feature) {
+				Object object = feature.getAbstractFeature().getValue();
+				if (object instanceof SFSpatialSamplingFeatureType) {
+					SFSpatialSamplingFeatureType spatialSamplingFeature = (SFSpatialSamplingFeatureType) object;
+					List<FeaturePropertyType> sampledFeatures = spatialSamplingFeature.getSampledFeature();
+					if (0 < sampledFeatures.size()) {
+						object = sampledFeatures.get(0).getAbstractFeature().getValue();
+						if (object instanceof AirspaceType) {
+							AirspaceType airspace = (AirspaceType) object;
+							for (AirspaceTimeSlicePropertyType timeSlice : airspace.getTimeSlice()) {
+								System.out.println(AixmData.getAirspaceDesignator(timeSlice.getAirspaceTimeSlice()));
+								System.out.println(AixmData.getAirspaceName(timeSlice.getAirspaceTimeSlice()));
+							}
+						}
+					}
+				}
+			}
+		}
+		
 	}
 	
 	public void updateSigmet(SIGMETType sigmet) throws JAXBException {

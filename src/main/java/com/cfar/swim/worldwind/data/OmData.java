@@ -43,6 +43,7 @@ import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.render.ObstaclePath;
 
+import aero.aixm.AirspaceTimeSliceType;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;

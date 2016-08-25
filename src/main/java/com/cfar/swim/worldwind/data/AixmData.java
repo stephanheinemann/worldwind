@@ -36,8 +36,12 @@ import javax.xml.bind.JAXBElement;
 
 import com.cfar.swim.worldwind.render.ObstacleCylinder;
 
+import aero.aixm.AirspaceTimeSliceType;
 import aero.aixm.AirspaceVolumeType;
+import aero.aixm.CodeAirspaceDesignatorType;
+import aero.aixm.CodeAirspaceType;
 import aero.aixm.SurfaceType;
+import aero.aixm.TextNameType;
 import aero.aixm.ValDistanceVerticalType;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
@@ -148,5 +152,46 @@ public class AixmData {
 		return surfaceShapes;
 	}
 	
+	public static String getAirspaceType(AirspaceTimeSliceType airspaceTimeSlice) {
+		String airspaceType = null;
+		
+		for (JAXBElement<?> element : airspaceTimeSlice.getRest()) {
+			Object value = element.getValue();
+			if (value instanceof CodeAirspaceType) {
+				airspaceType = ((CodeAirspaceType) value).getValue();
+				break;
+			}
+		}
+		
+		return airspaceType;
+	}
+	
+	public static String getAirspaceDesignator(AirspaceTimeSliceType airspaceTimeSlice) {
+		String airspaceDesignator = null;
+		
+		for (JAXBElement<?> element : airspaceTimeSlice.getRest()) {
+			Object value = element.getValue();
+			if (value instanceof CodeAirspaceDesignatorType) {
+				airspaceDesignator = ((CodeAirspaceDesignatorType) value).getValue();
+				break;
+			}
+		}
+		
+		return airspaceDesignator;
+	}
+	
+	public static String getAirspaceName(AirspaceTimeSliceType airspaceTimeSlice) {
+		String airspaceDesignator = null;
+		
+		for (JAXBElement<?> element : airspaceTimeSlice.getRest()) {
+			Object value = element.getValue();
+			if (value instanceof TextNameType) {
+				airspaceDesignator = ((TextNameType) value).getValue();
+				break;
+			}
+		}
+		
+		return airspaceDesignator;
+	}
 	
 }
