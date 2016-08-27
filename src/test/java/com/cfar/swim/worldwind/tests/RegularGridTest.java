@@ -43,6 +43,7 @@ import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
+import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
 
@@ -165,6 +166,14 @@ public class RegularGridTest {
         	label.setLayoutY(280);
         	label.setLayoutX(20);
         	group.getChildren().add(label);
+        	
+        	SwimDataListView list = new SwimDataListView();
+        	list.setLayoutY(350);
+        	list.setLayoutX(20);
+        	list.setPrefHeight(300);
+        	list.getItems().add("Test Item 1");
+        	list.getItems().add("Test Item 2");
+        	group.getChildren().add(list);
         	
         	return scene;
         }
