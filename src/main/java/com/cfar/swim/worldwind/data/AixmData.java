@@ -153,45 +153,15 @@ public class AixmData {
 	}
 	
 	public static String getAirspaceType(AirspaceTimeSliceType airspaceTimeSlice) {
-		String airspaceType = null;
-		
-		for (JAXBElement<?> element : airspaceTimeSlice.getRest()) {
-			Object value = element.getValue();
-			if (value instanceof CodeAirspaceType) {
-				airspaceType = ((CodeAirspaceType) value).getValue();
-				break;
-			}
-		}
-		
-		return airspaceType;
+		return airspaceTimeSlice.getType().getValue().getValue();
 	}
 	
 	public static String getAirspaceDesignator(AirspaceTimeSliceType airspaceTimeSlice) {
-		String airspaceDesignator = null;
-		
-		for (JAXBElement<?> element : airspaceTimeSlice.getRest()) {
-			Object value = element.getValue();
-			if (value instanceof CodeAirspaceDesignatorType) {
-				airspaceDesignator = ((CodeAirspaceDesignatorType) value).getValue();
-				break;
-			}
-		}
-		
-		return airspaceDesignator;
+		return airspaceTimeSlice.getDesignator().getValue().getValue();
 	}
 	
-	public static String getAirspaceName(AirspaceTimeSliceType airspaceTimeSlice) {
-		String airspaceDesignator = null;
-		
-		for (JAXBElement<?> element : airspaceTimeSlice.getRest()) {
-			Object value = element.getValue();
-			if (value instanceof TextNameType) {
-				airspaceDesignator = ((TextNameType) value).getValue();
-				break;
-			}
-		}
-		
-		return airspaceDesignator;
+	public static String getAirspaceName(AirspaceTimeSliceType airspaceTimeSlice) {		
+		return airspaceTimeSlice.getAirspaceName().getValue().getValue();
 	}
 	
 }
