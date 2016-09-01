@@ -211,7 +211,7 @@ public class ObstaclePath extends Path implements Obstacle {
 	 * Updates the visibility of this obstacle path.
 	 */
 	protected void updateVisibility() {
-		this.setVisible(this.activeCost > this.thresholdCost);
+		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 	}
 	
 	/**
