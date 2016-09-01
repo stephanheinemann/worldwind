@@ -69,14 +69,18 @@ public class RegularGridTest {
 	static NonUniformCostIntervalGrid tsGrid;
 	static NonUniformCostIntervalGrid tcGrid;
 	
+	// dirty, dirty, dirty...
+	static SwimDataListView list;
+	
 	// TODO: proper initialization with a sequence of tests
 	private static class AppFrame extends javax.swing.JFrame {
         
 		private static final long serialVersionUID = 1L;
 		
-		protected JFXPanel timePanel;
+		public JFXPanel timePanel;
 
 		public AppFrame() {
+			try {
         	WorldWindowGLCanvas wwd = new WorldWindowGLCanvas();
             wwd.setPreferredSize(new java.awt.Dimension(1000, 800));
             this.getContentPane().add(wwd, java.awt.BorderLayout.CENTER);
@@ -96,6 +100,7 @@ public class RegularGridTest {
             uvicGrid.setThreshold(0);
             uvicGrid.addChildren(uvicBox.getTLength() / 5.0);
             //uvicGrid.setThresholdCost(50);
+            //uvicGrid.setGlobe(model.getGlobe());
             
             RenderableLayer renderableLayer = new RenderableLayer();
             renderableLayer.addRenderable(uvicGrid);
@@ -116,6 +121,7 @@ public class RegularGridTest {
             largeGrid.addChildren(1, 9, 3, 2, 2, 2);
             largeGrid.addChildren(0, 9, 1, 2, 2, 2);
             largeGrid.addChildren(2, 9, 1, 2, 2, 2);
+            //largeGrid.setGlobe(model.getGlobe());
             renderableLayer.addRenderable(largeGrid);
             
             Sector ts = new Sector(
@@ -128,6 +134,7 @@ public class RegularGridTest {
             tsGrid.setThreshold(0);
             tsGrid.addChildren(tsGrid.getTLength() / 4.0);
             tsGrid.addChildren(3, 3, 0, 2, 2, 2);
+            //tsGrid.setGlobe(model.getGlobe());
             renderableLayer.addRenderable(tsGrid);
             
             Sector tc = new Sector(
@@ -146,6 +153,9 @@ public class RegularGridTest {
         	this.timePanel.setSize(300, 400);
         	this.timePanel.setScene(createScene(wwd));
         	this.getContentPane().add(this.timePanel, BorderLayout.WEST);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 		}
 		
 		protected Scene createScene(WorldWindow worldWindow) {
@@ -167,17 +177,14 @@ public class RegularGridTest {
         	label.setLayoutX(20);
         	group.getChildren().add(label);
         	
-        	SwimDataListView list = new SwimDataListView();
+        	list = new SwimDataListView(worldWindow);
         	list.setLayoutY(350);
         	list.setLayoutX(20);
         	list.setPrefHeight(300);
-        	list.getItems().add("Test Item 1");
-        	list.getItems().add("Test Item 2");
         	group.getChildren().add(list);
         	
         	return scene;
         }
-		
 		
     }
 	
@@ -197,16 +204,23 @@ public class RegularGridTest {
 		AppFrame frame = new AppFrame();
 		frame.setVisible(true);
 		
+		largeGrid.setGlobe(model.getGlobe());
 		IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
 		largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
 		
+		tsGrid.setGlobe(model.getGlobe());
 		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-CNL.xml")));
 		
+		tcGrid.setGlobe(model.getGlobe());
 		IwxxmUpdater tcUpdater = new IwxxmUpdater(model, tcGrid);
 		tcUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-2-TC.xml")));
+		
+		list.registerDataActivationListerner(largeUpdater);
+		list.registerDataActivationListerner(tsUpdater);
+		list.registerDataActivationListerner(tcUpdater);
 		
 		while (frame.isVisible()) {
 			Thread.sleep(1000);

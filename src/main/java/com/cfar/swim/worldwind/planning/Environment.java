@@ -34,18 +34,35 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.List;
 
 import com.binarydreamers.trees.Interval;
+import com.cfar.swim.worldwind.render.ThresholdRenderable;
+import com.cfar.swim.worldwind.render.TimedRenderable;
 
+import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Renderable;
 
 /**
- * Describes an environment as a renderable (spatial aspect) with associated
- * cost intervals (temporal aspect).
+ * Describes an environment as a renderable on a globe (spatial aspect) with
+ * associated cost intervals (temporal aspect).
  * 
  * @author Stephan Heinemann
  *
  */
-public interface Environment extends Renderable {
-
+public interface Environment extends Renderable, TimedRenderable, ThresholdRenderable {
+	
+	/**
+	 * Gets the globe of this environment.
+	 * 
+	 * @return the globe of this environment
+	 */
+	public Globe getGlobe();
+	
+	/**
+	 * Sets the globe of this environment.
+	 * 
+	 * @param globe the globe of this environment
+	 */
+	public void setGlobe(Globe globe);
+	
 	/**
 	 * Adds a cost interval to this environment.
 	 * 

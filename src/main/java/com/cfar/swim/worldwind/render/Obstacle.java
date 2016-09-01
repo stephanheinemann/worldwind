@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.render;
 
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.render.Renderable;
 
@@ -40,7 +41,7 @@ import gov.nasa.worldwind.render.Renderable;
  * @author Stephan Heinemann
  *
  */
-public interface Obstacle extends Renderable {
+public interface Obstacle extends Renderable, TimedRenderable, ThresholdRenderable, Enableable {
 
 	/**
 	 * Gets the cost interval of this obstacle.
@@ -55,5 +56,5 @@ public interface Obstacle extends Renderable {
 	 * @param costInterval the cost interval of this obstacle
 	 */
 	public void setCostInterval(CostInterval costInterval);
-
+	
 }

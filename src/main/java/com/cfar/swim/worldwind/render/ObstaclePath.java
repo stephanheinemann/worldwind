@@ -33,6 +33,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.avlist.AVKey;
@@ -47,7 +48,7 @@ import gov.nasa.worldwind.render.Path;
  * @author Stephan Heinemann
  *
  */
-public class ObstaclePath extends Path implements Obstacle, TimedRenderable, ThresholdRenderable {
+public class ObstaclePath extends Path implements Obstacle {
 
 	/** the current time of this obstacle path */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -79,6 +80,40 @@ public class ObstaclePath extends Path implements Obstacle, TimedRenderable, Thr
 		this.setAltitudeMode(WorldWind.ABSOLUTE);
 		this.setPathType(AVKey.GREAT_CIRCLE);
 		this.setShowPositions(true);
+	}
+	
+	/**
+	 * Enables this obstacle path.
+	 * 
+	 * @see Enableable#enable()
+	 */
+	@Override
+	public void enable() {
+		this.costInterval.enable();
+		this.update();
+	}
+	
+	/**
+	 * Disables this obstacle path.
+	 * 
+	 * @see Enableable#disable()
+	 */
+	@Override
+	public void disable() {
+		this.costInterval.disable();
+		this.update();
+	}
+	
+	/**
+	 * Determines whether or not this obstacle path is enabled.
+	 * 
+	 * @return true if this obstacle path is enabled, false otherwise
+	 * 
+	 * @see Enableable#isEnabled()
+	 */
+	@Override
+	public boolean isEnabled() {
+		return this.costInterval.isEnabled();
 	}
 	
 	/**

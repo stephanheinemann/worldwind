@@ -40,6 +40,7 @@ import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
+import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.LatLon;
@@ -58,7 +59,7 @@ import gov.nasa.worldwind.render.airspaces.CappedCylinder;
  * @author Stephan Heinemann
  *
  */
-public class ObstacleCylinder extends CappedCylinder implements Obstacle, TimedRenderable, ThresholdRenderable {
+public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 
 	/** the current time of this obstacle cylinder */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -92,6 +93,40 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle, TimedR
 		this.getAttributes().setOpacity(0.5);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
+	}
+	
+	/**
+	 * Enables this obstacle cylinder.
+	 * 
+	 * @see Enableable#enable()
+	 */
+	@Override
+	public void enable() {
+		this.costInterval.enable();
+		this.update();
+	}
+	
+	/**
+	 * Disables this obstacle cylinder.
+	 * 
+	 * @see Enableable#disable()
+	 */
+	@Override
+	public void disable() {
+		this.costInterval.disable();
+		this.update();
+	}
+	
+	/**
+	 * Determines whether or not this obstacle cylinder is enabled.
+	 * 
+	 * @return true if this obstacle cylinder is enabled, false otherwise
+	 * 
+	 * @see Enableable#isEnabled()
+	 */
+	@Override
+	public boolean isEnabled() {
+		return this.costInterval.isEnabled();
 	}
 	
 	/**

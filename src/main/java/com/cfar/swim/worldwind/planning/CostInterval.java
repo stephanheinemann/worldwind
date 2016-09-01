@@ -34,6 +34,8 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.Comparator;
 
 import com.binarydreamers.trees.Interval;
+import com.cfar.swim.worldwind.util.Enableable;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 /**
  * Realizes a cost interval based on TimeInterval and a cost value.
@@ -43,13 +45,16 @@ import com.binarydreamers.trees.Interval;
  * @author Stephan Heinemann
  *
  */
-public class CostInterval extends TimeInterval {
+public class CostInterval extends TimeInterval implements Identifiable, Enableable {
 	
 	/** the unique identifier of this cost interval */
 	protected String id = null;
 	
 	/** the cost of this cost interval */
 	protected int cost = 0;
+	
+	/** the enabled status of this cost interval */
+	private boolean isEnabled = true;
 	
 	/**
 	 * Constructs a cost (instant) interval based on the current UTC time for
@@ -135,14 +140,21 @@ public class CostInterval extends TimeInterval {
 	}
 	
 	/**
-	 * Gets the cost of this cost interval.
+	 * Gets the cost of this cost interval. A disabled cost interval
+	 * always returns zero cost.
 	 * 
 	 * @return the cost of this cost interval
 	 */
 	public int getCost() {
-		return this.cost;
+		int cost = 0;
+		
+		if (this.isEnabled) {
+			cost = this.cost;
+		}
+		
+		return cost;
 	}
-
+	
 	/**
 	 * Sets the cost of this cost interval.
 	 * 
@@ -150,6 +162,32 @@ public class CostInterval extends TimeInterval {
 	 */
 	public void setCost(int cost) {
 		this.cost = cost;
+	}
+	
+	/**
+	 * Enables this cost interval.
+	 */
+	@Override
+	public void enable() {
+		this.isEnabled = true;
+	}
+	
+	/**
+	 * Disables this cost interval.
+	 */
+	@Override
+	public void disable() {
+		this.isEnabled = false;
+	}
+	
+	/**
+	 * Determines whether or not this cost interval is enabled.
+	 * 
+	 * @return true if this cost interval is enabled, false otherwise
+	 */
+	@Override
+	public boolean isEnabled() {
+		return this.isEnabled;
 	}
 	
 	/**

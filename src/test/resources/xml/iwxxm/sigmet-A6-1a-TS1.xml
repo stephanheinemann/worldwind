@@ -13,7 +13,7 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
     http://def.wmo.int/metce/2013 http://schemas.wmo.int/metce/1.1/metce.xsd
     http://www.opengis.net/samplingSpatial/2.0 http://schemas.opengis.net/samplingSpatial/2.0/spatialSamplingFeature.xsd"
 
-    gml:id="sigmet-YUDD-201208101200Z"
+    gml:id="sigmet-YUDD-201208101200Z-b"
     status="NORMAL">
 
     <iwxxm:issuingAirTrafficServicesUnit>

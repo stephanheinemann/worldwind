@@ -27,37 +27,31 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.data;
-
-import java.util.Set;
+package com.cfar.swim.worldwind.util;
 
 /**
- * Describes a data activation listener for SWIM data.
+ * Describes an enableable object.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface DataActivationListener {
+public interface Enableable {
 
 	/**
-	 * Gets the data identifiers of this data activation listener.
-	 * 
-	 * @return the data identifiers of this data activation listener
+	 * Enables this enableable.
 	 */
-	public Set<String> getIdentifiers();
+	public void enable();
 	
 	/**
-	 * Activates the data with the specified data identifier.
-	 * 
-	 * @param identifier the data identifier
+	 * Disables this enableable.
 	 */
-	public void activate(String identifier);
+	public void disable();
 	
 	/**
-	 * Deactivates the data with the specified data identifier.
+	 * Determines whether or not this enableable is enabled.
 	 * 
-	 * @param identifier the data identifier
+	 * @return true if this enableable is enabled, false otherwise
 	 */
-	public void deactivate(String identifier);
-	
+	public boolean isEnabled();
+
 }

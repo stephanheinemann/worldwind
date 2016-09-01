@@ -43,13 +43,14 @@ import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.RegularGrid;
+import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 
-import gov.nasa.worldwind.geom.Cylinder;
-import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Vec4;
+import gov.nasa.worldwind.globes.Globe;
 
 /**
  * Realizes a non-uniform cost interval grid that can encode spatial and
@@ -58,8 +59,11 @@ import gov.nasa.worldwind.geom.Vec4;
  * @author Stephan Heinemann
  *
  */
-public class NonUniformCostIntervalGrid extends RegularGrid implements Environment, TimedRenderable, ThresholdRenderable {
+public class NonUniformCostIntervalGrid extends RegularGrid implements Environment {
 
+	/** the globe of this non-uniform cost interval grid */
+	private Globe globe = null;
+	
 	/** the cost interval tree encoding temporal costs */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
 	
@@ -75,11 +79,11 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	/** the threshold cost of this non-uniform cost interval grid */
 	private int thresholdCost = 0;
 	
-	/** the embeddints of this non-uniform cost interval grid */
-	private HashMap<Extent, CostInterval> embeddings = new HashMap<Extent, CostInterval>();
+	/** the obstacles embedded into this non-uniform cost interval grid */
+	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
 	
-	/** the affected children of cost interval embeddings */
-	private HashMap<CostInterval, List<NonUniformCostIntervalGrid>> affectedChildren = new HashMap<CostInterval, List<NonUniformCostIntervalGrid>>();
+	/** the affected children of obstacle embeddings */
+	private HashMap<Obstacle, List<NonUniformCostIntervalGrid>> affectedChildren = new HashMap<Obstacle, List<NonUniformCostIntervalGrid>>();
 	
 	/**
 	 * Constructs a non-uniform cost interval grid based on a geometric box
@@ -189,6 +193,8 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * @param modelPoint the point in world model coordinates
 	 * 
 	 * @return the non-uniform cost interval grid cells containing the specified point
+	 * 
+	 * @see RegularGrid#lookupCells(Vec4)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
@@ -197,10 +203,47 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	}
 	
 	/**
+	 * Sets the globe of this non-uniform cost interval grid.
+	 * 
+	 * @param globe the globe of this non-uniform cost interval grid
+	 * 
+	 * @see Environment#setGlobe(Globe)
+	 */
+	@Override
+	public void setGlobe(Globe globe) {
+		this.globe = globe;
+		
+		if (this.hasChildren()) {
+			for (int r = 0; r < this.cells.length; r++) {
+				for (int s = 0; s < this.cells[r].length; s++) {
+					for (int t = 0; t < this.cells[r][s].length; t++) {
+						((Environment) this.cells[r][s][t]).setGlobe(globe);
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Gets the globe of this non-uniform cost interval grid.
+	 * 
+	 * @return the globe of this non-uniform cost interval grid
+	 * 
+	 * @see Environment#getGlobe()
+	 */
+	@Override
+	public Globe getGlobe() {
+		return this.globe;
+	}
+	
+	/**
 	 * Adds a cost interval to this non-uniform cost interval grid.
 	 * 
 	 * @param costInterval the cost interval to be added
+	 * 
+	 * @see Environment#addCostInterval(CostInterval)
 	 */
+	@Override
 	public void addCostInterval(CostInterval costInterval) {
 		this.costIntervals.add(costInterval);
 		this.update();
@@ -214,7 +257,10 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * Removes a cost interval from this non-uniform cost interval grid.
 	 * 
 	 * @param costInterval the cost interval to be removed
+	 * 
+	 * @see Environment#removeCostInterval(CostInterval)
 	 */
+	@Override
 	public void removeCostInterval(CostInterval costInterval) {
 		this.costIntervals.remove(costInterval);
 		this.update();
@@ -225,7 +271,10 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * 
 	 * @param time the time instant
 	 * @return all cost intervals that are active at the specified time instant
+	 * 
+	 * @see Environment#getCostIntervals(ZonedDateTime)
 	 */
+	@Override
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
 		return this.costIntervals.searchInterval(new CostInterval(null, this.time));
 	}
@@ -235,8 +284,11 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * 
 	 * @param start the start time of the time interval
 	 * @param end the end time of the time interval
-	 * @return all cost intervals that are active during the specified time interval 
+	 * @return all cost intervals that are active during the specified time interval
+	 * 
+	 * @see Environment#getCostIntervals(ZonedDateTime, ZonedDateTime)
 	 */
+	@Override
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
 		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
 	}
@@ -312,6 +364,39 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	}
 	
 	/**
+	 * Updates this non-uniform cost interval grid with all its children.
+	 */
+	public void refresh() {
+		this.update();
+		
+		if (this.hasChildren()) {
+			for (int r = 0; r < this.cells.length; r++) {
+				for (int s = 0; s < this.cells[r].length; s++) {
+					for (int t = 0; t < this.cells[r][s].length; t++) {
+						((NonUniformCostIntervalGrid) this.cells[r][s][t]).refresh();
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Updates this non-uniform cost interval grid for an embedded obstacle.
+	 * 
+	 * @param obstacle the embedded obstacle
+	 */
+	public void refresh(Obstacle obstacle) {
+		if (this.obstacles.contains(obstacle)) {
+			this.update();
+			if (this.affectedChildren.containsKey(obstacle)) {
+				for (NonUniformCostIntervalGrid child : affectedChildren.get(obstacle)) {
+					child.refresh(obstacle);
+				}				
+			}
+		}
+	}
+	
+	/**
 	 * Updates this non-uniform cost interval grid.
 	 */
 	protected void update() {
@@ -368,28 +453,27 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	}
 	
 	/**
-	 * Embeds a geometric cylinder with an associated cost interval into this
+	 * Embeds an obstacle cylinder with an associated cost interval into this
 	 * non-uniform cost interval grid.
 	 * 
-	 * @param cylinder the geometric cylinder to be embedded
-	 * @param costInterval the associated cost interval
+	 * @param obstacle the obstacle cylinder to be embedded
 	 * 
 	 * @return true if an embedding took place, false otherwise
 	 */
-	public boolean embed(Cylinder cylinder, CostInterval costInterval) {
+	public boolean embed(ObstacleCylinder obstacle) {
 		boolean embedded = false;
 		
-		if (this.intersectsCylinder(cylinder)) {
-			this.addCostInterval(costInterval);
-			this.embeddings.put(cylinder, costInterval);
+		if ((null != this.globe) && (this.intersectsCylinder(obstacle.toGeometricCylinder(this.globe)))) {
+			this.addCostInterval(obstacle.getCostInterval());
+			this.obstacles.add(obstacle);
 			
 			if (this.hasChildren()) {
 				for (int r = 0; r < this.cells.length; r++) {
 					for (int s = 0; s < this.cells[r].length; s++) {
 						for (int t = 0; t < this.cells[r][s].length; t++) {
 							NonUniformCostIntervalGrid child = (NonUniformCostIntervalGrid) this.cells[r][s][t];
-							if (child.embed(cylinder, costInterval)) {
-								this.addAffectedChild(costInterval, child);
+							if (child.embed(obstacle)) {
+								this.addAffectedChild(obstacle, child);
 							}
 						}
 					}
@@ -397,6 +481,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 			}
 			embedded = true;
 		}
+		
 		return embedded;
 	}
 	
@@ -407,38 +492,49 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	// TODO: performance can be substantially improved by only considering relevant children for propagation
 	
 	/**
-	 * Unembeds a geometric extent from this non-uniform cost interval grid.
+	 * Unembeds an obstacle from this non-uniform cost interval grid.
 	 * 
-	 * @param extent the geometric extent to be unembedded
+	 * @param obstacle the obstacle to be unembedded
 	 */
-	public void unembed(Extent extent) {
-		if (this.embeddings.containsKey(extent)) {
-			CostInterval costInterval = this.embeddings.get(extent);
-			this.removeCostInterval(costInterval);
-			this.embeddings.remove(extent);
+	public void unembed(Obstacle obstacle) {
+		if (this.obstacles.contains(obstacle)) {
+			this.removeCostInterval(obstacle.getCostInterval());
+			this.obstacles.remove(obstacle);
 			
-			if (this.affectedChildren.containsKey(costInterval)) {
-				for (NonUniformCostIntervalGrid child : this.affectedChildren.get(costInterval)) {
-					child.unembed(extent);
+			if (this.affectedChildren.containsKey(obstacle)) {
+				for (NonUniformCostIntervalGrid child : this.affectedChildren.get(obstacle)) {
+					child.unembed(obstacle);
 				}
-				this.affectedChildren.remove(costInterval);
+				this.affectedChildren.remove(obstacle);
 			}
 		}
 	}
 	
 	/**
-	 * Adds an affected child to an embedding.
+	 * Determines whether or not an obstacle is embedded in this non-uniform
+	 * cost interval grid.
 	 * 
-	 * @param costInterval the cost interval of the embedding
+	 * @param obstacle the obstacle
+	 * @return true if the obstacle is embedded in this non-uniform cost
+	 *         interval grid, false otherwise
+	 */
+	public boolean isEmbedded(Obstacle obstacle) {
+		return this.obstacles.contains(obstacle);
+	}
+	
+	/**
+	 * Adds an affected child to an obstacle embedding.
+	 * 
+	 * @param obstacle the obstacle of the embedding
 	 * @param child the affected child
 	 */
-	private void addAffectedChild(CostInterval costInterval, NonUniformCostIntervalGrid child) {
-		if (this.affectedChildren.containsKey(costInterval)) {
-			this.affectedChildren.get(costInterval).add(child);
+	private void addAffectedChild(Obstacle obstacle, NonUniformCostIntervalGrid child) {
+		if (this.affectedChildren.containsKey(obstacle)) {
+			this.affectedChildren.get(obstacle).add(child);
 		} else {
 			ArrayList<NonUniformCostIntervalGrid> children = new ArrayList<NonUniformCostIntervalGrid>();
 			children.add(child);
-			this.affectedChildren.put(costInterval, children);
+			this.affectedChildren.put(obstacle, children);
 		}
 	}
 
@@ -456,15 +552,16 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	public void addChildren(int rCells, int sCells, int tCells) {
 		super.addChildren(rCells, sCells, tCells);
 		
-		// propagate existing embeddings to children
-		for (Extent extent : this.embeddings.keySet()) {
-			for (int r = 0; r < this.cells.length; r++) {
-				for (int s = 0; s < this.cells[r].length; s++) {
-					for (int t = 0; t < this.cells[r][s].length; t++) {
-						NonUniformCostIntervalGrid child = (NonUniformCostIntervalGrid) this.cells[r][s][t];
-						if (extent instanceof Cylinder) {
-							if (child.embed((Cylinder) extent, this.embeddings.get(extent))) {
-								this.addAffectedChild(this.embeddings.get(extent), child);
+		for (int r = 0; r < this.cells.length; r++) {
+			for (int s = 0; s < this.cells[r].length; s++) {
+				for (int t = 0; t < this.cells[r][s].length; t++) {
+					NonUniformCostIntervalGrid child = (NonUniformCostIntervalGrid) this.cells[r][s][t];
+					child.setGlobe(this.globe);
+					
+					for (Obstacle obstacle : this.obstacles) {
+						if (obstacle instanceof ObstacleCylinder) {
+							if (child.embed((ObstacleCylinder) obstacle)) {
+								this.addAffectedChild(obstacle, child);
 							}
 						}
 						// TODO: implement propagations for other extents

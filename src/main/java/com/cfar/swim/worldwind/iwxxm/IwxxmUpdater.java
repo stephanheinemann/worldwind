@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
@@ -47,6 +48,7 @@ import javax.xml.stream.XMLStreamReader;
 import org.xml.sax.InputSource;
 
 import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
+import com.cfar.swim.worldwind.data.DataActivationListener;
 import com.cfar.swim.worldwind.data.IwxxmData;
 import com.cfar.swim.worldwind.data.OmData;
 import com.cfar.swim.worldwind.planning.CostInterval;
@@ -58,7 +60,6 @@ import com.cfar.swim.worldwind.render.ObstaclePath;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 
 import gov.nasa.worldwind.Model;
-import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.render.airspaces.Airspace;
@@ -66,7 +67,7 @@ import icao.iwxxm.SIGMETReportStatusType;
 import icao.iwxxm.SIGMETType;
 import net.opengis.om.OMObservationType;
 
-public class IwxxmUpdater implements Runnable {
+public class IwxxmUpdater implements DataActivationListener, Runnable {
 	
 	CostMap costMap = new CostMap();
 	XMLInputFactory xif = XMLInputFactory.newFactory();
@@ -76,21 +77,30 @@ public class IwxxmUpdater implements Runnable {
 	Unmarshaller unmarshaller = null;
 	//InputSource source = null;
 	Model model = null;
+	
 	NonUniformCostIntervalGrid grid = null;
+	RenderableLayer renderableLayer = null;
 	
 	/** the sigmet embeddings this updater has created */
-	HashMap<IwxxmSigmetReference, List<Obstacle>> sigmetEmbeddings = new HashMap<IwxxmSigmetReference, List<Obstacle>>();
+	HashMap<IwxxmSigmetReference, List<Obstacle>> sigmetObstacles = new HashMap<IwxxmSigmetReference, List<Obstacle>>();
+	/*
+	HashMap<IwxxmSigmetReference, List<Obstacle>> inactiveSigmetObstacles = new HashMap<IwxxmSigmetReference, List<Obstacle>>();
+	HashMap<IwxxmSigmetReference, List<Extent>> activeSigmetEmbeddings = new HashMap<IwxxmSigmetReference, List<Extent>>();
+	HashMap<IwxxmSigmetReference, List<Extent>> inactiveSigmetEmbeddings = new HashMap<IwxxmSigmetReference, List<Extent>>();
+	*/
+	
+	HashMap<String, IwxxmSigmetReference> idReferences = new HashMap<String, IwxxmSigmetReference>();
 	
 	public IwxxmUpdater(/*InputSource source,*/ Model model, NonUniformCostIntervalGrid grid) throws JAXBException {
 		this.iwxxmUnmarshaller = new IwxxmUnmarshaller();
 		// TODO: repair IwxxmUnmarshaller and others to include ALL object factories!
 		this.unmarshaller = JAXBContext.newInstance(
 				icao.iwxxm.ObjectFactory.class,
-				net.opengis.sampling.ObjectFactory.class,
-				net.opengis.sampling.spatial.ObjectFactory.class).createUnmarshaller();
+				net.opengis.sampling.ObjectFactory.class).createUnmarshaller();
 		//this.source = source;
-		this.model = model;
 		this.grid = grid;
+		List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
+		this.renderableLayer = ((RenderableLayer) renderableLayers.get(0));
 	}
 	
 	@Override
@@ -133,9 +143,6 @@ public class IwxxmUpdater implements Runnable {
 	}
 	
 	public void cancelSigmet(SIGMETType sigmet) throws JAXBException {
-		List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
-		RenderableLayer renderableLayer = ((RenderableLayer) renderableLayers.get(0));
-		
 		// TODO: unfortunately a cancelled SIGMET is not referenced by identifier
 		int cancelledSequenceNumber = IwxxmData.getCancelledSequenceNumber(sigmet);
 		TimeInterval cancelledValidPeriod = IwxxmData.getCancelledValidPeriod(sigmet);
@@ -154,12 +161,12 @@ public class IwxxmUpdater implements Runnable {
 				cancelledValidPeriod.getLower(),
 				cancelledValidPeriod.getUpper());
 		
-		if (this.sigmetEmbeddings.containsKey(cancelReference)) {
+		if (this.sigmetObstacles.containsKey(cancelReference)) {
 			System.out.println("found embeddings to cancel!");
 		}
 		
-		List<Obstacle> embeddings = this.sigmetEmbeddings.get(cancelReference);
-		for (Obstacle obstacle : embeddings) {
+		List<Obstacle> obstacles = this.sigmetObstacles.get(cancelReference);
+		for (Obstacle obstacle : obstacles) {
 			CostInterval costInterval = obstacle.getCostInterval();
 			
 			if (costInterval.intersects(cancelInterval)) {
@@ -175,19 +182,20 @@ public class IwxxmUpdater implements Runnable {
 							obstacleCylinder.getAltitudes()[1],
 							obstacleCylinder.getRadii()[1]);
 					intersectionObstacle.setCostInterval(intersectionInterval);
-					Cylinder intersectionCylinder = intersectionObstacle.toGeometricCylinder(model.getGlobe());
-					this.grid.embed(intersectionCylinder, intersectionInterval);
-					this.addSigmetEmbedding(sigmetReference, intersectionObstacle);
-					renderableLayer.addRenderable(intersectionObstacle);
+					//Cylinder intersectionCylinder = intersectionObstacle.toGeometricCylinder(model.getGlobe());
+					//this.grid.embed(intersectionCylinder, intersectionInterval);
+					//this.addSigmetEmbedding(sigmetReference, intersectionCylinder);
+					
+					this.grid.embed(intersectionObstacle);
+					this.addSigmetObstacle(sigmetReference, intersectionObstacle);
+					this.idReferences.put(sigmet.getId(), sigmetReference);
+					this.renderableLayer.addRenderable(intersectionObstacle);
 				}
 			}
 		}
 	}
 	
 	public void updateSigmet(SIGMETType sigmet) throws JAXBException {
-		List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
-		RenderableLayer renderableLayer = ((RenderableLayer) renderableLayers.get(0));
-		
 		String phenomenom = IwxxmData.getPhenomenon(sigmet);
 		// TODO: things like quantification (weakening), spatial and temporal distance
 		// observation and analysis methods could be taken into account
@@ -276,27 +284,34 @@ public class IwxxmUpdater implements Runnable {
 				(next instanceof com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder)) {
 				List<com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder> interpolants = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).interpolate((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) next, 4);
 			
-				renderableLayer.addRenderable(current);
-				renderableLayer.addRenderables(interpolants);
+				this.renderableLayer.addRenderable(current);
+				this.renderableLayer.addRenderables(interpolants);
 				
-				Cylinder cylinder = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
-				this.grid.embed(cylinder, ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).getCostInterval());
-				this.addSigmetEmbedding(sigmetReference, (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
+				//Cylinder cylinder = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
+				//this.grid.embed(cylinder, ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).getCostInterval());
+				//this.addSigmetEmbedding(sigmetReference, cylinder);
+				this.grid.embed((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
+				this.addSigmetObstacle(sigmetReference, (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
 				
 				for (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder interpolant : interpolants) {
-					cylinder = interpolant.toGeometricCylinder(model.getGlobe());
-					this.grid.embed(cylinder, interpolant.getCostInterval());
-					this.addSigmetEmbedding(sigmetReference, interpolant);
+					//cylinder = interpolant.toGeometricCylinder(model.getGlobe());
+					//this.grid.embed(cylinder, interpolant.getCostInterval());
+					//this.addSigmetEmbedding(sigmetReference, cylinder);
+					this.grid.embed(interpolant);
+					this.addSigmetObstacle(sigmetReference, interpolant);
 				}
 			}
 			current = next;
 		}
 		
 		if (null != current) {
-			renderableLayer.addRenderable(current);
-			Cylinder cylinder = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
-			this.grid.embed(cylinder, ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).getCostInterval());
-			this.addSigmetEmbedding(sigmetReference, (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
+			this.renderableLayer.addRenderable(current);
+			//Cylinder cylinder = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
+			//this.grid.embed(cylinder, ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).getCostInterval());
+			//this.addSigmetEmbedding(sigmetReference, cylinder);
+			this.grid.embed((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
+			this.addSigmetObstacle(sigmetReference, (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
+			this.idReferences.put(sigmet.getId(), sigmetReference);
 		}
 		
 		// TODO: use valid times for path
@@ -304,10 +319,11 @@ public class IwxxmUpdater implements Runnable {
 		ObstaclePath observationPath = (ObstaclePath) OmData.getAirspacePath(sigmetAirspaces);
 		CostInterval pathCostInverval = new CostInterval(sigmet.getId(), IwxxmData.getValidPeriod(sigmet), cost);
 		observationPath.setCostInterval(pathCostInverval);
+		sigmetObstacles.get(sigmetReference).add(observationPath);
 		
 		//if (1 < sigmetShapes.size()) {
 		if (1 < sigmetAirspaces.size()) {
-			renderableLayer.addRenderable(observationPath);
+			this.renderableLayer.addRenderable(observationPath);
 		}
 		
 		/*
@@ -321,14 +337,56 @@ public class IwxxmUpdater implements Runnable {
 		*/
 	}
 	
-	private void addSigmetEmbedding(IwxxmSigmetReference sigmetReference, Obstacle embedding) {
-		if (this.sigmetEmbeddings.containsKey(sigmetReference)) {
-			this.sigmetEmbeddings.get(sigmetReference).add(embedding);
+	private void addSigmetObstacle(IwxxmSigmetReference sigmetReference, Obstacle obstacle) {
+		if (this.sigmetObstacles.containsKey(sigmetReference)) {
+			this.sigmetObstacles.get(sigmetReference).add(obstacle);
 		} else {
-			ArrayList<Obstacle> embeddings = new ArrayList<Obstacle>();
-			embeddings.add(embedding);
-			this.sigmetEmbeddings.put(sigmetReference, embeddings);
+			ArrayList<Obstacle> obstacles = new ArrayList<Obstacle>();
+			obstacles.add(obstacle);
+			this.sigmetObstacles.put(sigmetReference, obstacles);
 		}
+	}
+	
+	/*
+	private void addSigmetEmbedding(IwxxmSigmetReference sigmetReference, Extent embedding) {
+		if (this.activeSigmetEmbeddings.containsKey(sigmetReference)) {
+			this.activeSigmetEmbeddings.get(sigmetReference).add(embedding);
+		} else {
+			ArrayList<Extent> embeddings = new ArrayList<Extent>();
+			embeddings.add(embedding);
+			this.activeSigmetEmbeddings.put(sigmetReference, embeddings);
+			this.inactiveSigmetEmbeddings.put(sigmetReference, new ArrayList<Extent>());
+		}
+	}
+	*/
+
+	@Override
+	public void activate(String identifier) {
+		if (this.idReferences.containsKey(identifier)) {
+			IwxxmSigmetReference sigmetReference = (IwxxmSigmetReference) this.idReferences.get(identifier);
+			List<Obstacle> obstacles = this.sigmetObstacles.get(sigmetReference);
+			for (Obstacle obstacle : obstacles) {
+				obstacle.enable();
+				this.grid.refresh(obstacle);
+			}
+		}
+	}
+
+	@Override
+	public void deactivate(String identifier) {
+		if (this.idReferences.containsKey(identifier)) {
+			IwxxmSigmetReference sigmetReference = (IwxxmSigmetReference) this.idReferences.get(identifier);
+			List<Obstacle> obstacles = this.sigmetObstacles.get(sigmetReference);
+			for (Obstacle obstacle : obstacles) {
+				obstacle.disable();
+				this.grid.refresh(obstacle);
+			}
+		}
+	}
+
+	@Override
+	public Set<String> getIdentifiers() {
+		return this.idReferences.keySet();
 	}
 	
 }

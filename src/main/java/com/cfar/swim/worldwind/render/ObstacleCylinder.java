@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
@@ -50,7 +51,7 @@ import gov.nasa.worldwind.render.Renderable;
  * @author Stephan Heinemann
  *
  */
-public class ObstacleCylinder extends VerticalCylinder implements Obstacle, TimedRenderable, ThresholdRenderable {
+public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 
 	/** the current time of this obstacle cylinder */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -84,6 +85,40 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle, Time
 		this.getAttributes().setEnableLighting(true);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
+	}
+	
+	/**
+	 * Enables this obstacle cylinder.
+	 * 
+	 * @see Enableable#enable()
+	 */
+	@Override
+	public void enable() {
+		this.costInterval.enable();
+		this.update();
+	}
+	
+	/**
+	 * Disables this obstacle cylinder.
+	 * 
+	 * @see Enableable#disable()
+	 */
+	@Override
+	public void disable() {
+		this.costInterval.disable();
+		this.update();
+	}
+	
+	/**
+	 * Determines whether or not this obstacle cylinder is enabled.
+	 * 
+	 * @return true if this obstacle cylinder is enabled, false otherwise
+	 * 
+	 * @see Enableable#isEnabled()
+	 */
+	@Override
+	public boolean isEnabled() {
+		return this.costInterval.isEnabled();
 	}
 	
 	/**
