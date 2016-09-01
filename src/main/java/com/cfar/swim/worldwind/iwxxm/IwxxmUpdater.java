@@ -81,14 +81,10 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 	NonUniformCostIntervalGrid grid = null;
 	RenderableLayer renderableLayer = null;
 	
-	/** the sigmet embeddings this updater has created */
+	/** the SIGMET embeddings this updater has created (references are required for canceling messages) */
 	HashMap<IwxxmSigmetReference, List<Obstacle>> sigmetObstacles = new HashMap<IwxxmSigmetReference, List<Obstacle>>();
-	/*
-	HashMap<IwxxmSigmetReference, List<Obstacle>> inactiveSigmetObstacles = new HashMap<IwxxmSigmetReference, List<Obstacle>>();
-	HashMap<IwxxmSigmetReference, List<Extent>> activeSigmetEmbeddings = new HashMap<IwxxmSigmetReference, List<Extent>>();
-	HashMap<IwxxmSigmetReference, List<Extent>> inactiveSigmetEmbeddings = new HashMap<IwxxmSigmetReference, List<Extent>>();
-	*/
 	
+	/** the SIGMET identifier to reference mapping */
 	HashMap<String, IwxxmSigmetReference> idReferences = new HashMap<String, IwxxmSigmetReference>();
 	
 	public IwxxmUpdater(/*InputSource source,*/ Model model, NonUniformCostIntervalGrid grid) throws JAXBException {
@@ -131,11 +127,10 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 	
 	public void processSigmet(SIGMETType sigmet) throws JAXBException {
 		try {
-			// TODO: consider sequence numbers
 			if (sigmet.getStatus().equals(SIGMETReportStatusType.CANCELLATION)) {
-				cancelSigmet(sigmet);
+				this.cancelSigmet(sigmet);
 			} else if (sigmet.getStatus().equals(SIGMETReportStatusType.NORMAL)) {
-				updateSigmet(sigmet);
+				this.updateSigmet(sigmet);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -143,17 +138,13 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 	}
 	
 	public void cancelSigmet(SIGMETType sigmet) throws JAXBException {
-		// TODO: unfortunately a cancelled SIGMET is not referenced by identifier
 		int cancelledSequenceNumber = IwxxmData.getCancelledSequenceNumber(sigmet);
 		TimeInterval cancelledValidPeriod = IwxxmData.getCancelledValidPeriod(sigmet);
-		
 		IwxxmSigmetReference sigmetReference = IwxxmData.getSigmetReference(sigmet);
-		if (null == sigmetReference) {
-			System.out.println("WARNING: no sigmet reference found");
-		}
-		
+		// cancel from the start of the cancel validity period until the end of the validity period of the canceled message
 		TimeInterval cancelInterval = new TimeInterval(sigmetReference.getValidStart(), cancelledValidPeriod.getUpper());
 		
+		// build SIGMET reference
 		IwxxmSigmetReference cancelReference = new IwxxmSigmetReference(
 				sigmetReference.getAirspaceDesignator(),
 				sigmetReference.getAirspaceName(),
@@ -161,19 +152,19 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 				cancelledValidPeriod.getLower(),
 				cancelledValidPeriod.getUpper());
 		
-		if (this.sigmetObstacles.containsKey(cancelReference)) {
-			System.out.println("found embeddings to cancel!");
-		}
-		
+		// find obstacles of canceled SIGMET
 		List<Obstacle> obstacles = this.sigmetObstacles.get(cancelReference);
 		for (Obstacle obstacle : obstacles) {
 			CostInterval costInterval = obstacle.getCostInterval();
 			
 			if (costInterval.intersects(cancelInterval)) {
+				// cancel intersecting interval with negative cost obstacle
 				CostInterval intersectionInterval = new CostInterval(
 						sigmet.getId(),
 						costInterval.intersect(cancelInterval),
 						-costInterval.getCost());
+				
+				// embed canceling obstacle
 				if (obstacle instanceof ObstacleCylinder) {
 					ObstacleCylinder obstacleCylinder = (ObstacleCylinder) obstacle;
 					ObstacleCylinder intersectionObstacle = new ObstacleCylinder(
@@ -182,15 +173,13 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 							obstacleCylinder.getAltitudes()[1],
 							obstacleCylinder.getRadii()[1]);
 					intersectionObstacle.setCostInterval(intersectionInterval);
-					//Cylinder intersectionCylinder = intersectionObstacle.toGeometricCylinder(model.getGlobe());
-					//this.grid.embed(intersectionCylinder, intersectionInterval);
-					//this.addSigmetEmbedding(sigmetReference, intersectionCylinder);
 					
 					this.grid.embed(intersectionObstacle);
 					this.addSigmetObstacle(sigmetReference, intersectionObstacle);
 					this.idReferences.put(sigmet.getId(), sigmetReference);
 					this.renderableLayer.addRenderable(intersectionObstacle);
 				}
+				// TODO: implement other obstacle types
 			}
 		}
 	}
@@ -205,8 +194,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 		}
 			
 		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
-		System.out.println("found " + observations.size() + " observations for sigmet " + sigmet.getId());
-		//List<RigidShape> sigmetShapes = new ArrayList<RigidShape>();
+		System.out.println("found " + observations.size() + " observations for " + sigmet.getId());
 		List<Airspace> sigmetAirspaces = new ArrayList<Airspace>();
 		
 		for (OMObservationType observation : observations) {
@@ -222,7 +210,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			}
 			
 			// the end time should be the valid time of the observation or
-			// otherwise the valid time of the sigmet
+			// otherwise the valid time of the SIGMET
 			// if interpolation is done, then the final valid times have to be
 			// changed accordingly
 			ZonedDateTime end = null;
@@ -233,43 +221,22 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			}
 			
 			CostInterval costInterval = new CostInterval(sigmet.getId(), start, end, cost);
-			//List<RigidShape> observationShapes = OmData.getRigidShapes(observation, iwxxmUnmarshaller);
 			List<Airspace> observationAirspaces = OmData.getAirspaces(observation, iwxxmUnmarshaller);
 			
-			/*
-			for (RigidShape shape : observationShapes) {
-				if (shape instanceof ObstacleCylinder) {
-					ObstacleCylinder obstacleCylinder = (ObstacleCylinder) shape;
-					obstacleCylinder.setCostInterval(costInterval);
-				}
-			}
-			
-			sigmetShapes.addAll(observationShapes);
-			*/
-			
 			for (Airspace airspace : observationAirspaces) {
-				if (airspace instanceof com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) {
-					((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) airspace).setCostInterval(costInterval);
+				if (airspace instanceof Obstacle) {
+					((Obstacle) airspace).setCostInterval(costInterval);
 				}
 			}
 			
 			sigmetAirspaces.addAll(observationAirspaces);
 		}
 		
-		// cancel messages rely on sigmet references instead of sigmet identifiers
+		// cancel messages rely on SIGMET references instead of SIGMET identifiers
 		IwxxmSigmetReference sigmetReference = IwxxmData.getSigmetReference(sigmet);
-		if (null == sigmetReference) {
-			System.out.println("WARNING: no sigmet reference found");
-		}
 		
 		// TODO: assuming all shapes are ordered and belong to the same phenomenon
 		// TODO: ensure ordering and related phenomenon
-		// System.out.println("interpolating " + sigmetShapes.size() + " sigmet shapes for " + sigmet.getId());
-		System.out.println("interpolating " + sigmetAirspaces.size() + " sigmet airspaces for " + sigmet.getId());
-		/*
-		Iterator<RigidShape> ssi = sigmetShapes.iterator();
-		RigidShape current = null;
-		*/
 		Iterator<Airspace> ssi = sigmetAirspaces.iterator();
 		Airspace current = null;
 		
@@ -278,25 +245,16 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 		}
 		
 		while (ssi.hasNext()) {
-			//RigidShape next = ssi.next();
 			Airspace next = ssi.next();
-			if ((current instanceof com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) &&
-				(next instanceof com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder)) {
-				List<com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder> interpolants = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).interpolate((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) next, 4);
+			if ((current instanceof ObstacleCylinder) && (next instanceof ObstacleCylinder)) {
+				List<ObstacleCylinder> interpolants = ((ObstacleCylinder) current).interpolate((ObstacleCylinder) next, 4);
 			
 				this.renderableLayer.addRenderable(current);
 				this.renderableLayer.addRenderables(interpolants);
+				this.grid.embed((ObstacleCylinder) current);
+				this.addSigmetObstacle(sigmetReference, (ObstacleCylinder) current);
 				
-				//Cylinder cylinder = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
-				//this.grid.embed(cylinder, ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).getCostInterval());
-				//this.addSigmetEmbedding(sigmetReference, cylinder);
-				this.grid.embed((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
-				this.addSigmetObstacle(sigmetReference, (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
-				
-				for (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder interpolant : interpolants) {
-					//cylinder = interpolant.toGeometricCylinder(model.getGlobe());
-					//this.grid.embed(cylinder, interpolant.getCostInterval());
-					//this.addSigmetEmbedding(sigmetReference, cylinder);
+				for (ObstacleCylinder interpolant : interpolants) {
 					this.grid.embed(interpolant);
 					this.addSigmetObstacle(sigmetReference, interpolant);
 				}
@@ -306,22 +264,17 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 		
 		if (null != current) {
 			this.renderableLayer.addRenderable(current);
-			//Cylinder cylinder = ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).toGeometricCylinder(model.getGlobe());
-			//this.grid.embed(cylinder, ((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current).getCostInterval());
-			//this.addSigmetEmbedding(sigmetReference, cylinder);
-			this.grid.embed((com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
-			this.addSigmetObstacle(sigmetReference, (com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder) current);
+			this.grid.embed((ObstacleCylinder) current);
+			this.addSigmetObstacle(sigmetReference, (ObstacleCylinder) current);
 			this.idReferences.put(sigmet.getId(), sigmetReference);
 		}
 		
-		// TODO: use valid times for path
-		//ObstaclePath observationPath = (ObstaclePath) OmData.getObservationPath(sigmetShapes);
+		// create observation / obstacle path
 		ObstaclePath observationPath = (ObstaclePath) OmData.getAirspacePath(sigmetAirspaces);
 		CostInterval pathCostInverval = new CostInterval(sigmet.getId(), IwxxmData.getValidPeriod(sigmet), cost);
 		observationPath.setCostInterval(pathCostInverval);
 		sigmetObstacles.get(sigmetReference).add(observationPath);
 		
-		//if (1 < sigmetShapes.size()) {
 		if (1 < sigmetAirspaces.size()) {
 			this.renderableLayer.addRenderable(observationPath);
 		}
@@ -346,19 +299,6 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			this.sigmetObstacles.put(sigmetReference, obstacles);
 		}
 	}
-	
-	/*
-	private void addSigmetEmbedding(IwxxmSigmetReference sigmetReference, Extent embedding) {
-		if (this.activeSigmetEmbeddings.containsKey(sigmetReference)) {
-			this.activeSigmetEmbeddings.get(sigmetReference).add(embedding);
-		} else {
-			ArrayList<Extent> embeddings = new ArrayList<Extent>();
-			embeddings.add(embedding);
-			this.activeSigmetEmbeddings.put(sigmetReference, embeddings);
-			this.inactiveSigmetEmbeddings.put(sigmetReference, new ArrayList<Extent>());
-		}
-	}
-	*/
 
 	@Override
 	public void activate(String identifier) {
