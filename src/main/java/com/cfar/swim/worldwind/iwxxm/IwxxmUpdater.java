@@ -62,7 +62,6 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.weather.WeatherSymbolMap;
 
 import gov.nasa.worldwind.Model;
-import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.render.airspaces.Airspace;
@@ -238,10 +237,8 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 					ObstacleCylinder obstacle = (ObstacleCylinder) airspace;
 					obstacle.setCostInterval(costInterval);
 					
-					double altitude = obstacle.getAltitudes()[1] + 100000;
-					Position depictionPosition = new Position(obstacle.getCenter(), altitude);
 					obstacle.setDepiction(new Depiction(
-							symbolFactory.createPoint(sidc, depictionPosition, null)));
+							symbolFactory.createPoint(sidc, obstacle.getReferencePosition(), null)));
 				}
 			}
 			
@@ -274,12 +271,8 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 					this.grid.embed(interpolant);
 					this.addSigmetObstacle(sigmetReference, interpolant);
 					
-					
-					double altitude = interpolant.getAltitudes()[1] + 100000;
-					Position depictionPosition = new Position(interpolant.getCenter(), altitude);
-					System.out.println("depiction position " + depictionPosition);
 					interpolant.setDepiction(new Depiction(
-							symbolFactory.createPoint(sidc, depictionPosition, null)));
+							symbolFactory.createPoint(sidc, interpolant.getReferencePosition(), null)));
 				}
 			}
 			current = next;

@@ -45,4 +45,5 @@ public interface Planner {
 	// TODO: think about policies - risk, reward tradeoffs
 	// TODO: think about interaction (airspace or obstacle could provide CPDLC interface)
 	// TODO: changing altitudes may require CPDLC clearances depending on airspace
+	// TODO: computed paths can be associated with symbols (e.g. minimum risk path)
 }

@@ -44,14 +44,15 @@ import gov.nasa.worldwind.symbology.TacticalSymbolAttributes;
 public class Depiction implements Renderable {
 
 	private Renderable depiction = null;
-	private static TacticalSymbolAttributes symbolAttributes = new BasicTacticalSymbolAttributes();
-	private static TacticalGraphicAttributes graphicAttributes = new BasicTacticalGraphicAttributes();
+	private static final TacticalSymbolAttributes symbolAttributes = new BasicTacticalSymbolAttributes();
+	private static final TacticalGraphicAttributes graphicAttributes = new BasicTacticalGraphicAttributes();
 	
 	public Depiction(TacticalGraphic depiction) {
 		this.depiction = depiction;
 		depiction.setAttributes(Depiction.graphicAttributes);
 		depiction.getAttributes().setScale(0.5);
 		depiction.getAttributes().setTextModifierMaterial(Material.WHITE);
+		depiction.setVisible(false);
 	}
 	
 	public Depiction(TacticalSymbol depiction) {
@@ -60,6 +61,7 @@ public class Depiction implements Renderable {
 		depiction.getAttributes().setScale(0.5);
 		depiction.getAttributes().setTextModifierMaterial(Material.WHITE);
 		depiction.setAltitudeMode(WorldWind.ABSOLUTE);
+		depiction.setVisible(false);
 	}
 	
 	@Override
