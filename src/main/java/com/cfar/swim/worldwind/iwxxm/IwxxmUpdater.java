@@ -58,11 +58,15 @@ import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstaclePath;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
+import com.cfar.swim.worldwind.util.Depiction;
+import com.cfar.swim.worldwind.weather.WeatherSymbolMap;
 
 import gov.nasa.worldwind.Model;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.render.airspaces.Airspace;
+import gov.nasa.worldwind.symbology.milstd2525.MilStd2525GraphicFactory;
 import icao.iwxxm.SIGMETReportStatusType;
 import icao.iwxxm.SIGMETType;
 import net.opengis.om.OMObservationType;
@@ -70,6 +74,9 @@ import net.opengis.om.OMObservationType;
 public class IwxxmUpdater implements DataActivationListener, Runnable {
 	
 	CostMap costMap = new CostMap();
+	WeatherSymbolMap wxSymbolMap = new WeatherSymbolMap();
+	MilStd2525GraphicFactory symbolFactory = new MilStd2525GraphicFactory();
+	
 	XMLInputFactory xif = XMLInputFactory.newFactory();
 	XMLStreamReader xsr;
 	
@@ -189,8 +196,11 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 		// TODO: things like quantification (weakening), spatial and temporal distance
 		// observation and analysis methods could be taken into account
 		int cost = 0;
+		String sidc = null;
+		
 		if (null != phenomenom) {
 			cost = this.costMap.get(phenomenom);
+			sidc = this.wxSymbolMap.get(phenomenom);
 		}
 			
 		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
@@ -224,8 +234,14 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			List<Airspace> observationAirspaces = OmData.getAirspaces(observation, iwxxmUnmarshaller);
 			
 			for (Airspace airspace : observationAirspaces) {
-				if (airspace instanceof Obstacle) {
-					((Obstacle) airspace).setCostInterval(costInterval);
+				if (airspace instanceof ObstacleCylinder) {
+					ObstacleCylinder obstacle = (ObstacleCylinder) airspace;
+					obstacle.setCostInterval(costInterval);
+					
+					double altitude = obstacle.getAltitudes()[1] + 100000;
+					Position depictionPosition = new Position(obstacle.getCenter(), altitude);
+					obstacle.setDepiction(new Depiction(
+							symbolFactory.createPoint(sidc, depictionPosition, null)));
 				}
 			}
 			
@@ -257,6 +273,13 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 				for (ObstacleCylinder interpolant : interpolants) {
 					this.grid.embed(interpolant);
 					this.addSigmetObstacle(sigmetReference, interpolant);
+					
+					
+					double altitude = interpolant.getAltitudes()[1] + 100000;
+					Position depictionPosition = new Position(interpolant.getCenter(), altitude);
+					System.out.println("depiction position " + depictionPosition);
+					interpolant.setDepiction(new Depiction(
+							symbolFactory.createPoint(sidc, depictionPosition, null)));
 				}
 			}
 			current = next;

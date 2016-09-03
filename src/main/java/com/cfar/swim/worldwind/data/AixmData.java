@@ -38,10 +38,7 @@ import com.cfar.swim.worldwind.render.ObstacleCylinder;
 
 import aero.aixm.AirspaceTimeSliceType;
 import aero.aixm.AirspaceVolumeType;
-import aero.aixm.CodeAirspaceDesignatorType;
-import aero.aixm.CodeAirspaceType;
 import aero.aixm.SurfaceType;
-import aero.aixm.TextNameType;
 import aero.aixm.ValDistanceVerticalType;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;

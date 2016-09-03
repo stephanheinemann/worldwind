@@ -40,6 +40,8 @@ import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
+import com.cfar.swim.worldwind.util.Depictable;
+import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.geom.Cylinder;
@@ -68,7 +70,10 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	private CostInterval costInterval = new CostInterval("");
 	
 	/** the text annotation of this obstacle cylinder */
-	private GlobeAnnotation annotation = null;
+	protected GlobeAnnotation annotation = null;
+	
+	/** the depiction of this obstacle cylinder */
+	protected Depiction depiction = null;
 	
 	/** the threshold cost of this obstacle cylinder */
 	private int thresholdCost = 0;
@@ -90,9 +95,33 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	public ObstacleCylinder(LatLon location, double bottom, double top, double radius) {
 		super(location, radius);
 		this.setAltitudes(bottom, top);
-		this.getAttributes().setOpacity(0.5);
+		this.getAttributes().setOpacity(0.25);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
+	}
+	
+	/**
+	 * Gets the depiction of this obstacle cylinder.
+	 * 
+	 * @return the depiction of this obstacle cylinder
+	 * 
+	 * @see Depictable#getDepiction()
+	 */
+	@Override
+	public Depiction getDepiction() {
+		return this.depiction;
+	}
+
+	/**
+	 * Sets the depiction of this obstacle cylinder.
+	 * 
+	 * @param depiction the depiction of this obstacle cylinder
+	 * 
+	 * @see Depictable#setDepiction(Depiction)
+	 */
+	@Override
+	public void setDepiction(Depiction depiction) {
+		this.depiction = depiction;
 	}
 	
 	/**
@@ -226,8 +255,11 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 */
 	protected void updateVisibility() {
 		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
-		if (null != annotation) {
+		if (null != this.annotation) {
 			this.annotation.getAttributes().setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
+		}
+		if (null != this.depiction) {
+			this.depiction.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		}
 	}
 	
@@ -254,6 +286,9 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		super.render(dc);
 		if (null != this.annotation) {
 			this.annotation.render(dc);
+		}
+		if (null != this.depiction) {
+			this.depiction.render(dc);
 		}
 	}
 

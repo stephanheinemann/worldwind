@@ -27,37 +27,21 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.render;
+package com.cfar.swim.worldwind.weather;
 
-import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.util.Depictable;
-import com.cfar.swim.worldwind.util.Enableable;
+import java.util.HashMap;
 
-import gov.nasa.worldwind.render.Renderable;
+public class WeatherSymbolMap extends HashMap<String, String> {
 
-/**
- * Describes an obstacle as a renderable (spatial aspect) with an associated
- * cost interval (temporal aspect).
- * 
- * @author Stephan Heinemann
- *
- */
-public interface Obstacle extends Renderable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
+	private static final long serialVersionUID = 1L;
 
-	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
-	
 	/**
-	 * Gets the cost interval of this obstacle.
-	 * 
-	 * @return the cost interval of this obstacle
+	 * Constructs a weather symbol map that maps obstacle phenomena to
+	 * symbol identification codes.
 	 */
-	public CostInterval getCostInterval();
-	
-	/**
-	 * Sets the cost interval of this obstacle.
-	 * 
-	 * @param costInterval the cost interval of this obstacle
-	 */
-	public void setCostInterval(CostInterval costInterval);
+	public WeatherSymbolMap() {
+		this.put("http://codes.wmo.int/49-2/SigWxPhenomena/OBSC_TS", "WAS-WST-NPP----");
+		this.put("http://codes.wmo.int/49-2/SigWxPhenomena/TC", "WAS-WSTSS-P----");
+	}
 	
 }

@@ -36,6 +36,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.util.Depictable;
+import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.geom.Position;
@@ -60,7 +62,10 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	private CostInterval costInterval = new CostInterval("");
 	
 	/** the text annotation of this obstacle cylinder */
-	private GlobeAnnotation annotation = null;
+	protected GlobeAnnotation annotation = null;
+	
+	/** the depiction of this obstacle cylinder */
+	protected Depiction depiction = null;
 	
 	/** the threshold cost of this obstacle cylinder */
 	private int thresholdCost = 0;
@@ -81,10 +86,34 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	public ObstacleCylinder(Position centerPosition, double height, double radius) {
 		super(centerPosition, height, radius);
 		this.setAttributes(new BasicShapeAttributes());
-		this.getAttributes().setInteriorOpacity(0.5);
+		this.getAttributes().setInteriorOpacity(0.25);
 		this.getAttributes().setEnableLighting(true);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
+	}
+	
+	/**
+	 * Gets the depiction of this obstacle cylinder.
+	 * 
+	 * @return the depictin of this obstacle cylinder
+	 * 
+	 * @see Depictable#getDepiction()
+	 */
+	@Override
+	public Depiction getDepiction() {
+		return this.depiction;
+	}
+
+	/**
+	 * Sets the depiction of this obstacle cylinder.
+	 * 
+	 * @param depiction the depiction of this obstacle cylinder
+	 * 
+	 * @see Depictable#setDepiction(Depiction)
+	 */
+	@Override
+	public void setDepiction(Depiction depiction) {
+		this.depiction = depiction;
 	}
 	
 	/**
@@ -218,8 +247,11 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	 */
 	protected void updateVisibility() {
 		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
-		if (null != annotation) {
+		if (null != this.annotation) {
 			this.annotation.getAttributes().setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
+		}
+		if (null != this.depiction) {
+			this.depiction.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		}
 	}
 	
@@ -246,6 +278,9 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 		super.render(dc);
 		if (null != this.annotation) {
 			this.annotation.render(dc);
+		}
+		if (null != this.depiction) {
+			this.depiction.render(dc);
 		}
 	}
 

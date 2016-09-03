@@ -27,37 +27,22 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.render;
+package com.cfar.swim.worldwind.ai;
 
-import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.util.Depictable;
-import com.cfar.swim.worldwind.util.Enableable;
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Path;
 
-import gov.nasa.worldwind.render.Renderable;
+public interface Planner {
 
-/**
- * Describes an obstacle as a renderable (spatial aspect) with an associated
- * cost interval (temporal aspect).
- * 
- * @author Stephan Heinemann
- *
- */
-public interface Obstacle extends Renderable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
+	public Path plan(Globe globe, Position start, Position goal);
 
-	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
-	
-	/**
-	 * Gets the cost interval of this obstacle.
-	 * 
-	 * @return the cost interval of this obstacle
-	 */
-	public CostInterval getCostInterval();
-	
-	/**
-	 * Sets the cost interval of this obstacle.
-	 * 
-	 * @param costInterval the cost interval of this obstacle
-	 */
-	public void setCostInterval(CostInterval costInterval);
-	
+	// TODO: think about applicable heuristics (e.g., Euclidian distance)
+	// TODO: minimum ground clearances, altitude restrictions
+	// TODO: include capabilities (e.g., velocities, rates) and obtain cost at time
+	// TODO: construct grid from globe and positions
+	// TODO: think about feasibility and limited deliberation time
+	// TODO: think about policies - risk, reward tradeoffs
+	// TODO: think about interaction (airspace or obstacle could provide CPDLC interface)
+	// TODO: changing altitudes may require CPDLC clearances depending on airspace
 }

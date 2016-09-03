@@ -27,37 +27,20 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.render;
+package com.cfar.swim.worldwind.aircraft;
 
-import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.util.Depictable;
-import com.cfar.swim.worldwind.util.Enableable;
+import gov.nasa.worldwind.symbology.SymbologyConstants;
 
-import gov.nasa.worldwind.render.Renderable;
-
-/**
- * Describes an obstacle as a renderable (spatial aspect) with an associated
- * cost interval (temporal aspect).
- * 
- * @author Stephan Heinemann
- *
- */
-public interface Obstacle extends Renderable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
-
-	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
+public enum CombatIdentification {
+	UNKNOWN(SymbologyConstants.STANDARD_IDENTITY_UNKNOWN),
+	FRIEND(SymbologyConstants.STANDARD_IDENTITY_FRIEND),
+	NEUTRAL(SymbologyConstants.STANDARD_IDENTITY_NEUTRAL),
+	HOSTILE(SymbologyConstants.STANDARD_IDENTITY_HOSTILE);
 	
-	/**
-	 * Gets the cost interval of this obstacle.
-	 * 
-	 * @return the cost interval of this obstacle
-	 */
-	public CostInterval getCostInterval();
+	private final String combatIdentification;
 	
-	/**
-	 * Sets the cost interval of this obstacle.
-	 * 
-	 * @param costInterval the cost interval of this obstacle
-	 */
-	public void setCostInterval(CostInterval costInterval);
+	private CombatIdentification(String combatIdentification) {
+		this.combatIdentification = combatIdentification;
+	}
 	
 }

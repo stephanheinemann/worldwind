@@ -35,16 +35,21 @@ import java.awt.BorderLayout;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import javax.xml.bind.JAXBException;
 
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import com.cfar.swim.worldwind.aircraft.CombatIdentification;
+import com.cfar.swim.worldwind.aircraft.Quadcopter;
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
 import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
+import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
 
 import gov.nasa.worldwind.BasicModel;
@@ -52,6 +57,7 @@ import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
@@ -142,11 +148,20 @@ public class RegularGridTest {
                 	Angle.fromDegrees(30.0),
                 	Angle.fromDegrees(-75.0),
                 	Angle.fromDegrees(-70.0));
-                gov.nasa.worldwind.geom.Box tcBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, tc, 0.0, 50000.0);
-                tcGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tcBox));
-                tcGrid.setThreshold(0);
-                tcGrid.addChildren(tcGrid.getTLength() / 4.0);
-                renderableLayer.addRenderable(tcGrid);
+            gov.nasa.worldwind.geom.Box tcBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, tc, 0.0, 50000.0);
+            tcGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tcBox));
+            tcGrid.setThreshold(0);
+            tcGrid.addChildren(tcGrid.getTLength() / 4.0);
+            renderableLayer.addRenderable(tcGrid);
+            
+            Quadcopter quadcopter = new Quadcopter(new Position(ts.getCentroid(), 50000), 5000, CombatIdentification.FRIEND);
+            quadcopter.setCostInterval(new CostInterval(
+            				"Iris",
+            				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
+            				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
+            				70));
+            quadcopter.getDepiction().setDesignation("Iris");
+            renderableLayer.addRenderable(quadcopter);
             
             // TODO: add time slider with steps between min and max time (set using calender-like input)
             this.timePanel = new JFXPanel();

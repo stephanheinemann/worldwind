@@ -27,37 +27,44 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.render;
+package com.cfar.swim.worldwind.aircraft;
 
-import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.util.Depictable;
-import com.cfar.swim.worldwind.util.Enableable;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
-import gov.nasa.worldwind.render.Renderable;
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.render.Material;
+import gov.nasa.worldwind.symbology.milstd2525.MilStd2525Constants;
 
-/**
- * Describes an obstacle as a renderable (spatial aspect) with an associated
- * cost interval (temporal aspect).
- * 
- * @author Stephan Heinemann
- *
- */
-public interface Obstacle extends Renderable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
+public abstract class Aircraft extends ObstacleSphere {
 
-	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
+	// TODO: aggregate capabilities model
+	// TODO: call sign is included in cost interval
 	
-	/**
-	 * Gets the cost interval of this obstacle.
-	 * 
-	 * @return the cost interval of this obstacle
-	 */
-	public CostInterval getCostInterval();
+	public Aircraft(Position center, double radius) {
+		super(center, radius);
+	}
+
+	protected abstract String getSymbolIdentifier(CombatIdentification cid);
 	
-	/**
-	 * Sets the cost interval of this obstacle.
-	 * 
-	 * @param costInterval the cost interval of this obstacle
-	 */
-	public void setCostInterval(CostInterval costInterval);
+	protected Material getMaterial(CombatIdentification cid) {
+		switch(cid) {
+		case UNKNOWN:
+			return MilStd2525Constants.MATERIAL_UNKNOWN;
+		case FRIEND:
+			return MilStd2525Constants.MATERIAL_FRIEND;
+		case NEUTRAL:
+			return MilStd2525Constants.MATERIAL_NEUTRAL;
+		case HOSTILE:
+			return MilStd2525Constants.MATERIAL_HOSTILE;
+		default:
+			return MilStd2525Constants.MATERIAL_UNKNOWN;
+		}
+	}
+	
+	@Override
+	protected void updateVisibility() {
+		super.updateVisibility();
+		this.annotation.getAttributes().setVisible(false);
+	}
 	
 }

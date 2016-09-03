@@ -27,37 +27,44 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.render;
+package com.cfar.swim.worldwind.aircraft;
 
-import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.util.Depictable;
-import com.cfar.swim.worldwind.util.Enableable;
+import com.cfar.swim.worldwind.util.Depiction;
 
-import gov.nasa.worldwind.render.Renderable;
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.symbology.SymbologyConstants;
+import gov.nasa.worldwind.symbology.milstd2525.MilStd2525TacticalSymbol;
 
-/**
- * Describes an obstacle as a renderable (spatial aspect) with an associated
- * cost interval (temporal aspect).
- * 
- * @author Stephan Heinemann
- *
- */
-public interface Obstacle extends Renderable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
+public class Quadcopter extends Aircraft {
 
-	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
+	public static final String SIDC_UAV_ROTARY_UNKOWN = "SUGPUCVUR------";
+	public static final String SIDC_UAV_ROTARY_FRIEND = "SFGPUCVUR------";
+	public static final String SIDC_UAV_ROTARY_NEUTRAL = "SNGPUCVUR------";
+	public static final String SIDC_UAV_ROTARY_HOSTILE = "SHGPUCVUR------";
 	
-	/**
-	 * Gets the cost interval of this obstacle.
-	 * 
-	 * @return the cost interval of this obstacle
-	 */
-	public CostInterval getCostInterval();
+	public Quadcopter(Position position, double radius, CombatIdentification cid) {
+		super(position, radius);
+		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
+		this.getAttributes().setMaterial(this.getMaterial(cid));
+		
+		// TODO: use capabilities or actual data...
+		this.getDepiction().setModifier(SymbologyConstants.SPEED, 100);
+		this.getDepiction().setModifier(SymbologyConstants.ALTITUDE_DEPTH, position.getAltitude());
+	}
 	
-	/**
-	 * Sets the cost interval of this obstacle.
-	 * 
-	 * @param costInterval the cost interval of this obstacle
-	 */
-	public void setCostInterval(CostInterval costInterval);
+	public String getSymbolIdentifier(CombatIdentification cid) {
+		switch (cid) {
+		case UNKNOWN:
+			return Quadcopter.SIDC_UAV_ROTARY_UNKOWN;
+		case FRIEND:
+			return Quadcopter.SIDC_UAV_ROTARY_FRIEND;
+		case NEUTRAL:
+			return Quadcopter.SIDC_UAV_ROTARY_NEUTRAL;
+		case HOSTILE:
+			return Quadcopter.SIDC_UAV_ROTARY_HOSTILE;
+		default:
+			return Quadcopter.SIDC_UAV_ROTARY_UNKOWN;
+		}
+	}
 	
 }

@@ -27,37 +27,30 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.render;
+package com.cfar.swim.worldwind.weather;
 
-import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.util.Depictable;
-import com.cfar.swim.worldwind.util.Enableable;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
+import com.cfar.swim.worldwind.util.Depiction;
 
-import gov.nasa.worldwind.render.Renderable;
+import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.symbology.milstd2525.MilStd2525TacticalSymbol;
 
-/**
- * Describes an obstacle as a renderable (spatial aspect) with an associated
- * cost interval (temporal aspect).
- * 
- * @author Stephan Heinemann
- *
- */
-public interface Obstacle extends Renderable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
+public class TropicalCyclone extends ObstacleCylinder {
 
-	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
+	public static final String SIDC_WX_TC = "WAS-WSTSS-P----";
 	
-	/**
-	 * Gets the cost interval of this obstacle.
-	 * 
-	 * @return the cost interval of this obstacle
-	 */
-	public CostInterval getCostInterval();
+	public TropicalCyclone(LatLon location, double bottom, double top, double radius) {
+		super(location, bottom, top, radius);
+		this.depiction = new Depiction(new MilStd2525TacticalSymbol(TropicalCyclone.SIDC_WX_TC, this.getReferencePosition()));
+	}
 	
-	/**
-	 * Sets the cost interval of this obstacle.
-	 * 
-	 * @param costInterval the cost interval of this obstacle
-	 */
-	public void setCostInterval(CostInterval costInterval);
-	
+	public TropicalCyclone(ObstacleCylinder obstacleCylinder) {
+		super(
+			obstacleCylinder.getCenter(),
+			obstacleCylinder.getAltitudes()[0],
+			obstacleCylinder.getAltitudes()[1],
+			obstacleCylinder.getRadii()[1]);
+		this.depiction = new Depiction(new MilStd2525TacticalSymbol(TropicalCyclone.SIDC_WX_TC, this.getReferencePosition()));
+	}
+
 }
