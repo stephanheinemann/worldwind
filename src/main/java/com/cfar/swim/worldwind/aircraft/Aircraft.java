@@ -37,13 +37,16 @@ import gov.nasa.worldwind.symbology.milstd2525.MilStd2525Constants;
 
 public abstract class Aircraft extends ObstacleSphere {
 
-	// TODO: aggregate capabilities model
-	// TODO: call sign is included in cost interval
+	protected Capabilities capabilities = null;
 	
 	public Aircraft(Position center, double radius) {
 		super(center, radius);
 	}
 
+	public Capabilities getCapabilities() {
+		return this.capabilities;
+	}
+	
 	protected abstract String getSymbolIdentifier(CombatIdentification cid);
 	
 	protected Material getMaterial(CombatIdentification cid) {

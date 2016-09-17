@@ -34,6 +34,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -49,6 +50,7 @@ import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 
@@ -61,6 +63,8 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public class NonUniformCostIntervalGrid extends RegularGrid implements Environment {
 
+	// TODO: reconsider class hierarchy: Box -> RegularGrid -> CubicGrid -> PlanningGrid implements Environment
+	
 	/** the globe of this non-uniform cost interval grid */
 	private Globe globe = null;
 	
@@ -186,6 +190,94 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	}
 	
 	/**
+	 * Gets the eight corner positions in globe coordinates of this non-uniform
+	 * cost interval grid.
+	 *  
+	 * @return the eight corner positions in globe coordinates of this
+	 *         non-uniform cost interval grid if a globe has been set,
+	 *         null otherwise
+	 *         
+	 * @see Box#getCorners()
+	 */
+	public Position[] getCornerPositions() {
+		Position[] cornerPositions = null;
+		
+		if (null != globe) {
+			cornerPositions = new Position[8];
+			Vec4[] corners = this.getCorners();
+			for (int index = 0; index < 8; index++) {
+				cornerPositions[index] = this.globe.computePositionFromPoint(corners[index]);
+			}
+		}
+		
+		return cornerPositions;
+	}
+	
+	/**
+	 * Indicates whether or not a position in globe coordinates is a corner of
+	 * this non-uniform cost interval grid considering numerical inaccuracies.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is a corner of this non-uniform cost
+	 *         interval grid considering numerical inaccuracies, false otherwise
+	 * 
+	 * @see Box#isCorner(Vec4)
+	 */
+	public boolean isCorner(Position position) {
+		boolean isCorner = false;
+		
+		if (null != this.globe) {
+			isCorner = this.isCorner(this.globe.computePointFromPosition(position));
+		}
+		
+		return isCorner;
+	}
+	
+	/**
+	 * Indicates whether or not a position in globe coordinates is the center of
+	 * this non-uniform cost interval grid considering numerical inaccuracies.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is the center of this non-uniform cost
+	 *         interval grid considering numerical inaccuracies, false otherwise
+	 * 
+	 * @see Box#isCorner(Vec4)
+	 */
+	public boolean isCenter(Position position) {
+		boolean isCenter = false;
+		
+		if (null != this.globe) {
+			isCenter = this.isCenter(this.globe.computePointFromPosition(position));
+		}
+		
+		return isCenter;
+	}
+	
+	/**
+	 * Gets the neighbor corner positions of a specified corner position of this
+	 * non-uniform cost interval grid.
+	 * 
+	 * @param position the specified corner position
+	 * @return the neighbor corner positions of a the specified corner position
+	 *         if a corner position, null otherwise
+	 */
+	public Position[] getNeighborCorners(Position position) {
+		Position[] neighborCorners = null;
+		
+		if (null != this.globe) {
+			neighborCorners = new Position[3];
+			Vec4[] corners = this.getNeighborCorners(globe.computePointFromPosition(position));
+			neighborCorners[0] = this.globe.computePositionFromPoint(corners[0]);
+			neighborCorners[1] = this.globe.computePositionFromPoint(corners[1]);
+			neighborCorners[2] = this.globe.computePositionFromPoint(corners[2]);
+		}
+		
+		return neighborCorners;
+	}
+	
+	/**
 	 * Looks up the non-uniform cost interval grid cells (maximum eight)
 	 * containing a specified point in world model coordinates considering
 	 * numerical inaccuracies.
@@ -200,6 +292,27 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	@SuppressWarnings("unchecked")
 	public List<? extends NonUniformCostIntervalGrid> lookupCells(Vec4 modelPoint) {
 		return (List<NonUniformCostIntervalGrid>) super.lookupCells(modelPoint);
+	}
+	
+	/**
+	 * Looks up the non-uniform cost interval grid cells (maximum eight)
+	 * containing a specified position in globe coordinates considering
+	 * numerical inaccuracies.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the non-uniform cost interval grid cells contain the specified
+	 *         position if a globe has been set, null otherwise
+	 * 
+	 * @see RegularGrid#lookupCells(Vec4)
+	 */
+	@SuppressWarnings("unchecked")
+	public List<? extends NonUniformCostIntervalGrid> lookupCells(Position position) {
+		List<NonUniformCostIntervalGrid> cells = null;
+		if (null != this.globe) {
+			cells = (List<NonUniformCostIntervalGrid>) super.lookupCells(globe.computePointFromPosition(position));
+		}
+		return cells;
 	}
 	
 	/**
@@ -490,6 +603,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	// TODO: embedding should be a recursive operation starting at the root grid cell
 	// TODO: only if parent grid is affected, propagation to children will occur
 	// TODO: performance can be substantially improved by only considering relevant children for propagation
+	// TODO: maximum obstacle radius/extension can limit possible children.
 	
 	/**
 	 * Unembeds an obstacle from this non-uniform cost interval grid.
@@ -579,6 +693,54 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		super.removeChildren();
 		// remove affected children of all embeddings
 		this.affectedChildren.clear();
+	}
+	
+	public List<Environment> getChildren() {
+		List<Environment> children = new ArrayList<Environment>();
+		
+		if (this.hasChildren()) {
+			//...
+		}
+		
+		return children;
+	}
+	
+	public List<Environment> getNeighbors() {
+		List<Environment> neighbors = new ArrayList<Environment>();
+		
+		// only flat neighbors
+		// if a neighbor contains children, then planning has to be refined
+		// if planning is done via corners (not centers), then connecting
+		// grid cells are easily found
+		// TODO: parents should aggregate costs
+		
+		
+		
+		return neighbors;
+	}
+	
+	@Override
+	public List<Position> getNeighbors(Position position) {
+		List<Position> neighbors = null;
+		List<? extends NonUniformCostIntervalGrid> cells = this.lookupCells(position);
+		
+		// TODO: planning using positions and frequent coordinate transformations might be too expensive
+		
+		if (null != cells) {
+			if (1 == cells.size()) {
+				if (!cells.get(0).isCorner(position)) {
+					// start or goal position
+					neighbors = Arrays.asList(this.getCornerPositions());
+				} else {
+					// valid corner position of a single cell
+					neighbors = Arrays.asList(this.getNeighborCorners(position));
+				}
+			} else {
+				// valid corner position shared between cells
+			}
+		}
+		
+		return neighbors;
 	}
 	
 }

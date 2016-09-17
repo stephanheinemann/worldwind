@@ -41,6 +41,11 @@ import gov.nasa.worldwind.symbology.TacticalGraphicAttributes;
 import gov.nasa.worldwind.symbology.TacticalSymbol;
 import gov.nasa.worldwind.symbology.TacticalSymbolAttributes;
 
+/* TODO:
+ * Annotations and depictions should be instantiated only once per message and moved during time updates
+ * The same could apply to any entire obstacle being part of the same message
+ */
+
 public class Depiction implements Renderable {
 
 	private Renderable depiction = null;

@@ -44,7 +44,7 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
-import com.cfar.swim.worldwind.aircraft.Quadcopter;
+import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
 import com.cfar.swim.worldwind.javafx.SwimDataListView;
@@ -154,14 +154,14 @@ public class RegularGridTest {
             tcGrid.addChildren(tcGrid.getTLength() / 4.0);
             renderableLayer.addRenderable(tcGrid);
             
-            Quadcopter quadcopter = new Quadcopter(new Position(ts.getCentroid(), 50000), 5000, CombatIdentification.FRIEND);
-            quadcopter.setCostInterval(new CostInterval(
+            Iris iris = new Iris(new Position(ts.getCentroid(), 50000), 5000, CombatIdentification.FRIEND);
+            iris.setCostInterval(new CostInterval(
             				"Iris",
             				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
             				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
             				70));
-            quadcopter.getDepiction().setDesignation("Iris");
-            renderableLayer.addRenderable(quadcopter);
+            iris.getDepiction().setDesignation("Iris");
+            renderableLayer.addRenderable(iris);
             
             // TODO: add time slider with steps between min and max time (set using calender-like input)
             this.timePanel = new JFXPanel();

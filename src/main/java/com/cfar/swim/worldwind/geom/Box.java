@@ -43,6 +43,46 @@ import gov.nasa.worldwind.geom.Vec4;
 public class Box extends gov.nasa.worldwind.geom.Box {
 
 	/**
+	 * the bottom lower left corner index of this box
+	 */
+	public static final int CORNER_INDEX_BOTTOM_LOWER_LEFT = 0;
+	
+	/**
+	 * the bottom lower right corner index of this box
+	 */
+	public static final int CORNER_INDEX_BOTTOM_LOWER_RIGHT = 1;
+	
+	/**
+	 * the bottom upper right corner index of this box
+	 */
+	public static final int CORNER_INDEX_BOTTOM_UPPER_RIGHT = 2;
+	
+	/**
+	 * the bottom upper left corner index of this box
+	 */
+	public static final int CORNER_INDEX_BOTTOM_UPPER_LEFT = 3;
+	
+	/**
+	 * the top lower left corner index of this box
+	 */
+	public static final int CORNER_INDEX_TOP_LOWER_LEFT = 4;
+	
+	/**
+	 * the bottom lower right corner index of this box
+	 */
+	public static final int CORNER_INDEX_TOP_LOWER_RIGHT = 5;
+	
+	/**
+	 * the top upper right corner index of this box
+	 */
+	public static final int CORNER_INDEX_TOP_UPPER_RIGHT = 6;
+	
+	/**
+	 * the top upper left corner index of this box
+	 */
+	public static final int CORNER_INDEX_TOP_UPPER_LEFT = 7;
+	
+	/**
 	 * the epsilon used compensate for numerical inaccuracies
 	 */
 	protected static final double EPSILON = 1E-8;
@@ -105,6 +145,22 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
+	 * Indicates whether or not two vectors are equals considering numerical
+	 * inaccuracies.
+	 * 
+	 * @param u the first vector
+	 * @param v the second vector
+	 * @return true if two vectors are equals considering numerical inaccuracies,
+	 *         false otherwise
+	 */
+	protected static boolean equalsEpsilon(Vec4 u, Vec4 v) {
+		return Box.equalsEpsilon(u.x, v.x) &&
+				Box.equalsEpsilon(u.y, v.y) &&
+				Box.equalsEpsilon(u.z, v.z) &&
+				Box.equalsEpsilon(u.w, v.w);
+	}
+	
+	/**
 	 * Indicates whether or not a value lies is within a range considering
 	 * numerical inaccuracies.
 	 * 
@@ -117,6 +173,112 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 */
 	protected static boolean isInRangeEpsilon(double d, double l, double u) {
 		return ((l - EPSILON) <= d) && ((u + EPSILON) >= d);
+	}
+	
+	/**
+	 * Indicates whether or not a point in world model coordinates equals a
+	 * corner of this box considering numerical inaccuracies. 
+	 * 
+	 * @param point the point in world model coordinates
+	 * @return true if the point equals a corner of this box considering
+	 *         numerical inaccuracies, false otherwise
+	 */
+	public boolean isCorner(Vec4 point) {
+		boolean isCorner = false;
+		
+		for (Vec4 corner : this.getCorners()) {
+			if (Box.equalsEpsilon(point, corner)) {
+				isCorner = true;
+				break;
+			}
+		}
+		
+		return isCorner;
+	}
+	
+	/**
+	 * Indicates whether or not a point in world model coordinates equals the
+	 * center of this box considering numerical inaccuracies.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @return true if the point equals the center of this box considering
+	 *         numerical inaccuracies, false otherwise
+	 */
+	public boolean isCenter(Vec4 point) {
+		return Box.equalsEpsilon(point, this.getCenter());
+	}
+	
+	/**
+	 * Gets the corner index of a specified corner.
+	 * 
+	 * @param corner the corner
+	 * @return the corner index of the corner if a corner,
+	 *         -1 otherwise
+	 */
+	public int getCornerIndex(Vec4 corner) {
+		int cornerIndex = -1;
+		Vec4[] corners = this.getCorners();
+		
+		for (int index = 0; index < 8; index++) {
+			if (Box.equalsEpsilon(corner, corners[index])) {
+				cornerIndex = index;
+				break;
+			}
+		}
+		
+		return cornerIndex;
+	}
+	
+	/**
+	 * Gets the neighbor corners of a specified corner of this box.
+	 * 
+	 * @param corner the corner of this box
+	 * @return the neighbor corners of the corner if a corner,
+	 *         null otherwise
+	 */
+	public Vec4[] getNeighborCorners(Vec4 corner) {
+		Vec4[] neighborCorners = null;
+		Vec4[] corners = this.getCorners();
+		int cornerIndex = this.getCornerIndex(corner);
+		
+		if ((cornerIndex >= 0) && cornerIndex < corners.length) {
+			neighborCorners = new Vec4[3];
+			if (Box.CORNER_INDEX_BOTTOM_LOWER_LEFT == cornerIndex) {
+				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT];
+				neighborCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_LEFT];
+				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_LOWER_LEFT];
+			} else if (Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT == cornerIndex) {
+				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+				neighborCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_RIGHT];
+				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_LOWER_RIGHT];
+			} else if (Box.CORNER_INDEX_BOTTOM_UPPER_RIGHT == cornerIndex) {
+				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT];
+				neighborCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_LEFT];
+				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_UPPER_RIGHT];
+			} else if (Box.CORNER_INDEX_BOTTOM_UPPER_LEFT == cornerIndex) {
+				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+				neighborCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_RIGHT];
+				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_UPPER_LEFT];
+			} else if (Box.CORNER_INDEX_TOP_LOWER_LEFT == cornerIndex) {
+				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+				neighborCorners[1] = corners[Box.CORNER_INDEX_TOP_LOWER_RIGHT];
+				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_UPPER_LEFT];
+			} else if (Box.CORNER_INDEX_TOP_LOWER_RIGHT == cornerIndex) {
+				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT];
+				neighborCorners[1] = corners[Box.CORNER_INDEX_TOP_LOWER_LEFT];
+				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_UPPER_RIGHT];
+			} else if (Box.CORNER_INDEX_TOP_UPPER_RIGHT == cornerIndex) {
+				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_RIGHT];
+				neighborCorners[1] = corners[Box.CORNER_INDEX_TOP_LOWER_RIGHT];
+				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_UPPER_LEFT];
+			} else if (Box.CORNER_INDEX_TOP_UPPER_LEFT == cornerIndex) {
+				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_LEFT];
+				neighborCorners[1] = corners[Box.CORNER_INDEX_TOP_LOWER_LEFT];
+				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_UPPER_RIGHT];
+			}
+		}
+		
+		return neighborCorners;
 	}
 	
 	/**

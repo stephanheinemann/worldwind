@@ -29,13 +29,21 @@
  */
 package com.cfar.swim.worldwind.ai;
 
+import java.util.List;
+
+import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.planning.Environment;
+
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
 
 public interface Planner {
 
-	public Path plan(Globe globe, Position start, Position goal);
+	public Aircraft getAircraft();
+	public Environment getEnvironment();
+	
+	public Path plan(Position start, Position goal);
+	public Path plan(Position start, Position goal, List<Position> pois);
 
 	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions
@@ -46,4 +54,7 @@ public interface Planner {
 	// TODO: think about interaction (airspace or obstacle could provide CPDLC interface)
 	// TODO: changing altitudes may require CPDLC clearances depending on airspace
 	// TODO: computed paths can be associated with symbols (e.g. minimum risk path)
+
+	// TODO: think about required time constraints for waypoints (4D positions)
+	// TODO: higher costs might be acceptable to meet timing constraints
 }

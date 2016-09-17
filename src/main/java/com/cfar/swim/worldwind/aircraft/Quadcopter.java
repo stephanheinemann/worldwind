@@ -35,7 +35,7 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.symbology.SymbologyConstants;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525TacticalSymbol;
 
-public class Quadcopter extends Aircraft {
+public abstract class Quadcopter extends Aircraft {
 
 	public static final String SIDC_UAV_ROTARY_UNKOWN = "SUGPUCVUR------";
 	public static final String SIDC_UAV_ROTARY_FRIEND = "SFGPUCVUR------";

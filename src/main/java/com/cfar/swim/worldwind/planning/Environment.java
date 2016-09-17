@@ -37,6 +37,7 @@ import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Renderable;
 
@@ -47,7 +48,7 @@ import gov.nasa.worldwind.render.Renderable;
  * @author Stephan Heinemann
  *
  */
-public interface Environment extends Renderable, TimedRenderable, ThresholdRenderable {
+public interface Environment extends TimedRenderable, ThresholdRenderable {
 	
 	/**
 	 * Gets the globe of this environment.
@@ -62,6 +63,29 @@ public interface Environment extends Renderable, TimedRenderable, ThresholdRende
 	 * @param globe the globe of this environment
 	 */
 	public void setGlobe(Globe globe);
+	
+	/**
+	 * Gets the neighbors of this environment.
+	 * 
+	 * @return the neighbors of this environment
+	 */
+	public List<Environment> getNeighbors();
+	
+	/**
+	 * Gets the children of this environment.
+	 * 
+	 * @return the children of this environment
+	 */
+	public List<Environment> getChildren();
+	
+	/**
+	 * Gets the neighbor positions of a position in this environment.
+	 * 
+	 * @param position the position in this environment
+	 * 
+	 * @return the neighbor positions of the position
+	 */
+	public List<Position> getNeighbors(Position position);
 	
 	/**
 	 * Adds a cost interval to this environment.

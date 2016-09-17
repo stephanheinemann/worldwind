@@ -47,7 +47,14 @@ import gov.nasa.worldwind.util.OGLStackHandler;
  * 
  */
 public class RegularGrid extends Box {
-
+	
+	// TODO: parent (1) and neighbor (26) references
+	
+	/**
+	 * the parent of this regular grid
+	 */
+	protected RegularGrid parent = null;
+	
 	/**
 	 * the children of this regular grid
 	 */
@@ -190,6 +197,7 @@ public class RegularGrid extends Box {
 							sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s + 1)),
 							tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t)),
 							tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t + 1)));
+					this.cells[r][s][t].parent = this;
 				}
 			}
 		}
@@ -330,6 +338,25 @@ public class RegularGrid extends Box {
 		}
 		
 		return child;
+	}
+	
+	/**
+	 * Indicates whether or not this regular grid has a parent.
+	 * 
+	 * @return true if this regular grid has a parent, false otherwise
+	 */
+	public boolean hasParent() {
+		return (null != this.parent);
+	}
+	
+	/**
+	 * Gets the parent of this regular grid if present.
+	 * 
+	 * @return the parent of this regular grid if present,
+	 *         null otherwise
+	 */
+	public RegularGrid getParent() {
+		return this.parent;
 	}
 	
 	/**
