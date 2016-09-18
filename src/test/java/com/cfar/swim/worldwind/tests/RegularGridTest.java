@@ -37,6 +37,7 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import javax.xml.bind.JAXBException;
 
@@ -59,6 +60,8 @@ import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
+import gov.nasa.worldwind.globes.Earth;
+import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import javafx.embed.swing.JFXPanel;
@@ -74,6 +77,7 @@ public class RegularGridTest {
 	static NonUniformCostIntervalGrid largeGrid;
 	static NonUniformCostIntervalGrid tsGrid;
 	static NonUniformCostIntervalGrid tcGrid;
+	static Iris iris;
 	
 	// dirty, dirty, dirty...
 	static SwimDataListView list;
@@ -154,7 +158,7 @@ public class RegularGridTest {
             tcGrid.addChildren(tcGrid.getTLength() / 4.0);
             renderableLayer.addRenderable(tcGrid);
             
-            Iris iris = new Iris(new Position(ts.getCentroid(), 50000), 5000, CombatIdentification.FRIEND);
+            iris = new Iris(new Position(ts.getCentroid(), 50000), 5000, CombatIdentification.FRIEND);
             iris.setCostInterval(new CostInterval(
             				"Iris",
             				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
@@ -236,6 +240,19 @@ public class RegularGridTest {
 		list.registerDataActivationListerner(largeUpdater);
 		list.registerDataActivationListerner(tsUpdater);
 		list.registerDataActivationListerner(tcUpdater);
+		
+		Set<Position> neighbors = tsGrid.getNeighbors(iris.getReferencePosition());
+        System.out.println("neighbors = " + neighbors);
+        for (Position neighbor : neighbors) {
+        	Iris neighborIris = new Iris(neighbor, 5000, CombatIdentification.HOSTILE);
+        	neighborIris.setCostInterval(new CostInterval(
+    				"Iris N",
+    				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
+    				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
+    				70));
+        	Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
+        	((RenderableLayer) layer).addRenderable(neighborIris);
+        }
 		
 		while (frame.isVisible()) {
 			Thread.sleep(1000);

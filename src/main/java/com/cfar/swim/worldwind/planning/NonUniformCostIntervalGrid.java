@@ -34,7 +34,6 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -260,8 +259,11 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * non-uniform cost interval grid.
 	 * 
 	 * @param position the specified corner position
+	 * 
 	 * @return the neighbor corner positions of a the specified corner position
 	 *         if a corner position, null otherwise
+	 *         
+	 * @see Box#getNeighborCorners(Vec4)
 	 */
 	public Position[] getNeighborCorners(Position position) {
 		Position[] neighborCorners = null;
@@ -290,8 +292,8 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public List<? extends NonUniformCostIntervalGrid> lookupCells(Vec4 modelPoint) {
-		return (List<NonUniformCostIntervalGrid>) super.lookupCells(modelPoint);
+	public Set<? extends NonUniformCostIntervalGrid> lookupCells(Vec4 modelPoint) {
+		return (Set<NonUniformCostIntervalGrid>) super.lookupCells(modelPoint);
 	}
 	
 	/**
@@ -307,11 +309,13 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * @see RegularGrid#lookupCells(Vec4)
 	 */
 	@SuppressWarnings("unchecked")
-	public List<? extends NonUniformCostIntervalGrid> lookupCells(Position position) {
-		List<NonUniformCostIntervalGrid> cells = null;
+	public Set<? extends NonUniformCostIntervalGrid> lookupCells(Position position) {
+		Set<NonUniformCostIntervalGrid> cells = null;
+		
 		if (null != this.globe) {
-			cells = (List<NonUniformCostIntervalGrid>) super.lookupCells(globe.computePointFromPosition(position));
+			cells = (Set<NonUniformCostIntervalGrid>) super.lookupCells(globe.computePointFromPosition(position));
 		}
+		
 		return cells;
 	}
 	
@@ -695,8 +699,9 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		this.affectedChildren.clear();
 	}
 	
-	public List<Environment> getChildren() {
-		List<Environment> children = new ArrayList<Environment>();
+	/*
+	public Set<Environment> getChildren() {
+		Set<Environment> children = new HashSet<Environment>();
 		
 		if (this.hasChildren()) {
 			//...
@@ -705,8 +710,8 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		return children;
 	}
 	
-	public List<Environment> getNeighbors() {
-		List<Environment> neighbors = new ArrayList<Environment>();
+	public Set<Environment> getNeighbors() {
+		Set<Environment> neighbors = new HashSet<Environment>();
 		
 		// only flat neighbors
 		// if a neighbor contains children, then planning has to be refined
@@ -714,29 +719,22 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		// grid cells are easily found
 		// TODO: parents should aggregate costs
 		
-		
-		
 		return neighbors;
 	}
+	*/
 	
 	@Override
-	public List<Position> getNeighbors(Position position) {
-		List<Position> neighbors = null;
-		List<? extends NonUniformCostIntervalGrid> cells = this.lookupCells(position);
+	public Set<Position> getNeighbors(Position position) {
+		Set<Position> neighbors = new HashSet<Position>(6);
 		
-		// TODO: planning using positions and frequent coordinate transformations might be too expensive
+		// TODO: coordinate transformations might be too expensive for planning
+		// TODO: planning could be based on Vec4 with a final transformation of the route
 		
-		if (null != cells) {
-			if (1 == cells.size()) {
-				if (!cells.get(0).isCorner(position)) {
-					// start or goal position
-					neighbors = Arrays.asList(this.getCornerPositions());
-				} else {
-					// valid corner position of a single cell
-					neighbors = Arrays.asList(this.getNeighborCorners(position));
-				}
-			} else {
-				// valid corner position shared between cells
+		if (null != this.globe) {
+			System.out.println("computing neighbors of " + position);
+			Set<Vec4> neighborPoints = this.getNeighbors(this.globe.computePointFromPosition(position));
+			for (Vec4 neighbor : neighborPoints) {
+				neighbors.add(this.globe.computePositionFromPoint(neighbor));
 			}
 		}
 		

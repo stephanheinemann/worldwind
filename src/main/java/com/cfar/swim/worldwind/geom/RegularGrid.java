@@ -29,8 +29,9 @@
  */
 package com.cfar.swim.worldwind.geom;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.media.opengl.GL2;
 
@@ -47,8 +48,6 @@ import gov.nasa.worldwind.util.OGLStackHandler;
  * 
  */
 public class RegularGrid extends Box {
-	
-	// TODO: parent (1) and neighbor (26) references
 	
 	/**
 	 * the parent of this regular grid
@@ -404,8 +403,8 @@ public class RegularGrid extends Box {
 	 * 
 	 * @return the regular grid cells containing the specified point
 	 */
-	public List<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
-		List<RegularGrid> lookedUpCells = new ArrayList<RegularGrid>(8);
+	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
+		Set<RegularGrid> lookedUpCells = new HashSet<RegularGrid>(8);
 		
 		// transform point to cell (body) coordinates
 		Vec4 cellPoint = this.transformModelToBoxOrigin(modelPoint);
@@ -436,6 +435,58 @@ public class RegularGrid extends Box {
 		}
 		
 		return lookedUpCells;
+	}
+	
+	/**
+	 * Gets the neighbors of this regular grid.
+	 * 
+	 * @return the neighbors of this regular grid
+	 */
+	public Set<? extends RegularGrid> getNeighbors() {
+		Set<RegularGrid> neighbors = new HashSet<RegularGrid>(26);
+		
+		if (this.hasParent()) {
+			Vec4[] corners = this.getCorners();
+			for (Vec4 corner : corners) {
+				neighbors.addAll(this.parent.lookupCells(corner));
+			}
+		}
+		
+		return neighbors;
+	}
+	
+	/**
+	 * Gets the neighbors of a point in this regular grid.
+	 * 
+	 * @param point the point in this regular grid
+	 * 
+	 * @return the neighbors of the point in this regular grid 
+	 */
+	public Set<Vec4> getNeighbors(Vec4 point) {
+		Set<Vec4> neighbors = new HashSet<Vec4>(6);
+		Set<? extends RegularGrid> cells = this.lookupCells(point);
+		
+		System.out.println("computing neighbors of " + point);
+		System.out.println("found cells " + cells.size());
+		
+		if (1 == cells.size()) {
+			// point is within cell or an isolated corner
+			RegularGrid cell = cells.iterator().next();
+			if (!cell.isCorner(point)) {
+				// point within cell
+				neighbors.addAll(Arrays.asList(cell.getCorners()));
+			} else {
+				// isolated corner
+				neighbors.addAll(Arrays.asList(cell.getNeighborCorners(point)));
+			}
+		} else {
+			// point is a shared corner
+			while (cells.iterator().hasNext()) {
+				neighbors.addAll(Arrays.asList(cells.iterator().next().getNeighborCorners(point)));
+			}
+		}
+	
+		return neighbors;
 	}
 	
 	/**

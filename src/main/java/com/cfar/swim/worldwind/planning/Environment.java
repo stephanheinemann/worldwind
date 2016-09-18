@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.planning;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.List;
+import java.util.Set;
 
 import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
@@ -39,7 +40,6 @@ import com.cfar.swim.worldwind.render.TimedRenderable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
-import gov.nasa.worldwind.render.Renderable;
 
 /**
  * Describes an environment as a renderable on a globe (spatial aspect) with
@@ -69,14 +69,14 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * 
 	 * @return the neighbors of this environment
 	 */
-	public List<Environment> getNeighbors();
+	//public Set<Environment> getNeighbors();
 	
 	/**
 	 * Gets the children of this environment.
 	 * 
 	 * @return the children of this environment
 	 */
-	public List<Environment> getChildren();
+	//public Set<Environment> getChildren();
 	
 	/**
 	 * Gets the neighbor positions of a position in this environment.
@@ -85,7 +85,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * 
 	 * @return the neighbor positions of the position
 	 */
-	public List<Position> getNeighbors(Position position);
+	public Set<Position> getNeighbors(Position position);
 	
 	/**
 	 * Adds a cost interval to this environment.

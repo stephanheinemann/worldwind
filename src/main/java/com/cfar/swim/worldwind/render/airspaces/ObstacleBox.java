@@ -51,6 +51,8 @@ public class ObstacleBox extends Box implements Obstacle {
 	 * Overlapping positive and negative cost airspaces could better indicate suitable landing and descent areas.
 	 * Track airspaces could be useful too.
 	 * PRM would require an IFR/VFR roadmap.
+	 * 
+	 * TODO: consider airspace Layer class
 	 */
 	
 	public ObstacleBox(

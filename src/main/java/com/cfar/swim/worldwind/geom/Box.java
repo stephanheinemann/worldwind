@@ -154,6 +154,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 *         false otherwise
 	 */
 	protected static boolean equalsEpsilon(Vec4 u, Vec4 v) {
+		// TODO: NumericVec4.equals()
 		return Box.equalsEpsilon(u.x, v.x) &&
 				Box.equalsEpsilon(u.y, v.y) &&
 				Box.equalsEpsilon(u.z, v.z) &&
