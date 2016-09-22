@@ -188,6 +188,7 @@ public class RegularGrid extends Box {
 				for (int t = 0; t < tCells; t++) {
 					// translate the left-most planes of each axis to form the new
 					// left- and right-most planes of each axis for each child cell
+					// TODO: R >= S >= T (Note: No check is made to ensure the order of the face locations.)
 					this.cells[r][s][t] = this.newInstance(
 							axes,
 							rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r)),
@@ -422,7 +423,20 @@ public class RegularGrid extends Box {
 							if (s != -1) {
 								for (int t : tCellIndices) {
 									if (t != -1) {
+										// TODO: cells seem to be oriented arbitrarily although constructed consistently
+										int ri = this.cells.length -1 - r;
+										int si = this.cells[0].length -1 - s;
+										int ti = this.cells[0][0].length - 1 - t;
+										
+										// TODO: checking containment for all orientation possibilities is not a nice solution
 										lookedUpCells.addAll(this.cells[r][s][t].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[r][s][ti].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[r][si][t].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[r][si][ti].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[ri][s][t].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[ri][s][ti].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[ri][si][t].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[ri][si][ti].lookupCells(modelPoint));
 									}
 								}
 							}
@@ -450,6 +464,7 @@ public class RegularGrid extends Box {
 			for (Vec4 corner : corners) {
 				neighbors.addAll(this.parent.lookupCells(corner));
 			}
+			neighbors.remove(this);
 		}
 		
 		return neighbors;
@@ -465,9 +480,6 @@ public class RegularGrid extends Box {
 	public Set<Vec4> getNeighbors(Vec4 point) {
 		Set<Vec4> neighbors = new HashSet<Vec4>(6);
 		Set<? extends RegularGrid> cells = this.lookupCells(point);
-		
-		System.out.println("computing neighbors of " + point);
-		System.out.println("found cells " + cells.size());
 		
 		if (1 == cells.size()) {
 			// point is within cell or an isolated corner

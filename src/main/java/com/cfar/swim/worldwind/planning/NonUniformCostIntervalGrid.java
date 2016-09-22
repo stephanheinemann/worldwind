@@ -313,7 +313,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		Set<NonUniformCostIntervalGrid> cells = null;
 		
 		if (null != this.globe) {
-			cells = (Set<NonUniformCostIntervalGrid>) super.lookupCells(globe.computePointFromPosition(position));
+			cells = (Set<NonUniformCostIntervalGrid>) super.lookupCells(this.globe.computePointFromPosition(position));
 		}
 		
 		return cells;
@@ -731,7 +731,6 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		// TODO: planning could be based on Vec4 with a final transformation of the route
 		
 		if (null != this.globe) {
-			System.out.println("computing neighbors of " + position);
 			Set<Vec4> neighborPoints = this.getNeighbors(this.globe.computePointFromPosition(position));
 			for (Vec4 neighbor : neighborPoints) {
 				neighbors.add(this.globe.computePositionFromPoint(neighbor));

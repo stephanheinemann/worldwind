@@ -154,7 +154,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 *         false otherwise
 	 */
 	protected static boolean equalsEpsilon(Vec4 u, Vec4 v) {
-		// TODO: NumericVec4.equals()
+		// TODO: data type should features its own methods, e.g., NumVec4.equals()
 		return Box.equalsEpsilon(u.x, v.x) &&
 				Box.equalsEpsilon(u.y, v.y) &&
 				Box.equalsEpsilon(u.z, v.z) &&
@@ -291,10 +291,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return the box vector
 	 */
 	public Vec4 transformModelToBoxOrigin(Vec4 modelPoint) {
-		Vec4[] unitAxes = {ru, su, tu};
-		Vec4 origin = this.getCorners()[0];
-		Matrix transformMatrix = Matrix.fromLocalOrientation(origin , unitAxes).getInverse();
-		return modelPoint.transformBy4(transformMatrix);
+		// TODO: box orientation seems to be arbitrary and requires corner point calculation instead of direct transformation
+		Vec4 localPoint = this.transformModelToBoxCenter(modelPoint);
+		Vec4 halfDiagonal = (new Vec4(this.rLength, this.sLength, this.tLength)).multiply3(0.5);
+		return localPoint.add3(halfDiagonal);
 	}
 	
 	/**
@@ -305,7 +305,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return the box vector
 	 */
 	public Vec4 transformModelToBoxCenter(Vec4 modelPoint) {
-		Vec4[] unitAxes = {ru, su, tu};
+		Vec4[] unitAxes = {this.ru, this.su, this.tu};
 		Vec4 origin = this.getCenter();
 		Matrix transformMatrix = Matrix.fromLocalOrientation(origin , unitAxes).getInverse();
 		return modelPoint.transformBy4(transformMatrix);

@@ -52,14 +52,18 @@ import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
 import gov.nasa.worldwind.BasicModel;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
+import gov.nasa.worldwind.geom.Sphere;
+import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
@@ -132,7 +136,7 @@ public class RegularGridTest {
             largeGrid.addChildren(0, 9, 1, 2, 2, 2);
             largeGrid.addChildren(2, 9, 1, 2, 2, 2);
             //largeGrid.setGlobe(model.getGlobe());
-            renderableLayer.addRenderable(largeGrid);
+            //renderableLayer.addRenderable(largeGrid);
             
             Sector ts = new Sector(
                 	Angle.fromDegrees(50.0),
@@ -144,7 +148,6 @@ public class RegularGridTest {
             tsGrid.setThreshold(0);
             tsGrid.addChildren(tsGrid.getTLength() / 4.0);
             tsGrid.addChildren(3, 3, 0, 2, 2, 2);
-            //tsGrid.setGlobe(model.getGlobe());
             renderableLayer.addRenderable(tsGrid);
             
             Sector tc = new Sector(
@@ -241,16 +244,44 @@ public class RegularGridTest {
 		list.registerDataActivationListerner(tsUpdater);
 		list.registerDataActivationListerner(tcUpdater);
 		
+		// TODO: this seems to be the expected rst versus xyz bug
+		System.out.println("iris location " + iris.getLocation());
+		System.out.println("checking position " + iris.getReferencePosition());
+		Vec4 point = tsGrid.getGlobe().computePointFromPosition(iris.getReferencePosition());
+		System.out.println("cartesian point " + point);
+		System.out.println("grid contains point " + tsGrid.contains(point));
+		System.out.println("grid contains center " + tsGrid.contains(tsGrid.getCenter()));
+		System.out.println("grid contains corner0 " + tsGrid.contains(tsGrid.getCorners()[0]));
+		System.out.println("grid contains corner1 " + tsGrid.contains(tsGrid.getCorners()[1]));
+		System.out.println("grid contains corner2 " + tsGrid.contains(tsGrid.getCorners()[2]));
+		System.out.println("grid contains corner3 " + tsGrid.contains(tsGrid.getCorners()[3]));
+		System.out.println("grid contains corner4 " + tsGrid.contains(tsGrid.getCorners()[4]));
+		System.out.println("grid contains corner5 " + tsGrid.contains(tsGrid.getCorners()[5]));
+		System.out.println("grid contains corner6 " + tsGrid.contains(tsGrid.getCorners()[6]));
+		System.out.println("grid contains corner7 " + tsGrid.contains(tsGrid.getCorners()[7]));
+		Vec4 zero = tsGrid.getGlobe().computePointFromPosition(new Position(LatLon.fromDegrees(0, 0), 0));
+		System.out.println("grid contains zero " + tsGrid.contains(zero));
+		
+		System.out.println("grid contains center " + tcGrid.contains(tcGrid.getCenter()));
+		System.out.println("grid contains center " + largeGrid.contains(largeGrid.getCenter()));
+		
+		Sphere sphere = new Sphere(point, 5000);
+		Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
+    	((RenderableLayer) layer).addRenderable(sphere);
+		
+		Set<? extends NonUniformCostIntervalGrid> cells = tsGrid.lookupCells(iris.getReferencePosition());
+		System.out.println("found iris cells " + cells.size());
+		
 		Set<Position> neighbors = tsGrid.getNeighbors(iris.getReferencePosition());
         System.out.println("neighbors = " + neighbors);
         for (Position neighbor : neighbors) {
-        	Iris neighborIris = new Iris(neighbor, 5000, CombatIdentification.HOSTILE);
+        	ObstacleSphere neighborIris = new ObstacleSphere(neighbor, 2500);
         	neighborIris.setCostInterval(new CostInterval(
     				"Iris N",
     				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
     				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
     				70));
-        	Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
+        	//Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
         	((RenderableLayer) layer).addRenderable(neighborIris);
         }
 		
