@@ -272,18 +272,26 @@ public class RegularGridTest {
 		Set<? extends NonUniformCostIntervalGrid> cells = tsGrid.lookupCells(iris.getReferencePosition());
 		System.out.println("found iris cells " + cells.size());
 		
-		Set<Position> neighbors = tsGrid.getNeighbors(iris.getReferencePosition());
-        System.out.println("neighbors = " + neighbors);
+		try {
+		//Set<Position> neighbors = tsGrid.getNeighbors(iris.getReferencePosition());
+		//Set<Position> neighbors = tsGrid.getNeighbors(model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 2, 2).getBottomCenter()));
+		Set<Position> neighbors = tsGrid.getNeighbors(model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 2, 2).getCorners()[0]));
+		
+		System.out.println("neighbors = " + neighbors);
         for (Position neighbor : neighbors) {
         	ObstacleSphere neighborIris = new ObstacleSphere(neighbor, 2500);
         	neighborIris.setCostInterval(new CostInterval(
-    				"Iris N",
+    				"Neighbor",
     				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
     				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
     				70));
         	//Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
         	((RenderableLayer) layer).addRenderable(neighborIris);
         }
+        
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		
 		while (frame.isVisible()) {
 			Thread.sleep(1000);

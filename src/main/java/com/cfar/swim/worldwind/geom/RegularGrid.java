@@ -399,19 +399,36 @@ public class RegularGrid extends Box {
 	/**
 	 * Looks up the regular grid cells (maximum eight) containing a specified
 	 * point in world model coordinates considering numerical inaccuracies.
+	 * Cells are looked up recursively and only non-parent cells are
+	 * considered.
 	 * 
 	 * @param modelPoint the point in world model coordinates
+	 * @return the regular non-parent grid cells containing the specified point
+	 */
+	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
+		return this.lookupCells(modelPoint, -1);
+	}
+	
+	/**
+	 * Looks up the regular grid cells (maximum eight) containing a specified
+	 * point in world model coordinates considering numerical inaccuracies.
+	 * Cells are looked up recursively to a specified depth level. A zero depth
+	 * does not consider any children. A negative depth performs a full
+	 * recursive search and considers non-parent cells only. 
+	 * 
+	 * @param modelPoint the point in world model coordinates
+	 * @param depth the hierarchical depth of the lookup operation
 	 * 
 	 * @return the regular grid cells containing the specified point
 	 */
-	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
+	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint, int depth) {
 		Set<RegularGrid> lookedUpCells = new HashSet<RegularGrid>(8);
 		
 		// transform point to cell (body) coordinates
 		Vec4 cellPoint = this.transformModelToBoxOrigin(modelPoint);
 		
 		if (this.containsV(cellPoint)) {
-			if (this.hasChildren()) {
+			if (this.hasChildren() && (0 != depth)) {
 				// lookup containing cells using the cell (body) coordinates
 				int[] rCellIndices = RegularGrid.getCellIndices(cellPoint.x, this.rLength, this.cells.length);
 				int[] sCellIndices = RegularGrid.getCellIndices(cellPoint.y, this.sLength, this.cells[0].length);
@@ -429,14 +446,14 @@ public class RegularGrid extends Box {
 										int ti = this.cells[0][0].length - 1 - t;
 										
 										// TODO: checking containment for all orientation possibilities is not a nice solution
-										lookedUpCells.addAll(this.cells[r][s][t].lookupCells(modelPoint));
-										lookedUpCells.addAll(this.cells[r][s][ti].lookupCells(modelPoint));
-										lookedUpCells.addAll(this.cells[r][si][t].lookupCells(modelPoint));
-										lookedUpCells.addAll(this.cells[r][si][ti].lookupCells(modelPoint));
-										lookedUpCells.addAll(this.cells[ri][s][t].lookupCells(modelPoint));
-										lookedUpCells.addAll(this.cells[ri][s][ti].lookupCells(modelPoint));
-										lookedUpCells.addAll(this.cells[ri][si][t].lookupCells(modelPoint));
-										lookedUpCells.addAll(this.cells[ri][si][ti].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[r][s][t].lookupCells(modelPoint, depth - 1));
+										lookedUpCells.addAll(this.cells[r][s][ti].lookupCells(modelPoint, depth - 1));
+										lookedUpCells.addAll(this.cells[r][si][t].lookupCells(modelPoint, depth - 1));
+										lookedUpCells.addAll(this.cells[r][si][ti].lookupCells(modelPoint, depth - 1));
+										lookedUpCells.addAll(this.cells[ri][s][t].lookupCells(modelPoint, depth - 1));
+										lookedUpCells.addAll(this.cells[ri][s][ti].lookupCells(modelPoint, depth - 1));
+										lookedUpCells.addAll(this.cells[ri][si][t].lookupCells(modelPoint, depth - 1));
+										lookedUpCells.addAll(this.cells[ri][si][ti].lookupCells(modelPoint, depth - 1));
 									}
 								}
 							}
@@ -470,34 +487,46 @@ public class RegularGrid extends Box {
 		return neighbors;
 	}
 	
+	// TODO: public Set<? extends RegularGrid> getNeighbors(int depth)
+	
 	/**
-	 * Gets the neighbors of a point in this regular grid.
+	 * Gets the neighbors of a point in this regular grid considering
+	 * its direct children only if any. A full recursive search is
+	 * performed considering non-parent cells only.
 	 * 
-	 * @param point the point in this regular grid
+	 * @param point the point in world model coordinates
+	 * @return the neighbors of the point in this regular grid
+	 */
+	public Set<Vec4> getNeighbors(Vec4 point) {
+		return this.getNeighbors(point, -1);
+	}
+	
+	/**
+	 * Gets the neighbors of a point in this regular grid taking a specified
+	 * hierarchical depth into account. A zero depth does not consider any
+	 * children. A negative depth performs a full recursive search and
+	 * considers non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth for finding neighbors
 	 * 
 	 * @return the neighbors of the point in this regular grid 
 	 */
-	public Set<Vec4> getNeighbors(Vec4 point) {
+	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
 		Set<Vec4> neighbors = new HashSet<Vec4>(6);
-		Set<? extends RegularGrid> cells = this.lookupCells(point);
+		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
 		
-		if (1 == cells.size()) {
-			// point is within cell or an isolated corner
-			RegularGrid cell = cells.iterator().next();
-			if (!cell.isCorner(point)) {
-				// point within cell
-				neighbors.addAll(Arrays.asList(cell.getCorners()));
-			} else {
-				// isolated corner
+		for (RegularGrid cell : cells) {
+			if (cell.isCorner(point)) {
+				// point is a corner of the cell
 				neighbors.addAll(Arrays.asList(cell.getNeighborCorners(point)));
-			}
-		} else {
-			// point is a shared corner
-			while (cells.iterator().hasNext()) {
-				neighbors.addAll(Arrays.asList(cells.iterator().next().getNeighborCorners(point)));
+			} else {
+				// point within cell, on edge or plane (consider all corners as neighbors)
+				// TODO: possibly only consider adjacent corners of edges and planes
+				neighbors.addAll(Arrays.asList(cell.getCorners()));
 			}
 		}
-	
+		
 		return neighbors;
 	}
 	

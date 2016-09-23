@@ -42,8 +42,8 @@ public interface Planner {
 	public Aircraft getAircraft();
 	public Environment getEnvironment();
 	
-	public Path plan(Position start, Position goal);
-	public Path plan(Position start, Position goal, List<Position> pois);
+	public Path plan(Position origin, Position destination);
+	public Path plan(Position origin, Position destination, List<Position> waypoints);
 
 	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions
