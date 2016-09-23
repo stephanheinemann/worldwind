@@ -46,6 +46,7 @@ import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
 import com.cfar.swim.worldwind.javafx.SwimDataListView;
@@ -287,6 +288,16 @@ public class RegularGridTest {
     				70));
         	//Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
         	((RenderableLayer) layer).addRenderable(neighborIris);
+        }
+        
+        NonUniformCostIntervalGrid irisCell = tsGrid.lookupCells(iris.getReferencePosition()).iterator().next();
+        Set<? extends RegularGrid> irisNeighbors = irisCell.getNeighbors();
+        for (RegularGrid irisNeighbor : irisNeighbors) {
+        	((NonUniformCostIntervalGrid) irisNeighbor).addCostInterval(new CostInterval(
+    				"neighbor cell",
+    				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
+    				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
+    				50));
         }
         
 		} catch (Exception e) {

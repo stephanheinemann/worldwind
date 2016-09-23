@@ -360,6 +360,28 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
+	 * Gets all regular grids associated with this regular grid.
+	 * 
+	 * @return all regular grids associated with this regular grid
+	 */
+	public Set<? extends RegularGrid> getAll() {
+		Set<RegularGrid> all = new HashSet<RegularGrid>();
+		all.add(this);
+		
+		if (this.hasChildren()) {
+			for (int r = 0; r < this.cells.length; r++) {
+				for (int s = 0; s < this.cells[r].length; s++) {
+					for (int t = 0; t < this.cells[r][s].length; t++) {
+						all.addAll(this.cells[r][s][t].getAll());
+					}
+				}
+			}
+		}
+		
+		return all;
+	}
+	
+	/**
 	 * Gets the cell indices (maximum two) that are associated with child cells
 	 * along the specified axis parameters considering numerical inaccuracies.
 	 * 
@@ -469,25 +491,42 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Gets the neighbors of this regular grid.
+	 * Gets the neighbors of this regular grid performing a full recursive
+	 * search considering only non-parent neighbors.
+	 * 
+	 * @return the non-parent neighbors of this regular grid
+	 */
+	public Set<? extends RegularGrid> getNeighbors() {
+		return this.getNeighbors(-1);
+	}
+	
+	/**
+	 * Gets the neighbors of this regular grid taking a specified hierarchical
+	 * depth into account. A zero depth does not consider any neighboring
+	 * children. A negative depth performs a full recursive search and
+	 * considers non-parent neighbors only.
+	 * 
+	 * @param depth the hierarchical depth for finding neighbors
 	 * 
 	 * @return the neighbors of this regular grid
 	 */
-	public Set<? extends RegularGrid> getNeighbors() {
+	public Set<? extends RegularGrid> getNeighbors(int depth) {
 		Set<RegularGrid> neighbors = new HashSet<RegularGrid>(26);
 		
 		if (this.hasParent()) {
 			Vec4[] corners = this.getCorners();
-			for (Vec4 corner : corners) {
-				neighbors.addAll(this.parent.lookupCells(corner));
+			if (-1 == depth) {
+				depth--;
 			}
-			neighbors.remove(this);
+			for (Vec4 corner : corners) {
+				neighbors.addAll(this.parent.lookupCells(corner, depth + 1));
+			}
+			// TODO: possibly too expensive
+			neighbors.remove(this.getAll());
 		}
 		
 		return neighbors;
 	}
-	
-	// TODO: public Set<? extends RegularGrid> getNeighbors(int depth)
 	
 	/**
 	 * Gets the neighbors of a point in this regular grid considering
@@ -495,6 +534,7 @@ public class RegularGrid extends Box {
 	 * performed considering non-parent cells only.
 	 * 
 	 * @param point the point in world model coordinates
+	 * 
 	 * @return the neighbors of the point in this regular grid
 	 */
 	public Set<Vec4> getNeighbors(Vec4 point) {
