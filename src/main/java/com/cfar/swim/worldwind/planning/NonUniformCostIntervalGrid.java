@@ -633,6 +633,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * cost interval grid.
 	 * 
 	 * @param obstacle the obstacle
+	 * 
 	 * @return true if the obstacle is embedded in this non-uniform cost
 	 *         interval grid, false otherwise
 	 */
@@ -691,6 +692,8 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 
 	/**
 	 * Removes all children from this non-uniform cost interval grid.
+	 * 
+	 * @see RegularGrid#removeChildren()
 	 */
 	@Override
 	public void removeChildren() {
@@ -699,30 +702,52 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		this.affectedChildren.clear();
 	}
 	
-	/*
-	public Set<Environment> getChildren() {
-		Set<Environment> children = new HashSet<Environment>();
-		
-		if (this.hasChildren()) {
-			//...
-		}
-		
-		return children;
+	/**
+	 * Gets the children of this non-uniform cost interval grid.
+	 * 
+	 * @return the children of this non-uniform cost interval grid
+	 * 
+	 * @see RegularGrid#getChildren()
+	 * @see Environment#getChildren()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends NonUniformCostIntervalGrid> getChildren() {
+		return (Set<NonUniformCostIntervalGrid>) super.getChildren();
 	}
 	
-	public Set<Environment> getNeighbors() {
-		Set<Environment> neighbors = new HashSet<Environment>();
-		
-		// only flat neighbors
+	/**
+	 * Gets the neighbors of this non-uniform cost interval grid. A full
+	 * recursive search is performed considering only non-parent neighbors.
+	 * 
+	 * @return the non-parent neighbors of this non-uniform cost interval grid
+	 * 
+	 * @see RegularGrid#getNeighbors()
+	 * @see Environment#getNeighbors()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends NonUniformCostIntervalGrid> getNeighbors() {
+		// TODO: consider only flat neighbors
 		// if a neighbor contains children, then planning has to be refined
 		// if planning is done via corners (not centers), then connecting
 		// grid cells are easily found
-		// TODO: parents should aggregate costs
-		
-		return neighbors;
+		// TODO: parents should possbily aggregate costs
+		return (Set<NonUniformCostIntervalGrid>) super.getNeighbors();
 	}
-	*/
 	
+	/**
+	 * Gets the neighbors of a position in this non-uniform cost interval grid.
+	 * A full recursive search is performed considering non-parent cells only.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the neighbors of the position in this non-uniform cost interval
+	 *         grid
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4)
+	 * @see Environment#getNeighbors(Position)
+	 */
 	@Override
 	public Set<Position> getNeighbors(Position position) {
 		Set<Position> neighbors = new HashSet<Position>(6);
@@ -731,7 +756,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		// TODO: planning could be based on Vec4 with a final transformation of the route
 		
 		if (null != this.globe) {
-			Set<Vec4> neighborPoints = this.getNeighbors(this.globe.computePointFromPosition(position));
+			Set<Vec4> neighborPoints = super.getNeighbors(this.globe.computePointFromPosition(position));
 			for (Vec4 neighbor : neighborPoints) {
 				neighbors.add(this.globe.computePositionFromPoint(neighbor));
 			}

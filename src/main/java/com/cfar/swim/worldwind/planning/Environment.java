@@ -69,19 +69,19 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * 
 	 * @return the neighbors of this environment
 	 */
-	//public Set<Environment> getNeighbors();
+	public Set<? extends Environment> getNeighbors();
 	
 	/**
 	 * Gets the children of this environment.
 	 * 
 	 * @return the children of this environment
 	 */
-	//public Set<Environment> getChildren();
+	public Set<? extends Environment> getChildren();
 	
 	/**
 	 * Gets the neighbor positions of a position in this environment.
 	 * 
-	 * @param position the position in this environment
+	 * @param position the position in globe coordinates
 	 * 
 	 * @return the neighbor positions of the position
 	 */

@@ -491,10 +491,33 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Gets the neighbors of this regular grid performing a full recursive
-	 * search considering only non-parent neighbors.
+	 * Gets the children of this regular grid.
+	 * 
+	 * @return the children of this regular grid
+	 */
+	public Set<? extends RegularGrid> getChildren() {
+		Set<RegularGrid> children = new HashSet<RegularGrid>();
+		
+		if (this.hasChildren()) {
+			for (int r = 0; r < this.cells.length; r++) {
+				for (int s = 0; s < this.cells[r].length; s++) {
+					for (int t = 0; t < this.cells[r][s].length; t++) {
+						children.add(this.cells[r][s][t]);
+					}
+				}
+			}
+		}
+		
+		return children;
+	}
+	
+	/**
+	 * Gets the neighbors of this regular grid. A full recursive
+	 * search is performed considering only non-parent neighbors.
 	 * 
 	 * @return the non-parent neighbors of this regular grid
+	 * 
+	 * @see RegularGrid#getNeighbors(int)
 	 */
 	public Set<? extends RegularGrid> getNeighbors() {
 		return this.getNeighbors(-1);
@@ -529,9 +552,8 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Gets the neighbors of a point in this regular grid considering
-	 * its direct children only if any. A full recursive search is
-	 * performed considering non-parent cells only.
+	 * Gets the neighbors of a point in this regular grid. A full recursive
+	 * search is performed considering non-parent cells only.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
