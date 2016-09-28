@@ -65,6 +65,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public void setGlobe(Globe globe);
 	
 	/**
+	 * Gets the center position of this environment in globe coordinates.
+	 * 
+	 * @return the center position of this environment in globe coordinates
+	 */
+	public Position getCenterPosition();
+	
+	/**
 	 * Gets the neighbors of this environment.
 	 * 
 	 * @return the neighbors of this environment
@@ -76,6 +83,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * environment.
 	 * 
 	 * @param neighbor the potential neighbor
+	 * 
 	 * @return true if this environment is a neighbor of the other environment,
 	 *         false otherwise
 	 */
@@ -109,6 +117,16 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public Set<? extends Environment> getChildren();
 	
 	/**
+	 * Gets the distance between two positions in this environment.
+	 * 
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * 
+	 * @return the distance between the two positions in this environment
+	 */
+	public double getDistance(Position position1, Position position2);
+	
+	/**
 	 * Adds a cost interval to this environment.
 	 * 
 	 * @param costInterval the cost interval to be added to this environment
@@ -126,6 +144,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * Gets all (overlapping) cost intervals at a specified time instant.
 	 * 
 	 * @param time the time instant
+	 * 
 	 * @return the cost intervals at the specified time instant
 	 */
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time);
@@ -135,10 +154,23 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * 
 	 * @param start the start time of the time span
 	 * @param end the end time of the time span
+	 * 
 	 * @return the cost intervals within the specified time span
 	 */
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end);
 
+	/**
+	 * Gets the accumulated cost of this environment within a specified time
+	 * span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the accumulated cost of this environment within a the specified
+	 *         time span
+	 */
+	public double getCost(ZonedDateTime start, ZonedDateTime end);
+	
 	/**
 	 * Gets the step cost from a position to its neighbor position of this
 	 * environment between a start and an end time given a cost policy.

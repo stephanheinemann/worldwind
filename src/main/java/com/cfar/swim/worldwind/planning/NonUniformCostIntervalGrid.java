@@ -52,6 +52,8 @@ import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Polyline;
+import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
  * Realizes a non-uniform cost interval grid that can encode spatial and
@@ -234,6 +236,26 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	}
 	
 	/**
+	 * Gets the center position in globe coordinates of this non-uniform cost
+	 * interval grid.
+	 * 
+	 * @return the center position in globe coordinates of this non-uniform
+	 *         cost interval grid if a globe has been set, null otherwise
+	 * 
+	 * @see Box#getCenter()
+	 */
+	@Override
+	public Position getCenterPosition() {
+		Position centerPosition = null;
+		
+		if (null != this.globe) {
+			centerPosition = this.globe.computePositionFromPoint(this.getCenter());
+		}
+		
+		return centerPosition;
+	}
+	
+	/**
 	 * Indicates whether or not a position in globe coordinates is the center of
 	 * this non-uniform cost interval grid considering numerical inaccuracies.
 	 * 
@@ -408,6 +430,35 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	@Override
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
 		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
+	}
+	
+	/**
+	 * Gets the accumulated cost of this non-uniform cost interval grid within
+	 * a specified time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the accumulated cost of this non-uniform cost interval grid
+	 *         within the specified time span
+	 * 
+	 * @see Environment#getCost(ZonedDateTime, ZonedDateTime)
+	 */
+	@Override
+	public double getCost(ZonedDateTime start, ZonedDateTime end) {
+		double cost = 1d; // default uniform cost
+		
+		// add all (weighted) cost of the cell
+		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
+		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
+			if (interval instanceof WeightedCostInterval) {
+				cost += ((WeightedCostInterval) interval).getWeightedCost();
+			} else if (interval instanceof CostInterval) {
+				cost += ((CostInterval) interval).getCost();
+			}
+		}
+		
+		return cost;
 	}
 	
 	/**
@@ -771,29 +822,101 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		return neighbors;
 	}
 
+	/**
+	 * Gets the distance between two positions in this non-uniform cost
+	 * interval grid.
+	 * 
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * 
+	 * @return the distance between the two positions in this non-uniform cost
+	 *         interval grid
+	 * 
+	 * @see Environment#getDistance(Position, Position)
+	 */
+	@Override
+	public double getDistance(Position position1, Position position2) {
+		ArrayList<Position> positions = new ArrayList<Position>();
+		positions.add(position1);
+		positions.add(position2);
+		LengthMeasurer measurer = new LengthMeasurer(positions);
+		measurer.setPathType(Polyline.LINEAR);
+		measurer.setFollowTerrain(false);
+		return measurer.getLength(this.globe);
+	}
+	
 	// TODO: documentation
 	@Override
 	public boolean areNeighbors(Position position, Position neighbor) {
 		return this.getNeighbors(position).contains(neighbor);
 	}
 	
+	// TODO: documentation
 	@Override
 	public double getStepCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
 		double stepCost = Double.POSITIVE_INFINITY;
 		
+		// TODO: not very efficient implementation
 		if (this.areNeighbors(position, neighbor)) {
-			// TODO: implementation
+			// find shared adjacent cells
+			Set<? extends NonUniformCostIntervalGrid> stepCells = this.lookupCells(position);
+			stepCells.retainAll(this.lookupCells(neighbor));
+			List<Double> costs = new ArrayList<Double>();
+			
+			// compute initial distance cost
+			double cost = this.getDistance(position, neighbor);
+			
+			// compute cost of each adjacent cell
+			for (NonUniformCostIntervalGrid stepCell : stepCells) {
+				// add all (weighted) cost of the cell
+				costs.add(cost + stepCell.getCost(start, end));
+			}
+			
+			// apply cost policy for final cost
+			switch (policy) {
+			case MINIMUM:
+				stepCost = costs.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
+				break;
+			case MAXIMUM:
+				stepCost = costs.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
+				break;
+			case AVERAGE:
+				stepCost = costs.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
+				break;
+			}
+			
 		}
 		
 		return stepCost;
 	}
 
+	// TODO: documentation
 	@Override
 	public double getStepCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
 		double stepCost = Double.POSITIVE_INFINITY;
 		
+		// TODO: not very efficient implementation
 		if (this.areNeighbors(neighbor)) {
-			// TODO: implementation
+			List<Double> costs = new ArrayList<Double>();
+			
+			// compute initial distance cost
+			double cost = this.getDistance(this.getCenterPosition(), neighbor.getCenterPosition());
+			// add all (weighted) cost of the cells
+			costs.add(cost + this.getCost(start, end));
+			costs.add(cost + neighbor.getCost(start, end));
+			
+			// apply cost policy for final cost
+			switch (policy) {
+			case MINIMUM:
+				stepCost = costs.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
+				break;
+			case MAXIMUM:
+				stepCost = costs.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
+				break;
+			case AVERAGE:
+				stepCost = costs.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
+				break;
+			}
 		}
 		
 		return stepCost;
