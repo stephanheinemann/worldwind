@@ -29,7 +29,13 @@
  */
 package com.cfar.swim.worldwind.ai.astar;
 
+import java.time.ZonedDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -46,13 +52,29 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 
 	@Override
-	public Path plan(Position origin, Position destination) {
+	public Path plan(Position origin, Position destination, ZonedDateTime eto) {
+		//Set<Position> open = new HashSet<Position>();
+		Set<Position> closed = new HashSet<Position>();
+		Map<Position, Position> parent = new HashMap<Position, Position>();
+		Map<Position, Double> g = new HashMap<Position, Double>();
+		PriorityQueue<Double> open = new PriorityQueue<Double>();
+		// TODO: a priority queue of pairs is required
+		// maybe use SortedSet (HashSet, TreeSet)
+		// (position, estimated cost: c = g + h)
+		// (position, estimated cost tuple: (c1, c2)) for more advanced versions
+		
+		g.put(origin, 0d);
+		parent.put(origin, origin);
+		
+		
+		
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Path plan(Position origin, Position destination, List<Position> waypoints) {
+	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime eto) {
 		// TODO Auto-generated method stub
 		return null;
 	}

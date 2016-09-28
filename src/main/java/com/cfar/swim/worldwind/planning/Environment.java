@@ -72,11 +72,14 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public Set<? extends Environment> getNeighbors();
 	
 	/**
-	 * Gets the children of this environment.
+	 * Indicates whether or not this environment is a neighbor of another
+	 * environment.
 	 * 
-	 * @return the children of this environment
+	 * @param neighbor the potential neighbor
+	 * @return true if this environment is a neighbor of the other environment,
+	 *         false otherwise
 	 */
-	public Set<? extends Environment> getChildren();
+	public boolean areNeighbors(Environment neighbor);
 	
 	/**
 	 * Gets the neighbor positions of a position in this environment.
@@ -86,6 +89,24 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @return the neighbor positions of the position
 	 */
 	public Set<Position> getNeighbors(Position position);
+	
+	/**
+	 * Indicates whether or not two positions are neighbors in this
+	 * environment.
+	 * 
+	 * @param position the position
+	 * @param neighbor the potential neighbor of the position
+	 * 
+	 * @return true if the two positions are neighbors, false otherwise
+	 */
+	public boolean areNeighbors(Position position, Position neighbor);
+	
+	/**
+	 * Gets the children of this environment.
+	 * 
+	 * @return the children of this environment
+	 */
+	public Set<? extends Environment> getChildren();
 	
 	/**
 	 * Adds a cost interval to this environment.
@@ -118,4 +139,33 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 */
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end);
 
+	/**
+	 * Gets the step cost from a position to its neighbor position of this
+	 * environment between a start and an end time given a cost policy.
+	 * 
+	 * @param position the position
+	 * @param neighbor its neighbor position
+	 * @param start the start time
+	 * @param end the end time
+	 * @param policy the cost policy
+	 * 
+	 * @return the step cost from a position to its neighbor position
+	 */
+	public double getStepCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy);
+	
+	/**
+	 * Gets the step cost from the center of this environment to the center of
+	 * a neighboring environment between a start and an end time given a cost
+	 * policy. 
+	 * 
+	 * @param neighbor the neighboring environment
+	 * @param start the start time
+	 * @param end the end time
+	 * @param policy the cost policy
+	 * 
+	 * @return the step cost from the center of this environment to the center
+	 *         of the neighboring environment
+	 */
+	public double getStepCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy);
+	
 }

@@ -629,7 +629,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	}
 	
 	/**
-	 * Determines whether or not an obstacle is embedded in this non-uniform
+	 * Indicates whether or not an obstacle is embedded in this non-uniform
 	 * cost interval grid.
 	 * 
 	 * @param obstacle the obstacle
@@ -736,6 +736,12 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		return (Set<NonUniformCostIntervalGrid>) super.getNeighbors();
 	}
 	
+	// TODO: documentation
+	@Override
+	public boolean areNeighbors(Environment neighbor) {
+		return this.getNeighbors().contains(neighbor);
+	}
+	
 	/**
 	 * Gets the neighbors of a position in this non-uniform cost interval grid.
 	 * A full recursive search is performed considering non-parent cells only.
@@ -763,6 +769,34 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		}
 		
 		return neighbors;
+	}
+
+	// TODO: documentation
+	@Override
+	public boolean areNeighbors(Position position, Position neighbor) {
+		return this.getNeighbors(position).contains(neighbor);
+	}
+	
+	@Override
+	public double getStepCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
+		double stepCost = Double.POSITIVE_INFINITY;
+		
+		if (this.areNeighbors(position, neighbor)) {
+			// TODO: implementation
+		}
+		
+		return stepCost;
+	}
+
+	@Override
+	public double getStepCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
+		double stepCost = Double.POSITIVE_INFINITY;
+		
+		if (this.areNeighbors(neighbor)) {
+			// TODO: implementation
+		}
+		
+		return stepCost;
 	}
 	
 }

@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -42,8 +43,8 @@ public interface Planner {
 	public Aircraft getAircraft();
 	public Environment getEnvironment();
 	
-	public Path plan(Position origin, Position destination);
-	public Path plan(Position origin, Position destination, List<Position> waypoints);
+	public Path plan(Position origin, Position destination, ZonedDateTime eto);
+	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime eto);
 
 	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions

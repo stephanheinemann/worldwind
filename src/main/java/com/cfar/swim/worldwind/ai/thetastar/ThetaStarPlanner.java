@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai.thetastar;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
@@ -52,7 +53,7 @@ public class ThetaStarPlanner extends AbstractPlanner {
 	}
 	
 	@Override
-	public Path plan(Position origin, Position destination) {
+	public Path plan(Position origin, Position destination, ZonedDateTime eto) {
 		CubicPlanningGrid grid = this.getEnvironment();
 		
 		Vec4 originPoint = grid.getGlobe().computePointFromPosition(origin);
@@ -66,7 +67,7 @@ public class ThetaStarPlanner extends AbstractPlanner {
 	}
 
 	@Override
-	public Path plan(Position start, Position goal, List<Position> pois) {
+	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime eto) {
 		// TODO Auto-generated method stub
 		return null;
 	}

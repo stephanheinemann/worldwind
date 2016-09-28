@@ -552,12 +552,45 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
+	 * Indicates whether or not this regular grid is a neighbor of another
+	 * regular grid.
+	 * 
+	 * @param neighbor the potential neighbor
+	 * 
+	 * @return true if this regular grid is a neighbor of the other regular
+	 *         grid, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors()
+	 */
+	public boolean areNeighbors(RegularGrid neighbor) {
+		return this.getNeighbors().contains(neighbor);
+	}
+	
+	/**
+	 * Indicates whether or not this regular grid is a neighbor of another
+	 * regular grid taking a specified hierarchical depth into account.
+	 * 
+	 * @param neighbor the potential neighbor
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return true if this regular grid is a neighbor of the other regular
+	 *         grid taking the hierarchical depth into account, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(int)
+	 */
+	public boolean areNeighbors(RegularGrid neighbor, int depth) {
+		return this.getNeighbors(depth).contains(neighbor);
+	}
+	
+	/**
 	 * Gets the neighbors of a point in this regular grid. A full recursive
 	 * search is performed considering non-parent cells only.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
 	 * @return the neighbors of the point in this regular grid
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4, int)
 	 */
 	public Set<Vec4> getNeighbors(Vec4 point) {
 		return this.getNeighbors(point, -1);
@@ -590,6 +623,37 @@ public class RegularGrid extends Box {
 		}
 		
 		return neighbors;
+	}
+	
+	/**
+	 * Indicates whether or not two points are neighbors in this regular grid.
+	 * 
+	 * @param point the point
+	 * @param neighbor the potential neighbor of the point
+	 * 
+	 * @return true if the two points are neighbors, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4)
+	 */
+	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
+		return this.getNeighbors(point).contains(neighbor);
+	}
+	
+	/**
+	 * Indicates whether or not two points are neighbors in this regular grid
+	 * taking a specified hierarchical depth into account.
+	 * 
+	 * @param point the point
+	 * @param neighbor the potential neighbor of the point
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return true if the two points are neighbors taking the hierarchical
+	 *              depth into account, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4, int)
+	 */
+	public boolean areNeighbors(Vec4 point, Vec4 neighbor, int depth) {
+		return this.getNeighbors(point, depth).contains(neighbor);
 	}
 	
 	/**
