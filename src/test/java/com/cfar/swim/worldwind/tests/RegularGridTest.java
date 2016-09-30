@@ -52,6 +52,7 @@ import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
 import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
@@ -227,23 +228,27 @@ public class RegularGridTest {
 		AppFrame frame = new AppFrame();
 		frame.setVisible(true);
 		
+		try {
 		largeGrid.setGlobe(model.getGlobe());
-		IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
-		largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
+		//IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
+		//largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
 		
 		tsGrid.setGlobe(model.getGlobe());
-		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
+		/*
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-CNL.xml")));
+		*/
 		
 		tcGrid.setGlobe(model.getGlobe());
+		/*
 		IwxxmUpdater tcUpdater = new IwxxmUpdater(model, tcGrid);
 		tcUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-2-TC.xml")));
 		
 		list.registerDataActivationListerner(largeUpdater);
 		list.registerDataActivationListerner(tsUpdater);
 		list.registerDataActivationListerner(tcUpdater);
+		*/
 		
 		// TODO: this seems to be the expected rst versus xyz bug
 		System.out.println("iris location " + iris.getLocation());
@@ -273,11 +278,20 @@ public class RegularGridTest {
 		Set<? extends NonUniformCostIntervalGrid> cells = tsGrid.lookupCells(iris.getReferencePosition());
 		System.out.println("found iris cells " + cells.size());
 		
-		try {
 		//Set<Position> neighbors = tsGrid.getNeighbors(iris.getReferencePosition());
 		//Set<Position> neighbors = tsGrid.getNeighbors(model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 2, 2).getBottomCenter()));
-		Set<Position> neighbors = tsGrid.getNeighbors(model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 2, 2).getCorners()[0]));
+		Position position = model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 5, 1).getCorners()[0]);
+		ObstacleSphere posIris = new ObstacleSphere(position, 2500);
+    	posIris.setCostInterval(new CostInterval(
+				"Position",
+				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
+				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
+				70));
+    	((RenderableLayer) layer).addRenderable(posIris);
 		
+		Set<Position> neighbors = tsGrid.getNeighbors(position);
+		
+		System.out.println("neighbors size = " + neighbors.size());
 		System.out.println("neighbors = " + neighbors);
         for (Position neighbor : neighbors) {
         	ObstacleSphere neighborIris = new ObstacleSphere(neighbor, 2500);
@@ -288,6 +302,20 @@ public class RegularGridTest {
     				70));
         	//Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
         	((RenderableLayer) layer).addRenderable(neighborIris);
+        	
+        	double firstCost = tsGrid.getStepCost(
+        			position,
+        			neighbor,
+        			ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
+        			ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
+        			CostPolicy.AVERAGE);
+        	double secondCost = tsGrid.getStepCost(
+        			position,
+        			neighbor,
+        			ZonedDateTime.now(ZoneId.of("UTC")),
+        			ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
+        			CostPolicy.AVERAGE);
+        	System.out.println("first cost = " + firstCost + ", second cost = " + secondCost);
         }
         
         NonUniformCostIntervalGrid irisCell = tsGrid.lookupCells(iris.getReferencePosition()).iterator().next();

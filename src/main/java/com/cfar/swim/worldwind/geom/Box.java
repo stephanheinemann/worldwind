@@ -29,6 +29,10 @@
  */
 package com.cfar.swim.worldwind.geom;
 
+import com.cfar.swim.worldwind.geom.precision.Precision;
+import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
+import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
+
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Matrix;
 import gov.nasa.worldwind.geom.Vec4;
@@ -85,7 +89,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	/**
 	 * the epsilon used compensate for numerical inaccuracies
 	 */
-	protected static final double EPSILON = 1E-8;
+	//protected static final double EPSILON = 1E-8;
 	
 	/**
 	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4)
@@ -140,9 +144,11 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return true if two values are equal considering numerical inaccuracies,
 	 *         false otherwise
 	 */
+	/*
 	protected static boolean equalsEpsilon(double a, double b) {
-		return Math.abs(a - b) < EPSILON;
+		return Math.abs(a - b) < Box.EPSILON;
 	}
+	*/
 	
 	/**
 	 * Indicates whether or not two vectors are equals considering numerical
@@ -153,6 +159,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return true if two vectors are equals considering numerical inaccuracies,
 	 *         false otherwise
 	 */
+	/*
 	protected static boolean equalsEpsilon(Vec4 u, Vec4 v) {
 		// TODO: data type should features its own methods, e.g., NumVec4.equals()
 		return Box.equalsEpsilon(u.x, v.x) &&
@@ -160,6 +167,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 				Box.equalsEpsilon(u.z, v.z) &&
 				Box.equalsEpsilon(u.w, v.w);
 	}
+	*/
 	
 	/**
 	 * Indicates whether or not a value lies is within a range considering
@@ -172,9 +180,11 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return true if the value lies within the range considering numerical
 	 *         inaccuracies, false otherwise
 	 */
+	/*
 	protected static boolean isInRangeEpsilon(double d, double l, double u) {
-		return ((l - EPSILON) <= d) && ((u + EPSILON) >= d);
+		return ((l - Box.EPSILON) <= d) && ((u + Box.EPSILON) >= d);
 	}
+	*/
 	
 	/**
 	 * Indicates whether or not a point in world model coordinates equals a
@@ -188,7 +198,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		boolean isCorner = false;
 		
 		for (Vec4 corner : this.getCorners()) {
-			if (Box.equalsEpsilon(point, corner)) {
+			if (new PrecisionVec4(point).equals(new PrecisionVec4(corner))) {
 				isCorner = true;
 				break;
 			}
@@ -206,7 +216,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 *         numerical inaccuracies, false otherwise
 	 */
 	public boolean isCenter(Vec4 point) {
-		return Box.equalsEpsilon(point, this.getCenter());
+		return new PrecisionVec4(point).equals(new PrecisionVec4(this.getCenter()));
 	}
 	
 	/**
@@ -221,7 +231,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		Vec4[] corners = this.getCorners();
 		
 		for (int index = 0; index < 8; index++) {
-			if (Box.equalsEpsilon(corner, corners[index])) {
+			if (new PrecisionVec4(corner).equals(new PrecisionVec4(corners[index]))) {
 				cornerIndex = index;
 				break;
 			}
@@ -321,7 +331,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 *         numerical inaccuracies, false otherwise
 	 */
 	protected boolean containsREpsilon(double r) {
-		return Box.isInRangeEpsilon(r, 0.0, this.rLength);
+		return PrecisionDouble.isInRange(r, 0.0, this.rLength);
+		//return Box.isInRangeEpsilon(r, 0.0, this.rLength);
 	}
 	
 	/**
@@ -334,7 +345,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 *         numerical inaccuracies, false otherwise
 	 */
 	protected boolean containsSEpsilon(double s) {
-		return Box.isInRangeEpsilon(s, 0.0, this.sLength);
+		return PrecisionDouble.isInRange(s, 0.0, this.sLength);
+		//return Box.isInRangeEpsilon(s, 0.0, this.sLength);
 	}
 	
 	/**
@@ -347,7 +359,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 *         numerical inaccuracies, false otherwise
 	 */
 	protected boolean containsTEpsilon(double t) {
-		return Box.isInRangeEpsilon(t, 0.0, this.tLength);
+		return PrecisionDouble.isInRange(t, 0.0, this.tLength);
+		//return Box.isInRangeEpsilon(t, 0.0, this.tLength);
 	}
 	
 	/**
@@ -417,7 +430,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		if (midpointLength.z > (halfSideLength.z + halfSegmentLength.z))
 			return false; // segment cannot intersect on z axis
 		
-		halfSegmentLength = halfSegmentLength.add3(Box.EPSILON, Box.EPSILON, Box.EPSILON);
+		halfSegmentLength = halfSegmentLength.add3(Precision.EPSILON, Precision.EPSILON, Precision.EPSILON);
 		
 		// cross products of segment direction vector with coordinate axes
 		if (Math.abs((midpoint.y * halfSegment.z) - (midpoint.z * halfSegment.y)) >

@@ -38,11 +38,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.RegularGrid;
+import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
@@ -810,16 +812,25 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		Set<Position> neighbors = new HashSet<Position>(6);
 		
 		// TODO: coordinate transformations might be too expensive for planning
+		// TODO: coordinate transformations add numerical errors
 		// TODO: planning could be based on Vec4 with a final transformation of the route
+		// TODO: numerical issues! Position.equals
 		
 		if (null != this.globe) {
 			Set<Vec4> neighborPoints = super.getNeighbors(this.globe.computePointFromPosition(position));
 			for (Vec4 neighbor : neighborPoints) {
+				//neighbors.add(new PrecisionPosition(this.globe.computePositionFromPoint(neighbor)));
 				neighbors.add(this.globe.computePositionFromPoint(neighbor));
 			}
 		}
 		
 		return neighbors;
+	}
+	
+	// TODO: documentation
+	@Override
+	public boolean areNeighbors(Position position, Position neighbor) {
+		return this.getNeighbors(position).stream().map(PrecisionPosition::new).collect(Collectors.toSet()).contains(new PrecisionPosition(neighbor));
 	}
 
 	/**
@@ -847,12 +858,6 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	
 	// TODO: documentation
 	@Override
-	public boolean areNeighbors(Position position, Position neighbor) {
-		return this.getNeighbors(position).contains(neighbor);
-	}
-	
-	// TODO: documentation
-	@Override
 	public double getStepCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
 		double stepCost = Double.POSITIVE_INFINITY;
 		
@@ -861,6 +866,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 			// find shared adjacent cells
 			Set<? extends NonUniformCostIntervalGrid> stepCells = this.lookupCells(position);
 			stepCells.retainAll(this.lookupCells(neighbor));
+			
 			List<Double> costs = new ArrayList<Double>();
 			
 			// compute initial distance cost

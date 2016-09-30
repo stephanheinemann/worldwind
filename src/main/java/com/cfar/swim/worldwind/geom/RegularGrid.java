@@ -29,11 +29,14 @@
  */
 package com.cfar.swim.worldwind.geom;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.media.opengl.GL2;
+
+import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
+import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
 
 import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Vec4;
@@ -394,16 +397,16 @@ public class RegularGrid extends Box {
 	private static int[] getCellIndices(double value, double length, int cells) {
 		int index[] = {-1, -1};
 		
-		if (Box.isInRangeEpsilon(value, 0.0, length)) {
+		if (PrecisionDouble.isInRange(value, 0.0, length)) {
 			double cellLength = length / cells;
 			double cellSegment = value / cellLength;
 			double cellIndex = Math.ceil(cellSegment);
 			
-			if (!Box.equalsEpsilon(cellSegment, cellIndex)) {
+			if (!PrecisionDouble.equals(cellSegment, cellIndex)) {
 				cellIndex =  Math.floor(cellSegment);
 			}
 			
-			if (Box.equalsEpsilon(cellSegment, cellIndex)) {
+			if (PrecisionDouble.equals(cellSegment, cellIndex)) {
 				// two neighboring cells are affected
 				index[0] = (int) cellIndex - 1;
 				if (cellIndex < cells) {
@@ -541,6 +544,8 @@ public class RegularGrid extends Box {
 			if (-1 == depth) {
 				depth--;
 			}
+			
+			// TODO: possibly not correct - all neighboring wall cells are relevant
 			for (Vec4 corner : corners) {
 				neighbors.addAll(this.parent.lookupCells(corner, depth + 1));
 			}
@@ -612,13 +617,30 @@ public class RegularGrid extends Box {
 		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
 		
 		for (RegularGrid cell : cells) {
+			Vec4[] neighborCorners;
+			
 			if (cell.isCorner(point)) {
 				// point is a corner of the cell
-				neighbors.addAll(Arrays.asList(cell.getNeighborCorners(point)));
+				neighborCorners = cell.getNeighborCorners(point);
 			} else {
 				// point within cell, on edge or plane (consider all corners as neighbors)
 				// TODO: possibly only consider adjacent corners of edges and planes
-				neighbors.addAll(Arrays.asList(cell.getCorners()));
+				neighborCorners = cell.getCorners();
+			}
+			// reduce precision for proper set addition
+			//neighbors.addAll(neighborCorners.stream().map(PrecisionVec4::new).collect(Collectors.toSet()));
+			
+			for (Vec4 neighborCorner : neighborCorners) {
+				boolean contains = false;
+				for (Vec4 neighbor : neighbors) {
+					if ((new PrecisionVec4(neighborCorner)).equals(new PrecisionVec4(neighbor))) {
+						contains = true;
+						break;
+					}
+				}
+				if (!contains) {
+					neighbors.add(neighborCorner);
+				}
 			}
 		}
 		
@@ -636,7 +658,7 @@ public class RegularGrid extends Box {
 	 * @see RegularGrid#getNeighbors(Vec4)
 	 */
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
-		return this.getNeighbors(point).contains(neighbor);
+		return this.getNeighbors(point).stream().map(PrecisionVec4::new).collect(Collectors.toSet()).contains(new PrecisionVec4(neighbor));
 	}
 	
 	/**
@@ -653,7 +675,7 @@ public class RegularGrid extends Box {
 	 * @see RegularGrid#getNeighbors(Vec4, int)
 	 */
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor, int depth) {
-		return this.getNeighbors(point, depth).contains(neighbor);
+		return this.getNeighbors(point, depth).stream().map(PrecisionVec4::new).collect(Collectors.toSet()).contains(new PrecisionVec4(neighbor));
 	}
 	
 	/**
