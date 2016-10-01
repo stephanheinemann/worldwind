@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.geom;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -627,9 +628,20 @@ public class RegularGrid extends Box {
 				// TODO: possibly only consider adjacent corners of edges and planes
 				neighborCorners = cell.getCorners();
 			}
-			// reduce precision for proper set addition
-			//neighbors.addAll(neighborCorners.stream().map(PrecisionVec4::new).collect(Collectors.toSet()));
 			
+			// reduce precision for proper set addition (seems to be good enough)
+			//neighbors.addAll(Arrays.asList(neighborCorners).stream().map(PrecisionVec4::new).collect(Collectors.toSet()));
+			
+			// reduce precision for proper set addition, then extract original precision
+			neighbors.addAll(Arrays.asList(neighborCorners)
+				.stream()
+				.map(PrecisionVec4::new)
+				.filter(n -> neighbors.stream().map(PrecisionVec4::new).noneMatch(n::equals))
+				.map(PrecisionVec4::getOriginal)
+				.collect(Collectors.toSet()));
+			
+			/*
+			// maintain original precision ensuring proper set addition
 			for (Vec4 neighborCorner : neighborCorners) {
 				boolean contains = false;
 				for (Vec4 neighbor : neighbors) {
@@ -642,6 +654,7 @@ public class RegularGrid extends Box {
 					neighbors.add(neighborCorner);
 				}
 			}
+			*/
 		}
 		
 		return neighbors;

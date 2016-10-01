@@ -10,5 +10,6 @@ public interface Precision {
 	
 	public int getPrecision();
 	public Precision setPrecision(int precision);
+	public Object getOriginal();
 
 }
