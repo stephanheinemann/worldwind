@@ -87,11 +87,6 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public static final int CORNER_INDEX_TOP_UPPER_LEFT = 7;
 	
 	/**
-	 * the epsilon used compensate for numerical inaccuracies
-	 */
-	//protected static final double EPSILON = 1E-8;
-	
-	/**
 	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4)
 	 */
 	public Box(Vec4 point) {
@@ -135,62 +130,11 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not two values are equal considering numerical
-	 * inaccuracies.
-	 * 
-	 * @param a the first value
-	 * @param b the second value
-	 * 
-	 * @return true if two values are equal considering numerical inaccuracies,
-	 *         false otherwise
-	 */
-	/*
-	protected static boolean equalsEpsilon(double a, double b) {
-		return Math.abs(a - b) < Box.EPSILON;
-	}
-	*/
-	
-	/**
-	 * Indicates whether or not two vectors are equals considering numerical
-	 * inaccuracies.
-	 * 
-	 * @param u the first vector
-	 * @param v the second vector
-	 * @return true if two vectors are equals considering numerical inaccuracies,
-	 *         false otherwise
-	 */
-	/*
-	protected static boolean equalsEpsilon(Vec4 u, Vec4 v) {
-		// TODO: data type should features its own methods, e.g., NumVec4.equals()
-		return Box.equalsEpsilon(u.x, v.x) &&
-				Box.equalsEpsilon(u.y, v.y) &&
-				Box.equalsEpsilon(u.z, v.z) &&
-				Box.equalsEpsilon(u.w, v.w);
-	}
-	*/
-	
-	/**
-	 * Indicates whether or not a value lies is within a range considering
-	 * numerical inaccuracies.
-	 * 
-	 * @param d the value
-	 * @param l the lower bound of the range
-	 * @param u the upper bound of the range
-	 * 
-	 * @return true if the value lies within the range considering numerical
-	 *         inaccuracies, false otherwise
-	 */
-	/*
-	protected static boolean isInRangeEpsilon(double d, double l, double u) {
-		return ((l - Box.EPSILON) <= d) && ((u + Box.EPSILON) >= d);
-	}
-	*/
-	
-	/**
 	 * Indicates whether or not a point in world model coordinates equals a
 	 * corner of this box considering numerical inaccuracies. 
 	 * 
 	 * @param point the point in world model coordinates
+	 * 
 	 * @return true if the point equals a corner of this box considering
 	 *         numerical inaccuracies, false otherwise
 	 */
@@ -212,6 +156,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * center of this box considering numerical inaccuracies.
 	 * 
 	 * @param point the point in world model coordinates
+	 * 
 	 * @return true if the point equals the center of this box considering
 	 *         numerical inaccuracies, false otherwise
 	 */
@@ -223,8 +168,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * Gets the corner index of a specified corner.
 	 * 
 	 * @param corner the corner
-	 * @return the corner index of the corner if a corner,
-	 *         -1 otherwise
+	 * 
+	 * @return the corner index of the corner if a corner, -1 otherwise
 	 */
 	public int getCornerIndex(Vec4 corner) {
 		int cornerIndex = -1;
@@ -244,15 +189,15 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * Gets the neighbor corners of a specified corner of this box.
 	 * 
 	 * @param corner the corner of this box
-	 * @return the neighbor corners of the corner if a corner,
-	 *         null otherwise
+	 * 
+	 * @return the neighbor corners of the corner if a corner, null otherwise
 	 */
 	public Vec4[] getNeighborCorners(Vec4 corner) {
 		Vec4[] neighborCorners = null;
 		Vec4[] corners = this.getCorners();
 		int cornerIndex = this.getCornerIndex(corner);
 		
-		if ((cornerIndex >= 0) && cornerIndex < corners.length) {
+		if ((cornerIndex >= 0) && (cornerIndex < corners.length)) {
 			neighborCorners = new Vec4[3];
 			if (Box.CORNER_INDEX_BOTTOM_LOWER_LEFT == cornerIndex) {
 				neighborCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT];
@@ -293,8 +238,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Transforms a Cartesian world model vector into a box vector
-	 * using the first corner of this box as origin.
+	 * Transforms a Cartesian world model vector into a box vector using the
+	 * first corner of this box as origin.
 	 * 
 	 * @param modelPoint the world model vector
 	 * 
@@ -308,10 +253,11 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Transforms a Cartesian world model vector into a box vector
-	 * using the center of this box as origin.
+	 * Transforms a Cartesian world model vector into a box vector using the
+	 * center of this box as origin.
 	 * 
 	 * @param modelPoint the world model vector
+	 * 
 	 * @return the box vector
 	 */
 	public Vec4 transformModelToBoxCenter(Vec4 modelPoint) {
@@ -330,9 +276,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return true if the value lies on the <code>R</code> axis considering
 	 *         numerical inaccuracies, false otherwise
 	 */
-	protected boolean containsREpsilon(double r) {
-		return PrecisionDouble.isInRange(r, 0.0, this.rLength);
-		//return Box.isInRangeEpsilon(r, 0.0, this.rLength);
+	protected boolean containsR(double r) {
+		return (new PrecisionDouble(r)).isInRange(0.0, this.rLength);
 	}
 	
 	/**
@@ -344,9 +289,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return true if the value lies on the <code>S</code> axis considering
 	 *         numerical inaccuracies, false otherwise
 	 */
-	protected boolean containsSEpsilon(double s) {
-		return PrecisionDouble.isInRange(s, 0.0, this.sLength);
-		//return Box.isInRangeEpsilon(s, 0.0, this.sLength);
+	protected boolean containsS(double s) {
+		return (new PrecisionDouble(s)).isInRange(0.0, this.sLength);
 	}
 	
 	/**
@@ -358,26 +302,25 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return true if the value lies on the <code>T</code> axis considering
 	 *         numerical inaccuracies, false otherwise
 	 */
-	protected boolean containsTEpsilon(double t) {
-		return PrecisionDouble.isInRange(t, 0.0, this.tLength);
-		//return Box.isInRangeEpsilon(t, 0.0, this.tLength);
+	protected boolean containsT(double t) {
+		return (new PrecisionDouble(t)).isInRange(0.0, this.tLength);
 	}
 	
 	/**
-	 * Indicates whether or not a vector in box coordinates is contained
-	 * in this box considering numerical inaccuracies.
+	 * Indicates whether or not a vector in box coordinates is contained in
+	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param v the vector in box coordinates
 	 * 
 	 * @return true if this box contains the vector, false otherwise
 	 */
 	protected boolean containsV(Vec4 v) {
-		return this.containsREpsilon(v.x) && this.containsSEpsilon(v.y) && this.containsTEpsilon(v.z);
+		return this.containsR(v.x) && this.containsS(v.y) && this.containsT(v.z);
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates is
-	 * contained in this box.
+	 * Indicates whether or not a point in world model coordinates is contained
+	 * in this box.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
@@ -401,6 +344,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @param p0 the first point of the line segment
 	 * @param p1 the second point of the line segment
 	 * @param expansion the expansion vector to expand the box
+	 * 
 	 * @return true if the line segment intersects this box when expanding its
 	 *         sides with the expansion vector, false otherwise
 	 */
@@ -451,6 +395,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * 
 	 * @param p0 the first point of the line segment
 	 * @param p1 the second point of the line segment
+	 * 
 	 * @return true if the line segment intersects this box, false otherwise
 	 */
 	public boolean intersectsLineSegment(Vec4 p0, Vec4 p1) {
@@ -462,6 +407,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * box. 
 	 * 
 	 * @param cylinder the cylinder
+	 * 
 	 * @return true if the (bounding box of the) cylinder intersects this box,
 	 *         false otherwise
 	 */

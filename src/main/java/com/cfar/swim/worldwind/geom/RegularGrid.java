@@ -398,16 +398,16 @@ public class RegularGrid extends Box {
 	private static int[] getCellIndices(double value, double length, int cells) {
 		int index[] = {-1, -1};
 		
-		if (PrecisionDouble.isInRange(value, 0.0, length)) {
+		if ((new PrecisionDouble(value)).isInRange(0.0, length)) {
 			double cellLength = length / cells;
 			double cellSegment = value / cellLength;
 			double cellIndex = Math.ceil(cellSegment);
 			
-			if (!PrecisionDouble.equals(cellSegment, cellIndex)) {
+			if (!(new PrecisionDouble(cellSegment)).equals(new PrecisionDouble(cellIndex))) {
 				cellIndex =  Math.floor(cellSegment);
 			}
 			
-			if (PrecisionDouble.equals(cellSegment, cellIndex)) {
+			if ((new PrecisionDouble(cellSegment)).equals(new PrecisionDouble(cellIndex))) {
 				// two neighboring cells are affected
 				index[0] = (int) cellIndex - 1;
 				if (cellIndex < cells) {
@@ -546,7 +546,8 @@ public class RegularGrid extends Box {
 				depth--;
 			}
 			
-			// TODO: possibly not correct - all neighboring wall cells are relevant
+			// TODO: not correct - all neighboring wall cells are relevant
+			// not just the ones adjacent to corners
 			for (Vec4 corner : corners) {
 				neighbors.addAll(this.parent.lookupCells(corner, depth + 1));
 			}
@@ -639,22 +640,6 @@ public class RegularGrid extends Box {
 				.filter(n -> neighbors.stream().map(PrecisionVec4::new).noneMatch(n::equals))
 				.map(PrecisionVec4::getOriginal)
 				.collect(Collectors.toSet()));
-			
-			/*
-			// maintain original precision ensuring proper set addition
-			for (Vec4 neighborCorner : neighborCorners) {
-				boolean contains = false;
-				for (Vec4 neighbor : neighbors) {
-					if ((new PrecisionVec4(neighborCorner)).equals(new PrecisionVec4(neighbor))) {
-						contains = true;
-						break;
-					}
-				}
-				if (!contains) {
-					neighbors.add(neighborCorner);
-				}
-			}
-			*/
 		}
 		
 		return neighbors;
@@ -671,7 +656,11 @@ public class RegularGrid extends Box {
 	 * @see RegularGrid#getNeighbors(Vec4)
 	 */
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
-		return this.getNeighbors(point).stream().map(PrecisionVec4::new).collect(Collectors.toSet()).contains(new PrecisionVec4(neighbor));
+		return this.getNeighbors(point)
+				.stream()
+				.map(PrecisionVec4::new)
+				.collect(Collectors.toSet())
+				.contains(new PrecisionVec4(neighbor));
 	}
 	
 	/**
@@ -688,7 +677,11 @@ public class RegularGrid extends Box {
 	 * @see RegularGrid#getNeighbors(Vec4, int)
 	 */
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor, int depth) {
-		return this.getNeighbors(point, depth).stream().map(PrecisionVec4::new).collect(Collectors.toSet()).contains(new PrecisionVec4(neighbor));
+		return this.getNeighbors(point, depth)
+				.stream()
+				.map(PrecisionVec4::new)
+				.collect(Collectors.toSet())
+				.contains(new PrecisionVec4(neighbor));
 	}
 	
 	/**

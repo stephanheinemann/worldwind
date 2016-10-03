@@ -812,14 +812,11 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		Set<Position> neighbors = new HashSet<Position>(6);
 		
 		// TODO: coordinate transformations might be too expensive for planning
-		// TODO: coordinate transformations add numerical errors
 		// TODO: planning could be based on Vec4 with a final transformation of the route
-		// TODO: numerical issues! Position.equals
 		
 		if (null != this.globe) {
 			Set<Vec4> neighborPoints = super.getNeighbors(this.globe.computePointFromPosition(position));
 			for (Vec4 neighbor : neighborPoints) {
-				//neighbors.add(new PrecisionPosition(this.globe.computePositionFromPoint(neighbor)));
 				neighbors.add(this.globe.computePositionFromPoint(neighbor));
 			}
 		}
@@ -830,7 +827,11 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	// TODO: documentation
 	@Override
 	public boolean areNeighbors(Position position, Position neighbor) {
-		return this.getNeighbors(position).stream().map(PrecisionPosition::new).collect(Collectors.toSet()).contains(new PrecisionPosition(neighbor));
+		return this.getNeighbors(position)
+				.stream()
+				.map(PrecisionPosition::new)
+				.collect(Collectors.toSet())
+				.contains(new PrecisionPosition(neighbor));
 	}
 
 	/**
