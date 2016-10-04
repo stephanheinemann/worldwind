@@ -234,21 +234,20 @@ public class RegularGridTest {
 		//largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
 		
 		tsGrid.setGlobe(model.getGlobe());
-		/*
+		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-CNL.xml")));
-		*/
 		
 		tcGrid.setGlobe(model.getGlobe());
 		/*
 		IwxxmUpdater tcUpdater = new IwxxmUpdater(model, tcGrid);
 		tcUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-2-TC.xml")));
-		
-		list.registerDataActivationListerner(largeUpdater);
-		list.registerDataActivationListerner(tsUpdater);
-		list.registerDataActivationListerner(tcUpdater);
 		*/
+		
+		//list.registerDataActivationListerner(largeUpdater);
+		list.registerDataActivationListerner(tsUpdater);
+		//list.registerDataActivationListerner(tcUpdater);
 		
 		// TODO: this seems to be the expected rst versus xyz bug
 		System.out.println("iris location " + iris.getLocation());
@@ -308,13 +307,13 @@ public class RegularGridTest {
         			neighbor,
         			ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
         			ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
-        			CostPolicy.AVERAGE);
+        			CostPolicy.MAXIMUM);
         	double secondCost = tsGrid.getStepCost(
         			position,
         			neighbor,
         			ZonedDateTime.now(ZoneId.of("UTC")),
         			ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
-        			CostPolicy.AVERAGE);
+        			CostPolicy.MAXIMUM);
         	System.out.println("first cost = " + firstCost + ", second cost = " + secondCost);
         }
         

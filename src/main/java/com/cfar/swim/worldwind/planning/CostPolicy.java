@@ -29,6 +29,12 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+/**
+ * Enumerates available cost policies to compute a total planning cost.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public enum CostPolicy {
 	MINIMUM,
 	MAXIMUM,

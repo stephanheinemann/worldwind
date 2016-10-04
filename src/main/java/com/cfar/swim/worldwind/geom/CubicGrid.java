@@ -27,13 +27,11 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planning;
+package com.cfar.swim.worldwind.geom;
 
-import com.cfar.swim.worldwind.geom.Box;
+public class CubicGrid extends RegularGrid {
 
-public class CubicPlanningGrid extends NonUniformCostIntervalGrid {
-
-	public CubicPlanningGrid(Box box) {
+	public CubicGrid(Box box) {
 		super(box);
 		// TODO Auto-generated constructor stub
 	}

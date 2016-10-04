@@ -448,7 +448,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 */
 	@Override
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = 1d; // default uniform cost
+		double cost = 0d;
 		
 		// add all (weighted) cost of the cell
 		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
@@ -871,7 +871,8 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 			List<Double> costs = new ArrayList<Double>();
 			
 			// compute initial distance cost
-			double cost = this.getDistance(position, neighbor);
+			// double cost = this.getDistance(position, neighbor); // normalized for neighbor distance
+			double cost = 1d; // default uniform cost
 			
 			// compute cost of each adjacent cell
 			for (NonUniformCostIntervalGrid stepCell : stepCells) {
@@ -907,7 +908,8 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 			List<Double> costs = new ArrayList<Double>();
 			
 			// compute initial distance cost
-			double cost = this.getDistance(this.getCenterPosition(), neighbor.getCenterPosition());
+			//double cost = this.getDistance(this.getCenterPosition(), neighbor.getCenterPosition());
+			double cost = 1d; // default uniform cost
 			// add all (weighted) cost of the cells
 			costs.add(cost + this.getCost(start, end));
 			costs.add(cost + neighbor.getCost(start, end));

@@ -34,33 +34,22 @@ import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.planning.CubicPlanningGrid;
+import com.cfar.swim.worldwind.planning.Environment;
 
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.Path;
 
 public class ThetaStarPlanner extends AbstractPlanner {
-
 	
-	public ThetaStarPlanner(Aircraft aircraft, CubicPlanningGrid environment) {
+	public ThetaStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-	}
-
-	@Override
-	public CubicPlanningGrid getEnvironment() {
-		return (CubicPlanningGrid) super.getEnvironment();
 	}
 	
 	@Override
 	public Path plan(Position origin, Position destination, ZonedDateTime eto) {
-		CubicPlanningGrid grid = this.getEnvironment();
-		
-		Vec4 originPoint = grid.getGlobe().computePointFromPosition(origin);
-		Vec4 destinationPoint = grid.getGlobe().computePointFromPosition(destination);
-		
-		grid.lookupCells(originPoint);
-		grid.lookupCells(destinationPoint);
+		Environment environment = this.getEnvironment();
+		environment.getNeighbors(origin);
+		environment.getNeighbors(destination);
 		
 		// TODO Auto-generated method stub		
 		return new Path(origin, destination);
