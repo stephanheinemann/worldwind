@@ -309,6 +309,27 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
+	 * Gets the children of this regular grid.
+	 * 
+	 * @return the children of this regular grid
+	 */
+	public Set<? extends RegularGrid> getChildren() {
+		Set<RegularGrid> children = new HashSet<RegularGrid>();
+		
+		if (this.hasChildren()) {
+			for (int r = 0; r < this.cells.length; r++) {
+				for (int s = 0; s < this.cells[r].length; s++) {
+					for (int t = 0; t < this.cells[r][s].length; t++) {
+						children.add(this.cells[r][s][t]);
+					}
+				}
+			}
+		}
+		
+		return children;
+	}
+	
+	/**
 	 * Indicates whether or not this regular grid has a particular child.
 	 * 
 	 * @param r the <code>R</code> index of the child cell
@@ -493,27 +514,6 @@ public class RegularGrid extends Box {
 		}
 		
 		return lookedUpCells;
-	}
-	
-	/**
-	 * Gets the children of this regular grid.
-	 * 
-	 * @return the children of this regular grid
-	 */
-	public Set<? extends RegularGrid> getChildren() {
-		Set<RegularGrid> children = new HashSet<RegularGrid>();
-		
-		if (this.hasChildren()) {
-			for (int r = 0; r < this.cells.length; r++) {
-				for (int s = 0; s < this.cells[r].length; s++) {
-					for (int t = 0; t < this.cells[r][s].length; t++) {
-						children.add(this.cells[r][s][t]);
-					}
-				}
-			}
-		}
-		
-		return children;
 	}
 	
 	/**

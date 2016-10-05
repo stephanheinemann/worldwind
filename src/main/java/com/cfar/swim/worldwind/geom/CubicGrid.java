@@ -29,6 +29,10 @@
  */
 package com.cfar.swim.worldwind.geom;
 
+import java.util.Set;
+
+import gov.nasa.worldwind.geom.Vec4;
+
 /**
  * Realizes a hierarchical cubic three-dimensional grid.
  * 
@@ -51,6 +55,7 @@ public class CubicGrid extends RegularGrid {
 	 */
 	public CubicGrid(Cube cube) {
 		super(cube);
+		this.normalizer = cube.getLength();
 	}
 	
 	/**
@@ -72,8 +77,107 @@ public class CubicGrid extends RegularGrid {
 			refChild.getUnitTAxis().dot3(refChild.origin),
 			refChild.getUnitTAxis().dot3(refChild.origin) + (refChild.getLength() * tCells));
 		this.addChildren(rCells, sCells, tCells);
+		this.propagateUpNormalizer();
 	}
 	
-	// TODO: override addChildren methods that do not result in a cubic grid
-	// TODO: implement hierarchical normalization (cube.getLength())
+	protected CubicGrid newInstance(
+			Vec4[] axes,
+			double rMin, double rMax,
+			double sMin, double sMax,
+			double tMin, double tMax) {
+		Box b = new Box(axes, rMin, rMax, sMin, sMax, tMin, tMax);
+		return new CubicGrid(new Cube(b.getOrigin(), axes, b.getRLength()));
+	}
+	
+	protected void propagateUpNormalizer() {
+		if (this.hasChildren()) {
+			// update normalizer
+			this.normalizer = this.getChild(0, 0, 0).normalizer;
+		}
+		if (this.hasParent()) {
+			// propagate up normalizer
+			this.getParent().propagateUpNormalizer();
+		} else {
+			// propagate down normalizer
+			this.propagateDownNormalizer();
+		}
+	}
+	
+	protected void propagateDownNormalizer() {
+		if (this.hasChildren()) {
+			this.getAll().stream().map(c -> c.normalizer == this.normalizer);
+		}
+	}
+	
+	public void addChildren(int cells) {
+		super.addChildren(cells, cells, cells);
+		this.propagateUpNormalizer();
+	}
+	
+	@Override
+	public void addChildren(int rCells, int sCells, int tCells) {
+		if ((rCells == sCells) && (sCells == tCells)) {
+			super.addChildren(rCells, sCells, tCells);
+			this.propagateUpNormalizer();
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	@Override
+	public void addChildren(double rLength, double sLength, double tLength) {
+		if ((rLength == sLength) && (sLength == tLength)) {
+			super.addChildren(rLength, sLength, tLength);
+			this.propagateUpNormalizer();
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> getChildren() {
+		return (Set<CubicGrid>) super.getChildren();
+	}
+	
+	@Override
+	public CubicGrid getChild(int r, int s, int t) {
+		return (CubicGrid) super.getChild(r, s, t);
+	}
+	
+	@Override
+	public CubicGrid getParent() {
+		return (CubicGrid) super.getParent();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> getAll() {
+		return (Set<CubicGrid>) super.getAll();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> lookupCells(Vec4 modelPoint) {
+		return (Set<CubicGrid>) super.lookupCells(modelPoint);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> lookupCells(Vec4 modelPoint, int depth) {
+		return (Set<CubicGrid>) super.lookupCells(modelPoint, depth);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> getNeighbors() {
+		return (Set<CubicGrid>) super.getNeighbors();
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> getNeighbors(int depth) {
+		return (Set<CubicGrid>) super.getNeighbors(depth);
+	}
+	
 }
