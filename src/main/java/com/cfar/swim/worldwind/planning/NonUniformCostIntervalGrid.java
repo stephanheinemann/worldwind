@@ -450,13 +450,23 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
 		double cost = 0d;
 		
+		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
 		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
 		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
-			if (interval instanceof WeightedCostInterval) {
-				cost += ((WeightedCostInterval) interval).getWeightedCost();
-			} else if (interval instanceof CostInterval) {
-				cost += ((CostInterval) interval).getCost();
+			if (interval instanceof CostInterval) {
+				CostInterval costInterval = (CostInterval) interval;
+				
+				// only add costs of different overlapping cost intervals
+				if (!costIntervalIds.contains(costInterval.getId())) {
+					costIntervalIds.add(costInterval.getId());
+					
+					if ((interval instanceof WeightedCostInterval)) {
+						cost += ((WeightedCostInterval) interval).getWeightedCost();
+					} else {
+						cost += costInterval.getCost();
+					}
+				}	
 			}
 		}
 		
@@ -595,12 +605,15 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 			
 			// only add costs of different overlapping cost intervals
 			if (!costIntervalIds.contains(costInterval.getId())) {
-				costIntervalIds.add(costInterval.getId());
-				this.activeCost += ((CostInterval) costInterval).getCost();
+				// TODO: implement a proper weighted cost calculation normalized from 0 to 100
+				// TODO: the weight is affected by severity (reporting method) and currency (reporting time)
+				if ((interval instanceof WeightedCostInterval)) {
+					this.activeCost += ((WeightedCostInterval) interval).getWeightedCost();
+				} else {
+					this.activeCost += costInterval.getCost();
+				}
 			}
 		}
-		// TODO: implement a proper weighted cost calculation normalized from 0 to 100
-		// TODO: the weight is affected by severity (reporting method) and currency (reporting time)
 	}
 	
 	/**
@@ -855,6 +868,14 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 		measurer.setPathType(Polyline.LINEAR);
 		measurer.setFollowTerrain(false);
 		return measurer.getLength(this.globe);
+	}
+	
+	public double getNormalizedDistance(Position position1, Position position2) {
+		// TODO: normalizer = smallest contained cube side length?
+		// TODO: compute and update normalizer when children are added and removed
+		// TODO: use normalized cell cost as base for updateActiveCost and getCost
+		// this.getDistance(position1, position2) / 
+		return 1d;
 	}
 	
 	// TODO: documentation

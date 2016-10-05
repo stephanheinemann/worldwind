@@ -46,6 +46,8 @@ import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.geom.Cube;
+import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
@@ -104,7 +106,13 @@ public class RegularGridTest {
             wwd.setModel(new BasicModel());
             model = wwd.getModel();
         
+            RenderableLayer renderableLayer = new RenderableLayer();
+            LayerList layers = wwd.getModel().getLayers();
+            layers.add(renderableLayer);
+            
+            
             // TODO: separate test procedures
+            
             Sector uvic = new Sector(
             	Angle.fromDegrees(48.462836),
             	Angle.fromDegrees(48.463418),
@@ -117,11 +125,7 @@ public class RegularGridTest {
             uvicGrid.addChildren(uvicBox.getTLength() / 5.0);
             //uvicGrid.setThresholdCost(50);
             //uvicGrid.setGlobe(model.getGlobe());
-            
-            RenderableLayer renderableLayer = new RenderableLayer();
             renderableLayer.addRenderable(uvicGrid);
-            LayerList layers = wwd.getModel().getLayers();
-            layers.add(renderableLayer);
             
             
             Sector large = new Sector(
@@ -138,7 +142,7 @@ public class RegularGridTest {
             largeGrid.addChildren(0, 9, 1, 2, 2, 2);
             largeGrid.addChildren(2, 9, 1, 2, 2, 2);
             //largeGrid.setGlobe(model.getGlobe());
-            //renderableLayer.addRenderable(largeGrid);
+            renderableLayer.addRenderable(largeGrid);
             
             Sector ts = new Sector(
                 	Angle.fromDegrees(50.0),
@@ -146,6 +150,8 @@ public class RegularGridTest {
                 	Angle.fromDegrees(-15.0),
                 	Angle.fromDegrees(5.0));
             gov.nasa.worldwind.geom.Box tsBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, ts, 0.0, 500000.0);
+            //renderableLayer.addRenderable(tsBox);
+            //renderableLayer.addRenderable(new com.cfar.swim.worldwind.geom.Box(tsBox));
             tsGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tsBox));
             tsGrid.setThreshold(0);
             tsGrid.addChildren(tsGrid.getTLength() / 4.0);
@@ -229,15 +235,19 @@ public class RegularGridTest {
 		frame.setVisible(true);
 		
 		try {
+		Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
+			
 		largeGrid.setGlobe(model.getGlobe());
 		//IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
 		//largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
 		
 		tsGrid.setGlobe(model.getGlobe());
+		/*
 		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-CNL.xml")));
+		*/
 		
 		tcGrid.setGlobe(model.getGlobe());
 		/*
@@ -246,10 +256,11 @@ public class RegularGridTest {
 		*/
 		
 		//list.registerDataActivationListerner(largeUpdater);
-		list.registerDataActivationListerner(tsUpdater);
+		//list.registerDataActivationListerner(tsUpdater);
 		//list.registerDataActivationListerner(tcUpdater);
 		
 		// TODO: this seems to be the expected rst versus xyz bug
+		/*
 		System.out.println("iris location " + iris.getLocation());
 		System.out.println("checking position " + iris.getReferencePosition());
 		Vec4 point = tsGrid.getGlobe().computePointFromPosition(iris.getReferencePosition());
@@ -271,14 +282,14 @@ public class RegularGridTest {
 		System.out.println("grid contains center " + largeGrid.contains(largeGrid.getCenter()));
 		
 		Sphere sphere = new Sphere(point, 5000);
-		Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
     	((RenderableLayer) layer).addRenderable(sphere);
 		
 		Set<? extends NonUniformCostIntervalGrid> cells = tsGrid.lookupCells(iris.getReferencePosition());
 		System.out.println("found iris cells " + cells.size());
-		
+		*/
 		//Set<Position> neighbors = tsGrid.getNeighbors(iris.getReferencePosition());
 		//Set<Position> neighbors = tsGrid.getNeighbors(model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 2, 2).getBottomCenter()));
+		/*
 		Position position = model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 5, 1).getCorners()[0]);
 		ObstacleSphere posIris = new ObstacleSphere(position, 2500);
     	posIris.setCostInterval(new CostInterval(
@@ -326,6 +337,46 @@ public class RegularGridTest {
     				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
     				50));
         }
+        */
+        
+        /*
+        Vec4 x = new Vec4(1d, 0d, 0d);
+        Vec4 y = new Vec4(0d, 1d, 0d);
+        Vec4 z = new Vec4(0d, 0d, 1d);
+        Vec4[] axes = {x, y, z};
+        */
+        
+		/*
+        Cube cube = new Cube(model.getGlobe().computePointFromPosition(iris.getReferencePosition()), axes, 500000);
+        ((RenderableLayer) layer).addRenderable(cube);
+        */
+        /*
+		Sphere sphere = new Sphere(tsGrid.getOrigin(), 50000);
+		((RenderableLayer) layer).addRenderable(sphere);
+		*/
+		
+		Vec4[] axes = new Vec4[] {tsGrid.getUnitRAxis(), tsGrid.getUnitSAxis(), tsGrid.getUnitTAxis()};
+        Cube cube = new Cube(tsGrid.getOrigin(), axes, 50000);
+        CubicGrid cubicGrid = new CubicGrid(cube, 10, 5, 5);
+        ((RenderableLayer) layer).addRenderable(cubicGrid);
+        
+        /*
+        Sphere tcsphere = new Sphere(tcGrid.getOrigin(), 50000);
+		((RenderableLayer) layer).addRenderable(tcsphere);
+        
+        Vec4[] tcaxes = new Vec4[] {tcGrid.getUnitRAxis(), tcGrid.getUnitSAxis(), tcGrid.getUnitTAxis()};
+        Cube tccube = new Cube(tcGrid.getOrigin(), tcaxes, 50000);
+        CubicGrid tccubicGrid = new CubicGrid(tccube, 10, 5, 5);
+        ((RenderableLayer) layer).addRenderable(tccubicGrid);
+        
+        Sphere lsphere = new Sphere(largeGrid.getOrigin(), 50000);
+		((RenderableLayer) layer).addRenderable(lsphere);
+        
+        Vec4[] laxes = new Vec4[] {largeGrid.getUnitRAxis(), largeGrid.getUnitSAxis(), largeGrid.getUnitTAxis()};
+        Cube lcube = new Cube(largeGrid.getOrigin(), laxes, 50000);
+        CubicGrid lcubicGrid = new CubicGrid(lcube, 10, 5, 5);
+        ((RenderableLayer) layer).addRenderable(lcubicGrid);
+        */
         
 		} catch (Exception e) {
 			e.printStackTrace();

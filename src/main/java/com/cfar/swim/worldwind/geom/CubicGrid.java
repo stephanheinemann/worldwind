@@ -29,11 +29,51 @@
  */
 package com.cfar.swim.worldwind.geom;
 
+/**
+ * Realizes a hierarchical cubic three-dimensional grid.
+ * 
+ * @author Stephan Heinemann
+ * 
+ */
 public class CubicGrid extends RegularGrid {
-
-	public CubicGrid(Box box) {
-		super(box);
-		// TODO Auto-generated constructor stub
+	
+	/**
+	 * the normalizer for distances of this cubic grid
+	 */
+	protected double normalizer = Double.NaN;
+	
+	/**
+	 * Constructs a new cubic grid from a geometric cube without any children. 
+	 * 
+	 * @param cube the geometric cube
+	 * 
+	 * @see com.cfar.swim.worldwind.geom.Cube#Cube(gov.nasa.worldwind.geom.Vec4, gov.nasa.worldwind.geom.Vec4[], double)
+	 */
+	public CubicGrid(Cube cube) {
+		super(cube);
 	}
-
+	
+	/**
+	 * Constructs a new cubic grid from a geometric cube representing a
+	 * reference child.
+	 * 
+	 * @param refChild the geometric cube representing the reference child
+	 * @param rCells the number of cubic children along the <code>R</code> axis
+	 * @param sCells the number of cubic children along the <code>S</code> axis
+	 * @param tCells the number of cubic children along the <code>T</code> axis
+	 */
+	public CubicGrid(Cube refChild, int rCells, int sCells, int tCells) {
+		super(
+			refChild.getUnitAxes(),
+			refChild.getUnitRAxis().dot3(refChild.origin),
+			refChild.getUnitRAxis().dot3(refChild.origin) + (refChild.getLength() * rCells),
+			refChild.getUnitSAxis().dot3(refChild.origin),
+			refChild.getUnitSAxis().dot3(refChild.origin) + (refChild.getLength() * sCells),
+			refChild.getUnitTAxis().dot3(refChild.origin),
+			refChild.getUnitTAxis().dot3(refChild.origin) + (refChild.getLength() * tCells));
+		this.addChildren(rCells, sCells, tCells);
+	}
+	
+	// TODO: override addChildren methods that do not result in a cubic grid
+	// TODO: implement hierarchical normalization (cube.getLength())
 }

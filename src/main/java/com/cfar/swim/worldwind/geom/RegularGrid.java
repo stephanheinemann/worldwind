@@ -45,8 +45,7 @@ import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
- * Realizes a regular three-dimensional grid that can be used for motion
- * planning.
+ * Realizes a hierarchical regular three-dimensional grid.
  * 
  * @author Stephan Heinemann
  * 
@@ -147,6 +146,8 @@ public class RegularGrid extends Box {
 		this.addChildren(rCells, sCells, tCells);
 	}
 	
+	// TODO: include construction from axes, origin and lengths
+	
 	/**
 	 * Constructs a new regular grid from three plane normals and six distances
 	 * for each of the six faces of a geometric box without any children.
@@ -175,7 +176,7 @@ public class RegularGrid extends Box {
 		this.cells = new RegularGrid[rCells][sCells][tCells];
 		
 		// use the parent cell unit axes for all child cells
-		Vec4[] axes = {this.getUnitRAxis(), this.getUnitSAxis(), this.getUnitTAxis()};
+		Vec4[] axes = this.getUnitAxes();
 		
 		// shorten the parent cell axes for the child cells
 		Vec4 cellRAxis = this.getRAxis().divide3(rCells);

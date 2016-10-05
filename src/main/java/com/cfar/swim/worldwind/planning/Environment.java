@@ -127,6 +127,17 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getDistance(Position position1, Position position2);
 	
 	/**
+	 * Gets the normalized distance between two positions in this environment.
+	 * 
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * 
+	 * @return the normalized distance between the two positions in this
+	 *         environment
+	 */
+	public double getNormalizedDistance(Position position1, Position position2);
+	
+	/**
 	 * Adds a cost interval to this environment.
 	 * 
 	 * @param costInterval the cost interval to be added to this environment

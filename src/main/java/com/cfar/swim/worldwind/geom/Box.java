@@ -87,10 +87,16 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public static final int CORNER_INDEX_TOP_UPPER_LEFT = 7;
 	
 	/**
+	 * the origin of this box
+	 */
+	protected Vec4 origin = Vec4.ZERO;
+	
+	/**
 	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4)
 	 */
 	public Box(Vec4 point) {
 		super(point);
+		this.origin = this.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 	}
 	
 	/**
@@ -102,6 +108,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			double sMin, double sMax,
 			double tMin, double tMax) {
 		super(axes, rMin, rMax, sMin, sMax, tMin, tMax);
+		this.origin = this.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 	}
 	
 	/**
@@ -127,6 +134,56 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			box.getTLength(),
 			box.getPlanes()
 			);
+		this.origin = this.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+	}
+	
+	/**
+	 * Constructs a new box with specified origin, unit axes and side lengths.
+	 * 
+	 * @param origin the origin of this box
+	 * @param axes the unit axes of this box
+	 * @param rLength the side length along the <code>R</code> axes of this box
+	 * @param sLength the side length along the <code>S</code> axes of this box
+	 * @param tLength the side length along the <code>T</code> axes of this box
+	 */
+	public Box(Vec4 origin, Vec4[] axes, double rLength, double sLength, double tLength) {
+		super(
+			axes,
+			axes[0].dot3(origin), axes[0].dot3(origin) + rLength,
+			axes[1].dot3(origin), axes[1].dot3(origin) + sLength,
+			axes[2].dot3(origin), axes[2].dot3(origin) + tLength);
+		this.origin = origin;
+	}
+	
+	/**
+	 * Gets the unit axes of this box.
+	 * 
+	 * @return the unit axes of this box
+	 */
+	public Vec4[] getUnitAxes() {
+		return new Vec4[]{this.getUnitRAxis(), this.getUnitSAxis(), this.getUnitTAxis()};
+	}
+	
+	/**
+	 * Gets the origin of this box.
+	 * 
+	 * @return the origin of this box
+	 */
+	public Vec4 getOrigin() {
+		return this.origin;
+	}
+	
+	/**
+	 * Indicates whether or not a point in world model coordinates equals the
+	 * origin of this box considering numerical inaccuracies.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return true if the point equals the origin of this box considering
+	 *         numerical inaccuracies, false otherwise
+	 */
+	public boolean isOrigin(Vec4 point) {
+		return new PrecisionVec4(point).equals(new PrecisionVec4(this.origin));
 	}
 	
 	/**
@@ -261,7 +318,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return the box vector
 	 */
 	public Vec4 transformModelToBoxCenter(Vec4 modelPoint) {
-		Vec4[] unitAxes = {this.ru, this.su, this.tu};
+		Vec4[] unitAxes = this.getUnitAxes();
 		Vec4 origin = this.getCenter();
 		Matrix transformMatrix = Matrix.fromLocalOrientation(origin , unitAxes).getInverse();
 		return modelPoint.transformBy4(transformMatrix);
