@@ -77,7 +77,7 @@ public class CubicGrid extends RegularGrid {
 			refChild.getUnitTAxis().dot3(refChild.origin),
 			refChild.getUnitTAxis().dot3(refChild.origin) + (refChild.getLength() * tCells));
 		this.addChildren(rCells, sCells, tCells);
-		this.propagateUpNormalizer();
+		this.updateNormalizer();
 	}
 	
 	protected CubicGrid newInstance(
@@ -89,16 +89,30 @@ public class CubicGrid extends RegularGrid {
 		return new CubicGrid(new Cube(b.getOrigin(), axes, b.getRLength()));
 	}
 	
-	protected void propagateUpNormalizer() {
+	protected void updateNormalizer() {
 		if (this.hasChildren()) {
-			// update normalizer
-			this.normalizer = this.getChild(0, 0, 0).normalizer;
-		}
-		if (this.hasParent()) {
-			// propagate up normalizer
-			this.getParent().propagateUpNormalizer();
+			if (this.getChild(0, 0, 0).normalizer < this.normalizer) {
+				this.normalizer = this.getChild(0, 0, 0).normalizer;
+				this.propagateUpNormalizer();
+			} else {
+				this.propagateDownNormalizer();
+			}
 		} else {
-			// propagate down normalizer
+			this.normalizer = this.getLength();
+			this.propagateUpNormalizer();
+		}
+	}
+	
+	protected void propagateUpNormalizer() {
+		if (this.hasParent()) {
+			CubicGrid parent = this.getParent();
+			if (parent.normalizer > this.normalizer) {
+				parent.normalizer = this.normalizer;
+				parent.propagateUpNormalizer();
+			} else {
+				parent.propagateDownNormalizer();
+			}
+		} else {
 			this.propagateDownNormalizer();
 		}
 	}
@@ -109,16 +123,20 @@ public class CubicGrid extends RegularGrid {
 		}
 	}
 	
+	public double getLength() {
+		return this.rLength;
+	}
+	
 	public void addChildren(int cells) {
 		super.addChildren(cells, cells, cells);
-		this.propagateUpNormalizer();
+		this.updateNormalizer();
 	}
 	
 	@Override
 	public void addChildren(int rCells, int sCells, int tCells) {
 		if ((rCells == sCells) && (sCells == tCells)) {
 			super.addChildren(rCells, sCells, tCells);
-			this.propagateUpNormalizer();
+			this.updateNormalizer();
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -128,10 +146,16 @@ public class CubicGrid extends RegularGrid {
 	public void addChildren(double rLength, double sLength, double tLength) {
 		if ((rLength == sLength) && (sLength == tLength)) {
 			super.addChildren(rLength, sLength, tLength);
-			this.propagateUpNormalizer();
+			this.updateNormalizer();
 		} else {
 			throw new IllegalArgumentException();
 		}
+	}
+	
+	@Override
+	public void removeChildren() {
+		super.removeChildren();
+		this.updateNormalizer();
 	}
 	
 	@SuppressWarnings("unchecked")
