@@ -79,7 +79,7 @@ public class CubicGrid extends RegularGrid {
 			refChild.getUnitTAxis().dot3(refChild.origin),
 			refChild.getUnitTAxis().dot3(refChild.origin) + (refChild.getLength() * tCells));
 		this.normalizer = refChild.getLength();
-		this.addChildren(rCells, sCells, tCells);
+		super.addChildren(rCells, sCells, tCells);
 	}
 	
 	/**

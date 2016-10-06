@@ -120,9 +120,12 @@ public class RegularGridTest {
         		Angle.fromDegrees(-123.310799)
             	);
             gov.nasa.worldwind.geom.Box uvicBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, uvic, 0.0, 150.0);
-            uvicGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(uvicBox));
+            //uvicGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(uvicBox));
+            com.cfar.swim.worldwind.geom.Box uvicB = new com.cfar.swim.worldwind.geom.Box(uvicBox);
+            Cube uvicCube = new Cube(uvicB.getOrigin(), uvicB.getUnitAxes(), uvicB.getRLength() / 10);
+            uvicGrid = new NonUniformCostIntervalGrid(uvicCube, 10, 10, 5);
             uvicGrid.setThreshold(0);
-            uvicGrid.addChildren(uvicBox.getTLength() / 5.0);
+            //uvicGrid.addChildren(uvicBox.getTLength() / 5.0);
             //uvicGrid.setThresholdCost(50);
             //uvicGrid.setGlobe(model.getGlobe());
             renderableLayer.addRenderable(uvicGrid);
@@ -134,13 +137,18 @@ public class RegularGridTest {
             	Angle.fromDegrees(0.0),
             	Angle.fromDegrees(90.0));
             gov.nasa.worldwind.geom.Box largeBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, large, 0.0, 500000.0);
-            largeGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(largeBox));
+            //largeGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(largeBox));
+            com.cfar.swim.worldwind.geom.Box largeB = new com.cfar.swim.worldwind.geom.Box(largeBox);
+            Cube largeCube = new Cube(largeB.getOrigin(), largeB.getUnitAxes(), largeB.getRLength() / 10);
+            largeGrid = new NonUniformCostIntervalGrid(largeCube, 10, 10, 5);
             largeGrid.setThreshold(0);
+            /*
             largeGrid.addChildren(largeBox.getTLength() / 4.0);
             largeGrid.addChildren(0, 8, 3, 2, 2, 2);
             largeGrid.addChildren(1, 9, 3, 2, 2, 2);
             largeGrid.addChildren(0, 9, 1, 2, 2, 2);
             largeGrid.addChildren(2, 9, 1, 2, 2, 2);
+            */
             //largeGrid.setGlobe(model.getGlobe());
             renderableLayer.addRenderable(largeGrid);
             
@@ -152,10 +160,13 @@ public class RegularGridTest {
             gov.nasa.worldwind.geom.Box tsBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, ts, 0.0, 500000.0);
             //renderableLayer.addRenderable(tsBox);
             //renderableLayer.addRenderable(new com.cfar.swim.worldwind.geom.Box(tsBox));
-            tsGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tsBox));
+            //tsGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tsBox));
+            com.cfar.swim.worldwind.geom.Box tsB = new com.cfar.swim.worldwind.geom.Box(tsBox);
+            Cube tsCube = new Cube(tsB.getOrigin(), tsB.getUnitAxes(), tsB.getRLength() / 10);
+            tsGrid = new NonUniformCostIntervalGrid(tsCube, 10, 10, 5);
             tsGrid.setThreshold(0);
-            tsGrid.addChildren(tsGrid.getTLength() / 4.0);
-            tsGrid.addChildren(3, 3, 0, 2, 2, 2);
+            //tsGrid.addChildren(tsGrid.getTLength() / 4.0);
+            //tsGrid.addChildren(3, 3, 0, 2, 2, 2);
             renderableLayer.addRenderable(tsGrid);
             
             Sector tc = new Sector(
@@ -164,9 +175,12 @@ public class RegularGridTest {
                 	Angle.fromDegrees(-75.0),
                 	Angle.fromDegrees(-70.0));
             gov.nasa.worldwind.geom.Box tcBox = Sector.computeBoundingBox(wwd.getModel().getGlobe(), 1.0, tc, 0.0, 50000.0);
-            tcGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tcBox));
+            //tcGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tcBox));
+            com.cfar.swim.worldwind.geom.Box tcB = new com.cfar.swim.worldwind.geom.Box(tcBox);
+            Cube tcCube = new Cube(tcB.getOrigin(), tcB.getUnitAxes(), tcB.getRLength() / 10);
+            tcGrid = new NonUniformCostIntervalGrid(tcCube, 10, 10, 5);
             tcGrid.setThreshold(0);
-            tcGrid.addChildren(tcGrid.getTLength() / 4.0);
+            //tcGrid.addChildren(tcGrid.getTLength() / 4.0);
             renderableLayer.addRenderable(tcGrid);
             
             iris = new Iris(new Position(ts.getCentroid(), 50000), 5000, CombatIdentification.FRIEND);
@@ -242,12 +256,10 @@ public class RegularGridTest {
 		//largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
 		
 		tsGrid.setGlobe(model.getGlobe());
-		/*
 		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-CNL.xml")));
-		*/
 		
 		tcGrid.setGlobe(model.getGlobe());
 		/*
@@ -256,7 +268,7 @@ public class RegularGridTest {
 		*/
 		
 		//list.registerDataActivationListerner(largeUpdater);
-		//list.registerDataActivationListerner(tsUpdater);
+		list.registerDataActivationListerner(tsUpdater);
 		//list.registerDataActivationListerner(tcUpdater);
 		
 		// TODO: this seems to be the expected rst versus xyz bug
@@ -355,10 +367,12 @@ public class RegularGridTest {
 		((RenderableLayer) layer).addRenderable(sphere);
 		*/
 		
+		/*
 		Vec4[] axes = new Vec4[] {tsGrid.getUnitRAxis(), tsGrid.getUnitSAxis(), tsGrid.getUnitTAxis()};
         Cube cube = new Cube(tsGrid.getOrigin(), axes, 50000);
         CubicGrid cubicGrid = new CubicGrid(cube, 10, 5, 5);
         ((RenderableLayer) layer).addRenderable(cubicGrid);
+        */
         
         /*
         Sphere tcsphere = new Sphere(tcGrid.getOrigin(), 50000);

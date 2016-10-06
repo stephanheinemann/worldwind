@@ -43,7 +43,8 @@ import java.util.stream.Collectors;
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
-import com.cfar.swim.worldwind.geom.RegularGrid;
+import com.cfar.swim.worldwind.geom.Cube;
+import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
@@ -64,9 +65,9 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  * @author Stephan Heinemann
  *
  */
-public class NonUniformCostIntervalGrid extends RegularGrid implements Environment {
-
-	// TODO: reconsider class hierarchy: Box -> RegularGrid -> CubicGrid -> PlanningGrid implements Environment
+public class NonUniformCostIntervalGrid extends CubicGrid implements Environment {
+	
+	// TODO: rename PlanningGrid
 	
 	/** the globe of this non-uniform cost interval grid */
 	private Globe globe = null;
@@ -93,84 +94,37 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	private HashMap<Obstacle, List<NonUniformCostIntervalGrid>> affectedChildren = new HashMap<Obstacle, List<NonUniformCostIntervalGrid>>();
 	
 	/**
-	 * Constructs a non-uniform cost interval grid based on a geometric box
+	 * Constructs a non-uniform cost interval grid based on a geometric cube
 	 * without any children.
 	 * 
-	 * @param box the geometric box
+	 * @param cube the geometric cube
 	 * 
-	 * @see RegularGrid#RegularGrid(Box)
+	 * @see CubicGrid#CubicGrid(Cube)
 	 */
-	public NonUniformCostIntervalGrid(Box box) {
-		super(box);
+	public NonUniformCostIntervalGrid(Cube cube) {
+		super(cube);
+		this.update();
 	}
 	
 	/**
-	 * Constructs a non-uniform cost interval grid based on a geometric box
-	 * with the specified number of children on each axis.
+	 * Constructs a non-uniform cost interval grid from a geometric cube
+	 * representing a reference child.
 	 * 
-	 * @param box the geometric box
-	 * @param rCells the number of children on the <code>R</code> axis
-	 * @param sCells the number of children on the <code>S</code> axis
-	 * @param tCells the number of children on the <code>T</code> axis
-	 * 
-	 * @see RegularGrid#RegularGrid(Box, int, int, int)
+	 * @param refChild the geometric cube representing the reference child
+	 * @param rCells the number of cubic children along the <code>R</code> axis
+	 * @param sCells the number of cubic children along the <code>S</code> axis
+	 * @param tCells the number of cubic children along the <code>T</code> axis
+	 *
+	 * @see CubicGrid#CubicGrid(Cube, int, int, int)
 	 */
-	public NonUniformCostIntervalGrid(Box box, int rCells, int sCells, int tCells) {
-		super(box, rCells, sCells, tCells);
-	}
-	
-	/**
-	 * Constructs a non-uniform cost interval grid from three plane normals and
-	 * six distances for each of the six faces of a geometric box without any
-	 * children.
-	 * 
-	 * @param axes the three plane normals
-	 * @param rMin the minimum distance on the <code>R</code> axis
-	 * @param rMax the maximum distance on the <code>R</code> axis
-	 * @param sMin the minimum distance on the <code>S</code> axis
-	 * @param sMax the maximum distance on the <code>S</code> axis
-	 * @param tMin the minimum distance on the <code>T</code> axis
-	 * @param tMax the maximum distance on the <code>T</code> axis
-	 * 
-	 * @see RegularGrid#RegularGrid(Vec4[], double, double, double, double, double, double)
-	 */
-	public NonUniformCostIntervalGrid(
-			Vec4[] axes,
-			double rMin, double rMax,
-			double sMin, double sMax,
-			double tMin, double tMax) {
-		super(axes, rMin, rMax, sMin, sMax, tMin, tMax);
+	public NonUniformCostIntervalGrid(Cube refChild, int rCells, int sCells, int tCells) {
+		super(refChild, rCells, sCells, tCells);
+		this.update();
 	}
 	
 	/**
 	 * Constructs a non-uniform cost interval grid from three plane normals and
-	 * six distances for each of the six faces of a geometric box with the
-	 * specified number of children on each axis.
-	 * 
-	 * @param axes the three plane normals
-	 * @param rMin the minimum distance on the <code>R</code> axis
-	 * @param rMax the maximum distance on the <code>R</code> axis
-	 * @param sMin the minimum distance on the <code>S</code> axis
-	 * @param sMax the maximum distance on the <code>S</code> axis
-	 * @param tMin the minimum distance on the <code>T</code> axis
-	 * @param tMax the maximum distance on the <code>T</code> axis
-	 * @param rCells the number of children on the <code>R</code> axis
-	 * @param sCells the number of children on the <code>S</code> axis
-	 * @param tCells the number of children on the <code>T</code> axis
-	 * 
-	 * @see RegularGrid#RegularGrid(Vec4[], double, double, double, double, double, double, int, int, int)
-	 */
-	public NonUniformCostIntervalGrid(Vec4[] axes,
-			double rMin, double rMax,
-			double sMin, double sMax,
-			double tMin, double tMax,
-			int rCells, int sCells, int tCells) {
-		super(axes, rMin, rMax, sMin, sMax, tMin, tMax, rCells, sCells, tCells);
-	}
-	
-	/**
-	 * Constructs a non-uniform cost interval grid from three plane normals and
-	 * six distances for each of the six faces of a geometric box without any
+	 * six distances for each of the six faces of a geometric cube without any
 	 * children. The current time and threshold cost are propagated to the child.
 	 * 
 	 * This factory method is used during child construction and supposed to be
@@ -178,18 +132,26 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * 
 	 * @see NonUniformCostIntervalGrid#NonUniformCostIntervalGrid(Vec4[], double, double, double, double, double, double)
 	 */
+	
+	/**
+	 * Constructs a new non-uniform cost interval grid from three plane normals
+	 * and six distances for each of the six faces of a geometric box without
+	 * any children.
+	 * 
+	 * This factory method is used during child construction and supposed to be
+	 * overridden by specializing classes.
+	 * 
+	 * @see CubicGrid#newInstance(Vec4[], double, double, double, double, double, double)
+	 */
 	@Override
 	protected NonUniformCostIntervalGrid newInstance(
 			Vec4[] axes,
 			double rMin, double rMax,
 			double sMin, double sMax,
 			double tMin, double tMax) {
-		NonUniformCostIntervalGrid grid = new NonUniformCostIntervalGrid(
-				axes, rMin, rMax, sMin, sMax, tMin, tMax);
-		grid.setTime(this.time);
-		grid.setThreshold(this.thresholdCost);
-		grid.update();
-		return grid;
+		
+		Box b = new Box(axes, rMin, rMax, sMin, sMax, tMin, tMax);
+		return new NonUniformCostIntervalGrid(new Cube(b.getOrigin(), axes, b.getRLength()));
 	}
 	
 	/**
@@ -312,7 +274,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * 
 	 * @return the non-uniform cost interval grid cells containing the specified point
 	 * 
-	 * @see RegularGrid#lookupCells(Vec4)
+	 * @see CubicGrid#lookupCells(Vec4)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
@@ -330,7 +292,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * @return the non-uniform cost interval grid cells contain the specified
 	 *         position if a globe has been set, null otherwise
 	 * 
-	 * @see RegularGrid#lookupCells(Vec4)
+	 * @see CubicGrid#lookupCells(Vec4)
 	 */
 	@SuppressWarnings("unchecked")
 	public Set<? extends NonUniformCostIntervalGrid> lookupCells(Position position) {
@@ -725,13 +687,13 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 
 	/**
 	 * Adds the specified number of children on each axis to this non-uniform
-	 * cost interval grid and propagates existing embeddings.
+	 * cost interval grid and propagates existing obstacle embeddings.
 	 * 
 	 * @param rCells the number of children on the <code>R</code> axis
 	 * @param sCells the number of children on the <code>S</code> axis
 	 * @param tCells the number of children on the <code>T</code> axis
 	 * 
-	 * @see RegularGrid#addChildren(int, int, int)
+	 * @see CubicGrid#addChildren(int, int, int)
 	 */
 	@Override
 	public void addChildren(int rCells, int sCells, int tCells) {
@@ -741,8 +703,13 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 			for (int s = 0; s < this.cells[r].length; s++) {
 				for (int t = 0; t < this.cells[r][s].length; t++) {
 					NonUniformCostIntervalGrid child = (NonUniformCostIntervalGrid) this.cells[r][s][t];
+					// initialize children
 					child.setGlobe(this.globe);
+					child.setTime(this.time);
+					child.setThreshold(this.thresholdCost);
+					child.update();
 					
+					// propagate obstacle embeddings
 					for (Obstacle obstacle : this.obstacles) {
 						if (obstacle instanceof ObstacleCylinder) {
 							if (child.embed((ObstacleCylinder) obstacle)) {
@@ -759,7 +726,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	/**
 	 * Removes all children from this non-uniform cost interval grid.
 	 * 
-	 * @see RegularGrid#removeChildren()
+	 * @see CubicGrid#removeChildren()
 	 */
 	@Override
 	public void removeChildren() {
@@ -773,7 +740,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * 
 	 * @return the children of this non-uniform cost interval grid
 	 * 
-	 * @see RegularGrid#getChildren()
+	 * @see CubicGrid#getChildren()
 	 * @see Environment#getChildren()
 	 */
 	@SuppressWarnings("unchecked")
@@ -788,7 +755,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * 
 	 * @return the non-parent neighbors of this non-uniform cost interval grid
 	 * 
-	 * @see RegularGrid#getNeighbors()
+	 * @see CubicGrid#getNeighbors()
 	 * @see Environment#getNeighbors()
 	 */
 	@SuppressWarnings("unchecked")
@@ -817,7 +784,7 @@ public class NonUniformCostIntervalGrid extends RegularGrid implements Environme
 	 * @return the neighbors of the position in this non-uniform cost interval
 	 *         grid
 	 * 
-	 * @see RegularGrid#getNeighbors(Vec4)
+	 * @see CubicGrid#getNeighbors(Vec4)
 	 * @see Environment#getNeighbors(Position)
 	 */
 	@Override
