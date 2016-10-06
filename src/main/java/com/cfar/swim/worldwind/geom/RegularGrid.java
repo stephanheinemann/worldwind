@@ -171,40 +171,46 @@ public class RegularGrid extends Box {
 	 * @param rCells the number of children on the <code>R</code> axis
 	 * @param sCells the number of children on the <code>S</code> axis
 	 * @param tCells the number of children on the <code>T</code> axis
+	 * 
+	 * @throws IllegalStateException if this regular grid has children
 	 */
 	public void addChildren(int rCells, int sCells, int tCells) {
-		this.cells = new RegularGrid[rCells][sCells][tCells];
-		
-		// use the parent cell unit axes for all child cells
-		Vec4[] axes = this.getUnitAxes();
-		
-		// shorten the parent cell axes for the child cells
-		Vec4 cellRAxis = this.getRAxis().divide3(rCells);
-		Vec4 cellSAxis = this.getSAxis().divide3(sCells);
-		Vec4 cellTAxis = this.getTAxis().divide3(tCells);
-		
-		// use the left-most parent cell face planes to compute the child cells 
-		Plane rPlane = this.planes[0];
-		Plane sPlane = this.planes[2];
-		Plane tPlane = this.planes[4];
-		
-		for (int r = 0; r < rCells; r++) {
-			for (int s = 0; s < sCells; s++) {
-				for (int t = 0; t < tCells; t++) {
-					// translate the left-most planes of each axis to form the new
-					// left- and right-most planes of each axis for each child cell
-					// TODO: R >= S >= T (Note: No check is made to ensure the order of the face locations.)
-					this.cells[r][s][t] = this.newInstance(
-							axes,
-							rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r)),
-							rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r + 1)),
-							sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s)),
-							sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s + 1)),
-							tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t)),
-							tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t + 1)));
-					this.cells[r][s][t].parent = this;
+		if (!this.hasChildren()) {
+			this.cells = new RegularGrid[rCells][sCells][tCells];
+			
+			// use the parent cell unit axes for all child cells
+			Vec4[] axes = this.getUnitAxes();
+			
+			// shorten the parent cell axes for the child cells
+			Vec4 cellRAxis = this.getRAxis().divide3(rCells);
+			Vec4 cellSAxis = this.getSAxis().divide3(sCells);
+			Vec4 cellTAxis = this.getTAxis().divide3(tCells);
+			
+			// use the left-most parent cell face planes to compute the child cells 
+			Plane rPlane = this.planes[0];
+			Plane sPlane = this.planes[2];
+			Plane tPlane = this.planes[4];
+			
+			for (int r = 0; r < rCells; r++) {
+				for (int s = 0; s < sCells; s++) {
+					for (int t = 0; t < tCells; t++) {
+						// translate the left-most planes of each axis to form the new
+						// left- and right-most planes of each axis for each child cell
+						// TODO: R >= S >= T (Note: No check is made to ensure the order of the face locations.)
+						this.cells[r][s][t] = this.newInstance(
+								axes,
+								rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r)),
+								rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r + 1)),
+								sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s)),
+								sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s + 1)),
+								tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t)),
+								tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t + 1)));
+						this.cells[r][s][t].parent = this;
+					}
 				}
 			}
+		} else {
+			throw new IllegalStateException("grid already has children");
 		}
 	}
 	
@@ -216,6 +222,8 @@ public class RegularGrid extends Box {
 	 * @param rLength the length of a child cell on the <code>R</code> axis
 	 * @param sLength the length of a child cell on the <code>S</code> axis
 	 * @param tLength the length of a child cell on the <code>T</code> axis
+	 * 
+	 * @throws IllegalArgumentException if child dimensions are too large
 	 */
 	public void addChildren(double rLength, double sLength, double tLength) {
 		if ((this.rLength >= rLength) && (this.sLength >= sLength) && (this.tLength >= tLength)) {
@@ -224,6 +232,8 @@ public class RegularGrid extends Box {
 			int tCells = (int) Math.round(this.tLength / tLength);
 			
 			this.addChildren(rCells, sCells, tCells);
+		} else {
+			throw new IllegalArgumentException("children dimensions are too large");
 		}
 	}
 	
@@ -451,6 +461,7 @@ public class RegularGrid extends Box {
 	 * considered.
 	 * 
 	 * @param modelPoint the point in world model coordinates
+	 * 
 	 * @return the regular non-parent grid cells containing the specified point
 	 */
 	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
