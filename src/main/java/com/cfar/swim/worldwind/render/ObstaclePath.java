@@ -64,10 +64,10 @@ public class ObstaclePath extends Path implements Obstacle {
 	protected Depiction depiction = null;
 	
 	/** the threshold cost of this obstacle path */
-	private int thresholdCost = 0;
+	private double thresholdCost = 0d;
 	
 	/** the active cost of this obstacle path */
-	private int activeCost = 0;
+	private double activeCost = 0d;
 	
 	/**
 	 * Constructs an obstacle path with the specified waypoint positions.
@@ -173,10 +173,10 @@ public class ObstaclePath extends Path implements Obstacle {
 	 * 
 	 * @param threshold the threshold cost of this obstacle path
 	 *
-	 * @see ThresholdRenderable#setThreshold(int)
+	 * @see ThresholdRenderable#setThreshold(double)
 	 */
 	@Override
-	public void setThreshold(int threshold) {
+	public void setThreshold(double threshold) {
 		this.thresholdCost = threshold;
 		this.updateVisibility();
 	}
@@ -189,7 +189,7 @@ public class ObstaclePath extends Path implements Obstacle {
 	 * @see ThresholdRenderable#getThreshold()
 	 */
 	@Override
-	public int getThreshold() {
+	public double getThreshold() {
 		return this.thresholdCost;
 	}
 

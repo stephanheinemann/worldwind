@@ -63,7 +63,7 @@ public class ObstacleColor {
 	 * @param cost the cost
 	 * @return the color for the specified cost
 	 */
-	public static Color getColor(int cost) {
+	public static Color getColor(double cost) {
 		if (cost >= ObstacleColor.THRESHOLD_EXTREME_2) {
 			return Color.WHITE;
 		}

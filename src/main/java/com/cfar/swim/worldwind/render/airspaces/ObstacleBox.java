@@ -69,10 +69,10 @@ public class ObstacleBox extends Box implements Obstacle {
 	protected Depiction depiction = null;
 	
 	/** the threshold cost of this obstacle cylinder */
-	private int thresholdCost = 0;
+	private double thresholdCost = 0d;
 	
 	/** the active cost of this obstacle cylinder */
-	private int activeCost = 0;
+	private double activeCost = 0d;
 	
 	/*
 	 * TODO:
@@ -180,10 +180,10 @@ public class ObstacleBox extends Box implements Obstacle {
 	 * 
 	 * @param threshold the threshold cost of this obstacle box
 	 *
-	 * @see ThresholdRenderable#setThreshold(int)
+	 * @see ThresholdRenderable#setThreshold(double)
 	 */
 	@Override
-	public void setThreshold(int threshold) {
+	public void setThreshold(double threshold) {
 		this.thresholdCost = threshold;
 		this.updateVisibility();
 	}
@@ -196,7 +196,7 @@ public class ObstacleBox extends Box implements Obstacle {
 	 * @see ThresholdRenderable#getThreshold()
 	 */
 	@Override
-	public int getThreshold() {
+	public double getThreshold() {
 		return this.thresholdCost;
 	}
 

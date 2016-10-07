@@ -70,10 +70,10 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	protected Depiction depiction = null;
 	
 	/** the threshold cost of this obstacle sphere */
-	private int thresholdCost = 0;
+	private double thresholdCost = 0d;
 	
 	/** the active cost of this obstacle sphere */
-	private int activeCost = 0;
+	private double activeCost = 0d;
 	
 	/**
 	 * Constructs an obstacle sphere at the specified position with the
@@ -177,10 +177,10 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 * 
 	 * @param threshold the threshold cost of this obstacle sphere
 	 *
-	 * @see ThresholdRenderable#setThreshold(int)
+	 * @see ThresholdRenderable#setThreshold(double)
 	 */
 	@Override
-	public void setThreshold(int threshold) {
+	public void setThreshold(double threshold) {
 		this.thresholdCost = threshold;
 		this.updateVisibility();
 	}
@@ -193,7 +193,7 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 * @see ThresholdRenderable#getThreshold()
 	 */
 	@Override
-	public int getThreshold() {
+	public double getThreshold() {
 		return this.thresholdCost;
 	}
 

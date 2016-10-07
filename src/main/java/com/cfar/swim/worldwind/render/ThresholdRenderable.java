@@ -46,13 +46,13 @@ public interface ThresholdRenderable extends Renderable {
 	 * 
 	 * @param threshold the threshold of this threshold renderable
 	 */
-	public void setThreshold(int threshold);
+	public void setThreshold(double threshold);
 
 	/**
 	 * Gets the threshold of this threshold renderable.
 	 * 
 	 * @return the treshold of this threshold renderable
 	 */
-	public int getThreshold();
+	public double getThreshold();
 
 }

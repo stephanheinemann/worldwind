@@ -51,7 +51,7 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	protected String id = null;
 	
 	/** the cost of this cost interval */
-	protected int cost = 0;
+	protected double cost = 0d;
 	
 	/** the enabled status of this cost interval */
 	private boolean isEnabled = true;
@@ -101,7 +101,7 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	 * @param end the end time of this cost interval
 	 * @param cost the cost of this cost interval
 	 */
-	public CostInterval(String id, ZonedDateTime start, ZonedDateTime end, int cost) {
+	public CostInterval(String id, ZonedDateTime start, ZonedDateTime end, double cost) {
 		this(id, start, end);
 		this.cost = cost;
 	}
@@ -125,7 +125,7 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	 * @param timeInterval the time interval of this cost interval
 	 * @param cost the cost of this cost interval
 	 */
-	public CostInterval(String id, TimeInterval timeInterval, int cost) {
+	public CostInterval(String id, TimeInterval timeInterval, double cost) {
 		this(id, timeInterval);
 		this.cost = cost;
 	}
@@ -145,8 +145,8 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	 * 
 	 * @return the cost of this cost interval
 	 */
-	public int getCost() {
-		int cost = 0;
+	public double getCost() {
+		double cost = 0d;
 		
 		if (this.isEnabled) {
 			cost = this.cost;
@@ -160,7 +160,7 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	 * 
 	 * @param cost the cost of this cost interval
 	 */
-	public void setCost(int cost) {
+	public void setCost(double cost) {
 		this.cost = cost;
 	}
 	
@@ -210,7 +210,7 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 				if ((o1 instanceof CostInterval) && (o2 instanceof CostInterval)) {
 					CostInterval c1 = (CostInterval) o1;
 					CostInterval c2 = (CostInterval) o2;
-					value = Integer.compare(c1.cost, c2.cost);
+					value = Double.compare(c1.cost, c2.cost);
 					
 					if (0 == value) {
 						value = c1.id.compareTo(c2.id);

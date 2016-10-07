@@ -162,6 +162,7 @@ public class RegularGrid extends Box {
 			double rMin, double rMax,
 			double sMin, double sMax,
 			double tMin, double tMax) {
+		
 		return new RegularGrid(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 	}
 	

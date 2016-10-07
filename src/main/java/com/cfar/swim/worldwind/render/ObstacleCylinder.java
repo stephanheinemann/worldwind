@@ -68,10 +68,10 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	protected Depiction depiction = null;
 	
 	/** the threshold cost of this obstacle cylinder */
-	private int thresholdCost = 0;
+	private double thresholdCost = 0d;
 	
 	/** the active cost of this obstacle cylinder */
-	private int activeCost = 0;
+	private double activeCost = 0d;
 	
 	/**
 	 * Constructs an obstacle cylinder with a specified center position, height
@@ -177,10 +177,10 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	 * 
 	 * @param threshold the threshold cost of this obstacle cylinder
 	 *
-	 * @see ThresholdRenderable#setThreshold(int)
+	 * @see ThresholdRenderable#setThreshold(double)
 	 */
 	@Override
-	public void setThreshold(int threshold) {
+	public void setThreshold(double threshold) {
 		this.thresholdCost = threshold;
 		this.updateVisibility();
 	}
@@ -193,7 +193,7 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	 * @see ThresholdRenderable#getThreshold()
 	 */
 	@Override
-	public int getThreshold() {
+	public double getThreshold() {
 		return this.thresholdCost;
 	}
 
@@ -314,7 +314,7 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 		*/
 		
 		// TODO: rounding or conservative ceiling might be more appropriate
-		int cost = (this.costInterval.getCost() + other.costInterval.getCost()) / 2;
+		double cost = (this.costInterval.getCost() + other.costInterval.getCost()) / 2d;
 		
 		CostInterval costInterval = new CostInterval(this.costInterval.getId(), start, end, cost);
 		interpolant.setCostInterval(costInterval);

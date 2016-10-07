@@ -97,6 +97,7 @@ public class CubicGrid extends RegularGrid {
 			double rMin, double rMax,
 			double sMin, double sMax,
 			double tMin, double tMax) {
+		
 		Box b = new Box(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 		return new CubicGrid(new Cube(b.getOrigin(), axes, b.getRLength()));
 	}

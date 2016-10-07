@@ -88,7 +88,7 @@ public class WeightedCostInterval extends CostInterval {
 	 * @param end the end time of this weighted cost interval
 	 * @param cost the cost of this weighted cost interval
 	 */
-	public WeightedCostInterval(String id, ZonedDateTime start, ZonedDateTime end, int cost) {
+	public WeightedCostInterval(String id, ZonedDateTime start, ZonedDateTime end, double cost) {
 		super(id, start, end, cost);
 	}
 	
@@ -102,7 +102,7 @@ public class WeightedCostInterval extends CostInterval {
 	 * @param cost the cost of this weighted cost interval
 	 * @param weight the weight of this weighted cost interval
 	 */
-	public WeightedCostInterval(String id, ZonedDateTime start, ZonedDateTime end, int cost, double weight) {
+	public WeightedCostInterval(String id, ZonedDateTime start, ZonedDateTime end, double cost, double weight) {
 		super(id, start, end, cost);
 		this.weight = weight;
 	}

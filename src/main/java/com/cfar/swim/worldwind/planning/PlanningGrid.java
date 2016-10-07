@@ -77,14 +77,11 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	/** the current time of this planning grid */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 	
-	/** the current active cost intervals of this planning grid */
-	private List<Interval<ChronoZonedDateTime<?>>> activeCostIntervals = this.getCostIntervals(time);
-	
 	/** the current accumulated active cost of this planning grid */
-	private int activeCost = 1;
+	private double activeCost = 1d;
 	
 	/** the threshold cost of this planning grid */
-	private int thresholdCost = 0;
+	private double thresholdCost = 0d;
 	
 	/** the obstacles embedded into this planning grid */
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
@@ -118,7 +115,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	public PlanningGrid(Cube refChild, int rCells, int sCells, int tCells) {
 		super(refChild, rCells, sCells, tCells);
-		this.update();
+		this.refresh();
 	}
 	
 	/**
@@ -154,7 +151,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	public Position[] getCornerPositions() {
 		Position[] cornerPositions = null;
 		
-		if (null != globe) {
+		if (null != this.globe) {
 			cornerPositions = new Position[8];
 			Vec4[] corners = this.getCorners();
 			for (int index = 0; index < 8; index++) {
@@ -252,44 +249,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Looks up the planning grid cells (maximum eight) containing a specified
-	 * point in world model coordinates considering numerical inaccuracies.
-	 * 
-	 * @param modelPoint the point in world model coordinates
-	 * 
-	 * @return the planning grid cells containing the specified point
-	 * 
-	 * @see CubicGrid#lookupCells(Vec4)
-	 */
-	@Override
-	@SuppressWarnings("unchecked")
-	public Set<? extends PlanningGrid> lookupCells(Vec4 modelPoint) {
-		return (Set<PlanningGrid>) super.lookupCells(modelPoint);
-	}
-	
-	/**
-	 * Looks up the planning grid cells (maximum eight) containing a specified
-	 * position in globe coordinates considering numerical inaccuracies.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return the planning grid cells contain the specified position if a
-	 *         globe has been set, null otherwise
-	 * 
-	 * @see CubicGrid#lookupCells(Vec4)
-	 */
-	@SuppressWarnings("unchecked")
-	public Set<? extends PlanningGrid> lookupCells(Position position) {
-		Set<PlanningGrid> cells = null;
-		
-		if (null != this.globe) {
-			cells = (Set<PlanningGrid>) super.lookupCells(this.globe.computePointFromPosition(position));
-		}
-		
-		return cells;
-	}
-	
-	/**
 	 * Sets the globe of this planning grid.
 	 * 
 	 * @param globe the globe of this planning grid
@@ -298,16 +257,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@Override
 	public void setGlobe(Globe globe) {
-		this.globe = globe;
-		
-		if (this.hasChildren()) {
-			for (int r = 0; r < this.cells.length; r++) {
-				for (int s = 0; s < this.cells[r].length; s++) {
-					for (int t = 0; t < this.cells[r][s].length; t++) {
-						((Environment) this.cells[r][s][t]).setGlobe(globe);
-					}
-				}
-			}
+		for (PlanningGrid grid : this.getAll()) {
+			grid.globe = globe;
 		}
 	}
 	
@@ -384,6 +335,19 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
+	 * Gets the accumulated cost of this planning grid at specified time
+	 * instant.
+	 * 
+	 * @param time the time instant
+	 * 
+	 * @return the accumulated cost of this planning grid at the specified
+	 *         time instant
+	 */
+	public double getCost(ZonedDateTime time) {
+		return this.getCost(time, time);
+	}
+	
+	/**
 	 * Gets the accumulated cost of this planning grid within a specified time
 	 * span.
 	 * 
@@ -397,7 +361,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@Override
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = 0d;
+		// the normalized distance of the cell
+		double cost = this.getLength() / this.getNormalizer();
 		
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
@@ -409,6 +374,9 @@ public class PlanningGrid extends CubicGrid implements Environment {
 				// only add costs of different overlapping cost intervals
 				if (!costIntervalIds.contains(costInterval.getId())) {
 					costIntervalIds.add(costInterval.getId());
+					
+					// TODO: implement a proper weighted cost calculation normalized from 0 to 100
+					// TODO: the weight is affected by severity (reporting method) and currency (reporting time)
 					
 					if ((interval instanceof WeightedCostInterval)) {
 						cost += ((WeightedCostInterval) interval).getWeightedCost();
@@ -443,17 +411,9 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@Override
 	public void setTime(ZonedDateTime time) {
-		this.time = time;
-		this.update();
-		
-		if (this.hasChildren()) {
-			for (int r = 0; r < this.cells.length; r++) {
-				for (int s = 0; s < this.cells[r].length; s++) {
-					for (int t = 0; t < this.cells[r][s].length; t++) {
-						((TimedRenderable) this.cells[r][s][t]).setTime(time);
-					}
-				}
-			}
+		for (PlanningGrid grid : this.getAll()) {
+			grid.time = time;
+			grid.update();
 		}
 	}
 	
@@ -462,10 +422,10 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return the threshold cost of this planning grid
 	 * 
-	 * @see ThresholdRenderable#setThreshold(int)
+	 * @see ThresholdRenderable#setThreshold(double)
 	 */
 	@Override
-	public int getThreshold() {
+	public double getThreshold() {
 		return this.thresholdCost;
 	}
 	
@@ -474,21 +434,13 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @param thresholdCost the threshold cost of this planning grid
 	 * 
-	 * @see ThresholdRenderable#setThreshold(int)
+	 * @see ThresholdRenderable#setThreshold(double)
 	 */
 	@Override
-	public void setThreshold(int thresholdCost) {
-		this.thresholdCost = thresholdCost;
-		this.updateVisibility();
-		
-		if (this.hasChildren()) {
-			for (int r = 0; r < this.cells.length; r++) {
-				for (int s = 0; s < this.cells[r].length; s++) {
-					for (int t = 0; t < this.cells[r][s].length; t++) {
-						((ThresholdRenderable) this.cells[r][s][t]).setThreshold(thresholdCost);
-					}
-				}
-			}
+	public void setThreshold(double thresholdCost) {
+		for (PlanningGrid grid : this.getAll()) {
+			grid.thresholdCost = thresholdCost;
+			grid.updateVisibility();
 		}
 	}
 	
@@ -496,16 +448,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * Updates this planning grid with all its children.
 	 */
 	public void refresh() {
-		this.update();
-		
-		if (this.hasChildren()) {
-			for (int r = 0; r < this.cells.length; r++) {
-				for (int s = 0; s < this.cells[r].length; s++) {
-					for (int t = 0; t < this.cells[r][s].length; t++) {
-						((PlanningGrid) this.cells[r][s][t]).refresh();
-					}
-				}
-			}
+		for (PlanningGrid grid : this.getAll()) {
+			grid.update();
 		}
 	}
 	
@@ -529,40 +473,16 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * Updates this planning grid.
 	 */
 	protected void update() {
-		this.updateCostIntervals();
 		this.updateActiveCost();
 		this.updateAppearance();
 		this.updateVisibility();
 	}
 	
 	/**
-	 * Updates the active cost intervals of this planning grid.
-	 */
-	protected void updateCostIntervals() {
-		this.activeCostIntervals = this.getCostIntervals(this.time);
-	}
-	
-	/**
 	 * Updates the accumulated active cost of this planning grid.
 	 */
 	protected void updateActiveCost() {
-		this.activeCost = 1; // default uniform cost
-		
-		Set<String> costIntervalIds = new HashSet<String>();
-		for (Interval<ChronoZonedDateTime<?>> interval : this.activeCostIntervals) {
-			CostInterval costInterval = (CostInterval) interval;
-			
-			// only add costs of different overlapping cost intervals
-			if (!costIntervalIds.contains(costInterval.getId())) {
-				// TODO: implement a proper weighted cost calculation normalized from 0 to 100
-				// TODO: the weight is affected by severity (reporting method) and currency (reporting time)
-				if ((interval instanceof WeightedCostInterval)) {
-					this.activeCost += ((WeightedCostInterval) interval).getWeightedCost();
-				} else {
-					this.activeCost += costInterval.getCost();
-				}
-			}
-		}
+		this.activeCost = this.getCost(this.time);
 	}
 	
 	/**
@@ -599,18 +519,12 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			this.addCostInterval(obstacle.getCostInterval());
 			this.obstacles.add(obstacle);
 			
-			if (this.hasChildren()) {
-				for (int r = 0; r < this.cells.length; r++) {
-					for (int s = 0; s < this.cells[r].length; s++) {
-						for (int t = 0; t < this.cells[r][s].length; t++) {
-							PlanningGrid child = (PlanningGrid) this.cells[r][s][t];
-							if (child.embed(obstacle)) {
-								this.addAffectedChild(obstacle, child);
-							}
-						}
-					}
+			for (PlanningGrid child : this.getChildren()) {
+				if (child.embed(obstacle)) {
+					this.addAffectedChild(obstacle, child);
 				}
 			}
+			
 			embedded = true;
 		}
 		
@@ -685,26 +599,21 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	public void addChildren(int rCells, int sCells, int tCells) {
 		super.addChildren(rCells, sCells, tCells);
 		
-		for (int r = 0; r < this.cells.length; r++) {
-			for (int s = 0; s < this.cells[r].length; s++) {
-				for (int t = 0; t < this.cells[r][s].length; t++) {
-					PlanningGrid child = (PlanningGrid) this.cells[r][s][t];
-					// initialize children
-					child.setGlobe(this.globe);
-					child.setTime(this.time);
-					child.setThreshold(this.thresholdCost);
-					child.update();
-					
-					// propagate obstacle embeddings
-					for (Obstacle obstacle : this.obstacles) {
-						if (obstacle instanceof ObstacleCylinder) {
-							if (child.embed((ObstacleCylinder) obstacle)) {
-								this.addAffectedChild(obstacle, child);
-							}
-						}
-						// TODO: implement propagations for other extents
+		for (PlanningGrid child : this.getChildren()) {
+			// initialize children
+			child.setGlobe(this.globe);
+			child.setTime(this.time);
+			child.setThreshold(this.thresholdCost);
+			child.update();
+			
+			// propagate obstacle embeddings
+			for (Obstacle obstacle : this.obstacles) {
+				if (obstacle instanceof ObstacleCylinder) {
+					if (child.embed((ObstacleCylinder) obstacle)) {
+						this.addAffectedChild(obstacle, child);
 					}
 				}
+				// TODO: implement propagations for other extents
 			}
 		}
 	}
@@ -717,7 +626,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	@Override
 	public void removeChildren() {
 		super.removeChildren();
-		// remove affected children of all embeddings
+		// remove affected children of all obstacle embeddings
 		this.affectedChildren.clear();
 	}
 	
@@ -736,6 +645,87 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
+	 * Gets a particular child of this planning grid if present.
+	 * 
+	 * @param r the <code>R</code> index of the child cell
+	 * @param s the <code>S</code> index of the child cell
+	 * @param t the <code>T</code> index of the child cell
+	 * 
+	 * @return the particular child of this planning grid if present,
+	 *         null otherwise
+	 * 
+	 * @see CubicGrid#getChild(int, int, int)
+	 */
+	@Override
+	public PlanningGrid getChild(int r, int s, int t) {
+		return (PlanningGrid) super.getChild(r, s, t);
+	}
+	
+	/**
+	 * Gets the parent of this planning grid if present.
+	 * 
+	 * @return the parent of this planning grid if present,
+	 *         null otherwise
+	 * 
+	 * @see CubicGrid#getParent()
+	 */
+	@Override
+	public PlanningGrid getParent() {
+		return (PlanningGrid) super.getParent();
+	}
+	
+	/**
+	 * Gets all planning grids associated with this planning grid.
+	 * 
+	 * @return all planning grids associated with this planning grid
+	 * 
+	 * @see CubicGrid#getAll()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends PlanningGrid> getAll() {
+		return (Set<PlanningGrid>) super.getAll();
+	}
+	
+	/**
+	 * Looks up the planning grid cells (maximum eight) containing a specified
+	 * point in world model coordinates considering numerical inaccuracies.
+	 * 
+	 * @param modelPoint the point in world model coordinates
+	 * 
+	 * @return the planning grid cells containing the specified point
+	 * 
+	 * @see CubicGrid#lookupCells(Vec4)
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public Set<? extends PlanningGrid> lookupCells(Vec4 modelPoint) {
+		return (Set<PlanningGrid>) super.lookupCells(modelPoint);
+	}
+	
+	/**
+	 * Looks up the planning grid cells (maximum eight) containing a specified
+	 * position in globe coordinates considering numerical inaccuracies.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the planning grid cells contain the specified position if a
+	 *         globe has been set, null otherwise
+	 * 
+	 * @see CubicGrid#lookupCells(Vec4)
+	 */
+	@SuppressWarnings("unchecked")
+	public Set<? extends PlanningGrid> lookupCells(Position position) {
+		Set<PlanningGrid> cells = null;
+		
+		if (null != this.globe) {
+			cells = (Set<PlanningGrid>) super.lookupCells(this.globe.computePointFromPosition(position));
+		}
+		
+		return cells;
+	}
+	
+	/**
 	 * Gets the neighbors of this planning grid. A full recursive search is
 	 * performed considering only non-parent neighbors.
 	 * 
@@ -751,8 +741,26 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		// if a neighbor contains children, then planning has to be refined
 		// if planning is done via corners (not centers), then connecting
 		// grid cells are easily found
-		// TODO: parents should possbily aggregate costs
+		// TODO: parents should possibily aggregate costs
 		return (Set<PlanningGrid>) super.getNeighbors();
+	}
+	
+	/**
+	 * Gets the neighbors of this planning grid taking a specified hierarchical
+	 * depth into account. A zero depth does not consider any neighboring
+	 * children. A negative depth performs a full recursive search and
+	 * considers non-parent neighbors only.
+	 * 
+	 * @param depth the hierarchical depth for finding neighbors
+	 * 
+	 * @return the neighbors of this planning grid
+	 * 
+	 * @see CubicGrid#getNeighbors(int)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends PlanningGrid> getNeighbors(int depth) {
+		return (Set<PlanningGrid>) super.getNeighbors(depth);
 	}
 	
 	/**
@@ -879,12 +887,13 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			
 			// compute initial distance cost
 			// double cost = this.getDistance(position, neighbor); // normalized for neighbor distance
-			double cost = 1d; // default uniform cost
+			// double cost = 1d; // default uniform cost
+			// double cost = 0d;
 			
 			// compute cost of each adjacent cell
 			for (PlanningGrid stepCell : stepCells) {
 				// add all (weighted) cost of the cell
-				costs.add(cost + stepCell.getCost(start, end));
+				costs.add(stepCell.getCost(start, end));
 			}
 			
 			// apply cost policy for final cost
@@ -928,10 +937,10 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			
 			// compute initial distance cost
 			//double cost = this.getDistance(this.getCenterPosition(), neighbor.getCenterPosition());
-			double cost = 1d; // default uniform cost
+			//double cost = 1d; // default uniform cost
 			// add all (weighted) cost of the cells
-			costs.add(cost + this.getCost(start, end));
-			costs.add(cost + neighbor.getCost(start, end));
+			costs.add(this.getCost(start, end));
+			costs.add(neighbor.getCost(start, end));
 			
 			// apply cost policy for final cost
 			switch (policy) {
