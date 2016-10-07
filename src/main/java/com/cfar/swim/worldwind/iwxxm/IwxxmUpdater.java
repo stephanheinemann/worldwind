@@ -53,7 +53,7 @@ import com.cfar.swim.worldwind.data.IwxxmData;
 import com.cfar.swim.worldwind.data.OmData;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostMap;
-import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
+import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstaclePath;
@@ -84,7 +84,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 	//InputSource source = null;
 	Model model = null;
 	
-	NonUniformCostIntervalGrid grid = null;
+	PlanningGrid grid = null;
 	RenderableLayer renderableLayer = null;
 	
 	/** the SIGMET embeddings this updater has created (references are required for canceling messages) */
@@ -93,7 +93,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 	/** the SIGMET identifier to reference mapping */
 	HashMap<String, IwxxmSigmetReference> idReferences = new HashMap<String, IwxxmSigmetReference>();
 	
-	public IwxxmUpdater(/*InputSource source,*/ Model model, NonUniformCostIntervalGrid grid) throws JAXBException {
+	public IwxxmUpdater(/*InputSource source,*/ Model model, PlanningGrid grid) throws JAXBException {
 		this.iwxxmUnmarshaller = new IwxxmUnmarshaller();
 		// TODO: repair IwxxmUnmarshaller and others to include ALL object factories!
 		this.unmarshaller = JAXBContext.newInstance(

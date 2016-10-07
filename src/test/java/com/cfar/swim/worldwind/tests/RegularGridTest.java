@@ -55,7 +55,7 @@ import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.NonUniformCostIntervalGrid;
+import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
 import gov.nasa.worldwind.BasicModel;
@@ -81,10 +81,10 @@ import javafx.scene.paint.Color;
 public class RegularGridTest {
 	
 	static Model model;
-	static NonUniformCostIntervalGrid uvicGrid;
-	static NonUniformCostIntervalGrid largeGrid;
-	static NonUniformCostIntervalGrid tsGrid;
-	static NonUniformCostIntervalGrid tcGrid;
+	static PlanningGrid uvicGrid;
+	static PlanningGrid largeGrid;
+	static PlanningGrid tsGrid;
+	static PlanningGrid tcGrid;
 	static Iris iris;
 	
 	// dirty, dirty, dirty...
@@ -123,7 +123,7 @@ public class RegularGridTest {
             //uvicGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(uvicBox));
             com.cfar.swim.worldwind.geom.Box uvicB = new com.cfar.swim.worldwind.geom.Box(uvicBox);
             Cube uvicCube = new Cube(uvicB.getOrigin(), uvicB.getUnitAxes(), uvicB.getRLength() / 10);
-            uvicGrid = new NonUniformCostIntervalGrid(uvicCube, 10, 10, 5);
+            uvicGrid = new PlanningGrid(uvicCube, 10, 10, 5);
             uvicGrid.setThreshold(0);
             //uvicGrid.addChildren(uvicBox.getTLength() / 5.0);
             //uvicGrid.setThresholdCost(50);
@@ -140,7 +140,7 @@ public class RegularGridTest {
             //largeGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(largeBox));
             com.cfar.swim.worldwind.geom.Box largeB = new com.cfar.swim.worldwind.geom.Box(largeBox);
             Cube largeCube = new Cube(largeB.getOrigin(), largeB.getUnitAxes(), largeB.getRLength() / 10);
-            largeGrid = new NonUniformCostIntervalGrid(largeCube, 10, 10, 5);
+            largeGrid = new PlanningGrid(largeCube, 10, 10, 5);
             largeGrid.setThreshold(0);
             /*
             largeGrid.addChildren(largeBox.getTLength() / 4.0);
@@ -163,7 +163,7 @@ public class RegularGridTest {
             //tsGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tsBox));
             com.cfar.swim.worldwind.geom.Box tsB = new com.cfar.swim.worldwind.geom.Box(tsBox);
             Cube tsCube = new Cube(tsB.getOrigin(), tsB.getUnitAxes(), tsB.getRLength() / 10);
-            tsGrid = new NonUniformCostIntervalGrid(tsCube, 10, 10, 5);
+            tsGrid = new PlanningGrid(tsCube, 10, 10, 5);
             tsGrid.setThreshold(0);
             //tsGrid.addChildren(tsGrid.getTLength() / 4.0);
             //tsGrid.addChildren(3, 3, 0, 2, 2, 2);
@@ -178,7 +178,7 @@ public class RegularGridTest {
             //tcGrid = new NonUniformCostIntervalGrid(new com.cfar.swim.worldwind.geom.Box(tcBox));
             com.cfar.swim.worldwind.geom.Box tcB = new com.cfar.swim.worldwind.geom.Box(tcBox);
             Cube tcCube = new Cube(tcB.getOrigin(), tcB.getUnitAxes(), tcB.getRLength() / 10);
-            tcGrid = new NonUniformCostIntervalGrid(tcCube, 10, 10, 5);
+            tcGrid = new PlanningGrid(tcCube, 10, 10, 5);
             tcGrid.setThreshold(0);
             //tcGrid.addChildren(tcGrid.getTLength() / 4.0);
             renderableLayer.addRenderable(tcGrid);

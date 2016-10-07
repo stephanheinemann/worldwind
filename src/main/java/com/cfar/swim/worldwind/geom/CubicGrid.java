@@ -114,6 +114,8 @@ public class CubicGrid extends RegularGrid {
 	 * Updates the normalizer of this cubic grid after structural modifications.
 	 */
 	protected void updateNormalizer() {
+		// TODO: it might be better to keep the highest level child normalizer
+		// the normalized values would then always range from 0..1
 		CubicGrid root = this;
 		while (root.hasParent()) {
 			root = root.getParent();

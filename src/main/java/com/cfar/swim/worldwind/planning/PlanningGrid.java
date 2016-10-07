@@ -45,6 +45,7 @@ import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.CubicGrid;
+import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
@@ -59,56 +60,54 @@ import gov.nasa.worldwind.render.Polyline;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
- * Realizes a non-uniform cost interval grid that can encode spatial and
- * temporal costs, and can be used for motion planning.
+ * Realizes a planning grid that can encode spatial and temporal costs, and can
+ * be used for motion planning.
  * 
  * @author Stephan Heinemann
  *
  */
-public class NonUniformCostIntervalGrid extends CubicGrid implements Environment {
+public class PlanningGrid extends CubicGrid implements Environment {
 	
-	// TODO: rename PlanningGrid
-	
-	/** the globe of this non-uniform cost interval grid */
+	/** the globe of this planning grid */
 	private Globe globe = null;
 	
 	/** the cost interval tree encoding temporal costs */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
 	
-	/** the current time of this non-uniform cost interval grid */
+	/** the current time of this planning grid */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 	
-	/** the current active cost intervals of this non-uniform cost interval grid */
+	/** the current active cost intervals of this planning grid */
 	private List<Interval<ChronoZonedDateTime<?>>> activeCostIntervals = this.getCostIntervals(time);
 	
-	/** the current accumulated active cost of this non-uniform cost interval grid */
+	/** the current accumulated active cost of this planning grid */
 	private int activeCost = 1;
 	
-	/** the threshold cost of this non-uniform cost interval grid */
+	/** the threshold cost of this planning grid */
 	private int thresholdCost = 0;
 	
-	/** the obstacles embedded into this non-uniform cost interval grid */
+	/** the obstacles embedded into this planning grid */
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
 	
 	/** the affected children of obstacle embeddings */
-	private HashMap<Obstacle, List<NonUniformCostIntervalGrid>> affectedChildren = new HashMap<Obstacle, List<NonUniformCostIntervalGrid>>();
+	private HashMap<Obstacle, List<PlanningGrid>> affectedChildren = new HashMap<Obstacle, List<PlanningGrid>>();
 	
 	/**
-	 * Constructs a non-uniform cost interval grid based on a geometric cube
-	 * without any children.
+	 * Constructs a planning grid based on a geometric cube without any
+	 * children.
 	 * 
 	 * @param cube the geometric cube
 	 * 
 	 * @see CubicGrid#CubicGrid(Cube)
 	 */
-	public NonUniformCostIntervalGrid(Cube cube) {
+	public PlanningGrid(Cube cube) {
 		super(cube);
 		this.update();
 	}
 	
 	/**
-	 * Constructs a non-uniform cost interval grid from a geometric cube
-	 * representing a reference child.
+	 * Constructs a planning grid from a geometric cube representing a
+	 * reference child.
 	 * 
 	 * @param refChild the geometric cube representing the reference child
 	 * @param rCells the number of cubic children along the <code>R</code> axis
@@ -117,26 +116,15 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	 *
 	 * @see CubicGrid#CubicGrid(Cube, int, int, int)
 	 */
-	public NonUniformCostIntervalGrid(Cube refChild, int rCells, int sCells, int tCells) {
+	public PlanningGrid(Cube refChild, int rCells, int sCells, int tCells) {
 		super(refChild, rCells, sCells, tCells);
 		this.update();
 	}
 	
 	/**
-	 * Constructs a non-uniform cost interval grid from three plane normals and
-	 * six distances for each of the six faces of a geometric cube without any
-	 * children. The current time and threshold cost are propagated to the child.
-	 * 
-	 * This factory method is used during child construction and supposed to be
-	 * overridden by specializing classes.
-	 * 
-	 * @see NonUniformCostIntervalGrid#NonUniformCostIntervalGrid(Vec4[], double, double, double, double, double, double)
-	 */
-	
-	/**
-	 * Constructs a new non-uniform cost interval grid from three plane normals
-	 * and six distances for each of the six faces of a geometric box without
-	 * any children.
+	 * Constructs a new planning grid from three plane normals and six
+	 * distances for each of the six faces of a geometric box without any
+	 * children.
 	 * 
 	 * This factory method is used during child construction and supposed to be
 	 * overridden by specializing classes.
@@ -144,23 +132,22 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	 * @see CubicGrid#newInstance(Vec4[], double, double, double, double, double, double)
 	 */
 	@Override
-	protected NonUniformCostIntervalGrid newInstance(
+	protected PlanningGrid newInstance(
 			Vec4[] axes,
 			double rMin, double rMax,
 			double sMin, double sMax,
 			double tMin, double tMax) {
 		
 		Box b = new Box(axes, rMin, rMax, sMin, sMax, tMin, tMax);
-		return new NonUniformCostIntervalGrid(new Cube(b.getOrigin(), axes, b.getRLength()));
+		return new PlanningGrid(new Cube(b.getOrigin(), axes, b.getRLength()));
 	}
 	
 	/**
-	 * Gets the eight corner positions in globe coordinates of this non-uniform
-	 * cost interval grid.
+	 * Gets the eight corner positions in globe coordinates of this planning
+	 * grid.
 	 *  
-	 * @return the eight corner positions in globe coordinates of this
-	 *         non-uniform cost interval grid if a globe has been set,
-	 *         null otherwise
+	 * @return the eight corner positions in globe coordinates of this planning
+	 *         grid if a globe has been set, null otherwise
 	 *         
 	 * @see Box#getCorners()
 	 */
@@ -180,12 +167,12 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	
 	/**
 	 * Indicates whether or not a position in globe coordinates is a corner of
-	 * this non-uniform cost interval grid considering numerical inaccuracies.
+	 * this planning grid considering numerical inaccuracies.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if the position is a corner of this non-uniform cost
-	 *         interval grid considering numerical inaccuracies, false otherwise
+	 * @return true if the position is a corner of this planning grid
+	 *         considering numerical inaccuracies, false otherwise
 	 * 
 	 * @see Box#isCorner(Vec4)
 	 */
@@ -200,11 +187,10 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Gets the center position in globe coordinates of this non-uniform cost
-	 * interval grid.
+	 * Gets the center position in globe coordinates of this planning grid.
 	 * 
-	 * @return the center position in globe coordinates of this non-uniform
-	 *         cost interval grid if a globe has been set, null otherwise
+	 * @return the center position in globe coordinates of this planning grid
+	 *         if a globe has been set, null otherwise
 	 * 
 	 * @see Box#getCenter()
 	 */
@@ -220,13 +206,13 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Indicates whether or not a position in globe coordinates is the center of
-	 * this non-uniform cost interval grid considering numerical inaccuracies.
+	 * Indicates whether or not a position in globe coordinates is the center
+	 * of this planning grid considering numerical inaccuracies.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if the position is the center of this non-uniform cost
-	 *         interval grid considering numerical inaccuracies, false otherwise
+	 * @return true if the position is the center of this planning grid
+	 *         considering numerical inaccuracies, false otherwise
 	 * 
 	 * @see Box#isCorner(Vec4)
 	 */
@@ -241,8 +227,8 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Gets the neighbor corner positions of a specified corner position of this
-	 * non-uniform cost interval grid.
+	 * Gets the neighbor corner positions of a specified corner position of
+	 * this planning grid.
 	 * 
 	 * @param position the specified corner position
 	 * 
@@ -266,49 +252,47 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Looks up the non-uniform cost interval grid cells (maximum eight)
-	 * containing a specified point in world model coordinates considering
-	 * numerical inaccuracies.
+	 * Looks up the planning grid cells (maximum eight) containing a specified
+	 * point in world model coordinates considering numerical inaccuracies.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
-	 * @return the non-uniform cost interval grid cells containing the specified point
+	 * @return the planning grid cells containing the specified point
 	 * 
 	 * @see CubicGrid#lookupCells(Vec4)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public Set<? extends NonUniformCostIntervalGrid> lookupCells(Vec4 modelPoint) {
-		return (Set<NonUniformCostIntervalGrid>) super.lookupCells(modelPoint);
+	public Set<? extends PlanningGrid> lookupCells(Vec4 modelPoint) {
+		return (Set<PlanningGrid>) super.lookupCells(modelPoint);
 	}
 	
 	/**
-	 * Looks up the non-uniform cost interval grid cells (maximum eight)
-	 * containing a specified position in globe coordinates considering
-	 * numerical inaccuracies.
+	 * Looks up the planning grid cells (maximum eight) containing a specified
+	 * position in globe coordinates considering numerical inaccuracies.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return the non-uniform cost interval grid cells contain the specified
-	 *         position if a globe has been set, null otherwise
+	 * @return the planning grid cells contain the specified position if a
+	 *         globe has been set, null otherwise
 	 * 
 	 * @see CubicGrid#lookupCells(Vec4)
 	 */
 	@SuppressWarnings("unchecked")
-	public Set<? extends NonUniformCostIntervalGrid> lookupCells(Position position) {
-		Set<NonUniformCostIntervalGrid> cells = null;
+	public Set<? extends PlanningGrid> lookupCells(Position position) {
+		Set<PlanningGrid> cells = null;
 		
 		if (null != this.globe) {
-			cells = (Set<NonUniformCostIntervalGrid>) super.lookupCells(this.globe.computePointFromPosition(position));
+			cells = (Set<PlanningGrid>) super.lookupCells(this.globe.computePointFromPosition(position));
 		}
 		
 		return cells;
 	}
 	
 	/**
-	 * Sets the globe of this non-uniform cost interval grid.
+	 * Sets the globe of this planning grid.
 	 * 
-	 * @param globe the globe of this non-uniform cost interval grid
+	 * @param globe the globe of this planning grid
 	 * 
 	 * @see Environment#setGlobe(Globe)
 	 */
@@ -328,9 +312,9 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Gets the globe of this non-uniform cost interval grid.
+	 * Gets the globe of this planning grid.
 	 * 
-	 * @return the globe of this non-uniform cost interval grid
+	 * @return the globe of this planning grid
 	 * 
 	 * @see Environment#getGlobe()
 	 */
@@ -340,7 +324,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Adds a cost interval to this non-uniform cost interval grid.
+	 * Adds a cost interval to this planning grid.
 	 * 
 	 * @param costInterval the cost interval to be added
 	 * 
@@ -357,7 +341,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Removes a cost interval from this non-uniform cost interval grid.
+	 * Removes a cost interval from this planning grid.
 	 * 
 	 * @param costInterval the cost interval to be removed
 	 * 
@@ -373,6 +357,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	 * Gets all cost intervals that are active at a specified time instant.
 	 * 
 	 * @param time the time instant
+	 * 
 	 * @return all cost intervals that are active at the specified time instant
 	 * 
 	 * @see Environment#getCostIntervals(ZonedDateTime)
@@ -387,7 +372,9 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	 * 
 	 * @param start the start time of the time interval
 	 * @param end the end time of the time interval
-	 * @return all cost intervals that are active during the specified time interval
+	 * 
+	 * @return all cost intervals that are active during the specified time
+	 *         interval
 	 * 
 	 * @see Environment#getCostIntervals(ZonedDateTime, ZonedDateTime)
 	 */
@@ -397,14 +384,14 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Gets the accumulated cost of this non-uniform cost interval grid within
-	 * a specified time span.
+	 * Gets the accumulated cost of this planning grid within a specified time
+	 * span.
 	 * 
 	 * @param start the start time of the time span
 	 * @param end the end time of the time span
 	 * 
-	 * @return the accumulated cost of this non-uniform cost interval grid
-	 *         within the specified time span
+	 * @return the accumulated cost of this planning grid within the specified
+	 *         time span
 	 * 
 	 * @see Environment#getCost(ZonedDateTime, ZonedDateTime)
 	 */
@@ -436,9 +423,9 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Gets the current time of this non-uniform cost interval grid.
+	 * Gets the current time of this planning grid.
 	 * 
-	 * @return the current time of this non-uniform cost interval grid
+	 * @return the current time of this planning grid
 	 * 
 	 * @see TimedRenderable#getTime()
 	 */
@@ -448,9 +435,9 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Sets the current time of this non-uniform cost interval grid.
+	 * Sets the current time of this planning grid.
 	 * 
-	 * @param time the current time of this non-uniform cost interval grid
+	 * @param time the current time of this planning grid
 	 * 
 	 * @see TimedRenderable#setTime(ZonedDateTime)
 	 */
@@ -471,9 +458,9 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Gets the threshold cost of this non-uniform cost interval grid.
+	 * Gets the threshold cost of this planning grid.
 	 * 
-	 * @return the threshold cost of this non-uniform cost interval grid
+	 * @return the threshold cost of this planning grid
 	 * 
 	 * @see ThresholdRenderable#setThreshold(int)
 	 */
@@ -483,9 +470,9 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Sets the threshold cost of this non-uniform cost interval grid.
+	 * Sets the threshold cost of this planning grid.
 	 * 
-	 * @param thresholdCost the threshold cost of this non-uniform cost interval grid
+	 * @param thresholdCost the threshold cost of this planning grid
 	 * 
 	 * @see ThresholdRenderable#setThreshold(int)
 	 */
@@ -506,7 +493,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Updates this non-uniform cost interval grid with all its children.
+	 * Updates this planning grid with all its children.
 	 */
 	public void refresh() {
 		this.update();
@@ -515,7 +502,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 			for (int r = 0; r < this.cells.length; r++) {
 				for (int s = 0; s < this.cells[r].length; s++) {
 					for (int t = 0; t < this.cells[r][s].length; t++) {
-						((NonUniformCostIntervalGrid) this.cells[r][s][t]).refresh();
+						((PlanningGrid) this.cells[r][s][t]).refresh();
 					}
 				}
 			}
@@ -523,7 +510,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Updates this non-uniform cost interval grid for an embedded obstacle.
+	 * Updates this planning grid for an embedded obstacle.
 	 * 
 	 * @param obstacle the embedded obstacle
 	 */
@@ -531,7 +518,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 		if (this.obstacles.contains(obstacle)) {
 			this.update();
 			if (this.affectedChildren.containsKey(obstacle)) {
-				for (NonUniformCostIntervalGrid child : affectedChildren.get(obstacle)) {
+				for (PlanningGrid child : affectedChildren.get(obstacle)) {
 					child.refresh(obstacle);
 				}				
 			}
@@ -539,7 +526,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Updates this non-uniform cost interval grid.
+	 * Updates this planning grid.
 	 */
 	protected void update() {
 		this.updateCostIntervals();
@@ -549,14 +536,14 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Updates the active cost intervals of this non-uniform cost interval grid.
+	 * Updates the active cost intervals of this planning grid.
 	 */
 	protected void updateCostIntervals() {
 		this.activeCostIntervals = this.getCostIntervals(this.time);
 	}
 	
 	/**
-	 * Updates the accumulated active cost of this non-uniform cost interval grid.
+	 * Updates the accumulated active cost of this planning grid.
 	 */
 	protected void updateActiveCost() {
 		this.activeCost = 1; // default uniform cost
@@ -579,14 +566,14 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Updates the visibility of this non-uniform cost interval grid.
+	 * Updates the visibility of this planning grid.
 	 */
 	protected void updateVisibility() {
 		this.setVisible(this.activeCost > this.thresholdCost);
 	}
 	
 	/**
-	 * Updates the appearance of this non-uniform cost interval grid.
+	 * Updates the appearance of this planning grid.
 	 */
 	protected void updateAppearance() {
 		Color activeColor = ObstacleColor.getColor(activeCost);
@@ -599,7 +586,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	
 	/**
 	 * Embeds an obstacle cylinder with an associated cost interval into this
-	 * non-uniform cost interval grid.
+	 * planning grid.
 	 * 
 	 * @param obstacle the obstacle cylinder to be embedded
 	 * 
@@ -616,7 +603,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 				for (int r = 0; r < this.cells.length; r++) {
 					for (int s = 0; s < this.cells[r].length; s++) {
 						for (int t = 0; t < this.cells[r][s].length; t++) {
-							NonUniformCostIntervalGrid child = (NonUniformCostIntervalGrid) this.cells[r][s][t];
+							PlanningGrid child = (PlanningGrid) this.cells[r][s][t];
 							if (child.embed(obstacle)) {
 								this.addAffectedChild(obstacle, child);
 							}
@@ -638,7 +625,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	// TODO: maximum obstacle radius/extension can limit possible children.
 	
 	/**
-	 * Unembeds an obstacle from this non-uniform cost interval grid.
+	 * Unembeds an obstacle from this planning grid.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
 	 */
@@ -648,7 +635,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 			this.obstacles.remove(obstacle);
 			
 			if (this.affectedChildren.containsKey(obstacle)) {
-				for (NonUniformCostIntervalGrid child : this.affectedChildren.get(obstacle)) {
+				for (PlanningGrid child : this.affectedChildren.get(obstacle)) {
 					child.unembed(obstacle);
 				}
 				this.affectedChildren.remove(obstacle);
@@ -657,13 +644,12 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Indicates whether or not an obstacle is embedded in this non-uniform
-	 * cost interval grid.
+	 * Indicates whether or not an obstacle is embedded in this planning grid.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
-	 * @return true if the obstacle is embedded in this non-uniform cost
-	 *         interval grid, false otherwise
+	 * @return true if the obstacle is embedded in this planning grid,
+	 *         false otherwise
 	 */
 	public boolean isEmbedded(Obstacle obstacle) {
 		return this.obstacles.contains(obstacle);
@@ -675,19 +661,19 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	 * @param obstacle the obstacle of the embedding
 	 * @param child the affected child
 	 */
-	private void addAffectedChild(Obstacle obstacle, NonUniformCostIntervalGrid child) {
+	private void addAffectedChild(Obstacle obstacle, PlanningGrid child) {
 		if (this.affectedChildren.containsKey(obstacle)) {
 			this.affectedChildren.get(obstacle).add(child);
 		} else {
-			ArrayList<NonUniformCostIntervalGrid> children = new ArrayList<NonUniformCostIntervalGrid>();
+			ArrayList<PlanningGrid> children = new ArrayList<PlanningGrid>();
 			children.add(child);
 			this.affectedChildren.put(obstacle, children);
 		}
 	}
 
 	/**
-	 * Adds the specified number of children on each axis to this non-uniform
-	 * cost interval grid and propagates existing obstacle embeddings.
+	 * Adds the specified number of children on each axis to this planning grid
+	 * and propagates existing obstacle embeddings.
 	 * 
 	 * @param rCells the number of children on the <code>R</code> axis
 	 * @param sCells the number of children on the <code>S</code> axis
@@ -702,7 +688,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 		for (int r = 0; r < this.cells.length; r++) {
 			for (int s = 0; s < this.cells[r].length; s++) {
 				for (int t = 0; t < this.cells[r][s].length; t++) {
-					NonUniformCostIntervalGrid child = (NonUniformCostIntervalGrid) this.cells[r][s][t];
+					PlanningGrid child = (PlanningGrid) this.cells[r][s][t];
 					// initialize children
 					child.setGlobe(this.globe);
 					child.setTime(this.time);
@@ -724,7 +710,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 
 	/**
-	 * Removes all children from this non-uniform cost interval grid.
+	 * Removes all children from this planning grid.
 	 * 
 	 * @see CubicGrid#removeChildren()
 	 */
@@ -736,53 +722,62 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 	
 	/**
-	 * Gets the children of this non-uniform cost interval grid.
+	 * Gets the children of this planning grid.
 	 * 
-	 * @return the children of this non-uniform cost interval grid
+	 * @return the children of this planning grid
 	 * 
 	 * @see CubicGrid#getChildren()
 	 * @see Environment#getChildren()
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public Set<? extends NonUniformCostIntervalGrid> getChildren() {
-		return (Set<NonUniformCostIntervalGrid>) super.getChildren();
+	public Set<? extends PlanningGrid> getChildren() {
+		return (Set<PlanningGrid>) super.getChildren();
 	}
 	
 	/**
-	 * Gets the neighbors of this non-uniform cost interval grid. A full
-	 * recursive search is performed considering only non-parent neighbors.
+	 * Gets the neighbors of this planning grid. A full recursive search is
+	 * performed considering only non-parent neighbors.
 	 * 
-	 * @return the non-parent neighbors of this non-uniform cost interval grid
+	 * @return the non-parent neighbors of this planning grid
 	 * 
 	 * @see CubicGrid#getNeighbors()
 	 * @see Environment#getNeighbors()
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public Set<? extends NonUniformCostIntervalGrid> getNeighbors() {
+	public Set<? extends PlanningGrid> getNeighbors() {
 		// TODO: consider only flat neighbors
 		// if a neighbor contains children, then planning has to be refined
 		// if planning is done via corners (not centers), then connecting
 		// grid cells are easily found
 		// TODO: parents should possbily aggregate costs
-		return (Set<NonUniformCostIntervalGrid>) super.getNeighbors();
+		return (Set<PlanningGrid>) super.getNeighbors();
 	}
 	
-	// TODO: documentation
+	/**
+	 * Indicates whether or not this planning grid is a neighbor of another
+	 * environment.
+	 * 
+	 * @param neighbor the potential neighbor
+	 * 
+	 * @return true if this planning grid is a neighbor of the other
+	 *         environment, false otherwise
+	 * 
+	 * @see RegularGrid#areNeighbors(RegularGrid)
+	 */
 	@Override
 	public boolean areNeighbors(Environment neighbor) {
 		return this.getNeighbors().contains(neighbor);
 	}
 	
 	/**
-	 * Gets the neighbors of a position in this non-uniform cost interval grid.
-	 * A full recursive search is performed considering non-parent cells only.
+	 * Gets the neighbors of a position in this planning grid. A full recursive
+	 * search is performed considering non-parent cells only.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return the neighbors of the position in this non-uniform cost interval
-	 *         grid
+	 * @return the neighbors of the position in this planning grid
 	 * 
 	 * @see CubicGrid#getNeighbors(Vec4)
 	 * @see Environment#getNeighbors(Position)
@@ -804,7 +799,15 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 		return neighbors;
 	}
 	
-	// TODO: documentation
+	/**
+	 * Indicates whether or not two positions are neighbors in this planning
+	 * grid.
+	 * 
+	 * @param position the position
+	 * @param neighbor the potential neighbor of the position
+	 * 
+	 * @return true if the two positions are neighbors, false otherwise
+	 */
 	@Override
 	public boolean areNeighbors(Position position, Position neighbor) {
 		return this.getNeighbors(position)
@@ -815,14 +818,12 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 	}
 
 	/**
-	 * Gets the distance between two positions in this non-uniform cost
-	 * interval grid.
+	 * Gets the distance between two positions in this planning grid.
 	 * 
 	 * @param position1 the first position
 	 * @param position2 the second position
 	 * 
-	 * @return the distance between the two positions in this non-uniform cost
-	 *         interval grid
+	 * @return the distance between the two positions in this planning grid
 	 * 
 	 * @see Environment#getDistance(Position, Position)
 	 */
@@ -837,15 +838,33 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 		return measurer.getLength(this.globe);
 	}
 	
+	/**
+	 * Gets the normalized distance between two positions in this planning grid.
+	 * 
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * 
+	 * @return the normalized distance between the two positions in this
+	 *         planning grid
+	 */
+	@Override
 	public double getNormalizedDistance(Position position1, Position position2) {
-		// TODO: normalizer = smallest contained cube side length?
-		// TODO: compute and update normalizer when children are added and removed
 		// TODO: use normalized cell cost as base for updateActiveCost and getCost
-		// this.getDistance(position1, position2) / 
-		return 1d;
+		return this.getDistance(position1, position2) / this.getNormalizer();
 	}
 	
-	// TODO: documentation
+	/**
+	 * Gets the step cost from a position to its neighbor position of this
+	 * planning grid between a start and an end time given a cost policy.
+	 * 
+	 * @param position the position
+	 * @param neighbor its neighbor position
+	 * @param start the start time
+	 * @param end the end time
+	 * @param policy the cost policy
+	 * 
+	 * @return the step cost from a position to its neighbor position
+	 */
 	@Override
 	public double getStepCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
 		double stepCost = Double.POSITIVE_INFINITY;
@@ -853,7 +872,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 		// TODO: not very efficient implementation
 		if (this.areNeighbors(position, neighbor)) {
 			// find shared adjacent cells
-			Set<? extends NonUniformCostIntervalGrid> stepCells = this.lookupCells(position);
+			Set<? extends PlanningGrid> stepCells = this.lookupCells(position);
 			stepCells.retainAll(this.lookupCells(neighbor));
 			
 			List<Double> costs = new ArrayList<Double>();
@@ -863,7 +882,7 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 			double cost = 1d; // default uniform cost
 			
 			// compute cost of each adjacent cell
-			for (NonUniformCostIntervalGrid stepCell : stepCells) {
+			for (PlanningGrid stepCell : stepCells) {
 				// add all (weighted) cost of the cell
 				costs.add(cost + stepCell.getCost(start, end));
 			}
@@ -886,7 +905,19 @@ public class NonUniformCostIntervalGrid extends CubicGrid implements Environment
 		return stepCost;
 	}
 
-	// TODO: documentation
+	/**
+	 * Gets the step cost from the center of this planning grid to the center
+	 * of a neighboring environment between a start and an end time given a
+	 * cost policy. 
+	 * 
+	 * @param neighbor the neighboring environment
+	 * @param start the start time
+	 * @param end the end time
+	 * @param policy the cost policy
+	 * 
+	 * @return the step cost from the center of this environment to the center
+	 *         of the neighboring environment
+	 */
 	@Override
 	public double getStepCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
 		double stepCost = Double.POSITIVE_INFINITY;
