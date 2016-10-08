@@ -103,7 +103,7 @@ public class PlanningGridTest {
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
         
-        child.addCostInterval(new CostInterval("obstacle", ZonedDateTime.now(), ZonedDateTime.now(), 50d));
+        child.addCostInterval(new CostInterval("obstacle1", ZonedDateTime.now(), ZonedDateTime.now(), 50d));
         assertEquals(Double.POSITIVE_INFINITY, child.getStepCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
@@ -116,6 +116,36 @@ public class PlanningGridTest {
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.SAFETY), PrecisionDouble.EPSILON);
+        
+        child.addCostInterval(new CostInterval("obstacle1", ZonedDateTime.now(), ZonedDateTime.now(), 50d));
+        child.addCostInterval(new CostInterval("obstacle2", ZonedDateTime.now(), ZonedDateTime.now(), 30d));
+        assertEquals(Double.POSITIVE_INFINITY, child.getStepCost(
+        		child.getCornerPositions()[0],
+        		child.getCornerPositions()[1],
+        		ZonedDateTime.now().minusYears(10),
+        		ZonedDateTime.now().plusYears(10),
+        		CostPolicy.AVERAGE, RiskPolicy.EFFECTIVENESS), PrecisionDouble.EPSILON);
+        assertEquals(80d, child.getStepCost(
+        		child.getCornerPositions()[0],
+        		child.getCornerPositions()[1],
+        		ZonedDateTime.now().minusYears(10),
+        		ZonedDateTime.now().plusYears(10),
+        		CostPolicy.AVERAGE, RiskPolicy.IGNORANCE), PrecisionDouble.EPSILON);
+        assertEquals(1d, child.getNormalizedDistance(
+        		child.getCornerPositions()[0],
+        		child.getCornerPositions()[1]),
+        		PrecisionDouble.EPSILON);
+        
+        child.addChildren(2);
+        assertEquals(true, child.hasChildren());
+        assertEquals(true, child.hasChild(0, 0, 0));
+        
+        PlanningGrid grandChild = child.getChild(0, 0, 0);
+        assertEquals(0.5d, grandChild.getNormalizedDistance(
+        		grandChild.getCornerPositions()[0],
+        		grandChild.getCornerPositions()[1]),
+        		PrecisionDouble.EPSILON);
+        
 	}
 
 }

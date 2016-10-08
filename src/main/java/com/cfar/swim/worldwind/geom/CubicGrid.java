@@ -115,19 +115,18 @@ public class CubicGrid extends RegularGrid {
 	 * Updates the normalizer of this cubic grid after structural modifications.
 	 */
 	protected void updateNormalizer() {
-		// TODO: it might be better to keep the highest level child normalizer
-		// the normalized values would then always range from 0..1
-		// this is actually important, the normalizer should be constant and be
-		// associated with the refChild
-		// stepCost = (distance / normalizer) * cellCost
-		// if cellCost is higher than acceptable risk, then stepCost is to be boosted
 		CubicGrid root = this;
 		while (root.hasParent()) {
 			root = root.getParent();
 		}
 		
 		Set<? extends CubicGrid> grids = root.getAll();
-		double normalizer = grids.stream().map(CubicGrid::getLength).min(Double::compare).get().doubleValue();
+		
+		// the normalizer should always represent the length of the highest resultion child
+		//double normalizer = grids.stream().map(CubicGrid::getLength).min(Double::compare).get().doubleValue();
+		
+		// the normalizer should always represent the length of a reference child
+		double normalizer = grids.stream().map(CubicGrid::getNormalizer).max(Double::compare).get().doubleValue();
 		
 		for (CubicGrid grid : grids) {
 			grid.normalizer = normalizer;
@@ -154,7 +153,7 @@ public class CubicGrid extends RegularGrid {
 	 * @see RegularGrid#addChildren(int, int, int)
 	 */
 	public void addChildren(int cells) {
-		super.addChildren(cells, cells, cells);
+		this.addChildren(cells, cells, cells);
 		this.updateNormalizer();
 	}
 	
