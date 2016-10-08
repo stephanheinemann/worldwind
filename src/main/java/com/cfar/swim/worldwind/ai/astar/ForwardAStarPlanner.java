@@ -48,7 +48,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override

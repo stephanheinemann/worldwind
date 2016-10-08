@@ -184,31 +184,40 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	
 	/**
 	 * Gets the step cost from a position to its neighbor position of this
-	 * environment between a start and an end time given a cost policy.
+	 * environment between a start and an end time given a cost policy and
+	 * risk policy.
 	 * 
 	 * @param position the position
 	 * @param neighbor its neighbor position
 	 * @param start the start time
 	 * @param end the end time
-	 * @param policy the cost policy
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
 	 * 
 	 * @return the step cost from a position to its neighbor position
 	 */
-	public double getStepCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy);
+	public double getStepCost(
+			Position position, Position neighbor,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy);
 	
 	/**
 	 * Gets the step cost from the center of this environment to the center of
 	 * a neighboring environment between a start and an end time given a cost
-	 * policy. 
+	 * policy and risk policy.
 	 * 
 	 * @param neighbor the neighboring environment
 	 * @param start the start time
 	 * @param end the end time
-	 * @param policy the cost policy
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
 	 * 
 	 * @return the step cost from the center of this environment to the center
 	 *         of the neighboring environment
 	 */
-	public double getStepCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy);
+	public double getStepCost(
+			Environment neighbor,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy);
 	
 }

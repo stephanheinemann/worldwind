@@ -861,18 +861,24 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	
 	/**
 	 * Gets the step cost from a position to its neighbor position of this
-	 * planning grid between a start and an end time given a cost policy.
+	 * planning grid between a start and an end time given a cost policy and
+	 * risk policy.
 	 * 
 	 * @param position the position
 	 * @param neighbor its neighbor position
 	 * @param start the start time
 	 * @param end the end time
-	 * @param policy the cost policy
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
 	 * 
 	 * @return the step cost from a position to its neighbor position
 	 */
 	@Override
-	public double getStepCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
+	public double getStepCost(
+			Position position, Position neighbor,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		
 		double stepCost = Double.POSITIVE_INFINITY;
 		
 		// TODO: not very efficient implementation
@@ -886,16 +892,22 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			// compute initial distance cost
 			// explicit distance cost computation is required if neighboring
 			// cells are of different size (different level in the hierarchy)
-			double cost = this.getNormalizedDistance(position, neighbor);
+			double distance = this.getNormalizedDistance(position, neighbor);
 			
 			// compute cost of each adjacent cell
 			for (PlanningGrid stepCell : stepCells) {
 				// add all (weighted) cost of the cell
-				costs.add(cost + stepCell.getCost(start, end));
+				double cellCost = stepCell.getCost(start, end);
+				// boost cell cost if local risk is not acceptable
+				if (cellCost <= riskPolicy.getThreshholdCost()) {
+					costs.add(distance * cellCost);
+				} else {
+					costs.add(Double.POSITIVE_INFINITY);
+				}
 			}
 			
 			// apply cost policy for final cost
-			switch (policy) {
+			switch (costPolicy) {
 			case MINIMUM:
 				stepCost = costs.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
 				break;
@@ -915,18 +927,23 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	/**
 	 * Gets the step cost from the center of this planning grid to the center
 	 * of a neighboring environment between a start and an end time given a
-	 * cost policy. 
+	 * cost policy and risk policy. 
 	 * 
 	 * @param neighbor the neighboring environment
 	 * @param start the start time
 	 * @param end the end time
-	 * @param policy the cost policy
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
 	 * 
 	 * @return the step cost from the center of this environment to the center
 	 *         of the neighboring environment
 	 */
 	@Override
-	public double getStepCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
+	public double getStepCost(
+			Environment neighbor,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		
 		double stepCost = Double.POSITIVE_INFINITY;
 		
 		// TODO: not very efficient implementation
@@ -934,15 +951,29 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			List<Double> costs = new ArrayList<Double>();
 			
 			// compute initial distance cost
-			double cost = this.getNormalizedDistance(
+			double distance = this.getNormalizedDistance(
 					this.getCenterPosition(), neighbor.getCenterPosition());
 			
 			// add all (weighted) cost of the cells
-			costs.add(cost + this.getCost(start, end));
-			costs.add(cost + neighbor.getCost(start, end));
+			double cellCost = this.getCost(start, end);
+			double neighborCost = neighbor.getCost(start, end);
+			
+			// boost cell cost if local risk is not acceptable
+			if (cellCost <= riskPolicy.getThreshholdCost()) {
+				costs.add(distance * cellCost);
+			} else {
+				costs.add(Double.POSITIVE_INFINITY);
+			}
+			
+			// boost neighbor cost if local risk is not acceptable
+			if (neighborCost <= riskPolicy.getThreshholdCost()) {
+				costs.add(distance * neighborCost);
+			} else {
+				costs.add(Double.POSITIVE_INFINITY);
+			}
 			
 			// apply cost policy for final cost
-			switch (policy) {
+			switch (costPolicy) {
 			case MINIMUM:
 				stepCost = costs.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
 				break;

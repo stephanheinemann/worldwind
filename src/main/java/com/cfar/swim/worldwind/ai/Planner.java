@@ -33,7 +33,9 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.RiskPolicy;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
@@ -42,6 +44,12 @@ public interface Planner {
 
 	public Aircraft getAircraft();
 	public Environment getEnvironment();
+	
+	public CostPolicy getCostPolicy();
+	public void setCostPolicy(CostPolicy costPolicy);
+	
+	public RiskPolicy getRiskPolicy();
+	public void setRiskPolicy(RiskPolicy riskPolicy);
 	
 	public Path plan(Position origin, Position destination, ZonedDateTime eto);
 	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime eto);

@@ -165,14 +165,19 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public double getStepCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end,
-			CostPolicy policy) {
+	public double getStepCost(
+			Position position, Position neighbor, 
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
 	@Override
-	public double getStepCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy policy) {
+	public double getStepCost(
+			Environment neighbor,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		// TODO Auto-generated method stub
 		return 0;
 	}

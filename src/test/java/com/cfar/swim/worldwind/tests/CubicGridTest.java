@@ -42,24 +42,21 @@ import gov.nasa.worldwind.geom.Vec4;
 public class CubicGridTest {
 	
 	@Test
-	public void testConstruction() {
+	public void testStructure() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
         Cube cube = new Cube(Vec4.ZERO, axes, 1);
         CubicGrid cubicGrid = new CubicGrid(cube, 10, 5, 5);
-        
         assertEquals(true, cubicGrid.hasChildren());
         assertEquals(true, cubicGrid.hasChild(0, 0, 0));
         assertEquals(false, cubicGrid.hasParent());
         assertEquals(250 , cubicGrid.getChildren().size());
         
         CubicGrid child = cubicGrid.getChild(0, 0, 0);
-        
         assertEquals(false, child.hasChildren());
         assertEquals(true, child.hasParent());
         
         child.addChildren(0.5);
         child.getChild(1, 1, 1).addChildren(2);
-        
         assertEquals(true, child.hasChildren());
         assertEquals(8, child.getChildren().size());
         assertEquals(true, child.hasChild(1, 1, 1));
@@ -68,12 +65,10 @@ public class CubicGridTest {
         assertEquals(267, cubicGrid.getAll().size());
         
         child.removeChildren();
-        
         assertEquals(false, child.hasChildren());
         assertEquals(251, cubicGrid.getAll().size());
         
         cubicGrid.removeChildren();
-        
         assertEquals(false, cubicGrid.hasChildren());
         assertEquals(1, cubicGrid.getAll().size());
 	}

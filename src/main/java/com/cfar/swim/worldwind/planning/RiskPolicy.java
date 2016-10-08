@@ -27,53 +27,23 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai;
+package com.cfar.swim.worldwind.planning;
 
-import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-
-public abstract class AbstractPlanner implements Planner {
-
-	private Aircraft aircraft = null;
-	private Environment environment = null;
-	private CostPolicy costPolicy = CostPolicy.AVERAGE;
-	private RiskPolicy riskPolicy = RiskPolicy.SAFETY;
+public enum RiskPolicy {
+	AVOIDANCE(0d),
+	PROBE(25d),
+	SAFETY(50d),
+	EFFECTIVENESS(75d),
+	IGNORANCE(100d);
 	
-	public AbstractPlanner(Aircraft aircraft, Environment environment) {
-		this.aircraft = aircraft;
-		this.environment = environment;
+	private double thresholdCost = 0d;
+	
+	private RiskPolicy(double thresholdCost) {
+		this.thresholdCost = thresholdCost;
 	}
 	
-	@Override
-	public Aircraft getAircraft() {
-		return this.aircraft;
+	public double getThreshholdCost() {
+		return this.thresholdCost;
 	}
 	
-	@Override
-	public Environment getEnvironment() {
-		return this.environment;
-	}
-	
-	@Override
-	public CostPolicy getCostPolicy() {
-		return this.costPolicy;
-	}
-	
-	@Override
-	public void setCostPolicy(CostPolicy costPolicy) {
-		this.costPolicy = costPolicy;
-	}
-	
-	@Override
-	public RiskPolicy getRiskPolicy() {
-		return this.riskPolicy;
-	}
-	
-	@Override
-	public void setRiskPolicy(RiskPolicy riskPolicy) {
-		this.riskPolicy = riskPolicy;
-	}
-
 }

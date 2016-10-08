@@ -37,8 +37,10 @@ import org.junit.Test;
 
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
+import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
+import com.cfar.swim.worldwind.planning.RiskPolicy;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -47,7 +49,7 @@ import gov.nasa.worldwind.globes.Earth;
 public class PlanningGridTest {
 
 	@Test
-	public void testConstruction() {
+	public void testStructure() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
         // the reference cube has to be offset from the origin for the position computation to work
 		Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1);
@@ -94,12 +96,26 @@ public class PlanningGridTest {
         
         PlanningGrid child = planningGrid.getChild(0, 0, 0);
         assertEquals(0d, child.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
-        assertEquals(1d, child.getStepCost(
+        assertEquals(0d, child.getStepCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
-        		CostPolicy.AVERAGE), PrecisionDouble.EPSILON);
+        		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
+        
+        child.addCostInterval(new CostInterval("obstacle", ZonedDateTime.now(), ZonedDateTime.now(), 50d));
+        assertEquals(Double.POSITIVE_INFINITY, child.getStepCost(
+        		child.getCornerPositions()[0],
+        		child.getCornerPositions()[1],
+        		ZonedDateTime.now().minusYears(10),
+        		ZonedDateTime.now().plusYears(10),
+        		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
+        assertEquals(50d, child.getStepCost(
+        		child.getCornerPositions()[0],
+        		child.getCornerPositions()[1],
+        		ZonedDateTime.now().minusYears(10),
+        		ZonedDateTime.now().plusYears(10),
+        		CostPolicy.AVERAGE, RiskPolicy.SAFETY), PrecisionDouble.EPSILON);
 	}
 
 }
