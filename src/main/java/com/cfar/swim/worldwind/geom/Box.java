@@ -183,7 +183,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 *         numerical inaccuracies, false otherwise
 	 */
 	public boolean isOrigin(Vec4 point) {
-		return new PrecisionVec4(point).equals(new PrecisionVec4(this.origin));
+		return new PrecisionVec4(point.toHomogeneousPoint3()).equals(new PrecisionVec4(this.origin.toHomogeneousPoint3()));
 	}
 	
 	/**
@@ -199,7 +199,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		boolean isCorner = false;
 		
 		for (Vec4 corner : this.getCorners()) {
-			if (new PrecisionVec4(point).equals(new PrecisionVec4(corner))) {
+			if (new PrecisionVec4(point.toHomogeneousPoint3()).equals(new PrecisionVec4(corner.toHomogeneousPoint3()))) {
 				isCorner = true;
 				break;
 			}
@@ -218,7 +218,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 *         numerical inaccuracies, false otherwise
 	 */
 	public boolean isCenter(Vec4 point) {
-		return new PrecisionVec4(point).equals(new PrecisionVec4(this.getCenter()));
+		return new PrecisionVec4(point.toHomogeneousPoint3()).equals(new PrecisionVec4(this.getCenter().toHomogeneousPoint3()));
 	}
 	
 	/**
@@ -233,7 +233,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		Vec4[] corners = this.getCorners();
 		
 		for (int index = 0; index < 8; index++) {
-			if (new PrecisionVec4(corner).equals(new PrecisionVec4(corners[index]))) {
+			if (new PrecisionVec4(corner.toHomogeneousPoint3()).equals(new PrecisionVec4(corners[index].toHomogeneousPoint3()))) {
 				cornerIndex = index;
 				break;
 			}

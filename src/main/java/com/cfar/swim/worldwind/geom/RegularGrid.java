@@ -649,6 +649,7 @@ public class RegularGrid extends Box {
 			// reduce precision for proper set addition, then extract original precision
 			neighbors.addAll(Arrays.asList(neighborCorners)
 				.stream()
+				.map(n -> n.toHomogeneousPoint3())
 				.map(PrecisionVec4::new)
 				.filter(n -> neighbors.stream().map(PrecisionVec4::new).noneMatch(n::equals))
 				.map(PrecisionVec4::getOriginal)
@@ -671,9 +672,10 @@ public class RegularGrid extends Box {
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
 		return this.getNeighbors(point)
 				.stream()
+				.map(p -> p.toHomogeneousPoint3())
 				.map(PrecisionVec4::new)
 				.collect(Collectors.toSet())
-				.contains(new PrecisionVec4(neighbor));
+				.contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
 	}
 	
 	/**
@@ -694,7 +696,7 @@ public class RegularGrid extends Box {
 				.stream()
 				.map(PrecisionVec4::new)
 				.collect(Collectors.toSet())
-				.contains(new PrecisionVec4(neighbor));
+				.contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
 	}
 	
 	/**

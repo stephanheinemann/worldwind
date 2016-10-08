@@ -78,7 +78,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 	
 	/** the current accumulated active cost of this planning grid */
-	private double activeCost = 1d;
+	private double activeCost = 0d;
 	
 	/** the threshold cost of this planning grid */
 	private double thresholdCost = 0d;
@@ -361,8 +361,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@Override
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		// the normalized distance of the cell
-		double cost = this.getLength() / this.getNormalizer();
+		double cost = 0d;
 		
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
@@ -857,7 +856,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@Override
 	public double getNormalizedDistance(Position position1, Position position2) {
-		// TODO: use normalized cell cost as base for updateActiveCost and getCost
 		return this.getDistance(position1, position2) / this.getNormalizer();
 	}
 	
@@ -886,14 +884,14 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			List<Double> costs = new ArrayList<Double>();
 			
 			// compute initial distance cost
-			// double cost = this.getDistance(position, neighbor); // normalized for neighbor distance
-			// double cost = 1d; // default uniform cost
-			// double cost = 0d;
+			// explicit distance cost computation is required if neighboring
+			// cells are of different size (different level in the hierarchy)
+			double cost = this.getNormalizedDistance(position, neighbor);
 			
 			// compute cost of each adjacent cell
 			for (PlanningGrid stepCell : stepCells) {
 				// add all (weighted) cost of the cell
-				costs.add(stepCell.getCost(start, end));
+				costs.add(cost + stepCell.getCost(start, end));
 			}
 			
 			// apply cost policy for final cost
@@ -936,11 +934,12 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			List<Double> costs = new ArrayList<Double>();
 			
 			// compute initial distance cost
-			//double cost = this.getDistance(this.getCenterPosition(), neighbor.getCenterPosition());
-			//double cost = 1d; // default uniform cost
+			double cost = this.getNormalizedDistance(
+					this.getCenterPosition(), neighbor.getCenterPosition());
+			
 			// add all (weighted) cost of the cells
-			costs.add(this.getCost(start, end));
-			costs.add(neighbor.getCost(start, end));
+			costs.add(cost + this.getCost(start, end));
+			costs.add(cost + neighbor.getCost(start, end));
 			
 			// apply cost policy for final cost
 			switch (policy) {
