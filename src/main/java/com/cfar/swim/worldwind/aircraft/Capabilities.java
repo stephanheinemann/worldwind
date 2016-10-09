@@ -29,6 +29,11 @@
  */
 package com.cfar.swim.worldwind.aircraft;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+
+import gov.nasa.worldwind.render.Path;
+
 public class Capabilities {
 
 	private int cruiseSpeed = 0; // knots
@@ -36,6 +41,7 @@ public class Capabilities {
 	private int maximumClimbRate = 0; // ft/min
 	private int maximumDescentRate = 0; // ft/min
 	
+	// TODO: climb-speed-distance performance
 	// TODO: average fuel consumption, endurance, range, radius of action...
 	// TODO: equipment (de-icing, gear, floats...)
 	
@@ -69,6 +75,26 @@ public class Capabilities {
 
 	public void setMaximumDescentRate(int maximumDescentRate) {
 		this.maximumDescentRate = maximumDescentRate;
+	}
+	
+	public Duration getEstimatedDuration(double distance) {
+		// TODO: implement
+		return null;
+	}
+	
+	public Duration getEstimatedDuration(Path path) {
+		// TODO: implement (consider climbs and descents?)
+		return null;
+	}
+	
+	public ZonedDateTime getEstimatedTime(double distance, ZonedDateTime start) {
+		// TODO: implement
+		return null;
+	}
+	
+	public ZonedDateTime getEstimatedTime(Path path, ZonedDateTime start) {
+		// TODO: implement (consider climbs and descents?)
+		return null;
 	}
 	
 }
