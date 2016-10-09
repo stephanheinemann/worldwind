@@ -560,7 +560,10 @@ public class RegularGrid extends Box {
 			}
 			
 			// TODO: not correct - all neighboring wall cells are relevant
-			// not just the ones adjacent to corners
+			// not just the ones adjacent to corners, compute same level
+			// neighbors, for all same level neighbors, find the children
+			// that intersect (touch) the adjacent plane of this, continue
+			// recursively
 			for (Vec4 corner : corners) {
 				neighbors.addAll(this.parent.lookupCells(corner, depth + 1));
 			}
