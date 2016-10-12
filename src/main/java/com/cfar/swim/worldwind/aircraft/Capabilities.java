@@ -31,70 +31,273 @@ package com.cfar.swim.worldwind.aircraft;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.Iterator;
 
+import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
 
 public class Capabilities {
 
-	private int cruiseSpeed = 0; // knots
-	private int maximumSpeed = 0; // knots
-	private int maximumClimbRate = 0; // ft/min
-	private int maximumDescentRate = 0; // ft/min
+	// all capabilities are stored in SI units
+	private double maximumAngleOfClimbSpeed = 0d; // m/s
+	private double maximumRateOfClimbSpeed = 0d; // m/s
+	private double cruiseClimbSpeed = 0d; // m/s
+	private double cruiseSpeed = 0d; // m/s
+	private double approachSpeed = 0d; // m/s
+	private double maximumGlideSpeed = 0d; // m/s
+	private double maximumSpeed = 0d; // m/s
+	
+	private double maximumRateOfClimb = 0d; // m/s
+	private double cruiseRateOfClimb = 0d; // m/s
+	private double approachRateOfDescent = 0d; // m/s
+	private double maximumRateOfDescent = 0d; // m/s
+	
+	private Angle maximumAngleOfClimb = Angle.fromDegrees(0); // deg
 	
 	// TODO: climb-speed-distance performance
+	// TODO: possibly feature parameterization for air movement (horizontal / vertical)
+	// TODO: possibly feature parameterization for air density (temperature / pressure / humidity)
+	// TODO: create a new AirDataInterval class which aggregates AirData class
+	// TODO: environment would have to store air property intervals
 	// TODO: average fuel consumption, endurance, range, radius of action...
 	// TODO: equipment (de-icing, gear, floats...)
 	
-	public int getCruiseSpeed() {
+	public double getMaximumAngleOfClimbSpeed() {
+		return maximumAngleOfClimbSpeed;
+	}
+
+	public void setMaximumAngleOfClimbSpeed(double maximumAngleOfClimbSpeed) {
+		this.maximumAngleOfClimbSpeed = maximumAngleOfClimbSpeed;
+	}
+	
+	public double getMaximumRateOfClimbSpeed() {
+		return maximumRateOfClimbSpeed;
+	}
+
+	public void setMaximumRateOfClimbSpeed(double maximumRateOfClimbSpeed) {
+		this.maximumRateOfClimbSpeed = maximumRateOfClimbSpeed;
+	}
+	
+	public double getCruiseClimbSpeed() {
+		return cruiseClimbSpeed;
+	}
+
+	public void setCruiseClimbSpeed(double cruiseClimbSpeed) {
+		this.cruiseClimbSpeed = cruiseClimbSpeed;
+	}
+	
+	public double getCruiseSpeed() {
 		return this.cruiseSpeed;
 	}
 	
-	public void setCruiseSpeed(int cruiseSpeed) {
+	public void setCruiseSpeed(double cruiseSpeed) {
 		this.cruiseSpeed = cruiseSpeed;
 	}
+	
+	public double getApproachSpeed() {
+		return approachSpeed;
+	}
 
-	public int getMaximumSpeed() {
+	public void setApproachSpeed(double approachSpeed) {
+		this.approachSpeed = approachSpeed;
+	}
+	
+	public double getMaximumGlideSpeed() {
+		return maximumGlideSpeed;
+	}
+
+	public void setMaximumGlideSpeed(double maximumGlideSpeed) {
+		this.maximumGlideSpeed = maximumGlideSpeed;
+	}
+	
+	public double getMaximumSpeed() {
 		return maximumSpeed;
 	}
 
-	public void setMaximumSpeed(int maximumSpeed) {
+	public void setMaximumSpeed(double maximumSpeed) {
 		this.maximumSpeed = maximumSpeed;
 	}
 
-	public int getMaximumClimbRate() {
-		return maximumClimbRate;
+	public double getMaximumRateOfClimb() {
+		return maximumRateOfClimb;
 	}
 
-	public void setMaximumClimbRate(int maximumClimbRate) {
-		this.maximumClimbRate = maximumClimbRate;
-	}
-
-	public int getMaximumDescentRate() {
-		return maximumDescentRate;
-	}
-
-	public void setMaximumDescentRate(int maximumDescentRate) {
-		this.maximumDescentRate = maximumDescentRate;
+	public void setMaximumRateOfClimb(double maximumRateOfClimb) {
+		this.maximumRateOfClimb = maximumRateOfClimb;
 	}
 	
+	public double getCruiseRateOfClimb() {
+		return cruiseRateOfClimb;
+	}
+
+	public void setCruiseRateOfClimb(double cruiseRateOfClimb) {
+		this.cruiseRateOfClimb = cruiseRateOfClimb;
+	}
+	
+	public double getApproachRateOfDescent() {
+		return approachRateOfDescent;
+	}
+
+	public void setApproachRateOfDescent(double approachRateOfDescent) {
+		this.approachRateOfDescent = approachRateOfDescent;
+	}
+	
+	public double getMaximumRateOfDescent() {
+		return maximumRateOfDescent;
+	}
+
+	public void setMaximumRateOfDescent(double maximumDescentRate) {
+		this.maximumRateOfDescent = maximumDescentRate;
+	}
+	
+	public Angle getMaximumAngleOfClimb() {
+		return maximumAngleOfClimb;
+	}
+
+	public void setMaximumAngleOfClimb(Angle maximumAngleOfClimb) {
+		this.maximumAngleOfClimb = maximumAngleOfClimb;
+	}
+	
+	/**
+	 * Gets the estimated duration to travel a specified horizontal distance
+	 * at cruise speed in still air.
+	 * 
+	 * @param distance the horizontal distance in meters
+	 * 
+	 * @return the estimated duration to travel the specified level distance
+	 *         at cruise speed
+	 */
 	public Duration getEstimatedDuration(double distance) {
-		// TODO: implement
-		return null;
+		return Duration.ofSeconds((long) (distance / this.cruiseSpeed));
 	}
 	
-	public Duration getEstimatedDuration(Path path) {
-		// TODO: implement (consider climbs and descents?)
-		return null;
+	/**
+	 * Gets the estimated duration to travel directly from a start to a goal
+	 * position at cruise speed including climbs and descents in still air.
+	 * 
+	 * @param start the start position
+	 * @param goal the goal position
+	 * @param globe the globe associated with the positions
+	 * 
+	 * @return the estimated duration to travel directly from the start to the
+	 *         goal position at cruise speed including climbs and descents in
+	 *         still air
+	 */
+	public Duration getEstimatedDuration(Position start, Position goal, Globe globe) {
+		Duration estimatedDuration = Duration.ZERO;
+		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
+		double height = goal.getElevation() - start.getElevation();
+		
+		// use cruise rate of climb -> duration to cover height distance
+		if (0 == height) {
+			// horizontal movement
+			estimatedDuration = this.getEstimatedDuration(distance);
+		} else if (0 < height) {
+			// climb
+			// compute climb duration
+			Duration climbDuration = Duration.ofSeconds((long) (height / this.cruiseRateOfClimb));
+			// compute slant distance in still air
+			double slantDistance = this.cruiseClimbSpeed * climbDuration.getSeconds();
+			
+			// perform feasibility check
+			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
+			if (maxSlantDistance < slantDistance) {
+				// TODO: try again with this.maximumRateOfClimb and use maxSlantDistance if feasible
+				throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
+			}
+			
+			// compute climb angle in still air
+			double climbAngle = Math.asin(height / slantDistance);
+			// compute ground distance during climb in still air
+			double climbDistance = height / Math.tan(climbAngle);
+			// compute ground distance during level in still air
+			double levelDistance = distance - climbDistance;
+			// compute complete estimated duration
+			estimatedDuration = climbDuration.plus(this.getEstimatedDuration(levelDistance));
+		} else { 
+			// descent
+			// compute descent duration
+			Duration descentDuration = Duration.ofSeconds((long) (height / this.approachRateOfDescent));
+			// compute slant distance in still air
+			double slantDistance = this.approachSpeed * descentDuration.getSeconds();
+			
+			// perform feasibility check
+			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
+			if (maxSlantDistance < slantDistance) {
+				// TODO: try again with this.maximumRateOfDescent and use maxSlantDistance if feasible
+				throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
+			}
+			
+			// compute descent angle in still air
+			double descentAngle = Math.asin(height / slantDistance);
+			// compute ground distance during descent in still air
+			double descentDistance = height / Math.tan(descentAngle);
+			// compute ground distance during level in still air
+			double levelDistance = distance - descentDistance;
+			// compute complete estimated duration
+			estimatedDuration = descentDuration.plus(this.getEstimatedDuration(levelDistance));
+		}
+		
+		return estimatedDuration;
 	}
 	
+	/**
+	 * Gets the estimated duration to travel along a path of positions at
+	 * cruise speed including climbs and descents in still air.
+	 * 
+	 * @param path the path of positions
+	 * @param globe the globe associated with the positions
+	 * 
+	 * @return the estimated duration to travel along the path of positions at
+	 *         cruise speed including climbs and descents in still air
+	 */
+	public Duration getEstimatedDuration(Path path, Globe globe) {
+		Duration estimatedDuration = Duration.ZERO;
+		@SuppressWarnings("unchecked")
+		Iterator<Position> positions = (Iterator<Position>) path.getPositions().iterator();
+		Position current = null;
+		
+		if (positions.hasNext()) {
+			current = positions.next();
+		}
+		
+		while (positions.hasNext()) {
+			estimatedDuration = estimatedDuration.plus(this.getEstimatedDuration(current, positions.next(), globe));
+		}
+		
+		return estimatedDuration;
+	}
+	
+	/**
+	 * Gets the estimated time of arrival after traveling a specified
+	 * horizontal distance.
+	 * 
+	 * @param distance the horizontal distance in meters 
+	 * @param start the start time
+	 * 
+	 * @return the estimated time of arrival after traveling the specified
+	 *         horizontal distance
+	 */
 	public ZonedDateTime getEstimatedTime(double distance, ZonedDateTime start) {
-		// TODO: implement
-		return null;
+		return start.plus(this.getEstimatedDuration(distance));
 	}
 	
-	public ZonedDateTime getEstimatedTime(Path path, ZonedDateTime start) {
-		// TODO: implement (consider climbs and descents?)
-		return null;
+	/**
+	 * Gets the estimated time of arrival after traveling along a specified
+	 * path of positions.
+	 * 
+	 * @param path the path of positions
+	 * @param globe the globe associated with the positions
+	 * @param start the start time
+	 * 
+	 * @return the estimated time of arrival after traveling along the
+	 *         specified path of positions
+	 */
+	public ZonedDateTime getEstimatedTime(Path path, Globe globe, ZonedDateTime start) {
+		return start.plus(this.getEstimatedDuration(path, globe));
 	}
 	
 }
