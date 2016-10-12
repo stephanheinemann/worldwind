@@ -65,6 +65,9 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public void setGlobe(Globe globe);
 	
 	// TODO: aggregate property time intervals for air density (temperature, pressure, humidity)
+	// TODO: create a new AirDataInterval class which aggregates AirData class
+	// TODO: AirData, Surface/GroundData extends EnvironmentData
+	// TODO: environment would have to store air/ground property intervals
 	
 	/**
 	 * Gets the center position of this environment in globe coordinates.

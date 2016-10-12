@@ -47,8 +47,8 @@ public abstract class Quadcopter extends Aircraft {
 		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
 		this.getAttributes().setMaterial(this.getMaterial(cid));
 		
-		// TODO: use capabilities or actual data...
-		this.getDepiction().setModifier(SymbologyConstants.SPEED, 100);
+		// TODO: use actual live data...
+		this.getDepiction().setModifier(SymbologyConstants.SPEED, 15d);
 		this.getDepiction().setModifier(SymbologyConstants.ALTITUDE_DEPTH, position.getAltitude());
 	}
 	

@@ -29,24 +29,47 @@
  */
 package com.cfar.swim.worldwind.aircraft;
 
+import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 
 public class Iris extends Quadcopter {
 
 	// TODO: test/find proper capabilities
-	public static final double CRUISE_SPEED = 5;
-	public static final double MAX_SPEED = 7;
-	public static final double MAX_CLIMB_RATE = 200;
-	public static final double MAX_DESCENT_RATE = 200;
+	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 10d;
+	public static final double MAX_RATE_OF_CLIMB_SPEED = 10d;
+	public static final double CRUISE_CLIMB_SPEED = 15d;
+	public static final double CRUISE_SPEED = 15d;
+	public static final double CRUISE_DESCENT_SPEED = 15;
+	public static final double APPROACH_SPEED = 5d;
+	public static final double MAX_GLIDE_SPEED = 0d;
+	public static final double MAX_RATE_OF_DESCENT_SPEED = 10d;
+	public static final double MAX_SPEED = 20d;
+	
+	public static final double MAX_RATE_OF_CLIMB = 10d;
+	public static final double CRUISE_RATE_OF_CLIMB = 2d;
+	public static final double CRUISE_RATE_OF_DESCENT = 2d;
+	public static final double APPROACH_RATE_OF_DESCENT = 5d;
+	public static final double MAX_RATE_OF_DESCENT = 10d;
+	public static final double MAX_ANGLE_OF_CLIMB = 90d;
 	
 	public Iris(Position position, double radius, CombatIdentification cid) {
 		super(position, radius, cid);
 		this.capabilities = new Capabilities();
+		this.capabilities.setMaximumAngleOfClimbSpeed(Iris.MAX_ANGLE_OF_CLIMB_SPEED);
+		this.capabilities.setMaximumRateOfClimb(Iris.MAX_RATE_OF_CLIMB);
+		this.capabilities.setCruiseClimbSpeed(Iris.CRUISE_CLIMB_SPEED);
 		this.capabilities.setCruiseSpeed(Iris.CRUISE_SPEED);
-		this.capabilities.setMaximumRateOfClimb(Iris.MAX_CLIMB_RATE);
-		this.capabilities.setMaximumRateOfDescent(Iris.MAX_DESCENT_RATE);
+		this.capabilities.setCruiseDescentSpeed(Iris.CRUISE_DESCENT_SPEED);
+		this.capabilities.setApproachSpeed(Iris.APPROACH_SPEED);
+		this.capabilities.setMaximumGlideSpeed(Iris.MAX_GLIDE_SPEED);
+		this.capabilities.setMaximumRateOfDescentSpeed(Iris.MAX_RATE_OF_DESCENT_SPEED);
 		this.capabilities.setMaximumSpeed(Iris.MAX_SPEED);
-		// TODO: ...
+		this.capabilities.setMaximumRateOfClimb(Iris.MAX_RATE_OF_CLIMB);
+		this.capabilities.setCruiseRateOfClimb(Iris.CRUISE_RATE_OF_CLIMB);
+		this.capabilities.setCruiseRateOfDescent(Iris.CRUISE_RATE_OF_DESCENT);
+		this.capabilities.setApproachRateOfDescent(Iris.APPROACH_RATE_OF_DESCENT);
+		this.capabilities.setMaximumRateOfDescent(Iris.MAX_RATE_OF_DESCENT);
+		this.capabilities.setMaximumAngleOfClimb(Angle.POS90);
 	}
 
 }

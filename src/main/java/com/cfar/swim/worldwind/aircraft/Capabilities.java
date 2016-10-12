@@ -33,6 +33,8 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Iterator;
 
+import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
+
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
@@ -46,12 +48,15 @@ public class Capabilities {
 	private double maximumRateOfClimbSpeed = 0d; // m/s
 	private double cruiseClimbSpeed = 0d; // m/s
 	private double cruiseSpeed = 0d; // m/s
+	private double cruiseDescentSpeed = 0d; // m/s
 	private double approachSpeed = 0d; // m/s
 	private double maximumGlideSpeed = 0d; // m/s
+	private double maximumRateOfDescentSpeed = 0d; // m/s
 	private double maximumSpeed = 0d; // m/s
 	
 	private double maximumRateOfClimb = 0d; // m/s
 	private double cruiseRateOfClimb = 0d; // m/s
+	private double cruiseRateOfDescent = 0d; // m/s
 	private double approachRateOfDescent = 0d; // m/s
 	private double maximumRateOfDescent = 0d; // m/s
 	
@@ -61,6 +66,7 @@ public class Capabilities {
 	// TODO: possibly feature parameterization for air movement (horizontal / vertical)
 	// TODO: possibly feature parameterization for air density (temperature / pressure / humidity)
 	// TODO: create a new AirDataInterval class which aggregates AirData class
+	// TODO: AirData, Surface/GroundData extends EnvironmentData
 	// TODO: environment would have to store air property intervals
 	// TODO: average fuel consumption, endurance, range, radius of action...
 	// TODO: equipment (de-icing, gear, floats...)
@@ -97,6 +103,14 @@ public class Capabilities {
 		this.cruiseSpeed = cruiseSpeed;
 	}
 	
+	public double getCruiseDescentSpeed() {
+		return cruiseDescentSpeed;
+	}
+
+	public void setCruiseDescentSpeed(double cruiseDescentSpeed) {
+		this.cruiseDescentSpeed = cruiseDescentSpeed;
+	}
+	
 	public double getApproachSpeed() {
 		return approachSpeed;
 	}
@@ -111,6 +125,14 @@ public class Capabilities {
 
 	public void setMaximumGlideSpeed(double maximumGlideSpeed) {
 		this.maximumGlideSpeed = maximumGlideSpeed;
+	}
+	
+	public double getMaximumRateOfDescentSpeed() {
+		return maximumRateOfDescentSpeed;
+	}
+
+	public void setMaximumRateOfDescentSpeed(double maximumRateOfDescentSpeed) {
+		this.maximumRateOfDescentSpeed = maximumRateOfDescentSpeed;
 	}
 	
 	public double getMaximumSpeed() {
@@ -135,6 +157,14 @@ public class Capabilities {
 
 	public void setCruiseRateOfClimb(double cruiseRateOfClimb) {
 		this.cruiseRateOfClimb = cruiseRateOfClimb;
+	}
+	
+	public double getCruiseRateOfDescent() {
+		return cruiseRateOfDescent;
+	}
+
+	public void setCruiseRateOfDescent(double cruiseRateOfDescent) {
+		this.cruiseRateOfDescent = cruiseRateOfDescent;
 	}
 	
 	public double getApproachRateOfDescent() {
@@ -191,22 +221,27 @@ public class Capabilities {
 		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
 		double height = goal.getElevation() - start.getElevation();
 		
-		// use cruise rate of climb -> duration to cover height distance
-		if (0 == height) {
+		if (new PrecisionDouble(height).equals(new PrecisionDouble(0d))) {
 			// horizontal movement
 			estimatedDuration = this.getEstimatedDuration(distance);
 		} else if (0 < height) {
 			// climb
-			// compute climb duration
+			// compute cruise climb duration
 			Duration climbDuration = Duration.ofSeconds((long) (height / this.cruiseRateOfClimb));
-			// compute slant distance in still air
+			// compute cruise slant distance in still air
 			double slantDistance = this.cruiseClimbSpeed * climbDuration.getSeconds();
 			
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
-			if (maxSlantDistance < slantDistance) {
-				// TODO: try again with this.maximumRateOfClimb and use maxSlantDistance if feasible
-				throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
+			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+				// compute minimum climb duration
+				climbDuration = Duration.ofSeconds((long) (height / this.maximumRateOfClimb));
+				// compute minimum slant distance in still air
+				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.getSeconds();
+				
+				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+					throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
+				}
 			}
 			
 			// compute climb angle in still air
@@ -217,18 +252,25 @@ public class Capabilities {
 			double levelDistance = distance - climbDistance;
 			// compute complete estimated duration
 			estimatedDuration = climbDuration.plus(this.getEstimatedDuration(levelDistance));
-		} else { 
+		} else {
 			// descent
-			// compute descent duration
-			Duration descentDuration = Duration.ofSeconds((long) (height / this.approachRateOfDescent));
-			// compute slant distance in still air
-			double slantDistance = this.approachSpeed * descentDuration.getSeconds();
+			height = Math.abs(height);
+			// compute cruise descent duration
+			Duration descentDuration = Duration.ofSeconds((long) (height / this.cruiseRateOfDescent));
+			// compute cruise slant distance in still air
+			double slantDistance = this.cruiseDescentSpeed * descentDuration.getSeconds();
 			
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
-			if (maxSlantDistance < slantDistance) {
-				// TODO: try again with this.maximumRateOfDescent and use maxSlantDistance if feasible
-				throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
+			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+				// compute minimum descent duration
+				descentDuration = Duration.ofSeconds((long) (height / this.maximumRateOfDescent));
+				// compute minimum slant distance in still air
+				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.getSeconds();
+				
+				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+					throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
+				}
 			}
 			
 			// compute descent angle in still air
