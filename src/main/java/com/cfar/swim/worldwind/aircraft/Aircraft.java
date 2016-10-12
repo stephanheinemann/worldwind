@@ -39,8 +39,8 @@ public abstract class Aircraft extends ObstacleSphere {
 
 	protected Capabilities capabilities = null;
 	
-	public Aircraft(Position center, double radius) {
-		super(center, radius);
+	public Aircraft(Position position, double radius) {
+		super(position, radius);
 	}
 
 	public Capabilities getCapabilities() {

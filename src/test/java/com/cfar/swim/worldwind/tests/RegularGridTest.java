@@ -44,6 +44,7 @@ import javax.xml.bind.JAXBException;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Cube;
@@ -191,6 +192,15 @@ public class RegularGridTest {
             				70));
             iris.getDepiction().setDesignation("Iris");
             renderableLayer.addRenderable(iris);
+            
+            A320 a320 = new A320(new Position(ts.getCorners()[0], 50000), 5000, CombatIdentification.FRIEND);
+            a320.setCostInterval(new CostInterval(
+    				"A320",
+    				ZonedDateTime.now(ZoneId.of("UTC")).minusYears(10),
+    				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
+    				70));
+            a320.getDepiction().setDesignation("A320");
+            renderableLayer.addRenderable(a320);
             
             // TODO: add time slider with steps between min and max time (set using calender-like input)
             this.timePanel = new JFXPanel();

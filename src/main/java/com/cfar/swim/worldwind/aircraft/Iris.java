@@ -31,10 +31,11 @@ package com.cfar.swim.worldwind.aircraft;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.symbology.SymbologyConstants;
 
 public class Iris extends Quadcopter {
 
-	// TODO: test/find proper capabilities
+	// TODO: use environment AirDataIntervals
 	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 10d;
 	public static final double MAX_RATE_OF_CLIMB_SPEED = 10d;
 	public static final double CRUISE_CLIMB_SPEED = 15d;
@@ -50,10 +51,11 @@ public class Iris extends Quadcopter {
 	public static final double CRUISE_RATE_OF_DESCENT = 2d;
 	public static final double APPROACH_RATE_OF_DESCENT = 5d;
 	public static final double MAX_RATE_OF_DESCENT = 10d;
-	public static final double MAX_ANGLE_OF_CLIMB = 90d;
+	public static final Angle MAX_ANGLE_OF_CLIMB = Angle.POS90;
 	
 	public Iris(Position position, double radius, CombatIdentification cid) {
 		super(position, radius, cid);
+		
 		this.capabilities = new Capabilities();
 		this.capabilities.setMaximumAngleOfClimbSpeed(Iris.MAX_ANGLE_OF_CLIMB_SPEED);
 		this.capabilities.setMaximumRateOfClimb(Iris.MAX_RATE_OF_CLIMB);
@@ -69,7 +71,10 @@ public class Iris extends Quadcopter {
 		this.capabilities.setCruiseRateOfDescent(Iris.CRUISE_RATE_OF_DESCENT);
 		this.capabilities.setApproachRateOfDescent(Iris.APPROACH_RATE_OF_DESCENT);
 		this.capabilities.setMaximumRateOfDescent(Iris.MAX_RATE_OF_DESCENT);
-		this.capabilities.setMaximumAngleOfClimb(Angle.POS90);
+		this.capabilities.setMaximumAngleOfClimb(Iris.MAX_ANGLE_OF_CLIMB);
+	
+		// TODO: use actual live data for symbol annotations...
+		this.getDepiction().setModifier(SymbologyConstants.SPEED, Iris.CRUISE_SPEED);
 	}
 
 }
