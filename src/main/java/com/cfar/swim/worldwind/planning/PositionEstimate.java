@@ -27,40 +27,79 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.aircraft;
+package com.cfar.swim.worldwind.planning;
 
-import com.cfar.swim.worldwind.util.Depiction;
+import java.time.ZonedDateTime;
 
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.symbology.milstd2525.MilStd2525TacticalSymbol;
 
-public abstract class FixedWingCivilAircraft extends CivilAircraft {
-
-	public static final String SIDC_CIV_FW_AIRCRAFT_UNKOWN = "SUAPCF---------"; 
-	public static final String SIDC_CIV_FW_AIRCRAFT_FRIEND = "SFAPCF---------";
-	public static final String SIDC_CIV_FW_AIRCRAFT_NEUTRAL = "SNAPCF---------";
-	public static final String SIDC_CIV_FW_AIRCRAFT_HOSTILE = "SHAPCF---------";
+public class PositionEstimate implements Comparable<PositionEstimate> {
 	
-	public FixedWingCivilAircraft(Position position, double radius, CombatIdentification cid) {
-		super(position, radius, cid);
-		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
-		
-		// TODO: use actual live data for symbol annotations...
+	private PositionEstimate parent = null;
+	private Position position = null;
+	private double g = Double.POSITIVE_INFINITY;
+	private double h = Double.POSITIVE_INFINITY;
+	// (position, estimated cost tuple: (c1, c2)) for more advanced versions
+	private ZonedDateTime eto = null;
+	
+	public PositionEstimate(Position position) {
+		this.position = position;
+	}
+
+	public double getG() {
+		return g;
+	}
+
+	public void setG(double g) {
+		this.g = g;
+	}
+
+	public double getH() {
+		return h;
+	}
+
+	public void setH(double h) {
+		this.h = h;
+	}
+	
+	public double getF() {
+		return this.g + this.h;
+	}
+
+	public PositionEstimate getParent() {
+		return parent;
+	}
+
+	public void setParent(PositionEstimate parent) {
+		this.parent = parent;
+	}
+
+	public Position getPosition() {
+		return position;
 	}
 
 	@Override
-	protected String getSymbolIdentifier(CombatIdentification cid) {
-		switch (cid) {
-		case UNKNOWN:
-			return FixedWingCivilAircraft.SIDC_CIV_FW_AIRCRAFT_UNKOWN;
-		case FRIEND:
-			return FixedWingCivilAircraft.SIDC_CIV_FW_AIRCRAFT_FRIEND;
-		case NEUTRAL:
-			return FixedWingCivilAircraft.SIDC_CIV_FW_AIRCRAFT_NEUTRAL;
-		case HOSTILE:
-			return FixedWingCivilAircraft.SIDC_CIV_FW_AIRCRAFT_HOSTILE;
-		default:
-			return FixedWingCivilAircraft.SIDC_CIV_FW_AIRCRAFT_UNKOWN;
-		}
+	public int compareTo(PositionEstimate o) {
+		return new Double(this.getF()).compareTo(o.getF());
 	}
+	
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (o instanceof PositionEstimate) {
+			equals = this.position.equals(((PositionEstimate) o).getPosition());
+		}
+	
+		return equals;
+	}
+
+	public ZonedDateTime getEto() {
+		return eto;
+	}
+
+	public void setEto(ZonedDateTime eto) {
+		this.eto = eto;
+	}
+	
 }

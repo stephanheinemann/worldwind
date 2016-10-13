@@ -51,8 +51,8 @@ public interface Planner {
 	public RiskPolicy getRiskPolicy();
 	public void setRiskPolicy(RiskPolicy riskPolicy);
 	
-	public Path plan(Position origin, Position destination, ZonedDateTime eto);
-	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime eto);
+	public Path plan(Position origin, Position destination, ZonedDateTime etd);
+	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
 
 	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions

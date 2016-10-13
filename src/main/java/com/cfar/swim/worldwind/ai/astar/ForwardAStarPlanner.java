@@ -30,50 +30,97 @@
 package com.cfar.swim.worldwind.ai.astar;
 
 import java.time.ZonedDateTime;
-import java.util.HashMap;
+import java.util.ArrayDeque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.PositionEstimate;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 
 public class ForwardAStarPlanner extends AbstractPlanner {
 
+	PriorityQueue<PositionEstimate> open = new PriorityQueue<PositionEstimate>();
+	Set<PositionEstimate> closed = new HashSet<PositionEstimate>();
+	PositionEstimate start = null;
+	PositionEstimate goal = null;
+	ZonedDateTime etd = null;
+	
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 	}
-
+	
+	protected Path getPath(PositionEstimate positionEstimate) {
+		ArrayDeque<Position> positions = new ArrayDeque<Position>(); 
+		
+		while ((null != positionEstimate) && (positionEstimate != positionEstimate.getParent())) {
+			positions.addFirst(positionEstimate.getPosition());
+			positionEstimate = positionEstimate.getParent();
+		}
+		
+		return new Path(positions);
+	}
+	
+	protected void updatePositionEstimate(PositionEstimate source, PositionEstimate target) {
+		double gOld = target.getG();
+		this.computeCost(source, target);
+		if (target.getG() < gOld) {
+			if (!this.open.contains(target)) {
+				target.setH(this.getEnvironment().getNormalizedDistance(
+						target.getPosition(), this.goal.getPosition()));
+				this.open.add(target);
+			}
+		}
+	}
+	
+	protected void computeCost(PositionEstimate source, PositionEstimate target) {
+		
+	}
+	
 	@Override
-	public Path plan(Position origin, Position destination, ZonedDateTime eto) {
-		//Set<Position> open = new HashSet<Position>();
-		Set<Position> closed = new HashSet<Position>();
-		Map<Position, Position> parent = new HashMap<Position, Position>();
-		Map<Position, Double> g = new HashMap<Position, Double>();
-		PriorityQueue<Double> open = new PriorityQueue<Double>();
-		// TODO: a priority queue of pairs is required
-		// maybe use SortedSet (HashSet, TreeSet)
-		// (position, estimated cost: c = g + h)
-		// (position, estimated cost tuple: (c1, c2)) for more advanced versions
+	public Path plan(Position origin, Position destination, ZonedDateTime etd) {
+		this.start = new PositionEstimate(origin);
+		this.start.setG(0);
+		this.start.setH(this.getEnvironment().getNormalizedDistance(origin, destination));
+		this.start.setParent(this.start);
+		this.start.setEto(etd);
 		
-		g.put(origin, 0d);
-		parent.put(origin, origin);
+		this.goal = new PositionEstimate(destination);
+		this.goal.setH(0);
 		
+		this.etd = etd;
 		
+		while (null != this.open.peek()) {
+			PositionEstimate source = this.open.poll();
+			if (source.equals(this.goal)) {
+				return this.getPath(source);
+			}
+			this.closed.add(source);
+			Set<Position> neighbors = this.getEnvironment().getNeighbors(source.getPosition());
+			for (Position neighbor : neighbors) {
+				PositionEstimate target = new PositionEstimate(neighbor);
+				if (!closed.contains(target)) {
+					if (open.contains(target)) {
+						PositionEstimate o = open.stream().filter(s -> s.equals(target)).findFirst().get();
+						this.updatePositionEstimate(source, o);
+					} else {
+						this.updatePositionEstimate(source, target);
+					}
+				}
+			}
+		}
 		
-		
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime eto) {
+	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		// TODO Auto-generated method stub
 		return null;
 	}

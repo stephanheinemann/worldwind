@@ -631,6 +631,7 @@ public class RegularGrid extends Box {
 	 * @return the neighbors of the point in this regular grid 
 	 */
 	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
+		// TODO: also provide a 26 neighbor version (see Nash, Koenig AAPP)
 		Set<Vec4> neighbors = new HashSet<Vec4>(6);
 		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
 		
