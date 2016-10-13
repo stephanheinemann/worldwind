@@ -33,6 +33,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
@@ -44,6 +46,7 @@ import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Earth;
+import gov.nasa.worldwind.render.Path;
 
 public class AircraftTest {
 
@@ -59,6 +62,11 @@ public class AircraftTest {
 		Duration duration = iris.getCapabilities().getEstimatedDuration(start, goal, earth);
 		double totalSeconds = ((double) duration.getSeconds()) + ((double) duration.getNano() * 10E-9);
 		assertEquals(iris.getCapabilities().getCruiseSpeed(), 111120d / totalSeconds, 0.1d);
+		
+		Path leg = new Path(start, goal);
+		ZonedDateTime etd = ZonedDateTime.of(2016, 10, 13, 21, 31, 0, 0, ZoneId.of("UTC"));
+		ZonedDateTime eta = iris.getCapabilities().getEstimatedTime(leg, earth, etd);
+		assertEquals(etd.plusSeconds((long) totalSeconds), eta);	
 		
 		// climb 50 meters
 		goal = new Position(start, start.getElevation() + 50d);

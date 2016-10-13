@@ -38,19 +38,21 @@ import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PositionEstimate;
 
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
 
 public class ForwardAStarPlanner extends AbstractPlanner {
 
-	PriorityQueue<PositionEstimate> open = new PriorityQueue<PositionEstimate>();
-	Set<PositionEstimate> closed = new HashSet<PositionEstimate>();
-	PositionEstimate start = null;
-	PositionEstimate goal = null;
-	ZonedDateTime etd = null;
+	private PriorityQueue<PositionEstimate> open = new PriorityQueue<PositionEstimate>();
+	private Set<PositionEstimate> closed = new HashSet<PositionEstimate>();
+	private PositionEstimate start = null;
+	private PositionEstimate goal = null;
+	private ZonedDateTime etd = null;
 	
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
@@ -80,7 +82,21 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	protected void computeCost(PositionEstimate source, PositionEstimate target) {
+		Path leg = new Path(source.getPosition(), target.getPosition());
+		Capabilities capabilities = this.getAircraft().getCapabilities();
+		Globe globe = this.getEnvironment().getGlobe();
+		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
+		double cost = this.getEnvironment().getStepCost(
+				source.getPosition(), target.getPosition(),
+				source.getEto(), end,
+				this.getCostPolicy(), this.getRiskPolicy());
+		
+		if ((source.getG() + cost) < target.getG()) {
+			target.setParent(source);
+			target.setG(source.getG() + cost);
+			target.setEto(end);
+		}
 	}
 	
 	@Override
