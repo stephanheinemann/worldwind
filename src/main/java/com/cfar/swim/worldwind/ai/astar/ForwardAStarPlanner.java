@@ -31,7 +31,9 @@ package com.cfar.swim.worldwind.ai.astar;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -39,6 +41,7 @@ import java.util.Set;
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
+import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PositionEstimate;
 
@@ -110,6 +113,10 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	
 	@Override
 	public Path plan(Position origin, Position destination, ZonedDateTime etd) {
+		this.open.clear();
+		this.closed.clear();
+		this.plan.clear();
+		
 		this.start = new PositionEstimate(origin);
 		this.start.setG(0);
 		this.start.setH(this.getEnvironment().getNormalizedDistance(origin, destination));
@@ -141,13 +148,48 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			}
 		}
 		
-		return null;
+		return new Path();
 	}
 
 	@Override
 	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		// TODO Auto-generated method stub
-		return null;
+		List<Position> positions = new ArrayList<Position>();
+		ArrayDeque<PositionEstimate> plan = new ArrayDeque<PositionEstimate>();
+		Position currentOrigin = origin;
+		ZonedDateTime currentEtd = etd;
+		Iterator<Position> waypointIterator = waypoints.iterator();
+		
+		while (waypointIterator.hasNext()) {
+			positions.remove(currentOrigin);
+			Position currentDestination = waypointIterator.next();
+			
+			if (!(new PrecisionPosition(currentOrigin).equals(new PrecisionPosition(currentDestination)))) {
+				this.plan(currentOrigin, currentDestination, currentEtd);
+				
+				ArrayDeque<PositionEstimate> legPlan = this.getPlan();
+				if ((!plan.isEmpty()) && (!legPlan.isEmpty())) {
+					legPlan.getFirst().setParent(plan.getLast());
+				}
+				plan.addAll(legPlan);
+				PositionEstimate positionEstimate = null;
+				
+				while (null != legPlan.peek()) {
+					positionEstimate = legPlan.poll();
+					positions.add(positionEstimate.getPosition());
+				}
+				
+				if (null != positionEstimate) {
+					currentOrigin = positionEstimate.getPosition();
+					currentEtd = positionEstimate.getEto();
+				} else {
+					positions.clear();
+					return new Path(positions);
+				}
+			}
+		}
+		
+		this.plan = plan;
+		return new Path(positions);
 	}
 
 }

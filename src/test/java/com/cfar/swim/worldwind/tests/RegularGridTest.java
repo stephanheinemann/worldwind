@@ -37,8 +37,12 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
+import javax.naming.directory.BasicAttributes;
 import javax.xml.bind.JAXBException;
 
 import org.junit.Test;
@@ -75,6 +79,8 @@ import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
+import gov.nasa.worldwind.render.BasicShapeAttributes;
+import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Path;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Group;
@@ -415,9 +421,30 @@ public class RegularGridTest {
 		
 		ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, tsGrid);
 		Path path = planner.plan(origin, destination, ZonedDateTime.now());
+		path.setVisible(true);
+		path.setShowPositions(true);
+		path.setDrawVerticals(true);
+		path.setAttributes(new BasicShapeAttributes());
+		path.getAttributes().setOutlineMaterial(Material.MAGENTA);
+		path.getAttributes().setOutlineWidth(5d);
+		path.getAttributes().setOutlineOpacity(0.5d);
+		
 		for (PositionEstimate positionEstimate : planner.getPlan()) {
 			System.out.println(positionEstimate.getPosition() + " at " + positionEstimate.getEto());
 		}
+		((RenderableLayer) layer).addRenderable(path);
+		
+		List<Position> waypoints = Arrays.asList(tsGrid.getCornerPositions());
+		//ArrayList<Position> wp = new ArrayList<Position>(waypoints);
+		//wp.add(tsGrid.getCenterPosition());
+		path = planner.plan(origin, destination, waypoints, ZonedDateTime.now());
+		path.setVisible(true);
+		path.setShowPositions(true);
+		path.setDrawVerticals(true);
+		path.setAttributes(new BasicShapeAttributes());
+		path.getAttributes().setOutlineMaterial(Material.GREEN);
+		path.getAttributes().setOutlineWidth(5d);
+		path.getAttributes().setOutlineOpacity(0.5d);
 		((RenderableLayer) layer).addRenderable(path);
 		
 		} catch (Exception e) {

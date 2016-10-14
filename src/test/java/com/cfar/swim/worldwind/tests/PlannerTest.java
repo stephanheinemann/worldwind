@@ -1,8 +1,11 @@
 package com.cfar.swim.worldwind.tests;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 import java.time.ZonedDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Test;
 
@@ -34,8 +37,14 @@ public class PlannerTest {
         
         ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, planningGrid);
         Path path = planner.plan(origin, destination, etd);
-		assertNotNull(path);
+        assertNotNull(path);
 		assertEquals(6, planner.getPlan().size());
+		
+		List<Position> waypoints = Arrays.asList(planningGrid.getCornerPositions());
+		assertEquals(8, waypoints.size());
+		
+		planner.plan(origin, destination, waypoints, etd);
+		assertEquals(16 , planner.getPlan().size());
 	}
 
 }
