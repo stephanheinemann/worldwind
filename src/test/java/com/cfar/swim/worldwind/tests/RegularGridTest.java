@@ -58,6 +58,7 @@ import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
+import com.cfar.swim.worldwind.planning.PositionEstimate;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
 import gov.nasa.worldwind.BasicModel;
@@ -414,7 +415,9 @@ public class RegularGridTest {
 		
 		ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, tsGrid);
 		Path path = planner.plan(origin, destination, ZonedDateTime.now());
-		System.out.println(path);
+		for (PositionEstimate positionEstimate : planner.getPlan()) {
+			System.out.println(positionEstimate.getPosition() + " at " + positionEstimate.getEto());
+		}
 		((RenderableLayer) layer).addRenderable(path);
 		
 		} catch (Exception e) {

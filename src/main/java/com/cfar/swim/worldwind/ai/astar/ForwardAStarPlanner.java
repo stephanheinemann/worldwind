@@ -130,11 +130,10 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			Set<Position> neighbors = this.getEnvironment().getNeighbors(source.getPosition());
 			for (Position neighbor : neighbors) {
 				PositionEstimate target = new PositionEstimate(neighbor);
-				// TODO: debug, it seems closed never contains target?
 				if (!closed.contains(target)) {
 					if (open.contains(target)) {
-						PositionEstimate o = open.stream().filter(s -> s.equals(target)).findFirst().get();
-						this.updatePositionEstimate(source, o);
+						PositionEstimate visited = open.stream().filter(s -> s.equals(target)).findFirst().get();
+						this.updatePositionEstimate(source, visited);
 					} else {
 						this.updatePositionEstimate(source, target);
 					}

@@ -95,6 +95,11 @@ public class PositionEstimate implements Comparable<PositionEstimate> {
 	
 		return equals;
 	}
+	
+	@Override
+	public int hashCode() {
+		return this.position.hashCode();
+	}
 
 	public ZonedDateTime getEto() {
 		return eto;
