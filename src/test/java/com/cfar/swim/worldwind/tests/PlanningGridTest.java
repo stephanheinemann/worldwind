@@ -92,11 +92,11 @@ public class PlanningGridTest {
         Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1);
         PlanningGrid planningGrid = new PlanningGrid(cube, 10, 5, 5);
         planningGrid.setGlobe(new Earth());
-        assertEquals(0d, planningGrid.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
+        assertEquals(1d, planningGrid.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
         
         PlanningGrid child = planningGrid.getChild(0, 0, 0);
-        assertEquals(0d, child.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
-        assertEquals(0d, child.getStepCost(
+        assertEquals(1d, child.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
+        assertEquals(1d, child.getStepCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
@@ -110,7 +110,7 @@ public class PlanningGridTest {
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
-        assertEquals(50d, child.getStepCost(
+        assertEquals(51d, child.getStepCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
@@ -125,7 +125,7 @@ public class PlanningGridTest {
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.EFFECTIVENESS), PrecisionDouble.EPSILON);
-        assertEquals(80d, child.getStepCost(
+        assertEquals(81d, child.getStepCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),

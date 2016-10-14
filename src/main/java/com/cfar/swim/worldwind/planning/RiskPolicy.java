@@ -46,4 +46,8 @@ public enum RiskPolicy {
 		return this.thresholdCost;
 	}
 	
+	public boolean satisfies(double cost) {
+		return this.thresholdCost >= cost;
+	}
+	
 }

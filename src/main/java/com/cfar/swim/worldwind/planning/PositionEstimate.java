@@ -31,19 +31,21 @@ package com.cfar.swim.worldwind.planning;
 
 import java.time.ZonedDateTime;
 
+import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
+
 import gov.nasa.worldwind.geom.Position;
 
 public class PositionEstimate implements Comparable<PositionEstimate> {
 	
 	private PositionEstimate parent = null;
-	private Position position = null;
+	private PrecisionPosition position = null;
 	private double g = Double.POSITIVE_INFINITY;
 	private double h = Double.POSITIVE_INFINITY;
 	// (position, estimated cost tuple: (c1, c2)) for more advanced versions
 	private ZonedDateTime eto = null;
 	
 	public PositionEstimate(Position position) {
-		this.position = position;
+		this.position = new PrecisionPosition(position);
 	}
 
 	public double getG() {
@@ -75,7 +77,7 @@ public class PositionEstimate implements Comparable<PositionEstimate> {
 	}
 
 	public Position getPosition() {
-		return position;
+		return this.position.getOriginal();
 	}
 
 	@Override
@@ -88,7 +90,7 @@ public class PositionEstimate implements Comparable<PositionEstimate> {
 		boolean equals = false;
 		
 		if (o instanceof PositionEstimate) {
-			equals = this.position.equals(((PositionEstimate) o).getPosition());
+			equals = this.position.equals(((PositionEstimate) o).position);
 		}
 	
 		return equals;

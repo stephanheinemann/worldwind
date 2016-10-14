@@ -44,6 +44,7 @@ import javax.xml.bind.JAXBException;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
@@ -73,6 +74,7 @@ import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
+import gov.nasa.worldwind.render.Path;
 import javafx.embed.swing.JFXPanel;
 import javafx.scene.Group;
 import javafx.scene.Scene;
@@ -402,6 +404,19 @@ public class RegularGridTest {
         ((RenderableLayer) layer).addRenderable(lcubicGrid);
         */
         
+		Position origin = tsGrid.getCornerPositions()[0];
+		Position destination = tsGrid.getCornerPositions()[6];
+		
+		Sphere originSphere = new Sphere(tsGrid.getCorners()[0], 50000);
+		Sphere destinationSphere = new Sphere(tsGrid.getCorners()[6], 50000);
+		((RenderableLayer) layer).addRenderable(originSphere);
+		((RenderableLayer) layer).addRenderable(destinationSphere);
+		
+		ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, tsGrid);
+		Path path = planner.plan(origin, destination, ZonedDateTime.now());
+		System.out.println(path);
+		((RenderableLayer) layer).addRenderable(path);
+		
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

@@ -52,17 +52,22 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	private Set<PositionEstimate> closed = new HashSet<PositionEstimate>();
 	private PositionEstimate start = null;
 	private PositionEstimate goal = null;
-	private ZonedDateTime etd = null;
+	private ArrayDeque<PositionEstimate> plan = new ArrayDeque<PositionEstimate>();
 	
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 	}
 	
-	protected Path getPath(PositionEstimate positionEstimate) {
+	public ArrayDeque<PositionEstimate> getPlan() {
+		return plan;
+	}
+	
+	protected Path computePath(PositionEstimate positionEstimate) {
 		ArrayDeque<Position> positions = new ArrayDeque<Position>(); 
 		
 		while ((null != positionEstimate) && (positionEstimate != positionEstimate.getParent())) {
 			positions.addFirst(positionEstimate.getPosition());
+			plan.addFirst(positionEstimate);
 			positionEstimate = positionEstimate.getParent();
 		}
 		
@@ -76,6 +81,10 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			if (!this.open.contains(target)) {
 				target.setH(this.getEnvironment().getNormalizedDistance(
 						target.getPosition(), this.goal.getPosition()));
+				this.open.add(target);
+			} else {
+				// priority queue requires re-insertion of modified object
+				this.open.remove(target);
 				this.open.add(target);
 			}
 		}
@@ -110,17 +119,18 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.goal = new PositionEstimate(destination);
 		this.goal.setH(0);
 		
-		this.etd = etd;
+		this.open.add(this.start);
 		
 		while (null != this.open.peek()) {
 			PositionEstimate source = this.open.poll();
 			if (source.equals(this.goal)) {
-				return this.getPath(source);
+				return this.computePath(source);
 			}
 			this.closed.add(source);
 			Set<Position> neighbors = this.getEnvironment().getNeighbors(source.getPosition());
 			for (Position neighbor : neighbors) {
 				PositionEstimate target = new PositionEstimate(neighbor);
+				// TODO: debug, it seems closed never contains target?
 				if (!closed.contains(target)) {
 					if (open.contains(target)) {
 						PositionEstimate o = open.stream().filter(s -> s.equals(target)).findFirst().get();

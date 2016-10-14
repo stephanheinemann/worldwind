@@ -151,6 +151,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	public Position[] getCornerPositions() {
 		Position[] cornerPositions = null;
 		
+		// TODO: throw IllegalStateException instead
 		if (null != this.globe) {
 			cornerPositions = new Position[8];
 			Vec4[] corners = this.getCorners();
@@ -361,7 +362,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@Override
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = 0d;
+		double cost = 1d; // simple cost of normalized distance
 		
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
@@ -899,7 +900,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 				// add all (weighted) cost of the cell
 				double cellCost = stepCell.getCost(start, end);
 				// boost cell cost if local risk is not acceptable
-				if (cellCost <= riskPolicy.getThreshholdCost()) {
+				if (riskPolicy.satisfies(cellCost - 1)) {
 					costs.add(distance * cellCost);
 				} else {
 					costs.add(Double.POSITIVE_INFINITY);
@@ -959,14 +960,14 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			double neighborCost = neighbor.getCost(start, end);
 			
 			// boost cell cost if local risk is not acceptable
-			if (cellCost <= riskPolicy.getThreshholdCost()) {
+			if (riskPolicy.satisfies(cellCost - 1)) {
 				costs.add(distance * cellCost);
 			} else {
 				costs.add(Double.POSITIVE_INFINITY);
 			}
 			
 			// boost neighbor cost if local risk is not acceptable
-			if (neighborCost <= riskPolicy.getThreshholdCost()) {
+			if (riskPolicy.satisfies(neighborCost -1)) {
 				costs.add(distance * neighborCost);
 			} else {
 				costs.add(Double.POSITIVE_INFINITY);
