@@ -68,7 +68,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	protected Path computePath(PositionEstimate positionEstimate) {
 		ArrayDeque<Position> positions = new ArrayDeque<Position>(); 
 		
-		while ((null != positionEstimate) && (positionEstimate != positionEstimate.getParent())) {
+		while ((null != positionEstimate)) {
 			positions.addFirst(positionEstimate.getPosition());
 			plan.addFirst(positionEstimate);
 			positionEstimate = positionEstimate.getParent();
@@ -120,7 +120,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.start = new PositionEstimate(origin);
 		this.start.setG(0);
 		this.start.setH(this.getEnvironment().getNormalizedDistance(origin, destination));
-		this.start.setParent(this.start);
 		this.start.setEto(etd);
 		
 		this.goal = new PositionEstimate(destination);
@@ -160,7 +159,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		Iterator<Position> waypointIterator = waypoints.iterator();
 		
 		while (waypointIterator.hasNext()) {
-			positions.remove(currentOrigin);
 			Position currentDestination = waypointIterator.next();
 			
 			if (!(new PrecisionPosition(currentOrigin).equals(new PrecisionPosition(currentDestination)))) {
@@ -168,8 +166,10 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				
 				ArrayDeque<PositionEstimate> legPlan = this.getPlan();
 				if ((!plan.isEmpty()) && (!legPlan.isEmpty())) {
+					legPlan.poll();
 					legPlan.getFirst().setParent(plan.getLast());
 				}
+				
 				plan.addAll(legPlan);
 				PositionEstimate positionEstimate = null;
 				

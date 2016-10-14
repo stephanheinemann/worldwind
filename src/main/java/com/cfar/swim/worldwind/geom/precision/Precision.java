@@ -39,12 +39,12 @@ public interface Precision {
 	/**
 	 * the default precision used to compensate for numerical inaccuracies
 	 */
-	public static final int PRECISION = 7;
+	public static final int PRECISION = 5;
 	
 	/**
 	 * the default epsilon used to compensate for numerical inaccuracies
 	 */
-	public static final double EPSILON = 1E-7;
+	public static final double EPSILON = 1E-5;
 	
 	/**
 	 * Gets the precision of this numerical object.
