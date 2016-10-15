@@ -40,20 +40,84 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 
+/**
+ * Describes a motion planner for an aircraft in an environment using cost
+ * and risk policies.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public interface Planner {
 
+	/**
+	 * Gets the aircraft of this planner.
+	 * 
+	 * @return the aircraft of this planner
+	 */
 	public Aircraft getAircraft();
+	
+	/**
+	 * Gets the environment of this planner.
+	 * 
+	 * @return the environment of this planner
+	 */
 	public Environment getEnvironment();
 	
+	/**
+	 * Gets the cost policy of this planner.
+	 * 
+	 * @return the cost policy of this planner
+	 */
 	public CostPolicy getCostPolicy();
+	
+	/**
+	 * Sets the cost policy of this planner.
+	 * 
+	 * @param costPolicy the cost policy of this planner
+	 */
 	public void setCostPolicy(CostPolicy costPolicy);
 	
+	/**
+	 * Gets the risk policy of this planner.
+	 * 
+	 * @return the risk policy of this planner
+	 */
 	public RiskPolicy getRiskPolicy();
+	
+	/**
+	 * Sets the risk policy of this planner.
+	 * 
+	 * @param riskPolicy the risk policy of this planner
+	 */
 	public void setRiskPolicy(RiskPolicy riskPolicy);
 	
+	/**
+	 * Plans a path from an origin to a destination at a specified estimated
+	 * time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned path
+	 */
 	public Path plan(Position origin, Position destination, ZonedDateTime etd);
+	
+	/**
+	 * Plans a path from an origin to a destination along waypoints at a
+	 * specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param waypoints the waypoints in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned path
+	 */
 	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
-
+	
+	// TODO: plan returns Trajectory extends Path, aggregates Waypoint extends Position
+	
 	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions
 	// TODO: include capabilities (e.g., velocities, rates) and obtain cost at time

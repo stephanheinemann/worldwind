@@ -46,11 +46,16 @@ public class A320 extends FixedWingCivilAircraft {
 	public static final double MAX_RATE_OF_DESCENT_SPEED = 281d; // m/s = 547 KTAS
 	public static final double MAX_SPEED = 281d; // m/s = 547 KTAS
 	
-	public static final double MAX_RATE_OF_CLIMB = 12d; // m/s = 2400 ft/min
-	public static final double CRUISE_RATE_OF_CLIMB = 8d; // m/s = 1500 ft/min
-	public static final double CRUISE_RATE_OF_DESCENT = 5d; // m/s = 1000 ft/min
-	public static final double APPROACH_RATE_OF_DESCENT = 9d; // m/s = 1800 ft/min
-	public static final double MAX_RATE_OF_DESCENT = 18d; // m/s = 3500 ft/min
+	//public static final double MAX_RATE_OF_CLIMB = 12d; // m/s = 2400 ft/min
+	public static final double MAX_RATE_OF_CLIMB = 139d;
+	//public static final double CRUISE_RATE_OF_CLIMB = 8d; // m/s = 1500 ft/min
+	public static final double CRUISE_RATE_OF_CLIMB = 257d;
+	//public static final double CRUISE_RATE_OF_DESCENT = 5d; // m/s = 1000 ft/min
+	public static final double CRUISE_RATE_OF_DESCENT = 257d;
+	//public static final double APPROACH_RATE_OF_DESCENT = 9d; // m/s = 1800 ft/min
+	public static final double APPROACH_RATE_OF_DESCENT = 113d;
+	//public static final double MAX_RATE_OF_DESCENT = 18d; // m/s = 3500 ft/min
+	public static final double MAX_RATE_OF_DESCENT = 281d;
 	public static final Angle MAX_ANGLE_OF_CLIMB = Angle.fromDegrees(15d);
 	
 	public A320(Position position, double radius, CombatIdentification cid) {

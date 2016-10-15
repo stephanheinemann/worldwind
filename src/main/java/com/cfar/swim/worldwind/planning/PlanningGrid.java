@@ -726,6 +726,80 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
+	 * Indicates whether or not a position is a waypoint in this planning grid.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is a waypoint in this planning grid,
+	 *         false otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
+	 * @see Environment#isWaypoint(Position)
+	 * @see RegularGrid#isWayoint(Vec4)
+	 */
+	@Override
+	public boolean isWaypoint(Position position) {
+		if (null != this.globe) {
+			return super.isWayoint(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
+	/**
+	 * Gets the adjacent waypoints of a position in this planning grid.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the adjacent waypoints of the position in this
+	 *         planning grid, or the waypoint position itself
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
+	 * @see Environment#getAdjacentWaypoints(Position)
+	 * @see RegularGrid#getAdjacentWaypoints(Vec4)
+	 */
+	@Override
+	public Set<Position> getAdjacentWaypoints(Position position) {
+		if (null != this.globe) {
+			Set<Vec4> waypoints = super.getAdjacentWaypoints(this.globe.computePointFromPosition(position));
+			return waypoints
+					.stream()
+					.map(this.globe::computePositionFromPoint)
+					.collect(Collectors.toSet());
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
+	/**
+	 * Indicates whether or not a position is adjacent to a waypoint in this
+	 * planning grid.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param waypoint the waypoint in globe coordinates
+	 * 
+	 * @return true if the position is adjacent to the waypoint in this
+	 *         planning grid, false otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
+	 * @see Environment#isAdjacentWaypoint(Position, Position)
+	 * @see RegularGrid#isAdjacentWaypoint(Vec4, Vec4)
+	 */
+	@Override
+	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
+		if (null != this.globe) {
+			return super.isAdjacentWaypoint(
+					this.globe.computePointFromPosition(position),
+					this.globe.computePointFromPosition(waypoint));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
+	/**
 	 * Gets the neighbors of this planning grid. A full recursive search is
 	 * performed considering only non-parent neighbors.
 	 * 
@@ -815,6 +889,9 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @param neighbor the potential neighbor of the position
 	 * 
 	 * @return true if the two positions are neighbors, false otherwise
+	 * 
+	 * @see Environment#areNeighbors(Position, Position)
+	 * @see RegularGrid#areNeighbors(Vec4, Vec4)
 	 */
 	@Override
 	public boolean areNeighbors(Position position, Position neighbor) {
@@ -833,17 +910,23 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return the distance between the two positions in this planning grid
 	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
 	 * @see Environment#getDistance(Position, Position)
 	 */
 	@Override
 	public double getDistance(Position position1, Position position2) {
-		ArrayList<Position> positions = new ArrayList<Position>();
-		positions.add(position1);
-		positions.add(position2);
-		LengthMeasurer measurer = new LengthMeasurer(positions);
-		measurer.setPathType(Polyline.LINEAR);
-		measurer.setFollowTerrain(false);
-		return measurer.getLength(this.globe);
+		if (null != this.globe) {
+			ArrayList<Position> positions = new ArrayList<Position>();
+			positions.add(position1);
+			positions.add(position2);
+			LengthMeasurer measurer = new LengthMeasurer(positions);
+			measurer.setPathType(Polyline.LINEAR);
+			measurer.setFollowTerrain(false);
+			return measurer.getLength(this.globe);
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
 	}
 	
 	/**
@@ -883,7 +966,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		double stepCost = Double.POSITIVE_INFINITY;
 		
 		// TODO: not very efficient implementation
-		if (this.areNeighbors(position, neighbor)) {
+		// TODO: this.areAdjacent in any directions
+		//if (this.areNeighbors(position, neighbor)) {
 			// find shared adjacent cells
 			Set<? extends PlanningGrid> stepCells = this.lookupCells(position);
 			stepCells.retainAll(this.lookupCells(neighbor));
@@ -920,7 +1004,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 				break;
 			}
 			
-		}
+		//}
 		
 		return stepCost;
 	}

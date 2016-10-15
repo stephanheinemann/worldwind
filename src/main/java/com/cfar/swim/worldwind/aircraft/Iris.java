@@ -40,7 +40,7 @@ public class Iris extends Quadcopter {
 	public static final double MAX_RATE_OF_CLIMB_SPEED = 10d;
 	public static final double CRUISE_CLIMB_SPEED = 15d;
 	public static final double CRUISE_SPEED = 15d;
-	public static final double CRUISE_DESCENT_SPEED = 15;
+	public static final double CRUISE_DESCENT_SPEED = 15d;
 	public static final double APPROACH_SPEED = 5d;
 	public static final double MAX_GLIDE_SPEED = 0d;
 	public static final double MAX_RATE_OF_DESCENT_SPEED = 10d;

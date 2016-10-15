@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -49,12 +50,30 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
 
+/**
+ * Realizes a basic forward A* planner that plans a trajectory of an aircraft
+ * in an environment considering a local cost and risk policy.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class ForwardAStarPlanner extends AbstractPlanner {
 
+	// TODO: plan Trajectory extends Path, aggregates Waypoint
+	// TODO: PositionEstimate -> Waypoint extends Position
+	
+	/** the priority queue of expandable waypoints */
 	private PriorityQueue<PositionEstimate> open = new PriorityQueue<PositionEstimate>();
+	
+	/** the set of expanded waypoints */
 	private Set<PositionEstimate> closed = new HashSet<PositionEstimate>();
+	
+	/** the start waypoint */
 	private PositionEstimate start = null;
+	
+	/** the goal waypoint */
 	private PositionEstimate goal = null;
+	
 	private ArrayDeque<PositionEstimate> plan = new ArrayDeque<PositionEstimate>();
 	
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
@@ -62,7 +81,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	public ArrayDeque<PositionEstimate> getPlan() {
-		return plan;
+		return plan; // TODO: remove, return Trajectory instead
 	}
 	
 	protected Path computePath(PositionEstimate positionEstimate) {
@@ -124,6 +143,12 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 		this.goal = new PositionEstimate(destination);
 		this.goal.setH(0);
+		// if a goal is not a waypoint in the environment, then its
+		// goal region has to be determined for the final expansion
+		Set<PrecisionPosition> goalRegion = this.getEnvironment().getAdjacentWaypoints(destination)
+				.stream()
+				.map(PrecisionPosition::new)
+				.collect(Collectors.toSet());
 		
 		this.open.add(this.start);
 		
@@ -133,7 +158,19 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				return this.computePath(source);
 			}
 			this.closed.add(source);
+			
 			Set<Position> neighbors = this.getEnvironment().getNeighbors(source.getPosition());
+			// if a start has no neighbors, then it is not a waypoint in the
+			// environment and its adjacent waypoints have to be determined for
+			// initial expansion
+			if (neighbors.isEmpty()) {
+				neighbors = this.getEnvironment().getAdjacentWaypoints(source.getPosition());
+			}
+			// expand a goal region position towards the goal
+			if (goalRegion.contains(new PrecisionPosition(source.getPosition()))) {
+				neighbors.add(destination);
+			}
+			
 			for (Position neighbor : neighbors) {
 				PositionEstimate target = new PositionEstimate(neighbor);
 				if (!closed.contains(target)) {

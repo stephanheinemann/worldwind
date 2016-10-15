@@ -182,4 +182,22 @@ public class PlanningRoadmap implements Environment {
 		return 0;
 	}
 
+	@Override
+	public boolean isWaypoint(Position position) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Set<Position> getAdjacentWaypoints(Position position) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

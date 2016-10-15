@@ -80,6 +80,7 @@ import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
+import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Path;
 import javafx.embed.swing.JFXPanel;
@@ -446,6 +447,26 @@ public class RegularGridTest {
 		path.getAttributes().setOutlineWidth(5d);
 		path.getAttributes().setOutlineOpacity(0.5d);
 		((RenderableLayer) layer).addRenderable(path);
+		
+		Position paris = new Position(Angle.fromDegrees(48.864716d), Angle.fromDegrees(2.349014d), 10000);
+		Position goal = tsGrid.getChild(1, 3, 1).getCenterPosition();
+		A320 a320 = new A320(paris, 5000, CombatIdentification.FRIEND);
+		ZonedDateTime start = ZonedDateTime.of(2012, 8, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
+		ForwardAStarPlanner planner2 = new ForwardAStarPlanner(a320, tsGrid);
+		Path path2 = planner2.plan(paris, goal, start);
+		path2.setVisible(true);
+		path2.setShowPositions(true);
+		path2.setDrawVerticals(true);
+		path2.setAttributes(new BasicShapeAttributes());
+		path2.getAttributes().setOutlineMaterial(Material.ORANGE);
+		path2.getAttributes().setOutlineWidth(5d);
+		path2.getAttributes().setOutlineOpacity(0.5d);
+		((RenderableLayer) layer).addRenderable(path2);
+		
+		for (PositionEstimate p : planner2.getPlan()) {
+			GlobeAnnotation ga = new GlobeAnnotation(p.getEto().toString() , p.getPosition());
+			((RenderableLayer) layer).addRenderable(ga);
+		}
 		
 		} catch (Exception e) {
 			e.printStackTrace();

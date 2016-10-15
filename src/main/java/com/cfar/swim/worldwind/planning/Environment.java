@@ -68,6 +68,39 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	// TODO: create a new AirDataInterval class which aggregates AirData class
 	// TODO: AirData, Surface/GroundData extends EnvironmentData
 	// TODO: environment would have to store air/ground property intervals
+	// TODO: data could be made available via WXXM and IWXXM
+	
+	/**
+	 * Indicates whether or not a position is a waypoint in this environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is a waypoint in this environment,
+	 *         false otherwise
+	 */
+	public boolean isWaypoint(Position position);
+	
+	/**
+	 * Gets the adjacent waypoints of a position in this environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the adjacent waypoints of the position in this
+	 *         environment, or the waypoint position itself
+	 */
+	public Set<Position> getAdjacentWaypoints(Position position);
+	
+	/**
+	 * Indicates whether or not a position is adjacent to a waypoint in this
+	 * environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param waypoint the waypoint in globe coordinates
+	 * 
+	 * @return true if the position is adjacent to the waypoint in this
+	 *         environment, false otherwise
+	 */
+	public boolean isAdjacentWaypoint(Position position, Position waypoint);
 	
 	/**
 	 * Gets the center position of this environment in globe coordinates.

@@ -36,7 +36,16 @@ package com.cfar.swim.worldwind.planning;
  *
  */
 public enum CostPolicy {
+	/**
+	 * the minimum of all occurring costs
+	 */
 	MINIMUM,
+	/**
+	 * the maximum of all occurring costs
+	 */
 	MAXIMUM,
+	/**
+	 * the average of all occurring costs
+	 */
 	AVERAGE
 }

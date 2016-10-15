@@ -29,23 +29,63 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+/**
+ * Enumerates the planning risk policies for taking local risk in an
+ * environment featuring risk.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public enum RiskPolicy {
+	/**
+	 * Avoids all local risk
+	 */
 	AVOIDANCE(0d),
+	/**
+	 * Accepts a maximum of 25% local risk
+	 */
 	PROBE(25d),
+	/**
+	 * Accepts a maximum of 50% local risk
+	 */
 	SAFETY(50d),
+	/**
+	 * Accepts a maximum of 75% local risk
+	 */
 	EFFECTIVENESS(75d),
+	/**
+	 * Ignores all local risk
+	 */
 	IGNORANCE(100d);
 	
+	/** the threshold cost of this risk policy */
 	private double thresholdCost = 0d;
 	
+	/**
+	 * Constructs a new risk policy with a specified threshold cost.
+	 * 
+	 * @param thresholdCost the threshold cost of this risk policy
+	 */
 	private RiskPolicy(double thresholdCost) {
 		this.thresholdCost = thresholdCost;
 	}
 	
+	/**
+	 * Gets the threshold cost of this risk policy.
+	 * 
+	 * @return the threshold cost of this risk policy
+	 */
 	public double getThreshholdCost() {
 		return this.thresholdCost;
 	}
 	
+	/**
+	 * Indicates whether or not a cost satisfies this risk policy.
+	 * 
+	 * @param cost the cost
+	 * 
+	 * @return true if the cost satisfies the risk policy, false otherwise
+	 */
 	public boolean satisfies(double cost) {
 		return this.thresholdCost >= cost;
 	}

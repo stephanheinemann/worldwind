@@ -38,8 +38,10 @@ import javax.media.opengl.GL2;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
+import com.cfar.swim.worldwind.planning.Environment;
 
 import gov.nasa.worldwind.geom.Plane;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.util.OGLStackHandler;
@@ -529,6 +531,100 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
+	 * Indicates whether or not a point is a waypoint in this regular grid.
+	 * A full recursive search is performed considering only non-parent cells.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return true if the point is a waypoint in this regular grid,
+	 *         false otherwise
+	 * 
+	 * @see RegularGrid#isWayPoint(Vec4, int)
+	 */
+	public boolean isWayoint(Vec4 point) {
+		return this.isWayPoint(point, -1);
+	}
+	
+	/**
+	 * Indicates whether or not a point is a waypoint in this regular grid
+	 * taking a specified hierarchical depth into account. A zero depth does
+	 * not consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return true if the point is a waypoint in this regular grid taking the
+	 *         hierarchical depth into account, false otherwise
+	 */
+	public boolean isWayPoint(Vec4 point, int depth) {
+		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
+		return (0 < cells.stream().filter(c -> c.isCorner(point)).count());
+	}
+	
+	/**
+	 * Gets the adjacent waypoints of a point in this regular grid. A full
+	 * recursive search is performed considering only non-parent cells.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return the adjacent waypoints of the point in this
+	 *         regular grid, or the waypoint itself
+	 * 
+	 * @see RegularGrid#getAdjacentWaypoints(Vec4, int)
+	 */
+	public Set<Vec4> getAdjacentWaypoints(Vec4 point) {
+		return this.getAdjacentWaypoints(point, -1);
+	}
+	
+	/**
+	 * Gets the adjacent waypoints of a point in this regular grid taking a
+	 * specified hierarchical depth into account. A zero depth does not
+	 * consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return the adjacent waypoints of the point in this regular grid taking
+	 *         the hierarchical depth into account, or the waypoint itself
+	 */
+	public Set<Vec4> getAdjacentWaypoints(Vec4 point, int depth) {
+		Set<Vec4> adjacentWaypoints = new HashSet<Vec4>();
+		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
+		Set<? extends RegularGrid> waypointCells = cells.stream()
+				.filter(c -> c.isCorner(point)).collect(Collectors.toSet());
+
+		if (waypointCells.isEmpty()) {
+			for (RegularGrid cell : cells) {
+				adjacentWaypoints.addAll(Arrays.asList(cell.getCorners()));
+			}
+		} else {
+			adjacentWaypoints.add(point);
+		}
+		
+		return adjacentWaypoints;
+	}
+	
+	/**
+	 * Indicates whether or not a point is adjacent to a waypoint in this
+	 * regular grid.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param waypoint the waypoint in world model coordinates
+	 * 
+	 * @return true if the point is adjacent to the waypoint in this
+	 *         regular grid, false otherwise
+	 */
+	public boolean isAdjacentWaypoint(Vec4 point, Vec4 waypoint) {
+		return this.getAdjacentWaypoints(point)
+				.stream()
+				.map(PrecisionVec4::new)
+				.collect(Collectors.toSet())
+				.contains(new PrecisionVec4(waypoint));
+	}
+	
+	/**
 	 * Gets the neighbors of this regular grid. A full recursive
 	 * search is performed considering only non-parent neighbors.
 	 * 
@@ -636,16 +732,19 @@ public class RegularGrid extends Box {
 		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
 		
 		for (RegularGrid cell : cells) {
-			Vec4[] neighborCorners;
+			Vec4[] neighborCorners = {};
 			
 			if (cell.isCorner(point)) {
 				// point is a corner of the cell
 				neighborCorners = cell.getNeighborCorners(point);
-			} else {
+			}
+			/*
+			else {
 				// point within cell, on edge or plane (consider all corners as neighbors)
 				// TODO: possibly only consider adjacent corners of edges and planes
 				neighborCorners = cell.getCorners();
 			}
+			*/
 			
 			// reduce precision for proper set addition (seems to be good enough)
 			//neighbors.addAll(Arrays.asList(neighborCorners).stream().map(PrecisionVec4::new).collect(Collectors.toSet()));
