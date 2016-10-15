@@ -36,141 +36,141 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes an estimate for a planned position.
+ * Realizes a waypoint of a trajectory featuring estimates for costs and time.
  * 
  * @author Stephan Heinemann
  *
  */
-public class PositionEstimate implements Comparable<PositionEstimate> {
+public class Waypoint extends Position implements Comparable<Waypoint> {
 	
-	// TODO: PositionEstimate -> Waypoint (4D) extends Position (3D)
-	// TODO: Trajectory (4D) extends Path (3D) aggregates Waypoint
+	// TODO: possibly extend Waypoint with PrecisionWaypoint
 	
-	/** the parent position estimate of this position estimate */
-	private PositionEstimate parent = null;
+	/** the parent waypoint of this waypoint in a trajectory */
+	private Waypoint parent = null;
 	
-	/** the position of this position estimate */
+	/** the precision position of this waypoint */
 	private PrecisionPosition position = null;
 	
-	/** the estimated current cost of this position estimate */
+	/** the estimated current cost of this waypoint */
 	private double g = Double.POSITIVE_INFINITY;
 	
 	// TODO: (position, estimated cost tuple: (g1, g2)) for more advanced versions
 	
-	/** the estimated remaining cost of this position estimate */
+	/** the estimated remaining cost of this waypoint */
 	private double h = Double.POSITIVE_INFINITY;
 	
-	/** the estimated time over the position of this position estimate */
+	/** the estimated time at this waypoint */
 	private ZonedDateTime eto = null;
 	
 	// TODO: include actual time over and correct resulting cruise performance
 	
 	/**
-	 * Constructs a position estimate at a specified position.
+	 * Constructs a waypoint at a specified position.
 	 * 
 	 * @param position the position in globe coordinates
 	 */
-	public PositionEstimate(Position position) {
+	public Waypoint(Position position) {
+		super(position.getLatitude(), position.getLongitude(), position.getElevation());
 		this.position = new PrecisionPosition(position);
 	}
 	
 	/**
-	 * Gets the estimated current cost of this position estimate.
+	 * Gets the estimated current cost of this waypoint.
 	 * 
-	 * @return the estimated current cost of this position estimate
+	 * @return the estimated current cost of this waypoint
 	 */
 	public double getG() {
 		return g;
 	}
 	
 	/**
-	 * Sets the estimated current cost of this position estimate.
+	 * Sets the estimated current cost of this waypoint.
 	 * 
-	 * @param g the estimated current cost of this position estimate
+	 * @param g the estimated current cost of this waypoint
 	 */
 	public void setG(double g) {
 		this.g = g;
 	}
 	
 	/**
-	 * Gets the estimated remaining cost of this position estimate.
+	 * Gets the estimated remaining cost of this waypoint.
 	 * 
-	 * @return the estimated remaining cost of this position estimate
+	 * @return the estimated remaining cost of this waypoint
 	 */
 	public double getH() {
 		return h;
 	}
 	
 	/**
-	 * Sets the estimated remaining cost of this position estimate.
+	 * Sets the estimated remaining cost of this waypoint.
 	 * 
-	 * @param h the estimated remaining cost of this position estimate
+	 * @param h the estimated remaining cost of this waypoint
 	 */
 	public void setH(double h) {
 		this.h = h;
 	}
 	
 	/**
-	 * Gets the estimated total cost of this position estimate.
+	 * Gets the estimated total cost of this waypoint.
 	 * 
-	 * @return the estimated total cost of this position estimate
+	 * @return the estimated total cost of this waypoint
 	 */
 	public double getF() {
 		return this.g + this.h;
 	}
 	
 	/**
-	 * Gets the parent position estimate of this position estimate.
+	 * Gets the parent waypoint of this waypoint.
 	 * 
-	 * @return the parent position estimate of this position estimate
+	 * @return the parent waypoint of this waypoint
 	 */
-	public PositionEstimate getParent() {
+	public Waypoint getParent() {
 		return parent;
 	}
 	
 	/**
-	 * Sets the parent position estimate of this position estimate.
+	 * Sets the parent waypoint of this waypoint.
 	 * 
-	 * @param parent the parent position estimate of this position estimate
+	 * @param parent the parent waypoint of this waypoint
 	 */
-	public void setParent(PositionEstimate parent) {
+	public void setParent(Waypoint parent) {
 		this.parent = parent;
 	}
 	
 	/**
-	 * Gets the position of this position estimate.
+	 * Gets the precision position of this waypoint.
 	 * 
-	 * @return the position of this position estimate
+	 * @return the precision position of this waypoint
 	 */
-	public Position getPosition() {
-		return this.position.getOriginal();
+	public PrecisionPosition getPrecisionPosition() {
+		return this.position;
 	}
 	
 	/**
-	 * Compares this position estimate to another position estimate
-	 * based on their total estimated cost.
+	 * Compares this waypoint to another waypoint based on their total estimated
+	 * cost.
 	 * 
-	 * @param o the other position estimate
+	 * @param o the other waypoint
 	 * 
-	 * @return -1, 0, 1, if this position estimate is less than, equal, or
-	 *         greater, respectively, than the other position estimate based
-	 *         on their total estimated cost
+	 * @return -1, 0, 1, if this waypoint is less than, equal, or greater,
+	 *         respectively, than the other waypoint based on their total
+	 *         estimated cost
 	 * 
 	 * @see Comparable#compareTo(Object)
 	 */
 	@Override
-	public int compareTo(PositionEstimate o) {
+	public int compareTo(Waypoint o) {
 		return new Double(this.getF()).compareTo(o.getF());
 	}
 	
 	/**
-	 * Indicates whether or not this position estimate equals another position
-	 * estimate based on their position.
+	 * Indicates whether or not this waypoint equals another waypoint based on
+	 * their precision position.
 	 * 
-	 * @param o the other position estimate
+	 * @param o the other waypoint
 	 * 
-	 * @return true, if the position of this position estimate equals the
-	 *         position of the other position estimate, false otherwise
+	 * @return true, if the precision position of this waypoint equals the
+	 *         precision position of the other waypoint, false otherwise
 	 * 
 	 * @see Object#equals(Object)
 	 */
@@ -178,17 +178,17 @@ public class PositionEstimate implements Comparable<PositionEstimate> {
 	public boolean equals(Object o) {
 		boolean equals = false;
 		
-		if (o instanceof PositionEstimate) {
-			equals = this.position.equals(((PositionEstimate) o).position);
+		if (o instanceof Waypoint) {
+			equals = this.position.equals(((Waypoint) o).position);
 		}
 	
 		return equals;
 	}
 	
 	/**
-	 * Gets the hash code of this position estimate based on its position.
+	 * Gets the hash code of this waypoint based on its precision position.
 	 * 
-	 * @return the hash code of this position estimate based on its position
+	 * @return the hash code of this waypoint based on its precision position
 	 * 
 	 * @see Object#hashCode()
 	 */
@@ -198,18 +198,18 @@ public class PositionEstimate implements Comparable<PositionEstimate> {
 	}
 	
 	/**
-	 * Gets the estimated time over the position of this position estimate.
+	 * Gets the estimated time at this waypoint.
 	 * 
-	 * @return the estimated time over the position of this position estimate
+	 * @return the estimated time at this waypoint
 	 */
 	public ZonedDateTime getEto() {
 		return eto;
 	}
 	
 	/**
-	 * Sets the estimate time over the position of this position estimate.
+	 * Sets the estimated time at this waypoint.
 	 * 
-	 * @param eto the estimate time over the position of this position estimate
+	 * @param eto the estimated time at this waypoint
 	 */
 	public void setEto(ZonedDateTime eto) {
 		this.eto = eto;

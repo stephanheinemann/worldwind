@@ -62,7 +62,7 @@ import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
-import com.cfar.swim.worldwind.planning.PositionEstimate;
+import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
 import gov.nasa.worldwind.BasicModel;
@@ -430,8 +430,8 @@ public class RegularGridTest {
 		path.getAttributes().setOutlineWidth(5d);
 		path.getAttributes().setOutlineOpacity(0.5d);
 		
-		for (PositionEstimate positionEstimate : planner.getPlan()) {
-			System.out.println(positionEstimate.getPosition() + " at " + positionEstimate.getEto());
+		for (Waypoint positionEstimate : planner.getPlan()) {
+			System.out.println(positionEstimate + " at " + positionEstimate.getEto());
 		}
 		((RenderableLayer) layer).addRenderable(path);
 		
@@ -463,8 +463,8 @@ public class RegularGridTest {
 		path2.getAttributes().setOutlineOpacity(0.5d);
 		((RenderableLayer) layer).addRenderable(path2);
 		
-		for (PositionEstimate p : planner2.getPlan()) {
-			GlobeAnnotation ga = new GlobeAnnotation(p.getEto().toString() , p.getPosition());
+		for (Waypoint p : planner2.getPlan()) {
+			GlobeAnnotation ga = new GlobeAnnotation(p.getEto().toString() , p);
 			((RenderableLayer) layer).addRenderable(ga);
 		}
 		

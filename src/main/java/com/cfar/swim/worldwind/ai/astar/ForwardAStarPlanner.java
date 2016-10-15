@@ -31,7 +31,6 @@ package com.cfar.swim.worldwind.ai.astar;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -44,7 +43,7 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.PositionEstimate;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
@@ -63,46 +62,45 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	// TODO: PositionEstimate -> Waypoint extends Position
 	
 	/** the priority queue of expandable waypoints */
-	private PriorityQueue<PositionEstimate> open = new PriorityQueue<PositionEstimate>();
+	private PriorityQueue<Waypoint> open = new PriorityQueue<Waypoint>();
 	
 	/** the set of expanded waypoints */
-	private Set<PositionEstimate> closed = new HashSet<PositionEstimate>();
+	private Set<Waypoint> closed = new HashSet<Waypoint>();
 	
 	/** the start waypoint */
-	private PositionEstimate start = null;
+	private Waypoint start = null;
 	
 	/** the goal waypoint */
-	private PositionEstimate goal = null;
+	private Waypoint goal = null;
 	
-	private ArrayDeque<PositionEstimate> plan = new ArrayDeque<PositionEstimate>();
+	private ArrayDeque<Waypoint> plan = new ArrayDeque<Waypoint>();
 	
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 	}
 	
-	public ArrayDeque<PositionEstimate> getPlan() {
-		return plan; // TODO: remove, return Trajectory instead
+	public ArrayDeque<Waypoint> getPlan() {
+		return this.plan; // TODO: put into Planner Collection<Waypoint> getPlan()?
 	}
 	
-	protected Path computePath(PositionEstimate positionEstimate) {
-		ArrayDeque<Position> positions = new ArrayDeque<Position>(); 
+	protected Path computeTrajectory(Waypoint waypoint) {
+		ArrayDeque<Waypoint> waypoints = new ArrayDeque<Waypoint>();
 		
-		while ((null != positionEstimate)) {
-			positions.addFirst(positionEstimate.getPosition());
-			plan.addFirst(positionEstimate);
-			positionEstimate = positionEstimate.getParent();
+		while ((null != waypoint)) {
+			this.plan.addFirst(waypoint);
+			waypoints.addFirst(waypoint);
+			waypoint = waypoint.getParent();
 		}
 		
-		return new Path(positions);
+		return new Path(waypoints);
 	}
 	
-	protected void updatePositionEstimate(PositionEstimate source, PositionEstimate target) {
+	protected void updateWaypoint(Waypoint source, Waypoint target) {
 		double gOld = target.getG();
 		this.computeCost(source, target);
 		if (target.getG() < gOld) {
 			if (!this.open.contains(target)) {
-				target.setH(this.getEnvironment().getNormalizedDistance(
-						target.getPosition(), this.goal.getPosition()));
+				target.setH(this.getEnvironment().getNormalizedDistance(target, this.goal));
 				this.open.add(target);
 			} else {
 				// priority queue requires re-insertion of modified object
@@ -112,14 +110,14 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		}
 	}
 	
-	protected void computeCost(PositionEstimate source, PositionEstimate target) {
-		Path leg = new Path(source.getPosition(), target.getPosition());
+	protected void computeCost(Waypoint source, Waypoint target) {
+		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
 		double cost = this.getEnvironment().getStepCost(
-				source.getPosition(), target.getPosition(),
+				source, target,
 				source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy());
 		
@@ -136,12 +134,12 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.closed.clear();
 		this.plan.clear();
 		
-		this.start = new PositionEstimate(origin);
+		this.start = new Waypoint(origin);
 		this.start.setG(0);
 		this.start.setH(this.getEnvironment().getNormalizedDistance(origin, destination));
 		this.start.setEto(etd);
 		
-		this.goal = new PositionEstimate(destination);
+		this.goal = new Waypoint(destination);
 		this.goal.setH(0);
 		// if a goal is not a waypoint in the environment, then its
 		// goal region has to be determined for the final expansion
@@ -153,32 +151,32 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.open.add(this.start);
 		
 		while (null != this.open.peek()) {
-			PositionEstimate source = this.open.poll();
+			Waypoint source = this.open.poll();
 			if (source.equals(this.goal)) {
-				return this.computePath(source);
+				return this.computeTrajectory(source);
 			}
 			this.closed.add(source);
 			
-			Set<Position> neighbors = this.getEnvironment().getNeighbors(source.getPosition());
+			Set<Position> neighbors = this.getEnvironment().getNeighbors(source);
 			// if a start has no neighbors, then it is not a waypoint in the
 			// environment and its adjacent waypoints have to be determined for
 			// initial expansion
 			if (neighbors.isEmpty()) {
-				neighbors = this.getEnvironment().getAdjacentWaypoints(source.getPosition());
+				neighbors = this.getEnvironment().getAdjacentWaypoints(source);
 			}
 			// expand a goal region position towards the goal
-			if (goalRegion.contains(new PrecisionPosition(source.getPosition()))) {
+			if (goalRegion.contains(source.getPrecisionPosition())) {
 				neighbors.add(destination);
 			}
 			
 			for (Position neighbor : neighbors) {
-				PositionEstimate target = new PositionEstimate(neighbor);
+				Waypoint target = new Waypoint(neighbor);
 				if (!closed.contains(target)) {
 					if (open.contains(target)) {
-						PositionEstimate visited = open.stream().filter(s -> s.equals(target)).findFirst().get();
-						this.updatePositionEstimate(source, visited);
+						Waypoint visited = open.stream().filter(s -> s.equals(target)).findFirst().get();
+						this.updateWaypoint(source, visited);
 					} else {
-						this.updatePositionEstimate(source, target);
+						this.updateWaypoint(source, target);
 					}
 				}
 			}
@@ -189,8 +187,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 
 	@Override
 	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		List<Position> positions = new ArrayList<Position>();
-		ArrayDeque<PositionEstimate> plan = new ArrayDeque<PositionEstimate>();
+		ArrayDeque<Waypoint> plan = new ArrayDeque<Waypoint>();
 		Position currentOrigin = origin;
 		ZonedDateTime currentEtd = etd;
 		Iterator<Position> waypointIterator = waypoints.iterator();
@@ -201,32 +198,28 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			if (!(new PrecisionPosition(currentOrigin).equals(new PrecisionPosition(currentDestination)))) {
 				this.plan(currentOrigin, currentDestination, currentEtd);
 				
-				ArrayDeque<PositionEstimate> legPlan = this.getPlan();
+				ArrayDeque<Waypoint> legPlan = this.plan;
 				if ((!plan.isEmpty()) && (!legPlan.isEmpty())) {
 					legPlan.poll();
 					legPlan.getFirst().setParent(plan.getLast());
 				}
 				
-				plan.addAll(legPlan);
-				PositionEstimate positionEstimate = null;
-				
-				while (null != legPlan.peek()) {
-					positionEstimate = legPlan.poll();
-					positions.add(positionEstimate.getPosition());
-				}
-				
-				if (null != positionEstimate) {
-					currentOrigin = positionEstimate.getPosition();
-					currentEtd = positionEstimate.getEto();
+				if (!legPlan.isEmpty()) {
+					plan.addAll(legPlan);
+					Waypoint last = legPlan.getLast();
+					currentOrigin = last;
+					currentEtd = last.getEto();
 				} else {
-					positions.clear();
-					return new Path(positions);
+					this.plan.clear();
+					return new Path();
 				}
+				
 			}
 		}
 		
-		this.plan = plan;
-		return new Path(positions);
+		this.plan.clear();
+		this.plan.addAll(plan);
+		return new Path(plan);
 	}
 
 }
