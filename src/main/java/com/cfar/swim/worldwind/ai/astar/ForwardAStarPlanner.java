@@ -43,6 +43,7 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -57,9 +58,6 @@ import gov.nasa.worldwind.render.Path;
  *
  */
 public class ForwardAStarPlanner extends AbstractPlanner {
-
-	// TODO: plan Trajectory extends Path, aggregates Waypoint
-	// TODO: PositionEstimate -> Waypoint extends Position
 	
 	/** the priority queue of expandable waypoints */
 	private PriorityQueue<Waypoint> open = new PriorityQueue<Waypoint>();
@@ -83,7 +81,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		return this.plan; // TODO: put into Planner Collection<Waypoint> getPlan()?
 	}
 	
-	protected Path computeTrajectory(Waypoint waypoint) {
+	protected Trajectory computeTrajectory(Waypoint waypoint) {
 		ArrayDeque<Waypoint> waypoints = new ArrayDeque<Waypoint>();
 		
 		while ((null != waypoint)) {
@@ -92,7 +90,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			waypoint = waypoint.getParent();
 		}
 		
-		return new Path(waypoints);
+		return new Trajectory(waypoints);
 	}
 	
 	protected void updateWaypoint(Waypoint source, Waypoint target) {
@@ -129,7 +127,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	@Override
-	public Path plan(Position origin, Position destination, ZonedDateTime etd) {
+	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.open.clear();
 		this.closed.clear();
 		this.plan.clear();
@@ -182,11 +180,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			}
 		}
 		
-		return new Path();
+		return new Trajectory();
 	}
 
 	@Override
-	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		ArrayDeque<Waypoint> plan = new ArrayDeque<Waypoint>();
 		Position currentOrigin = origin;
 		ZonedDateTime currentEtd = etd;
@@ -196,7 +194,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			Position currentDestination = waypointIterator.next();
 			
 			if (!(new PrecisionPosition(currentOrigin).equals(new PrecisionPosition(currentDestination)))) {
-				this.plan(currentOrigin, currentDestination, currentEtd);
+				Path leg = this.plan(currentOrigin, currentDestination, currentEtd);
 				
 				ArrayDeque<Waypoint> legPlan = this.plan;
 				if ((!plan.isEmpty()) && (!legPlan.isEmpty())) {
@@ -211,15 +209,14 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 					currentEtd = last.getEto();
 				} else {
 					this.plan.clear();
-					return new Path();
+					return new Trajectory();
 				}
-				
 			}
 		}
 		
 		this.plan.clear();
 		this.plan.addAll(plan);
-		return new Path(plan);
+		return new Trajectory(plan);
 	}
 
 }
