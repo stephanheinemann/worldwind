@@ -35,6 +35,7 @@ import java.util.List;
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
@@ -57,6 +58,12 @@ public class ThetaStarPlanner extends AbstractPlanner {
 
 	@Override
 	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime eto) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<? extends Waypoint> getPlan() {
 		// TODO Auto-generated method stub
 		return null;
 	}

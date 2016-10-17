@@ -118,6 +118,13 @@ public interface Planner {
 	 */
 	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
 	
+	/**
+	 * Gets a copy of the last computed plan.
+	 * 
+	 * @return a copy of the last computed plan
+	 */
+	public List<? extends Position> getPlan();
+	
 	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions
 	// TODO: include capabilities (e.g., velocities, rates) and obtain cost at time

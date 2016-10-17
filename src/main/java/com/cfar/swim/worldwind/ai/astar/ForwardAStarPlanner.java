@@ -30,11 +30,10 @@
 package com.cfar.swim.worldwind.ai.astar;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -75,7 +74,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	private Waypoint goal = null;
 	
 	/** the last computed path */
-	private ArrayDeque<Waypoint> plan = new ArrayDeque<Waypoint>();
+	private LinkedList<Waypoint> plan = new LinkedList<Waypoint>();
 	
 	/**
 	 * Constructs a basic forward A* planner for a specified aircraft and
@@ -89,12 +88,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Gets the last computed plan.
+	 * Gets a copy of the last computed plan.
 	 * 
-	 * @return the last computed plan
+	 * @return a copy of last computed plan
+	 * 
+	 * @see Planner#getPlan()
 	 */
-	public Deque<Waypoint> getPlan() {
-		return this.plan;
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<? extends Waypoint> getPlan() {
+		return (List<Waypoint>) this.plan.clone();
 	}
 	
 	/**
@@ -105,7 +108,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @return the trajectory of waypoints
 	 */
 	protected Trajectory computeTrajectory(Waypoint waypoint) {
-		ArrayDeque<Waypoint> waypoints = new ArrayDeque<Waypoint>();
+		LinkedList<Waypoint> waypoints = new LinkedList<Waypoint>();
 		
 		while ((null != waypoint)) {
 			this.plan.addFirst(waypoint);
@@ -250,7 +253,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		ArrayDeque<Waypoint> plan = new ArrayDeque<Waypoint>();
+		LinkedList<Waypoint> plan = new LinkedList<Waypoint>();
 		Waypoint currentOrigin = new Waypoint(origin);
 		ZonedDateTime currentEtd = etd;
 		
