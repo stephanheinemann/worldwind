@@ -99,7 +99,8 @@ public interface Planner {
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
 	 * 
-	 * @return the planned path
+	 * @return the planned path from the origin to the destination with the
+	 *         estimated time of departure
 	 */
 	public Path plan(Position origin, Position destination, ZonedDateTime etd);
 	
@@ -112,11 +113,10 @@ public interface Planner {
 	 * @param waypoints the waypoints in globe coordinates
 	 * @param etd the estimated time of departure
 	 * 
-	 * @return the planned path
+	 * @return the planned path from the origin to the destination along the
+	 *         waypoints with the estimated time of departure
 	 */
 	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
-	
-	// TODO: plan returns Trajectory extends Path, aggregates Waypoint extends Position
 	
 	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions

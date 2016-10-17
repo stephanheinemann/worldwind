@@ -76,12 +76,18 @@ public class PlannerTest {
 		List<Position> waypoints = Arrays.asList(planningGrid.getCornerPositions());
 		planner.plan(origin, destination, waypoints, etd);
 		assertEquals(8, waypoints.size());
+		assertEquals(19 , planner.getPlan().size());
+		
+		destination = planningGrid.getCornerPositions()[7];
+		planner.plan(origin, destination, waypoints, etd);
+		assertEquals(8, waypoints.size());
 		assertEquals(17 , planner.getPlan().size());
 		
 		PlanningGrid child = planningGrid.getChild(0, 0, 1);
 		ZonedDateTime start = ZonedDateTime.now().minusYears(1);
 		ZonedDateTime end = ZonedDateTime.now().plusYears(1);
 		child.addCostInterval(new CostInterval("ci1", start, end, 25d));
+		destination = planningGrid.getCornerPositions()[6];
 		path = planner.plan(origin, destination, etd);
 		assertNotNull(path);
 		assertEquals(7, planner.getPlan().size());

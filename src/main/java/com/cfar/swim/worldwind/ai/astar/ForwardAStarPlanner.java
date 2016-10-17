@@ -31,6 +31,8 @@ package com.cfar.swim.worldwind.ai.astar;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -39,6 +41,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
+import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
@@ -71,16 +74,36 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	/** the goal waypoint */
 	private Waypoint goal = null;
 	
+	/** the last computed path */
 	private ArrayDeque<Waypoint> plan = new ArrayDeque<Waypoint>();
 	
+	/**
+	 * Constructs a basic forward A* planner for a specified aircraft and
+	 * environment using default local cost and risk policies.
+	 * 
+	 * @param aircraft the aircraft
+	 * @param environment the environment
+	 */
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 	}
 	
-	public ArrayDeque<Waypoint> getPlan() {
-		return this.plan; // TODO: put into Planner Collection<Waypoint> getPlan()?
+	/**
+	 * Gets the last computed plan.
+	 * 
+	 * @return the last computed plan
+	 */
+	public Deque<Waypoint> getPlan() {
+		return this.plan;
 	}
 	
+	/**
+	 * Computes a trajectory of specified waypoints.
+	 * 
+	 * @param waypoint the waypoints
+	 * 
+	 * @return the trajectory of waypoints
+	 */
 	protected Trajectory computeTrajectory(Waypoint waypoint) {
 		ArrayDeque<Waypoint> waypoints = new ArrayDeque<Waypoint>();
 		
@@ -93,6 +116,13 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		return new Trajectory(waypoints);
 	}
 	
+	/**
+	 * Updates the estimated cost of a specified target waypoint when reached
+	 * via a specified source waypoint.
+	 * 
+	 * @param source the source waypoint in globe coordinates
+	 * @param target the target waypoint in globe coordinates
+	 */
 	protected void updateWaypoint(Waypoint source, Waypoint target) {
 		double gOld = target.getG();
 		this.computeCost(source, target);
@@ -108,6 +138,13 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		}
 	}
 	
+	/**
+	 * Computes the estimated cost of a specified target waypoint when reached
+	 * via a specified source waypoint.
+	 * 
+	 * @param source the source waypoint in globe coordinates
+	 * @param target the target waypoint in globe coordinates
+	 */
 	protected void computeCost(Waypoint source, Waypoint target) {
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
@@ -126,6 +163,19 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		}
 	}
 	
+	/**
+	 * Plans a trajectory from an origin to a destination at a specified
+	 * estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination with
+	 *         the estimated time of departure
+	 * 
+	 * @see Planner#plan(Position, Position, ZonedDateTime)
+	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.open.clear();
@@ -180,36 +230,56 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			}
 		}
 		
+		// if no plan could be found, return an empty trajectory
 		return new Trajectory();
 	}
-
+	
+	/**
+	 * Plans a trajectory from an origin to a destination along waypoints at a
+	 * specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param waypoints the waypoints in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination along
+	 *         the waypoints with the estimated time of departure
+	 * 
+	 * @see Planner#plan(Position, Position, List, ZonedDateTime)
+	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		ArrayDeque<Waypoint> plan = new ArrayDeque<Waypoint>();
-		Position currentOrigin = origin;
+		Waypoint currentOrigin = new Waypoint(origin);
 		ZonedDateTime currentEtd = etd;
-		Iterator<Position> waypointIterator = waypoints.iterator();
 		
-		while (waypointIterator.hasNext()) {
-			Position currentDestination = waypointIterator.next();
+		ArrayList<Waypoint> destinations = waypoints
+				.stream().map(Waypoint::new).collect(Collectors.toCollection(ArrayList::new));
+		destinations.add(new Waypoint(destination));
+		Iterator<Waypoint> destinationsIterator = destinations.iterator();
+		
+		while (destinationsIterator.hasNext()) {
+			Waypoint currentDestination = destinationsIterator.next();
 			
-			if (!(new PrecisionPosition(currentOrigin).equals(new PrecisionPosition(currentDestination)))) {
-				Path leg = this.plan(currentOrigin, currentDestination, currentEtd);
+			if (!(currentOrigin.equals(currentDestination))) {
+				Trajectory part = this.plan(currentOrigin, currentDestination, currentEtd);
 				
-				ArrayDeque<Waypoint> legPlan = this.plan;
-				if ((!plan.isEmpty()) && (!legPlan.isEmpty())) {
-					legPlan.poll();
-					legPlan.getFirst().setParent(plan.getLast());
+				for (Waypoint waypoint : part.getWaypoints()) {
+					if ((!plan.isEmpty()) &&  (null == waypoint.getParent())) {
+						plan.pollLast();
+						waypoint.setParent(plan.peekLast());
+					}
+					plan.add(waypoint);
 				}
 				
-				if (!legPlan.isEmpty()) {
-					plan.addAll(legPlan);
-					Waypoint last = legPlan.getLast();
-					currentOrigin = last;
-					currentEtd = last.getEto();
-				} else {
+				if (plan.peekLast().equals(currentOrigin)) {
+					// if no plan could be found, return an empty trajectory
 					this.plan.clear();
 					return new Trajectory();
+				} else {
+					currentOrigin = plan.peekLast();
+					currentEtd = currentOrigin.getEto();
 				}
 			}
 		}
