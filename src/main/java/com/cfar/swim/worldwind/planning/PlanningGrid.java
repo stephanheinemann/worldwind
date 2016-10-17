@@ -46,7 +46,6 @@ import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.RegularGrid;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
@@ -866,7 +865,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@Override
 	public Set<Position> getNeighbors(Position position) {
-		Set<Position> neighbors = new HashSet<Position>(6);
+		Set<Position> neighbors = new HashSet<Position>();
 		
 		// TODO: coordinate transformations might be too expensive for planning
 		// TODO: planning could be based on Vec4 with a final transformation of the route
@@ -890,16 +889,20 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return true if the two positions are neighbors, false otherwise
 	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
 	 * @see Environment#areNeighbors(Position, Position)
 	 * @see RegularGrid#areNeighbors(Vec4, Vec4)
 	 */
 	@Override
 	public boolean areNeighbors(Position position, Position neighbor) {
-		return this.getNeighbors(position)
-				.stream()
-				.map(PrecisionPosition::new)
-				.collect(Collectors.toSet())
-				.contains(new PrecisionPosition(neighbor));
+		if (null != this.globe) {
+			return super.areNeighbors(
+					this.globe.computePointFromPosition(position),
+					this.globe.computePointFromPosition(neighbor));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
 	}
 
 	/**

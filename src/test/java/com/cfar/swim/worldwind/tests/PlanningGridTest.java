@@ -36,6 +36,7 @@ import java.time.ZonedDateTime;
 import org.junit.Test;
 
 import com.cfar.swim.worldwind.geom.Cube;
+import com.cfar.swim.worldwind.geom.Neighborhood;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
@@ -54,6 +55,7 @@ public class PlanningGridTest {
         // the reference cube has to be offset from the origin for the position computation to work
 		Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1);
         PlanningGrid planningGrid = new PlanningGrid(cube, 10, 5, 5);
+        planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
         planningGrid.setGlobe(new Earth());
         assertEquals(true, planningGrid.hasChildren());
         
@@ -67,6 +69,11 @@ public class PlanningGridTest {
         assertEquals(3, planningGrid.getNeighbors(position).size());
         assertEquals(true, child.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
         
+        planningGrid.setNeighborhood(Neighborhood.VERTEX_26);
+        assertEquals(7, child.getNeighbors(position).size());
+        assertEquals(7, planningGrid.getNeighbors(position).size());
+        
+        planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
         child = planningGrid.getChild(1, 1, 1);
         position = child.getCornerPositions()[0];
         assertEquals(true, child.isCorner(position));
@@ -74,6 +81,11 @@ public class PlanningGridTest {
         assertEquals(3, child.getNeighbors(position).size());
         assertEquals(6, planningGrid.getNeighbors(position).size());
         
+        planningGrid.setNeighborhood(Neighborhood.VERTEX_26);
+        assertEquals(7, child.getNeighbors(position).size());
+        assertEquals(26, planningGrid.getNeighbors(position).size());
+        
+        planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
         position = child.getCenterPosition();
         assertEquals(false, child.isCorner(position));
         assertEquals(true, child.isCenter(position));
@@ -84,7 +96,7 @@ public class PlanningGridTest {
         assertEquals(false, child.isWaypoint(position));
         assertEquals(false, planningGrid.isWaypoint(position));
         assertEquals(true, child.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
-        assertEquals(true, planningGrid.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
+        assertEquals(true, planningGrid.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));   
 	}
 	
 	@Test

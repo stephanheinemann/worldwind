@@ -43,6 +43,7 @@ import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Cube;
+import com.cfar.swim.worldwind.geom.Neighborhood;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
@@ -61,6 +62,7 @@ public class PlannerTest {
         // the reference cube has to be offset from the origin for the position computation to work
 		Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1);
         PlanningGrid planningGrid = new PlanningGrid(cube, 2, 2, 2);
+        planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
         planningGrid.setGlobe(new Earth());
         
         Position origin = planningGrid.getCornerPositions()[0];
@@ -73,6 +75,12 @@ public class PlannerTest {
         assertNotNull(path);
 		assertEquals(7, planner.getPlan().size());
 		
+		planningGrid.setNeighborhood(Neighborhood.VERTEX_26);
+		path = planner.plan(origin, destination, etd);
+        assertNotNull(path);
+		assertEquals(3, planner.getPlan().size());
+		
+		planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
 		List<Position> waypoints = Arrays.asList(planningGrid.getCornerPositions());
 		planner.plan(origin, destination, waypoints, etd);
 		assertEquals(8, waypoints.size());

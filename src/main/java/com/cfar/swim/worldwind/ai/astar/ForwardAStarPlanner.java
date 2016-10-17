@@ -108,15 +108,14 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @return the trajectory of waypoints
 	 */
 	protected Trajectory computeTrajectory(Waypoint waypoint) {
-		LinkedList<Waypoint> waypoints = new LinkedList<Waypoint>();
+		this.plan.clear();
 		
 		while ((null != waypoint)) {
 			this.plan.addFirst(waypoint);
-			waypoints.addFirst(waypoint);
 			waypoint = waypoint.getParent();
 		}
 		
-		return new Trajectory(waypoints);
+		return new Trajectory(this.getPlan());
 	}
 	
 	/**
