@@ -815,11 +815,9 @@ public class RegularGrid extends Box {
 			default:
 				if (cell.isCorner(point)) {
 					neighbors.addAll(
-							Arrays.asList(cell.getCorners())
+							Arrays.asList(cell.getOtherCorners(point))
 							.stream()
-							.map(Vec4::toHomogeneousPoint3)
 							.map(PrecisionVec4::new)
-							.filter(n -> !(n.equals(new PrecisionVec4(point.toHomogeneousPoint3()))))
 							.collect(Collectors.toSet()));
 				}
 			}

@@ -96,7 +96,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 */
 	public Box(Vec4 point) {
 		super(point);
-		this.origin = this.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 	}
 	
 	/**
@@ -108,7 +108,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			double sMin, double sMax,
 			double tMin, double tMax) {
 		super(axes, rMin, rMax, sMin, sMax, tMin, tMax);
-		this.origin = this.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 	}
 	
 	/**
@@ -134,7 +134,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			box.getTLength(),
 			box.getPlanes()
 			);
-		this.origin = this.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 	}
 	
 	/**
@@ -189,30 +189,6 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates equals a
-	 * corner of this box considering numerical inaccuracies. 
-	 * 
-	 * @param point the point in world model coordinates
-	 * 
-	 * @return true if the point equals a corner of this box considering
-	 *         numerical inaccuracies, false otherwise
-	 */
-	public boolean isCorner(Vec4 point) {
-		boolean isCorner = false;
-		
-		for (Vec4 corner : this.getCorners()) {
-			PrecisionVec4 v1 = new PrecisionVec4(point.toHomogeneousPoint3());
-			PrecisionVec4 v2 = new PrecisionVec4(corner.toHomogeneousPoint3());
-			if (v1.equals(v2)) {
-				isCorner = true;
-				break;
-			}
-		}
-		
-		return isCorner;
-	}
-	
-	/**
 	 * Indicates whether or not a point in world model coordinates equals the
 	 * center of this box considering numerical inaccuracies.
 	 * 
@@ -228,6 +204,30 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
+	 * Indicates whether or not a point in world model coordinates equals a
+	 * corner of this box considering numerical inaccuracies. 
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return true if the point equals a corner of this box considering
+	 *         numerical inaccuracies, false otherwise
+	 */
+	public boolean isCorner(Vec4 point) {
+		boolean isCorner = false;
+		
+		for (Vec4 corner : super.getCorners()) {
+			PrecisionVec4 v1 = new PrecisionVec4(point.toHomogeneousPoint3());
+			PrecisionVec4 v2 = new PrecisionVec4(corner.toHomogeneousPoint3());
+			if (v1.equals(v2)) {
+				isCorner = true;
+				break;
+			}
+		}
+		
+		return isCorner;
+	}
+	
+	/**
 	 * Gets the corner index of a specified corner.
 	 * 
 	 * @param corner the corner
@@ -236,7 +236,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 */
 	public int getCornerIndex(Vec4 corner) {
 		int cornerIndex = -1;
-		Vec4[] corners = this.getCorners();
+		Vec4[] corners = super.getCorners();
 		
 		for (int index = 0; index < 8; index++) {
 			PrecisionVec4 v1 = new PrecisionVec4(corner.toHomogeneousPoint3());
@@ -259,7 +259,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 */
 	public Vec4[] getNeighborCorners(Vec4 corner) {
 		Vec4[] neighborCorners = null;
-		Vec4[] corners = this.getCorners();
+		Vec4[] corners = super.getCorners();
 		int cornerIndex = this.getCornerIndex(corner);
 		
 		if ((cornerIndex >= 0) && (cornerIndex < corners.length)) {
@@ -300,6 +300,77 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		}
 		
 		return neighborCorners;
+	}
+	
+	/**
+	 * Gets the opposite corners of a specified corner of this box.
+	 * 
+	 * @param corner the corner of this box
+	 * 
+	 * @return the opposite corners of the corner if a corner, null otherwise
+	 */
+	public Vec4[] getOppositeCorners(Vec4 corner) {
+		Vec4[] oppositeCorners = null;
+		Vec4[] corners = super.getCorners();
+		int cornerIndex = this.getCornerIndex(corner);
+		
+		if ((cornerIndex >= 0) && (cornerIndex < corners.length)) {
+			oppositeCorners = new Vec4[2];
+		
+			if (Box.CORNER_INDEX_BOTTOM_LOWER_LEFT == cornerIndex) {
+				oppositeCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_RIGHT];
+				oppositeCorners[1] = corners[Box.CORNER_INDEX_TOP_UPPER_RIGHT];
+			} else if (Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT == cornerIndex) {
+				oppositeCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_LEFT];
+				oppositeCorners[1] = corners[Box.CORNER_INDEX_TOP_UPPER_LEFT];
+			} else if (Box.CORNER_INDEX_BOTTOM_UPPER_RIGHT == cornerIndex) {
+				oppositeCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+				oppositeCorners[1] = corners[Box.CORNER_INDEX_TOP_LOWER_LEFT];
+			} else if (Box.CORNER_INDEX_BOTTOM_UPPER_LEFT == cornerIndex) {
+				oppositeCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT];
+				oppositeCorners[1] = corners[Box.CORNER_INDEX_TOP_LOWER_RIGHT];
+			} else if (Box.CORNER_INDEX_TOP_LOWER_LEFT == cornerIndex) {
+				oppositeCorners[0] = corners[Box.CORNER_INDEX_TOP_UPPER_RIGHT];
+				oppositeCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_RIGHT];
+			} else if (Box.CORNER_INDEX_TOP_LOWER_RIGHT == cornerIndex) {
+				oppositeCorners[0] = corners[Box.CORNER_INDEX_TOP_UPPER_LEFT];
+				oppositeCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_LEFT];
+			} else if (Box.CORNER_INDEX_TOP_UPPER_RIGHT == cornerIndex) {
+				oppositeCorners[0] = corners[Box.CORNER_INDEX_TOP_LOWER_LEFT];
+				oppositeCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+			} else if (Box.CORNER_INDEX_TOP_UPPER_LEFT == cornerIndex) {
+				oppositeCorners[0] = corners[Box.CORNER_INDEX_TOP_LOWER_RIGHT];
+				oppositeCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT];
+			}
+		}
+		
+		return oppositeCorners;
+	}
+	
+	/**
+	 * Gets the other corners of a specified corner of this box.
+	 * 
+	 * @param corner the corner of this box
+	 * 
+	 * @return the other corners of the corner if a corner, null otherwise
+	 */
+	public Vec4[] getOtherCorners(Vec4 corner) {
+		Vec4[] otherCorners = null;
+		Vec4[] corners = super.getCorners();
+		int cornerIndex = this.getCornerIndex(corner);
+		
+		if ((cornerIndex >= 0) && (cornerIndex < corners.length)) {
+			otherCorners = new Vec4[7];
+			
+			for (int index = 0, otherIndex = 0; index < corners.length; index++) {
+				if (cornerIndex != index) {
+					otherCorners[otherIndex] = corners[index];
+					otherIndex++;
+				}
+			}
+		}
+		
+		return otherCorners;
 	}
 	
 	/**
