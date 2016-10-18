@@ -110,7 +110,7 @@ public class PlanningGridTest {
         
         PlanningGrid child = planningGrid.getChild(0, 0, 0);
         assertEquals(1d, child.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
-        assertEquals(1d, child.getStepCost(
+        assertEquals(1d / child.getNormalizer(), child.getStepCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
@@ -124,7 +124,7 @@ public class PlanningGridTest {
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
-        assertEquals(51d, child.getStepCost(
+        assertEquals(51d / child.getNormalizer(), child.getStepCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
@@ -139,13 +139,13 @@ public class PlanningGridTest {
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.EFFECTIVENESS), PrecisionDouble.EPSILON);
-        assertEquals(81d, child.getStepCost(
+        assertEquals(81d / child.getNormalizer(), child.getStepCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.IGNORANCE), PrecisionDouble.EPSILON);
-        assertEquals(1d, child.getNormalizedDistance(
+        assertEquals(1d / child.getNormalizer(), child.getNormalizedDistance(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1]),
         		PrecisionDouble.EPSILON);
@@ -155,7 +155,7 @@ public class PlanningGridTest {
         assertEquals(true, child.hasChild(0, 0, 0));
         
         PlanningGrid grandChild = child.getChild(0, 0, 0);
-        assertEquals(0.5d, grandChild.getNormalizedDistance(
+        assertEquals(0.5d / grandChild.getNormalizer(), grandChild.getNormalizedDistance(
         		grandChild.getCornerPositions()[0],
         		grandChild.getCornerPositions()[1]),
         		PrecisionDouble.EPSILON);

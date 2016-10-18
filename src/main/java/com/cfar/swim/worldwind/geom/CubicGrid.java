@@ -57,7 +57,7 @@ public class CubicGrid extends RegularGrid {
 	 */
 	public CubicGrid(Cube cube) {
 		super(cube);
-		this.normalizer = cube.getLength();
+		this.normalizer = cube.getDiameter();
 	}
 	
 	/**
@@ -78,7 +78,7 @@ public class CubicGrid extends RegularGrid {
 			refChild.getUnitSAxis().dot3(refChild.origin) + (refChild.getLength() * sCells),
 			refChild.getUnitTAxis().dot3(refChild.origin),
 			refChild.getUnitTAxis().dot3(refChild.origin) + (refChild.getLength() * tCells));
-		this.normalizer = refChild.getLength();
+		this.normalizer = refChild.getDiameter();
 		super.addChildren(rCells, sCells, tCells);
 	}
 	
@@ -115,21 +115,8 @@ public class CubicGrid extends RegularGrid {
 	 * Updates the normalizer of this cubic grid after structural modifications.
 	 */
 	protected void updateNormalizer() {
-		CubicGrid root = this;
-		while (root.hasParent()) {
-			root = root.getParent();
-		}
-		
-		Set<? extends CubicGrid> grids = root.getAll();
-		
-		// the normalizer should always represent the length of the highest resultion child
-		//double normalizer = grids.stream().map(CubicGrid::getLength).min(Double::compare).get().doubleValue();
-		
-		// the normalizer should always represent the length of a reference child
-		double normalizer = grids.stream().map(CubicGrid::getNormalizer).max(Double::compare).get().doubleValue();
-		
-		for (CubicGrid grid : grids) {
-			grid.normalizer = normalizer;
+		for (CubicGrid child : this.getChildren()) {
+			child.normalizer = this.normalizer;
 		}
 	}
 	
@@ -204,17 +191,6 @@ public class CubicGrid extends RegularGrid {
 		} else {
 			throw new IllegalArgumentException("children must be cubes");
 		}
-	}
-	
-	/**
-	 * Removes all children from this cubic grid.
-	 * 
-	 * @see RegularGrid#removeChildren()
-	 */
-	@Override
-	public void removeChildren() {
-		super.removeChildren();
-		this.updateNormalizer();
 	}
 	
 	/**
