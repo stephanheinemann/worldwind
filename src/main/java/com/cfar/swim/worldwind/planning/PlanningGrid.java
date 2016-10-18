@@ -77,7 +77,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 	
 	/** the current accumulated active cost of this planning grid */
-	private double activeCost = 0d;
+	private double activeCost = 1d;
 	
 	/** the threshold cost of this planning grid */
 	private double thresholdCost = 0d;
@@ -139,24 +139,27 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Gets the eight corner positions in globe coordinates of this planning
-	 * grid.
+	 * Gets the eight corner positions in globe coordinates of this
+	 * planning grid.
 	 *  
-	 * @return the eight corner positions in globe coordinates of this planning
-	 *         grid if a globe has been set, null otherwise
+	 * @return the eight corner positions in globe coordinates of this
+	 *         planning grid
+	 * 
+	 * @throws IllegalStateException if the globe is not set
 	 *         
 	 * @see Box#getCorners()
 	 */
 	public Position[] getCornerPositions() {
 		Position[] cornerPositions = null;
 		
-		// TODO: throw IllegalStateException instead
 		if (null != this.globe) {
 			cornerPositions = new Position[8];
 			Vec4[] corners = this.getCorners();
 			for (int index = 0; index < 8; index++) {
 				cornerPositions[index] = this.globe.computePositionFromPoint(corners[index]);
 			}
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return cornerPositions;
@@ -171,6 +174,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return true if the position is a corner of this planning grid
 	 *         considering numerical inaccuracies, false otherwise
 	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
 	 * @see Box#isCorner(Vec4)
 	 */
 	public boolean isCorner(Position position) {
@@ -178,6 +183,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		if (null != this.globe) {
 			isCorner = this.isCorner(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return isCorner;
@@ -187,7 +194,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * Gets the center position in globe coordinates of this planning grid.
 	 * 
 	 * @return the center position in globe coordinates of this planning grid
-	 *         if a globe has been set, null otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
 	 * 
 	 * @see Box#getCenter()
 	 */
@@ -197,6 +205,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		if (null != this.globe) {
 			centerPosition = this.globe.computePositionFromPoint(this.getCenter());
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return centerPosition;
@@ -211,6 +221,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return true if the position is the center of this planning grid
 	 *         considering numerical inaccuracies, false otherwise
 	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
 	 * @see Box#isCorner(Vec4)
 	 */
 	public boolean isCenter(Position position) {
@@ -218,6 +230,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		if (null != this.globe) {
 			isCenter = this.isCenter(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return isCenter;
@@ -231,7 +245,9 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return the neighbor corner positions of a the specified corner position
 	 *         if a corner position, null otherwise
-	 *         
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
 	 * @see Box#getNeighborCorners(Vec4)
 	 */
 	public Position[] getNeighborCorners(Position position) {
@@ -240,9 +256,14 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		if (null != this.globe) {
 			neighborCorners = new Position[3];
 			Vec4[] corners = this.getNeighborCorners(globe.computePointFromPosition(position));
-			neighborCorners[0] = this.globe.computePositionFromPoint(corners[0]);
-			neighborCorners[1] = this.globe.computePositionFromPoint(corners[1]);
-			neighborCorners[2] = this.globe.computePositionFromPoint(corners[2]);
+			
+			if (null != corners) {
+				neighborCorners[0] = this.globe.computePositionFromPoint(corners[0]);
+				neighborCorners[1] = this.globe.computePositionFromPoint(corners[1]);
+				neighborCorners[2] = this.globe.computePositionFromPoint(corners[2]);
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return neighborCorners;
@@ -510,21 +531,27 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @param obstacle the obstacle cylinder to be embedded
 	 * 
 	 * @return true if an embedding took place, false otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
 	 */
 	public boolean embed(ObstacleCylinder obstacle) {
 		boolean embedded = false;
 		
-		if ((null != this.globe) && (this.intersectsCylinder(obstacle.toGeometricCylinder(this.globe)))) {
-			this.addCostInterval(obstacle.getCostInterval());
-			this.obstacles.add(obstacle);
-			
-			for (PlanningGrid child : this.getChildren()) {
-				if (child.embed(obstacle)) {
-					this.addAffectedChild(obstacle, child);
+		if (null != this.globe) {
+			if (this.intersectsCylinder(obstacle.toGeometricCylinder(this.globe))) {
+				this.addCostInterval(obstacle.getCostInterval());
+				this.obstacles.add(obstacle);
+				
+				for (PlanningGrid child : this.getChildren()) {
+					if (child.embed(obstacle)) {
+						this.addAffectedChild(obstacle, child);
+					}
 				}
+				
+				embedded = true;
 			}
-			
-			embedded = true;
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return embedded;
@@ -708,8 +735,9 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return the planning grid cells contain the specified position if a
-	 *         globe has been set, null otherwise
+	 * @return the planning grid cells containing the specified position
+	 * 
+	 * @throws IllegalStateException if the globe is not set
 	 * 
 	 * @see CubicGrid#lookupCells(Vec4)
 	 */
@@ -719,6 +747,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		if (null != this.globe) {
 			cells = (Set<PlanningGrid>) super.lookupCells(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return cells;
@@ -814,7 +844,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		// if a neighbor contains children, then planning has to be refined
 		// if planning is done via corners (not centers), then connecting
 		// grid cells are easily found
-		// TODO: parents should possibily aggregate costs
+		// TODO: parents should possibly aggregate costs
 		return (Set<PlanningGrid>) super.getNeighbors();
 	}
 	
@@ -860,6 +890,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return the neighbors of the position in this planning grid
 	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
 	 * @see CubicGrid#getNeighbors(Vec4)
 	 * @see Environment#getNeighbors(Position)
 	 */
@@ -875,6 +907,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			for (Vec4 neighbor : neighborPoints) {
 				neighbors.add(this.globe.computePositionFromPoint(neighbor));
 			}
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return neighbors;

@@ -147,8 +147,9 @@ public class Waypoint extends Position implements Comparable<Waypoint> {
 	}
 	
 	/**
-	 * Compares this waypoint to another waypoint based on their total estimated
-	 * cost.
+	 * Compares this waypoint to another waypoint based on their estimated
+	 * total costs. It the estimated total costs of both waypoints is equal,
+	 * then break ties in favor of higher estimated current costs.
 	 * 
 	 * @param o the other waypoint
 	 * 
@@ -160,7 +161,13 @@ public class Waypoint extends Position implements Comparable<Waypoint> {
 	 */
 	@Override
 	public int compareTo(Waypoint o) {
-		return new Double(this.getF()).compareTo(o.getF());
+		int compareTo = new Double(this.getF()).compareTo(o.getF());
+		if (0 == compareTo) {
+			// break ties in favor of higher G-values
+			compareTo = new Double(o.getG()).compareTo(this.getG());
+		}
+		
+		return compareTo;
 	}
 	
 	/**

@@ -31,7 +31,6 @@ package com.cfar.swim.worldwind.geom;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -631,37 +630,35 @@ public class RegularGrid extends Box {
 		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
 		Set<? extends RegularGrid> waypointCells;
 		
-		if (!cells.isEmpty()) {
-			switch(this.neighborhood) {
-			case CELL_26:
-				waypointCells = cells
-					.stream()
-					.filter(c -> c.isCenter(point))
-					.collect(Collectors.toSet());
-				
-				if (waypointCells.isEmpty()) {
-					for (RegularGrid cell : cells) {
-						adjacentWaypoints.add(cell.getCenter());
-					}
-				} else {
-					adjacentWaypoints.add(point);
+		switch(this.neighborhood) {
+		case CELL_26:
+			waypointCells = cells
+				.stream()
+				.filter(c -> c.isCenter(point))
+				.collect(Collectors.toSet());
+			
+			if (waypointCells.isEmpty()) {
+				for (RegularGrid cell : cells) {
+					adjacentWaypoints.add(cell.getCenter());
 				}
-				break;
-			case VERTEX_6:
-			case VERTEX_26:
-			default:
-				waypointCells = cells
-					.stream()
-					.filter(c -> c.isCorner(point))
-					.collect(Collectors.toSet());
-				
-				if (waypointCells.isEmpty()) {
-					for (RegularGrid cell : cells) {
-						adjacentWaypoints.addAll(Arrays.asList(cell.getCorners()));
-					}
-				} else {
-					adjacentWaypoints.add(point);
+			} else {
+				adjacentWaypoints.add(point);
+			}
+			break;
+		case VERTEX_6:
+		case VERTEX_26:
+		default:
+			waypointCells = cells
+				.stream()
+				.filter(c -> c.isCorner(point))
+				.collect(Collectors.toSet());
+			
+			if (waypointCells.isEmpty()) {
+				for (RegularGrid cell : cells) {
+					adjacentWaypoints.addAll(Arrays.asList(cell.getCorners()));
 				}
+			} else {
+				adjacentWaypoints.add(point);
 			}
 		}
 		
@@ -709,7 +706,7 @@ public class RegularGrid extends Box {
 	 * @return the neighbors of this regular grid
 	 */
 	public Set<? extends RegularGrid> getNeighbors(int depth) {
-		Set<RegularGrid> neighbors = new HashSet<RegularGrid>(26);
+		Set<RegularGrid> neighbors = new HashSet<RegularGrid>();
 		
 		if (this.hasParent()) {
 			Vec4[] corners = this.getCorners();
@@ -844,7 +841,7 @@ public class RegularGrid extends Box {
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
 		return this.getNeighbors(point)
 				.stream()
-				.map(p -> p.toHomogeneousPoint3())
+				.map(Vec4::toHomogeneousPoint3)
 				.map(PrecisionVec4::new)
 				.collect(Collectors.toSet())
 				.contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
@@ -866,6 +863,7 @@ public class RegularGrid extends Box {
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor, int depth) {
 		return this.getNeighbors(point, depth)
 				.stream()
+				.map(Vec4::toHomogeneousPoint3)
 				.map(PrecisionVec4::new)
 				.collect(Collectors.toSet())
 				.contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
