@@ -38,6 +38,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import com.binarydreamers.trees.Interval;
@@ -752,6 +753,42 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		}
 		
 		return cells;
+	}
+	
+	/**
+	 * Finds all cells of this planning grid that satisfy a specified predicate.
+	 * A full recursive search is performed considering only non-parent cells.
+	 * 
+	 * @param predicate the predicate
+	 * 
+	 * @return the cells of this planning grid that satisfy a predicate
+	 * 
+	 * @see CubicGrid#findCells(Predicate)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends PlanningGrid> findCells(Predicate<RegularGrid> predicate) {
+		return (Set<PlanningGrid>) super.findCells(predicate);
+	}
+	
+	/**
+	 * Finds all cells of this planning grid that satisfy a specified predicate
+	 * taking a specified hierarchical depth into account. A zero depth does
+	 * not consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param predicate the predicate
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return the cells of this planning grid that satisfy a predicate taking
+	 *         the hierarchical depth into account
+	 * 
+	 * @see CubicGrid#findCells(Predicate, int)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> findCells(Predicate<RegularGrid> predicate, int depth) {
+		return (Set<CubicGrid>) super.findCells(predicate, depth);
 	}
 	
 	/**

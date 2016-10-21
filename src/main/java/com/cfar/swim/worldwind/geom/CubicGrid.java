@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.geom;
 
 import java.util.Set;
+import java.util.function.Predicate;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 
@@ -141,7 +142,6 @@ public class CubicGrid extends RegularGrid {
 	 */
 	public void addChildren(int cells) {
 		this.addChildren(cells, cells, cells);
-		this.updateNormalizer();
 	}
 	
 	/**
@@ -285,6 +285,42 @@ public class CubicGrid extends RegularGrid {
 	@Override
 	public Set<? extends CubicGrid> lookupCells(Vec4 modelPoint, int depth) {
 		return (Set<CubicGrid>) super.lookupCells(modelPoint, depth);
+	}
+	
+	/**
+	 * Finds all cells of this cubic grid that satisfy a specified predicate.
+	 * A full recursive search is performed considering only non-parent cells.
+	 * 
+	 * @param predicate the predicate
+	 * 
+	 * @return the cells of this cubic grid that satisfy a predicate
+	 * 
+	 * @see RegularGrid#findCells(Predicate)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> findCells(Predicate<RegularGrid> predicate) {
+		return (Set<CubicGrid>) super.findCells(predicate);
+	}
+	
+	/**
+	 * Finds all cells of this cubic grid that satisfy a specified predicate
+	 * taking a specified hierarchical depth into account. A zero depth does
+	 * not consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param predicate the predicate
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return the cells of this cubic grid that satisfy a predicate taking
+	 *         the hierarchical depth into account
+	 * 
+	 * @see RegularGrid#findCells(Predicate, int)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends CubicGrid> findCells(Predicate<RegularGrid> predicate, int depth) {
+		return (Set<CubicGrid>) super.findCells(predicate, depth);
 	}
 	
 	/**
