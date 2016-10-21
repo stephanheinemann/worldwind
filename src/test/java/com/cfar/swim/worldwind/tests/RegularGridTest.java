@@ -153,13 +153,11 @@ public class RegularGridTest {
             Cube largeCube = new Cube(largeB.getOrigin(), largeB.getUnitAxes(), largeB.getRLength() / 10);
             largeGrid = new PlanningGrid(largeCube, 10, 10, 5);
             largeGrid.setThreshold(0);
-            /*
-            largeGrid.addChildren(largeBox.getTLength() / 4.0);
+            //largeGrid.addChildren(largeBox.getTLength() / 4.0);
             largeGrid.addChildren(0, 8, 3, 2, 2, 2);
             largeGrid.addChildren(1, 9, 3, 2, 2, 2);
             largeGrid.addChildren(0, 9, 1, 2, 2, 2);
             largeGrid.addChildren(2, 9, 1, 2, 2, 2);
-            */
             //largeGrid.setGlobe(model.getGlobe());
             renderableLayer.addRenderable(largeGrid);
             
@@ -272,8 +270,8 @@ public class RegularGridTest {
 		Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
 			
 		largeGrid.setGlobe(model.getGlobe());
-		//IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
-		//largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
+		IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
+		largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
 		
 		tsGrid.setGlobe(model.getGlobe());
 		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
@@ -287,7 +285,7 @@ public class RegularGridTest {
 		tcUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-2-TC.xml")));
 		*/
 		
-		//list.registerDataActivationListerner(largeUpdater);
+		list.registerDataActivationListerner(largeUpdater);
 		list.registerDataActivationListerner(tsUpdater);
 		//list.registerDataActivationListerner(tcUpdater);
 		

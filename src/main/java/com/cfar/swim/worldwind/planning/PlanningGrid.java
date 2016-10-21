@@ -538,7 +538,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		boolean embedded = false;
 		
 		if (null != this.globe) {
-			if (this.intersectsCylinder(obstacle.toGeometricCylinder(this.globe))) {
+			if (this.intersects(obstacle.toGeometricCylinder(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
 				
@@ -1004,6 +1004,14 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		// TODO: not very efficient implementation
 		// TODO: this.areAdjacent in any directions
+		// TODO: the only requirement is actually that both positions are
+		// contained in the same grid cell, regardless of being a corner
+		// or any point on the planes, hence, if they share a grid cell
+		// all is good (which is already reflected in stepCells)
+		// TODO: this method can be used to compute any leg-segment costs
+		// for a straight-line (visibility) connection with pinch points
+		// in cut cells
+		// TODO: get steps / segments of a leg
 		//if (this.areNeighbors(position, neighbor)) {
 			// find shared adjacent cells
 			Set<? extends PlanningGrid> stepCells = this.lookupCells(position);

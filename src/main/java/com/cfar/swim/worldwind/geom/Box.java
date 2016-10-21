@@ -34,7 +34,10 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
 
 import gov.nasa.worldwind.geom.Cylinder;
+import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.geom.Frustum;
 import gov.nasa.worldwind.geom.Matrix;
+import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
@@ -556,6 +559,41 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		Vec4 expansion = new Vec4(rx, ry, rz);
 		// perform the conservatively approximate (cylinder bounding box) intersection check
 		return this.intersectsLineSegment(cylinder.getBottomCenter(), cylinder.getTopCenter(), expansion);
-	} 
+	}
+	
+	/**
+	 * Indicates whether or not an extent intersects this box.
+	 * 
+	 * @param extent the extent
+	 * 
+	 * @return true if the extent intersects this box, false otherwise
+	 */
+	public boolean intersects(Extent extent) {
+		// TODO: other intersection methods can be removed
+		Plane[] frustumPlanes = new Plane[6];
+		
+		// frustum planes point inwards, box planes point outwards
+		// xMin <= xMax must be satisfied for any box axes x
+		for (int index = 0; index < this.planes.length; index++) {
+			Vec4 planeNormal = planes[index].getNormal();
+			// invert box plane to create frustum plane
+			// expand frustum by epsilon to detect touching extents
+			frustumPlanes[index] = new Plane(
+					-planeNormal.x,
+					-planeNormal.y,
+					-planeNormal.z,
+					-planeNormal.w + PrecisionDouble.EPSILON);
+		}
+		
+        Frustum frustum = new Frustum(
+        		frustumPlanes[0],
+        		frustumPlanes[1],
+        		frustumPlanes[2],
+        		frustumPlanes[3],
+        		frustumPlanes[4],
+        		frustumPlanes[5]);
+		
+		return extent.intersects(frustum);
+	}
 	
 }

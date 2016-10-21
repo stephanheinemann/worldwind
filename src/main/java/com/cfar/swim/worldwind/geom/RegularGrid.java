@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.geom;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import javax.media.opengl.GL2;
@@ -535,6 +536,46 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
+	 * Finds all cells of this regular grid that satisfy a specified predicate.
+	 * A full recursive search is performed considering only non-parent cells.
+	 * 
+	 * @param predicate the predicate
+	 * 
+	 * @return the cells of this regular grid that satisfy a predicate
+	 */
+	public Set<? extends RegularGrid> findCells(Predicate<RegularGrid> predicate) {
+		return this.findCells(predicate, -1);
+	}
+	
+	/**
+	 * Finds all cells of this regular grid that satisfy a specified predicate
+	 * taking a specified hierarchical depth into account. A zero depth does
+	 * not consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param predicate the predicate
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return the cells of this regular grid that satisfy a predicate taking
+	 *         the hierarchical depth into account
+	 */
+	public Set<? extends RegularGrid> findCells(Predicate<RegularGrid> predicate, int depth) {
+		Set<RegularGrid> foundCells = new HashSet<RegularGrid>();
+		
+		if (predicate.test(this)) {
+			if (this.hasChildren() && depth != 0) {
+				for (RegularGrid child : this.getChildren()) {
+					foundCells.addAll(child.findCells(predicate, depth - 1));
+				}
+			} else {
+				foundCells.add(this);
+			}
+		}
+		
+		return foundCells;
+	}
+	
+	/**
 	 * Gets the neighborhood of this regular grid.
 	 * 
 	 * @return the neighborhood of this regular grid
@@ -695,6 +736,9 @@ public class RegularGrid extends Box {
 		return this.getNeighbors(-1);
 	}
 	
+	// TODO: all neighborhood-related methods could be way more efficient if
+	// a regular grid stores its coordinates in its parent if it is a child
+	
 	/**
 	 * Gets the neighbors of this regular grid taking a specified hierarchical
 	 * depth into account. A zero depth does not consider any neighboring
@@ -709,21 +753,21 @@ public class RegularGrid extends Box {
 		Set<RegularGrid> neighbors = new HashSet<RegularGrid>();
 		
 		if (this.hasParent()) {
+			Set<RegularGrid> flatNeighbors = new HashSet<RegularGrid>();
+			
 			Vec4[] corners = this.getCorners();
-			if (-1 == depth) {
-				depth--;
+			// compute same level neighbors first
+			for (Vec4 corner : corners) {
+				flatNeighbors.addAll(this.parent.lookupCells(corner, 0));
+			}
+			flatNeighbors.remove(this);
+			
+			if (0 != depth) {
+				for (RegularGrid neighbor : flatNeighbors) {
+					neighbors.addAll(neighbor.findCells(c -> c.intersects(this), depth));
+				}
 			}
 			
-			// TODO: not correct - all neighboring wall cells are relevant
-			// not just the ones adjacent to corners, compute same level
-			// neighbors, for all same level neighbors, find the children
-			// that intersect (touch) the adjacent plane of this, continue
-			// recursively
-			for (Vec4 corner : corners) {
-				neighbors.addAll(this.parent.lookupCells(corner, depth + 1));
-			}
-			// TODO: possibly too expensive
-			neighbors.remove(this.getAll());
 		}
 		
 		return neighbors;
@@ -823,7 +867,10 @@ public class RegularGrid extends Box {
 			}
 		}
 			
-		return neighbors.stream().map(PrecisionVec4::getOriginal).collect(Collectors.toSet());
+		return neighbors
+				.stream()
+				.map(PrecisionVec4::getOriginal)
+				.collect(Collectors.toSet());
 	}
 	
 	/**
