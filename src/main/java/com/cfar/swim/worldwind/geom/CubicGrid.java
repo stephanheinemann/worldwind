@@ -515,6 +515,9 @@ public class CubicGrid extends RegularGrid {
 		if (this.intersectsSegment(source, target)) {
 			// clip the end points of the segment to this cell
 			Vec4[] endPoints = Line.clipToFrustum(source, target, this.getFrustum());
+			// TODO: it seems clipping is not successful sometimes although an
+			// intersection has been tested using the same frustum expansion
+			if (null == endPoints) return new LinkedHashSet<Vec4>();
 			intersectionPoints.add(new PrecisionVec4(endPoints[0]));
 			
 			if ((depth != 0) && this.hasChildren()) {

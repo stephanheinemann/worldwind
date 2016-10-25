@@ -585,7 +585,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 					-planeNormal.x,
 					-planeNormal.y,
 					-planeNormal.z,
-					-planeNormal.w + (PrecisionDouble.EPSILON * 0.1d));
+					-planeNormal.w + (PrecisionDouble.EPSILON * 0.001d));
 		}
 		
 	    return new Frustum(
@@ -637,7 +637,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 					planeNormal.x,
 					planeNormal.y,
 					planeNormal.z,
-					planeNormal.w - (PrecisionDouble.EPSILON * 0.1d));
+					planeNormal.w - (PrecisionDouble.EPSILON * 0.001d));
 		}
 		
 		return WWMath.polytopeIntersect(line, boxPlanes);

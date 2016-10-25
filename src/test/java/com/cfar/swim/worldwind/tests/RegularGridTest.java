@@ -484,11 +484,11 @@ public class RegularGridTest {
 		}
 		*/
 		
-		Set<PlanningGrid> intersectedCells = new HashSet<PlanningGrid>();
+		//Set<PlanningGrid> intersectedCells = new HashSet<PlanningGrid>();
 		PlanningGrid child1 = largeGrid.getChild(0, 9, 0);
 		PlanningGrid child2 = largeGrid.getChild(0, 9, 4);
-		Position o1 = largeGrid.getGlobe().computePositionFromPoint(child1.getCorners()[5]);
-		Position o2 = largeGrid.getGlobe().computePositionFromPoint(child2.getCorners()[5]);
+		Position o1 = largeGrid.getGlobe().computePositionFromPoint(largeGrid.getCorners()[0]/*child1.getCorners()[5]*//*largeGrid.getTopCenter()*/);
+		Position o2 = largeGrid.getGlobe().computePositionFromPoint(largeGrid.getCorners()[6]/*child2.getCorners()[5]*//*largeGrid.getBottomCenter()*/);
 		Path ip = new Path(largeGrid.getIntersectedPositions(o1, o2));
 		ip.setVisible(true);
 		ip.setShowPositions(true);
@@ -499,6 +499,7 @@ public class RegularGridTest {
 		((RenderableLayer) layer).addRenderable(ip);
 		
 		for (Position p : ip.getPositions()) {
+			System.out.println(p);
 			GlobeAnnotation ga = new GlobeAnnotation(p.toString() , p);
 			((RenderableLayer) layer).addRenderable(ga);
 		}
