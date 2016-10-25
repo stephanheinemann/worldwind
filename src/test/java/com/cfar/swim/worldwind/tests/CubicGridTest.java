@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.tests;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -37,6 +38,8 @@ import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 
+import gov.nasa.worldwind.geom.Intersection;
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Vec4;
 
 public class CubicGridTest {
@@ -100,6 +103,27 @@ public class CubicGridTest {
         for (CubicGrid grid : cubicGrid.getAll()) {
         	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
         }
+	}
+	
+	@Test
+	public void testIntersections() {
+		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
+        Cube cube = new Cube(Vec4.ZERO, axes, 1);
+        CubicGrid cubicGrid = new CubicGrid(cube, 10, 5, 5);
+        cubicGrid.getChild(0, 0, 0).addChildren(2);
+        Line line = Line.fromSegment(cubicGrid.getCorners()[0], cubicGrid.getCorners()[1]);
+        
+        assertTrue(null != cubicGrid.intersect(line));
+        assertTrue(null != cubicGrid.getChild(0, 0, 0).intersect(line));
+        
+        CubicGrid grandChild = cubicGrid.getChild(0, 0, 0).getChild(0, 0, 0);
+        Intersection[] intersections = grandChild.intersect(line);
+        assertTrue(null != intersections);
+        assertEquals(2, intersections.length);
+        assertTrue(intersections[0].isTangent());
+        assertTrue(intersections[1].isTangent());
+        assertEquals(grandChild.getCorners()[0], intersections[0].getIntersectionPoint());
+        assertEquals(grandChild.getCorners()[1], intersections[1].getIntersectionPoint());
 	}
 
 }

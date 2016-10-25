@@ -39,6 +39,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,6 +53,7 @@ import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.RegularGrid;
@@ -71,6 +73,7 @@ import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.geom.Sphere;
@@ -465,6 +468,75 @@ public class RegularGridTest {
 			GlobeAnnotation ga = new GlobeAnnotation(p.getEto().toString() , p);
 			((RenderableLayer) layer).addRenderable(ga);
 		}
+		
+		/*
+		Set<? extends PlanningGrid> ics = largeGrid.getIntersectedCells(
+				largeGrid.getBottomCenter(),
+				largeGrid.getTopCenter(),
+				2);
+		System.out.println("intersected cells " + ics.size());
+		for (PlanningGrid ic : ics) {
+			ic.addCostInterval(new CostInterval(
+					"ic",
+					ZonedDateTime.now().minusYears(10),
+					ZonedDateTime.now().plusYears(10),
+					65));
+		}
+		*/
+		
+		Set<PlanningGrid> intersectedCells = new HashSet<PlanningGrid>();
+		PlanningGrid child1 = largeGrid.getChild(0, 9, 0);
+		PlanningGrid child2 = largeGrid.getChild(0, 9, 4);
+		Position o1 = largeGrid.getGlobe().computePositionFromPoint(child1.getCorners()[5]);
+		Position o2 = largeGrid.getGlobe().computePositionFromPoint(child2.getCorners()[5]);
+		Path ip = new Path(largeGrid.getIntersectedPositions(o1, o2));
+		ip.setVisible(true);
+		ip.setShowPositions(true);
+		ip.setAttributes(new BasicShapeAttributes());
+		ip.getAttributes().setOutlineMaterial(Material.MAGENTA);
+		ip.getAttributes().setOutlineWidth(5d);
+		ip.getAttributes().setOutlineOpacity(0.5d);
+		((RenderableLayer) layer).addRenderable(ip);
+		
+		for (Position p : ip.getPositions()) {
+			GlobeAnnotation ga = new GlobeAnnotation(p.toString() , p);
+			((RenderableLayer) layer).addRenderable(ga);
+		}
+		
+		/*
+		for (Vec4 intersectionPoint : largeGrid.getIntersectionPoints(child1.getCorners()[5], child2.getCorners()[5])) {
+			intersectedCells.addAll(largeGrid.lookupCells(intersectionPoint));
+		}
+		for (PlanningGrid intersectedCell : intersectedCells) {
+			intersectedCell.addCostInterval(new CostInterval(
+					"ic",
+					ZonedDateTime.now().minusYears(10),
+					ZonedDateTime.now().plusYears(10),
+					65));
+		}
+		*/
+		
+		/*
+		Vec4 o = largeGrid.getCorners()[5].toHomogeneousPoint3();
+		Cube c = new Cube(o, largeGrid.getUnitAxes(), 100000);
+		for (Plane p : c.getPlanes()) {
+			System.out.println(p);
+		}
+		System.out.println("--");
+		
+		Vec4 ro = c.getRAxis().multiply3(0.25);
+		Vec4 so = c.getSAxis().multiply3(0.25);
+		Vec4 to = c.getTAxis().multiply3(0.25);
+		Vec4 o2 = o.add3(ro).add3(so).add3(to);
+		
+		Cube c2 = new Cube(o2, c.getUnitAxes(), 50000);
+		for (Plane p : c2.getPlanes()) {
+			System.out.println(p);
+		}
+		
+		((RenderableLayer) layer).addRenderable(c);
+		((RenderableLayer) layer).addRenderable(c2);
+		*/
 		
 		} catch (Exception e) {
 			e.printStackTrace();

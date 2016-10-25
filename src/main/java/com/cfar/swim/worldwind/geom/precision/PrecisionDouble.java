@@ -140,4 +140,6 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 		return new Double(this.original);
 	}
 	
+	// TODO: override arithmetic operations to propagate
+	// operations on the original value
 }

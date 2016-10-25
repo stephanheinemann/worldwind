@@ -36,6 +36,7 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -787,8 +788,35 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public Set<? extends CubicGrid> findCells(Predicate<RegularGrid> predicate, int depth) {
-		return (Set<CubicGrid>) super.findCells(predicate, depth);
+	public Set<? extends PlanningGrid> findCells(Predicate<RegularGrid> predicate, int depth) {
+		return (Set<PlanningGrid>) super.findCells(predicate, depth);
+	}
+	
+	/**
+	 * Gets the intersection positions of a straight leg with the cells of this
+	 * planning grid. A full recursive search is performed considering only
+	 * non-parent cells.
+	 * 
+	 * @param origin the origin of the leg in globe coordinates
+	 * @param destination the destination of the leg in globe coordinates
+	 * 
+	 * @return the intersection positions of the straight leg with the cells of
+	 *         this planning grid
+	 * 
+	 * @see CubicGrid#getIntersectionPoints(Vec4, Vec4)
+	 */
+	public Iterable<? extends Position> getIntersectedPositions(Position origin, Position destination) {
+		if (null != this.globe) {
+			return
+				super.getIntersectionPoints(
+					this.globe.computePointFromPosition(origin),
+					this.globe.computePointFromPosition(destination))
+				.stream()
+				.map(this.globe::computePositionFromPoint)
+				.collect(Collectors.toCollection(LinkedHashSet<Position>::new));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
 	}
 	
 	/**

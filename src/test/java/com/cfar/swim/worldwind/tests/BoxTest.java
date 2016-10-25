@@ -8,6 +8,8 @@ import org.junit.Test;
 
 import com.cfar.swim.worldwind.geom.Box;
 
+import gov.nasa.worldwind.geom.Intersection;
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Vec4;
 
 public class BoxTest {
@@ -57,6 +59,31 @@ public class BoxTest {
 		assertTrue(box2.intersects(box4));
 		assertFalse(box5.intersects(box4));
 		assertTrue(box6.intersects(box5));
+	}
+	
+	@Test
+	public void testIntersections() {
+		//Vec4[] axes = { Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z };
+		Vec4[] axes = { new Vec4(1, 0, 0), new Vec4(0, 1, 0), new Vec4(0, 0, 1) };
+		Box box1 = new Box(axes, 10, 20, 10, 20, 10, 20);
+		
+		Line line = Line.fromSegment(box1.getCorners()[0], box1.getCorners()[6]);
+		Intersection[] intersections = box1.intersect(line);
+		assertTrue(null != intersections);
+		assertEquals(2, intersections.length);
+		assertFalse(intersections[0].isTangent());
+		assertFalse(intersections[1].isTangent());
+		assertEquals(box1.getCorners()[0], intersections[0].getIntersectionPoint());
+		assertEquals(box1.getCorners()[6], intersections[1].getIntersectionPoint());
+		
+		line = Line.fromSegment(box1.getCorners()[0], box1.getCorners()[1]);
+		intersections = box1.intersect(line);
+		assertTrue(null != intersections);
+		assertEquals(2, intersections.length);
+		assertTrue(intersections[0].isTangent());
+		assertTrue(intersections[1].isTangent());
+		assertEquals(box1.getCorners()[0], intersections[0].getIntersectionPoint());
+		assertEquals(box1.getCorners()[1], intersections[1].getIntersectionPoint());
 	}
 
 }

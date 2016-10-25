@@ -29,7 +29,6 @@
  */
 package com.cfar.swim.worldwind.geom;
 
-import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
 
@@ -513,7 +512,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		if (midpointLength.z > (halfSideLength.z + halfSegmentLength.z))
 			return false; // segment cannot intersect on z axis
 		
-		halfSegmentLength = halfSegmentLength.add3(Precision.EPSILON, Precision.EPSILON, Precision.EPSILON);
+		halfSegmentLength = halfSegmentLength.add3(
+			PrecisionDouble.EPSILON,
+			PrecisionDouble.EPSILON,
+			PrecisionDouble.EPSILON);
 		
 		// cross products of segment direction vector with coordinate axes
 		if (Math.abs((midpoint.y * halfSegment.z) - (midpoint.z * halfSegment.y)) >
@@ -562,38 +564,84 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not an extent intersects this box.
+	 * Gets a frustum representation of this box which is slightly expanded
+	 * to account for numerical inaccuracies.
 	 * 
-	 * @param extent the extent
-	 * 
-	 * @return true if the extent intersects this box, false otherwise
+	 * @return a frustum representation of this box
 	 */
-	public boolean intersects(Extent extent) {
+	protected Frustum getFrustum() {
 		// TODO: other intersection methods can be removed
 		Plane[] frustumPlanes = new Plane[6];
 		
 		// frustum planes point inwards, box planes point outwards
 		// xMin <= xMax must be satisfied for any box axes x
 		for (int index = 0; index < this.planes.length; index++) {
-			Vec4 planeNormal = planes[index].getNormal();
+			Vec4 planeNormal = this.planes[index].getNormal();
 			// invert box plane to create frustum plane
 			// expand frustum by epsilon to detect touching extents
+			// the expansion must be a fraction of the default epsilon
+			// to allow for a contraction within the default epsilon
 			frustumPlanes[index] = new Plane(
 					-planeNormal.x,
 					-planeNormal.y,
 					-planeNormal.z,
-					-planeNormal.w + PrecisionDouble.EPSILON);
+					-planeNormal.w + (PrecisionDouble.EPSILON * 0.1d));
 		}
 		
-        Frustum frustum = new Frustum(
-        		frustumPlanes[0],
-        		frustumPlanes[1],
-        		frustumPlanes[2],
-        		frustumPlanes[3],
-        		frustumPlanes[4],
-        		frustumPlanes[5]);
-		
-		return extent.intersects(frustum);
+	    return new Frustum(
+	    		frustumPlanes[0],
+	    		frustumPlanes[1],
+	    		frustumPlanes[2],
+	    		frustumPlanes[3],
+	    		frustumPlanes[4],
+	    		frustumPlanes[5]);
 	}
+	
+	/**
+	 * Indicates whether or not an extent intersects this box.
+	 * 
+	 * @param extent the extent
+	 * 
+	 * @return true if the extent intersects this box, false otherwise
+	 * 
+	 * @see Frustum#intersects(Extent)
+	 */
+	public boolean intersects(Extent extent) {
+		return extent.intersects(this.getFrustum());
+	}
+	
+	/**
+	 * Indicates whether or not a line segment intersects this box.
+	 * 
+	 * @param pa one end of the line segment
+	 * @param pb the other end of the line segment
+	 *  
+	 * @return true if the line segment intersects or is contained in this box,
+	 *         false otherwise
+	 * 
+	 * @see Frustum#intersectsSegment(Vec4, Vec4)
+	 */
+	public boolean intersectsSegment(Vec4 pa, Vec4 pb) {
+		return this.getFrustum().intersectsSegment(pa, pb);
+	}
+	
+	/*
+	@Override
+	public Intersection[] intersect(Line line) {
+		Plane[] boxPlanes = new Plane[6];
+		
+		for (int index = 0; index < this.planes.length; index++) {
+			Vec4 planeNormal = this.planes[index].getNormal();
+			// expand box by epsilon for intersection		
+			boxPlanes[index] = new Plane(
+					planeNormal.x,
+					planeNormal.y,
+					planeNormal.z,
+					planeNormal.w - (PrecisionDouble.EPSILON * 0.1d));
+		}
+		
+		return WWMath.polytopeIntersect(line, boxPlanes);
+	}
+	*/
 	
 }

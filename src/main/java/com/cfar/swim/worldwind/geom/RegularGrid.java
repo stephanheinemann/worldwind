@@ -435,7 +435,7 @@ public class RegularGrid extends Box {
 	 * 
 	 * @return the cell indices that are associated with child cells
 	 */
-	private static int[] getCellIndices(double value, double length, int cells) {
+	protected static int[] getCellIndices(double value, double length, int cells) {
 		int index[] = {-1, -1};
 		
 		if ((new PrecisionDouble(value)).isInRange(0.0, length)) {
@@ -736,7 +736,7 @@ public class RegularGrid extends Box {
 		return this.getNeighbors(-1);
 	}
 	
-	// TODO: all neighborhood-related methods could be way more efficient if
+	// TODO: all neighborhood-related methods could be more efficient if
 	// a regular grid stores its coordinates in its parent if it is a child
 	
 	/**
