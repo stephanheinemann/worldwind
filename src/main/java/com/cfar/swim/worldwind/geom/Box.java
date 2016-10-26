@@ -622,6 +622,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @see Frustum#intersectsSegment(Vec4, Vec4)
 	 */
 	public boolean intersectsSegment(Vec4 pa, Vec4 pb) {
+		// TODO: the frustum method is buggy and detects false intersects
+		// (one successful plane clip is not sufficient)
 		return this.getFrustum().intersectsSegment(pa, pb);
 	}
 	

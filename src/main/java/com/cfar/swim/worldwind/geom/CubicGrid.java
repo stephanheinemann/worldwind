@@ -382,24 +382,40 @@ public class CubicGrid extends RegularGrid {
 	}
 	
 	/**
-	 * Computes the cell indices for a point in this cubic grid. 
+	 * Computes the cell indices for a point in this cubic grid favoring
+	 * specified directions to be applied in case of multiple matches.
 	 * 
 	 * @param point the point in grid coordinates
+	 * @param directions the favoring directions
 	 * 
-	 * @return the (minimum) grid cell coordinates for the point
-	 *         in this cubic grid
+	 * @return the grid cell coordinates for the point in this cubic grid
+	 *         favoring the directions
 	 */
-	private int[] computeIndices(Vec4 point) {
+	private int[] computeIndices(Vec4 point, int[] directions) {
 		int[] indices = new int[3];
 		
-		// TODO: this method could probably be placed in RegularGrid as getMinimumCellIndices
 		int[] rci = RegularGrid.getCellIndices(point.x, this.rLength, this.cells.length);
 		int[] sci = RegularGrid.getCellIndices(point.y, this.sLength, this.cells[0].length);
 		int[] tci = RegularGrid.getCellIndices(point.z, this.tLength, this.cells[0][0].length);
 		
-		indices[0] = (rci[0] != -1) ? rci[0] : rci[1];
-		indices[1] = (sci[0] != -1) ? sci[0] : sci[1];
-		indices[2] = (tci[0] != -1) ? tci[0] : tci[1];
+		// take directions into account to decide for the better index
+		if ((rci[0] != -1) && (rci[1] != -1)) {
+			indices[0] = (0 < directions[0]) ? Math.max(rci[0], rci[1]) : Math.min(rci[0], rci[1]);
+		} else {
+			indices[0] = (rci[0] != -1) ? rci[0] : rci[1];
+		}
+		
+		if ((sci[0] != -1) && (sci[1] != -1)) {
+			indices[1] = (0 < directions[1]) ? Math.max(sci[0], sci[1]) : Math.min(sci[0], sci[1]);
+		} else {
+			indices[1] = (sci[0] != -1) ? sci[0] : sci[1];
+		}
+		
+		if ((tci[0] != -1) && (tci[1] != -1)) {
+			indices[2] = (0 < directions[2]) ? Math.max(tci[0], tci[1]) : Math.min(tci[0], tci[1]);
+		} else {
+			indices[2] = (tci[0] != -1) ? tci[0] : tci[1];
+		}
 		
 		return indices;
 	}
@@ -409,20 +425,22 @@ public class CubicGrid extends RegularGrid {
 	 * traversal of this cubic grid using Bresenham's algorithm.
 	 * 
 	 * @param point the point in grid coordinates
+	 * @param directions the traversal directions
 	 * 
 	 * @return the minimum and maximum reference boundaries of the point
 	 */
-	private double[][] computeMinMax(Vec4 point) {
+	private double[][] computeMinMax(Vec4 point, int[] directions) {
 		double[][] minmax = new double[3][2];
 		double side = this.getChild(0, 0, 0).getLength();
+		int[] indices = this.computeIndices(point, directions);
 		
-		minmax[0][0] = side * Math.floor(point.x / side);
+		minmax[0][0] = side * indices[0];
 		minmax[0][1] = minmax[0][0] + side;
 		
-		minmax[1][0] = side * Math.floor(point.y / side);
+		minmax[1][0] = side * indices[1];
 		minmax[1][1] = minmax[1][0] + side;
 		
-		minmax[2][0] = side * Math.floor(point.z / side);
+		minmax[2][0] = side * indices[2];
 		minmax[2][1] = minmax[2][0] + side;
 		
 		return minmax;
@@ -434,12 +452,13 @@ public class CubicGrid extends RegularGrid {
 	 * 
 	 * @param source the source point in grid coordinates
 	 * @param target the target point in grid coordinates
+	 * @param directions the traversal directions
 	 * 
 	 * @return the reference distances of the two points
 	 */
-	private double[][] computeDistances(Vec4 source, Vec4 target) {
+	private double[][] computeDistances(Vec4 source, Vec4 target, int[] directions) {
 		double[][] distances = new double[3][2];
-		double[][] srcMinMax = this.computeMinMax(source);
+		double[][] srcMinMax = this.computeMinMax(source, directions);
 		double side = this.getChild(0, 0, 0).getLength();
 		PrecisionDouble dx = new PrecisionDouble(target.x - source.x);
 		PrecisionDouble dy = new PrecisionDouble(target.y - source.y);
@@ -512,67 +531,68 @@ public class CubicGrid extends RegularGrid {
 	public LinkedHashSet<Vec4> getIntersectionPoints(Vec4 source, Vec4 target, int depth) {
 		LinkedHashSet<PrecisionVec4> intersectionPoints = new LinkedHashSet<PrecisionVec4>();
 		
-		if (this.intersectsSegment(source, target)) {
-			// clip the end points of the segment to this cell
-			Vec4[] endPoints = Line.clipToFrustum(source, target, this.getFrustum());
-			// TODO: it seems clipping is not successful sometimes although an
-			// intersection has been tested using the same frustum expansion
-			if (null == endPoints) return new LinkedHashSet<Vec4>();
+		// clip the end points of the segment to this cell
+		Vec4[] endPoints = Line.clipToFrustum(source, target, this.getFrustum());
+		
+		// if this cell is intersected by the line segment
+		if (null != endPoints) {
 			intersectionPoints.add(new PrecisionVec4(endPoints[0]));
 			
+			// recurse for children if required
 			if ((depth != 0) && this.hasChildren()) {
-				// uniform grid intersection test using Bresenham's algorithm
-				// according to Christer Ericson: Real-Time Collision Detection
-				// (7.4.2 Uniform Grid Intersection Test)
 				Vec4 src = this.transformModelToBoxOrigin(endPoints[0]);
 				Vec4 tgt = this.transformModelToBoxOrigin(endPoints[1]);
 				
 				// compute primary step directions
 				int[] directions = this.computeDirections(src, tgt);
 				
-				// compute source and target coordinates
-				int[] srcIndices = this.computeIndices(src);
-				int[] tgtIndices = this.computeIndices(tgt);
+				// compute source and target child cell indices
+				int[] srcIndices = this.computeIndices(src, directions);
+				int[] tgtIndices = this.computeIndices(tgt, directions);
 				
-				// compute initial and step distances
-				double[][] distances = this.computeDistances(src, tgt);
-				
-				// compute all intersected children using Bresenham's algorithm
-				LinkedHashSet<CubicGrid> intersectedChildren = new LinkedHashSet<CubicGrid>();
-				
+				// while not at the target index
 				while (!Arrays.equals(srcIndices, tgtIndices)) {
-					intersectedChildren.add(this.getChild(
-							srcIndices[0], srcIndices[1], srcIndices[2]));
-					if ((distances[0][0] <= distances[1][0]) &&
-						(distances[0][0] <= distances[2][0])) {
-						// advance r-axis
-						distances[0][0] += distances[0][1];
+					CubicGrid intersectedChild = this.getChild(
+							srcIndices[0],
+							srcIndices[1],
+							srcIndices[2]);
+					// collect intersection points recursively in order
+					intersectionPoints.addAll(
+							intersectedChild.getIntersectionPoints(source, target, depth - 1)
+								.stream()
+								.map(PrecisionVec4::new)
+								.collect(Collectors.toCollection(LinkedHashSet<PrecisionVec4>::new)));
+					
+					// perform one step towards target index
+					endPoints = Line.clipToFrustum(source, target, intersectedChild.getFrustum());
+					CubicGrid nr = this.getChild(
+							srcIndices[0] + directions[0],
+							srcIndices[1],
+							srcIndices[2]);
+					CubicGrid ns = this.getChild(
+							srcIndices[0],
+							srcIndices[1] + directions[1],
+							srcIndices[2]);
+					
+					if ((null != nr) && (0 != directions[0]) && nr.contains(endPoints[1]) ) {
 						srcIndices[0] += directions[0];
-					
-					} else if (
-						(distances[1][0] <= distances[0][0]) &&
-						(distances[1][0] <= distances[2][0])) {
-						// advance s-axis
-						distances[1][0] += distances[1][1];
+					} else if ((null != ns) && (0 != directions[1]) && ns.contains(endPoints[1])) {
 						srcIndices[1] += directions[1];
-					
 					} else {
-						// advance t-axis
-						distances[2][0] += distances[2][1];
 						srcIndices[2] += directions[2];
 					}
 				}
-				intersectedChildren.add(this.getChild(
-						srcIndices[0], srcIndices[1], srcIndices[2]));
-				
-				// collect intersection points recursively
-				for (CubicGrid intersectedChild : intersectedChildren) {
-					intersectionPoints.addAll(
+				// target child cell
+				CubicGrid intersectedChild = this.getChild(
+						srcIndices[0],
+						srcIndices[1],
+						srcIndices[2]);
+				// collect intersection points recursively in order
+				intersectionPoints.addAll(
 						intersectedChild.getIntersectionPoints(source, target, depth - 1)
 							.stream()
 							.map(PrecisionVec4::new)
 							.collect(Collectors.toCollection(LinkedHashSet<PrecisionVec4>::new)));
-				}
 			}
 			
 			intersectionPoints.add(new PrecisionVec4(endPoints[1]));
