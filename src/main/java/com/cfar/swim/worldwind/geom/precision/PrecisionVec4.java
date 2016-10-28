@@ -120,4 +120,47 @@ public class PrecisionVec4 extends Vec4 implements Precision {
 		return this.original;
 	}
 	
+	/**
+	 * Indicates whether or not a specified vector is colinear to this
+	 * precision vector.
+	 * 
+	 * @param vector the vector
+	 * 
+	 * @return true if the vector is colinear to this precision vector,
+	 *         false otherwise
+	 */
+	public boolean isColinear(Vec4 vector) {
+		PrecisionDouble d = new PrecisionDouble(this.original.dot3(vector), this.precision);
+		return d.equals(new PrecisionDouble(1, this.precision));
+	}
+	
+	/**
+	 * Indicates whether or not a specified vector is orthonormal to this
+	 * precision vector.
+	 * 
+	 * @param vector the vector
+	 * 
+	 * @return true if the vector is orthonormal to this precision vector,
+	 *         false otherwise
+	 */
+	public boolean isOrthonormal(Vec4 vector) {
+		PrecisionDouble d = new PrecisionDouble(this.original.dot3(vector), this.precision);
+		return d.equals(new PrecisionDouble(0, this.precision));
+	}
+	
+	/**
+	 * Indicates whether or not two specified vectors are orthonormal to each
+	 * other and this precision vector.
+	 * 
+	 * @param a the first vector
+	 * @param b the second vector
+	 * 
+	 * @return true if the two vectors are orthonormal to each other and this
+	 *         precision vector
+	 */
+	public boolean areOrthonormal(Vec4 a, Vec4 b) {
+		PrecisionVec4 pa = new PrecisionVec4(a, this.precision);
+		return this.isOrthonormal(a) && this.isOrthonormal(b) && pa.isOrthonormal(b);
+	}
+	
 }

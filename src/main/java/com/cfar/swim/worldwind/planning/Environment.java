@@ -71,6 +71,15 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	// TODO: data could be made available via WXXM and IWXXM
 	
 	/**
+	 * Indicates whether or not this environment contains a position.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if this environment contains the position, false otherwise
+	 */
+	public boolean contains(Position position);
+	
+	/**
 	 * Indicates whether or not a position is a waypoint in this environment.
 	 * 
 	 * @param position the position in globe coordinates
@@ -221,40 +230,40 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getCost(ZonedDateTime start, ZonedDateTime end);
 	
 	/**
-	 * Gets the step cost from a position to its neighbor position of this
+	 * Gets the leg cost from an origin to a destination position within this
 	 * environment between a start and an end time given a cost policy and
 	 * risk policy.
 	 * 
-	 * @param position the position
-	 * @param neighbor its neighbor position
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
 	 * @param start the start time
 	 * @param end the end time
 	 * @param costPolicy the cost policy
 	 * @param riskPolicy the risk policy
 	 * 
-	 * @return the step cost from a position to its neighbor position
+	 * @return the leg cost from the origin to the destination position
 	 */
-	public double getStepCost(
-			Position position, Position neighbor,
+	public double getLegCost(
+			Position origin, Position destination,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy);
 	
 	/**
-	 * Gets the step cost from the center of this environment to the center of
-	 * a neighboring environment between a start and an end time given a cost
+	 * Gets the leg cost from the center of this environment to the center of
+	 * another environment between a start and an end time given a cost
 	 * policy and risk policy.
 	 * 
-	 * @param neighbor the neighboring environment
+	 * @param destination the destination environment
 	 * @param start the start time
 	 * @param end the end time
 	 * @param costPolicy the cost policy
 	 * @param riskPolicy the risk policy
 	 * 
-	 * @return the step cost from the center of this environment to the center
-	 *         of the neighboring environment
+	 * @return the leg cost from the center of this environment to the center
+	 *         of the destination environment
 	 */
-	public double getStepCost(
-			Environment neighbor,
+	public double getLegCost(
+			Environment destination,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy);
 	

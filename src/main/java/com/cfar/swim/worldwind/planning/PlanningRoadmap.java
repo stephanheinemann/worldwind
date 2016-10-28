@@ -165,7 +165,7 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public double getStepCost(
+	public double getLegCost(
 			Position position, Position neighbor, 
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
@@ -174,7 +174,7 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public double getStepCost(
+	public double getLegCost(
 			Environment neighbor,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
@@ -196,6 +196,12 @@ public class PlanningRoadmap implements Environment {
 
 	@Override
 	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean contains(Position position) {
 		// TODO Auto-generated method stub
 		return false;
 	}

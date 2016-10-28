@@ -96,7 +96,7 @@ public class PlanningGridTest {
         assertEquals(false, child.isWaypoint(position));
         assertEquals(false, planningGrid.isWaypoint(position));
         assertEquals(true, child.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
-        assertEquals(true, planningGrid.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));   
+        assertEquals(true, planningGrid.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
 	}
 	
 	@Test
@@ -110,7 +110,7 @@ public class PlanningGridTest {
         
         PlanningGrid child = planningGrid.getChild(0, 0, 0);
         assertEquals(1d, child.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
-        assertEquals(1d / child.getNormalizer(), child.getStepCost(
+        assertEquals(1d / child.getNormalizer(), child.getLegCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
@@ -118,13 +118,13 @@ public class PlanningGridTest {
         		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
         
         child.addCostInterval(new CostInterval("obstacle1", ZonedDateTime.now(), ZonedDateTime.now(), 50d));
-        assertEquals(Double.POSITIVE_INFINITY, child.getStepCost(
+        assertEquals(Double.POSITIVE_INFINITY, child.getLegCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
-        assertEquals(51d / child.getNormalizer(), child.getStepCost(
+        assertEquals(51d / child.getNormalizer(), child.getLegCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
@@ -133,13 +133,13 @@ public class PlanningGridTest {
         
         child.addCostInterval(new CostInterval("obstacle1", ZonedDateTime.now(), ZonedDateTime.now(), 50d));
         child.addCostInterval(new CostInterval("obstacle2", ZonedDateTime.now(), ZonedDateTime.now(), 30d));
-        assertEquals(Double.POSITIVE_INFINITY, child.getStepCost(
+        assertEquals(Double.POSITIVE_INFINITY, child.getLegCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),
         		ZonedDateTime.now().plusYears(10),
         		CostPolicy.AVERAGE, RiskPolicy.EFFECTIVENESS), PrecisionDouble.EPSILON);
-        assertEquals(81d / child.getNormalizer(), child.getStepCost(
+        assertEquals(81d / child.getNormalizer(), child.getLegCost(
         		child.getCornerPositions()[0],
         		child.getCornerPositions()[1],
         		ZonedDateTime.now().minusYears(10),

@@ -35,9 +35,12 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Frustum;
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Matrix;
 import gov.nasa.worldwind.geom.Plane;
+import gov.nasa.worldwind.geom.TransformationMatrix;
 import gov.nasa.worldwind.geom.Vec4;
+import gov.nasa.worldwind.util.Logging;
 
 /**
  * Realizes a geometric box that allows for convenient containment and
@@ -94,14 +97,26 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	protected Vec4 origin = Vec4.ZERO;
 	
 	/**
+	 * the local transformation matrix of this box
+	 */
+	protected Matrix toLocalOrigin = null;
+	
+	/**
+	 * {@inheritDoc}
 	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4)
 	 */
 	public Box(Vec4 point) {
-		super(point);
+		// TODO: file bug report for worldwind 2.0 
+		// gov.nasa.worldwind.geom.Box#Box(Vec4)
+		// constructs box completely wrong - center and dimensions 
+		//super(point);
+		this(Box.createInstance(point));
 		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
 	
 	/**
+	 * {@inheritDoc}
 	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4[], double, double, double, double, double, double)
 	 */
 	public Box(
@@ -111,6 +126,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			double tMin, double tMax) {
 		super(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
 	
 	/**
@@ -137,6 +153,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			box.getPlanes()
 			);
 		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
 	
 	/**
@@ -155,6 +172,80 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			axes[1].dot3(origin), axes[1].dot3(origin) + sLength,
 			axes[2].dot3(origin), axes[2].dot3(origin) + tLength);
 		this.origin = origin;
+		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
+	}
+	
+	/**
+	 * {@inheritDoc}
+	 */
+	protected Box(
+			Vec4 bottomCenter, Vec4 topCenter, Vec4 center,
+			Vec4 r, Vec4 s, Vec4 t, Vec4 ru, Vec4 su, Vec4 tu,
+	        double rLength, double sLength, double tLength,
+	        Plane[] planes) {
+		super(bottomCenter, topCenter, center, r, s, t, ru, su, tu, rLength, sLength, tLength, planes);
+		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
+		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
+	}
+	
+	/**
+	 * Creates a new unit box centered at a specified point.
+	 * 
+	 * @param center the center of the unit box in model model coordinates
+	 * 
+	 * @return a new unit box centered at the center point
+	 */
+	protected static Box createInstance(Vec4 center) {
+		if (center == null)
+        {
+            String msg = Logging.getMessage("nullValue.PointIsNull");
+            Logging.logger().severe(msg);
+            throw new IllegalArgumentException(msg);
+        }
+
+        Vec4 ru = new Vec4(1, 0, 0, 1);
+        Vec4 su = new Vec4(0, 1, 0, 1);
+        Vec4 tu = new Vec4(0, 0, 1, 1);
+
+        Vec4 r = ru;
+        Vec4 s = su;
+        Vec4 t = tu;
+
+        double rLength = 1d;
+        double sLength = 1d;
+        double tLength = 1d;
+
+        // Plane normals point outwards from the box.
+        Plane[] planes = new Plane[6];
+        double d = center.getLength3();
+        double dr = (center.x < 0) ? 0.5d : -0.5d;
+        double ds = (center.y < 0) ? 0.5d : -0.5d;
+        double dt = (center.z < 0) ? 0.5d : -0.5d;
+        planes[0] = new Plane(-ru.x, -ru.y, -ru.z, d + dr);
+        planes[1] = new Plane(+ru.x, +ru.y, +ru.z, d - dr);
+        planes[2] = new Plane(-su.x, -su.y, -su.z, d + ds);
+        planes[3] = new Plane(+su.x, +su.y, +su.z, d - ds);
+        planes[4] = new Plane(-tu.x, -tu.y, -tu.z, d + dt);
+        planes[5] = new Plane(+tu.x, +tu.y, +tu.z, d - dt);
+
+        Vec4 rHalf = r.multiply3(0.5);
+        Vec4 topCenter = center.add3(rHalf);
+        Vec4 bottomCenter = center.subtract3(rHalf);
+        
+        return new Box(
+        		bottomCenter, topCenter, center,
+        		r, s, t, ru, su, tu,
+		        rLength, sLength, tLength,
+		        planes);
+	}
+	
+	/**
+	 * Gets the axes of this box.
+	 * 
+	 * @return the axes of this box
+	 */
+	public Vec4[] getAxes() {
+		return new Vec4[] {this.r, this.s, this.t };
 	}
 	
 	/**
@@ -163,7 +254,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return the unit axes of this box
 	 */
 	public Vec4[] getUnitAxes() {
-		return new Vec4[]{this.getUnitRAxis(), this.getUnitSAxis(), this.getUnitTAxis()};
+		return new Vec4[] {this.ru, this.su, this.tu};
 	}
 	
 	/**
@@ -384,10 +475,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return the box vector
 	 */
 	public Vec4 transformModelToBoxOrigin(Vec4 modelPoint) {
-		// TODO: box orientation seems to be arbitrary and requires corner point calculation instead of direct transformation
-		Vec4 localPoint = this.transformModelToBoxCenter(modelPoint);
-		Vec4 halfDiagonal = (new Vec4(this.rLength, this.sLength, this.tLength)).multiply3(0.5);
-		return localPoint.add3(halfDiagonal);
+		return modelPoint.transformBy4(this.toLocalOrigin);
 	}
 	
 	/**
@@ -399,9 +487,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return the box vector
 	 */
 	public Vec4 transformModelToBoxCenter(Vec4 modelPoint) {
-		Vec4[] unitAxes = this.getUnitAxes();
-		Vec4 origin = this.getCenter();
-		Matrix transformMatrix = Matrix.fromLocalOrientation(origin , unitAxes).getInverse();
+		Matrix transformMatrix = TransformationMatrix.toLocalOrientation(this.getCenter(), this.getAxes());
 		return modelPoint.transformBy4(transformMatrix);
 	}
 	
@@ -569,7 +655,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * 
 	 * @return a frustum representation of this box
 	 */
-	protected Frustum getFrustum() {
+	public Frustum getFrustum() {
 		// TODO: other intersection methods can be removed
 		Plane[] frustumPlanes = new Plane[6];
 		
@@ -622,9 +708,11 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @see Frustum#intersectsSegment(Vec4, Vec4)
 	 */
 	public boolean intersectsSegment(Vec4 pa, Vec4 pb) {
-		// TODO: the frustum method is buggy and detects false intersects
-		// (one successful plane clip is not sufficient)
-		return this.getFrustum().intersectsSegment(pa, pb);
+		// TODO: file bug report for worldwind 2.0 
+		// gov.nasa.worldwind.geom.Frustum#intersectsSegment(Vec4)
+		// detects false intersects since one successful plane clip is not sufficient
+		//return this.getFrustum().intersectsSegment(pa, pb);
+		return (null != Line.clipToFrustum(pa, pb, this.getFrustum()));
 	}
 	
 	/*

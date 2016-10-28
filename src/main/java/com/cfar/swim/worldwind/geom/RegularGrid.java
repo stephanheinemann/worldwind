@@ -507,20 +507,7 @@ public class RegularGrid extends Box {
 							if (s != -1) {
 								for (int t : tCellIndices) {
 									if (t != -1) {
-										// TODO: cells seem to be oriented arbitrarily although constructed consistently
-										int ri = this.cells.length -1 - r;
-										int si = this.cells[0].length -1 - s;
-										int ti = this.cells[0][0].length - 1 - t;
-										
-										// TODO: checking containment for all orientation possibilities is not a nice solution
 										lookedUpCells.addAll(this.cells[r][s][t].lookupCells(modelPoint, depth - 1));
-										lookedUpCells.addAll(this.cells[r][s][ti].lookupCells(modelPoint, depth - 1));
-										lookedUpCells.addAll(this.cells[r][si][t].lookupCells(modelPoint, depth - 1));
-										lookedUpCells.addAll(this.cells[r][si][ti].lookupCells(modelPoint, depth - 1));
-										lookedUpCells.addAll(this.cells[ri][s][t].lookupCells(modelPoint, depth - 1));
-										lookedUpCells.addAll(this.cells[ri][s][ti].lookupCells(modelPoint, depth - 1));
-										lookedUpCells.addAll(this.cells[ri][si][t].lookupCells(modelPoint, depth - 1));
-										lookedUpCells.addAll(this.cells[ri][si][ti].lookupCells(modelPoint, depth - 1));
 									}
 								}
 							}

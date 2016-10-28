@@ -36,6 +36,7 @@ import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -138,6 +139,28 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		Box b = new Box(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 		return new PlanningGrid(new Cube(b.getOrigin(), axes, b.getRLength()));
+	}
+	
+	/**
+	 * Indicates whether or not this planning grid contains a position.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if this planning grid contains the position,
+	 *         false otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
+	 * @see Environment#contains(Position)
+	 * @see Box#contains(Vec4)
+	 */
+	@Override
+	public boolean contains(Position position) {
+		if (null != this.globe) {
+			return super.contains(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
 	}
 	
 	/**
@@ -803,6 +826,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return the intersection positions of the straight leg with the cells of
 	 *         this planning grid
 	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
 	 * @see CubicGrid#getIntersectionPoints(Vec4, Vec4)
 	 */
 	public Iterable<? extends Position> getIntersectedPositions(Position origin, Position destination) {
@@ -1046,142 +1071,153 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Gets the step cost from a position to its neighbor position of this
+	 * Gets the step cost from an origin to a destination position within this
 	 * planning grid between a start and an end time given a cost policy and
 	 * risk policy.
 	 * 
-	 * @param position the position
-	 * @param neighbor its neighbor position
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
 	 * @param start the start time
 	 * @param end the end time
 	 * @param costPolicy the cost policy
 	 * @param riskPolicy the risk policy
 	 * 
-	 * @return the step cost from a position to its neighbor position
+	 * @return the step cost from the origin to the destination position
 	 */
-	@Override
-	public double getStepCost(
-			Position position, Position neighbor,
+	private double getStepCost(
+			Position origin, Position destination,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		
-		double stepCost = Double.POSITIVE_INFINITY;
+		double stepCost = 0d;
 		
-		// TODO: not very efficient implementation
-		// TODO: this.areAdjacent in any directions
-		// TODO: the only requirement is actually that both positions are
-		// contained in the same grid cell, regardless of being a corner
-		// or any point on the planes, hence, if they share a grid cell
-		// all is good (which is already reflected in stepCells)
-		// TODO: this method can be used to compute any leg-segment costs
-		// for a straight-line (visibility) connection with pinch points
-		// in cut cells
-		// TODO: get steps / segments of a leg
-		//if (this.areNeighbors(position, neighbor)) {
-			// find shared adjacent cells
-			Set<? extends PlanningGrid> stepCells = this.lookupCells(position);
-			stepCells.retainAll(this.lookupCells(neighbor));
-			
-			List<Double> costs = new ArrayList<Double>();
-			
-			// compute initial distance cost
-			// explicit distance cost computation is required if neighboring
-			// cells are of different size (different level in the hierarchy)
-			double distance = this.getNormalizedDistance(position, neighbor);
-			
-			// compute cost of each adjacent cell
-			for (PlanningGrid stepCell : stepCells) {
-				// add all (weighted) cost of the cell
-				double cellCost = stepCell.getCost(start, end);
-				// boost cell cost if local risk is not acceptable
-				if (riskPolicy.satisfies(cellCost - 1)) {
-					costs.add(distance * cellCost);
-				} else {
-					costs.add(Double.POSITIVE_INFINITY);
-				}
-			}
-			
-			// apply cost policy for final cost
-			switch (costPolicy) {
-			case MINIMUM:
-				stepCost = costs.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
-				break;
-			case MAXIMUM:
-				stepCost = costs.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
-				break;
-			case AVERAGE:
-				stepCost = costs.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
-				break;
-			}
-			
-		//}
+		// compute participating cells
+		Set<? extends PlanningGrid> segmentCells = this.lookupCells(origin);
+		segmentCells.retainAll(this.lookupCells(destination));
 		
-		return stepCost;
-	}
-
-	/**
-	 * Gets the step cost from the center of this planning grid to the center
-	 * of a neighboring environment between a start and an end time given a
-	 * cost policy and risk policy. 
-	 * 
-	 * @param neighbor the neighboring environment
-	 * @param start the start time
-	 * @param end the end time
-	 * @param costPolicy the cost policy
-	 * @param riskPolicy the risk policy
-	 * 
-	 * @return the step cost from the center of this environment to the center
-	 *         of the neighboring environment
-	 */
-	@Override
-	public double getStepCost(
-			Environment neighbor,
-			ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		List<Double> costs = new ArrayList<Double>();
 		
-		double stepCost = Double.POSITIVE_INFINITY;
+		// compute initial distance cost
+		// explicit distance cost computation is required if neighboring
+		// cells are of different size (different level in the hierarchy)
+		double distance = this.getNormalizedDistance(origin, destination);
 		
-		// TODO: not very efficient implementation
-		if (this.areNeighbors(neighbor)) {
-			List<Double> costs = new ArrayList<Double>();
-			
-			// compute initial distance cost
-			double distance = this.getNormalizedDistance(
-					this.getCenterPosition(), neighbor.getCenterPosition());
-			
-			// add all (weighted) cost of the cells
-			double cellCost = this.getCost(start, end);
-			double neighborCost = neighbor.getCost(start, end);
-			
+		// compute cost of each adjacent cell
+		for (PlanningGrid segmentCell : segmentCells) {
+			// add all (weighted) cost of the cell
+			double cellCost = segmentCell.getCost(start, end);
 			// boost cell cost if local risk is not acceptable
 			if (riskPolicy.satisfies(cellCost - 1)) {
 				costs.add(distance * cellCost);
 			} else {
 				costs.add(Double.POSITIVE_INFINITY);
 			}
-			
-			// boost neighbor cost if local risk is not acceptable
-			if (riskPolicy.satisfies(neighborCost -1)) {
-				costs.add(distance * neighborCost);
-			} else {
-				costs.add(Double.POSITIVE_INFINITY);
-			}
-			
-			// apply cost policy for final cost
-			switch (costPolicy) {
-			case MINIMUM:
-				stepCost = costs.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
-				break;
-			case MAXIMUM:
-				stepCost = costs.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
-				break;
-			case AVERAGE:
-				stepCost = costs.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
-				break;
-			}
+		}
+		
+		// apply cost policy for final cost
+		switch (costPolicy) {
+		case MINIMUM:
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
+			break;
+		case MAXIMUM:
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
+			break;
+		case AVERAGE:
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
+			break;
 		}
 		
 		return stepCost;
+	}
+	
+	/**
+	 * Gets the leg cost from an origin to a destination position within this
+	 * planning grid between a start and an end time given a cost policy and
+	 * risk policy.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
+	 * 
+	 * @return the leg cost from the origin to the destination position
+	 * 
+	 * @see Environment#getLegCost(Position, Position, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
+	 */
+	@Override
+	public double getLegCost(
+			Position origin, Position destination,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		
+		double legCost = Double.POSITIVE_INFINITY;
+		
+		// compute all intersection positions on this straight leg
+		Iterator<? extends Position> positionIterator =
+				this.getIntersectedPositions(origin, destination).iterator();
+		
+		// compute the cost of each leg segment
+		if (positionIterator.hasNext()) {
+			legCost = 0d;
+			Position current = positionIterator.next();
+			
+			while (positionIterator.hasNext()) {
+				Position next = positionIterator.next();
+				legCost += this.getStepCost(
+						current, next, start, end, costPolicy, riskPolicy);
+				current = next;
+			}
+		}
+		
+		return legCost;
+	}
+
+	/**
+	 * Gets the leg cost from the center of this planning grid to the center
+	 * of another environment between a start and an end time given a
+	 * cost policy and risk policy. 
+	 * 
+	 * @param destination the destination environment
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
+	 * 
+	 * @return the leg cost from the center of this environment to the center
+	 *         of the destination environment
+	 * 
+	 * @see Environment#getLegCost(Environment, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
+	 */
+	@Override
+	public double getLegCost(
+			Environment destination,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		
+		double legCost = Double.POSITIVE_INFINITY;
+		
+		// compute all intersection positions on this straight leg
+		Iterator<? extends Position> positionIterator =
+				this.getIntersectedPositions(
+						this.getCenterPosition(),
+						destination.getCenterPosition()).iterator();
+		
+		// compute the cost of each leg segment
+		if (positionIterator.hasNext()) {
+			legCost = 0d;
+			Position current = positionIterator.next();
+			
+			while (positionIterator.hasNext()) {
+				Position next = positionIterator.next();
+				legCost += this.getStepCost(
+						current, next, start, end, costPolicy, riskPolicy);
+				current = next;
+			}
+		}
+		
+		return legCost;
 	}
 	
 }

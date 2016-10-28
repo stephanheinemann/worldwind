@@ -416,10 +416,15 @@ public class RegularGridTest {
 		Position origin = tsGrid.getCornerPositions()[0];
 		Position destination = tsGrid.getCornerPositions()[6];
 		
+		/*
 		Sphere originSphere = new Sphere(tsGrid.getCorners()[0], 50000);
 		Sphere destinationSphere = new Sphere(tsGrid.getCorners()[6], 50000);
 		((RenderableLayer) layer).addRenderable(originSphere);
 		((RenderableLayer) layer).addRenderable(destinationSphere);
+		Vec4 pv = new Vec4(-889843.9756064053, 5581603.786233872, 3111118.000796212, 1.0);
+		Sphere ps = new Sphere(pv, 5000);
+		((RenderableLayer) layer).addRenderable(ps);
+		*/
 		
 		ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, tsGrid);
 		Path path = planner.plan(origin, destination, ZonedDateTime.now());
@@ -487,8 +492,8 @@ public class RegularGridTest {
 		//Set<PlanningGrid> intersectedCells = new HashSet<PlanningGrid>();
 		PlanningGrid child1 = largeGrid.getChild(0, 9, 0);
 		PlanningGrid child2 = largeGrid.getChild(0, 9, 4);
-		Position o1 = largeGrid.getGlobe().computePositionFromPoint(/*largeGrid.getCorners()[0]*//*child1.getCorners()[5]*/largeGrid.getTopCenter());
-		Position o2 = largeGrid.getGlobe().computePositionFromPoint(/*largeGrid.getCorners()[6]*//*child2.getCorners()[5]*/largeGrid.getBottomCenter());
+		Position o1 = largeGrid.getGlobe().computePositionFromPoint(/*largeGrid.getCorners()[0]*//*child1.getCorners()[5]*/largeGrid.getBottomCenter());
+		Position o2 = largeGrid.getGlobe().computePositionFromPoint(/*largeGrid.getCorners()[6]*/child2.getCorners()[5]/*largeGrid.getBottomCenter()*/);
 		Path ip = new Path(largeGrid.getIntersectedPositions(o1, o2));
 		ip.setVisible(true);
 		ip.setShowPositions(true);
