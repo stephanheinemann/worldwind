@@ -50,6 +50,7 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
+import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
@@ -454,6 +455,7 @@ public class RegularGridTest {
 		path.getAttributes().setOutlineOpacity(0.5d);
 		((RenderableLayer) layer).addRenderable(path);
 		
+		// A*
 		Position paris = new Position(Angle.fromDegrees(48.864716d), Angle.fromDegrees(2.349014d), 10000);
 		Position goal = tsGrid.getChild(1, 3, 1).getCenterPosition();
 		A320 a320 = new A320(paris, 5000, CombatIdentification.FRIEND);
@@ -469,10 +471,22 @@ public class RegularGridTest {
 		path2.getAttributes().setOutlineOpacity(0.5d);
 		((RenderableLayer) layer).addRenderable(path2);
 		
+		// Theta*
 		for (Waypoint p : planner2.getPlan()) {
 			GlobeAnnotation ga = new GlobeAnnotation(p.getEto().toString() , p);
 			((RenderableLayer) layer).addRenderable(ga);
 		}
+		
+		ThetaStarPlanner planner3 = new ThetaStarPlanner(a320, tsGrid);
+		Path path3 = planner3.plan(paris, goal, start);
+		path3.setVisible(true);
+		path3.setShowPositions(true);
+		path3.setDrawVerticals(true);
+		path3.setAttributes(new BasicShapeAttributes());
+		path3.getAttributes().setOutlineMaterial(Material.RED);
+		path3.getAttributes().setOutlineWidth(5d);
+		path3.getAttributes().setOutlineOpacity(0.5d);
+		((RenderableLayer) layer).addRenderable(path3);
 		
 		/*
 		Set<? extends PlanningGrid> ics = largeGrid.getIntersectedCells(

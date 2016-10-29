@@ -30,42 +30,87 @@
 package com.cfar.swim.worldwind.ai.thetastar;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 
-import com.cfar.swim.worldwind.ai.AbstractPlanner;
+import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
-import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
 
-public class ThetaStarPlanner extends AbstractPlanner {
-	
+
+/**
+ * Realizes a Theta* planner that plans a trajectory of an aircraft
+ * in an environment considering a local cost and risk policy.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public class ThetaStarPlanner extends ForwardAStarPlanner {
+
+	/**
+	 * Constructs a basic Theta* planner for a specified aircraft and
+	 * environment using default local cost and risk policies.
+	 * 
+	 * @param aircraft the aircraft
+	 * @param environment the environment
+	 */
 	public ThetaStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 	}
 	
+	/**
+	 * Computes the estimated cost of a specified target waypoint when reached
+	 * via a specified source waypoint. A straight connection between the
+	 * parent of the specified source waypoint and the specified target
+	 * waypoint is also considered to create an any-angle path.
+	 * 
+	 * @param source the source waypoint in globe coordinates
+	 * @param target the target waypoint in globe coordinates
+	 */
 	@Override
-	public Path plan(Position origin, Position destination, ZonedDateTime eto) {
-		Environment environment = this.getEnvironment();
-		environment.getNeighbors(origin);
-		environment.getNeighbors(destination);
+	protected void computeCost(Waypoint source, Waypoint target) {
+		Path leg = new Path(source, target);
+		Capabilities capabilities = this.getAircraft().getCapabilities();
+		Globe globe = this.getEnvironment().getGlobe();
+		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
-		// TODO Auto-generated method stub		
-		return new Path(origin, destination);
-	}
-
-	@Override
-	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime eto) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public List<? extends Waypoint> getPlan() {
-		// TODO Auto-generated method stub
-		return null;
+		Waypoint parent = null;
+		double straightCost = Double.POSITIVE_INFINITY;
+		double straightTargetG = Double.POSITIVE_INFINITY;
+		ZonedDateTime straightEnd = null;
+		
+		// attempt to plan a straight leg from source's parent to target
+		if (null != source.getParent()) {
+			parent = source.getParent();
+			Path straightLeg = new Path(parent, target);
+			straightEnd = capabilities.getEstimatedTime(straightLeg, globe, parent.getEto());
+			
+			straightCost = this.getEnvironment().getLegCost(
+				parent, target,
+				parent.getEto(), straightEnd,
+				this.getCostPolicy(), this.getRiskPolicy());
+			straightTargetG = parent.getG() + straightCost;
+		}
+			
+		double cost = this.getEnvironment().getLegCost(
+				source, target,
+				source.getEto(), end,
+				this.getCostPolicy(), this.getRiskPolicy());
+		double targetG = source.getG() + cost;
+		
+		// take the better of the two trajectories
+		if ((straightTargetG < targetG) && (straightTargetG < target.getG())) {
+			target.setParent(parent);
+			target.setG(straightTargetG);
+			target.setEto(straightEnd);
+		} else if (targetG < target.getG()) {
+			target.setParent(source);
+			target.setG(targetG);
+			target.setEto(end);
+		}
 	}
 
 }
