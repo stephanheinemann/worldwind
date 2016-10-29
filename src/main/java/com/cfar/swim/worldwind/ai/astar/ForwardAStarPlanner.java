@@ -153,7 +153,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		Globe globe = this.getEnvironment().getGlobe();
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
-		double cost = this.getEnvironment().getLegCost(
+		double cost = this.getEnvironment().getStepCost(
 				source, target,
 				source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy());

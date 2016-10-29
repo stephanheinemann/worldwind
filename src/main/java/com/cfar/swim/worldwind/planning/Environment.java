@@ -230,6 +230,25 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getCost(ZonedDateTime start, ZonedDateTime end);
 	
 	/**
+	 * Gets the step cost from an origin to a destination position within this
+	 * environment between a start and an end time given a cost policy and
+	 * risk policy.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
+	 * 
+	 * @return the step cost from the origin to the destination position
+	 */
+	public double getStepCost(
+			Position origin, Position destination,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy);
+	
+	/**
 	 * Gets the leg cost from an origin to a destination position within this
 	 * environment between a start and an end time given a cost policy and
 	 * risk policy.

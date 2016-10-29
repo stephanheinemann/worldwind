@@ -206,4 +206,11 @@ public class PlanningRoadmap implements Environment {
 		return false;
 	}
 
+	@Override
+	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

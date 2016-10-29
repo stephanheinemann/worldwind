@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.awt.Color;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
@@ -930,11 +931,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Set<? extends PlanningGrid> getNeighbors() {
-		// TODO: consider only flat neighbors
-		// if a neighbor contains children, then planning has to be refined
-		// if planning is done via corners (not centers), then connecting
-		// grid cells are easily found
-		// TODO: parents should possibly aggregate costs
 		return (Set<PlanningGrid>) super.getNeighbors();
 	}
 	
@@ -1084,7 +1080,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return the step cost from the origin to the destination position
 	 */
-	private double getStepCost(
+	public double getStepCost(
 			Position origin, Position destination,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
@@ -1094,6 +1090,11 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		// compute participating cells
 		Set<? extends PlanningGrid> segmentCells = this.lookupCells(origin);
 		segmentCells.retainAll(this.lookupCells(destination));
+		
+		// an invalid step results in infinite costs
+		if (segmentCells.isEmpty()) {
+			return Double.POSITIVE_INFINITY;
+		}
 		
 		List<Double> costs = new ArrayList<Double>();
 		
@@ -1154,6 +1155,11 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		double legCost = Double.POSITIVE_INFINITY;
 		
+		// compute leg performance
+		Duration legDuration = Duration.between(start, end);
+		double legDistance = this.getDistance(origin, destination);
+		double legSpeed = legDistance / legDuration.getSeconds();
+		
 		// compute all intersection positions on this straight leg
 		Iterator<? extends Position> positionIterator =
 				this.getIntersectedPositions(origin, destination).iterator();
@@ -1161,12 +1167,21 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		// compute the cost of each leg segment
 		if (positionIterator.hasNext()) {
 			legCost = 0d;
+			ZonedDateTime currentEto = start;
 			Position current = positionIterator.next();
 			
 			while (positionIterator.hasNext()) {
 				Position next = positionIterator.next();
+				
+				// compute step performance
+				double stepDistance = this.getDistance(current, next);
+				Duration stepDuration =  Duration.ofSeconds(Math.round((stepDistance / legSpeed)));
+				ZonedDateTime nextEto = currentEto.plus(stepDuration);
+				
 				legCost += this.getStepCost(
-						current, next, start, end, costPolicy, riskPolicy);
+						current, next, currentEto, nextEto, costPolicy, riskPolicy);
+				
+				currentEto = nextEto;
 				current = next;
 			}
 		}
@@ -1198,6 +1213,12 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		double legCost = Double.POSITIVE_INFINITY;
 		
+		// compute leg performance
+		Duration legDuration = Duration.between(start, end);
+		double legDistance = this.getDistance(
+				this.getCenterPosition(), destination.getCenterPosition());
+		double legSpeed = legDistance / legDuration.getSeconds();
+		
 		// compute all intersection positions on this straight leg
 		Iterator<? extends Position> positionIterator =
 				this.getIntersectedPositions(
@@ -1207,12 +1228,21 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		// compute the cost of each leg segment
 		if (positionIterator.hasNext()) {
 			legCost = 0d;
+			ZonedDateTime currentEto = start;
 			Position current = positionIterator.next();
 			
 			while (positionIterator.hasNext()) {
 				Position next = positionIterator.next();
+				
+				// compute step performance
+				double stepDistance = this.getDistance(current, next);
+				Duration stepDuration =  Duration.ofSeconds(Math.round((stepDistance / legSpeed)));
+				ZonedDateTime nextEto = currentEto.plus(stepDuration);
+				
 				legCost += this.getStepCost(
-						current, next, start, end, costPolicy, riskPolicy);
+						current, next, currentEto, nextEto, costPolicy, riskPolicy);
+				
+				currentEto = nextEto;
 				current = next;
 			}
 		}

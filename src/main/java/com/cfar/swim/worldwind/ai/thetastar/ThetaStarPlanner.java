@@ -95,7 +95,7 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 			straightTargetG = parent.getG() + straightCost;
 		}
 			
-		double cost = this.getEnvironment().getLegCost(
+		double cost = this.getEnvironment().getStepCost(
 				source, target,
 				source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy());
