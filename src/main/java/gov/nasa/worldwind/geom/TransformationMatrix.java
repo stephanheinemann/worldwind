@@ -66,6 +66,7 @@ public final class TransformationMatrix extends Matrix {
 		Vec4 f = new Vec4(m13, m23, m33);
 		
 		if (!(new PrecisionVec4(s, 2).areOrthonormal(u, f))) {
+			// TODO: review message resource bundle
 			String msg = Logging.getMessage("generic.NonOrthonormalVectors");
 			Logging.logger().severe(msg);
 			throw new IllegalArgumentException(msg);

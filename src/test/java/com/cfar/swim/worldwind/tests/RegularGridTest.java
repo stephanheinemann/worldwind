@@ -69,8 +69,10 @@ import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
 import gov.nasa.worldwind.BasicModel;
+import gov.nasa.worldwind.Configuration;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.WorldWindow;
+import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.LatLon;
@@ -120,6 +122,10 @@ public class RegularGridTest {
             this.pack();
             wwd.setModel(new BasicModel());
             model = wwd.getModel();
+            
+            Configuration.setValue(
+            		AVKey.MIL_STD_2525_ICON_RETRIEVER_PATH,
+            		ClassLoader.getSystemResource("milstd2525"));
         
             RenderableLayer renderableLayer = new RenderableLayer();
             LayerList layers = wwd.getModel().getLayers();
