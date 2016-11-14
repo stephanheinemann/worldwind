@@ -29,13 +29,15 @@
  */
 package com.cfar.swim.worldwind.util;
 
+import gov.nasa.worldwind.render.Renderable;
+
 /**
  * Describes a depictable object.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface Depictable {
+public interface Depictable extends Renderable {
 
 	/**
 	 * Gets the depiction of this depictable.

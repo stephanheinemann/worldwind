@@ -32,8 +32,12 @@ package com.cfar.swim.worldwind.planning;
 import java.time.ZonedDateTime;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
+import com.cfar.swim.worldwind.util.Depictable;
+import com.cfar.swim.worldwind.util.Depiction;
 
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.render.Renderable;
 
 /**
  * Realizes a waypoint of a trajectory featuring estimates for costs and time.
@@ -41,7 +45,34 @@ import gov.nasa.worldwind.geom.Position;
  * @author Stephan Heinemann
  *
  */
-public class Waypoint extends Position implements Comparable<Waypoint> {
+public class Waypoint extends Position implements Comparable<Waypoint>, Depictable {
+	
+	/** the symbol identification code for an action waypoint */
+	public static final String SICD_NAV_WAYPOINT_ACTION = "GFGPGPPW------X"; // G*GPGPPW--****X
+	
+	/** the symbol identification code for a reference waypoint */
+	public static final String SIDC_NAV_WAYPOINT_REFERENCE = "GFGPGPRW------X"; // G*GPGPRW--****X
+	
+	/** the symbol identification code for a corridor waypoint */
+	public static final String SIDC_NAV_WAYPOINT_CORRIDOR = "GFGPGPRC------X"; // G*GPGPRC--****X
+	
+	/** the symbol identification code for a point of interest */
+	public static final String SIDC_NAV_WAYPOINT_POI = "GFGPGPRI------X"; //G*GPGPRI--****X
+	
+	/** the symbol identification code for a route waypoint */
+	public static final String SICD_NAV_WAYPOINT_ROUTE = "GFGPGPOW------X"; // G*GPGPO---****X, G*GPGPOW--****X
+	
+	/** the symbol identification code for a route rendezvous waypoint */
+	public static final String SICD_NAV_WAYPOINT_ROUTE_RENDEZVOUS = "GFGPGPOZ------X"; // G*GPGPOZ--****X
+	
+	/** the symbol identification code for a route diversion waypoint */
+	public static final String SICD_NAV_WAYPOINT_ROUTE_DIVERSION = "GFGPGPOD------X"; // G*GPGPOD--****X
+	
+	/** the symbol identification code for a route point of intended movement */
+	public static final String SICD_NAV_WAYPOINT_ROUTE_PIM = "GFGPGPOP------X"; // G*GPGPOP--****X
+	
+	/** the symbol identification code for a route reference waypoint */
+	public static final String SICD_NAV_WAYPOINT_ROUTE_REFERENCE = "GFGPGPOR------X"; // G*GPGPOR--****X
 	
 	// TODO: possibly extend Waypoint with PrecisionWaypoint
 	
@@ -63,6 +94,9 @@ public class Waypoint extends Position implements Comparable<Waypoint> {
 	private ZonedDateTime eto = null;
 	
 	// TODO: include actual time over and correct resulting cruise performance
+	
+	/** the depiction of this waypoint */
+	private Depiction depiction = null;
 	
 	/**
 	 * Constructs a waypoint at a specified position.
@@ -220,6 +254,42 @@ public class Waypoint extends Position implements Comparable<Waypoint> {
 	 */
 	public void setEto(ZonedDateTime eto) {
 		this.eto = eto;
+	}
+	
+	/**
+	 * Gets the depiction of this waypoint.
+	 * 
+	 * @return the depiction of this waypoint
+	 * 
+	 * @see Depictable#getDepiction()
+	 */
+	@Override
+	public Depiction getDepiction() {
+		return this.depiction;
+	}
+	
+	/**
+	 * Sets the depiction of this waypoint.
+	 * 
+	 * @param depiction the depiction of this waypoint
+	 * 
+	 * @see Depictable#setDepiction(Depiction)
+	 */
+	@Override
+	public void setDepiction(Depiction depiction) {
+		this.depiction = depiction;
+	}
+	
+	/**
+	 * Renders this waypoint.
+	 * 
+	 * @see Renderable#render(DrawContext)
+	 */
+	@Override
+	public void render(DrawContext dc) {
+		if (null != this.depiction) {
+			this.depiction.render(dc);
+		}
 	}
 	
 }

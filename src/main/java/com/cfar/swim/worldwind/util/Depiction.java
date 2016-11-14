@@ -77,8 +77,7 @@ public class Depiction implements Renderable {
 	public void setVisible(boolean visible) {
 		if (this.depiction instanceof TacticalGraphic) {
 			((TacticalGraphic) this.depiction).setVisible(visible);
-		}
-		if (this.depiction instanceof TacticalSymbol) {
+		} else if (this.depiction instanceof TacticalSymbol) {
 			((TacticalSymbol) this.depiction).setVisible(visible);
 		}
 	}
@@ -86,8 +85,7 @@ public class Depiction implements Renderable {
 	public void setDesignation(String designation) {
 		if (this.depiction instanceof TacticalGraphic) {
 			((TacticalGraphic) this.depiction).setText(designation);
-		}
-		if (this.depiction instanceof TacticalSymbol) {
+		} else if (this.depiction instanceof TacticalSymbol) {
 			((TacticalSymbol) this.depiction).setModifier(SymbologyConstants.UNIQUE_DESIGNATION, designation);
 		}
 	}
@@ -95,8 +93,7 @@ public class Depiction implements Renderable {
 	public void setModifier(String modifier, Object value) {
 		if (this.depiction instanceof TacticalGraphic) {
 			((TacticalGraphic) this.depiction).setModifier(modifier, value);
-		}
-		if (this.depiction instanceof TacticalSymbol) {
+		} else if (this.depiction instanceof TacticalSymbol) {
 			((TacticalSymbol) this.depiction).setModifier(modifier, value);
 		}
 	}
@@ -106,8 +103,7 @@ public class Depiction implements Renderable {
 		
 		if (this.depiction instanceof TacticalGraphic) {
 			value = ((TacticalGraphic) this.depiction).getModifier(modifier);
-		}
-		if (this.depiction instanceof TacticalSymbol) {
+		} else if (this.depiction instanceof TacticalSymbol) {
 			value = ((TacticalSymbol) this.depiction).getModifier(modifier);
 		}
 		
