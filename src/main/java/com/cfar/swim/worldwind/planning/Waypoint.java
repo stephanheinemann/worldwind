@@ -76,6 +76,9 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	
 	// TODO: possibly extend Waypoint with PrecisionWaypoint
 	
+	/** the designator of this waypoint */
+	private String designator = "?";
+	
 	/** the parent waypoint of this waypoint in a trajectory */
 	private Waypoint parent = null;
 	
@@ -108,6 +111,24 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 		this.position = new PrecisionPosition(position);
 	}
 	
+	/**
+	 * Gets the designator of this waypoint.
+	 * 
+	 * @return the designator of this waypoint
+	 */
+	public String getDesignator() {
+		return designator;
+	}
+	
+	/**
+	 * Sets the designator of this waypoint.
+	 * 
+	 * @param designator the designator of this waypoint
+	 */
+	public void setDesignator(String designator) {
+		this.designator = designator;
+	}
+
 	/**
 	 * Gets the estimated current cost of this waypoint.
 	 * 

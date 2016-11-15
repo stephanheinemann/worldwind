@@ -30,42 +30,26 @@
 package com.cfar.swim.worldwind.session;
 
 import java.util.HashSet;
-import java.util.Set;
 
-import com.cfar.swim.worldwind.util.Identifiable;
+public class SessionManager {
 
-import gov.nasa.worldwind.Configuration;
-import gov.nasa.worldwind.avlist.AVKey;
-
-public class Session implements Identifiable {
-
-	private String id;
+	private static SessionManager manager = new SessionManager();
+	private HashSet<Session> sessions = new HashSet<Session>();
 	
-	private Set<Scenario> scenarios = new HashSet<Scenario>();
-	
-	public Session(String id) {
-		this.id = id;
-		this.scenarios.add(new Scenario("default"));
-		this.init();
+	private SessionManager() {
+		// TODO Auto-generated constructor stub
 	}
 	
-	@Override
-	public String getId() {
-		return this.id;
+	public static SessionManager getInstance() {
+		return SessionManager.manager;
 	}
 	
-	private void init() {
-		Configuration.setValue(
-    			AVKey.MIL_STD_2525_ICON_RETRIEVER_PATH,
-    			this.getClass().getClassLoader().getResource("milstd2525"));
+	public Session getSession(String id) {
+		return this.sessions.stream().filter(s -> s.getId().equals(id)).findFirst().get();
 	}
 	
-	public Scenario getScenario(String id) {
-		return this.scenarios.stream().filter(s -> s.getId().equals(id)).findFirst().get();
-	}
-	
-	public void addScenario(Scenario scenario) {
-		this.scenarios.add(scenario);
+	public void addSession(Session session) {
+		this.sessions.add(session);
 	}
 
 }
