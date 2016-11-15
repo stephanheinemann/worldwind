@@ -43,4 +43,11 @@ public interface Identifiable {
 	 */
 	public String getId();
 	
+	/**
+	 * Sets the identifier of this identifiable.
+	 * 
+	 * @param id the identifier of this identifiable
+	 */
+	public void setId(String id);
+	
 }

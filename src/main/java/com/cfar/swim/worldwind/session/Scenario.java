@@ -53,6 +53,9 @@ import gov.nasa.worldwind.globes.Globe;
 
 public class Scenario implements Identifiable {
 
+	// TODO: equals, hashCode (id)
+	
+	public static final String DEFAULT_SCENARIO_ID = "default";
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
 	protected String id;
@@ -64,8 +67,8 @@ public class Scenario implements Identifiable {
 	protected Planner planner;
 	protected Trajectory trajectory;
 	
-	public Scenario(String id) {
-		this.id = id;
+	public Scenario() {
+		this.id = Scenario.DEFAULT_SCENARIO_ID;
 		this.globe = new Earth();
 		this.sector = new Sector(Angle.ZERO, Angle.ZERO, Angle.POS90, Angle.POS90);
 		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1.0, this.sector, 0, 50000);
@@ -79,9 +82,19 @@ public class Scenario implements Identifiable {
 		this.trajectory = new Trajectory();
 	}
 	
+	public Scenario(String id) {
+		this.id = id;
+		// TODO: ...
+	}
+	
 	@Override
 	public String getId() {
 		return this.id;
+	}
+	
+	@Override
+	public void setId(String id) {
+		this.id = id;
 	}
 
 	public void addPropertyChangeListener(PropertyChangeListener listener) {
@@ -102,22 +115,26 @@ public class Scenario implements Identifiable {
 	}
 	
 	public void addPointOfInterest(Waypoint waypoint) {
+		waypoint.setId(Integer.toString(this.pois.size()));
 		this.pois.add(waypoint);
 		this.pcs.firePropertyChange("pois", null, (Iterable<Waypoint>) this.pois);
 	}
 	
 	public void addPointOfInterest(int index, Waypoint waypoint) {
 		this.pois.add(index, waypoint);
+		this.renumberPointsOfInterest();
 		this.pcs.firePropertyChange("pois", null, (Iterable<Waypoint>) this.pois);
 	}
 	
 	public void removePointOfInterest(Waypoint waypoint) {
 		this.pois.remove(waypoint);
+		this.renumberPointsOfInterest();
 		this.pcs.firePropertyChange("pois", null, (Iterable<Waypoint>) this.pois);
 	}
 	
 	public void removePointOfInterest(int index) {
 		this.pois.remove(index);
+		this.renumberPointsOfInterest();
 		this.pcs.firePropertyChange("pois", null, (Iterable<Waypoint>) this.pois);
 	}
 	
@@ -126,4 +143,11 @@ public class Scenario implements Identifiable {
 		this.pcs.firePropertyChange("pois", null, (Iterable<Waypoint>) this.pois);
 	}
 	
+	private void renumberPointsOfInterest() {
+		int number = 0;
+		for (Waypoint poi : this.getPointsOfInterest()) {
+			poi.setId(Integer.toString(number));
+			number++;
+		}
+	}
 }

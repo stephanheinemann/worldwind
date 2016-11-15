@@ -134,9 +134,23 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	 * Gets the identifier of this cost interval.
 	 * 
 	 * @return the identifier of this cost interval
+	 * 
+	 * @see Identifiable#getId()
 	 */
+	@Override
 	public String getId() {
 		return this.id;
+	}
+	
+	/**
+	 * Sets the identifier of this cost interval.
+	 * 
+	 * @param id the identifier of this cost interval
+	 * 
+	 * @see Identifiable#setId(String)
+	 */
+	public void setId(String id) {
+		this.id = id;
 	}
 	
 	/**
@@ -166,6 +180,8 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	
 	/**
 	 * Enables this cost interval.
+	 * 
+	 * @see Enableable#enable()
 	 */
 	@Override
 	public void enable() {
@@ -174,6 +190,8 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	
 	/**
 	 * Disables this cost interval.
+	 * 
+	 * @see Enableable#disable()
 	 */
 	@Override
 	public void disable() {

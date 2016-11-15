@@ -38,14 +38,22 @@ import gov.nasa.worldwind.Configuration;
 import gov.nasa.worldwind.avlist.AVKey;
 
 public class Session implements Identifiable {
-
+	
+	// TODO: equals, hashCode (id)
+	
+	public static final String DEFAULT_SESSION_ID = "default";
+	
 	private String id;
 	
 	private Set<Scenario> scenarios = new HashSet<Scenario>();
 	
+	public Session() {
+		this(Session.DEFAULT_SESSION_ID);
+	}
+	
 	public Session(String id) {
 		this.id = id;
-		this.scenarios.add(new Scenario("default"));
+		this.scenarios.add(new Scenario());
 		this.init();
 	}
 	
@@ -54,10 +62,20 @@ public class Session implements Identifiable {
 		return this.id;
 	}
 	
+	@Override
+	public void setId(String id) {
+		this.id = id;
+	}
+	
 	private void init() {
 		Configuration.setValue(
     			AVKey.MIL_STD_2525_ICON_RETRIEVER_PATH,
     			this.getClass().getClassLoader().getResource("milstd2525"));
+		// TODO: initialize registries
+	}
+	
+	public Scenario getDefaultScenario() {
+		return this.scenarios.stream().filter(s -> s.getId().equals(Scenario.DEFAULT_SCENARIO_ID)).findFirst().get();
 	}
 	
 	public Scenario getScenario(String id) {
