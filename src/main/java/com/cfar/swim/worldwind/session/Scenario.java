@@ -126,6 +126,14 @@ public class Scenario implements Identifiable {
 		this.pcs.firePropertyChange("pois", null, (Iterable<Waypoint>) this.pois);
 	}
 	
+	public void updatePointOfInterest(Waypoint oldWaypoint, Waypoint newWaypoint) {
+		int index = this.pois.indexOf(oldWaypoint);
+		newWaypoint.setId(Integer.toString(index));
+		this.pois.remove(index);
+		this.pois.add(index, newWaypoint);
+		this.pcs.firePropertyChange("pois", null, (Iterable<Waypoint>) this.pois);
+	}
+	
 	public void removePointOfInterest(Waypoint waypoint) {
 		this.pois.remove(waypoint);
 		this.renumberPointsOfInterest();
