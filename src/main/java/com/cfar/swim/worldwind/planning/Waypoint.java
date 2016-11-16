@@ -39,7 +39,6 @@ import com.cfar.swim.worldwind.util.Identifiable;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Renderable;
-import gov.nasa.worldwind.symbology.SymbologyConstants;
 
 /**
  * Realizes a waypoint of a trajectory featuring estimates for costs and time.
@@ -137,7 +136,7 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 		this.id = id;
 		
 		if (null != this.depiction) {
-			this.depiction.setModifier(SymbologyConstants.UNIQUE_DESIGNATION, id);
+			this.depiction.setDesignation(this.id);
 		}
 	}
 
@@ -311,7 +310,7 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	@Override
 	public void setDepiction(Depiction depiction) {
 		this.depiction = depiction;
-		this.depiction.setModifier(SymbologyConstants.UNIQUE_DESIGNATION, this.id);
+		this.depiction.setDesignation(this.id);
 	}
 	
 	/**
