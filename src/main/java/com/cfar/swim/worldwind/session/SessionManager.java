@@ -30,24 +30,61 @@
 package com.cfar.swim.worldwind.session;
 
 import java.util.HashSet;
+import java.util.Optional;
 
+/**
+ * Realizes a session manager.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class SessionManager {
 
+	/** the singleton session manager instance */
 	private static SessionManager manager = new SessionManager();
+	
+	/** the managed session of this session manager */
 	private HashSet<Session> sessions = new HashSet<Session>();
 	
+	/**
+	 * Constructs the singleton session manager instance.
+	 */
 	private SessionManager() {
-		// TODO Auto-generated constructor stub
 	}
 	
+	/**
+	 * Gets the singleton session manager instance.
+	 * 
+	 * @return the singleton session manager instance
+	 */
 	public static SessionManager getInstance() {
 		return SessionManager.manager;
 	}
 	
+	/**
+	 * Gets a session with a specified identifier from this session manager
+	 * if present.
+	 * 
+	 * @param id the session identifier
+	 * 
+	 * @return the identified session if present, null otherwise
+	 */
 	public Session getSession(String id) {
-		return this.sessions.stream().filter(s -> s.getId().equals(id)).findFirst().get();
+		Session session = null;
+		Optional<Session> optSession = this.sessions.stream().filter(s -> s.getId().equals(id)).findFirst();
+		
+		if (optSession.isPresent()) {
+			session = optSession.get();
+		}
+		
+		return session;
 	}
 	
+	/**
+	 * Adds a session to this session manager if not present.
+	 * 
+	 * @param session the session to be added
+	 */
 	public void addSession(Session session) {
 		this.sessions.add(session);
 	}

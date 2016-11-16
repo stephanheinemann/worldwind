@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.session;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.util.Identifiable;
@@ -37,53 +38,219 @@ import com.cfar.swim.worldwind.util.Identifiable;
 import gov.nasa.worldwind.Configuration;
 import gov.nasa.worldwind.avlist.AVKey;
 
+/**
+ * Realizes a planning session that aggregates planning scenarios.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class Session implements Identifiable {
 	
-	// TODO: equals, hashCode (id)
+	/** the default session identifier */
+	public static final String DEFAULT_SESSION_ID = "Session.Default.Identifier";
 	
-	public static final String DEFAULT_SESSION_ID = "default";
-	
+	/** the identifier of this session */
 	private String id;
 	
+	/** the scenarios of this session */
 	private Set<Scenario> scenarios = new HashSet<Scenario>();
 	
+	/** the default scenario of this session */
+	private final Scenario defaultScenario = new Scenario();
+	
+	/** the active scenario of this session */
+	private Scenario activeScenario;
+	
+	/**
+	 * Constructs and initializes a default session.
+	 */
 	public Session() {
 		this(Session.DEFAULT_SESSION_ID);
 	}
 	
+	/**
+	 * Constructs and initializes a session with a specified session identifier.
+	 * 
+	 * @param id the session identifier
+	 */
 	public Session(String id) {
 		this.id = id;
-		this.scenarios.add(new Scenario());
 		this.init();
 	}
 	
+	/**
+	 * Gets the identifier of this session.
+	 * 
+	 * @return the identifier of this session
+	 * 
+	 * @see Identifiable#getId()
+	 */
 	@Override
 	public String getId() {
 		return this.id;
 	}
 	
+	/**
+	 * Sets the identifier of this session.
+	 * 
+	 * @param id the identifier of this session
+	 * 
+	 * @see Identifiable#setId(String)
+	 */
 	@Override
 	public void setId(String id) {
 		this.id = id;
 	}
 	
-	private void init() {
+	/**
+	 * Initializes this session.
+	 */
+	public void init() {
+		this.scenarios.clear();
+		this.scenarios.add(this.defaultScenario);
+		this.activeScenario = this.defaultScenario;
+		
 		Configuration.setValue(
     			AVKey.MIL_STD_2525_ICON_RETRIEVER_PATH,
     			this.getClass().getClassLoader().getResource("milstd2525"));
-		// TODO: initialize registries
+		// TODO: initialize registries (aircraft, environments, planners...)
 	}
 	
-	public Scenario getDefaultScenario() {
-		return this.scenarios.stream().filter(s -> s.getId().equals(Scenario.DEFAULT_SCENARIO_ID)).findFirst().get();
-	}
-	
+	/**
+	 * Gets a scenario with a specified identifier from this session.
+	 *  
+	 * @param id the scenario identifier
+	 * 
+	 * @return the identified scenario if present, null otherwise
+	 */
 	public Scenario getScenario(String id) {
-		return this.scenarios.stream().filter(s -> s.getId().equals(id)).findFirst().get();
+		Scenario scenario = null;
+		Optional<Scenario> optScenario = this.scenarios.stream().filter(s -> s.getId().equals(id)).findFirst();
+		
+		if (optScenario.isPresent()) {
+			scenario = optScenario.get();
+		}
+		
+		return scenario;
 	}
 	
+	/**
+	 * Removes a scenario with a specified identifier from this session
+	 * if present.
+	 * 
+	 * @param id the scenario identifier
+	 */
+	public void removeScenario(String id) {
+		if (!id.equals(Scenario.DEFAULT_SCENARIO_ID)) {
+			Optional<Scenario> optScenario = this.scenarios.stream().filter(s -> s.getId().equals(id)).findFirst();
+			
+			if (optScenario.isPresent()) {
+				this.removeScenario(optScenario.get());
+			}
+		}
+	}
+	
+	/**
+	 * Activates a scenario with a specified identifier of this session
+	 * if present.
+	 * 
+	 * @param id the scenario identifier
+	 */
+	public void setActiveScenario(String id) {
+		Optional<Scenario> optScenario = this.scenarios.stream().filter(s -> s.getId().equals(id)).findFirst();
+		
+		if (optScenario.isPresent()) {
+			this.activeScenario = optScenario.get();
+		}
+	}
+	
+	/**
+	 * Gets the default scenario of this session.
+	 * 
+	 * @return the default scenario of this session
+	 */
+	public Scenario getDefaultScenario() {
+		return this.defaultScenario;
+	}
+	
+	/**
+	 * Gets the active scenario of this session.
+	 * 
+	 * @return the active scenario of this session
+	 */
+	public Scenario getActiveScenario() {
+		return this.activeScenario;
+	}
+	
+	/**
+	 * Sets the active scenario of this session.
+	 * The scenario is added if not present.
+	 * 
+	 * @param scenario the scenario to be activated
+	 */
+	public void setActiveScenario(Scenario scenario) {
+		if (!this.scenarios.contains(scenario)) {
+			this.scenarios.add(scenario);
+		}
+		this.activeScenario = scenario;
+	}
+	
+	/**
+	 * Adds a scenario to this session if not present.
+	 * 
+	 * @param scenario the scenario to be added
+	 */
 	public void addScenario(Scenario scenario) {
 		this.scenarios.add(scenario);
 	}
-
+	
+	/**
+	 * Removes a scenario from this session if present. The default scenario
+	 * cannot be removed. If the active scenario is removed, the default
+	 * scenario becomes the active scenario.
+	 * 
+	 * @param scenario the scenario to be removed
+	 */
+	public void removeScenario(Scenario scenario) {
+		if (!scenario.equals(this.defaultScenario)) {
+			this.scenarios.remove(scenario);
+			if (scenario.equals(this.activeScenario)) {
+				this.activeScenario = this.defaultScenario;
+			}
+		}
+	}
+	
+	/**
+	 * Indicates whether or not this session equals another session based on
+	 * their identifiers.
+	 * 
+	 * @param o the other session
+	 * 
+	 * @return true, if the identifier of this session equals the
+	 *         identifier of the other session, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (o instanceof Session) {
+			equals = this.id.equals(((Session) o).id);
+		}
+	
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this session based on its identifier.
+	 * 
+	 * @return the hash code of this session based on its identifier
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return this.id.hashCode();
+	}
 }
