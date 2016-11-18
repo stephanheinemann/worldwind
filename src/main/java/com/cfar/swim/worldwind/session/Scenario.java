@@ -44,6 +44,7 @@ import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.util.Enableable;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -57,16 +58,19 @@ import gov.nasa.worldwind.globes.Globe;
  * @author Stephan Heinemann
  *
  */
-public class Scenario implements Identifiable {
+public class Scenario implements Identifiable, Enableable {
 	
 	/** the default scenario identifier */
-	public static final String DEFAULT_SCENARIO_ID = "Scenario.Default.Identifier";
+	public static final String DEFAULT_SCENARIO_ID = "Default Scenario";
 	
 	/** the property change support of this scenario */
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
 	/** the identifier of this scenario */
-	private String id;
+	private final String id;
+	
+	/** indicates whether or not this scenario is enabled */
+	private boolean isEnabled = false;
 	
 	/** the globe of this scenario */
 	private Globe globe;
@@ -107,30 +111,6 @@ public class Scenario implements Identifiable {
 	}
 	
 	/**
-	 * Gets the identifier of this scenario.
-	 * 
-	 * @return the identifier of this scenario
-	 * 
-	 * @see Identifiable#getId()
-	 */
-	@Override
-	public String getId() {
-		return this.id;
-	}
-	
-	/**
-	 * Sets the identifier of this scenario.
-	 * 
-	 * @param id the identifier of this scenario
-	 * 
-	 * @see Identifiable#setId(String)
-	 */
-	@Override
-	public void setId(String id) {
-		this.id = id;
-	}
-	
-	/**
 	 * Initializes this scenario.
 	 */
 	public void init() {
@@ -148,6 +128,52 @@ public class Scenario implements Identifiable {
 	}
 	
 	/**
+	 * Gets the identifier of this scenario.
+	 * 
+	 * @return the identifier of this scenario
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return this.id;
+	}
+	
+	/**
+	 * Enables this scenario.
+	 * 
+	 * @see Enableable#enable()
+	 */
+	@Override
+	public void enable() {
+		this.isEnabled = true;
+		this.pcs.firePropertyChange("isEnabled", null, this.isEnabled);
+	}
+	
+	/**
+	 * Disables this scenario.
+	 * 
+	 * @see Enableable#disable()
+	 */
+	@Override
+	public void disable() {
+		this.isEnabled = false;
+		this.pcs.firePropertyChange("isEnabled", null, this.isEnabled);
+	}
+	
+	/**
+	 * Indicates whether or not this scenario is enabled.
+	 * 
+	 * @return true if this scenario is enabled, false otherwise
+	 * 
+	 * @see Enableable#isEnabled()
+	 */
+	@Override
+	public boolean isEnabled() {
+		return this.isEnabled;
+	}
+	
+	/**
 	 * Adds a property change listener to this scenario.
 	 * 
 	 * @param listener the property change listener to be added
@@ -157,21 +183,30 @@ public class Scenario implements Identifiable {
 	}
 	
 	/**
-	 * Adds a waypoint change listener to this scenario.
-	 * 
-	 * @param listener the waypoint change listener to be added
-	 */
-	public void addWaypointsChangeListener(PropertyChangeListener listener) {
-		this.pcs.addPropertyChangeListener("waypoints", listener);
-	}
-	
-	/**
 	 * Removes a property change listener from this scenario.
 	 * 
 	 * @param listener the property change listener to be removed
 	 */
 	public void removePropertyChangeListener(PropertyChangeListener listener) {
 		this.pcs.removePropertyChangeListener(listener);
+	}
+	
+	/**
+	 * Adds an enabled change listener to this scenario.
+	 * 
+	 * @param listener the enabled change listener to be added
+	 */
+	public void addEnabledChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("isEnabled", listener);
+	}
+	
+	/**
+	 * Adds a waypoint change listener to this scenario.
+	 * 
+	 * @param listener the waypoint change listener to be added
+	 */
+	public void addWaypointsChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("waypoints", listener);
 	}
 	
 	/**
@@ -190,7 +225,7 @@ public class Scenario implements Identifiable {
 	 * @param waypoint the waypoint to be added
 	 */
 	public void addWaypoint(Waypoint waypoint) {
-		waypoint.setId(Integer.toString(this.waypoints.size()));
+		waypoint.setDesignator(Integer.toString(this.waypoints.size()));
 		this.waypoints.add(waypoint);
 		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
 	}
@@ -217,7 +252,7 @@ public class Scenario implements Identifiable {
 	public void updateWaypoint(Waypoint oldWaypoint, Waypoint newWaypoint) {
 		int index = this.waypoints.indexOf(oldWaypoint);
 		if (-1 != index) {
-			newWaypoint.setId(Integer.toString(index));
+			newWaypoint.setDesignator(Integer.toString(index));
 			this.waypoints.remove(index);
 			this.waypoints.add(index, newWaypoint);
 			this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
@@ -261,8 +296,8 @@ public class Scenario implements Identifiable {
 	 */
 	private void sequenceWaypoints() {
 		int number = 0;
-		for (Waypoint poi : this.getWaypoints()) {
-			poi.setId(Integer.toString(number));
+		for (Waypoint waypoint : this.getWaypoints()) {
+			waypoint.setDesignator(Integer.toString(number));
 			number++;
 		}
 	}
@@ -336,4 +371,5 @@ public class Scenario implements Identifiable {
 	public int hashCode() {
 		return this.id.hashCode();
 	}
+	
 }

@@ -34,7 +34,7 @@ import java.time.ZonedDateTime;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
-import com.cfar.swim.worldwind.util.Identifiable;
+import com.cfar.swim.worldwind.util.Designatable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
@@ -46,7 +46,7 @@ import gov.nasa.worldwind.render.Renderable;
  * @author Stephan Heinemann
  *
  */
-public class Waypoint extends Position implements Comparable<Waypoint>, Depictable, Identifiable {
+public class Waypoint extends Position implements Comparable<Waypoint>, Depictable, Designatable {
 	
 	/** the symbol identification code for an action waypoint */
 	public static final String SICD_NAV_WAYPOINT_ACTION = "GFGPGPPW------X"; // G*GPGPPW--****X
@@ -77,8 +77,8 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	
 	// TODO: possibly extend Waypoint with PrecisionWaypoint
 	
-	/** the identifier of this waypoint */
-	private String id = "?";
+	/** the designator of this waypoint */
+	private String designator = "?";
 	
 	/** the parent waypoint of this waypoint in a trajectory */
 	private Waypoint parent = null;
@@ -113,30 +113,30 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	}
 	
 	/**
-	 * Gets the identifier of this waypoint.
+	 * Gets the designator of this waypoint.
 	 * 
-	 * @return the identifier of this waypoint
+	 * @return the designator of this waypoint
 	 * 
-	 * @see Identifiable#getId()
+	 * @see Designatable#getDesignator()
 	 */
 	@Override
-	public String getId() {
-		return this.id;
+	public String getDesignator() {
+		return this.designator;
 	}
 	
 	/**
-	 * Sets the identifier of this waypoint.
+	 * Sets the designator of this waypoint.
 	 * 
-	 * @param id the identifier of this waypoint
+	 * @param designator the designator of this waypoint
 	 * 
-	 * @see Identifiable#setId(String)
+	 * @see Designatable#setDesignator(String)
 	 */
 	@Override
-	public void setId(String id) {
-		this.id = id;
+	public void setDesignator(String designator) {
+		this.designator = designator;
 		
 		if (null != this.depiction) {
-			this.depiction.setDesignation(this.id);
+			this.depiction.setDesignation(this.designator);
 		}
 	}
 
@@ -310,7 +310,7 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	@Override
 	public void setDepiction(Depiction depiction) {
 		this.depiction = depiction;
-		this.depiction.setDesignation(this.id);
+		this.depiction.setDesignation(this.designator);
 	}
 	
 	/**

@@ -29,7 +29,10 @@
  */
 package com.cfar.swim.worldwind.session;
 
-import java.util.HashSet;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -46,20 +49,28 @@ import gov.nasa.worldwind.avlist.AVKey;
  */
 public class Session implements Identifiable {
 	
+	// TODO: a managed scenario can be enabled/disabled externally
+	
+	// TODO: if a session is used concurrently (AM, UI monitoring),
+	// then this should be a protected monitor
+	
 	/** the default session identifier */
-	public static final String DEFAULT_SESSION_ID = "Session.Default.Identifier";
+	public static final String DEFAULT_SESSION_ID = "Default Session";
+	
+	/** the property change support of this session */
+	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
 	/** the identifier of this session */
-	private String id;
+	private final String id;
 	
 	/** the scenarios of this session */
-	private Set<Scenario> scenarios = new HashSet<Scenario>();
+	private final Set<Scenario> scenarios = new LinkedHashSet<Scenario>();
 	
 	/** the default scenario of this session */
 	private final Scenario defaultScenario = new Scenario();
 	
 	/** the active scenario of this session */
-	private Scenario activeScenario;
+	private Scenario activeScenario = this.defaultScenario;
 	
 	/**
 	 * Constructs and initializes a default session.
@@ -91,29 +102,51 @@ public class Session implements Identifiable {
 	}
 	
 	/**
-	 * Sets the identifier of this session.
-	 * 
-	 * @param id the identifier of this session
-	 * 
-	 * @see Identifiable#setId(String)
-	 */
-	@Override
-	public void setId(String id) {
-		this.id = id;
-	}
-	
-	/**
 	 * Initializes this session.
 	 */
 	public void init() {
-		this.scenarios.clear();
-		this.scenarios.add(this.defaultScenario);
-		this.activeScenario = this.defaultScenario;
+		this.clearScenarios();
 		
 		Configuration.setValue(
     			AVKey.MIL_STD_2525_ICON_RETRIEVER_PATH,
     			this.getClass().getClassLoader().getResource("milstd2525"));
 		// TODO: initialize registries (aircraft, environments, planners...)
+	}
+	
+	/**
+	 * Adds a property change listener to this session.
+	 * 
+	 * @param listener the property change listener to be added
+	 */
+	public void addPropertyChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener(listener);
+	}
+	
+	/**
+	 * Removes a property change listener from this session.
+	 * 
+	 * @param listener the property change listener to be removed
+	 */
+	public void removePropertyChangeListener(PropertyChangeListener listener) {
+		this.pcs.removePropertyChangeListener(listener);
+	}
+	
+	/**
+	 * Adds a scenarios change listener to this session.
+	 * 
+	 * @param listener the scenarios change listener to be added
+	 */
+	public void addScenariosChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("scenarios", listener);
+	}
+	
+	/**
+	 * Adds an active scenario change listener to this session.
+	 * 
+	 * @param listener the active scenario change listener to be added
+	 */
+	public void addActiveScenarioChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("activeScenario", listener);
 	}
 	
 	/**
@@ -136,9 +169,10 @@ public class Session implements Identifiable {
 	
 	/**
 	 * Removes a scenario with a specified identifier from this session
-	 * if present.
+	 * if present. The default scenario cannot be removed. If the removed
+	 * scenario was enabled, the default scenario will be enabled.
 	 * 
-	 * @param id the scenario identifier
+	 * @param id the scenario identifier of the scenario to be removed
 	 */
 	public void removeScenario(String id) {
 		if (!id.equals(Scenario.DEFAULT_SCENARIO_ID)) {
@@ -151,16 +185,16 @@ public class Session implements Identifiable {
 	}
 	
 	/**
-	 * Activates a scenario with a specified identifier of this session
-	 * if present.
+	 * Sets the active scenario with a specified identifier of this session
+	 * if present. The previously enabled scenario will be disabled.
 	 * 
-	 * @param id the scenario identifier
+	 * @param id the scenario identifier of the scenario to be disabled
 	 */
 	public void setActiveScenario(String id) {
 		Optional<Scenario> optScenario = this.scenarios.stream().filter(s -> s.getId().equals(id)).findFirst();
 		
 		if (optScenario.isPresent()) {
-			this.activeScenario = optScenario.get();
+			this.setActiveScenario(optScenario.get());
 		}
 	}
 	
@@ -183,25 +217,29 @@ public class Session implements Identifiable {
 	}
 	
 	/**
-	 * Sets the active scenario of this session.
-	 * The scenario is added if not present.
+	 * Sets the active scenario of this session. The scenario is added if not present.
 	 * 
 	 * @param scenario the scenario to be activated
 	 */
 	public void setActiveScenario(Scenario scenario) {
-		if (!this.scenarios.contains(scenario)) {
-			this.scenarios.add(scenario);
-		}
-		this.activeScenario = scenario;
+		this.addScenario(scenario);
+		this.activeScenario.disable();
+		this.activeScenario = this.getScenario(scenario.getId());
+		this.activeScenario.enable();
+		this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
 	}
 	
 	/**
-	 * Adds a scenario to this session if not present.
+	 * Adds a scenario to this session if not present. Disables the scenario if
+	 * added.
 	 * 
 	 * @param scenario the scenario to be added
 	 */
 	public void addScenario(Scenario scenario) {
-		this.scenarios.add(scenario);
+		if (this.scenarios.add(scenario)) {
+			scenario.disable();
+			this.pcs.firePropertyChange("scenarios", null, (Iterable<Scenario>) this.scenarios);
+		}
 	}
 	
 	/**
@@ -213,11 +251,38 @@ public class Session implements Identifiable {
 	 */
 	public void removeScenario(Scenario scenario) {
 		if (!scenario.equals(this.defaultScenario)) {
-			this.scenarios.remove(scenario);
-			if (scenario.equals(this.activeScenario)) {
-				this.activeScenario = this.defaultScenario;
+			if (this.scenarios.remove(scenario)) {
+				if (this.activeScenario.equals(scenario)) {
+					this.activeScenario.disable();
+					this.activeScenario = this.defaultScenario;
+					this.activeScenario.enable();
+					this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
+				}
+				this.pcs.firePropertyChange("scenarios", null, (Iterable<Scenario>) this.scenarios);
 			}
 		}
+	}
+	
+	/**
+	 * Removes all scenarios of this session but the default scenario.
+	 */
+	public void clearScenarios() {
+		this.scenarios.clear();
+		this.scenarios.add(this.defaultScenario);
+		this.activeScenario.disable();
+		this.activeScenario = this.defaultScenario;
+		this.activeScenario.enable();
+		this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
+		this.pcs.firePropertyChange("scenarios", null, (Iterable<Scenario>) this.scenarios);
+	}
+	
+	/**
+	 * Gets all scenarios of this session.
+	 * 
+	 * @return all scenarios of this session
+	 */
+	public Set<Scenario> getScenarios() {
+		return Collections.unmodifiableSet(this.scenarios);
 	}
 	
 	/**
@@ -253,4 +318,5 @@ public class Session implements Identifiable {
 	public int hashCode() {
 		return this.id.hashCode();
 	}
+	
 }

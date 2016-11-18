@@ -48,7 +48,7 @@ import com.cfar.swim.worldwind.util.Identifiable;
 public class CostInterval extends TimeInterval implements Identifiable, Enableable {
 	
 	/** the unique identifier of this cost interval */
-	protected String id = null;
+	protected final String id;
 	
 	/** the cost of this cost interval */
 	protected double cost = 0d;
@@ -140,17 +140,6 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 	@Override
 	public String getId() {
 		return this.id;
-	}
-	
-	/**
-	 * Sets the identifier of this cost interval.
-	 * 
-	 * @param id the identifier of this cost interval
-	 * 
-	 * @see Identifiable#setId(String)
-	 */
-	public void setId(String id) {
-		this.id = id;
 	}
 	
 	/**
