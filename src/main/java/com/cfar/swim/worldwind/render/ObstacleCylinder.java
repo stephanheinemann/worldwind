@@ -61,9 +61,6 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	/** the cost interval of this obstacle cylinder */
 	private CostInterval costInterval = new CostInterval("");
 	
-	/** the text annotation of this obstacle cylinder */
-	protected GlobeAnnotation annotation = null;
-	
 	/** the depiction of this obstacle cylinder */
 	protected Depiction depiction = null;
 	
@@ -117,6 +114,18 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	}
 	
 	/**
+	 * Indicates whether or not this obstacle cylinder has a depiction.
+	 * 
+	 * @return true if this obstacle cylinder has a depiction, false otherwise
+	 * 
+	 * @see Depictable#hasDepiction()
+	 */
+	@Override
+	public boolean hasDepiction() {
+		return (null != this.depiction);
+	}
+	
+	/**
 	 * Enables this obstacle cylinder.
 	 * 
 	 * @see Enableable#enable()
@@ -167,7 +176,6 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	 */
 	public void setCostInterval(CostInterval costInterval) {
 		this.costInterval = costInterval;
-		this.annotation = new GlobeAnnotation(costInterval.getId(), this.centerPosition);
 		this.update();
 	}
 	
@@ -247,9 +255,6 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	 */
 	protected void updateVisibility() {
 		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
-		if (null != this.annotation) {
-			this.annotation.getAttributes().setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
-		}
 		if (null != this.depiction) {
 			this.depiction.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		}
@@ -276,9 +281,6 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	@Override
 	public void render(DrawContext dc) {
 		super.render(dc);
-		if (null != this.annotation) {
-			this.annotation.render(dc);
-		}
 		if (null != this.depiction) {
 			this.depiction.render(dc);
 		}
@@ -318,6 +320,13 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 		
 		CostInterval costInterval = new CostInterval(this.costInterval.getId(), start, end, cost);
 		interpolant.setCostInterval(costInterval);
+		if (interpolant.hasDepiction()) {
+			if (interpolant.getDepiction().hasAnnotation()) {
+				interpolant.getDepiction().getAnnotation().setText(costInterval.getId());
+			} else {
+				interpolant.getDepiction().setAnnotation(new GlobeAnnotation(costInterval.getId(), interpolant.getReferencePosition()));
+			}
+		}
 		
 		return interpolant;
 	}

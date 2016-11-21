@@ -67,7 +67,6 @@ public abstract class Aircraft extends ObstacleSphere {
 	@Override
 	protected void updateVisibility() {
 		super.updateVisibility();
-		this.annotation.getAttributes().setVisible(false);
 	}
 	
 }

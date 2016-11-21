@@ -64,6 +64,7 @@ import com.cfar.swim.worldwind.weather.WeatherSymbolMap;
 import gov.nasa.worldwind.Model;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
+import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.airspaces.Airspace;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525GraphicFactory;
 import icao.iwxxm.SIGMETReportStatusType;
@@ -179,6 +180,14 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 							obstacleCylinder.getAltitudes()[1],
 							obstacleCylinder.getRadii()[1]);
 					intersectionObstacle.setCostInterval(intersectionInterval);
+					if (intersectionObstacle.hasDepiction()) {
+						if (intersectionObstacle.getDepiction().hasAnnotation()) {
+							intersectionObstacle.getDepiction().getAnnotation().setText(intersectionInterval.getId());
+						} else {
+							intersectionObstacle.getDepiction().setAnnotation(
+								new GlobeAnnotation(intersectionInterval.getId(), intersectionObstacle.getReferencePosition()));
+						}
+					}
 					
 					this.grid.embed(intersectionObstacle);
 					this.addSigmetObstacle(sigmetReference, intersectionObstacle);
@@ -239,6 +248,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 					
 					obstacle.setDepiction(new Depiction(
 							symbolFactory.createPoint(sidc, obstacle.getReferencePosition(), null)));
+					obstacle.getDepiction().setAnnotation(new GlobeAnnotation(costInterval.getId(), obstacle.getReferencePosition()));
 				}
 			}
 			

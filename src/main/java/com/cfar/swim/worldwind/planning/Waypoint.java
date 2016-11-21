@@ -76,6 +76,7 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	public static final String SICD_NAV_WAYPOINT_ROUTE_REFERENCE = "GFGPGPOR------X"; // G*GPGPOR--****X
 	
 	// TODO: possibly extend Waypoint with PrecisionWaypoint
+	// TODO: use markers for actual track data (class Track)
 	
 	/** the designator of this waypoint */
 	private String designator = "?";
@@ -311,6 +312,18 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	public void setDepiction(Depiction depiction) {
 		this.depiction = depiction;
 		this.depiction.setDesignation(this.designator);
+	}
+	
+	/**
+	 * Indicates whether or not this waypoint has a depiction.
+	 * 
+	 * @return true if this waypoint has a depiction, false otherwise
+	 * 
+	 * @see Depictable#hasDepiction()
+	 */
+	@Override
+	public boolean hasDepiction() {
+		return (null != this.depiction);
 	}
 	
 	/**

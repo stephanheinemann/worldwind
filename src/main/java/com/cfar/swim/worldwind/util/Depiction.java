@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.util;
 
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.symbology.BasicTacticalGraphicAttributes;
@@ -42,16 +43,36 @@ import gov.nasa.worldwind.symbology.TacticalSymbol;
 import gov.nasa.worldwind.symbology.TacticalSymbolAttributes;
 
 /* TODO:
- * Annotations and depictions should be instantiated only once per message and moved during time updates
- * The same could apply to any entire obstacle being part of the same message
+ * Annotations and depictions should be instantiated only once per message and
+ * moved during time updates. The same could apply to any entire obstacle being
+ * part of the same message.
+ * TODO: a depiction could aggregate several symbols / geometries and render
+ * all of them. For example, a waypoint can have a ground POI symbol and an air
+ * WPT symbol at altitude and a text annotation (times, costs).
  */
 
+/**
+ * Realizes an annotatable depiction that aggregates either a tactical symbol
+ * or graphic.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class Depiction implements Renderable {
 
+	/** the tactical symbol or graphic of this depiction */
 	private Renderable depiction = null;
 	private static final TacticalSymbolAttributes symbolAttributes = new BasicTacticalSymbolAttributes();
 	private static final TacticalGraphicAttributes graphicAttributes = new BasicTacticalGraphicAttributes();
 	
+	/** the annotation of this depiction */
+	private GlobeAnnotation annotation = null;
+	
+	/**
+	 * Constructs a new depiction from a tactical graphic.
+	 * 
+	 * @param depiction the tactical graphic
+	 */
 	public Depiction(TacticalGraphic depiction) {
 		this.depiction = depiction;
 		depiction.setAttributes(Depiction.graphicAttributes);
@@ -60,6 +81,11 @@ public class Depiction implements Renderable {
 		depiction.setVisible(false);
 	}
 	
+	/**
+	 * Constructs a new depiction from a tactical symbol.
+	 * 
+	 * @param depiction the tactical symbol
+	 */
 	public Depiction(TacticalSymbol depiction) {
 		this.depiction = depiction;
 		depiction.setAttributes(Depiction.symbolAttributes);
@@ -69,19 +95,40 @@ public class Depiction implements Renderable {
 		depiction.setVisible(false);
 	}
 	
+	/**
+	 * Renders this depiction.
+	 * 
+	 * @see Renderable#render(DrawContext)
+	 */
 	@Override
 	public void render(DrawContext dc) {
 		this.depiction.render(dc);
+		if (null != this.annotation) {
+			this.annotation.render(dc);
+		}
 	}
 	
+	/**
+	 * Sets whether or not this depiction is visible.
+	 * 
+	 * @param visible the visibility state to be set
+	 */
 	public void setVisible(boolean visible) {
 		if (this.depiction instanceof TacticalGraphic) {
 			((TacticalGraphic) this.depiction).setVisible(visible);
 		} else if (this.depiction instanceof TacticalSymbol) {
 			((TacticalSymbol) this.depiction).setVisible(visible);
 		}
+		if (null != this.annotation) {
+			this.annotation.getAttributes().setVisible(visible);
+		}
 	}
 	
+	/**
+	 * Sets the designation of this depiction.
+	 * 
+	 * @param designation the designation to be set
+	 */
 	public void setDesignation(String designation) {
 		if (this.depiction instanceof TacticalGraphic) {
 			((TacticalGraphic) this.depiction).setText(designation);
@@ -90,6 +137,15 @@ public class Depiction implements Renderable {
 		}
 	}
 	
+	/**
+	 * Sets a modifier value of this depiction.
+	 * 
+	 * @param modifier the modifier
+	 * @param value the value of the modifier
+	 * 
+	 * @see TacticalGraphic#setModifier(String, Object)
+	 * @see TacticalSymbol#setModifier(String, Object)
+	 */
 	public void setModifier(String modifier, Object value) {
 		if (this.depiction instanceof TacticalGraphic) {
 			((TacticalGraphic) this.depiction).setModifier(modifier, value);
@@ -98,6 +154,15 @@ public class Depiction implements Renderable {
 		}
 	}
 	
+	/**
+	 * Gets a modifier value of this depiction.
+	 * 
+	 * @param modifier the modifier
+	 * @return the value of the modifier
+	 * 
+	 * @see TacticalGraphic#getModifier(String)
+	 * @see TacticalSymbol#getModifier(String)
+	 */
 	public Object getModifier(String modifier) {
 		Object value = null;
 		
@@ -108,6 +173,33 @@ public class Depiction implements Renderable {
 		}
 		
 		return value;
-	} 
-
+	}
+	
+	/**
+	 * Gets the annotation of this depiction.
+	 * 
+	 * @return the annotation of this depiction
+	 */
+	public GlobeAnnotation getAnnotation() {
+		return this.annotation;
+	}
+	
+	/**
+	 * Set the annotation of this depiction.
+	 * 
+	 * @param annotation the annotation to be set
+	 */
+	public void setAnnotation(GlobeAnnotation annotation) {
+		this.annotation = annotation;
+	}
+	
+	/**
+	 * Indicates whether or not this depiction has an annotation.
+	 * 
+	 * @return true if this depiction has an annotation, false otherwise
+	 */
+	public boolean hasAnnotation() {
+		return (null != this.annotation);
+	}
+	
 }

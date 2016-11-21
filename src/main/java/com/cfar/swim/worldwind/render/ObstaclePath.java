@@ -114,6 +114,18 @@ public class ObstaclePath extends Path implements Obstacle {
 	}
 	
 	/**
+	 * Indicates whether or not this obstacle path has a depiction.
+	 * 
+	 * @return true if this obstacle path has a depiction, false otherwise
+	 * 
+	 * @see Depictable#hasDepiction()
+	 */
+	@Override
+	public boolean hasDepiction() {
+		return (null != this.depiction);
+	}
+	
+	/**
 	 * Enables this obstacle path.
 	 * 
 	 * @see Enableable#enable()

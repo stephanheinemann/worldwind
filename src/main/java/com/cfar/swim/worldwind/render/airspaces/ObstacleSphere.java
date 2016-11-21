@@ -44,7 +44,6 @@ import com.cfar.swim.worldwind.util.Enableable;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
-import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.render.airspaces.SphereAirspace;
@@ -62,9 +61,6 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	
 	/** the cost interval of this obstacle sphere */
 	private CostInterval costInterval = new CostInterval("");
-	
-	/** the text annotation of this obstacle sphere */
-	protected GlobeAnnotation annotation = null;
 	
 	/** the depiction of this obstacle sphere */
 	protected Depiction depiction = null;
@@ -114,6 +110,18 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	@Override
 	public void setDepiction(Depiction depiction) {
 		this.depiction = depiction;
+	}
+	
+	/**
+	 * Indicates whether or not this obstacle sphere has a depiction.
+	 * 
+	 * @return true if this obstacle path has a depiction, false otherwise
+	 * 
+	 * @see Depictable#hasDepiction()
+	 */
+	@Override
+	public boolean hasDepiction() {
+		return (null != this.depiction);
 	}
 	
 	/**
@@ -167,7 +175,6 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 */
 	public void setCostInterval(CostInterval costInterval) {
 		this.costInterval = costInterval;
-		this.annotation = new GlobeAnnotation(costInterval.getId(), this.getReferencePosition());
 		this.update();
 	}
 	
@@ -247,9 +254,6 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 */
 	protected void updateVisibility() {
 		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
-		if (null != this.annotation) {
-			this.annotation.getAttributes().setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
-		}
 		if (null != this.depiction) {
 			this.depiction.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		}
@@ -276,9 +280,6 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	@Override
 	public void render(DrawContext dc) {
 		super.render(dc);
-		if (null != this.annotation) {
-			this.annotation.render(dc);
-		}
 		if (null != this.depiction) {
 			this.depiction.render(dc);
 		}

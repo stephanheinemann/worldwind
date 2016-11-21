@@ -52,5 +52,12 @@ public interface Depictable extends Renderable {
 	 * @param depiction the depiction of this depictable
 	 */
 	public void setDepiction(Depiction depiction);
+	
+	/**
+	 * Indicates whether or not this depictable has a depiction.
+	 * 
+	 * @return true if this depictable has a depiction, false otherwise
+	 */
+	public boolean hasDepiction();
 
 }

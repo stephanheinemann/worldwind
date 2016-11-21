@@ -43,7 +43,6 @@ import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.render.DrawContext;
-import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.render.airspaces.Box;
@@ -61,9 +60,6 @@ public class ObstacleBox extends Box implements Obstacle {
 	
 	/** the cost interval of this obstacle cylinder */
 	private CostInterval costInterval = new CostInterval("");
-	
-	/** the text annotation of this obstacle cylinder */
-	protected GlobeAnnotation annotation = null;
 	
 	/** the depiction of this obstacle cylinder */
 	protected Depiction depiction = null;
@@ -120,6 +116,18 @@ public class ObstacleBox extends Box implements Obstacle {
 	}
 	
 	/**
+	 * Indicates whether or not this obstacle box has a depiction.
+	 * 
+	 * @return true if this obstacle box has a depiction, false otherwise
+	 * 
+	 * @see Depictable#hasDepiction()
+	 */
+	@Override
+	public boolean hasDepiction() {
+		return (null != this.depiction);
+	}
+	
+	/**
 	 * Enables this obstacle box.
 	 * 
 	 * @see Enableable#enable()
@@ -170,7 +178,6 @@ public class ObstacleBox extends Box implements Obstacle {
 	 */
 	public void setCostInterval(CostInterval costInterval) {
 		this.costInterval = costInterval;
-		this.annotation = new GlobeAnnotation(costInterval.getId(), this.getReferencePosition());
 		this.update();
 	}
 	
@@ -250,9 +257,6 @@ public class ObstacleBox extends Box implements Obstacle {
 	 */
 	protected void updateVisibility() {
 		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
-		if (null != this.annotation) {
-			this.annotation.getAttributes().setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
-		}
 		if (null != this.depiction) {
 			this.depiction.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		}
@@ -279,9 +283,6 @@ public class ObstacleBox extends Box implements Obstacle {
 	@Override
 	public void render(DrawContext dc) {
 		super.render(dc);
-		if (null != this.annotation) {
-			this.annotation.render(dc);
-		}
 		if (null != this.depiction) {
 			this.depiction.render(dc);
 		}
