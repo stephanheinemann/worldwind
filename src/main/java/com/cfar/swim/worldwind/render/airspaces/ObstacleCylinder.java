@@ -40,6 +40,7 @@ import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
+import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
@@ -50,7 +51,6 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
-import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.render.airspaces.CappedCylinder;
@@ -336,7 +336,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 			if (interpolant.getDepiction().hasAnnotation()) {
 				interpolant.getDepiction().getAnnotation().setText(costInterval.getId());
 			} else {
-				interpolant.getDepiction().setAnnotation(new GlobeAnnotation(costInterval.getId(), interpolant.getReferencePosition()));
+				interpolant.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), interpolant.getReferencePosition()));
 			}
 		}
 		

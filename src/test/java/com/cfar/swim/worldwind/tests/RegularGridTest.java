@@ -37,13 +37,9 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
-import javax.naming.directory.BasicAttributes;
 import javax.xml.bind.JAXBException;
 
 import org.junit.Test;
@@ -54,19 +50,14 @@ import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
-import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
-import com.cfar.swim.worldwind.geom.CubicGrid;
-import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
 import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.Waypoint;
-import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
 import gov.nasa.worldwind.BasicModel;
 import gov.nasa.worldwind.Configuration;
@@ -75,13 +66,8 @@ import gov.nasa.worldwind.WorldWindow;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.LatLon;
-import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
-import gov.nasa.worldwind.geom.Sphere;
-import gov.nasa.worldwind.geom.Vec4;
-import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
@@ -209,7 +195,7 @@ public class RegularGridTest {
             				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
             				70));
             iris.getDepiction().setDesignation("Iris");
-            //iris.getDepiction().setAnnotation(new GlobeAnnotation("Iris", iris.getReferencePosition()));
+            //iris.getDepiction().setAnnotation(new DepictionAnnotation("Iris", iris.getReferencePosition()));
             renderableLayer.addRenderable(iris);
             
             A320 a320 = new A320(new Position(ts.getCorners()[0], 50000), 5000, CombatIdentification.FRIEND);
@@ -219,7 +205,7 @@ public class RegularGridTest {
     				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
     				70));
             a320.getDepiction().setDesignation("A320");
-            //a320.getDepiction().setAnnotation(new GlobeAnnotation("A320", iris.getReferencePosition()));
+            //a320.getDepiction().setAnnotation(new DepictionAnnotation("A320", iris.getReferencePosition()));
             renderableLayer.addRenderable(a320);
             
             // TODO: add time slider with steps between min and max time (set using calender-like input)

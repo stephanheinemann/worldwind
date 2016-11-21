@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
@@ -43,7 +44,6 @@ import com.cfar.swim.worldwind.util.Enableable;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.DrawContext;
-import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 
@@ -324,7 +324,7 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 			if (interpolant.getDepiction().hasAnnotation()) {
 				interpolant.getDepiction().getAnnotation().setText(costInterval.getId());
 			} else {
-				interpolant.getDepiction().setAnnotation(new GlobeAnnotation(costInterval.getId(), interpolant.getReferencePosition()));
+				interpolant.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), interpolant.getReferencePosition()));
 			}
 		}
 		

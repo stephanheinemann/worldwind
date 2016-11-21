@@ -29,9 +29,10 @@
  */
 package com.cfar.swim.worldwind.util;
 
+import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
+
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.render.DrawContext;
-import gov.nasa.worldwind.render.GlobeAnnotation;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.symbology.BasicTacticalGraphicAttributes;
@@ -66,7 +67,7 @@ public class Depiction implements Renderable {
 	private static final TacticalGraphicAttributes graphicAttributes = new BasicTacticalGraphicAttributes();
 	
 	/** the annotation of this depiction */
-	private GlobeAnnotation annotation = null;
+	private DepictionAnnotation annotation = null;
 	
 	/**
 	 * Constructs a new depiction from a tactical graphic.
@@ -180,7 +181,7 @@ public class Depiction implements Renderable {
 	 * 
 	 * @return the annotation of this depiction
 	 */
-	public GlobeAnnotation getAnnotation() {
+	public DepictionAnnotation getAnnotation() {
 		return this.annotation;
 	}
 	
@@ -189,7 +190,7 @@ public class Depiction implements Renderable {
 	 * 
 	 * @param annotation the annotation to be set
 	 */
-	public void setAnnotation(GlobeAnnotation annotation) {
+	public void setAnnotation(DepictionAnnotation annotation) {
 		this.annotation = annotation;
 	}
 	
