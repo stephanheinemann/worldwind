@@ -115,12 +115,13 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void init() {
 		this.globe = new Earth();
-		this.sector = new Sector(Angle.ZERO, Angle.ZERO, Angle.POS90, Angle.POS90);
-		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1.0, this.sector, 0, 50000);
+		this.sector = new Sector(Angle.ZERO, Angle.POS90, Angle.ZERO, Angle.POS90);
+		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1.0, this.sector, 0, 500000);
 		Box envBox = new Box(sectorBox);
 		Cube planningCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), envBox.getRLength() / 10);
 		this.waypoints = new ArrayList<Waypoint>();
 		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
+		this.environment.setThreshold(0);
 		this.environment.setGlobe(this.globe);
 		this.aircraft = new Iris(this.environment.getCenterPosition(), 5000, CombatIdentification.FRIEND);
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
@@ -207,6 +208,24 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void addWaypointsChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("waypoints", listener);
+	}
+	
+	/**
+	 * Gets the environment of this scenario.
+	 * 
+	 * @return the environment of this scenario
+	 */
+	public Environment getEnvironment() {
+		return this.environment;
+	}
+	
+	/**
+	 * Sets the environment of this scenario.
+	 * 
+	 * @param environment the environment to be set
+	 */
+	public void setEnvironment(Environment environment) {
+		this.environment = environment;
 	}
 	
 	/**
