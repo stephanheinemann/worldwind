@@ -244,7 +244,11 @@ public class Scenario implements Identifiable, Enableable {
 	 * @param waypoint the waypoint to be added
 	 */
 	public void addWaypoint(Waypoint waypoint) {
-		waypoint.setDesignator(Integer.toString(this.waypoints.size()));
+		String designator = Integer.toString(this.waypoints.size());
+		waypoint.setDesignator(designator);
+		if (waypoint.hasDepiction() && waypoint.getDepiction().hasAnnotation()) {
+			waypoint.getDepiction().getAnnotation().setText(designator);
+		} 
 		this.waypoints.add(waypoint);
 		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
 	}
@@ -271,7 +275,11 @@ public class Scenario implements Identifiable, Enableable {
 	public void updateWaypoint(Waypoint oldWaypoint, Waypoint newWaypoint) {
 		int index = this.waypoints.indexOf(oldWaypoint);
 		if (-1 != index) {
-			newWaypoint.setDesignator(Integer.toString(index));
+			String designator = Integer.toString(index);
+			newWaypoint.setDesignator(designator);
+			if (newWaypoint.hasDepiction() && newWaypoint.getDepiction().hasAnnotation()) {
+				newWaypoint.getDepiction().getAnnotation().setText(designator);
+			}
 			this.waypoints.remove(index);
 			this.waypoints.add(index, newWaypoint);
 			this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
@@ -316,7 +324,11 @@ public class Scenario implements Identifiable, Enableable {
 	private void sequenceWaypoints() {
 		int number = 0;
 		for (Waypoint waypoint : this.getWaypoints()) {
-			waypoint.setDesignator(Integer.toString(number));
+			String designator = Integer.toString(number);
+			waypoint.setDesignator(designator);
+			if (waypoint.hasDepiction() && waypoint.getDepiction().hasAnnotation()) {
+				waypoint.getDepiction().getAnnotation().setText(designator);
+			}
 			number++;
 		}
 	}
