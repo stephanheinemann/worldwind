@@ -211,6 +211,42 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Gets the globe of this scenario.
+	 * 
+	 * @return the globe of this scenario
+	 */
+	public Globe getGlobe() {
+		return this.globe;
+	}
+	
+	/**
+	 * Sets the globe of this scenario.
+	 * 
+	 * @param globe the globe to be set
+	 */
+	public void setGlobe(Globe globe) {
+		this.globe = globe;
+	}
+	
+	/**
+	 * Gets the planning sector of this scenario.
+	 * 
+	 * @return the planning sector of this scenario
+	 */
+	public Sector getSector() {
+		return this.sector;
+	}
+	
+	/**
+	 * Sets the planning sector of this scenario.
+	 * 
+	 * @param sector the planning sector to be set
+	 */
+	public void setSector(Sector sector) {
+		this.sector = sector;
+	}
+	
+	/**
 	 * Gets the environment of this scenario.
 	 * 
 	 * @return the environment of this scenario

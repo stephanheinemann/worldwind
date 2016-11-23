@@ -36,13 +36,22 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.registries.EnvironmentFactory;
+import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.registries.PlanningContinuumProperties;
+import com.cfar.swim.worldwind.registries.PlanningGridProperties;
+import com.cfar.swim.worldwind.registries.PlanningRoadmapProperties;
+import com.cfar.swim.worldwind.registries.Registry;
+import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.Configuration;
 import gov.nasa.worldwind.avlist.AVKey;
 
 /**
- * Realizes a planning session that aggregates planning scenarios.
+ * Realizes a planning session that aggregates planning scenarios,
+ * registries and a setup.
  * 
  * @author Stephan Heinemann
  *
@@ -71,6 +80,15 @@ public class Session implements Identifiable {
 	
 	/** the active scenario of this session */
 	private Scenario activeScenario = this.defaultScenario;
+	
+	/** the environment registry of this session */
+	private Registry<Environment> environmentRegistry = new Registry<>();
+	
+	/** the environment factory of this session */
+	private EnvironmentFactory environmentFactory = new EnvironmentFactory(this.activeScenario);
+	
+	/** the setup of this session */
+	private Setup setup;
 	
 	/**
 	 * Constructs and initializes a default session.
@@ -105,12 +123,20 @@ public class Session implements Identifiable {
 	 * Initializes this session.
 	 */
 	public void init() {
-		this.clearScenarios();
-		
 		Configuration.setValue(
     			AVKey.MIL_STD_2525_ICON_RETRIEVER_PATH,
     			this.getClass().getClassLoader().getResource("milstd2525"));
+		
+		this.clearScenarios();
+		this.environmentRegistry.clearSpecifications();
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_GRID_ID, new PlanningGridProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
+		
 		// TODO: initialize registries (aircraft, environments, planners...)
+	
+		this.setup = new Setup();
+		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
 	}
 	
 	/**
@@ -226,6 +252,7 @@ public class Session implements Identifiable {
 		this.activeScenario.disable();
 		this.activeScenario = this.getScenario(scenario.getId());
 		this.activeScenario.enable();
+		this.environmentFactory.setScenario(this.activeScenario);
 		this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
 	}
 	
@@ -256,6 +283,7 @@ public class Session implements Identifiable {
 					this.activeScenario.disable();
 					this.activeScenario = this.defaultScenario;
 					this.activeScenario.enable();
+					this.environmentFactory.setScenario(this.activeScenario);
 					this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
 				}
 				this.pcs.firePropertyChange("scenarios", null, (Iterable<Scenario>) this.scenarios);
@@ -272,6 +300,7 @@ public class Session implements Identifiable {
 		this.activeScenario.disable();
 		this.activeScenario = this.defaultScenario;
 		this.activeScenario.enable();
+		this.environmentFactory.setScenario(this.activeScenario);
 		this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
 		this.pcs.firePropertyChange("scenarios", null, (Iterable<Scenario>) this.scenarios);
 	}
@@ -283,6 +312,64 @@ public class Session implements Identifiable {
 	 */
 	public Set<Scenario> getScenarios() {
 		return Collections.unmodifiableSet(this.scenarios);
+	}
+	
+	/**
+	 * Gets the environment specifications of this session.
+	 * 
+	 * @return the environment specifications of this session
+	 */
+	public Set<Specification<Environment>> getEnvironmentSpecifications() {
+		return this.environmentRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified environment specification from this session.
+	 * 
+	 * @param id the environment specification identifier
+	 * 
+	 * @return the identified environment specification, or null otherwise
+	 */
+	public Specification<Environment> getEnvironmentSpecification(String id) {
+		Specification<Environment> envSpec = null;
+		Optional<Specification<Environment>> optSpec =
+				this.environmentRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			envSpec = optSpec.get();
+		}
+		
+		return envSpec;
+	}
+	
+	/**
+	 * Gets the environment factory of this session.
+	 * 
+	 * @return the environment factory of this session
+	 */
+	public Factory<Environment> getEnvironmentFactory() {
+		return this.environmentFactory;
+	}
+	
+	/**
+	 * Gets the setup of this session.
+	 * 
+	 * @return the setup of this session.
+	 */
+	public Setup getSetup() {
+		return this.setup;
+	}
+	
+	/**
+	 * Sets the setup of this session.
+	 * 
+	 * @param setup the setup to be set
+	 */
+	public void setSetup(Setup setup) {
+		this.setup = setup;
 	}
 	
 	/**
