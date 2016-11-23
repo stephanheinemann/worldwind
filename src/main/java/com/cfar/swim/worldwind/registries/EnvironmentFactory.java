@@ -61,7 +61,7 @@ public class EnvironmentFactory implements Factory<Environment> {
 	 * @param scenario the scenario of this environment factory
 	 */
 	public EnvironmentFactory(Scenario scenario) {
-		this.setScenario(scenario);
+		this.scenario = scenario;
 	}
 	
 	/**
