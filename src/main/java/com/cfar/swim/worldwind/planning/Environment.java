@@ -157,18 +157,30 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public boolean areNeighbors(Position position, Position neighbor);
 	
 	/**
-	 * Indicates whether or not this environment has children.
+	 * Indicates whether or not this environment is refined.
 	 * 
-	 * @return true if this environment has children, false otherwise
+	 * @return true if this environment is refined, false otherwise
 	 */
-	public boolean hasChildren();
+	public boolean isRefined();
 	
 	/**
-	 * Gets the children of this environment.
+	 * Gets the refinements of this environment.
 	 * 
-	 * @return the children of this environment
+	 * @return the refinements of this environment
 	 */
-	public Set<? extends Environment> getChildren();
+	public Set<? extends Environment> getRefinements();
+	
+	/**
+	 * Refines this environment with a refinement density.
+	 * 
+	 * @param density the refinement density
+	 */
+	public void refine(int density);
+	
+	/**
+	 * Coarsens this environment.
+	 */
+	public void coarsen();
 	
 	/**
 	 * Gets the distance between two positions in this environment.

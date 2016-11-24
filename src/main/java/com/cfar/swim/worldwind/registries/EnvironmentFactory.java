@@ -56,6 +56,9 @@ public class EnvironmentFactory implements Factory<Environment> {
 	/** the scenario of this environment factory */
 	private Scenario scenario;
 	
+	/** the active scenario change listener of this environment factory */
+	private ActiveScenarioChangeListener ascl = new ActiveScenarioChangeListener();
+	
 	/**
 	 * Constructs a new environment factory with a specified scenario.
 	 * The scenario aggregates a globe and sector which shall not be
@@ -91,15 +94,7 @@ public class EnvironmentFactory implements Factory<Environment> {
 	 * @return the active scenario change listener of this environment factory
 	 */
 	public PropertyChangeListener getActiveScenarioChangeListener() {
-		return new PropertyChangeListener() {
-
-			@Override
-			public void propertyChange(PropertyChangeEvent evt) {
-				if (evt.getNewValue() instanceof Scenario) {
-					scenario = (Scenario) evt.getNewValue();
-				}
-			}
-		};
+		return this.ascl;
 	}
 	
 	/**
@@ -137,4 +132,20 @@ public class EnvironmentFactory implements Factory<Environment> {
 		return environment;
 	}
 
+	/**
+	 * Realizes an active scenario change listener for this environment factory.
+	 * 
+	 * @author Stephan Heinemann
+	 *
+	 */
+	private class ActiveScenarioChangeListener implements PropertyChangeListener {
+		
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			if (evt.getNewValue() instanceof Scenario) {
+				scenario = (Scenario) evt.getNewValue();
+			}
+		}
+	}
+	
 }

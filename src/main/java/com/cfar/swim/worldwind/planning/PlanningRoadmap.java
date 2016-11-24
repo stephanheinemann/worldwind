@@ -117,7 +117,7 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public Set<? extends Environment> getChildren() {
+	public Set<? extends Environment> getRefinements() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -214,9 +214,17 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public boolean hasChildren() {
+	public boolean isRefined() {
 		// TODO Auto-generated method stub
 		return false;
+	}
+
+	@Override
+	public void refine(int density) {
+		// TODO Auto-generated method stub	
+	}
+	
+	public void coarsen() {
 	}
 
 }

@@ -144,7 +144,7 @@ public class PlanningContinuum implements Environment {
 	}
 
 	@Override
-	public Set<? extends Environment> getChildren() {
+	public Set<? extends Environment> getRefinements() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -213,9 +213,18 @@ public class PlanningContinuum implements Environment {
 	}
 
 	@Override
-	public boolean hasChildren() {
+	public boolean isRefined() {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
+	@Override
+	public void refine(int density) {
+		// TODO Auto-generated method stub
+	}
+	
+	@Override
+	public void coarsen() {
+	}
+	
 }

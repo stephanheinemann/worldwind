@@ -275,6 +275,13 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Notifies this scenario about a changed environment.
+	 */
+	public void notifyEnvironmentChange() {
+		this.pcs.firePropertyChange("environment", null, this.environment);
+	}
+	
+	/**
 	 * Gets the waypoints of this scenario.
 	 * 
 	 * @return the waypoints of this scenario
@@ -377,6 +384,13 @@ public class Scenario implements Identifiable, Enableable {
 			}
 			number++;
 		}
+	}
+	
+	/**
+	 * Notifies this scenario about a waypoints change.
+	 */
+	public void notifyWaypointsChange() {
+		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
 	}
 	
 	/**

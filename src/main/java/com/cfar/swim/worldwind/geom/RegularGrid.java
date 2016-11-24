@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.geom;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -332,7 +333,7 @@ public class RegularGrid extends Box {
 	 * @return the children of this regular grid
 	 */
 	public Set<? extends RegularGrid> getChildren() {
-		Set<RegularGrid> children = new HashSet<RegularGrid>();
+		Set<RegularGrid> children = new LinkedHashSet<RegularGrid>();
 		
 		if (this.hasChildren()) {
 			for (int r = 0; r < this.cells.length; r++) {
@@ -409,7 +410,7 @@ public class RegularGrid extends Box {
 	 * @return all regular grids associated with this regular grid
 	 */
 	public Set<? extends RegularGrid> getAll() {
-		Set<RegularGrid> all = new HashSet<RegularGrid>();
+		Set<RegularGrid> all = new LinkedHashSet<RegularGrid>();
 		all.add(this);
 		
 		if (this.hasChildren()) {

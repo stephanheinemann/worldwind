@@ -740,6 +740,54 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
+	 * Indicates whether or not this planning grid is refined, that is,
+	 * has children.
+	 * 
+	 * @return true if this planning grid is refined, false otherwise
+	 * 
+	 * @see Environment#isRefined()
+	 */
+	@Override
+	public boolean isRefined() {
+		return this.hasChildren();
+	}
+	
+	/**
+	 * Gets the refinements, that is, children of this planning grid.
+	 * 
+	 * @return the refinements of this planning grid
+	 * 
+	 * @see Environment#getRefinements()
+	 */
+	@Override
+	public Set<? extends PlanningGrid> getRefinements() {
+		return this.getChildren();
+	}
+	
+	/**
+	 * Refines, that is, adds children with a specified density to this
+	 * planning grid.
+	 * 
+	 * @param density the refinement density
+	 * 
+	 * @see Environment#refine(int)
+	 */
+	@Override
+	public void refine(int density) {
+		this.addChildren(density);
+	}
+	
+	/**
+	 * Coarsens, that is, removes the children of this planning grid.
+	 *
+	 * @see Environemnt#coarsen
+	 */
+	@Override
+	public void coarsen() {
+		this.removeChildren();
+	}
+	
+	/**
 	 * Looks up the planning grid cells (maximum eight) containing a specified
 	 * point in world model coordinates considering numerical inaccuracies.
 	 * 
