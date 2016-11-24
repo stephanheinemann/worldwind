@@ -29,6 +29,9 @@
  */
 package com.cfar.swim.worldwind.registries;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -80,6 +83,23 @@ public class EnvironmentFactory implements Factory<Environment> {
 	 */
 	public void setScenario(Scenario scenario) {
 		this.scenario = scenario;
+	}
+	
+	/**
+	 * Gets the active scenario change listener of this environment factory.
+	 * 
+	 * @return the active scenario change listener of this environment factory
+	 */
+	public PropertyChangeListener getActiveScenarioChangeListener() {
+		return new PropertyChangeListener() {
+
+			@Override
+			public void propertyChange(PropertyChangeEvent evt) {
+				if (evt.getNewValue() instanceof Scenario) {
+					scenario = (Scenario) evt.getNewValue();
+				}
+			}
+		};
 	}
 	
 	/**

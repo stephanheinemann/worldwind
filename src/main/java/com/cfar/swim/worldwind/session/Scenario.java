@@ -202,6 +202,15 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Adds an environment change listener to this scenario.
+	 * 
+	 * @param listener the environment change listener to be added
+	 */
+	public void addEnvironmentChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("environment", listener);
+	}
+	
+	/**
 	 * Adds a waypoint change listener to this scenario.
 	 * 
 	 * @param listener the waypoint change listener to be added
@@ -262,6 +271,7 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void setEnvironment(Environment environment) {
 		this.environment = environment;
+		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
 	
 	/**

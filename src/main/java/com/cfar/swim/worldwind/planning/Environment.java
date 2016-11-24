@@ -157,6 +157,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public boolean areNeighbors(Position position, Position neighbor);
 	
 	/**
+	 * Indicates whether or not this environment has children.
+	 * 
+	 * @return true if this environment has children, false otherwise
+	 */
+	public boolean hasChildren();
+	
+	/**
 	 * Gets the children of this environment.
 	 * 
 	 * @return the children of this environment

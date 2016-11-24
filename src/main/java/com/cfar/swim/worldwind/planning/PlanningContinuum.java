@@ -212,4 +212,10 @@ public class PlanningContinuum implements Environment {
 		return 0;
 	}
 
+	@Override
+	public boolean hasChildren() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

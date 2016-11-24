@@ -133,6 +133,7 @@ public class Session implements Identifiable {
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
 		
+		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		// TODO: initialize registries (aircraft, environments, planners...)
 	
 		this.setup = new Setup();
@@ -252,7 +253,6 @@ public class Session implements Identifiable {
 		this.activeScenario.disable();
 		this.activeScenario = this.getScenario(scenario.getId());
 		this.activeScenario.enable();
-		this.environmentFactory.setScenario(this.activeScenario);
 		this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
 	}
 	
@@ -283,7 +283,6 @@ public class Session implements Identifiable {
 					this.activeScenario.disable();
 					this.activeScenario = this.defaultScenario;
 					this.activeScenario.enable();
-					this.environmentFactory.setScenario(this.activeScenario);
 					this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
 				}
 				this.pcs.firePropertyChange("scenarios", null, (Iterable<Scenario>) this.scenarios);
@@ -300,7 +299,6 @@ public class Session implements Identifiable {
 		this.activeScenario.disable();
 		this.activeScenario = this.defaultScenario;
 		this.activeScenario.enable();
-		this.environmentFactory.setScenario(this.activeScenario);
 		this.pcs.firePropertyChange("activeScenario", null, this.activeScenario);
 		this.pcs.firePropertyChange("scenarios", null, (Iterable<Scenario>) this.scenarios);
 	}
