@@ -125,6 +125,34 @@ public interface Planner {
 	 */
 	public List<? extends Position> getPlan();
 	
+	/**
+	 * Indicates whether or not this planner supports a specified aircraft.
+	 * 
+	 * @param aircraft the aircraft
+	 * 
+	 * @return true if this planner supports the aircraft, false otherwise
+	 */
+	public boolean supports(Aircraft aircraft);
+	
+	/**
+	 * Indicates whether or not this planner supports a specified environment.
+	 * 
+	 * @param environment the environment
+	 * 
+	 * @return true if this planner supports the environment, false otherwise
+	 */
+	public boolean supports(Environment environment);
+	
+	/**
+	 * Indicates whether or not this planner supports specified waypoints.
+	 * 
+	 * @param waypoints the waypoints
+	 * 
+	 * @return true if this planner supports the waypoints, false otherwise
+	 */
+	public boolean supports(List<Position> waypoints);
+	
+	
 	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions
 	// TODO: include capabilities (e.g., velocities, rates) and obtain cost at time

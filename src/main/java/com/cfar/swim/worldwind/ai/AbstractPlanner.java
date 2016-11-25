@@ -29,10 +29,14 @@
  */
 package com.cfar.swim.worldwind.ai;
 
+import java.util.List;
+
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
+
+import gov.nasa.worldwind.geom.Position;
 
 /**
  * Concretizes a motion planner for an aircraft in an environment using cost
@@ -136,6 +140,60 @@ public abstract class AbstractPlanner implements Planner {
 	@Override
 	public void setRiskPolicy(RiskPolicy riskPolicy) {
 		this.riskPolicy = riskPolicy;
+	}
+	
+	/**
+	 * Indicates whether or not this abstract planner supports a specified
+	 * aircraft.
+	 * 
+	 * @param aircraft the aircraft
+	 * 
+	 * @return true if the aircraft is non-null, false otherwise
+	 * 
+	 * @see Planner#supports(Aircraft)
+	 */
+	@Override
+	public boolean supports(Aircraft aircraft) {
+		return (null != aircraft);
+	}
+	
+	/**
+	 * Indicates whether or not this abstract planner supports a specified
+	 * environment.
+	 * 
+	 * @param environment the environment
+	 * 
+	 * @return true if the environment is non-null, false otherwise
+	 */
+	public boolean supports(Environment environment) {
+		return (null != environment);
+	}
+	
+	
+	/**
+	 * Indicates whether or not this abstract planner supports specified
+	 * waypoints.
+	 * 
+	 * @param waypoints the waypoints
+	 * 
+	 * @return true if waypoints are contained in the planner's environment,
+	 *         false otherwise
+	 */
+	@Override
+	public boolean supports(List<Position> waypoints) {
+		boolean supports = false;
+		
+		if ((null != this.environment) && (null != waypoints)) {
+			supports = true;
+			for (Position waypoint : waypoints) {
+				if (!this.environment.contains(waypoint)) {
+					supports = false;
+					break;
+				}
+			}
+		}
+		
+		return supports;
 	}
 
 }

@@ -45,6 +45,8 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.PlanningGrid;
+import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -151,6 +153,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
+		// TODO: catch IllegalArgumentException (incapable) and exit
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
 		double cost = this.getEnvironment().getStepCost(
@@ -202,6 +205,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 		while (null != this.open.peek()) {
 			Waypoint source = this.open.poll();
+			this.setWaypoint(source);
 			if (source.equals(this.goal)) {
 				return this.computeTrajectory(source);
 			}
@@ -291,4 +295,36 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		return new Trajectory(plan);
 	}
 
+	/**
+	 * Post-processes a previously expanded waypoint upon its own expansion.
+	 * This method is intended to be overridden by lazy evaluation algorithms.
+	 * 
+	 * @param waypoint the expanded waypoint
+	 */
+	protected void setWaypoint(Waypoint waypoint) {}
+	
+	/**
+	 * Indicates whether or not this forward A* planner supports a specified
+	 * environment.
+	 * 
+	 * @param environment the environment
+	 * 
+	 * @return true if the environment is a planning grid or roadmap,
+	 *         false otherwise
+	 *         
+	 * @see PlanningGrid
+	 * @see PlanningRoadmap
+	 */
+	@Override
+	public boolean supports(Environment environment) {
+		boolean supports = super.supports(environment);
+		
+		if (supports) {
+			supports = (environment instanceof PlanningGrid) ||
+					(environment instanceof PlanningRoadmap);
+		}
+		
+		return supports;
+	}
+	
 }

@@ -32,6 +32,8 @@ package com.cfar.swim.worldwind.session;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
@@ -304,9 +306,8 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the waypoints of this scenario
 	 */
-	public Iterable<Waypoint> getWaypoints() {
-		// TODO: waypoints are not immutable and external changes could be problematic
-		return this.waypoints;
+	public List<Waypoint> getWaypoints() {
+		return Collections.unmodifiableList(this.waypoints);
 	}
 	
 	/**

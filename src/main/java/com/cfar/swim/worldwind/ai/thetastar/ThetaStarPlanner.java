@@ -75,6 +75,7 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
+		// TODO: catch IllegalArgumentException (incapable) and exit
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
 		Waypoint parent = null;
@@ -86,6 +87,7 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 		if (null != source.getParent()) {
 			parent = source.getParent();
 			Path straightLeg = new Path(parent, target);
+			// TODO: catch IllegalArgumentException (incapable) and exit
 			straightEnd = capabilities.getEstimatedTime(straightLeg, globe, parent.getEto());
 			
 			straightCost = this.getEnvironment().getLegCost(
