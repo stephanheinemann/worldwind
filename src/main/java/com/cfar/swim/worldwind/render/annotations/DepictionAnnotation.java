@@ -57,6 +57,10 @@ public class DepictionAnnotation extends GlobeAnnotation {
 	 */
 	public DepictionAnnotation(String text, Position position) {
 		super(text, position);
+		this.getAttributes().setTextColor(Color.LIGHT_GRAY);
+		this.getAttributes().setBackgroundColor(new Color(0, 0, 0, 0));
+		this.getAttributes().setTextAlign(AVKey.CENTER);
+		this.getAttributes().setLeaderGapWidth(3);
 	}
 	
 	/**
