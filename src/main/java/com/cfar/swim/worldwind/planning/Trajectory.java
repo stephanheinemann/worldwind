@@ -29,17 +29,24 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import com.cfar.swim.worldwind.util.Depictable;
+import com.cfar.swim.worldwind.util.Depiction;
+
+import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Path;
 
 /**
- * Realizes a trajectory of waypoints which represents a path in both space and
- * time.
+ * Realizes a trajectory of waypoints which represents a path in both
+ * space and time.
  * 
  * @author Stephan Heinemann
  *
  */
-public class Trajectory extends Path {
+public class Trajectory extends Path implements Depictable {
 
+	/** the depiction of this trajectory */
+	private Depiction depiction = null;
+	
 	/**
 	 * Constructs an empty trajectory.
 	 * 
@@ -82,6 +89,60 @@ public class Trajectory extends Path {
 	@SuppressWarnings("unchecked")
 	public Iterable<? extends Waypoint> getWaypoints() {
 		return (Iterable<Waypoint>) super.getPositions();
+	}
+	
+	/**
+	 * Gets the depiction of this trajectory.
+	 * 
+	 * @return the depiction of this trajectory
+	 * 
+	 * @see Depictable#getDepiction()
+	 */
+	@Override
+	public Depiction getDepiction() {
+		return this.depiction;
+	}
+	
+	/**
+	 * Sets the depiction of this trajectory.
+	 * 
+	 * @param depiction the depiction to be set
+	 * 
+	 * @see Depictable#setDepiction(Depiction)
+	 */
+	@Override
+	public void setDepiction(Depiction depiction) {
+		this.depiction = depiction;
+	}
+	
+	/**
+	 * Indicates whether or not this trajectory has a depiction.
+	 * 
+	 * @return true if this trajectory has a depiction, false otherwise
+	 * 
+	 * @see Depictable#hasDepiction()
+	 */
+	@Override
+	public boolean hasDepiction() {
+		return (null != this.depiction);
+	}
+	
+	/**
+	 * Renders this trajectory.
+	 * 
+	 * @param dc the drawing context
+	 * 
+	 * @see Renderable#render
+	 */
+	@Override
+	public void render(DrawContext dc) {
+		super.render(dc);
+		if (null != this.depiction) {
+			this.depiction.render(dc);
+		}
+		for (Waypoint waypoint : this.getWaypoints()) {
+			waypoint.render(dc);
+		}
 	}
 	
 }

@@ -27,13 +27,4 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries;
-
-/**
- * Realizes the properties bean of a planning continuum environment.
- * 
- * @author Stephan Heinemann
- *
- */
-public class PlanningContinuumProperties extends EnvironmentProperties {
-}
+package com.cfar.swim.worldwind.registries.planners;

@@ -36,9 +36,9 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
+import com.cfar.swim.worldwind.planning.Trajectory;
 
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.render.Path;
 
 /**
  * Describes a motion planner for an aircraft in an environment using cost
@@ -92,20 +92,20 @@ public interface Planner {
 	public void setRiskPolicy(RiskPolicy riskPolicy);
 	
 	/**
-	 * Plans a path from an origin to a destination at a specified estimated
-	 * time of departure.
+	 * Plans a trajectory from an origin to a destination at a specified
+	 * estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
 	 * 
-	 * @return the planned path from the origin to the destination with the
-	 *         estimated time of departure
+	 * @return the planned trajectory from the origin to the destination with
+	 *         the estimated time of departure
 	 */
-	public Path plan(Position origin, Position destination, ZonedDateTime etd);
+	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd);
 	
 	/**
-	 * Plans a path from an origin to a destination along waypoints at a
+	 * Plans a trajectory from an origin to a destination along waypoints at a
 	 * specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
@@ -113,10 +113,10 @@ public interface Planner {
 	 * @param waypoints the waypoints in globe coordinates
 	 * @param etd the estimated time of departure
 	 * 
-	 * @return the planned path from the origin to the destination along the
-	 *         waypoints with the estimated time of departure
+	 * @return the planned trajectory from the origin to the destination along
+	 *         the waypoints with the estimated time of departure
 	 */
-	public Path plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
+	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
 	
 	/**
 	 * Gets a copy of the last computed plan.

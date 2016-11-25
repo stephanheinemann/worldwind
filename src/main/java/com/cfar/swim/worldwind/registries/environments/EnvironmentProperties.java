@@ -27,9 +27,10 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries;
+package com.cfar.swim.worldwind.registries.environments;
 
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.registries.Properties;
 
 /**
  * Abstracts environment properties applicable to all environments.
@@ -39,14 +40,15 @@ import com.cfar.swim.worldwind.planning.Environment;
  */
 public abstract class EnvironmentProperties implements Properties<Environment> {
 
-	/** the floor of this environment */
+	/** the floor of this environment properties bean */
 	protected double floor;
 	
-	/** the ceiling of this environment */
+	/** the ceiling of this environment properties bean */
 	protected double ceiling;
 	
 	/**
-	 * Constructs new environment properties using default a floor and ceiling.
+	 * Constructs a new environment properties bean using default floor and
+	 * ceiling property values.
 	 */
 	protected EnvironmentProperties() {
 		this.floor = 0d;
@@ -54,10 +56,11 @@ public abstract class EnvironmentProperties implements Properties<Environment> {
 	}
 	
 	/**
-	 * Constructs new environment properties with a specified floor and ceiling.
+	 * Constructs a new environment properties bean with specified floor and
+	 * ceiling property values.
 	 * 
-	 * @param floor the floor of this environment in meters
-	 * @param ceiling the ceiling of this environment in meters
+	 * @param floor the floor of this environment properties bean in meters
+	 * @param ceiling the ceiling of this environment properties bean in meters
 	 */
 	public EnvironmentProperties(double floor, double ceiling) {
 		this.floor = floor;
@@ -65,16 +68,16 @@ public abstract class EnvironmentProperties implements Properties<Environment> {
 	}
 	
 	/**
-	 * Gets the floor of this environment.
+	 * Gets the floor of this environment properties bean.
 	 * 
-	 * @return the floor of this environment in meters
+	 * @return the floor of this environment properties bean in meters
 	 */
 	public double getFloor() {
 		return floor;
 	}
 	
 	/**
-	 * Sets the floor of this environment.
+	 * Sets the floor of this environment properties bean.
 	 * 
 	 * @param floor the floor to be set in meters
 	 */
@@ -83,16 +86,16 @@ public abstract class EnvironmentProperties implements Properties<Environment> {
 	}
 	
 	/**
-	 * Gets the ceiling of this environment.
+	 * Gets the ceiling of this environment properties bean.
 	 * 
-	 * @return the ceiling of this environment in meters
+	 * @return the ceiling of this environment properties bean in meters
 	 */
 	public double getCeiling() {
 		return ceiling;
 	}
 	
 	/**
-	 * Sets the ceiling of this environment.
+	 * Sets the ceiling of this environment properties bean.
 	 * 
 	 * @param ceiling the ceiling to be set in meters
 	 */

@@ -27,13 +27,35 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries;
+package com.cfar.swim.worldwind.registries.planners;
+
+import com.cfar.swim.worldwind.planning.CostPolicy;
+import com.cfar.swim.worldwind.planning.RiskPolicy;
 
 /**
- * Realizes the properties bean of a planning roadmap environment.
+ * Realizes the properties bean of a Theta* planner.
  * 
  * @author Stephan Heinemann
  *
  */
-public class PlanningRoadmapProperties extends EnvironmentProperties {
+public class ThetaStarProperties extends PlannerProperties {
+
+	/**
+	 * Constructs a new Theta* planner properties bean.
+	 */
+	public ThetaStarProperties() {
+		super();
+	}
+	
+	/**
+	 * Constructs a new Theta* planner properties bean with
+	 * specified cost and risk policy property values.
+	 * 
+	 * @param costPolicy the cost policy of this Theta* planner properties bean
+	 * @param riskPolicy the risk policy of this Theta* planner properties bean
+	 */
+	public ThetaStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		super(costPolicy, riskPolicy);
+	}
+	
 }

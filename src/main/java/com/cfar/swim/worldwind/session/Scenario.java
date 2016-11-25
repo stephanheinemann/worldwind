@@ -282,6 +282,24 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Gets the aircraft of this scenario.
+	 * 
+	 * @return the aircraft of this scenario
+	 */
+	public Aircraft getAircraft() {
+		return this.aircraft;
+	}
+	
+	/**
+	 * Sets the aircraft of this scenario.
+	 * 
+	 * @param aircraft the aircraft to be set
+	 */
+	public void setAircraft(Aircraft aircraft) {
+		this.aircraft = aircraft;
+	}
+	
+	/**
 	 * Gets the waypoints of this scenario.
 	 * 
 	 * @return the waypoints of this scenario

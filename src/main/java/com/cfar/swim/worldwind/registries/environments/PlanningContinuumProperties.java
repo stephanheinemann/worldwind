@@ -27,56 +27,13 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries;
+package com.cfar.swim.worldwind.registries.environments;
 
 /**
- * Realizes the properties bean of a planning grid environment.
+ * Realizes the properties bean of a planning continuum environment.
  * 
  * @author Stephan Heinemann
  *
  */
-public class PlanningGridProperties extends EnvironmentProperties {
-
-	/** the longest axis division of this planning grid properties bean */
-	private int division;
-	
-	/**
-	 * Constructs a new planning grid properties bean with a default
-	 * division (number of cells) for the longest axis.
-	 */
-	public PlanningGridProperties() {
-		this.division = 10;
-	}
-	
-	/**
-	 * Constructs a new planning grid properties bean with a specified
-	 * division (number of cells) for the longest axis.
-	 * 
-	 * @param division the division for the longest axis
-	 */
-	public PlanningGridProperties(int division) {
-		this.division = division;
-	}
-	
-	/**
-	 * Gets the division (number of cells) for the longest axis of this
-	 * planning grid properties bean.
-	 * 
-	 * @return the division for the longest axis of this planning grid
-	 *         properties bean
-	 */
-	public int getDivsion() {
-		return this.division;
-	}
-	
-	/**
-	 * Sets the division (number of cells) for the longest axis of this
-	 * planning grid properties bean.
-	 * 
-	 * @param division the division for the longest axis to be set
-	 */
-	public void setDivsion(int division) {
-		this.division = division;
-	}
-	
+public class PlanningContinuumProperties extends EnvironmentProperties {
 }

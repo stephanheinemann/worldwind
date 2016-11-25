@@ -36,14 +36,18 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.registries.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.Factory;
-import com.cfar.swim.worldwind.registries.PlanningContinuumProperties;
-import com.cfar.swim.worldwind.registries.PlanningGridProperties;
-import com.cfar.swim.worldwind.registries.PlanningRoadmapProperties;
 import com.cfar.swim.worldwind.registries.Registry;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
+import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
+import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
+import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties;
+import com.cfar.swim.worldwind.registries.planners.ForwardAStarProperties;
+import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
+import com.cfar.swim.worldwind.registries.planners.ThetaStarProperties;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.Configuration;
@@ -87,6 +91,12 @@ public class Session implements Identifiable {
 	/** the environment factory of this session */
 	private EnvironmentFactory environmentFactory = new EnvironmentFactory(this.activeScenario);
 	
+	/** the planner registry of this session */
+	private Registry<Planner> plannerRegistry = new Registry<>();
+	
+	/** the planner factory of this session */
+	private PlannerFactory plannerFactory = new PlannerFactory(this.activeScenario);
+	
 	/** the setup of this session */
 	private Setup setup;
 	
@@ -128,16 +138,23 @@ public class Session implements Identifiable {
     			this.getClass().getClassLoader().getResource("milstd2525"));
 		
 		this.clearScenarios();
+		
 		this.environmentRegistry.clearSpecifications();
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_GRID_ID, new PlanningGridProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
-		
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
+		
+		this.plannerRegistry.clearSpecifications();
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAS_ID, new ForwardAStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties()));
+		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
+		
 		// TODO: initialize registries (aircraft, environments, planners...)
-	
+		
 		this.setup = new Setup();
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
+		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
 	}
 	
 	/**
@@ -350,6 +367,46 @@ public class Session implements Identifiable {
 	 */
 	public Factory<Environment> getEnvironmentFactory() {
 		return this.environmentFactory;
+	}
+	
+	/**
+	 * Gets the planner specifications of this session.
+	 * 
+	 * @return the planner specifications of this session
+	 */
+	public Set<Specification<Planner>> getPlannerSpecifications() {
+		return this.plannerRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified planner specification from this session.
+	 * 
+	 * @param id the planner specification identifier
+	 * 
+	 * @return the identified planner specification, or null otherwise
+	 */
+	public Specification<Planner> getPlannerSpecification(String id) {
+		Specification<Planner> plannerSpec = null;
+		Optional<Specification<Planner>> optSpec =
+				this.plannerRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			plannerSpec = optSpec.get();
+		}
+		
+		return plannerSpec;
+	}
+	
+	/**
+	 * Gets the planner factory of this session.
+	 * 
+	 * @return the planner factory of this session
+	 */
+	public Factory<Planner> getPlannerFactory() {
+		return this.plannerFactory;
 	}
 	
 	/**

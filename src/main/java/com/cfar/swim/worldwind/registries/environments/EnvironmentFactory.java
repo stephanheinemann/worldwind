@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries;
+package com.cfar.swim.worldwind.registries.environments;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -38,6 +38,8 @@ import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
+import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
 
 import gov.nasa.worldwind.geom.Sector;
@@ -52,6 +54,9 @@ import gov.nasa.worldwind.geom.Sector;
  * @see Specification
  */
 public class EnvironmentFactory implements Factory<Environment> {
+	
+	// TODO: Both, environment and planner factory need the active scenario
+	// maybe pull up scenario functionality into abstract factory
 	
 	/** the scenario of this environment factory */
 	private Scenario scenario;
