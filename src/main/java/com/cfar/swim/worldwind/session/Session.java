@@ -152,6 +152,7 @@ public class Session implements Identifiable {
 		
 		// TODO: initialize registries (aircraft, environments, planners...)
 		
+		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));

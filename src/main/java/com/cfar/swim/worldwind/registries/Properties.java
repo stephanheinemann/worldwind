@@ -38,5 +38,15 @@ package com.cfar.swim.worldwind.registries;
  * 
  * @see Specification
  */
-public interface Properties<Registree> {
+public interface Properties<Registree> extends Cloneable {
+	
+	/**
+	 * Clones this properties bean.
+	 * 
+	 * @return a clone of this properties bean
+	 * 
+	 * @see Cloneable
+	 */
+	public Properties<Registree> clone();
+	
 }

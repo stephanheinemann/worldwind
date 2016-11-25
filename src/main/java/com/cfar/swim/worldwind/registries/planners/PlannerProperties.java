@@ -105,4 +105,22 @@ public abstract class PlannerProperties implements Properties<Planner> {
 		this.riskPolicy = riskPolicy;
 	}
 	
+	/**
+	 * Clones this planner properties bean.
+	 * 
+	 * @return a clone of this planner properties bean
+	 * 
+	 * @see Properties#clone()
+	 */
+	@Override
+	public PlannerProperties clone() {
+		PlannerProperties clone = null;
+		try {
+			clone = (PlannerProperties) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return clone;
+	}
+	
 }

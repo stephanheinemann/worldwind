@@ -103,4 +103,22 @@ public abstract class EnvironmentProperties implements Properties<Environment> {
 		this.ceiling = ceiling;
 	}
 	
+	/**
+	 * Clones this environment properties bean.
+	 * 
+	 * @return a clone of this environment properties bean
+	 * 
+	 * @see Properties#clone()
+	 */
+	@Override
+	public EnvironmentProperties clone() {
+		EnvironmentProperties clone = null;
+		try {
+			clone = (EnvironmentProperties) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return clone;
+	}
+	
 }
