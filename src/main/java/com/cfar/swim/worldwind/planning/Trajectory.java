@@ -140,8 +140,10 @@ public class Trajectory extends Path implements Depictable {
 		if (null != this.depiction) {
 			this.depiction.render(dc);
 		}
-		for (Waypoint waypoint : this.getWaypoints()) {
-			waypoint.render(dc);
+		if (null != this.getWaypoints()) {
+			for (Waypoint waypoint : this.getWaypoints()) {
+				waypoint.render(dc);
+			}
 		}
 	}
 	
