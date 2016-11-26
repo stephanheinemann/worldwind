@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 import com.cfar.swim.worldwind.ai.Planner;
@@ -222,6 +223,15 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Adds a trajectory change listener to this scenario.
+	 * 
+	 * @param listener the trajectory change listener to be added
+	 */
+	public void addTrajectoryChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("trajectory", listener);
+	}
+	
+	/**
 	 * Gets the globe of this scenario.
 	 * 
 	 * @return the globe of this scenario
@@ -406,13 +416,6 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
-	 * Notifies this scenario about a waypoints change.
-	 */
-	public void notifyWaypointsChange() {
-		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
-	}
-	
-	/**
 	 * Gets the planner of this scenario.
 	 * 
 	 * @return the planner of this scenario
@@ -446,8 +449,91 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void setTrajectory(Trajectory trajectory) {
 		this.trajectory = trajectory;
+		this.sequenceTrajectory();
+		this.pcs.firePropertyChange("trajectory", null, this.trajectory);
 	}
-
+	
+	/**
+	 * Clears the planned trajectory of this scenario.
+	 */
+	public void clearTrajectory() {
+		this.trajectory = new Trajectory();
+		this.pcs.firePropertyChange("trajectory", null, this.trajectory);
+	}
+	
+	/**
+	 * Indicates whether or not this scenario has a computed trajectory.
+	 * 
+	 * @return true if this scenario has a computed trajectory, false otherwise
+	 */
+	public boolean hasTrajectory() {
+		return (null != this.trajectory) && (null != this.trajectory.getWaypoints());
+	}
+	
+	/**
+	 * Sequences the trajectory of this scenario.
+	 */
+	private void sequenceTrajectory() {
+		if (this.hasTrajectory()) {
+			Iterator<Waypoint> waypointsIterator = this.waypoints.iterator();
+			Iterator<? extends Waypoint> trajectoryIterator = this.trajectory.getWaypoints().iterator();
+			int number = 0;
+			
+			if (waypointsIterator.hasNext()) {
+				Waypoint current = waypointsIterator.next();
+				
+				while (waypointsIterator.hasNext()) {
+					Waypoint next = waypointsIterator.next();
+					boolean isNext = false;
+					
+					while (trajectoryIterator.hasNext() && !isNext) {
+						Waypoint waypoint = trajectoryIterator.next();
+						if (waypoint.equals(next)) {
+							number = 0;
+							current = next;
+							isNext = true;
+						}
+						waypoint.setDesignator(current.getDesignator() + "." + Integer.toString(number));
+						number++;
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Gets a trajectory leg of the computed trajectory (sub-trajectory)
+	 * of this scenario.
+	 * 
+	 * @param from the first waypoint of the trajectory leg
+	 * @param to the last waypoint of the trajectory leg
+	 * 
+	 * @return the trajectory leg between the first and the last waypoint 
+	 */
+	public List<Waypoint> getTrajectoryLeg(Waypoint from, Waypoint to) {
+		List<Waypoint> leg = new ArrayList<Waypoint>();
+		
+		if (this.hasTrajectory()) {
+			Iterator<? extends Waypoint> trajectoryIterator = this.trajectory.getWaypoints().iterator();
+			boolean passedFrom = false;
+			boolean passedTo = false;
+			while (trajectoryIterator.hasNext() && !passedTo) {
+				Waypoint waypoint = trajectoryIterator.next();
+				if (waypoint.equals(to)) {
+					passedTo = true;
+					leg.add(waypoint);
+				} else if (waypoint.equals(from)) {
+					passedFrom = true;
+					leg.add(waypoint);
+				} else if (passedFrom) {
+					leg.add(waypoint);
+				}
+			}
+		}
+		
+		return leg;
+	}
+	
 	/**
 	 * Indicates whether or not this scenario equals another scenario based on
 	 * their identifiers.
