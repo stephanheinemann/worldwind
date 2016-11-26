@@ -37,10 +37,14 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.Planner;
+import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Registry;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.aircraft.A320Properties;
+import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
+import com.cfar.swim.worldwind.registries.aircraft.IrisProperties;
 import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
@@ -84,6 +88,12 @@ public class Session implements Identifiable {
 	
 	/** the active scenario of this session */
 	private Scenario activeScenario = this.defaultScenario;
+	
+	/** the aircraft registry of this session */
+	private Registry<Aircraft> aircraftRegistry = new Registry<>();
+	
+	/** the aircraft factory of this session */
+	private AircraftFactory aircraftFactory = new AircraftFactory();
 	
 	/** the environment registry of this session */
 	private Registry<Environment> environmentRegistry = new Registry<>();
@@ -139,6 +149,10 @@ public class Session implements Identifiable {
 		
 		this.clearScenarios();
 		
+		this.aircraftRegistry.clearSpecifications();
+		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_IRIS_ID, new IrisProperties()));
+		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_A320_ID, new A320Properties()));
+		
 		this.environmentRegistry.clearSpecifications();
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_GRID_ID, new PlanningGridProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
@@ -154,6 +168,7 @@ public class Session implements Identifiable {
 		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
+		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
 	}
@@ -328,6 +343,46 @@ public class Session implements Identifiable {
 	 */
 	public Set<Scenario> getScenarios() {
 		return Collections.unmodifiableSet(this.scenarios);
+	}
+	
+	/**
+	 * Gets the aircraft specifications of this session.
+	 * 
+	 * @return the aircraft specifications of this session
+	 */
+	public Set<Specification<Aircraft>> getAircraftSpecifications() {
+		return this.aircraftRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified aircraft specification from this session.
+	 * 
+	 * @param id the aircraft specification identifier
+	 * 
+	 * @return the identified aircraft specification, or null otherwise
+	 */
+	public Specification<Aircraft> getAircraftSpecification(String id) {
+		Specification<Aircraft> aircraftSpec = null;
+		Optional<Specification<Aircraft>> optSpec =
+				this.aircraftRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			aircraftSpec = optSpec.get();
+		}
+		
+		return aircraftSpec;
+	}
+	
+	/**
+	 * Gets the aircraft factory of this session.
+	 * 
+	 * @return the aircraft factory of this session
+	 */
+	public Factory<Aircraft> getAircraftFactory() {
+		return this.aircraftFactory;
 	}
 	
 	/**

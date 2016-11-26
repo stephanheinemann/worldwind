@@ -45,6 +45,7 @@ import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
+import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
@@ -95,6 +96,36 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		this.getAttributes().setOpacity(0.25);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
+	}
+	
+	/**
+	 * Moves this obstacle cylinder by adding a specified position.
+	 * 
+	 * @param position the position to be added to this obstacle cylinder's position
+	 * 
+	 * @see Movable#move(Position)
+	 */
+	@Override
+	public void move(Position position) {
+		super.move(position);
+		if (this.hasDepiction()) {
+			this.depiction.move(position);
+		}
+	}
+	
+	/**
+	 * Moves this obstacle cylinder to a specified position.
+	 * 
+	 * @param position the position to move this obstacle cylinder to
+	 * 
+	 * @see Movable#moveTo(Position)
+	 */
+	@Override
+	public void moveTo(Position position) {
+		super.moveTo(position);
+		if (this.hasDepiction()) {
+			this.depiction.moveTo(position);
+		}
 	}
 	
 	/**

@@ -117,6 +117,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * Initializes this scenario.
 	 */
 	public void init() {
+		// TODO: initial scenario should not have aircraft (and maybe no sector, environment, planner...)
 		this.globe = new Earth();
 		this.sector = new Sector(Angle.ZERO, Angle.POS90, Angle.ZERO, Angle.POS90);
 		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1.0, this.sector, 0, 500000);
@@ -126,7 +127,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
 		this.environment.setThreshold(0);
 		this.environment.setGlobe(this.globe);
-		this.aircraft = new Iris(this.environment.getCenterPosition(), 5000, CombatIdentification.FRIEND);
+		this.aircraft = null; //new Iris(this.environment.getCenterPosition(), 5000, CombatIdentification.FRIEND);
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
 		this.setTrajectory(new Trajectory());
 	}
@@ -205,6 +206,15 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Adds an aircraft change listener to this scenario.
+	 * 
+	 * @param listener the aircraft change listener to be added
+	 */
+	public void addAircraftChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("aircraft", listener);
+	} 
+	
+	/**
 	 * Adds an environment change listener to this scenario.
 	 * 
 	 * @param listener the environment change listener to be added
@@ -268,6 +278,49 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Gets the aircraft of this scenario.
+	 * 
+	 * @return the aircraft of this scenario
+	 */
+	public Aircraft getAircraft() {
+		return this.aircraft;
+	}
+	
+	/**
+	 * Sets the aircraft of this scenario.
+	 * 
+	 * @param aircraft the aircraft to be set
+	 */
+	public void setAircraft(Aircraft aircraft) {
+		this.aircraft = aircraft;
+		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
+	}
+	
+	/**
+	 * Removes the aircraft from this scenario.
+	 */
+	public void removeAircraft() {
+		this.aircraft = null;
+		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
+	}
+	
+	/**
+	 * Indicates whether or not this scenario has an aircraft.
+	 * 
+	 * @return true if this scenario has an aircraft, false otherwise
+	 */
+	public boolean hasAircraft() {
+		return (null != this.aircraft);
+	}
+	
+	/**
+	 * Notifies this scenario about a changed aircraft.
+	 */
+	public void notifyAircraftChange() {
+		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
+	}
+	
+	/**
 	 * Gets the environment of this scenario.
 	 * 
 	 * @return the environment of this scenario
@@ -291,24 +344,6 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void notifyEnvironmentChange() {
 		this.pcs.firePropertyChange("environment", null, this.environment);
-	}
-	
-	/**
-	 * Gets the aircraft of this scenario.
-	 * 
-	 * @return the aircraft of this scenario
-	 */
-	public Aircraft getAircraft() {
-		return this.aircraft;
-	}
-	
-	/**
-	 * Sets the aircraft of this scenario.
-	 * 
-	 * @param aircraft the aircraft to be set
-	 */
-	public void setAircraft(Aircraft aircraft) {
-		this.aircraft = aircraft;
 	}
 	
 	/**

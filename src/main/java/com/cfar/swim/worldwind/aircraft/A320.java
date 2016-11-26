@@ -58,6 +58,11 @@ public class A320 extends FixedWingCivilAircraft {
 	public static final double MAX_RATE_OF_DESCENT = 281d;
 	public static final Angle MAX_ANGLE_OF_CLIMB = Angle.fromDegrees(15d);
 	
+	// TODO: horizontal versus, vertical separation
+	// obstacle ellipsoid instead of obstacle sphere
+	// compute horizontal separation from separation times and cruise speed
+	public static final double SEPARATION_RADIUS = 5000d;
+	
 	public A320(Position position, double radius, CombatIdentification cid) {
 		super(position, radius, cid);
 		this.capabilities = new Capabilities();

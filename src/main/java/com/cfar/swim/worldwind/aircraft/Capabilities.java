@@ -179,8 +179,8 @@ public class Capabilities {
 		return maximumRateOfDescent;
 	}
 
-	public void setMaximumRateOfDescent(double maximumDescentRate) {
-		this.maximumRateOfDescent = maximumDescentRate;
+	public void setMaximumRateOfDescent(double maximumRateOfDescent) {
+		this.maximumRateOfDescent = maximumRateOfDescent;
 	}
 	
 	public Angle getMaximumAngleOfClimb() {

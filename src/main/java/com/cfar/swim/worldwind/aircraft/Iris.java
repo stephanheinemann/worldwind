@@ -52,6 +52,11 @@ public class Iris extends Quadcopter {
 	public static final double APPROACH_RATE_OF_DESCENT = 5d;
 	public static final double MAX_RATE_OF_DESCENT = 10d;
 	public static final Angle MAX_ANGLE_OF_CLIMB = Angle.POS90;
+
+	// TODO: horizontal versus, vertical separation
+	// obstacle ellipsoid instead of obstacle sphere
+	// compute horizontal separation from separation times and cruise speed
+	public static final double SEPARATION_RADIUS = 500d;
 	
 	public Iris(Position position, double radius, CombatIdentification cid) {
 		super(position, radius, cid);

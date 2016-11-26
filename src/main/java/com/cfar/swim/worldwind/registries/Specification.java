@@ -46,6 +46,12 @@ import com.cfar.swim.worldwind.util.Identifiable;
  */
 public class Specification<Registree> implements Identifiable, Customizable<Registree>, Comparable<Specification<Registree>> {
 	
+	/** the identifier of an Iris aircraft */
+	public static final String AIRCRAFT_IRIS_ID = "Iris";
+	
+	/** the identifier of an A320 aircraft */
+	public static final String AIRCRAFT_A320_ID = "A320";
+	
 	/** the identifier of a planning grid environment */
 	public static final String PLANNING_GRID_ID = "Planning Grid";
 	

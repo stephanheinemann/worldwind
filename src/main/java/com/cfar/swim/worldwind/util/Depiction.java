@@ -31,7 +31,9 @@ package com.cfar.swim.worldwind.util;
 
 import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
 
+import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.WorldWind;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
@@ -59,7 +61,7 @@ import gov.nasa.worldwind.symbology.TacticalSymbolAttributes;
  * @author Stephan Heinemann
  *
  */
-public class Depiction implements Renderable {
+public class Depiction implements Renderable, Movable {
 
 	/** the tactical symbol or graphic of this depiction */
 	private Renderable depiction = null;
@@ -201,6 +203,67 @@ public class Depiction implements Renderable {
 	 */
 	public boolean hasAnnotation() {
 		return (null != this.annotation);
+	}
+	
+	/**
+	 * Gets the reference position of this depiction.
+	 * 
+	 * @return the reference position of this depiction
+	 * 
+	 * @see Movable#getReferencePosition()
+	 */
+	@Override
+	public Position getReferencePosition() {
+		Position referencePosition = null;
+		
+		if (this.depiction instanceof TacticalGraphic) {
+			((TacticalGraphic) this.depiction).getReferencePosition();
+		} else if (this.depiction instanceof TacticalSymbol) {
+			((TacticalSymbol) this.depiction).getPosition();
+		}
+		
+		return referencePosition;
+	}
+	
+	/**
+	 * Moves this depiction to a specified position.
+	 * 
+	 * @param position the position to move this depiction to
+	 * 
+	 * @see Movable#moveTo(Position)
+	 */
+	@Override
+	public void moveTo(Position position) {
+		if (this.depiction instanceof TacticalGraphic) {
+			((TacticalGraphic) this.depiction).moveTo(position);
+		} else if (this.depiction instanceof TacticalSymbol) {
+			((TacticalSymbol) this.depiction).setPosition(position);
+		}
+		
+		if (null != this.annotation) {
+			this.annotation.moveTo(position);
+		}
+	}
+	
+	/**
+	 * Moves this depiction by adding a specified position.
+	 * 
+	 * @param position the position to be added to this depiction's position
+	 * 
+	 * @see Movable#move(Position)
+	 */
+	@Override
+	public void move(Position position) {
+		if (this.depiction instanceof TacticalGraphic) {
+			((TacticalGraphic) this.depiction).move(position);
+		} else if (this.depiction instanceof TacticalSymbol) {
+			TacticalSymbol symbol = ((TacticalSymbol) this.depiction);
+			symbol.setPosition(symbol.getPosition().add(position));
+		}
+		
+		if (null != this.annotation) {
+			this.annotation.move(position);
+		}
 	}
 	
 }

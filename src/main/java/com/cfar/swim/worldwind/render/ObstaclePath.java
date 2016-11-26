@@ -37,6 +37,7 @@ import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
+import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Position;
@@ -87,6 +88,36 @@ public class ObstaclePath extends Path implements Obstacle {
 		this.setAltitudeMode(WorldWind.ABSOLUTE);
 		this.setPathType(AVKey.GREAT_CIRCLE);
 		this.setShowPositions(true);
+	}
+	
+	/**
+	 * Moves this obstacle path by adding a specified position.
+	 * 
+	 * @param position the position to be added to this obstacle path's position
+	 * 
+	 * @see Movable#move(Position)
+	 */
+	@Override
+	public void move(Position position) {
+		super.move(position);
+		if (this.hasDepiction()) {
+			this.depiction.move(position);
+		}
+	}
+	
+	/**
+	 * Moves this obstacle path to a specified position.
+	 * 
+	 * @param position the position to move this obstacle path to
+	 * 
+	 * @see Movable#moveTo(Position)
+	 */
+	@Override
+	public void moveTo(Position position) {
+		super.moveTo(position);
+		if (this.hasDepiction()) {
+			this.depiction.moveTo(position);
+		}
 	}
 	
 	/**

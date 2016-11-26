@@ -32,6 +32,8 @@ package com.cfar.swim.worldwind.planning;
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 
+import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Path;
 
@@ -77,6 +79,36 @@ public class Trajectory extends Path implements Depictable {
 	 */
 	public Trajectory(Iterable<? extends Waypoint> waypoints) {
 		super(waypoints);
+	}
+	
+	/**
+	 * Moves this trajectory by adding a specified position.
+	 * 
+	 * @param position the position to be added to this trajectory's position
+	 * 
+	 * @see Movable#move(Position)
+	 */
+	@Override
+	public void move(Position position) {
+		super.move(position);
+		if (this.hasDepiction()) {
+			this.depiction.move(position);
+		}
+	}
+	
+	/**
+	 * Moves this trajectory to a specified position.
+	 * 
+	 * @param position the position to move this trajectory to
+	 * 
+	 * @see Movable#moveTo(Position)
+	 */
+	@Override
+	public void moveTo(Position position) {
+		super.moveTo(position);
+		if (this.hasDepiction()) {
+			this.depiction.moveTo(position);
+		}
 	}
 	
 	/**
