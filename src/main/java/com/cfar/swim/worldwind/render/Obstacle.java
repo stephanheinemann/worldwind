@@ -33,6 +33,8 @@ import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Enableable;
 
+import gov.nasa.worldwind.Movable;
+
 /**
  * Describes an obstacle as a renderable (spatial aspect) with an associated
  * cost interval (temporal aspect).
@@ -40,7 +42,7 @@ import com.cfar.swim.worldwind.util.Enableable;
  * @author Stephan Heinemann
  *
  */
-public interface Obstacle extends TimedRenderable, ThresholdRenderable, Enableable, Depictable {
+public interface Obstacle extends Movable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
 
 	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
 	
