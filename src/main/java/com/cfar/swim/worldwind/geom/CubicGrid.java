@@ -557,6 +557,7 @@ public class CubicGrid extends RegularGrid {
 							srcIndices[1],
 							srcIndices[2]);
 					// collect intersection points recursively in order
+					// TODO: observed NPE here: intersectedChild? Precision?
 					intersectionPoints.addAll(
 							intersectedChild.getIntersectionPoints(source, target, depth - 1)
 								.stream()

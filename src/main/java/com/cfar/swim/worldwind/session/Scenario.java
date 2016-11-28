@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.session;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -39,8 +40,6 @@ import java.util.List;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.aircraft.CombatIdentification;
-import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -74,6 +73,12 @@ public class Scenario implements Identifiable, Enableable {
 	
 	/** indicates whether or not this scenario is enabled */
 	private boolean isEnabled = false;
+	
+	/** the time of this scenario */
+	private ZonedDateTime time;
+	
+	/** the cost threshold of this scenario */
+	private double threshold;
 	
 	/** the globe of this scenario */
 	private Globe globe;
@@ -117,17 +122,19 @@ public class Scenario implements Identifiable, Enableable {
 	 * Initializes this scenario.
 	 */
 	public void init() {
-		// TODO: initial scenario should not have aircraft (and maybe no sector, environment, planner...)
+		// TODO: improve initial scenario
+		this.time = ZonedDateTime.now();
+		this.threshold = 0d;
 		this.globe = new Earth();
 		this.sector = new Sector(Angle.ZERO, Angle.POS90, Angle.ZERO, Angle.POS90);
 		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1.0, this.sector, 0, 500000);
 		Box envBox = new Box(sectorBox);
 		Cube planningCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), envBox.getRLength() / 10);
-		this.waypoints = new ArrayList<Waypoint>();
 		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
 		this.environment.setThreshold(0);
 		this.environment.setGlobe(this.globe);
-		this.aircraft = null; //new Iris(this.environment.getCenterPosition(), 5000, CombatIdentification.FRIEND);
+		this.aircraft = null;
+		this.waypoints = new ArrayList<Waypoint>();
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
 		this.setTrajectory(new Trajectory());
 	}
@@ -197,12 +204,39 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Removes all property change listeners from this scenario.
+	 */
+	public void clearPropertyChangeListeners() {
+		for (PropertyChangeListener listener : this.pcs.getPropertyChangeListeners()) {
+			this.pcs.removePropertyChangeListener(listener);
+		}
+	}
+	
+	/**
 	 * Adds an enabled change listener to this scenario.
 	 * 
 	 * @param listener the enabled change listener to be added
 	 */
 	public void addEnabledChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("isEnabled", listener);
+	}
+	
+	/**
+	 * Adds a time change listener to this scenario.
+	 * 
+	 * @param listener the time change listener to be added
+	 */
+	public void addTimeChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("time", listener);
+	}
+	
+	/**
+	 * Adds a cost threshold change listener to this scenario.
+	 * 
+	 * @param listener the cost threshold change listener to be added
+	 */
+	public void addThresholdChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("threshold", listener);
 	}
 	
 	/**
@@ -239,6 +273,48 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void addTrajectoryChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("trajectory", listener);
+	}
+	
+	/**
+	 * Gets the time of this scenario.
+	 * 
+	 * @return the time of this scenario
+	 */
+	public ZonedDateTime getTime() {
+		return this.time;
+	}
+	
+	/**
+	 * Sets the time of this scenario.
+	 * 
+	 * @param time the time to be set
+	 */
+	public void setTime(ZonedDateTime time) {
+		this.time = time;
+		// TODO: environment, aircraft, obstacles
+		this.environment.setTime(time);
+		this.pcs.firePropertyChange("time", null, this.time);
+	}
+	
+	/**
+	 * Gets the cost threshold of this scenario.
+	 * 
+	 * @return the cost threshold of this scenario
+	 */
+	public double getThreshold() {
+		return this.threshold;
+	}
+	
+	/**
+	 * Sets the cost threshold of this scenario.
+	 * 
+	 * @param threshold the cost threshold to be set
+	 */
+	public void setThreshold(double threshold) {
+		this.threshold = threshold;
+		// TODO: environment, aircraft, obstacles
+		this.environment.setThreshold(threshold);
+		this.pcs.firePropertyChange("threshold", null, this.threshold);
 	}
 	
 	/**
@@ -293,6 +369,7 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void setAircraft(Aircraft aircraft) {
 		this.aircraft = aircraft;
+		// TODO: time, threshold, factory scenario
 		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
 	}
 	
@@ -336,6 +413,9 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void setEnvironment(Environment environment) {
 		this.environment = environment;
+		// TODO: time, threshold, globe, factory scenario?
+		this.environment.setTime(this.time);
+		this.environment.setThreshold(this.threshold);
 		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
 	
