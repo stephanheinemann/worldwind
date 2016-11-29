@@ -34,8 +34,10 @@ import java.beans.PropertyChangeSupport;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
@@ -46,6 +48,7 @@ import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.util.Enableable;
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -101,6 +104,9 @@ public class Scenario implements Identifiable, Enableable {
 	/** the planned trajectory of this scenario */
 	private Trajectory trajectory;
 	
+	/** the obstacles of this scenario */
+	private Set<Obstacle> obstacles;
+	
 	/**
 	 * Constructs and initializes a default scenario.
 	 */
@@ -137,6 +143,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.waypoints = new ArrayList<Waypoint>();
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
 		this.setTrajectory(new Trajectory());
+		this.obstacles = new HashSet<Obstacle>();
 	}
 	
 	/**
@@ -258,9 +265,9 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
-	 * Adds a waypoint change listener to this scenario.
+	 * Adds a waypoints change listener to this scenario.
 	 * 
-	 * @param listener the waypoint change listener to be added
+	 * @param listener the waypoints change listener to be added
 	 */
 	public void addWaypointsChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("waypoints", listener);
@@ -273,6 +280,15 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void addTrajectoryChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("trajectory", listener);
+	}
+	
+	/**
+	 * Adds an obstacles change listener to this scenario.
+	 * 
+	 * @param listener the obstacles change listener to be added
+	 */
+	public void addObstaclesChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("obstacles", listener);
 	}
 	
 	/**
@@ -293,6 +309,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.time = time;
 		// TODO: environment, aircraft, obstacles
 		this.environment.setTime(time);
+		this.obstacles.forEach(o -> o.setTime(time));
 		this.pcs.firePropertyChange("time", null, this.time);
 	}
 	
@@ -314,6 +331,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.threshold = threshold;
 		// TODO: environment, aircraft, obstacles
 		this.environment.setThreshold(threshold);
+		this.obstacles.forEach(o -> o.setThreshold(threshold));
 		this.pcs.firePropertyChange("threshold", null, this.threshold);
 	}
 	
@@ -414,6 +432,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void setEnvironment(Environment environment) {
 		this.environment = environment;
 		// TODO: time, threshold, globe, factory scenario?
+		// TODO: embed obstacles?
 		this.environment.setTime(this.time);
 		this.environment.setThreshold(this.threshold);
 		this.pcs.firePropertyChange("environment", null, this.environment);
@@ -447,7 +466,7 @@ public class Scenario implements Identifiable, Enableable {
 			waypoint.getDepiction().getAnnotation().setText(designator);
 		} 
 		this.waypoints.add(waypoint);
-		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
+		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
 	}
 	
 	/**
@@ -460,7 +479,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void addWaypoint(int index, Waypoint waypoint) {
 		this.waypoints.add(index, waypoint);
 		this.sequenceWaypoints();
-		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
+		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
 	}
 	
 	/**
@@ -479,7 +498,7 @@ public class Scenario implements Identifiable, Enableable {
 			}
 			this.waypoints.remove(index);
 			this.waypoints.add(index, newWaypoint);
-			this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
+			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
 		}
 	}
 	
@@ -492,7 +511,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void removeWaypoint(Waypoint waypoint) {
 		this.waypoints.remove(waypoint);
 		this.sequenceWaypoints();
-		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
+		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
 	}
 	
 	/**
@@ -504,7 +523,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void removeWaypoint(int index) {
 		this.waypoints.remove(index);
 		this.sequenceWaypoints();
-		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
+		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
 	}
 	
 	/**
@@ -512,7 +531,7 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void clearWaypoints() {
 		this.waypoints.clear();
-		this.pcs.firePropertyChange("waypoints", null, (Iterable<Waypoint>) this.waypoints);
+		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
 	}
 	
 	/**
@@ -647,6 +666,73 @@ public class Scenario implements Identifiable, Enableable {
 		}
 		
 		return leg;
+	}
+	
+	/**
+	 * Gets the obstacles of this scenario.
+	 * 
+	 * @return the obstacles of this scenario
+	 */
+	public Set<Obstacle> getObstacles() {
+		return Collections.unmodifiableSet(this.obstacles);
+	}
+	
+	/**
+	 * Adds an obstacle to this scenario.
+	 * 
+	 * @param obstacle the obstacle to be added
+	 */
+	public void addObstacle(Obstacle obstacle) {
+		if (this.obstacles.add(obstacle)) {
+			obstacle.setTime(this.time);
+			obstacle.setThreshold(this.threshold);
+			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+		}
+	}
+	
+	/**
+	 * Removes an obstacle from this scenario.
+	 * 
+	 * @param obstacle the obstacle to be added
+	 */
+	public void removeObstacle(Obstacle obstacle) {
+		if (this.obstacles.remove(obstacle)) {
+			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+		}
+	}
+	
+	/**
+	 * Removes all obstacles from this scenario.
+	 */
+	public void clearObstacles() {
+		this.obstacles.clear();
+		this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+	}
+	
+	/**
+	 * Embeds an obstacle into the environment of this scenario.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 */
+	public void embedObstacle(Obstacle obstacle) {
+		if (this.obstacles.add(obstacle)) {
+			obstacle.setTime(this.time);
+			obstacle.setThreshold(this.threshold);
+			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+		}
+		if (this.environment.embed(obstacle)) {
+			this.pcs.firePropertyChange("environment", null, this.environment);
+		}
+	}
+	
+	/**
+	 * Unembeds an obstacle from the environment of this scenario.
+	 * 
+	 * @param obstacle the obstacle to be unembedded
+	 */
+	public void unembedObstacle(Obstacle obstacle) {
+		this.environment.unembed(obstacle);
+		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
 	
 	/**
