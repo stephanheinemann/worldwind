@@ -54,6 +54,7 @@ import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
+import gov.nasa.worldwind.render.airspaces.AbstractAirspace;
 import gov.nasa.worldwind.render.airspaces.CappedCylinder;
 
 /**
@@ -401,12 +402,16 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	}
 	
 	/**
-	 * Converts this obstacle cylinder to a geometric cylinder.
+	 * Gets the geometric extent of this obstacle cylinder for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
-	 * @return the geometric cylinder
+	 * 
+	 * @return the geometric extent of this obstacle cylinder
+	 * 
+	 * @see AbstractAirspace#getExtent(Globe, double)
 	 */
-	public Cylinder toGeometricCylinder(Globe globe) {
+	@Override
+	public Cylinder getExtent(Globe globe) {
 		Position bcp = new Position(this.getCenter(), this.getAltitudes()[0]);
 		Position tcp = new Position(this.getCenter(), this.getAltitudes()[1]);
 		Vec4 bottomCenter = globe.computePointFromPosition(bcp);
@@ -414,6 +419,8 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		double radius = this.getRadii()[1];
 		
 		return new Cylinder(bottomCenter, topCenter, radius);
+		// TODO: check available method
+		//return super.getExtent(globe, 1d);
 	}
 
 }

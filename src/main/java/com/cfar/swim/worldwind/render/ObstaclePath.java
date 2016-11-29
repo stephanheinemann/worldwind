@@ -40,12 +40,15 @@ import com.cfar.swim.worldwind.util.Enableable;
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.avlist.AVKey;
+import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.render.Renderable;
+import gov.nasa.worldwind.render.RigidShape;
 
 /**
  * Realizes an obstacle path for motion planning.
@@ -310,6 +313,20 @@ public class ObstaclePath extends Path implements Obstacle {
 		if (null != this.depiction) {
 			this.depiction.render(dc);
 		}
+	}
+	
+	/**
+	 * Gets the geometric extent of this obstacle path for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the geometric extent of this obstacle path
+	 * 
+	 * @see Path#getExtent(Globe, double)
+	 */
+	@Override
+	public Extent getExtent(Globe globe) {
+		return super.getExtent(globe, 1d);
 	}
 
 }

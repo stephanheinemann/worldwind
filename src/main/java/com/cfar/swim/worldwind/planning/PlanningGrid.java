@@ -564,7 +564,40 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		boolean embedded = false;
 		
 		if (null != this.globe) {
-			if (this.intersects(obstacle.toGeometricCylinder(this.globe))) {
+			if (this.intersects(obstacle.getExtent(this.globe))) {
+				this.addCostInterval(obstacle.getCostInterval());
+				this.obstacles.add(obstacle);
+				
+				for (PlanningGrid child : this.getChildren()) {
+					if (child.embed(obstacle)) {
+						this.addAffectedChild(obstacle, child);
+					}
+				}
+				
+				embedded = true;
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+		
+		return embedded;
+	}
+	
+	/**
+	 * Embeds an obstacle into this planning grid.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 * 
+	 * @return true if the obstacle has been embedded, false otherwise
+	 * 
+	 * @see Environment#embed(Obstacle)
+	 */
+	@Override
+	public boolean embed(Obstacle obstacle) {
+		boolean embedded = false;
+		
+		if (null != this.globe) {
+			if (this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
 				
@@ -594,7 +627,10 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * Unembeds an obstacle from this planning grid.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
+	 * 
+	 * @see Environment#unembed(Obstacle)
 	 */
+	@Override
 	public void unembed(Obstacle obstacle) {
 		if (this.obstacles.contains(obstacle)) {
 			this.removeCostInterval(obstacle.getCostInterval());

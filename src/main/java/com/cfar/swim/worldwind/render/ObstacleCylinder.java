@@ -42,11 +42,14 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
+import gov.nasa.worldwind.render.RigidShape;
 
 /**
  * Realizes an obstacle cylinder for motion planning.
@@ -386,6 +389,20 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 		}
 		
 		return interpolants;
+	}
+	
+	/**
+	 * Gets the geometric extent of this obstacle cylinder for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the geometric extent (a bounding box) of this obstacle cylinder
+	 * 
+	 * @see RigidShape#getExtent(Globe, double)
+	 */
+	@Override
+	public Extent getExtent(Globe globe) {
+		return super.getExtent(globe, 1d);
 	}
 	
 }

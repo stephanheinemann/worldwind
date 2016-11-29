@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.binarydreamers.trees.Interval;
+import com.cfar.swim.worldwind.render.Obstacle;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
@@ -225,6 +226,18 @@ public class PlanningRoadmap implements Environment {
 	}
 	
 	public void coarsen() {
+	}
+
+	@Override
+	public boolean embed(Obstacle obstacle) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void unembed(Obstacle obstacle) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

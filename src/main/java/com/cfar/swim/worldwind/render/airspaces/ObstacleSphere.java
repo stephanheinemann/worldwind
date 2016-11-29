@@ -42,11 +42,15 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
+import gov.nasa.worldwind.render.RigidShape;
+import gov.nasa.worldwind.render.airspaces.AbstractAirspace;
 import gov.nasa.worldwind.render.airspaces.SphereAirspace;
 
 /**
@@ -314,6 +318,20 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 		if (null != this.depiction) {
 			this.depiction.render(dc);
 		}
+	}
+	
+	/**
+	 * Gets the geometric extent of this obstacle sphere for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the geometric extent of this obstacle sphere
+	 * 
+	 * @see AbstractAirspace#getExtent(Globe, double)
+	 */
+	@Override
+	public Extent getExtent(Globe globe) {
+		return super.getExtent(globe, 1d);
 	}
 	
 	// TODO: interpolation and geometric conversion methods

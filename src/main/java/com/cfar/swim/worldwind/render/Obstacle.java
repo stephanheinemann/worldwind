@@ -34,6 +34,8 @@ import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.globes.Globe;
 
 /**
  * Describes an obstacle as a renderable (spatial aspect) with an associated
@@ -43,7 +45,7 @@ import gov.nasa.worldwind.Movable;
  *
  */
 public interface Obstacle extends Movable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
-
+	
 	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
 	
 	/**
@@ -59,5 +61,14 @@ public interface Obstacle extends Movable, TimedRenderable, ThresholdRenderable,
 	 * @param costInterval the cost interval of this obstacle
 	 */
 	public void setCostInterval(CostInterval costInterval);
+	
+	/**
+	 * Gets the geometric extent of this obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the geometric extent of this obstacle
+	 */
+	public Extent getExtent(Globe globe);
 	
 }

@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.binarydreamers.trees.Interval;
+import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
@@ -181,6 +182,22 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * Coarsens this environment.
 	 */
 	public void coarsen();
+	
+	/**
+	 * Embeds an obstacle into this environment.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 * 
+	 * @return true if the obstacle has been embedded, false otherwise
+	 */
+	public boolean embed(Obstacle obstacle);
+	
+	/**
+	 * Umembeds an obstacle from this environment.
+	 * 
+	 * @param obstacle the obstacle to be unembedded
+	 */
+	public void unembed(Obstacle obstacle);
 	
 	/**
 	 * Gets the distance between two positions in this environment.
