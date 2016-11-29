@@ -200,6 +200,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public void unembed(Obstacle obstacle);
 	
 	/**
+	 * Updates this environment for an embedded obstacle.
+	 * 
+	 * @param obstacle the embedded obstacle
+	 */
+	public void refresh(Obstacle obstacle);
+	
+	/**
 	 * Gets the distance between two positions in this environment.
 	 * 
 	 * @param position1 the first position

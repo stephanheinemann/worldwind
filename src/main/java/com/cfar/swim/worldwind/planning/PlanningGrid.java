@@ -503,7 +503,10 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * Updates this planning grid for an embedded obstacle.
 	 * 
 	 * @param obstacle the embedded obstacle
+	 * 
+	 * @see Environment#refresh(Obstacle)
 	 */
+	@Override
 	public void refresh(Obstacle obstacle) {
 		if (this.obstacles.contains(obstacle)) {
 			this.update();

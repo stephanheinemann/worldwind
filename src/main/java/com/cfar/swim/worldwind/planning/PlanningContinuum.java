@@ -239,5 +239,11 @@ public class PlanningContinuum implements Environment {
 		// TODO Auto-generated method stub
 		
 	}
+
+	@Override
+	public void refresh(Obstacle obstacle) {
+		// TODO Auto-generated method stub
+		
+	}
 	
 }

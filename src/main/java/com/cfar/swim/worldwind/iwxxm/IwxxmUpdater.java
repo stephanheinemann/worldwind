@@ -53,7 +53,7 @@ import com.cfar.swim.worldwind.data.IwxxmData;
 import com.cfar.swim.worldwind.data.OmData;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostMap;
-import com.cfar.swim.worldwind.planning.PlanningGrid;
+import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstaclePath;
@@ -85,7 +85,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 	//InputSource source = null;
 	Model model = null;
 	
-	PlanningGrid grid = null;
+	Environment env = null;
 	RenderableLayer renderableLayer = null;
 	
 	/** the SIGMET embeddings this updater has created (references are required for canceling messages) */
@@ -94,14 +94,14 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 	/** the SIGMET identifier to reference mapping */
 	HashMap<String, IwxxmSigmetReference> idReferences = new HashMap<String, IwxxmSigmetReference>();
 	
-	public IwxxmUpdater(/*InputSource source,*/ Model model, PlanningGrid grid) throws JAXBException {
+	public IwxxmUpdater(/*InputSource source,*/ Model model, Environment env) throws JAXBException {
 		this.iwxxmUnmarshaller = new IwxxmUnmarshaller();
 		// TODO: repair IwxxmUnmarshaller and others to include ALL object factories!
 		this.unmarshaller = JAXBContext.newInstance(
 				icao.iwxxm.ObjectFactory.class,
 				net.opengis.sampling.ObjectFactory.class).createUnmarshaller();
 		//this.source = source;
-		this.grid = grid;
+		this.env = env;
 		List<Layer> renderableLayers = model.getLayers().getLayersByClass(RenderableLayer.class);
 		this.renderableLayer = ((RenderableLayer) renderableLayers.get(0));
 	}
@@ -189,7 +189,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 						}
 					}
 					
-					this.grid.embed(intersectionObstacle);
+					this.env.embed(intersectionObstacle);
 					this.addSigmetObstacle(sigmetReference, intersectionObstacle);
 					this.idReferences.put(sigmet.getId(), sigmetReference);
 					this.renderableLayer.addRenderable(intersectionObstacle);
@@ -274,11 +274,11 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			
 				this.renderableLayer.addRenderable(current);
 				this.renderableLayer.addRenderables(interpolants);
-				this.grid.embed((ObstacleCylinder) current);
+				this.env.embed((ObstacleCylinder) current);
 				this.addSigmetObstacle(sigmetReference, (ObstacleCylinder) current);
 				
 				for (ObstacleCylinder interpolant : interpolants) {
-					this.grid.embed(interpolant);
+					this.env.embed(interpolant);
 					this.addSigmetObstacle(sigmetReference, interpolant);
 					
 					interpolant.setDepiction(new Depiction(
@@ -290,7 +290,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 		
 		if (null != current) {
 			this.renderableLayer.addRenderable(current);
-			this.grid.embed((ObstacleCylinder) current);
+			this.env.embed((ObstacleCylinder) current);
 			this.addSigmetObstacle(sigmetReference, (ObstacleCylinder) current);
 			this.idReferences.put(sigmet.getId(), sigmetReference);
 		}
@@ -333,7 +333,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			List<Obstacle> obstacles = this.sigmetObstacles.get(sigmetReference);
 			for (Obstacle obstacle : obstacles) {
 				obstacle.enable();
-				this.grid.refresh(obstacle);
+				this.env.refresh(obstacle);
 			}
 		}
 	}
@@ -345,7 +345,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			List<Obstacle> obstacles = this.sigmetObstacles.get(sigmetReference);
 			for (Obstacle obstacle : obstacles) {
 				obstacle.disable();
-				this.grid.refresh(obstacle);
+				this.env.refresh(obstacle);
 			}
 		}
 	}

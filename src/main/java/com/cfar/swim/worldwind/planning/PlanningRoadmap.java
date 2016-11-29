@@ -240,4 +240,10 @@ public class PlanningRoadmap implements Environment {
 		
 	}
 
+	@Override
+	public void refresh(Obstacle obstacle) {
+		// TODO Auto-generated method stub
+		
+	}
+
 }
