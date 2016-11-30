@@ -246,9 +246,10 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 					ObstacleCylinder obstacle = (ObstacleCylinder) airspace;
 					obstacle.setCostInterval(costInterval);
 					
-					obstacle.setDepiction(new Depiction(
-							symbolFactory.createPoint(sidc, obstacle.getReferencePosition(), null)));
-					obstacle.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), obstacle.getReferencePosition()));
+					obstacle.setDepiction(
+							new Depiction(symbolFactory.createPoint(sidc, obstacle.getReferencePosition(), null)));
+					obstacle.getDepiction().setAnnotation(
+							new DepictionAnnotation(costInterval.getId(), obstacle.getReferencePosition()));
 				}
 			}
 			
@@ -281,8 +282,10 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 					this.env.embed(interpolant);
 					this.addSigmetObstacle(sigmetReference, interpolant);
 					
-					interpolant.setDepiction(new Depiction(
-							symbolFactory.createPoint(sidc, interpolant.getReferencePosition(), null)));
+					interpolant.setDepiction(
+							new Depiction(symbolFactory.createPoint(sidc, interpolant.getReferencePosition(), null)));
+					interpolant.getDepiction().setAnnotation(
+							new DepictionAnnotation(interpolant.getCostInterval().getId(), interpolant.getReferencePosition()));
 				}
 			}
 			current = next;

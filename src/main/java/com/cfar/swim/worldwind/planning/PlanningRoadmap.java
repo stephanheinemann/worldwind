@@ -235,13 +235,25 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public void unembed(Obstacle obstacle) {
+	public boolean unembed(Obstacle obstacle) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void refresh(Obstacle obstacle) {
 		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void refresh(Obstacle obstacle) {
+	public boolean isEmbedded(Obstacle obstacle) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void unembedAll() {
 		// TODO Auto-generated method stub
 		
 	}

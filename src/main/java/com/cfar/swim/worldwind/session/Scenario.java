@@ -291,6 +291,9 @@ public class Scenario implements Identifiable, Enableable {
 		this.pcs.addPropertyChangeListener("obstacles", listener);
 	}
 	
+	// TODO: be more conservative with firing property change listeners
+	// only fire if properties have actually changed and pass along old values
+	
 	/**
 	 * Gets the time of this scenario.
 	 * 
@@ -308,6 +311,8 @@ public class Scenario implements Identifiable, Enableable {
 	public void setTime(ZonedDateTime time) {
 		this.time = time;
 		// TODO: environment, aircraft, obstacles
+		// consider time property change reaction versus
+		// firing environment and obstacle changes
 		this.environment.setTime(time);
 		this.obstacles.forEach(o -> o.setTime(time));
 		this.pcs.firePropertyChange("time", null, this.time);
@@ -330,6 +335,8 @@ public class Scenario implements Identifiable, Enableable {
 	public void setThreshold(double threshold) {
 		this.threshold = threshold;
 		// TODO: environment, aircraft, obstacles
+		// consider threshold property change reaction versus
+		// firing environment and obstacle changes
 		this.environment.setThreshold(threshold);
 		this.obstacles.forEach(o -> o.setThreshold(threshold));
 		this.pcs.firePropertyChange("threshold", null, this.threshold);
@@ -351,6 +358,7 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void setGlobe(Globe globe) {
 		this.globe = globe;
+		// TODO: globe of environment
 	}
 	
 	/**
@@ -409,6 +417,18 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
+	 * Moves the aircraft of this scenario to a specified waypoint.
+	 * 
+	 * @param waypoint the waypoint the aircraft is moved to
+	 */
+	public void moveAircraft(Waypoint waypoint) {
+		if (this.hasAircraft()) {
+			this.aircraft.moveTo(waypoint);
+			this.pcs.firePropertyChange("aircraft", null, this.aircraft);
+		}
+	}
+	
+	/**
 	 * Notifies this scenario about a changed aircraft.
 	 */
 	public void notifyAircraftChange() {
@@ -432,11 +452,19 @@ public class Scenario implements Identifiable, Enableable {
 	public void setEnvironment(Environment environment) {
 		this.environment = environment;
 		// TODO: time, threshold, globe, factory scenario?
-		// TODO: embed obstacles?
+		// TODO: clear and embed obstacles?
 		this.environment.setTime(this.time);
 		this.environment.setThreshold(this.threshold);
+		this.environment.unembedAll();
+		for (Obstacle obstacle : this.obstacles) {
+			if (obstacle.isEnabled()) {
+				this.environment.embed(obstacle);
+			}
+		}
 		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
+	
+	// TODO: eliminate all explicit notification if possible
 	
 	/**
 	 * Notifies this scenario about a changed environment.
@@ -687,6 +715,10 @@ public class Scenario implements Identifiable, Enableable {
 			obstacle.setTime(this.time);
 			obstacle.setThreshold(this.threshold);
 			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+			
+			if (obstacle.isEnabled() && this.environment.embed(obstacle)) {
+				this.pcs.firePropertyChange("environment", null, this.environment);
+			}
 		}
 	}
 	
@@ -698,6 +730,40 @@ public class Scenario implements Identifiable, Enableable {
 	public void removeObstacle(Obstacle obstacle) {
 		if (this.obstacles.remove(obstacle)) {
 			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+			
+			if (this.environment.unembed(obstacle)) {
+				this.pcs.firePropertyChange("environment", null, this.environment);
+			}
+		}
+	}
+	
+	/**
+	 * Removes obstacles with a specified cost interval identifier.
+	 * 
+	 * @param costIntervalId the cost interval identifier
+	 */
+	public void removeObstacles(String costIntervalId) {
+		boolean removed = false;
+		boolean unembedded = false;
+		
+		Iterator<Obstacle> obstaclesIterator = this.obstacles.iterator();
+		while (obstaclesIterator.hasNext()) {
+			Obstacle obstacle = obstaclesIterator.next();
+			if (obstacle.getCostInterval().getId().equals(costIntervalId)) {
+				obstaclesIterator.remove();
+				removed = true;
+				if (this.environment.unembed(obstacle)) {
+					unembedded = true;
+				}
+			}
+		}
+		
+		if (removed) {
+			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+		}
+		
+		if (unembedded) {
+			this.pcs.firePropertyChange("environment", null, this.environment);
 		}
 	}
 	
@@ -707,6 +773,8 @@ public class Scenario implements Identifiable, Enableable {
 	public void clearObstacles() {
 		this.obstacles.clear();
 		this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+		this.environment.unembedAll();
+		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
 	
 	/**
@@ -731,8 +799,72 @@ public class Scenario implements Identifiable, Enableable {
 	 * @param obstacle the obstacle to be unembedded
 	 */
 	public void unembedObstacle(Obstacle obstacle) {
-		this.environment.unembed(obstacle);
-		this.pcs.firePropertyChange("environment", null, this.environment);
+		if (this.environment.unembed(obstacle)) {
+			this.pcs.firePropertyChange("environment", null, this.environment);
+		}
+	}
+	
+	/**
+	 * Enables obstacles with a specified cost interval identifier.
+	 * 
+	 * @param costIntervalId the cost interval identifier
+	 */
+	public void enableObstacles(String costIntervalId) {
+		boolean enabled = false;
+		boolean embedded = false;
+		
+		for (Obstacle obstacle : this.obstacles) {
+			if (obstacle.getCostInterval().getId().equals(costIntervalId)) {
+				obstacle.enable();
+				enabled = true;
+				if (this.environment.embed(obstacle)) {
+					embedded = true;
+				}
+			}
+		}
+		
+		if (enabled) {
+			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+		}
+		
+		if (embedded) {
+			this.pcs.firePropertyChange("environment", null, this.environment);
+		}
+	}
+	
+	/**
+	 * Disables obstacles with a specified cost interval identifier.
+	 * 
+	 * @param costIntervalId the cost interval identifier
+	 */
+	public void disableObstacles(String costIntervalId) {
+		boolean disabled = false;
+		boolean unembedded = false;
+		
+		for (Obstacle obstacle : this.obstacles) {
+			if (obstacle.getCostInterval().getId().equals(costIntervalId)) {
+				obstacle.disable();
+				disabled = true;
+				if (this.environment.unembed(obstacle)) {
+					unembedded = true;
+				}
+			}
+		}
+		
+		if (disabled) {
+			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+		}
+		
+		if (unembedded) {
+			this.pcs.firePropertyChange("environment", null, this.environment);
+		}
+	}
+	
+	/**
+	 * Notifies this scenario about a changed obstacles.
+	 */
+	public void notifyObstaclesChange() {
+		this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
 	}
 	
 	/**

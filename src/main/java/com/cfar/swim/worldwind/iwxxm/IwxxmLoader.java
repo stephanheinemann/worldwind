@@ -147,8 +147,10 @@ public class IwxxmLoader implements ObstacleLoader {
 				
 				for (ObstacleCylinder interpolant : interpolants) {
 					//this.addSigmetObstacle(sigmetReference, interpolant);
-					interpolant.setDepiction(new Depiction(
-							symbolFactory.createPoint(sidc, interpolant.getReferencePosition(), null)));
+					interpolant.setDepiction(
+							new Depiction(symbolFactory.createPoint(sidc, interpolant.getReferencePosition(), null)));
+					interpolant.getDepiction().setAnnotation(
+							new DepictionAnnotation(interpolant.getCostInterval().getId(), interpolant.getReferencePosition()));
 				}
 			}
 			current = next;

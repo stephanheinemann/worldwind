@@ -40,7 +40,6 @@ import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
-import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
@@ -364,13 +363,6 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		
 		CostInterval costInterval = new CostInterval(this.costInterval.getId(), start, end, cost);
 		interpolant.setCostInterval(costInterval);
-		if (interpolant.hasDepiction()) {
-			if (interpolant.getDepiction().hasAnnotation()) {
-				interpolant.getDepiction().getAnnotation().setText(costInterval.getId());
-			} else {
-				interpolant.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), interpolant.getReferencePosition()));
-			}
-		}
 		
 		return interpolant;
 	}

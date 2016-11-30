@@ -567,7 +567,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		boolean embedded = false;
 		
 		if (null != this.globe) {
-			if (this.intersects(obstacle.getExtent(this.globe))) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
 				
@@ -600,7 +600,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		boolean embedded = false;
 		
 		if (null != this.globe) {
-			if (this.intersects(obstacle.getExtent(this.globe))) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
 				
@@ -631,13 +631,43 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @param obstacle the obstacle to be unembedded
 	 * 
+	 * @return true if the obstacle has been unembedded, false otherwise
+	 * 
 	 * @see Environment#unembed(Obstacle)
 	 */
 	@Override
-	public void unembed(Obstacle obstacle) {
-		if (this.obstacles.contains(obstacle)) {
+	public boolean unembed(Obstacle obstacle) {
+		boolean unembedded = false;
+		
+		if (this.isEmbedded(obstacle)) {
 			this.removeCostInterval(obstacle.getCostInterval());
 			this.obstacles.remove(obstacle);
+			
+			if (this.affectedChildren.containsKey(obstacle)) {
+				for (PlanningGrid child : this.affectedChildren.get(obstacle)) {
+					child.unembed(obstacle);
+				}
+				this.affectedChildren.remove(obstacle);
+			}
+			
+			unembedded = true;
+		}
+		
+		return unembedded;
+	}
+	
+	/**
+	 * Unembeds all obstacles from this planning grid.
+	 * 
+	 * @see Environment#unembedAll()
+	 */
+	@Override
+	public void unembedAll() {
+		Iterator<Obstacle> obstaclesIterator = this.obstacles.iterator();
+		while (obstaclesIterator.hasNext()) {
+			Obstacle obstacle = obstaclesIterator.next();
+			this.removeCostInterval(obstacle.getCostInterval());
+			obstaclesIterator.remove();
 			
 			if (this.affectedChildren.containsKey(obstacle)) {
 				for (PlanningGrid child : this.affectedChildren.get(obstacle)) {
@@ -655,7 +685,10 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return true if the obstacle is embedded in this planning grid,
 	 *         false otherwise
+	 * 
+	 * @see Environment#isEmbedded(Obstacle)
 	 */
+	@Override
 	public boolean isEmbedded(Obstacle obstacle) {
 		return this.obstacles.contains(obstacle);
 	}

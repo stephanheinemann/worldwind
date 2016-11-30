@@ -196,8 +196,25 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * Umembeds an obstacle from this environment.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
+	 * 
+	 * @return true if the obstacle has been unembedded, false otherwise
 	 */
-	public void unembed(Obstacle obstacle);
+	public boolean unembed(Obstacle obstacle);
+	
+	/**
+	 * Unembeds all obstacles from this environment.
+	 */
+	public void unembedAll();
+	
+	/**
+	 * Indicates whether or not an obstacle is embedded in this environment.
+	 * 
+	 * @param obstacle the obstacle
+	 * 
+	 * @return true if the obstacle is embedded in this environment,
+	 *         false otherwise
+	 */
+	public boolean isEmbedded(Obstacle obstacle);
 	
 	/**
 	 * Updates this environment for an embedded obstacle.
