@@ -48,7 +48,6 @@ import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.render.Renderable;
-import gov.nasa.worldwind.render.RigidShape;
 
 /**
  * Realizes an obstacle path for motion planning.

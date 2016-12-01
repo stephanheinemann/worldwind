@@ -49,7 +49,6 @@ import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
-import gov.nasa.worldwind.render.RigidShape;
 import gov.nasa.worldwind.render.airspaces.AbstractAirspace;
 import gov.nasa.worldwind.render.airspaces.SphereAirspace;
 

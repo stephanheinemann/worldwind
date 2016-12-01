@@ -35,13 +35,34 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.symbology.SymbologyConstants;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525TacticalSymbol;
 
+/**
+ * Abstracts a civil aircraft.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public abstract class CivilAircraft extends Aircraft {
 	
-	public static final String SIDC_CIV_AIRCRAFT_UNKOWN = "SUAPC----------"; 
+	/** the symbol identification code of an unknown civil aircraft */
+	public static final String SIDC_CIV_AIRCRAFT_UNKOWN = "SUAPC----------";
+	
+	/** the symbol identification code of a friendly civil aircraft */
 	public static final String SIDC_CIV_AIRCRAFT_FRIEND = "SFAPC----------";
+	
+	/** the symbol identification code of a neutral civil aircraft */
 	public static final String SIDC_CIV_AIRCRAFT_NEUTRAL = "SNAPC----------";
+	
+	/** the symbol identification code of a hostile civil aircraft */
 	public static final String SIDC_CIV_AIRCRAFT_HOSTILE = "SHAPC----------";
 	
+	/**
+	 * Constructs a new civil aircraft at a specified position with a specified
+	 * separation radius and combat identification.
+	 * 
+	 * @param position the position
+	 * @param radius the separation radius
+	 * @param cid the combat identification
+	 */
 	public CivilAircraft(Position position, double radius, CombatIdentification cid) {
 		super(position, radius);
 		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
@@ -50,7 +71,15 @@ public abstract class CivilAircraft extends Aircraft {
 		// TODO: use actual live data for symbol annotations...
 		this.getDepiction().setModifier(SymbologyConstants.ALTITUDE_DEPTH, position.getAltitude());
 	}
-
+	
+	/**
+	 * Gets the symbol identification of this civil aircraft from a specified
+	 * combat identification.
+	 * 
+	 * @return the symbol identification of this civil aircraft
+	 * 
+	 * @see Aircraft#getSymbolIdentifier(CombatIdentification)
+	 */
 	@Override
 	protected String getSymbolIdentifier(CombatIdentification cid) {
 		switch (cid) {

@@ -31,16 +31,41 @@ package com.cfar.swim.worldwind.aircraft;
 
 import gov.nasa.worldwind.symbology.SymbologyConstants;
 
+/**
+ * Enumerates the combat identification of an aircraft (or any moving agent).
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public enum CombatIdentification {
 	UNKNOWN(SymbologyConstants.STANDARD_IDENTITY_UNKNOWN),
 	FRIEND(SymbologyConstants.STANDARD_IDENTITY_FRIEND),
 	NEUTRAL(SymbologyConstants.STANDARD_IDENTITY_NEUTRAL),
 	HOSTILE(SymbologyConstants.STANDARD_IDENTITY_HOSTILE);
 	
+	/** the string representation of this combat identification */
 	private final String combatIdentification;
 	
+	/**
+	 * Constructs a new combat identification from a string representation.
+	 * 
+	 * @param combatIdentification the string representation of this combat
+	 *        identification
+	 */
 	private CombatIdentification(String combatIdentification) {
 		this.combatIdentification = combatIdentification;
+	}
+	
+	/**
+	 * Gets the string representation of this combat identification
+	 * 
+	 * @return the string representation of this combat identification
+	 * 
+	 * @see Enum#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.combatIdentification;
 	}
 	
 }

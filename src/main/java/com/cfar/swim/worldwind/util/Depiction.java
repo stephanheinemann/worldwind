@@ -45,14 +45,12 @@ import gov.nasa.worldwind.symbology.TacticalGraphicAttributes;
 import gov.nasa.worldwind.symbology.TacticalSymbol;
 import gov.nasa.worldwind.symbology.TacticalSymbolAttributes;
 
-/* TODO:
- * Annotations and depictions should be instantiated only once per message and
- * moved during time updates. The same could apply to any entire obstacle being
- * part of the same message.
- * TODO: a depiction could aggregate several symbols / geometries and render
- * all of them. For example, a waypoint can have a ground POI symbol and an air
- * WPT symbol at altitude and a text annotation (times, costs).
- */
+// TODO: Annotations and depictions should be instantiated only once per
+// message and moved during time updates. The same could apply to any entire
+// obstacle being part of the same message.
+// TODO: A depiction could aggregate several symbols / geometries and render
+// all of them. For example, a waypoint can have a ground POI symbol and an
+// air WPT symbol at altitude and a text annotation (times, costs).
 
 /**
  * Realizes an annotatable depiction that aggregates either a tactical symbol

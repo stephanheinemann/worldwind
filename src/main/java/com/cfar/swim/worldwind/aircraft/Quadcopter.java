@@ -35,13 +35,34 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.symbology.SymbologyConstants;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525TacticalSymbol;
 
+/**
+ * Abstracts a quadcopter.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public abstract class Quadcopter extends Aircraft {
 
+	/** the symbol identification code of an unknown rotary UAV */
 	public static final String SIDC_UAV_ROTARY_UNKOWN = "SUGPUCVUR------";
+	
+	/** the symbol identification code of a friendly rotary UAV */
 	public static final String SIDC_UAV_ROTARY_FRIEND = "SFGPUCVUR------";
+	
+	/** the symbol identification code of a neutral rotary UAV */
 	public static final String SIDC_UAV_ROTARY_NEUTRAL = "SNGPUCVUR------";
+	
+	/** the symbol identification code of a hostile rotary UAV */
 	public static final String SIDC_UAV_ROTARY_HOSTILE = "SHGPUCVUR------";
 	
+	/**
+	 * Constructs a new quadcopter at a specified position with a specified
+	 * separation radius and combat identification.
+	 * 
+	 * @param position the position
+	 * @param radius the separation radius
+	 * @param cid the combat identification
+	 */
 	public Quadcopter(Position position, double radius, CombatIdentification cid) {
 		super(position, radius);
 		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
@@ -51,6 +72,15 @@ public abstract class Quadcopter extends Aircraft {
 		this.getDepiction().setModifier(SymbologyConstants.ALTITUDE_DEPTH, position.getAltitude());
 	}
 	
+	/**
+	 * Gets the symbol identification of this quadcopter from a specified combat
+	 * identification.
+	 * 
+	 * @return the symbol identification of this quadcopter
+	 * 
+	 * @see Aircraft#getSymbolIdentifier(CombatIdentification)
+	 */
+	@Override
 	public String getSymbolIdentifier(CombatIdentification cid) {
 		switch (cid) {
 		case UNKNOWN:

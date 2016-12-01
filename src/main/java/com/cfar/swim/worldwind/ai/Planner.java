@@ -152,17 +152,13 @@ public interface Planner {
 	 */
 	public boolean supports(List<Position> waypoints);
 	
-	
-	// TODO: think about applicable heuristics (e.g., Euclidian distance)
 	// TODO: minimum ground clearances, altitude restrictions
 	// TODO: include capabilities (e.g., velocities, rates) and obtain cost at time
-	// TODO: construct grid from globe and positions
 	// TODO: think about feasibility and limited deliberation time
 	// TODO: think about policies - risk, reward tradeoffs
 	// TODO: think about interaction (airspace or obstacle could provide CPDLC interface)
 	// TODO: changing altitudes may require CPDLC clearances depending on airspace
 	// TODO: computed paths can be associated with symbols (e.g. minimum risk path)
-
 	// TODO: think about required time constraints for waypoints (4D positions)
 	// TODO: higher costs might be acceptable to meet timing constraints
 }

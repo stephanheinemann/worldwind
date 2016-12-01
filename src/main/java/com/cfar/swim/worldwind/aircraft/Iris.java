@@ -33,31 +33,76 @@ import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.symbology.SymbologyConstants;
 
+/**
+ * Realizes a 3DR Iris quadcopter.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class Iris extends Quadcopter {
 
 	// TODO: use environment AirDataIntervals
+	
+	/** the maximum angle of climb speed of this Iris in m/s */
 	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 10d;
+	
+	/** the maximum rate of climb speed of this Iris in m/s */
 	public static final double MAX_RATE_OF_CLIMB_SPEED = 10d;
+	
+	/** the cruise climb speed of this Iris in m/s */
 	public static final double CRUISE_CLIMB_SPEED = 15d;
+	
+	/** the cruise speed of this Iris in m/s */
 	public static final double CRUISE_SPEED = 15d;
+	
+	/** the cruise descent speed of this Iris in m/s */
 	public static final double CRUISE_DESCENT_SPEED = 15d;
+	
+	/** the approach speed of this Iris in m/s */
 	public static final double APPROACH_SPEED = 5d;
+	
+	/** the maximum glide speed of this Iris in m/s */
 	public static final double MAX_GLIDE_SPEED = 0d;
+	
+	/** the maximum rate of descent speed of this Iris in m/s */
 	public static final double MAX_RATE_OF_DESCENT_SPEED = 10d;
+	
+	/** the maximum speed of this Iris in m/s */
 	public static final double MAX_SPEED = 20d;
 	
+	/** the maximum rate of climb of this Iris in m/s */
 	public static final double MAX_RATE_OF_CLIMB = 10d;
+	
+	/** the cruise rate of climb of this Iris in m/s */
 	public static final double CRUISE_RATE_OF_CLIMB = 2d;
+	
+	/** the cruise rate of descent of this Iris in m/s */
 	public static final double CRUISE_RATE_OF_DESCENT = 2d;
+	
+	/** the approach rate of descent of this Iris in m/s */
 	public static final double APPROACH_RATE_OF_DESCENT = 5d;
+	
+	/** the maximum rate of descent of this Iris in m/s */
 	public static final double MAX_RATE_OF_DESCENT = 10d;
+	
+	/** the maximum angle of climb of this A320 in degrees */
 	public static final Angle MAX_ANGLE_OF_CLIMB = Angle.POS90;
 
 	// TODO: horizontal versus, vertical separation
 	// obstacle ellipsoid instead of obstacle sphere
 	// compute horizontal separation from separation times and cruise speed
+	
+	/** the separation radius of this Iris */
 	public static final double SEPARATION_RADIUS = 500d;
 	
+	/**
+	 * Constructs a new Iris at a specified position with a specified
+	 * separation radius and combat identification.
+	 * 
+	 * @param position the position
+	 * @param radius the separation radius
+	 * @param cid the combat identification
+	 */
 	public Iris(Position position, double radius, CombatIdentification cid) {
 		super(position, radius, cid);
 		

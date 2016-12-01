@@ -34,20 +34,49 @@ import com.cfar.swim.worldwind.util.Depiction;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525TacticalSymbol;
 
+/**
+ * Abstracts a fixed wing civil aircraft.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public abstract class FixedWingCivilAircraft extends CivilAircraft {
 
+	/** the symbol identification code of an unknown fixed wing civil aircraft */
 	public static final String SIDC_CIV_FW_AIRCRAFT_UNKOWN = "SUAPCF---------"; 
+	
+	/** the symbol identification code of a friendly fixed wing civil aircraft */
 	public static final String SIDC_CIV_FW_AIRCRAFT_FRIEND = "SFAPCF---------";
+	
+	/** the symbol identification code of a neutral fixed wing civil aircraft */
 	public static final String SIDC_CIV_FW_AIRCRAFT_NEUTRAL = "SNAPCF---------";
+	
+	/** the symbol identification code of a hostile fixed wing civil aircraft */
 	public static final String SIDC_CIV_FW_AIRCRAFT_HOSTILE = "SHAPCF---------";
 	
+	/**
+	 * Constructs a new fixed wing civil aircraft at a specified position with a
+	 * specified separation radius and combat identification.
+	 * 
+	 * @param position the position
+	 * @param radius the separation radius
+	 * @param cid the combat identification
+	 */
 	public FixedWingCivilAircraft(Position position, double radius, CombatIdentification cid) {
 		super(position, radius, cid);
 		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
 		
 		// TODO: use actual live data for symbol annotations...
 	}
-
+	
+	/**
+	 * Gets the symbol identification of this fixed wing civil aircraft from a
+	 * specified combat identification.
+	 * 
+	 * @return the symbol identification of this fixed wing civil aircraft
+	 * 
+	 * @see CivilAircraft#getSymbolIdentifier(CombatIdentification)
+	 */
 	@Override
 	protected String getSymbolIdentifier(CombatIdentification cid) {
 		switch (cid) {
@@ -63,4 +92,5 @@ public abstract class FixedWingCivilAircraft extends CivilAircraft {
 			return FixedWingCivilAircraft.SIDC_CIV_FW_AIRCRAFT_UNKOWN;
 		}
 	}
+	
 }

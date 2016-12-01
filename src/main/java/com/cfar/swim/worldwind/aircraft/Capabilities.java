@@ -41,25 +41,59 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
 
+/**
+ * Realizes the capabilities of an aircraft (or any moving agent).
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class Capabilities {
 
 	// all capabilities are stored in SI units
+	
+	/** the maximum angle of climb speed of this capabilities bean in m/s */
 	private double maximumAngleOfClimbSpeed = 0d; // m/s
+	
+	/** the maximum rate of climb speed of this capabilities bean in m/s */
 	private double maximumRateOfClimbSpeed = 0d; // m/s
+	
+	/** the cruise climb speed of this capabilities bean in m/s */
 	private double cruiseClimbSpeed = 0d; // m/s
+	
+	/** the cruise speed of this capabilities bean in m/s */
 	private double cruiseSpeed = 0d; // m/s
+	
+	/** the cruise descent speed of this capabilities bean in m/s */
 	private double cruiseDescentSpeed = 0d; // m/s
+	
+	/** the approach speed of this capabilities bean in m/s */
 	private double approachSpeed = 0d; // m/s
+	
+	/** the maximum glide speed of this capabilities bean in m/s */
 	private double maximumGlideSpeed = 0d; // m/s
+	
+	/** the maximum rate of descent speed of this capabilities bean in m/s */
 	private double maximumRateOfDescentSpeed = 0d; // m/s
+	
+	/** the maximum speed of this capabilities bean in m/s */
 	private double maximumSpeed = 0d; // m/s
 	
+	/** maximum rate of climb of this capabilities bean in m/s */
 	private double maximumRateOfClimb = 0d; // m/s
+	
+	/** the cruise rate of climb of this capabilities bean in m/s */
 	private double cruiseRateOfClimb = 0d; // m/s
+	
+	/** the cruise rate of descent of this capabilities bean in m/s */
 	private double cruiseRateOfDescent = 0d; // m/s
+	
+	/** the approach rate of descent of this capabilities bean in m/s */
 	private double approachRateOfDescent = 0d; // m/s
+	
+	/** the maximum rate of descent of this capabilities bean in m/s */
 	private double maximumRateOfDescent = 0d; // m/s
 	
+	/** the maximum angle of climb of this capabilities bean in degrees */
 	private Angle maximumAngleOfClimb = Angle.fromDegrees(0); // deg
 	
 	// TODO: climb-speed-distance performance
@@ -71,122 +105,272 @@ public class Capabilities {
 	// TODO: average fuel consumption, endurance, range, radius of action...
 	// TODO: equipment (de-icing, gear, floats...)
 	
+	/**
+	 * Gets the maximum angle of climb speed of this capabilities bean.
+	 * 
+	 * @return the maximum angle of climb speed of this capabilities bean in m/s
+	 */
 	public double getMaximumAngleOfClimbSpeed() {
 		return maximumAngleOfClimbSpeed;
 	}
-
+	
+	/**
+	 * Sets the maximum angle of climb speed of this capabilities bean.
+	 * 
+	 * @param maximumAngleOfClimbSpeed the maximum angle of climb speed in m/s
+	 */
 	public void setMaximumAngleOfClimbSpeed(double maximumAngleOfClimbSpeed) {
 		this.maximumAngleOfClimbSpeed = maximumAngleOfClimbSpeed;
 	}
 	
+	/**
+	 * Gets the maximum rate of climb speed of this capabilities bean.
+	 * 
+	 * @return the maximum rate of climb speed of this capabilities bean in m/s
+	 */
 	public double getMaximumRateOfClimbSpeed() {
 		return maximumRateOfClimbSpeed;
 	}
-
+	
+	/**
+	 * Sets the maximum rate of climb speed of this capabilities bean.
+	 * 
+	 * @param maximumRateOfClimbSpeed the maximum rate of climb speed in m/s
+	 */
 	public void setMaximumRateOfClimbSpeed(double maximumRateOfClimbSpeed) {
 		this.maximumRateOfClimbSpeed = maximumRateOfClimbSpeed;
 	}
 	
+	/**
+	 * Gets the cruise climb speed of this capabilities bean.
+	 * 
+	 * @return the cruise climb speed of this capabilities bean in m/s
+	 */
 	public double getCruiseClimbSpeed() {
 		return cruiseClimbSpeed;
 	}
-
+	
+	/**
+	 * Sets the cruise climb speed of this capabilities bean.
+	 * 
+	 * @param cruiseClimbSpeed the cruise climb speed in m/s
+	 */
 	public void setCruiseClimbSpeed(double cruiseClimbSpeed) {
 		this.cruiseClimbSpeed = cruiseClimbSpeed;
 	}
 	
+	/**
+	 * Gets the cruise speed of this capabilities bean.
+	 * 
+	 * @return the cruise speed of this capabilities bean in m/s
+	 */
 	public double getCruiseSpeed() {
 		return this.cruiseSpeed;
 	}
 	
+	/**
+	 * Sets the cruise speed of this capabilities bean.
+	 * 
+	 * @param cruiseSpeed the cruise speed in m/s
+	 */
 	public void setCruiseSpeed(double cruiseSpeed) {
 		this.cruiseSpeed = cruiseSpeed;
 	}
 	
+	/**
+	 * Gets the cruise descent speed of this capabilities bean.
+	 * 
+	 * @return the cruise descent speed of this capabilities bean in m/s
+	 */
 	public double getCruiseDescentSpeed() {
 		return cruiseDescentSpeed;
 	}
-
+	
+	/**
+	 * Sets the cruise descent speed of this capabilities bean.
+	 * 
+	 * @param cruiseDescentSpeed the cruise descent speed in m/s
+	 */
 	public void setCruiseDescentSpeed(double cruiseDescentSpeed) {
 		this.cruiseDescentSpeed = cruiseDescentSpeed;
 	}
 	
+	/**
+	 * Gets the approach speed of this capabilities bean.
+	 * 
+	 * @return the approach speed of this capabilities bean in m/s
+	 */
 	public double getApproachSpeed() {
 		return approachSpeed;
 	}
-
+	
+	/**
+	 * Sets the approach speed of this capabilities bean.
+	 * 
+	 * @param approachSpeed the approach speed in m/s
+	 */
 	public void setApproachSpeed(double approachSpeed) {
 		this.approachSpeed = approachSpeed;
 	}
 	
+	/**
+	 * Gets the maximum glide speed of this capabilities bean.
+	 * 
+	 * @return the maximum glide speed of this capabilities bean in m/s
+	 */
 	public double getMaximumGlideSpeed() {
 		return maximumGlideSpeed;
 	}
-
+	
+	/**
+	 * Sets the maximum glide speed of this capabilities bean.
+	 * 
+	 * @param maximumGlideSpeed the maximum glide speed in m/s
+	 */
 	public void setMaximumGlideSpeed(double maximumGlideSpeed) {
 		this.maximumGlideSpeed = maximumGlideSpeed;
 	}
 	
+	/**
+	 * Gets the maximum rate of descent speed of this capabilities bean.
+	 * 
+	 * @return the maximum rate of descent speed of this capabilities bean in m/s
+	 */
 	public double getMaximumRateOfDescentSpeed() {
 		return maximumRateOfDescentSpeed;
 	}
-
+	
+	/**
+	 * Sets the maximum rate of descent speed of this capabilities bean.
+	 * 
+	 * @param maximumRateOfDescentSpeed the maximum rate of descent speed in m/s
+	 */
 	public void setMaximumRateOfDescentSpeed(double maximumRateOfDescentSpeed) {
 		this.maximumRateOfDescentSpeed = maximumRateOfDescentSpeed;
 	}
 	
+	/**
+	 * Gets the maximum speed of this capabilities bean.
+	 * 
+	 * @return the maximum speed of this capabilities bean in m/s
+	 */
 	public double getMaximumSpeed() {
 		return maximumSpeed;
 	}
-
+	
+	/**
+	 * Sets the maximum speed of this capabilities bean.
+	 * 
+	 * @param maximumSpeed the maximum speed in m/s
+	 */
 	public void setMaximumSpeed(double maximumSpeed) {
 		this.maximumSpeed = maximumSpeed;
 	}
-
+	
+	/**
+	 * Gets the maximum rate of climb of this capabilities bean.
+	 * 
+	 * @return the maximum rate of climb of this capabilities bean in m/s
+	 */
 	public double getMaximumRateOfClimb() {
 		return maximumRateOfClimb;
 	}
-
+	
+	/**
+	 * Sets the maximum rate of climb of this capabilities bean.
+	 * 
+	 * @param maximumRateOfClimb the maximum rate of climb in m/s
+	 */
 	public void setMaximumRateOfClimb(double maximumRateOfClimb) {
 		this.maximumRateOfClimb = maximumRateOfClimb;
 	}
 	
+	/**
+	 * Gets the cruise rate of climb of this capabilities bean.
+	 * 
+	 * @return the cruise rate of climb of this capabilities bean in m/s
+	 */
 	public double getCruiseRateOfClimb() {
 		return cruiseRateOfClimb;
 	}
-
+	
+	/**
+	 * Sets the cruise rate of climb of this capabilities bean.
+	 * 
+	 * @param cruiseRateOfClimb the cruise rate of climb in m/s
+	 */
 	public void setCruiseRateOfClimb(double cruiseRateOfClimb) {
 		this.cruiseRateOfClimb = cruiseRateOfClimb;
 	}
 	
+	/**
+	 * Gets the cruise rate of descent of this capabilities bean.
+	 * 
+	 * @return the cruise rate of descent of this capabilities bean in m/s
+	 */
 	public double getCruiseRateOfDescent() {
 		return cruiseRateOfDescent;
 	}
-
+	
+	/**
+	 * Sets the cruise rate of descent of this capabilities bean.
+	 * 
+	 * @param cruiseRateOfDescent the cruise rate of descent in m/s
+	 */
 	public void setCruiseRateOfDescent(double cruiseRateOfDescent) {
 		this.cruiseRateOfDescent = cruiseRateOfDescent;
 	}
 	
+	/**
+	 * Gets the approach rate of descent of this capabilities bean.
+	 * 
+	 * @return the approach rate of descent of this capabilities bean in m/s
+	 */
 	public double getApproachRateOfDescent() {
 		return approachRateOfDescent;
 	}
-
+	
+	/**
+	 * Sets the approach rate of descent of this capabilities bean.
+	 * 
+	 * @param approachRateOfDescent the approach rate of descent in m/s
+	 */
 	public void setApproachRateOfDescent(double approachRateOfDescent) {
 		this.approachRateOfDescent = approachRateOfDescent;
 	}
 	
+	/**
+	 * Gets the maximum rate of descent of this capabilities bean.
+	 * 
+	 * @return the maximum rate of descent of this capabilities bean in m/s
+	 */
 	public double getMaximumRateOfDescent() {
 		return maximumRateOfDescent;
 	}
-
+	
+	/**
+	 * Sets the maximum rate of descent of this capabilities bean.
+	 * 
+	 * @param maximumRateOfDescent the maximum rate of descent in m/s
+	 */
 	public void setMaximumRateOfDescent(double maximumRateOfDescent) {
 		this.maximumRateOfDescent = maximumRateOfDescent;
 	}
 	
+	/**
+	 * Gets the maximum angle of climb of this capabilities bean.
+	 * 
+	 * @return the maximum angle of climb of this capabilities bean in degrees
+	 */
 	public Angle getMaximumAngleOfClimb() {
 		return maximumAngleOfClimb;
 	}
-
+	
+	/**
+	 * Sets the maximum angle of climb of this capabilities bean.
+	 * 
+	 * @param maximumAngleOfClimb the maximum angle of climb in degrees
+	 */
 	public void setMaximumAngleOfClimb(Angle maximumAngleOfClimb) {
 		this.maximumAngleOfClimb = maximumAngleOfClimb;
 	}

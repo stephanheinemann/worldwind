@@ -29,10 +29,10 @@
  */
 package com.cfar.swim.worldwind.ai.thetastar;
 
-/*
- * TODO:
- * Use ObstacleBox extends airspace box implements Obstacle to model altitude restrictions (min. altitudes, IFR, VFR altitudes). ThetaStar should plan vertically up and down through the costly airspace (CPDLC for landings) and perform string pulling at level. A desired altitude could be modeled as lowest cost altitude.
- * Overlapping positive and negative cost airspaces could better indicate suitable landing and descent areas.
- * Track airspaces could be useful too.
- * PRM would require an IFR/VFR roadmap.
- */
+// TODO: Use ObstacleBox extends airspace box implements Obstacle to model
+// altitude restrictions (min. altitudes, IFR, VFR altitudes). ThetaStar should
+// plan vertically up and down through the costly airspace (CPDLC for landings)
+// and perform string pulling at level. A desired altitude could be modeled as
+// lowest cost altitude. Overlapping positive and negative cost airspaces could
+// better indicate suitable landing and descent areas. Track airspaces could be
+// useful too. PRM would require an IFR/VFR roadmap.

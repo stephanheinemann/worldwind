@@ -35,20 +35,55 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525Constants;
 
+/**
+ * Abstracts an aircraft.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public abstract class Aircraft extends ObstacleSphere {
 
+	/** the capabilities of this aircraft */
 	protected Capabilities capabilities = null;
 	
+	/**
+	 * Constructs a new aircraft at a specified position with a specified
+	 * separation radius.
+	 * 
+	 * @param position the position
+	 * @param radius the separation radius
+	 */
 	public Aircraft(Position position, double radius) {
 		super(position, radius);
 	}
-
+	
+	/**
+	 * Gets the capabilities of this aircraft.
+	 * 
+	 * @return the capabilities of this aircraft
+	 */
 	public Capabilities getCapabilities() {
 		return this.capabilities;
 	}
 	
+	/**
+	 * Gets the symbol identification of this aircraft from a specified
+	 * combat identification.
+	 * 
+	 * @param cid the combat identification
+	 * 
+	 * @return the symbol identification of this aircraft
+	 */
 	protected abstract String getSymbolIdentifier(CombatIdentification cid);
 	
+	/**
+	 * Gets the material (appearance) of this aircraft from a specified
+	 * combat identification.
+	 * 
+	 * @param cid the combat identification
+	 * 
+	 * @return the material of this aircraft
+	 */
 	protected Material getMaterial(CombatIdentification cid) {
 		switch(cid) {
 		case UNKNOWN:
@@ -62,11 +97,6 @@ public abstract class Aircraft extends ObstacleSphere {
 		default:
 			return MilStd2525Constants.MATERIAL_UNKNOWN;
 		}
-	}
-	
-	@Override
-	protected void updateVisibility() {
-		super.updateVisibility();
 	}
 	
 }

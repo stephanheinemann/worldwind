@@ -39,7 +39,7 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Concretizes a motion planner for an aircraft in an environment using cost
+ * Abstracts a motion planner for an aircraft in an environment using cost
  * and risk policies.
  * 
  * @author Stephan Heinemann
