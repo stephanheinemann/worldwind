@@ -29,62 +29,65 @@
  */
 package com.cfar.swim.worldwind.geom;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.Set;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
-import javax.media.opengl.GL;
 import javax.media.opengl.GL2;
 
-import gov.nasa.worldwind.geom.Box;
-import gov.nasa.worldwind.geom.Matrix;
+import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
+import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
+
 import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
- * Realizes a regular three-dimensional grid that can be used motion planning.
+ * Realizes a hierarchical regular three-dimensional grid.
  * 
  * @author Stephan Heinemann
+ * 
  */
 public class RegularGrid extends Box {
-
+	
 	/**
-	 * the epsilon used compensate for numerical inaccuracies
+	 * the parent of this regular grid
 	 */
-	private static final double EPSILON = 1E-8;
+	protected RegularGrid parent = null;
 	
 	/**
 	 * the children of this regular grid
 	 */
-	private RegularGrid[][][] cells = null;
+	protected RegularGrid[][][] cells = null;
 	
-	// TODO: data, occurrences and drawing based on data and severity
-	private double cost = Math.random();
+	/**
+	 * the neighborhood of this regular grid
+	 */
+	protected Neighborhood neighborhood = Neighborhood.VERTEX_26;
+	
+	/**
+	 * the drawing color of this regular grid
+	 */
+	private float[] color = {1.0f, 1.0f, 1.0f, 1.0f};
+	
+	/**
+	 * the visibility state of this regular grid
+	 */
+	protected boolean visible = true;
 	
 	/**
 	 * Constructs a new regular grid from a geometric box without any children.
 	 * 
 	 * @param box the geometric box
 	 * 
-	 * @see gov.nasa.worldwind.geom.Box
+	 * @see com.cfar.swim.worldwind.geom.Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
 	public RegularGrid(Box box) {
-		super(
-			box.getBottomCenter(),
-			box.getTopCenter(),
-			box.getCenter(),
-			box.getRAxis(),
-			box.getSAxis(),
-			box.getTAxis(),
-			box.getUnitRAxis(),
-			box.getUnitSAxis(),
-			box.getUnitTAxis(),
-			box.getRLength(),
-			box.getSLength(),
-			box.getTLength(),
-			box.getPlanes()
-			);
+		super(box);
 	}
 	
 	/**
@@ -96,7 +99,6 @@ public class RegularGrid extends Box {
 	 * @param sCells the number of children on the <code>S</code> axis
 	 * @param tCells the number of children on the <code>T</code> axis
 	 * 
-	 * @see gov.nasa.worldwind.geom.Box
 	 */
 	public RegularGrid(Box box, int rCells, int sCells, int tCells) {
 		this(box);
@@ -115,7 +117,7 @@ public class RegularGrid extends Box {
 	 * @param tMin the minimum distance on the <code>T</code> axis
 	 * @param tMax the maximum distance on the <code>T</code> axis
 	 * 
-	 * @see gov.nasa.worldwind.geom.Box
+	 * @see com.cfar.swim.worldwind.geom.Box#Box(Vec4[], double, double, double, double, double, double)
 	 */
 	public RegularGrid(
 			Vec4[] axes,
@@ -141,7 +143,6 @@ public class RegularGrid extends Box {
 	 * @param sCells the number of children on the <code>S</code> axis
 	 * @param tCells the number of children on the <code>T</code> axis
 	 * 
-	 * @see gov.nasa.worldwind.geom.Box
 	 */
 	public RegularGrid(Vec4[] axes,
 			double rMin, double rMax,
@@ -152,44 +153,73 @@ public class RegularGrid extends Box {
 		this.addChildren(rCells, sCells, tCells);
 	}
 	
+	// TODO: include construction from axes, origin and lengths
+	
+	/**
+	 * Constructs a new regular grid from three plane normals and six distances
+	 * for each of the six faces of a geometric box without any children.
+	 * 
+	 * This factory method is used during child construction and supposed to be
+	 * overridden by specializing classes.
+	 * 
+	 * @see RegularGrid#RegularGrid(Vec4[], double, double, double, double, double, double)
+	 */
+	protected RegularGrid newInstance(
+			Vec4[] axes,
+			double rMin, double rMax,
+			double sMin, double sMax,
+			double tMin, double tMax) {
+		
+		return new RegularGrid(axes, rMin, rMax, sMin, sMax, tMin, tMax);
+	}
+	
 	/**
 	 * Adds the specified number of children on each axis to this regular grid.
 	 * 
 	 * @param rCells the number of children on the <code>R</code> axis
 	 * @param sCells the number of children on the <code>S</code> axis
 	 * @param tCells the number of children on the <code>T</code> axis
+	 * 
+	 * @throws IllegalStateException if this regular grid has children
 	 */
 	public void addChildren(int rCells, int sCells, int tCells) {
-		this.cells = new RegularGrid[rCells][sCells][tCells];
-		
-		// use the parent cell unit axes for all child cells
-		Vec4[] axes = {this.getUnitRAxis(), this.getUnitSAxis(), this.getUnitTAxis()};
-		
-		// shorten the parent cell axes for the child cells
-		Vec4 cellRAxis = this.getRAxis().divide3(rCells);
-		Vec4 cellSAxis = this.getSAxis().divide3(sCells);
-		Vec4 cellTAxis = this.getTAxis().divide3(tCells);
-		
-		// use the left-most parent cell face planes to compute the child cells 
-		Plane rPlane = this.planes[0];
-		Plane sPlane = this.planes[2];
-		Plane tPlane = this.planes[4];
-		
-		for (int r = 0; r < rCells; r++) {
-			for (int s = 0; s < sCells; s++) {
-				for (int t = 0; t < tCells; t++) {
-					// translate the left-most planes of each axis to form the new
-					// left- and right-most planes of each axis for each child cell
-					this.cells[r][s][t] = new RegularGrid(
-							axes,
-							rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r)),
-							rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r + 1)),
-							sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s)),
-							sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s + 1)),
-							tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t)),
-							tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t + 1)));
+		if (!this.hasChildren()) {
+			this.cells = new RegularGrid[rCells][sCells][tCells];
+			
+			// use the parent cell unit axes for all child cells
+			Vec4[] axes = this.getUnitAxes();
+			
+			// shorten the parent cell axes for the child cells
+			Vec4 cellRAxis = this.getRAxis().divide3(rCells);
+			Vec4 cellSAxis = this.getSAxis().divide3(sCells);
+			Vec4 cellTAxis = this.getTAxis().divide3(tCells);
+			
+			// use the left-most parent cell face planes to compute the child cells 
+			Plane rPlane = this.planes[0];
+			Plane sPlane = this.planes[2];
+			Plane tPlane = this.planes[4];
+			
+			for (int r = 0; r < rCells; r++) {
+				for (int s = 0; s < sCells; s++) {
+					for (int t = 0; t < tCells; t++) {
+						// translate the left-most planes of each axis to form the new
+						// left- and right-most planes of each axis for each child cell
+						// TODO: R >= S >= T (Note: No check is made to ensure the order of the face locations.)
+						this.cells[r][s][t] = this.newInstance(
+								axes,
+								rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r)),
+								rPlane.getDistance() - rPlane.getNormal().dot3(cellRAxis.multiply3(r + 1)),
+								sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s)),
+								sPlane.getDistance() - sPlane.getNormal().dot3(cellSAxis.multiply3(s + 1)),
+								tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t)),
+								tPlane.getDistance() - tPlane.getNormal().dot3(cellTAxis.multiply3(t + 1)));
+						this.cells[r][s][t].parent = this;
+						this.cells[r][s][t].neighborhood = this.neighborhood;
+					}
 				}
 			}
+		} else {
+			throw new IllegalStateException("grid already has children");
 		}
 	}
 	
@@ -201,6 +231,8 @@ public class RegularGrid extends Box {
 	 * @param rLength the length of a child cell on the <code>R</code> axis
 	 * @param sLength the length of a child cell on the <code>S</code> axis
 	 * @param tLength the length of a child cell on the <code>T</code> axis
+	 * 
+	 * @throws IllegalArgumentException if child dimensions are too large
 	 */
 	public void addChildren(double rLength, double sLength, double tLength) {
 		if ((this.rLength >= rLength) && (this.sLength >= sLength) && (this.tLength >= tLength)) {
@@ -209,6 +241,8 @@ public class RegularGrid extends Box {
 			int tCells = (int) Math.round(this.tLength / tLength);
 			
 			this.addChildren(rCells, sCells, tCells);
+		} else {
+			throw new IllegalArgumentException("children dimensions are too large");
 		}
 	}
 	
@@ -294,6 +328,27 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
+	 * Gets the children of this regular grid.
+	 * 
+	 * @return the children of this regular grid
+	 */
+	public Set<? extends RegularGrid> getChildren() {
+		Set<RegularGrid> children = new LinkedHashSet<RegularGrid>();
+		
+		if (this.hasChildren()) {
+			for (int r = 0; r < this.cells.length; r++) {
+				for (int s = 0; s < this.cells[r].length; s++) {
+					for (int t = 0; t < this.cells[r][s].length; t++) {
+						children.add(this.cells[r][s][t]);
+					}
+				}
+			}
+		}
+		
+		return children;
+	}
+	
+	/**
 	 * Indicates whether or not this regular grid has a particular child.
 	 * 
 	 * @param r the <code>R</code> index of the child cell
@@ -331,117 +386,44 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not two values are equal considering numerical
-	 * inaccuracies.
+	 * Indicates whether or not this regular grid has a parent.
 	 * 
-	 * @param a the first value
-	 * @param b the second value
-	 * 
-	 * @return true if two values are equal considering numerical inaccuracies,
-	 *         false otherwise
+	 * @return true if this regular grid has a parent, false otherwise
 	 */
-	private static boolean equalsEpsilon(double a, double b) {
-		return Math.abs(a - b) < EPSILON;
+	public boolean hasParent() {
+		return (null != this.parent);
 	}
 	
 	/**
-	 * Indicates whether or not a value lies is within a range considering
-	 * numerical inaccuracies.
+	 * Gets the parent of this regular grid if present.
 	 * 
-	 * @param d the value
-	 * @param l the lower bound of the range
-	 * @param u the upper bound of the range
-	 * 
-	 * @return true if the value lies within the range considering numerical
-	 *         inaccuracies, false otherwise
+	 * @return the parent of this regular grid if present,
+	 *         null otherwise
 	 */
-	private static boolean isInRangeEpsilon(double d, double l, double u) {
-		return ((l - EPSILON) <= d) && ((u + EPSILON) >= d);
+	public RegularGrid getParent() {
+		return this.parent;
 	}
 	
 	/**
-	 * Transforms a Cartesian world model vector into a regular grid vector
-	 * using the first corner of this regular grid as origin.
+	 * Gets all regular grids associated with this regular grid.
 	 * 
-	 * @param modelPoint the world model vector
-	 * 
-	 * @return the regular grid vector
+	 * @return all regular grids associated with this regular grid
 	 */
-	public Vec4 transformModelToGrid(Vec4 modelPoint) {
-		Vec4[] unitAxes = {ru, su, tu};
-		Vec4 origin = this.getCorners()[0];
-		Matrix transformMatrix = Matrix.fromLocalOrientation(origin , unitAxes).getInverse();
-		return modelPoint.transformBy4(transformMatrix);
-	}
-	
-	/**
-	 * Indicates whether or not a value lies on the <code>R</code> axis of this
-	 * regular grid considering numerical inaccuracies.
-	 * 
-	 * @param r the value
-	 * 
-	 * @return true if the value lies on the <code>R</code> axis considering
-	 *         numerical inaccuracies, false otherwise
-	 */
-	private boolean containsREpsilon(double r) {
-		return RegularGrid.isInRangeEpsilon(r, 0.0, this.rLength);
-	}
-	
-	/**
-	 * Indicates whether or not a value lies on the <code>S</code> axis of this
-	 * regular grid considering numerical inaccuracies.
-	 * 
-	 * @param s the value
-	 * 
-	 * @return true if the value lies on the <code>S</code> axis considering
-	 *         numerical inaccuracies, false otherwise
-	 */
-	private boolean containsSEpsilon(double s) {
-		return RegularGrid.isInRangeEpsilon(s, 0.0, this.sLength);
-	}
-	
-	/**
-	 * Indicates whether or not a value lies on the <code>T</code> axis of this
-	 * regular grid considering numerical inaccuracies.
-	 * 
-	 * @param t the value
-	 * 
-	 * @return true if the value lies on the <code>T</code> axis considering
-	 *         numerical inaccuracies, false otherwise
-	 */
-	private boolean containsTEpsilon(double t) {
-		return RegularGrid.isInRangeEpsilon(t, 0.0, this.tLength);
-	}
-	
-	/**
-	 * Indicates whether or not a vector in regular grid coordinates is contained
-	 * in this regular grid considering numerical inaccuracies.
-	 * 
-	 * @param v the vector in regular grid coordinates
-	 * 
-	 * @return true if this regular grid contains the vector, false otherwise
-	 */
-	private boolean containsV(Vec4 v) {
-		return this.containsREpsilon(v.x) && this.containsSEpsilon(v.y) && this.containsTEpsilon(v.z);
-	}
-	
-	/**
-	 * Indicates whether or not a point in world model coordinates is
-	 * contained in this regular grid.
-	 * 
-	 * @param modelPoint the point in world model coordinates
-	 * 
-	 * @return true if this regular grid contains the point, false otherwise
-	 */
-	public boolean contains(Vec4 modelPoint) {
-		boolean contains = false;
+	public Set<? extends RegularGrid> getAll() {
+		Set<RegularGrid> all = new LinkedHashSet<RegularGrid>();
+		all.add(this);
 		
-		Vec4 localPoint = this.transformModelToGrid(modelPoint);
-		if (this.containsV(localPoint)) {
-			contains = true;
+		if (this.hasChildren()) {
+			for (int r = 0; r < this.cells.length; r++) {
+				for (int s = 0; s < this.cells[r].length; s++) {
+					for (int t = 0; t < this.cells[r][s].length; t++) {
+						all.addAll(this.cells[r][s][t].getAll());
+					}
+				}
+			}
 		}
 		
-		return contains;
+		return all;
 	}
 	
 	/**
@@ -454,19 +436,19 @@ public class RegularGrid extends Box {
 	 * 
 	 * @return the cell indices that are associated with child cells
 	 */
-	private static int[] getCellIndices(double value, double length, int cells) {
+	protected static int[] getCellIndices(double value, double length, int cells) {
 		int index[] = {-1, -1};
 		
-		if (RegularGrid.isInRangeEpsilon(value, 0.0, length)) {
+		if ((new PrecisionDouble(value)).isInRange(0.0, length)) {
 			double cellLength = length / cells;
 			double cellSegment = value / cellLength;
 			double cellIndex = Math.ceil(cellSegment);
 			
-			if (!RegularGrid.equalsEpsilon(cellSegment, cellIndex)) {
+			if (!(new PrecisionDouble(cellSegment)).equals(new PrecisionDouble(cellIndex))) {
 				cellIndex =  Math.floor(cellSegment);
 			}
 			
-			if (RegularGrid.equalsEpsilon(cellSegment, cellIndex)) {
+			if ((new PrecisionDouble(cellSegment)).equals(new PrecisionDouble(cellIndex))) {
 				// two neighboring cells are affected
 				index[0] = (int) cellIndex - 1;
 				if (cellIndex < cells) {
@@ -482,21 +464,39 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Looks up the cells (maximum eight) containing a specified point in
-	 * world model coordinates considering numerical inaccuracies.
+	 * Looks up the regular grid cells (maximum eight) containing a specified
+	 * point in world model coordinates considering numerical inaccuracies.
+	 * Cells are looked up recursively and only non-parent cells are
+	 * considered.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
-	 * @return the cells containing the specified point
+	 * @return the regular non-parent grid cells containing the specified point
 	 */
-	public List<RegularGrid> lookupCells(Vec4 modelPoint) {
-		List<RegularGrid> lookedUpCells = new ArrayList<RegularGrid>(8);
+	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
+		return this.lookupCells(modelPoint, -1);
+	}
+	
+	/**
+	 * Looks up the regular grid cells (maximum eight) containing a specified
+	 * point in world model coordinates considering numerical inaccuracies.
+	 * Cells are looked up recursively to a specified depth level. A zero depth
+	 * does not consider any children. A negative depth performs a full
+	 * recursive search and considers non-parent cells only. 
+	 * 
+	 * @param modelPoint the point in world model coordinates
+	 * @param depth the hierarchical depth of the lookup operation
+	 * 
+	 * @return the regular grid cells containing the specified point
+	 */
+	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint, int depth) {
+		Set<RegularGrid> lookedUpCells = new HashSet<RegularGrid>(8);
 		
 		// transform point to cell (body) coordinates
-		Vec4 cellPoint = this.transformModelToGrid(modelPoint);
+		Vec4 cellPoint = this.transformModelToBoxOrigin(modelPoint);
 		
 		if (this.containsV(cellPoint)) {
-			if (this.hasChildren()) {
+			if (this.hasChildren() && (0 != depth)) {
 				// lookup containing cells using the cell (body) coordinates
 				int[] rCellIndices = RegularGrid.getCellIndices(cellPoint.x, this.rLength, this.cells.length);
 				int[] sCellIndices = RegularGrid.getCellIndices(cellPoint.y, this.sLength, this.cells[0].length);
@@ -508,7 +508,7 @@ public class RegularGrid extends Box {
 							if (s != -1) {
 								for (int t : tCellIndices) {
 									if (t != -1) {
-										lookedUpCells.addAll(this.cells[r][s][t].lookupCells(modelPoint));
+										lookedUpCells.addAll(this.cells[r][s][t].lookupCells(modelPoint, depth - 1));
 									}
 								}
 							}
@@ -524,22 +524,402 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
+	 * Finds all cells of this regular grid that satisfy a specified predicate.
+	 * A full recursive search is performed considering only non-parent cells.
+	 * 
+	 * @param predicate the predicate
+	 * 
+	 * @return the cells of this regular grid that satisfy a predicate
+	 */
+	public Set<? extends RegularGrid> findCells(Predicate<RegularGrid> predicate) {
+		return this.findCells(predicate, -1);
+	}
+	
+	/**
+	 * Finds all cells of this regular grid that satisfy a specified predicate
+	 * taking a specified hierarchical depth into account. A zero depth does
+	 * not consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param predicate the predicate
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return the cells of this regular grid that satisfy a predicate taking
+	 *         the hierarchical depth into account
+	 */
+	public Set<? extends RegularGrid> findCells(Predicate<RegularGrid> predicate, int depth) {
+		Set<RegularGrid> foundCells = new HashSet<RegularGrid>();
+		
+		if (predicate.test(this)) {
+			if (this.hasChildren() && depth != 0) {
+				for (RegularGrid child : this.getChildren()) {
+					foundCells.addAll(child.findCells(predicate, depth - 1));
+				}
+			} else {
+				foundCells.add(this);
+			}
+		}
+		
+		return foundCells;
+	}
+	
+	/**
+	 * Gets the neighborhood of this regular grid.
+	 * 
+	 * @return the neighborhood of this regular grid
+	 */
+	public Neighborhood getNeighborhood() {
+		return this.neighborhood;
+	}
+	
+	/**
+	 * Sets the neighborhood of this regular grid.
+	 * 
+	 * @param neighborhood the neighborhood of this regular grid
+	 */
+	public void setNeighborhood(Neighborhood neighborhood) {
+		for (RegularGrid grid : this.getAll()) {
+			grid.neighborhood = neighborhood;
+		}
+	}
+	
+	/**
+	 * Indicates whether or not a point is a waypoint in this regular grid.
+	 * A full recursive search is performed considering only non-parent cells.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return true if the point is a waypoint in this regular grid,
+	 *         false otherwise
+	 * 
+	 * @see RegularGrid#isWaypoint(Vec4, int)
+	 */
+	public boolean isWayoint(Vec4 point) {
+		return this.isWaypoint(point, -1);
+	}
+	
+	/**
+	 * Indicates whether or not a point is a waypoint in this regular grid
+	 * taking a specified hierarchical depth into account. A zero depth does
+	 * not consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return true if the point is a waypoint in this regular grid taking the
+	 *         hierarchical depth into account, false otherwise
+	 */
+	public boolean isWaypoint(Vec4 point, int depth) {
+		boolean isWaypoint = false;
+		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
+		
+		switch (this.neighborhood) {
+		case CELL_26:
+			isWaypoint = (0 < cells.stream().filter(c -> c.isCenter(point)).count());
+			break;
+		case VERTEX_6:
+		case VERTEX_26:
+		default:
+			isWaypoint = (0 < cells.stream().filter(c -> c.isCorner(point)).count());
+		}
+	
+		return isWaypoint;
+	}
+	
+	/**
+	 * Gets the adjacent waypoints of a point in this regular grid. A full
+	 * recursive search is performed considering only non-parent cells.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return the adjacent waypoints of the point in this
+	 *         regular grid, or the waypoint itself
+	 * 
+	 * @see RegularGrid#getAdjacentWaypoints(Vec4, int)
+	 */
+	public Set<Vec4> getAdjacentWaypoints(Vec4 point) {
+		return this.getAdjacentWaypoints(point, -1);
+	}
+	
+	/**
+	 * Gets the adjacent waypoints of a point in this regular grid taking a
+	 * specified hierarchical depth into account. A zero depth does not
+	 * consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return the adjacent waypoints of the point in this regular grid taking
+	 *         the hierarchical depth into account, or the waypoint itself
+	 */
+	public Set<Vec4> getAdjacentWaypoints(Vec4 point, int depth) {
+		Set<Vec4> adjacentWaypoints = new HashSet<Vec4>();
+		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
+		Set<? extends RegularGrid> waypointCells;
+		
+		switch(this.neighborhood) {
+		case CELL_26:
+			waypointCells = cells
+				.stream()
+				.filter(c -> c.isCenter(point))
+				.collect(Collectors.toSet());
+			
+			if (waypointCells.isEmpty()) {
+				for (RegularGrid cell : cells) {
+					adjacentWaypoints.add(cell.getCenter());
+				}
+			} else {
+				adjacentWaypoints.add(point);
+			}
+			break;
+		case VERTEX_6:
+		case VERTEX_26:
+		default:
+			waypointCells = cells
+				.stream()
+				.filter(c -> c.isCorner(point))
+				.collect(Collectors.toSet());
+			
+			if (waypointCells.isEmpty()) {
+				for (RegularGrid cell : cells) {
+					adjacentWaypoints.addAll(Arrays.asList(cell.getCorners()));
+				}
+			} else {
+				adjacentWaypoints.add(point);
+			}
+		}
+		
+		return adjacentWaypoints;
+	}
+	
+	/**
+	 * Indicates whether or not a point is adjacent to a waypoint in this
+	 * regular grid.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param waypoint the waypoint in world model coordinates
+	 * 
+	 * @return true if the point is adjacent to the waypoint in this
+	 *         regular grid, false otherwise
+	 */
+	public boolean isAdjacentWaypoint(Vec4 point, Vec4 waypoint) {
+		return this.getAdjacentWaypoints(point)
+				.stream()
+				.map(PrecisionVec4::new)
+				.collect(Collectors.toSet())
+				.contains(new PrecisionVec4(waypoint));
+	}
+	
+	/**
+	 * Gets the neighbors of this regular grid. A full recursive
+	 * search is performed considering only non-parent neighbors.
+	 * 
+	 * @return the non-parent neighbors of this regular grid
+	 * 
+	 * @see RegularGrid#getNeighbors(int)
+	 */
+	public Set<? extends RegularGrid> getNeighbors() {
+		return this.getNeighbors(-1);
+	}
+	
+	// TODO: all neighborhood-related methods could be more efficient if
+	// a regular grid stores its coordinates in its parent if it is a child
+	
+	/**
+	 * Gets the neighbors of this regular grid taking a specified hierarchical
+	 * depth into account. A zero depth does not consider any neighboring
+	 * children. A negative depth performs a full recursive search and
+	 * considers non-parent neighbors only.
+	 * 
+	 * @param depth the hierarchical depth for finding neighbors
+	 * 
+	 * @return the neighbors of this regular grid
+	 */
+	public Set<? extends RegularGrid> getNeighbors(int depth) {
+		Set<RegularGrid> neighbors = new HashSet<RegularGrid>();
+		
+		if (this.hasParent()) {
+			Set<RegularGrid> flatNeighbors = new HashSet<RegularGrid>();
+			
+			Vec4[] corners = this.getCorners();
+			// compute same level neighbors first
+			for (Vec4 corner : corners) {
+				flatNeighbors.addAll(this.parent.lookupCells(corner, 0));
+			}
+			flatNeighbors.remove(this);
+			
+			if (0 != depth) {
+				for (RegularGrid neighbor : flatNeighbors) {
+					neighbors.addAll(neighbor.findCells(c -> c.intersects(this), depth));
+				}
+			}
+			
+		}
+		
+		return neighbors;
+	}
+	
+	/**
+	 * Indicates whether or not this regular grid is a neighbor of another
+	 * regular grid.
+	 * 
+	 * @param neighbor the potential neighbor
+	 * 
+	 * @return true if this regular grid is a neighbor of the other regular
+	 *         grid, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors()
+	 */
+	public boolean areNeighbors(RegularGrid neighbor) {
+		return this.getNeighbors().contains(neighbor);
+	}
+	
+	/**
+	 * Indicates whether or not this regular grid is a neighbor of another
+	 * regular grid taking a specified hierarchical depth into account.
+	 * 
+	 * @param neighbor the potential neighbor
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return true if this regular grid is a neighbor of the other regular
+	 *         grid taking the hierarchical depth into account, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(int)
+	 */
+	public boolean areNeighbors(RegularGrid neighbor, int depth) {
+		return this.getNeighbors(depth).contains(neighbor);
+	}
+	
+	/**
+	 * Gets the neighbors of a point in this regular grid. A full recursive
+	 * search is performed considering non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return the neighbors of the point in this regular grid
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4, int)
+	 */
+	public Set<Vec4> getNeighbors(Vec4 point) {
+		return this.getNeighbors(point, -1);
+	}
+	
+	/**
+	 * Gets the neighbors of a point in this regular grid taking a specified
+	 * hierarchical depth into account. A zero depth does not consider any
+	 * children. A negative depth performs a full recursive search and
+	 * considers non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth for finding neighbors
+	 * 
+	 * @return the neighbors of the point in this regular grid 
+	 */
+	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
+		Set<PrecisionVec4> neighbors = new HashSet<PrecisionVec4>();
+		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
+		
+		for (RegularGrid cell : cells) {
+			
+			switch(this.neighborhood) {
+			case CELL_26:
+				if (cell.isCenter(point)) {
+					neighbors.addAll(
+							this.getNeighbors(depth)
+							.stream()
+							.map(c -> c.getCenter())
+							.map(PrecisionVec4::new)
+							.collect(Collectors.toSet()));
+				}
+				break;
+			case VERTEX_6:
+				if (cell.isCorner(point)) {
+					neighbors.addAll(
+							Arrays.asList(cell.getNeighborCorners(point))
+							.stream()
+							.map(PrecisionVec4::new)
+							.collect(Collectors.toSet()));
+				}
+				break;
+			case VERTEX_26:
+			default:
+				if (cell.isCorner(point)) {
+					neighbors.addAll(
+							Arrays.asList(cell.getOtherCorners(point))
+							.stream()
+							.map(PrecisionVec4::new)
+							.collect(Collectors.toSet()));
+				}
+			}
+		}
+			
+		return neighbors
+				.stream()
+				.map(PrecisionVec4::getOriginal)
+				.collect(Collectors.toSet());
+	}
+	
+	/**
+	 * Indicates whether or not two points are neighbors in this regular grid.
+	 * 
+	 * @param point the point
+	 * @param neighbor the potential neighbor of the point
+	 * 
+	 * @return true if the two points are neighbors, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4)
+	 */
+	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
+		return this.getNeighbors(point)
+				.stream()
+				.map(Vec4::toHomogeneousPoint3)
+				.map(PrecisionVec4::new)
+				.collect(Collectors.toSet())
+				.contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
+	}
+	
+	/**
+	 * Indicates whether or not two points are neighbors in this regular grid
+	 * taking a specified hierarchical depth into account.
+	 * 
+	 * @param point the point
+	 * @param neighbor the potential neighbor of the point
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return true if the two points are neighbors taking the hierarchical
+	 *              depth into account, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4, int)
+	 */
+	public boolean areNeighbors(Vec4 point, Vec4 neighbor, int depth) {
+		return this.getNeighbors(point, depth)
+				.stream()
+				.map(Vec4::toHomogeneousPoint3)
+				.map(PrecisionVec4::new)
+				.collect(Collectors.toSet())
+				.contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
+	}
+	
+	/**
 	 * Renders this regular grid. If a grid cell has children, then only the
 	 * children are rendered.
+	 * 
+	 * @param dc the drawing context
 	 */
 	@Override
 	public void render(DrawContext dc) {
-		if (this.hasChildren()) {
-			for (int r = 0; r < this.cells.length; r++) {
-				for(int s = 0; s < this.cells[r].length; s++) {
-					for (int t = 0; t < this.cells[r][s].length; t++) {
-						this.cells[r][s][t].render(dc);
+		if (this.visible) {
+			if (this.hasChildren()) {
+				for (int r = 0; r < this.cells.length; r++) {
+					for(int s = 0; s < this.cells[r].length; s++) {
+						for (int t = 0; t < this.cells[r][s].length; t++) {
+							this.cells[r][s][t].render(dc);
+						}
 					}
 				}
-			}
-		} else {
-			// TODO: drawing should depend on cell transition cost threshold
-			if (cost > .75) {
+			} else {
 				super.render(dc);
 			}
 		}
@@ -562,11 +942,7 @@ public class RegularGrid extends Box {
         ogsh.pushModelview(gl);
         try
         {
-        	// TODO: color should reflect cell transition cost
-        	//gl.glColor3f(1f, 0f, 0f);
-        	gl.glColor3d(cost, 1.0 - cost, 0d);
-        	gl.glEnable(GL.GL_CULL_FACE);
-            //gl.glFrontFace(GL.GL_CCW);
+        	gl.glColor4f(this.color[0], this.color[1], this.color[2], this.color[3]);
         	this.drawOutline(dc, a, b, c, d);
         	gl.glTranslated(r.x, r.y, r.z);
         	this.drawOutline(dc, a, b, c, d);
@@ -583,6 +959,31 @@ public class RegularGrid extends Box {
         }
     }
 	
+	/**
+	 * Sets the drawing color of this regular grid.
+	 * 
+	 * @param red the red color component between 0.0 and 1.0
+	 * @param green the green color component between 0.0 and 1.0
+	 * @param blue the blue color component between 0.0 and 1.0
+	 * @param alpha the alpha component between 0.0 and 1.0
+	 */
+	public void setColor(float red, float green, float blue, float alpha) {
+		this.color[0] = red;
+		this.color[1] = green;
+		this.color[2] = blue;
+		this.color[3] = alpha;
+	}
+	
+	/**
+	 * Sets the visibility state of this regular grid.
+	 * 
+	 * @param visible true if this regular grid is visible, false otherwise
+	 */
+	public void setVisible(boolean visible) {
+		this.visible = visible;
+	}
+	
+	// TODO: remove if not needed
 	protected void drawQuad(DrawContext dc, Vec4 a, Vec4 b, Vec4 c, Vec4 d) {
 		GL2 gl = dc.getGL().getGL2();
 		gl.glBegin(GL2.GL_QUADS);

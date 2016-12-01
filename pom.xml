@@ -33,7 +33,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.uvic-cfar.swim</groupId>
 	<artifactId>worldwind</artifactId>
-	<version>1.0.0-alpha1</version>
+	<version>1.0.0-alpha2</version>
 	<packaging>bundle</packaging>
 	<name>SWIM Worldwind</name>
 	<description>NASA Worldwind extensions for SWIM-based planning, decision-making and support.</description>
@@ -130,7 +130,20 @@
 	</properties>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>config/worldwind.xml</include>
+				</includes>
+			</resource>
+		</resources>
 		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-resources-plugin</artifactId>
+				<version>2.7</version>
+			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
@@ -148,8 +161,8 @@
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-resources-plugin</artifactId>
-				<version>2.7</version>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>2.19.1</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -191,6 +204,10 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
+						<Export-Package>${local-packages};-split-package:=merge-first</Export-Package>
+						<Private-Package>
+						com.binarydreamers.trees
+						</Private-Package>
 						<_removeheaders>Built-By</_removeheaders>
 					</instructions>
 				</configuration>
@@ -213,6 +230,11 @@
 				</dependencies>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-project-info-reports-plugin</artifactId>
+				<version>2.9</version>
+			</plugin>
+			<plugin>
 				<groupId>com.mycila</groupId>
 				<artifactId>license-maven-plugin</artifactId>
 				<version>2.11</version>
@@ -223,6 +245,10 @@
 						<owner>Stephan Heinemann</owner>
 						<organization>UVic Center for Aerospace Research</organization>
 					</properties>
+					<excludes>
+						<exclude>src/test/resources/xml/**/*.xml</exclude>
+						<exclude>src/main/java/com/binarydreamers/trees/**/*.java</exclude>
+					</excludes>
 				</configuration>
 			</plugin>
 			<plugin>
@@ -244,14 +270,25 @@
 
 	<dependencies>
 		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.4</version>
+		</dependency>
+		<dependency>
 			<groupId>gov.nasa</groupId>
 			<artifactId>worldwind</artifactId>
-			<version>2.0.0-986</version>
+			<version>2.0.0</version>
 		</dependency>
 		<dependency>
 			<groupId>gov.nasa</groupId>
 			<artifactId>worldwindx</artifactId>
-			<version>2.0.0-986</version>
+			<version>2.0.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.uvic-cfar.swim</groupId>
+			<artifactId>milstd2525</artifactId>
+			<version>1.0.0-alpha2</version>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.jogamp.gluegen</groupId>
@@ -262,6 +299,22 @@
 			<groupId>org.jogamp.jogl</groupId>
 			<artifactId>jogl-all-main</artifactId>
 			<version>2.2.4</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jfxtras</groupId>
+			<artifactId>jfxtras-controls</artifactId>
+			<version>8.0-r5</version>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.uvic-cfar.swim</groupId>
+			<artifactId>iwxxm-jaxb</artifactId>
+			<version>2.0.0-beta5</version>
 		</dependency>
 	</dependencies>
 
