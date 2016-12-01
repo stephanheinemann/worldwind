@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.session;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -53,6 +54,7 @@ import com.cfar.swim.worldwind.util.Enableable;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.globes.Globe;
@@ -307,15 +309,26 @@ public class Scenario implements Identifiable, Enableable {
 	 * Sets the time of this scenario.
 	 * 
 	 * @param time the time to be set
+	 * 
+	 * @throws IllegalArgumentException if time is null
 	 */
 	public void setTime(ZonedDateTime time) {
-		this.time = time;
-		// TODO: environment, aircraft, obstacles
-		// consider time property change reaction versus
-		// firing environment and obstacle changes
-		this.environment.setTime(time);
-		this.obstacles.forEach(o -> o.setTime(time));
-		this.pcs.firePropertyChange("time", null, this.time);
+		if (null != time) {
+			this.time = time;
+			
+			if (this.hasAircraft()) {
+				this.aircraft.setTime(time);
+				this.moveAircraftOnTrajectory();
+			}
+			
+			this.environment.setTime(time);
+			this.obstacles.forEach(o -> o.setTime(time));
+			
+			// TODO: consider time property change reaction versus firing individual changes
+			this.pcs.firePropertyChange("time", null, this.time);
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	/**
@@ -334,11 +347,15 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void setThreshold(double threshold) {
 		this.threshold = threshold;
-		// TODO: environment, aircraft, obstacles
-		// consider threshold property change reaction versus
-		// firing environment and obstacle changes
+		
+		if (this.hasAircraft()) {
+			this.aircraft.setThreshold(threshold);
+		}
+		
 		this.environment.setThreshold(threshold);
 		this.obstacles.forEach(o -> o.setThreshold(threshold));
+		
+		// TODO: consider threshold property change reaction versus firing individual changes
 		this.pcs.firePropertyChange("threshold", null, this.threshold);
 	}
 	
@@ -355,10 +372,16 @@ public class Scenario implements Identifiable, Enableable {
 	 * Sets the globe of this scenario.
 	 * 
 	 * @param globe the globe to be set
+	 * 
+	 * @throws IllegalArgumentException if globe is null
 	 */
 	public void setGlobe(Globe globe) {
-		this.globe = globe;
-		// TODO: globe of environment
+		if (null != globe) {
+			this.globe = globe;
+			this.environment.setGlobe(globe);
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	/**
@@ -374,9 +397,15 @@ public class Scenario implements Identifiable, Enableable {
 	 * Sets the planning sector of this scenario.
 	 * 
 	 * @param sector the planning sector to be set
+	 * 
+	 * @throws IllegalArgumentException if sector is null
 	 */
 	public void setSector(Sector sector) {
-		this.sector = sector;
+		if (null != sector) {
+			this.sector = sector;
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	/**
@@ -395,7 +424,13 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void setAircraft(Aircraft aircraft) {
 		this.aircraft = aircraft;
-		// TODO: time, threshold, factory scenario
+		
+		if (null != this.aircraft) {
+			this.aircraft.setTime(this.time);
+			this.moveAircraftOnTrajectory();
+			this.aircraft.setThreshold(threshold);
+		}
+		
 		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
 	}
 	
@@ -417,16 +452,55 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
-	 * Moves the aircraft of this scenario to a specified waypoint.
+	 * Moves the aircraft of this scenario to a specified position.
 	 * 
-	 * @param waypoint the waypoint the aircraft is moved to
+	 * @param position the position the aircraft is moved to
 	 */
-	public void moveAircraft(Waypoint waypoint) {
+	public void moveAircraft(Position position) {
 		if (this.hasAircraft()) {
-			this.aircraft.moveTo(waypoint);
+			this.aircraft.moveTo(position);
 			this.pcs.firePropertyChange("aircraft", null, this.aircraft);
 		}
 	}
+	
+	/**
+	 * Moves the aircraft on the trajectory according to the time of this
+	 * scenario. If the time of this scenario is before the first or after
+	 * the last waypoint of the trajectory, the aircraft is moved to the
+	 * first or last waypoint, respectively.
+	 */
+	public void moveAircraftOnTrajectory() {
+		if (this.hasAircraft() && this.hasTrajectory()) {
+			
+			// find trajectory leg for the time of this scenario 
+			Waypoint previous = null;
+			Waypoint next = null;
+			Iterator<? extends Waypoint> trajectoryIterator = this.trajectory.getWaypoints().iterator();
+			while (trajectoryIterator.hasNext() && (null == next)) {
+				next = trajectoryIterator.next();
+				if (next.getEto().isBefore(this.time) ) {
+					previous = next;
+					next = null;
+				}
+			}
+			
+			if ((null == previous) && this.hasWaypoints()) {
+				// time of this scenario is before the first waypoint
+				this.moveAircraft(this.waypoints.get(0));
+			} else if ((null == next) && this.hasWaypoints()) {
+				// time of this scenario is after the last waypoint
+				this.moveAircraft(this.waypoints.get(this.waypoints.size() - 1));
+			} else {
+				// interpolate between waypoints
+				Duration d1 = Duration.between(previous.getEto(), this.time);
+				Duration d2 = Duration.between(previous.getEto(), next.getEto());
+				double ratio = ((double) d1.getSeconds()) / ((double) d2.getSeconds());
+				this.moveAircraft(Position.interpolate(ratio, previous, next));
+			}
+		}
+	}
+	
+	// TODO: consider elimination of all explicit notifications if possible
 	
 	/**
 	 * Notifies this scenario about a changed aircraft.
@@ -448,23 +522,27 @@ public class Scenario implements Identifiable, Enableable {
 	 * Sets the environment of this scenario.
 	 * 
 	 * @param environment the environment to be set
+	 * 
+	 * @throws IllegalArgumentException if environment is null
 	 */
 	public void setEnvironment(Environment environment) {
-		this.environment = environment;
-		// TODO: time, threshold, globe, factory scenario?
-		// TODO: clear and embed obstacles?
-		this.environment.setTime(this.time);
-		this.environment.setThreshold(this.threshold);
-		this.environment.unembedAll();
-		for (Obstacle obstacle : this.obstacles) {
-			if (obstacle.isEnabled()) {
-				this.environment.embed(obstacle);
+		if (null != environment) {
+			this.environment = environment;
+			this.environment.setGlobe(this.globe);
+			this.environment.setTime(this.time);
+			this.environment.setThreshold(this.threshold);
+			this.environment.unembedAll();
+			for (Obstacle obstacle : this.obstacles) {
+				if (obstacle.isEnabled()) {
+					this.environment.embed(obstacle);
+				}
 			}
+		
+			this.pcs.firePropertyChange("environment", null, this.environment);
+		} else {
+			throw new IllegalArgumentException();
 		}
-		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
-	
-	// TODO: eliminate all explicit notification if possible
 	
 	/**
 	 * Notifies this scenario about a changed environment.
@@ -486,15 +564,21 @@ public class Scenario implements Identifiable, Enableable {
 	 * Adds a waypoint to this scenario and sequences its identifier.
 	 * 
 	 * @param waypoint the waypoint to be added
+	 * 
+	 * @throws IllegalArgumentException if waypoint is null
 	 */
 	public void addWaypoint(Waypoint waypoint) {
-		String designator = Integer.toString(this.waypoints.size());
-		waypoint.setDesignator(designator);
-		if (waypoint.hasDepiction() && waypoint.getDepiction().hasAnnotation()) {
-			waypoint.getDepiction().getAnnotation().setText(designator);
-		} 
-		this.waypoints.add(waypoint);
-		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		if (null != waypoint) {
+			String designator = Integer.toString(this.waypoints.size());
+			waypoint.setDesignator(designator);
+			if (waypoint.hasDepiction() && waypoint.getDepiction().hasAnnotation()) {
+				waypoint.getDepiction().getAnnotation().setText(designator);
+			} 
+			this.waypoints.add(waypoint);
+			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	/**
@@ -503,11 +587,17 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param index the waypoint index
 	 * @param waypoint the waypoint to be added
+	 * 
+	 * @throws IllegalArgumentException if waypoint is null
 	 */
 	public void addWaypoint(int index, Waypoint waypoint) {
-		this.waypoints.add(index, waypoint);
-		this.sequenceWaypoints();
-		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		if (null != waypoint) {
+			this.waypoints.add(index, waypoint);
+			this.sequenceWaypoints();
+			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	/**
@@ -515,18 +605,24 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param oldWaypoint the old waypoint to be replaced
 	 * @param newWaypoint the new waypoint to replace the old one
+	 * 
+	 * @throws IllegalArgumentException if any waypoint is null
 	 */
 	public void updateWaypoint(Waypoint oldWaypoint, Waypoint newWaypoint) {
-		int index = this.waypoints.indexOf(oldWaypoint);
-		if (-1 != index) {
-			String designator = Integer.toString(index);
-			newWaypoint.setDesignator(designator);
-			if (newWaypoint.hasDepiction() && newWaypoint.getDepiction().hasAnnotation()) {
-				newWaypoint.getDepiction().getAnnotation().setText(designator);
+		if ((null != oldWaypoint) && (null != newWaypoint)) {
+			int index = this.waypoints.indexOf(oldWaypoint);
+			if (-1 != index) {
+				String designator = Integer.toString(index);
+				newWaypoint.setDesignator(designator);
+				if (newWaypoint.hasDepiction() && newWaypoint.getDepiction().hasAnnotation()) {
+					newWaypoint.getDepiction().getAnnotation().setText(designator);
+				}
+				this.waypoints.remove(index);
+				this.waypoints.add(index, newWaypoint);
+				this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
 			}
-			this.waypoints.remove(index);
-			this.waypoints.add(index, newWaypoint);
-			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 	
@@ -535,11 +631,17 @@ public class Scenario implements Identifiable, Enableable {
 	 * identifiers.
 	 * 
 	 * @param waypoint the waypoint to be removed
+	 * 
+	 * @throws IllegalArgumentException if waypoint is null
 	 */
 	public void removeWaypoint(Waypoint waypoint) {
-		this.waypoints.remove(waypoint);
-		this.sequenceWaypoints();
-		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		if (null != waypoint) {
+			this.waypoints.remove(waypoint);
+			this.sequenceWaypoints();
+			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	/**
@@ -560,6 +662,15 @@ public class Scenario implements Identifiable, Enableable {
 	public void clearWaypoints() {
 		this.waypoints.clear();
 		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+	}
+	
+	/**
+	 * Indicates whether or not this scenario has waypoints.
+	 * 
+	 * @return true if this scenario has waypoints, false otherwise
+	 */
+	public boolean hasWaypoints() {
+		return !this.waypoints.isEmpty();
 	}
 	
 	/**
@@ -590,9 +701,15 @@ public class Scenario implements Identifiable, Enableable {
 	 * Sets the planner of this scenario.
 	 * 
 	 * @param planner the planner of this scenario
+	 * 
+	 * @throws IllegalArgumentException if planner is null
 	 */
 	public void setPlanner(Planner planner) {
-		this.planner = planner;
+		if (null != planner) {
+			this.planner = planner;
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 
 	/**
@@ -608,11 +725,18 @@ public class Scenario implements Identifiable, Enableable {
 	 * Sets the planned trajectory of this scenario.
 	 * 
 	 * @param trajectory the planned trajectory of this scenario
+	 * 
+	 * @throws IllegalArgumentException if trajectory is null
 	 */
 	public void setTrajectory(Trajectory trajectory) {
-		this.trajectory = trajectory;
-		this.sequenceTrajectory();
-		this.pcs.firePropertyChange("trajectory", null, this.trajectory);
+		if (null != trajectory) {
+			this.trajectory = trajectory;
+			this.sequenceTrajectory();
+			this.moveAircraftOnTrajectory();
+			this.pcs.firePropertyChange("trajectory", null, this.trajectory);
+		} else {
+			throw new IllegalArgumentException();
+		}
 	}
 	
 	/**
@@ -629,7 +753,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * @return true if this scenario has a computed trajectory, false otherwise
 	 */
 	public boolean hasTrajectory() {
-		return (null != this.trajectory) && (null != this.trajectory.getWaypoints());
+		return (null != this.trajectory.getWaypoints());
 	}
 	
 	/**
@@ -670,27 +794,33 @@ public class Scenario implements Identifiable, Enableable {
 	 * @param from the first waypoint of the trajectory leg
 	 * @param to the last waypoint of the trajectory leg
 	 * 
-	 * @return the trajectory leg between the first and the last waypoint 
+	 * @return the trajectory leg between the first and the last waypoint
+	 * 
+	 *  @throws IllegalArgumentException if any waypoint is null
 	 */
 	public List<Waypoint> getTrajectoryLeg(Waypoint from, Waypoint to) {
 		List<Waypoint> leg = new ArrayList<Waypoint>();
 		
-		if (this.hasTrajectory()) {
-			Iterator<? extends Waypoint> trajectoryIterator = this.trajectory.getWaypoints().iterator();
-			boolean passedFrom = false;
-			boolean passedTo = false;
-			while (trajectoryIterator.hasNext() && !passedTo) {
-				Waypoint waypoint = trajectoryIterator.next();
-				if (waypoint.equals(to)) {
-					passedTo = true;
-					leg.add(waypoint);
-				} else if (waypoint.equals(from)) {
-					passedFrom = true;
-					leg.add(waypoint);
-				} else if (passedFrom) {
-					leg.add(waypoint);
+		if ((null != from) && (null != to)) {
+			if (this.hasTrajectory()) {
+				Iterator<? extends Waypoint> trajectoryIterator = this.trajectory.getWaypoints().iterator();
+				boolean passedFrom = false;
+				boolean passedTo = false;
+				while (trajectoryIterator.hasNext() && !passedTo) {
+					Waypoint waypoint = trajectoryIterator.next();
+					if (waypoint.equals(to)) {
+						passedTo = true;
+						leg.add(waypoint);
+					} else if (waypoint.equals(from)) {
+						passedFrom = true;
+						leg.add(waypoint);
+					} else if (passedFrom) {
+						leg.add(waypoint);
+					}
 				}
 			}
+		} else {
+			throw new IllegalArgumentException();
 		}
 		
 		return leg;
@@ -709,16 +839,22 @@ public class Scenario implements Identifiable, Enableable {
 	 * Adds an obstacle to this scenario.
 	 * 
 	 * @param obstacle the obstacle to be added
+	 * 
+	 * @throws IllegalArgumentException if obstacle is null
 	 */
 	public void addObstacle(Obstacle obstacle) {
-		if (this.obstacles.add(obstacle)) {
-			obstacle.setTime(this.time);
-			obstacle.setThreshold(this.threshold);
-			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
-			
-			if (obstacle.isEnabled() && this.environment.embed(obstacle)) {
-				this.pcs.firePropertyChange("environment", null, this.environment);
+		if (null != obstacle) {
+			if (this.obstacles.add(obstacle)) {
+				obstacle.setTime(this.time);
+				obstacle.setThreshold(this.threshold);
+				this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+				
+				if (obstacle.isEnabled() && this.environment.embed(obstacle)) {
+					this.pcs.firePropertyChange("environment", null, this.environment);
+				}
 			}
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 	
@@ -726,14 +862,20 @@ public class Scenario implements Identifiable, Enableable {
 	 * Removes an obstacle from this scenario.
 	 * 
 	 * @param obstacle the obstacle to be added
+	 * 
+	 * @throws IllegalArgumentException if obstacle is null
 	 */
 	public void removeObstacle(Obstacle obstacle) {
-		if (this.obstacles.remove(obstacle)) {
-			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
-			
-			if (this.environment.unembed(obstacle)) {
-				this.pcs.firePropertyChange("environment", null, this.environment);
+		if (null != obstacle) {
+			if (this.obstacles.remove(obstacle)) {
+				this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+				
+				if (this.environment.unembed(obstacle)) {
+					this.pcs.firePropertyChange("environment", null, this.environment);
+				}
 			}
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 	
@@ -781,15 +923,21 @@ public class Scenario implements Identifiable, Enableable {
 	 * Embeds an obstacle into the environment of this scenario.
 	 * 
 	 * @param obstacle the obstacle to be embedded
+	 * 
+	 * @throws IllegalArgumentException if obstacle is null
 	 */
 	public void embedObstacle(Obstacle obstacle) {
-		if (this.obstacles.add(obstacle)) {
-			obstacle.setTime(this.time);
-			obstacle.setThreshold(this.threshold);
-			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
-		}
-		if (this.environment.embed(obstacle)) {
-			this.pcs.firePropertyChange("environment", null, this.environment);
+		if (null != obstacle) {
+			if (this.obstacles.add(obstacle)) {
+				obstacle.setTime(this.time);
+				obstacle.setThreshold(this.threshold);
+				this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+			}
+			if (this.environment.embed(obstacle)) {
+				this.pcs.firePropertyChange("environment", null, this.environment);
+			}
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 	
@@ -797,10 +945,16 @@ public class Scenario implements Identifiable, Enableable {
 	 * Unembeds an obstacle from the environment of this scenario.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
+	 * 
+	 * @throws IllegalArgumentException if obstacle is null
 	 */
 	public void unembedObstacle(Obstacle obstacle) {
-		if (this.environment.unembed(obstacle)) {
-			this.pcs.firePropertyChange("environment", null, this.environment);
+		if (null != obstacle) {
+			if (this.environment.unembed(obstacle)) {
+				this.pcs.firePropertyChange("environment", null, this.environment);
+			}
+		} else {
+			throw new IllegalArgumentException();
 		}
 	}
 	
