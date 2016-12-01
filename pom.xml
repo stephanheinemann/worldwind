@@ -33,7 +33,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.uvic-cfar.swim</groupId>
 	<artifactId>worldwind</artifactId>
-	<version>1.0.0-alpha2-SNAPSHOT</version>
+	<version>1.0.0-alpha2</version>
 	<packaging>bundle</packaging>
 	<name>SWIM Worldwind</name>
 	<description>NASA Worldwind extensions for SWIM-based planning, decision-making and support.</description>
