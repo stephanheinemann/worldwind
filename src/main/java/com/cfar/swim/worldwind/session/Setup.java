@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.session;
 
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.connections.AircraftConnection;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.registries.Specification;
 
@@ -51,6 +52,9 @@ public class Setup {
 	
 	/** the planner specification of this setup */
 	Specification<Planner> plannerSpecification;
+	
+	/** the aircraft connection specification of this setup */
+	Specification<AircraftConnection> aircraftConnectionSpecification;
 	// ...
 	
 	/**
@@ -105,6 +109,24 @@ public class Setup {
 	 */
 	public void setPlannerSpecification(Specification<Planner> plannerSpecification) {
 		this.plannerSpecification = plannerSpecification;
+	}
+	
+	/**
+	 * Gets the aircraft connection specification of this setup.
+	 * 
+	 * @return the aircraft connection specification of this setup
+	 */
+	public Specification<AircraftConnection> getAircraftConnectionSpecification() {
+		return this.aircraftConnectionSpecification;
+	}
+	
+	/**
+	 * Sets the aircraft connection specification of this setup
+	 * 
+	 * @param aircraftConnectionSpecification the aircraft connection specification to be set
+	 */
+	public void setAircraftConnectionSpecification(Specification<AircraftConnection> aircraftConnectionSpecification) {
+		this.aircraftConnectionSpecification = aircraftConnectionSpecification;
 	}
 	
 }

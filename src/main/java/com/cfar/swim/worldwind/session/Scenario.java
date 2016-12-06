@@ -43,6 +43,8 @@ import java.util.Set;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.connections.AircraftConnection;
+import com.cfar.swim.worldwind.connections.SimulatedAircraftConnection;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -100,6 +102,9 @@ public class Scenario implements Identifiable, Enableable {
 	/** the planner of this scenario */
 	private Planner planner;
 	
+	/** the aircraft connection of this scenario */
+	private AircraftConnection aircraftConnection;
+	
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
 	
@@ -144,6 +149,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.aircraft = null;
 		this.waypoints = new ArrayList<Waypoint>();
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
+		this.setAircraftConnection(new SimulatedAircraftConnection());
 		this.setTrajectory(new Trajectory());
 		this.obstacles = new HashSet<Obstacle>();
 	}
@@ -707,6 +713,30 @@ public class Scenario implements Identifiable, Enableable {
 	public void setPlanner(Planner planner) {
 		if (null != planner) {
 			this.planner = planner;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	/**
+	 * Gets the aircraft connection of this scenario.
+	 * 
+	 * @return the aircraft connection of this scenario
+	 */
+	public AircraftConnection getAicraftConnection() {
+		return this.aircraftConnection;
+	}
+
+	/**
+	 * Sets the aircraft connection of this scenario.
+	 * 
+	 * @param aircraftConnection the aircraftConnection of this scenario
+	 * 
+	 * @throws IllegalArgumentException if planner is null
+	 */
+	public void setAircraftConnection(AircraftConnection aircraftConnection) {
+		if (null != aircraftConnection) {
+			this.aircraftConnection = aircraftConnection;
 		} else {
 			throw new IllegalArgumentException();
 		}

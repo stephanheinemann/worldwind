@@ -94,6 +94,24 @@ public class SimulatedAircraftConnection extends AircraftConnection {
 		return false;
 	}
 
+	@Override
+	public void takeOff() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void land() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void returnToLaunch() {
+		// TODO Auto-generated method stub
+		
+	}
+
 	// TODO: a simulated connection shall aggregate a runnable
 	// simulating a selected aircraft with its telemetry
 

@@ -38,6 +38,7 @@ import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.connections.AircraftConnection;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Registry;
@@ -45,6 +46,9 @@ import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.aircraft.A320Properties;
 import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
 import com.cfar.swim.worldwind.registries.aircraft.IrisProperties;
+import com.cfar.swim.worldwind.registries.connections.AircraftConnectionFactory;
+import com.cfar.swim.worldwind.registries.connections.DronekitConnectionProperties;
+import com.cfar.swim.worldwind.registries.connections.SimulatedAircraftConnectionProperties;
 import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
@@ -107,6 +111,12 @@ public class Session implements Identifiable {
 	/** the planner factory of this session */
 	private PlannerFactory plannerFactory = new PlannerFactory(this.activeScenario);
 	
+	/** the aircraft connection registry of this session */
+	private Registry<AircraftConnection> aircraftConnectionRegistry = new Registry<>();
+	
+	/** the aircraft connection factory of this session */
+	private AircraftConnectionFactory aircraftConnectionFactory = new AircraftConnectionFactory();
+	
 	/** the setup of this session */
 	private Setup setup;
 	
@@ -164,13 +174,18 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
-		// TODO: initialize registries (aircraft, environments, planners...)
+		this.aircraftConnectionRegistry.clearSpecifications();
+		this.aircraftConnectionRegistry.addSpecification(new Specification<AircraftConnection>(Specification.CONNECTION_AIRCRAFT_DRONEKIT, new DronekitConnectionProperties()));
+		this.aircraftConnectionRegistry.addSpecification(new Specification<AircraftConnection>(Specification.CONNECTION_AIRCRAFT_SIMULATED, new SimulatedAircraftConnectionProperties()));
+		
+		// TODO: complete registries (SWIM setup)
 		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
+		this.setup.setAircraftConnectionSpecification(this.aircraftConnectionRegistry.getSpecification(Specification.CONNECTION_AIRCRAFT_SIMULATED));
 	}
 	
 	/**
@@ -463,6 +478,46 @@ public class Session implements Identifiable {
 	 */
 	public Factory<Planner> getPlannerFactory() {
 		return this.plannerFactory;
+	}
+	
+	/**
+	 * Gets the aircraft connection specifications of this session.
+	 * 
+	 * @return the aircraft connection specifications of this session
+	 */
+	public Set<Specification<AircraftConnection>> getAircraftConnectionSpecifications() {
+		return this.aircraftConnectionRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified aircraft connection specification from this session.
+	 * 
+	 * @param id the aircraft connection specification identifier
+	 * 
+	 * @return the identified aircraft connection specification, or null otherwise
+	 */
+	public Specification<AircraftConnection> getAircraftConnectionSpecification(String id) {
+		Specification<AircraftConnection> aircraftConnectionSpec = null;
+		Optional<Specification<AircraftConnection>> optSpec =
+				this.aircraftConnectionRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			aircraftConnectionSpec = optSpec.get();
+		}
+		
+		return aircraftConnectionSpec;
+	}
+	
+	/**
+	 * Gets the aircraft connection factory of this session.
+	 * 
+	 * @return the aircraft connection factory of this session
+	 */
+	public Factory<AircraftConnection> getAircraftConnectionFactory() {
+		return this.aircraftConnectionFactory;
 	}
 	
 	/**

@@ -57,5 +57,8 @@ public abstract class AircraftConnection implements Connection {
 	public abstract void disarmAircraft();
 	public abstract boolean isAircraftArmed();
 	public abstract void uploadPath(Path path);
+	public abstract void takeOff(); // TODO: take-off specification / setup (altitude, vertical speed, gps/height, horizontal (cruise speed))
+	public abstract void land();
+	public abstract void returnToLaunch();
 
 }

@@ -36,6 +36,7 @@ import com.cfar.swim.droneconnect.DroneConnectGrpc.DroneConnectStub;
 import com.cfar.swim.droneconnect.Mode;
 import com.cfar.swim.droneconnect.Null;
 import com.cfar.swim.droneconnect.Safety;
+import com.cfar.swim.droneconnect.TakeoffToAltitude;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -224,6 +225,39 @@ public class DronekitConnection extends AircraftConnection {
 
 		@Override
 		public void onCompleted() {
+		}
+	}
+
+	@Override
+	public void takeOff() {
+		if (this.isConnected()) {
+			// TODO: include take-off setup
+			TakeoffToAltitude altitude = TakeoffToAltitude.newBuilder().setAltitude(5d).build();
+			this.blockingStub.takeoff(altitude);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+	}
+
+	@Override
+	public void land() {
+		if (this.isConnected()) {
+			// TODO: flight mode enumeration
+			Mode landMode = Mode.newBuilder().setMode("LAND").build();
+			this.blockingStub.setMode(landMode);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+	}
+
+	@Override
+	public void returnToLaunch() {
+		if (this.isConnected()) {
+			// TODO: flight mode enumeration
+			Mode landMode = Mode.newBuilder().setMode("RTL").build();
+			this.blockingStub.setMode(landMode);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
 		}
 	}
 	

@@ -27,42 +27,29 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.aircraft;
+package com.cfar.swim.worldwind.registries.connections;
 
-import gov.nasa.worldwind.symbology.SymbologyConstants;
+import com.cfar.swim.worldwind.connections.AircraftConnection;
+import com.cfar.swim.worldwind.registries.Properties;
 
-/**
- * Enumerates the combat identification of an aircraft (or any moving agent).
- * 
- * @author Stephan Heinemann
- *
- */
-public enum CombatIdentification {
-	UNKNOWN(SymbologyConstants.STANDARD_IDENTITY_UNKNOWN),
-	FRIEND(SymbologyConstants.STANDARD_IDENTITY_FRIEND),
-	NEUTRAL(SymbologyConstants.STANDARD_IDENTITY_NEUTRAL),
-	HOSTILE(SymbologyConstants.STANDARD_IDENTITY_HOSTILE);
-	
-	/** the string representation of this combat identification */
-	private final String combatIdentification;
+public abstract class AircraftConnectionProperties implements Properties<AircraftConnection> {
 	
 	/**
-	 * Constructs a new combat identification from a string representation.
+	 * Clones this aircraft connection properties bean.
 	 * 
-	 * @param combatIdentification the string representation of this combat
-	 *        identification
-	 */
-	private CombatIdentification(String combatIdentification) {
-		this.combatIdentification = combatIdentification;
-	}
-	
-	/**
-	 * Gets the string representation of this combat identification
+	 * @return a clone of this aircraft connection properties bean
 	 * 
-	 * @return the string representation of this combat identification
+	 * @see Properties#clone()
 	 */
-	public String getString() {
-		return this.combatIdentification;
+	@Override
+	public AircraftConnectionProperties clone() {
+		AircraftConnectionProperties clone = null;
+		try {
+			clone = (AircraftConnectionProperties) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return clone;
 	}
-	
+
 }
