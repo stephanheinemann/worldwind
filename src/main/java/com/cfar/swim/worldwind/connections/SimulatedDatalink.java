@@ -27,29 +27,92 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.connections;
+package com.cfar.swim.worldwind.connections;
 
-import com.cfar.swim.worldwind.connections.AircraftConnection;
-import com.cfar.swim.worldwind.registries.Properties;
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.render.Path;
 
-public abstract class AircraftConnectionProperties implements Properties<AircraftConnection> {
-	
-	/**
-	 * Clones this aircraft connection properties bean.
-	 * 
-	 * @return a clone of this aircraft connection properties bean
-	 * 
-	 * @see Properties#clone()
-	 */
+public class SimulatedDatalink extends Datalink {
+
 	@Override
-	public AircraftConnectionProperties clone() {
-		AircraftConnectionProperties clone = null;
-		try {
-			clone = (AircraftConnectionProperties) super.clone();
-		} catch (CloneNotSupportedException e) {
-			e.printStackTrace();
-		}
-		return clone;
+	public String getAircraftMode() {
+		// TODO Auto-generated method stub
+		return null;
 	}
+
+	@Override
+	public void setAircraftMode(String aircraftMode) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public Position getAircraftPosition() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void armAircraft() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void disarmAircraft() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isAircraftArmed() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void uploadPath(Path path) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void enableAircraftSafety() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void disableAircraftSafety() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isAircraftSafetyEnabled() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void takeOff() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void land() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void returnToLaunch() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	// TODO: a simulated connection shall aggregate a runnable
+	// simulating a selected aircraft with its telemetry
 
 }

@@ -43,8 +43,8 @@ import java.util.Set;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.connections.AircraftConnection;
-import com.cfar.swim.worldwind.connections.SimulatedAircraftConnection;
+import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.connections.SimulatedDatalink;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -102,8 +102,8 @@ public class Scenario implements Identifiable, Enableable {
 	/** the planner of this scenario */
 	private Planner planner;
 	
-	/** the aircraft connection of this scenario */
-	private AircraftConnection aircraftConnection;
+	/** the datalink of this scenario */
+	private Datalink datalink;
 	
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
@@ -149,7 +149,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.aircraft = null;
 		this.waypoints = new ArrayList<Waypoint>();
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
-		this.setAircraftConnection(new SimulatedAircraftConnection());
+		this.setDatalink(new SimulatedDatalink());
 		this.setTrajectory(new Trajectory());
 		this.obstacles = new HashSet<Obstacle>();
 	}
@@ -719,24 +719,24 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
-	 * Gets the aircraft connection of this scenario.
+	 * Gets the datalink of this scenario.
 	 * 
-	 * @return the aircraft connection of this scenario
+	 * @return the datalink of this scenario
 	 */
-	public AircraftConnection getAicraftConnection() {
-		return this.aircraftConnection;
+	public Datalink getDatalink() {
+		return this.datalink;
 	}
 
 	/**
-	 * Sets the aircraft connection of this scenario.
+	 * Sets the datalink of this scenario.
 	 * 
-	 * @param aircraftConnection the aircraftConnection of this scenario
+	 * @param datalink the datalink of this scenario
 	 * 
 	 * @throws IllegalArgumentException if planner is null
 	 */
-	public void setAircraftConnection(AircraftConnection aircraftConnection) {
-		if (null != aircraftConnection) {
-			this.aircraftConnection = aircraftConnection;
+	public void setDatalink(Datalink datalink) {
+		if (null != datalink) {
+			this.datalink = datalink;
 		} else {
 			throw new IllegalArgumentException();
 		}

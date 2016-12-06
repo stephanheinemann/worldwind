@@ -38,7 +38,7 @@ import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.connections.AircraftConnection;
+import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Registry;
@@ -46,9 +46,9 @@ import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.aircraft.A320Properties;
 import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
 import com.cfar.swim.worldwind.registries.aircraft.IrisProperties;
-import com.cfar.swim.worldwind.registries.connections.AircraftConnectionFactory;
-import com.cfar.swim.worldwind.registries.connections.DronekitConnectionProperties;
-import com.cfar.swim.worldwind.registries.connections.SimulatedAircraftConnectionProperties;
+import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
+import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
+import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
 import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
@@ -111,11 +111,11 @@ public class Session implements Identifiable {
 	/** the planner factory of this session */
 	private PlannerFactory plannerFactory = new PlannerFactory(this.activeScenario);
 	
-	/** the aircraft connection registry of this session */
-	private Registry<AircraftConnection> aircraftConnectionRegistry = new Registry<>();
+	/** the datalink registry of this session */
+	private Registry<Datalink> datalinkRegistry = new Registry<>();
 	
-	/** the aircraft connection factory of this session */
-	private AircraftConnectionFactory aircraftConnectionFactory = new AircraftConnectionFactory();
+	/** the datalink factory of this session */
+	private DatalinkFactory datalinkFactory = new DatalinkFactory();
 	
 	/** the setup of this session */
 	private Setup setup;
@@ -174,9 +174,9 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
-		this.aircraftConnectionRegistry.clearSpecifications();
-		this.aircraftConnectionRegistry.addSpecification(new Specification<AircraftConnection>(Specification.CONNECTION_AIRCRAFT_DRONEKIT, new DronekitConnectionProperties()));
-		this.aircraftConnectionRegistry.addSpecification(new Specification<AircraftConnection>(Specification.CONNECTION_AIRCRAFT_SIMULATED, new SimulatedAircraftConnectionProperties()));
+		this.datalinkRegistry.clearSpecifications();
+		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.DATALINK_DRONEKIT, new DronekitDatalinkProperties()));
+		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.DATALINK_SIMULATED, new SimulatedDatalinkProperties()));
 		
 		// TODO: complete registries (SWIM setup)
 		
@@ -185,7 +185,7 @@ public class Session implements Identifiable {
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
-		this.setup.setAircraftConnectionSpecification(this.aircraftConnectionRegistry.getSpecification(Specification.CONNECTION_AIRCRAFT_SIMULATED));
+		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
 	}
 	
 	/**
@@ -481,43 +481,43 @@ public class Session implements Identifiable {
 	}
 	
 	/**
-	 * Gets the aircraft connection specifications of this session.
+	 * Gets the datalink specifications of this session.
 	 * 
-	 * @return the aircraft connection specifications of this session
+	 * @return the datalink specifications of this session
 	 */
-	public Set<Specification<AircraftConnection>> getAircraftConnectionSpecifications() {
-		return this.aircraftConnectionRegistry.getSpecifications();
+	public Set<Specification<Datalink>> getDatalinkSpecifications() {
+		return this.datalinkRegistry.getSpecifications();
 	}
 	
 	/**
-	 * Gets an identified aircraft connection specification from this session.
+	 * Gets an identified datalink specification from this session.
 	 * 
-	 * @param id the aircraft connection specification identifier
+	 * @param id the datalink specification identifier
 	 * 
-	 * @return the identified aircraft connection specification, or null otherwise
+	 * @return the identified datalink specification, or null otherwise
 	 */
-	public Specification<AircraftConnection> getAircraftConnectionSpecification(String id) {
-		Specification<AircraftConnection> aircraftConnectionSpec = null;
-		Optional<Specification<AircraftConnection>> optSpec =
-				this.aircraftConnectionRegistry.getSpecifications()
+	public Specification<Datalink> getDatalinkSpecification(String id) {
+		Specification<Datalink> datalinkSpec = null;
+		Optional<Specification<Datalink>> optSpec =
+				this.datalinkRegistry.getSpecifications()
 				.stream()
 				.filter(s -> s.getId().equals(id))
 				.findFirst();
 		
 		if (optSpec.isPresent()) {
-			aircraftConnectionSpec = optSpec.get();
+			datalinkSpec = optSpec.get();
 		}
 		
-		return aircraftConnectionSpec;
+		return datalinkSpec;
 	}
 	
 	/**
-	 * Gets the aircraft connection factory of this session.
+	 * Gets the datalink factory of this session.
 	 * 
-	 * @return the aircraft connection factory of this session
+	 * @return the datalink factory of this session
 	 */
-	public Factory<AircraftConnection> getAircraftConnectionFactory() {
-		return this.aircraftConnectionFactory;
+	public Factory<Datalink> getDatalinkFactory() {
+		return this.datalinkFactory;
 	}
 	
 	/**

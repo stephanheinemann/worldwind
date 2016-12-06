@@ -29,17 +29,17 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
-public class DronekitConnectionProperties extends AircraftConnectionProperties {
+public class DronekitDatalinkProperties extends DatalinkProperties {
 
-	public static final String AIRCRAFT_CONNECTION_LOCALHOST = "localhost";
-	public static final int AIRCRAFT_CONNECTION_GRPCPORT = 50051;
+	public static final String DATALINK_LOCALHOST = "localhost";
+	public static final int DATALINK_GRPCPORT = 50051;
 	
 	private String host;
 	private int port;
 	
-	public DronekitConnectionProperties() {
-		this.host = DronekitConnectionProperties.AIRCRAFT_CONNECTION_LOCALHOST;
-		this.port = DronekitConnectionProperties.AIRCRAFT_CONNECTION_GRPCPORT;
+	public DronekitDatalinkProperties() {
+		this.host = DronekitDatalinkProperties.DATALINK_LOCALHOST;
+		this.port = DronekitDatalinkProperties.DATALINK_GRPCPORT;
 	}
 	
 	public String getHost() {

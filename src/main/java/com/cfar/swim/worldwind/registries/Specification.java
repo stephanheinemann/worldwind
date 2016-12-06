@@ -67,13 +67,13 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of a Theta* planner */
 	public static final String PLANNER_TS_ID = "Theta*";
 	
-	/** the identifier of a simulated aircraft connection */
-	public static final String CONNECTION_AIRCRAFT_SIMULATED = "Simulated Aircraft";
+	/** the identifier of a simulated datalink */
+	public static final String DATALINK_SIMULATED = "Simulated Datalink";
 	
-	/** the identifier of a dronekit aircraft connection */
-	public static final String CONNECTION_AIRCRAFT_DRONEKIT = "Dronekit Aircraft";
+	/** the identifier of a dronekit datalink */
+	public static final String DATALINK_DRONEKIT = "Dronekit Datalink";
 	
-	// TODO: aircraft, planner ...
+	// TODO: SWIM ...
 	
 	/** the identifier of this specification */
 	private final String id;

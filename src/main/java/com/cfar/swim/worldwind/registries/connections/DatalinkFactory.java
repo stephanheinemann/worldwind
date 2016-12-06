@@ -27,38 +27,28 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.connections;
+package com.cfar.swim.worldwind.registries.connections;
 
-import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.render.Path;
+import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.connections.DronekitDatalink;
+import com.cfar.swim.worldwind.connections.SimulatedDatalink;
+import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.registries.Specification;
 
-public abstract class AircraftConnection implements Connection {
-	
+public class DatalinkFactory implements Factory<Datalink> {
+
 	@Override
-	public void connect() {
+	public Datalink createInstance(Specification<Datalink> specification) {
+		Datalink connection = null;
+		
+		if (specification.getId().equals(Specification.DATALINK_SIMULATED)) {
+			connection = new SimulatedDatalink();
+		} else if (specification.getId().equals(Specification.DATALINK_DRONEKIT)) {			
+			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) specification.getProperties();
+			connection = new DronekitDatalink(properties.getHost(), properties.getPort());
+		}
+		
+		return connection;
 	}
-	
-	@Override
-	public void disconnect() {
-	}
-	
-	@Override
-	public boolean isConnected() {
-		return false;
-	}
-	
-	public abstract Position getAircraftPosition();
-	public abstract String getAircraftMode();
-	public abstract void setAircraftMode(String aircraftMode);
-	public abstract void enableAircraftSafety();
-	public abstract void disableAircraftSafety();
-	public abstract boolean isAircraftSafetyEnabled();
-	public abstract void armAircraft();
-	public abstract void disarmAircraft();
-	public abstract boolean isAircraftArmed();
-	public abstract void uploadPath(Path path);
-	public abstract void takeOff(); // TODO: take-off specification / setup (altitude, vertical speed, gps/height, horizontal (cruise speed))
-	public abstract void land();
-	public abstract void returnToLaunch();
 
 }

@@ -32,87 +32,33 @@ package com.cfar.swim.worldwind.connections;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 
-public class SimulatedAircraftConnection extends AircraftConnection {
-
+public abstract class Datalink implements Connection {
+	
 	@Override
-	public String getAircraftMode() {
-		// TODO Auto-generated method stub
-		return null;
+	public void connect() {
 	}
-
+	
 	@Override
-	public void setAircraftMode(String aircraftMode) {
-		// TODO Auto-generated method stub
-		
+	public void disconnect() {
 	}
-
+	
 	@Override
-	public Position getAircraftPosition() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void armAircraft() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void disarmAircraft() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isAircraftArmed() {
-		// TODO Auto-generated method stub
+	public boolean isConnected() {
 		return false;
 	}
-
-	@Override
-	public void uploadPath(Path path) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void enableAircraftSafety() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void disableAircraftSafety() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isAircraftSafetyEnabled() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void takeOff() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void land() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void returnToLaunch() {
-		// TODO Auto-generated method stub
-		
-	}
-
-	// TODO: a simulated connection shall aggregate a runnable
-	// simulating a selected aircraft with its telemetry
+	
+	public abstract Position getAircraftPosition();
+	public abstract String getAircraftMode();
+	public abstract void setAircraftMode(String aircraftMode);
+	public abstract void enableAircraftSafety();
+	public abstract void disableAircraftSafety();
+	public abstract boolean isAircraftSafetyEnabled();
+	public abstract void armAircraft();
+	public abstract void disarmAircraft();
+	public abstract boolean isAircraftArmed();
+	public abstract void uploadPath(Path path);
+	public abstract void takeOff(); // TODO: take-off specification / setup (altitude, vertical speed, gps/height, horizontal (cruise speed))
+	public abstract void land();
+	public abstract void returnToLaunch();
 
 }

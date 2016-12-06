@@ -46,7 +46,7 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
-public class DronekitConnection extends AircraftConnection {
+public class DronekitDatalink extends Datalink {
 	
 	private String host;
 	private int port;
@@ -55,7 +55,7 @@ public class DronekitConnection extends AircraftConnection {
 	private DroneConnectBlockingStub blockingStub;
 	private DroneConnectStub stub;
 	
-	public DronekitConnection(String host, int port) {
+	public DronekitDatalink(String host, int port) {
 		this.host = host;
 		this.port = port;
 		this.channel = null;

@@ -29,5 +29,27 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
-public class SimulatedAircraftConnectionProperties extends AircraftConnectionProperties {
+import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.registries.Properties;
+
+public abstract class DatalinkProperties implements Properties<Datalink> {
+	
+	/**
+	 * Clones this datalink properties bean.
+	 * 
+	 * @return a clone of this datalink properties bean
+	 * 
+	 * @see Properties#clone()
+	 */
+	@Override
+	public DatalinkProperties clone() {
+		DatalinkProperties clone = null;
+		try {
+			clone = (DatalinkProperties) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return clone;
+	}
+
 }

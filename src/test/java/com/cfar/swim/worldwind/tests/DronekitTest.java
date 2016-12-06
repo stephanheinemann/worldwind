@@ -35,10 +35,10 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.cfar.swim.worldwind.connections.AircraftConnection;
+import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.registries.connections.AircraftConnectionFactory;
-import com.cfar.swim.worldwind.registries.connections.DronekitConnectionProperties;
+import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
+import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -48,52 +48,52 @@ public class DronekitTest {
 
 	@Test
 	public void testConnection() throws InterruptedException {
-		Specification<AircraftConnection> aircraftSpecification = new Specification<>(Specification.CONNECTION_AIRCRAFT_DRONEKIT, new DronekitConnectionProperties());
-		DronekitConnectionProperties properties = (DronekitConnectionProperties) aircraftSpecification.getProperties();
+		Specification<Datalink> datalinkSpecification = new Specification<>(Specification.DATALINK_DRONEKIT, new DronekitDatalinkProperties());
+		DronekitDatalinkProperties properties = (DronekitDatalinkProperties) datalinkSpecification.getProperties();
 		properties.setHost("206.87.166.221");
 		properties.setPort(50051);
-		AircraftConnectionFactory aircraftConnectionFactory = new AircraftConnectionFactory();
-		AircraftConnection connection = aircraftConnectionFactory.createInstance(aircraftSpecification);
+		DatalinkFactory datalinkFactory = new DatalinkFactory();
+		Datalink datalink = datalinkFactory.createInstance(datalinkSpecification);
 		
 		// connect
-		connection.connect();
-		assertTrue(connection.isConnected());
+		datalink.connect();
+		assertTrue(datalink.isConnected());
 		
 		Position first = new Position(Angle.POS90, Angle.POS180, 9500d);
 		Position second = new Position(Angle.NEG90, Angle.NEG180, 9700d);
 		assertEquals(second.getAltitude(), 9700d, 0.1d);
 		
 		Path path = new Path(first, second);
-		connection.uploadPath(path);
+		datalink.uploadPath(path);
 		
-		while(!connection.getAircraftMode().equals("AUTO")) {
-			System.out.println(connection.getAircraftMode());
+		while(!datalink.getAircraftMode().equals("AUTO")) {
+			System.out.println(datalink.getAircraftMode());
 			Thread.sleep(1000);
 		}
 		
 		// set mode
-		connection.setAircraftMode("STABILIZE");
-		System.out.println(connection.getAircraftPosition());
+		datalink.setAircraftMode("STABILIZE");
+		System.out.println(datalink.getAircraftPosition());
 		
 		// set safety
-		connection.disableAircraftSafety();
-		while (connection.isAircraftSafetyEnabled()) {
+		datalink.disableAircraftSafety();
+		while (datalink.isAircraftSafetyEnabled()) {
 			Thread.sleep(1000);
 		}
-		assertFalse(connection.isAircraftSafetyEnabled());
+		assertFalse(datalink.isAircraftSafetyEnabled());
 		
 		// arm
-		connection.armAircraft();
-		while (!connection.isAircraftArmed()) {
+		datalink.armAircraft();
+		while (!datalink.isAircraftArmed()) {
 			Thread.sleep(1000);
 		}
-		assertTrue(connection.isAircraftArmed());
+		assertTrue(datalink.isAircraftArmed());
 		
 		// cleanup
-		connection.disarmAircraft();
-		connection.enableAircraftSafety();
-		connection.disconnect();
-		assertFalse(connection.isConnected());
+		datalink.disarmAircraft();
+		datalink.enableAircraftSafety();
+		datalink.disconnect();
+		assertFalse(datalink.isConnected());
 	}
 
 }
