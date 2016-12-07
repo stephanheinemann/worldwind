@@ -85,7 +85,7 @@ public class SimulatedDatalink extends Datalink {
 	}
 
 	@Override
-	public void uploadPath(Path path) {
+	public void uploadFlightPath(Path path) {
 		try {
 			Thread.sleep(5000);
 		} catch (InterruptedException e) {

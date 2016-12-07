@@ -46,15 +46,36 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
+
+/**
+ * Realizes a dronekit datalink.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class DronekitDatalink extends Datalink {
 	
+	/** the remote host of this dronekit datalink */
 	private String host;
+	
+	/** the remote port of this dronekit datalink */
 	private int port;
 	
+	/** the netty channel of this dronekit datalink */
 	private Channel channel;
+	
+	/** the blocking RPC stub of this dronekit datalink */
 	private DroneConnectBlockingStub blockingStub;
+	
+	/** the RPC stub of this dronekit datalink */
 	private DroneConnectStub stub;
 	
+	/**
+	 * Constructs a new donekit datalink with a specified remote host and port.
+	 * 
+	 * @param host the remote dronekit host
+	 * @param port the remote dronekit port
+	 */
 	public DronekitDatalink(String host, int port) {
 		this.host = host;
 		this.port = port;
@@ -62,6 +83,11 @@ public class DronekitDatalink extends Datalink {
 		this.blockingStub = null;
 	}
 	
+	/**
+	 * Connects this dronekit datalink.
+	 * 
+	 * @see Datalink#connect()
+	 */
 	@Override
 	public void connect() {
 		this.channel = NettyChannelBuilder.forAddress(this.host, this.port)
@@ -71,17 +97,36 @@ public class DronekitDatalink extends Datalink {
 		this.stub = DroneConnectGrpc.newStub(this.channel);
 	}
 	
+	/**
+	 * Disconnects this dronekit datalink.
+	 * 
+	 * @see Datalink#disconnect()
+	 */
 	@Override
 	public void disconnect() {
 		this.channel = null;
 		this.blockingStub = null;
 	}
 	
+	/**
+	 * Indicates whether or not this dronekit datalink is connected.
+	 * 
+	 * @return true if this dronekit datalink is connected, false otherwise
+	 * 
+	 * @see Datalink#isConnected()
+	 */
 	@Override
 	public boolean isConnected() {
 		return (null != this.blockingStub);
 	}
 	
+	/**
+	 * Gets the aircraft position via this dronekit datalink.
+	 * 
+	 * @return the aircraft position obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftPosition()
+	 */
 	public Position getAircraftPosition() {
 		Position aircraftPosition = null;
 		
@@ -99,6 +144,13 @@ public class DronekitDatalink extends Datalink {
 		return aircraftPosition;
 	}
 	
+	/**
+	 * Gets the aircraft mode via this dronekit datalink.
+	 * 
+	 * @return the aircraft mode obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftMode()
+	 */
 	@Override
 	public String getAircraftMode() {
 		String aircraftMode = null;
@@ -113,6 +165,13 @@ public class DronekitDatalink extends Datalink {
 		return aircraftMode;
 	}
 	
+	/**
+	 * Sets the aircraft mode via this dronekit datalink.
+	 * 
+	 * @param aircraftMode the aircraft mode to be set
+	 * 
+	 * @see Datalink#setAircraftMode(String)
+	 */
 	@Override
 	public void setAircraftMode(String aircraftMode) {
 		if (this.isConnected()) {
@@ -123,6 +182,11 @@ public class DronekitDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Enables the aircraft safety via this dronekit datalink.
+	 * 
+	 * @see Datalink#enableAircraftSafety()
+	 */
 	@Override
 	public void enableAircraftSafety() {
 		if (this.isConnected()) {
@@ -133,6 +197,11 @@ public class DronekitDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Disables the aircraft safety via this dronekit datalink.
+	 * 
+	 * @see Datalink#disableAircraftSafety()
+	 */
 	@Override
 	public void disableAircraftSafety() {
 		if (this.isConnected()) {
@@ -143,6 +212,14 @@ public class DronekitDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Indicates whether or not the aircraft safety is enabled for the aircraft
+	 * connected via this dronekit datalink.
+	 * 
+	 * @return true if the aircraft safety is enabled, false otherwise
+	 * 
+	 * @see Datalink#isAircraftSafetyEnabled()
+	 */
 	@Override
 	public boolean isAircraftSafetyEnabled() {
 		boolean isAircraftSafetyEnabled = false;
@@ -157,6 +234,11 @@ public class DronekitDatalink extends Datalink {
 		return isAircraftSafetyEnabled;
 	}
 	
+	/**
+	 * Arms the aircraft via this dronekit datalink.
+	 * 
+	 * @see Datalink#armAircraft()
+	 */
 	@Override
 	public void armAircraft() {
 		if (this.isConnected()) {
@@ -167,6 +249,11 @@ public class DronekitDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Disarms the aircraft via this dronekit datalink.
+	 * 
+	 * @see Datalink#disarmAircraft()
+	 */
 	@Override
 	public void disarmAircraft() {
 		if (this.isConnected()) {
@@ -177,6 +264,14 @@ public class DronekitDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Indicates whether or not the aircraft connected via this dronekit
+	 * datalink is armed.
+	 * 
+	 * @return true if the aircraft is armed, false otherwise
+	 * 
+	 * @see Datalink#isAircraftArmed()
+	 */
 	@Override
 	public boolean isAircraftArmed() {
 		boolean isArmed = false;
@@ -191,8 +286,16 @@ public class DronekitDatalink extends Datalink {
 		return isArmed;
 	}
 	
+	/**
+	 * Uploads a flight path to the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @param path the flight path to be uploaded
+	 * 
+	 * @see Datalink#uploadFlightPath(Path)
+	 */
 	@Override
-	public void uploadPath(Path path) {
+	public void uploadFlightPath(Path path) {
 		if (this.isConnected()) {
 			NullStreamObserver nso = new NullStreamObserver();
 			StreamObserver<com.cfar.swim.droneconnect.Position> pso = this.stub.setPath(nso);
@@ -213,6 +316,12 @@ public class DronekitDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Realizes a null stream observer.
+	 * 
+	 * @author Stephan Heinemann
+	 *
+	 */
 	private class NullStreamObserver implements StreamObserver<Null> {
 
 		@Override
@@ -227,7 +336,13 @@ public class DronekitDatalink extends Datalink {
 		public void onCompleted() {
 		}
 	}
-
+	
+	/**
+	 * Initiates a take-off for the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @see Datalink#takeOff()
+	 */
 	@Override
 	public void takeOff() {
 		if (this.isConnected()) {
@@ -238,7 +353,13 @@ public class DronekitDatalink extends Datalink {
 			throw new IllegalStateException("dronekit is not connected");
 		}
 	}
-
+	
+	/**
+	 * Initiates a landing for the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @see Datalink#land()
+	 */
 	@Override
 	public void land() {
 		if (this.isConnected()) {
@@ -249,7 +370,13 @@ public class DronekitDatalink extends Datalink {
 			throw new IllegalStateException("dronekit is not connected");
 		}
 	}
-
+	
+	/**
+	 * Initiates a return to and landing at the launch position for the
+	 * aircraft connected via this dronekit datalink.
+	 * 
+	 * @see Datalink#returnToLaunch()
+	 */
 	@Override
 	public void returnToLaunch() {
 		if (this.isConnected()) {

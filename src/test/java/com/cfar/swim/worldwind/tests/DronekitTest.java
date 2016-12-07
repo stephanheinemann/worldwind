@@ -64,7 +64,7 @@ public class DronekitTest {
 		assertEquals(second.getAltitude(), 9700d, 0.1d);
 		
 		Path path = new Path(first, second);
-		datalink.uploadPath(path);
+		datalink.uploadFlightPath(path);
 		
 		while(!datalink.getAircraftMode().equals("AUTO")) {
 			System.out.println(datalink.getAircraftMode());

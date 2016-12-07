@@ -29,36 +29,205 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 
+/**
+ * Abstracts a datalink connection to connect to and communicate with aircraft.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public abstract class Datalink implements Connection {
 	
-	@Override
-	public void connect() {
-	}
+	/** the property change support of this datalink */
+	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
-	@Override
-	public void disconnect() {
-	}
+	/** the position of the source of this datalink */
+	private Position position;
 	
-	@Override
-	public boolean isConnected() {
-		return false;
-	}
+	/** the monitor of this datalink */
+	ScheduledExecutorService monitor = Executors.newSingleThreadScheduledExecutor();
 	
+	/**
+	 * Connects this datalink.
+	 * 
+	 * @see Connection#connect()
+	 */
+	@Override
+	public abstract void connect();
+	
+	/**
+	 * Disconnect this datalink.
+	 * 
+	 * @see Connection#connect()
+	 */
+	@Override
+	public abstract void disconnect();
+	
+	/**
+	 * Indicates whether or not this datalink is connected.
+	 * 
+	 * @return true if this datalink is connected, false otherwise
+	 * 
+	 * @see Connection#isConnected()
+	 */
+	@Override
+	public abstract boolean isConnected();
+	
+	/**
+	 * Gets the aircraft position via this datalink.
+	 * 
+	 * @return the aircraft position obtained via this datalink
+	 */
 	public abstract Position getAircraftPosition();
+	
+	/**
+	 * Gets the aircraft mode via this datalink.
+	 * 
+	 * @return the aircraft mode obtained via this datalink
+	 */
 	public abstract String getAircraftMode();
+	
+	/**
+	 * Sets the aircraft mode via this datalink.
+	 * 
+	 * @param aircraftMode the aircraft mode to be set
+	 */
 	public abstract void setAircraftMode(String aircraftMode);
+	
+	/**
+	 * Enables the aircraft safety via this datalink.
+	 */
 	public abstract void enableAircraftSafety();
+	
+	/**
+	 * Disables the aircraft safety via this datalink.
+	 */
 	public abstract void disableAircraftSafety();
+	
+	/**
+	 * Indicates whether or not the aircraft safety is enabled for the aircraft
+	 * connected via this datalink.
+	 * 
+	 * @return true if the aircraft safety is enabled, false otherwise
+	 */
 	public abstract boolean isAircraftSafetyEnabled();
+	
+	/**
+	 * Arms the aircraft via this datalink.
+	 */
 	public abstract void armAircraft();
+	
+	/**
+	 * Disarms the aircraft via this datalink.
+	 */
 	public abstract void disarmAircraft();
+	
+	/**
+	 * Indicates whether or not the aircraft connected via this datalink
+	 * is armed.
+	 * 
+	 * @return true if the aircraft is armed, false otherwise
+	 */
 	public abstract boolean isAircraftArmed();
-	public abstract void uploadPath(Path path);
-	public abstract void takeOff(); // TODO: take-off specification / setup (altitude, vertical speed, gps/height, horizontal (cruise speed))
+	
+	/**
+	 * Uploads a flight path to the aircraft connected via this datalink.
+	 * 
+	 * @param path the flight path to be uploaded
+	 */
+	public abstract void uploadFlightPath(Path path);
+	
+	// TODO: take-off specification / setup
+	// flight envelope (initial altitude, vertical speed, horizontal speed)
+	
+	/**
+	 * Initiates a take-off for the aircraft connected via this datalink.
+	 */
+	public abstract void takeOff();
+	
+	/**
+	 * Initiates a landing for the aircraft connected via this datalink.
+	 */
 	public abstract void land();
+	
+	/**
+	 * Initiates a return to and landing at the launch position for the
+	 * aircraft connected via this datalink.
+	 */
 	public abstract void returnToLaunch();
-
+	
+	/**
+	 * Starts the datalink monitor with a specified monitoring period.
+	 * 
+	 * @param period the monitoring period in milliseconds
+	 */
+	public void startMonitoring(long period) {
+		this.monitor.scheduleAtFixedRate(new DatalinkMonitor(), 0, period, TimeUnit.MILLISECONDS);
+	}
+	
+	/**
+	 * Stops the datalink monitor.
+	 */
+	public void stopMonitoring() {
+		this.monitor.shutdown();
+	}
+	
+	/**
+	 * Realizes a datalink monitor.
+	 * 
+	 * @author Stephan Heinemann
+	 *
+	 */
+	private class DatalinkMonitor implements Runnable {
+		
+		/**
+		 * Monitors the datalink and fires registered property change listeners.
+		 * 
+		 * @see Runnable#run()
+		 */
+		@Override
+		public void run() {
+			Position oldPosition = position;
+			position = getAircraftPosition();
+			pcs.firePropertyChange("position", oldPosition, position);
+			// TODO: extend monitored properties
+		}
+		
+	}
+	
+	/**
+	 * Adds a property change listener to this datalink.
+	 * 
+	 * @param listener the property change listener to be added
+	 */
+	public void addPropertyChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener(listener);
+	}
+	
+	/**
+	 * Removes a property change listener from this datalink.
+	 * 
+	 * @param listener the property change listener to be removed
+	 */
+	public void removePropertyChangeListener(PropertyChangeListener listener) {
+		this.pcs.removePropertyChangeListener(listener);
+	}
+	
+	/**
+	 * Adds a position change listener to this datalink.
+	 * 
+	 * @param listener the position change listener to be added
+	 */
+	public void addPositionChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("position", listener);
+	}
+	
 }

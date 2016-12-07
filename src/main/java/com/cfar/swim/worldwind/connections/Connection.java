@@ -29,10 +29,30 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+/**
+ * Describes a connection which can be used to connect to and communicate
+ * with entities such as aircraft (datalink connection) or the SWIM network.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public interface Connection {
 
+	/**
+	 * Connects this connection.
+	 */
 	public void connect();
+	
+	/**
+	 * Disconnects this connection.
+	 */
 	public void disconnect();
+	
+	/**
+	 * Indicates whether or not this connection is connected.
+	 * 
+	 * @return true if this connection is connected, false otherwise
+	 */
 	public boolean isConnected();
 	
 }
