@@ -31,6 +31,8 @@ package com.cfar.swim.worldwind.connections;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -49,11 +51,23 @@ public abstract class Datalink implements Connection {
 	/** the property change support of this datalink */
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
-	/** the position of the source of this datalink */
-	private Position position;
+	// TODO: Track as own class similar to Trajectory of Waypoints storing ATO
+	
+	/** the track of the source of this datalink */
+	private Queue<Position> track = new ConcurrentLinkedQueue<>();
 	
 	/** the monitor of this datalink */
 	ScheduledExecutorService monitor = Executors.newSingleThreadScheduledExecutor();
+	
+	/**
+	 * Gets the track of the aircraft connected via this datalink.
+	 * 
+	 * @return the track of the aircraft connected via this datalink
+	 */
+	public Iterable<Position> getTrack() {
+		// TODO: return Path, Trajectory or Track with set ATOs
+		return this.track;
+	}
 	
 	/**
 	 * Connects this datalink.
@@ -170,6 +184,7 @@ public abstract class Datalink implements Connection {
 	 * @param period the monitoring period in milliseconds
 	 */
 	public void startMonitoring(long period) {
+		this.track.clear();
 		this.monitor.scheduleAtFixedRate(new DatalinkMonitor(), 0, period, TimeUnit.MILLISECONDS);
 	}
 	
@@ -195,12 +210,10 @@ public abstract class Datalink implements Connection {
 		 */
 		@Override
 		public void run() {
-			Position oldPosition = position;
-			position = getAircraftPosition();
-			pcs.firePropertyChange("position", oldPosition, position);
+			track.add(getAircraftPosition());
+			pcs.firePropertyChange("track", null, track);
 			// TODO: extend monitored properties
 		}
-		
 	}
 	
 	/**
@@ -222,12 +235,12 @@ public abstract class Datalink implements Connection {
 	}
 	
 	/**
-	 * Adds a position change listener to this datalink.
+	 * Adds a track change listener to this datalink.
 	 * 
 	 * @param listener the position change listener to be added
 	 */
-	public void addPositionChangeListener(PropertyChangeListener listener) {
-		this.pcs.addPropertyChangeListener("position", listener);
+	public void addTrackChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("track", listener);
 	}
 	
 }

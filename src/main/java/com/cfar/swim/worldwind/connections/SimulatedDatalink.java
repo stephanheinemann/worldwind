@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 
@@ -38,6 +39,7 @@ public class SimulatedDatalink extends Datalink {
 	private boolean isArmed = false;
 	private boolean isAircraftSafetyEnabled = true;
 	private String aircraftMode = "UNKNOWN";
+	private Position position = new Position(Angle.ZERO, Angle.ZERO, 10000d);
 	
 	@Override
 	public void connect() {
@@ -66,7 +68,9 @@ public class SimulatedDatalink extends Datalink {
 
 	@Override
 	public Position getAircraftPosition() {
-		return Position.ZERO;
+		Position delta = new Position(Angle.fromDegrees(1d), Angle.fromDegrees(1d), 0d);
+		this.position = this.position.add(delta);
+		return this.position;
 	}
 
 	@Override
