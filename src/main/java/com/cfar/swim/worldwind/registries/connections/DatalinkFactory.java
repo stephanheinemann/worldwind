@@ -35,8 +35,27 @@ import com.cfar.swim.worldwind.connections.SimulatedDatalink;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Specification;
 
-public class DatalinkFactory implements Factory<Datalink> {
 
+/**
+ * Realizes a datalink factory to create datalinks according to
+ * customized datalink specifications.
+ * 
+ * @author Stephan Heinemann
+ * 
+ * @see Factory
+ * @see Specification
+ */
+public class DatalinkFactory implements Factory<Datalink> {
+	
+	/**
+	 * Creates a new datalink according to a customized datalink specification.
+	 * 
+	 * @param specification the customized datalink specification
+	 * 
+	 * @return the created datalink
+	 * 
+	 * @see Factory#createInstance(Specification)
+	 */
 	@Override
 	public Datalink createInstance(Specification<Datalink> specification) {
 		Datalink connection = null;

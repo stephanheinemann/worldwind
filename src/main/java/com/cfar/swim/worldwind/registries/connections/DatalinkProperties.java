@@ -32,6 +32,13 @@ package com.cfar.swim.worldwind.registries.connections;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.registries.Properties;
 
+
+/**
+ * Abstracts datalink properties applicable to all datalinks.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public abstract class DatalinkProperties implements Properties<Datalink> {
 	
 	/**

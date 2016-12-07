@@ -29,31 +29,67 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
-public class DronekitDatalinkProperties extends DatalinkProperties {
 
+/**
+ * Realizes the properties bean of a dronekit datalink.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public class DronekitDatalinkProperties extends DatalinkProperties {
+	
+	/** the standard localhost of a dronekit datalink properties bean */
 	public static final String DATALINK_LOCALHOST = "localhost";
+	
+	/** the standard gRPC port of a dronekit datalink properties bean */
 	public static final int DATALINK_GRPCPORT = 50051;
 	
+	/** the remote host of this dronekit datalink properties bean */
 	private String host;
+	
+	/** the remote port of this dronekit datalink properties bean */
 	private int port;
 	
+	/**
+	 * Constructs a new dronekit datalink properties bean.
+	 */
 	public DronekitDatalinkProperties() {
 		this.host = DronekitDatalinkProperties.DATALINK_LOCALHOST;
 		this.port = DronekitDatalinkProperties.DATALINK_GRPCPORT;
 	}
 	
+	/**
+	 * Gets the host of this dronekit datalink properties bean.
+	 * 
+	 * @return the host of this dronekit datalink properties bean
+	 */
 	public String getHost() {
 		return this.host;
 	}
 	
+	/**
+	 * Sets the host of this dronekit datalink properties bean.
+	 * 
+	 * @param host the host to be set
+	 */
 	public void setHost(String host) {
 		this.host = host;
 	}
 	
+	/**
+	 * Gets the port of this dronekit datalink properties bean.
+	 * 
+	 * @return the port of this dronekit datalink properties bean
+	 */
 	public int getPort() {
 		return this.port;
 	}
 	
+	/**
+	 * Sets the port of this dronekit datalink properties bean.
+	 * 
+	 * @param port the port to be set
+	 */
 	public void setPort(int port) {
 		this.port = port;
 	}
