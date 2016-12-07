@@ -33,83 +33,109 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 
 public class SimulatedDatalink extends Datalink {
-
+	
+	private boolean isConnected = false;
+	private boolean isArmed = false;
+	private boolean isAircraftSafetyEnabled = true;
+	private String aircraftMode = "UNKNOWN";
+	
+	@Override
+	public void connect() {
+		this.isConnected = true;
+	}
+	
+	@Override
+	public void disconnect() {
+		this.isConnected = false;
+	}
+	
+	@Override
+	public boolean isConnected() {
+		return this.isConnected;
+	}
+	
 	@Override
 	public String getAircraftMode() {
-		// TODO Auto-generated method stub
-		return null;
+		return this.aircraftMode;
 	}
 
 	@Override
 	public void setAircraftMode(String aircraftMode) {
-		// TODO Auto-generated method stub
-		
+		this.aircraftMode = aircraftMode;
 	}
 
 	@Override
 	public Position getAircraftPosition() {
-		// TODO Auto-generated method stub
-		return null;
+		return Position.ZERO;
 	}
 
 	@Override
 	public void armAircraft() {
-		// TODO Auto-generated method stub
-		
+		this.isArmed = true;
 	}
 
 	@Override
 	public void disarmAircraft() {
-		// TODO Auto-generated method stub
-		
+		this.isArmed = false;
 	}
 
 	@Override
 	public boolean isAircraftArmed() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.isArmed;
 	}
 
 	@Override
 	public void uploadPath(Path path) {
-		// TODO Auto-generated method stub
-		
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void enableAircraftSafety() {
-		// TODO Auto-generated method stub
-		
+		this.isAircraftSafetyEnabled = true;
 	}
 
 	@Override
 	public void disableAircraftSafety() {
-		// TODO Auto-generated method stub
-		
+		this.isAircraftSafetyEnabled = false;
 	}
 
 	@Override
 	public boolean isAircraftSafetyEnabled() {
-		// TODO Auto-generated method stub
-		return false;
+		return this.isAircraftSafetyEnabled;
 	}
 
 	@Override
 	public void takeOff() {
-		// TODO Auto-generated method stub
-		
+		this.setAircraftMode("GUIDED");
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void land() {
-		// TODO Auto-generated method stub
-		
+		this.setAircraftMode("LAND");
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override
 	public void returnToLaunch() {
-		// TODO Auto-generated method stub
-		
+		this.setAircraftMode("RTL");
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	// TODO: a simulated connection shall aggregate a runnable
