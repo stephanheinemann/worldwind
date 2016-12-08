@@ -233,7 +233,17 @@ public abstract class Datalink implements Connection {
 	public void stopMonitoring() {
 		if (null != this.executor) {
 			this.executor.shutdown();
+			this.executor = null;
 		}
+	}
+	
+	/**
+	 * Indicates whether or not this datalink is being monitored.
+	 * 
+	 * @return true if this datalink is being monitored, false otherwise
+	 */
+	public boolean isMonitoring() {
+		return (null != this.executor);
 	}
 	
 	/**
