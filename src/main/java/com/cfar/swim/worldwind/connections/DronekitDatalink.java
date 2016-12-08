@@ -70,6 +70,8 @@ public class DronekitDatalink extends Datalink {
 	/** the RPC stub of this dronekit datalink */
 	private DroneConnectStub stub;
 	
+	// TODO: implement maximum blocking delay
+	
 	/**
 	 * Constructs a new donekit datalink with a specified remote host and port.
 	 * 
