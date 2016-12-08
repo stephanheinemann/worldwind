@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 
@@ -56,18 +57,9 @@ public abstract class Datalink implements Connection {
 	/** the track of the source of this datalink */
 	private Queue<Position> track = new ConcurrentLinkedQueue<>();
 	
-	/** the monitor of this datalink */
-	ScheduledExecutorService monitor = Executors.newSingleThreadScheduledExecutor();
+	/** the monitor executor of this datalink */
+	private ScheduledExecutorService executor = null;
 	
-	/**
-	 * Gets the track of the aircraft connected via this datalink.
-	 * 
-	 * @return the track of the aircraft connected via this datalink
-	 */
-	public Iterable<Position> getTrack() {
-		// TODO: return Path, Trajectory or Track with set ATOs
-		return this.track;
-	}
 	
 	/**
 	 * Connects this datalink.
@@ -96,11 +88,57 @@ public abstract class Datalink implements Connection {
 	public abstract boolean isConnected();
 	
 	/**
+	 * Gets the aircraft heading via this datalink.
+	 * 
+	 * @return the aircraft heading obtained via this datalink
+	 */
+	public abstract Angle getAircraftHeading();
+	
+	/**
+	 * Gets the aircraft pitch via this datalink.
+	 * 
+	 * @return the aircraft pitch obtained via this datalink
+	 */
+	public abstract Angle getAircraftPitch();
+	
+	/**
+	 * Gets the aircraft bank via this datalink.
+	 * 
+	 * @return the aircraft bank obtained via this datalink
+	 */
+	public abstract Angle getAircraftBank();
+	
+	/**
+	 * Gets the aircraft yaw via this datalink.
+	 * 
+	 * @return the aircraft yaw obtained via this datalink
+	 */
+	public abstract Angle getAircraftYaw();
+	
+	/**
 	 * Gets the aircraft position via this datalink.
 	 * 
 	 * @return the aircraft position obtained via this datalink
 	 */
 	public abstract Position getAircraftPosition();
+	
+	/**
+	 * Gets the aircraft track monitored via this datalink.
+	 * 
+	 * @return the aircraft track monitored via this datalink
+	 */
+	public Iterable<Position> getAircraftTrack() {
+		// TODO: return Path, Trajectory or Track with set ATOs
+		return this.track;
+	}
+	
+	/**
+	 * Clears the aircraft track monitored via this datalink.
+	 */
+	public void clearAircraftTrack() {
+		this.track.clear();
+		this.pcs.firePropertyChange("track", null, this.track);
+	}
 	
 	/**
 	 * Gets the aircraft mode via this datalink.
@@ -184,15 +222,18 @@ public abstract class Datalink implements Connection {
 	 * @param period the monitoring period in milliseconds
 	 */
 	public void startMonitoring(long period) {
-		this.track.clear();
-		this.monitor.scheduleAtFixedRate(new DatalinkMonitor(), 0, period, TimeUnit.MILLISECONDS);
+		this.clearAircraftTrack();
+		this.executor = Executors.newSingleThreadScheduledExecutor();
+		this.executor.scheduleAtFixedRate(new DatalinkMonitor(), 0, period, TimeUnit.MILLISECONDS);
 	}
 	
 	/**
 	 * Stops the datalink monitor.
 	 */
 	public void stopMonitoring() {
-		this.monitor.shutdown();
+		if (null != this.executor) {
+			this.executor.shutdown();
+		}
 	}
 	
 	/**

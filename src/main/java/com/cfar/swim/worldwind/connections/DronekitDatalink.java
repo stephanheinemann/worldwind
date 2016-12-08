@@ -121,6 +121,46 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
+	 * Gets the aircraft heading via this dronekit datalink.
+	 * 
+	 * @return the aircraft heading obtained via this dronekit datalink
+	 */
+	public Angle getAircraftHeading() {
+		// TODO: implement
+		return Angle.ZERO;
+	}
+	
+	/**
+	 * Gets the aircraft pitch via this dronekit datalink.
+	 * 
+	 * @return the aircraft pitch obtained via this dronekit datalink
+	 */
+	public Angle getAircraftPitch() {
+		// TODO: implement
+		return Angle.ZERO;
+	}
+	
+	/**
+	 * Gets the aircraft bank via this dronekit datalink.
+	 * 
+	 * @return the aircraft bank obtained via this dronekit datalink
+	 */
+	public Angle getAircraftBank() {
+		// TODO: implement
+		return Angle.ZERO;
+	}
+	
+	/**
+	 * Gets the aircraft yaw via this dronekit datalink.
+	 * 
+	 * @return the aircraft yaw obtained via this dronekit datalink
+	 */
+	public Angle getAircraftYaw() {
+		// TODO: implement
+		return Angle.ZERO;
+	}
+	
+	/**
 	 * Gets the aircraft position via this dronekit datalink.
 	 * 
 	 * @return the aircraft position obtained via this dronekit datalink

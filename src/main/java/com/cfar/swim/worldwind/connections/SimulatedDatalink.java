@@ -91,7 +91,7 @@ public class SimulatedDatalink extends Datalink {
 	@Override
 	public void uploadFlightPath(Path path) {
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -114,32 +114,62 @@ public class SimulatedDatalink extends Datalink {
 
 	@Override
 	public void takeOff() {
+		System.out.println("initiating taking off...");
 		this.setAircraftMode("GUIDED");
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		System.out.println("taking off...");
 	}
 
 	@Override
 	public void land() {
+		System.out.println("initiating landing...");
 		this.setAircraftMode("LAND");
 		try {
-			Thread.sleep(5000);
+			Thread.sleep(2000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		System.out.println("landing...");
 	}
 
 	@Override
 	public void returnToLaunch() {
+		System.out.println("initiating return to launch...");
 		this.setAircraftMode("RTL");
 		try {
 			Thread.sleep(5000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+		System.out.println("returning to launch...");
+	}
+
+	@Override
+	public Angle getAircraftHeading() {
+		// TODO Auto-generated method stub
+		return Angle.ZERO;
+	}
+
+	@Override
+	public Angle getAircraftPitch() {
+		// TODO Auto-generated method stub
+		return Angle.ZERO;
+	}
+
+	@Override
+	public Angle getAircraftBank() {
+		// TODO Auto-generated method stub
+		return Angle.ZERO;
+	}
+
+	@Override
+	public Angle getAircraftYaw() {
+		// TODO Auto-generated method stub
+		return Angle.ZERO;
 	}
 
 	// TODO: a simulated connection shall aggregate a runnable
