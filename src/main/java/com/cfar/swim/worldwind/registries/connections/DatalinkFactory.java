@@ -61,10 +61,13 @@ public class DatalinkFactory implements Factory<Datalink> {
 		Datalink connection = null;
 		
 		if (specification.getId().equals(Specification.DATALINK_SIMULATED)) {
+			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) specification.getProperties();
 			connection = new SimulatedDatalink();
+			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
 		} else if (specification.getId().equals(Specification.DATALINK_DRONEKIT)) {			
 			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) specification.getProperties();
 			connection = new DronekitDatalink(properties.getHost(), properties.getPort());
+			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
 		}
 		
 		return connection;

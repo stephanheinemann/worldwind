@@ -41,6 +41,27 @@ import com.cfar.swim.worldwind.registries.Properties;
  */
 public abstract class DatalinkProperties implements Properties<Datalink> {
 	
+	/** the downlink period of this datalink properties bean */
+	private long downlinkPeriod = 1000; // ms
+	
+	/**
+	 * Gets the downlink (monitoring) period of this datalink properties bean.
+	 * 
+	 * @return the downlink period of this datalink properties bean in milliseconds
+	 */
+	public long getDownlinkPeriod() {
+		return this.downlinkPeriod;
+	}
+	
+	/**
+	 * Sets the downlink (monitoring) period of this datalink properties bean.
+	 * 
+	 * @param downlinkPeriod the downlink period to be set in milliseconds
+	 */
+	public void setDownlinkPeriod(long downlinkPeriod) {
+		this.downlinkPeriod = downlinkPeriod;
+	}
+
 	/**
 	 * Clones this datalink properties bean.
 	 * 

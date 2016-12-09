@@ -52,6 +52,9 @@ public abstract class Datalink implements Connection {
 	/** the property change support of this datalink */
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
+	/** the downlink (monitoring) period of this datalink */
+	private long downlinkPeriod = 1000; // ms
+	
 	// TODO: Track as own class similar to Trajectory of Waypoints storing ATO
 	
 	/** the track of the source of this datalink */
@@ -217,14 +220,32 @@ public abstract class Datalink implements Connection {
 	public abstract void returnToLaunch();
 	
 	/**
+	 * Gets the downlink (monitoring) period of this datalink.
+	 * 
+	 * @return the downlink period of this datalink in milliseconds
+	 */
+	public long getDownlinkPeriod() {
+		return this.downlinkPeriod;
+	}
+	
+	/**
+	 * Sets the downlink (monitoring) period of this datalink.
+	 * 
+	 * @param downlinkPeriod the downlink period to be set in milliseconds
+	 */
+	public void setDownlinkPeriod(long downlinkPeriod) {
+		this.downlinkPeriod = downlinkPeriod;
+	}
+	
+	/**
 	 * Starts the datalink monitor with a specified monitoring period.
 	 * 
 	 * @param period the monitoring period in milliseconds
 	 */
-	public void startMonitoring(long period) {
+	public void startMonitoring() {
 		this.clearAircraftTrack();
 		this.executor = Executors.newSingleThreadScheduledExecutor();
-		this.executor.scheduleAtFixedRate(new DatalinkMonitor(), 0, period, TimeUnit.MILLISECONDS);
+		this.executor.scheduleAtFixedRate(new DatalinkMonitor(), 0, this.downlinkPeriod, TimeUnit.MILLISECONDS);
 	}
 	
 	/**
