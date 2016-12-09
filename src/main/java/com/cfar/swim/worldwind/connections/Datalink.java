@@ -31,15 +31,22 @@ package com.cfar.swim.worldwind.connections;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.cfar.swim.worldwind.planning.TrackPoint;
+
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Path;
+import gov.nasa.worldwind.render.markers.BasicMarkerAttributes;
+import gov.nasa.worldwind.render.markers.BasicMarkerShape;
 
 /**
  * Abstracts a datalink connection to connect to and communicate with aircraft.
@@ -58,7 +65,7 @@ public abstract class Datalink implements Connection {
 	// TODO: Track as own class similar to Trajectory of Waypoints storing ATO
 	
 	/** the track of the source of this datalink */
-	private Queue<Position> track = new ConcurrentLinkedQueue<>();
+	private Queue<TrackPoint> track = new ConcurrentLinkedQueue<>();
 	
 	/** the monitor executor of this datalink */
 	private ScheduledExecutorService executor = null;
@@ -130,7 +137,7 @@ public abstract class Datalink implements Connection {
 	 * 
 	 * @return the aircraft track monitored via this datalink
 	 */
-	public Iterable<Position> getAircraftTrack() {
+	public Iterable<TrackPoint> getAircraftTrack() {
 		// TODO: return Path, Trajectory or Track with set ATOs
 		return this.track;
 	}
@@ -282,7 +289,15 @@ public abstract class Datalink implements Connection {
 		 */
 		@Override
 		public void run() {
-			track.add(getAircraftPosition());
+			BasicMarkerAttributes attributes = new BasicMarkerAttributes(
+					 Material.GREEN, BasicMarkerShape.ORIENTED_SPHERE, 1d);
+			attributes.setHeadingMaterial(Material.GREEN);
+			TrackPoint trackPoint = new TrackPoint(getAircraftPosition(), attributes);
+			trackPoint.setPitch(getAircraftPitch());
+			trackPoint.setRoll(getAircraftBank());
+			trackPoint.setHeading(getAircraftHeading());
+			trackPoint.setTime(ZonedDateTime.now(ZoneId.of("UTC")));
+			track.add(trackPoint);
 			pcs.firePropertyChange("track", null, track);
 			// TODO: extend monitored properties
 		}

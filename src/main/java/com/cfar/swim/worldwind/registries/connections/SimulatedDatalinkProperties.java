@@ -29,5 +29,11 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
+/**
+ * Realizes the properties bean of a simulated datalink.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class SimulatedDatalinkProperties extends DatalinkProperties {
 }
