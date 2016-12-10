@@ -33,9 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Iterator;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -66,7 +64,7 @@ public abstract class Datalink implements Connection {
 	// TODO: Track as own class similar to Trajectory of Waypoints storing ATO
 	
 	/** the track of the source of this datalink */
-	private Queue<TrackPoint> track = new ConcurrentLinkedQueue<>();
+	private ConcurrentLinkedDeque<TrackPoint> track = new ConcurrentLinkedDeque<>();
 	
 	/** the monitor executor of this datalink */
 	private ScheduledExecutorService executor = null;
@@ -291,12 +289,8 @@ public abstract class Datalink implements Connection {
 		@Override
 		public void run() {
 			// clean up old track points
-			Iterator<TrackPoint> trackIterator = track.iterator();
-			while (trackIterator.hasNext()) {
-				TrackPoint trackPoint = trackIterator.next();
-				if (trackPoint.isOld()) {
-					trackIterator.remove();
-				}
+			if (!track.isEmpty() && track.peekFirst().isOld()) {
+				track.removeFirst();
 			}
 			
 			// add new track point
