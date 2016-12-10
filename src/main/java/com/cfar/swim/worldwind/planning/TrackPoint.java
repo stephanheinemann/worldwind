@@ -118,16 +118,27 @@ public class TrackPoint extends BasicMarker {
 	}
 	
 	/**
+	 * Indicates whether or not this track point is old.
+	 * 
+	 * @return true if this track point is old, false otherwise
+	 */
+	public boolean isOld() {
+		ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+		Duration age = Duration.between(this.time, now);
+		return (1 == age.compareTo(this.maxAge));
+	}
+	
+	/**
 	 * Updates the opacity of this track point according to its age and
 	 * maximum age.
 	 */
 	private void updateOpacity() {
 		ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
 		Duration age = Duration.between(this.time, now);
-		if (1 == age.compareTo(maxAge)) {
+		if (1 == age.compareTo(this.maxAge)) {
 			this.getAttributes().setOpacity(0d);
 		} else {
-			Duration remaining = maxAge.minus(age);
+			Duration remaining = this.maxAge.minus(age);
 			double opacity = ((double) remaining.getSeconds() / (double) maxAge.getSeconds());
 			if (0d > opacity) opacity = 0d;
 			this.getAttributes().setOpacity(opacity);

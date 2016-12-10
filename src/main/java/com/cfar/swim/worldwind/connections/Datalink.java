@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Iterator;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
@@ -289,6 +290,16 @@ public abstract class Datalink implements Connection {
 		 */
 		@Override
 		public void run() {
+			// clean up old track points
+			Iterator<TrackPoint> trackIterator = track.iterator();
+			while (trackIterator.hasNext()) {
+				TrackPoint trackPoint = trackIterator.next();
+				if (trackPoint.isOld()) {
+					trackIterator.remove();
+				}
+			}
+			
+			// add new track point
 			BasicMarkerAttributes attributes = new BasicMarkerAttributes(
 					 Material.GREEN, BasicMarkerShape.ORIENTED_SPHERE, 1d);
 			attributes.setHeadingMaterial(Material.GREEN);
