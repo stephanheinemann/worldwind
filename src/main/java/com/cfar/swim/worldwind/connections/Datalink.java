@@ -249,9 +249,11 @@ public abstract class Datalink implements Connection {
 	 * @param period the monitoring period in milliseconds
 	 */
 	public void startMonitoring() {
-		this.clearAircraftTrack();
-		this.executor = Executors.newSingleThreadScheduledExecutor();
-		this.executor.scheduleAtFixedRate(new DatalinkMonitor(), 0, this.downlinkPeriod, TimeUnit.MILLISECONDS);
+		if (!this.isMonitoring()) {
+			this.clearAircraftTrack();
+			this.executor = Executors.newSingleThreadScheduledExecutor();
+			this.executor.scheduleAtFixedRate(new DatalinkMonitor(), 0, this.downlinkPeriod, TimeUnit.MILLISECONDS);
+		}
 	}
 	
 	/**

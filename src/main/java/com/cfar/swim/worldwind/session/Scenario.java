@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.session;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -39,6 +40,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
@@ -84,6 +88,9 @@ public class Scenario implements Identifiable, Enableable {
 	/** the time of this scenario */
 	private ZonedDateTime time;
 	
+	/** the time controller of this scenario */
+	private TimeController timeController;
+	
 	/** the cost threshold of this scenario */
 	private double threshold;
 	
@@ -114,6 +121,10 @@ public class Scenario implements Identifiable, Enableable {
 	/** the obstacles of this scenario */
 	private Set<Obstacle> obstacles;
 	
+	/** the timer executor of this scenario */
+	private ScheduledExecutorService executor;
+	
+	
 	/**
 	 * Constructs and initializes a default scenario.
 	 */
@@ -136,15 +147,16 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void init() {
 		// TODO: improve initial scenario
-		this.time = ZonedDateTime.now();
+		this.time = ZonedDateTime.now(ZoneId.of("UTC"));
+		this.timeController = new TimeController(0);
 		this.threshold = 0d;
 		this.globe = new Earth();
 		this.sector = new Sector(Angle.ZERO, Angle.POS90, Angle.ZERO, Angle.POS90);
-		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1.0, this.sector, 0, 500000);
+		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1d, this.sector, 0d, 500000d);
 		Box envBox = new Box(sectorBox);
 		Cube planningCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), envBox.getRLength() / 10);
 		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
-		this.environment.setThreshold(0);
+		this.environment.setThreshold(0d);
 		this.environment.setGlobe(this.globe);
 		this.aircraft = null;
 		this.waypoints = new ArrayList<Waypoint>();
@@ -335,6 +347,96 @@ public class Scenario implements Identifiable, Enableable {
 		} else {
 			throw new IllegalArgumentException();
 		}
+	}
+	
+	/**
+	 * Starts the time for this scenario with a specified advancement
+	 * factor. A factor of zero tracks the current time and a positive
+	 * or negative factor advances the time towards the future or past,
+	 * respectively.
+	 * 
+	 * @param factor the advancement factor
+	 */
+	public void startTime(int factor) {
+		if (!this.isTimePlaying() && !this.isTimeTracking()) {
+			this.timeController.setFactor(factor);
+			this.executor = Executors.newSingleThreadScheduledExecutor();
+			this.executor.scheduleAtFixedRate(this.timeController, 0l, 500, TimeUnit.MILLISECONDS);
+		}
+	}
+	
+	/**
+	 * Stops the time for this scenario.
+	 */
+	public void stopTime() {
+		if (null != this.executor) {
+			this.executor.shutdown();
+			this.executor = null;
+		}
+	}
+	
+	/**
+	 * Tracks the real time for this scenario.
+	 */
+	public void trackTime() {
+		this.startTime(0);
+	}
+	
+	/**
+	 * Starts the current time for this scenario.
+	 */
+	public void playTime() {
+		this.startTime(1);
+	}
+	
+	/**
+	 * Rewinds the time for this scenario.
+	 */
+	public void rewindTime() {
+		if (this.isTimePlaying()) {
+			int factor = this.timeController.getFactor();
+			if (1 < factor) {
+				this.timeController.setFactor(factor / 2);
+			} else if (1 == factor) {
+				this.timeController.setFactor(-1);
+			} else {
+				this.timeController.setFactor(factor * 2);
+			}
+		}
+	}
+	
+	/**
+	 * Fast forwards the time for this scenario.
+	 */
+	public void fastForwardTime() {
+		if (this.isTimePlaying()) {
+			int factor = this.timeController.getFactor();
+			if (-1 > factor) {
+				this.timeController.setFactor(factor / 2);
+			} else if (-1 == factor) {
+				this.timeController.setFactor(1);
+			} else {
+				this.timeController.setFactor(factor * 2);
+			}
+		}
+	}
+	
+	/**
+	 * Indicates whether or not this scenario is tracking the real time.
+	 * 
+	 * @return true if this scenario is tracking the real time, false otherwise
+	 */
+	public boolean isTimeTracking() {
+		return (null != this.executor) && (0 == this.timeController.getFactor());
+	}
+	
+	/**
+	 * Indicates whether or not this scenario is playing its current time.
+	 * 
+	 * @return true if this scenario is playing its current time, false otherwise
+	 */
+	public boolean isTimePlaying() {
+		return (null != this.executor) && (0 != this.timeController.getFactor());
 	}
 	
 	/**
@@ -1083,6 +1185,70 @@ public class Scenario implements Identifiable, Enableable {
 	@Override
 	public int hashCode() {
 		return this.id.hashCode();
+	}
+	
+	/**
+	 * Realizes a time controller for this scenario.
+	 * 
+	 * @author Stephan Heinemann
+	 *
+	 */
+	private class TimeController implements Runnable {
+		
+		/** the factor by which this time controller advances the time */
+		private int factor = 0;
+		
+		/** the last invocation time of this time controller */
+		private ZonedDateTime last = null;
+		
+		/**
+		 * Constructs a new time controller that advances the scenario
+		 * time by a specified factor. A factor of zero tracks the
+		 * current time.
+		 * 
+		 * @param factor the advancement factor of this time controller 
+		 */
+		public TimeController(int factor) {
+			this.factor = factor;
+		}
+		
+		/**
+		 * Gets the advancement factor of this time controller.
+		 * 
+		 * @return the advancement factor of this time controller
+		 */
+		public int getFactor() {
+			return this.factor;
+		}
+		
+		/**
+		 * Sets the advancement factor of this time controller.
+		 * 
+		 * @param factor the advancement factor to be set
+		 */
+		public void setFactor(int factor) {
+			this.factor = factor;
+		}
+
+		/**
+		 * Advances the time as specified by the advancement factor.
+		 * 
+		 * @see Runnable#run()
+		 */
+		@Override
+		public void run() {
+			ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
+			if (0 == factor) {
+				setTime(now);
+			} else if (null == this.last) {
+				this.last = now;
+			} else {
+				Duration duration = Duration.between(this.last, now);
+				Duration advance = duration.multipliedBy(factor);
+				setTime(getTime().plus(advance));
+				this.last = now;
+			}
+		}
 	}
 	
 }
