@@ -358,10 +358,11 @@ public class Scenario implements Identifiable, Enableable {
 	 * @param factor the advancement factor
 	 */
 	public void startTime(int factor) {
-		if (!this.isTimePlaying() && !this.isTimeTracking()) {
+		if (!this.isTimed()) {
+			this.timeController.reset();
 			this.timeController.setFactor(factor);
 			this.executor = Executors.newSingleThreadScheduledExecutor();
-			this.executor.scheduleAtFixedRate(this.timeController, 0l, 500, TimeUnit.MILLISECONDS);
+			this.executor.scheduleAtFixedRate(this.timeController, 0l, 500l, TimeUnit.MILLISECONDS);
 		}
 	}
 	
@@ -437,6 +438,15 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public boolean isTimePlaying() {
 		return (null != this.executor) && (0 != this.timeController.getFactor());
+	}
+	
+	/**
+	 * Indicates whether or not this scenario is being timed.
+	 *  
+	 * @return true if this scenario is being timed, false otherwise
+	 */
+	public boolean isTimed() {
+		return (null != this.executor);
 	}
 	
 	/**
@@ -1210,6 +1220,13 @@ public class Scenario implements Identifiable, Enableable {
 		 */
 		public TimeController(int factor) {
 			this.factor = factor;
+		}
+		
+		/**
+		 * Resets this time controller.
+		 */
+		public void reset() {
+			this.last = null;
 		}
 		
 		/**
