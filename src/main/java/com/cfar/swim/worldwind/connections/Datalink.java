@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -139,6 +140,53 @@ public abstract class Datalink implements Connection {
 	public Iterable<TrackPoint> getAircraftTrack() {
 		// TODO: return Path, Trajectory or Track with set ATOs
 		return this.track;
+	}
+	
+	/**
+	 * Gets the first track point of the aircraft track
+	 * monitored via this datalink.
+	 * 
+	 * @return the first track point of the aircraft track
+	 *         monitored via this datalink
+	 */
+	public TrackPoint getFirstTrackPoint() {
+		return this.track.peekFirst();
+	}
+	
+	/**
+	 * Gets the last track point of the aircraft track
+	 * monitored via this datalink.
+	 * 
+	 * @return the last track point of the aircraft track
+	 *         monitored via this datalink
+	 */
+	public TrackPoint getLastTrackPoint() {
+		return this.track.peekLast();
+	}
+	
+	/**
+	 * Gets a previous track point at a specified index of the reverse
+	 * aircraft track monitored via this datalink.
+	 * 
+	 * @param index the index of the track point of the reverse aircraft track
+	 * 
+	 * @return the previous track point at the specified index of the reverse
+	 *         aircraft track monitored via this datalink
+	 */
+	public TrackPoint getPreviousTrackPoint(int index) {
+		TrackPoint previousTrackPoint = null;
+		Iterator<TrackPoint> reverseTrackIterator = this.track.descendingIterator();
+		
+		while (reverseTrackIterator.hasNext() && index > 0) {
+			reverseTrackIterator.next();
+			index--;
+		}
+		
+		if (reverseTrackIterator.hasNext()) {
+			previousTrackPoint = reverseTrackIterator.next();
+		}
+		
+		return previousTrackPoint;
 	}
 	
 	/**
