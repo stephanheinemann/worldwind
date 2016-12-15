@@ -39,6 +39,7 @@ import com.cfar.swim.worldwind.util.Designatable;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Renderable;
+import java.time.Duration;
 
 /**
  * Realizes a waypoint of a trajectory featuring estimates for costs and time.
@@ -95,8 +96,17 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	/** the estimated remaining cost of this waypoint */
 	private double h = Double.POSITIVE_INFINITY;
 	
+	/** the distance to go from this waypoint (to the next one) */
+	private double dtg = Double.POSITIVE_INFINITY;
+	
+	/** the time to go from this waypoint (to the next one) */
+	private Duration ttg = null;
+	
 	/** the estimated time at this waypoint */
 	private ZonedDateTime eto = null;
+	
+	/** the actual time at this waypoint */
+	private ZonedDateTime ato = null;
 	
 	// TODO: include actual time over and correct resulting cruise performance
 	
@@ -272,12 +282,48 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	}
 	
 	/**
+	 * Gets the distance to go from this waypoint (to the next one).
+	 * 
+	 * @return the distance to go from this waypoint in meters
+	 */
+	public double getDtg() {
+		return this.dtg;
+	}
+	
+	/**
+	 * Sets the distance to go from this waypoint (to the next one).
+	 * 
+	 * @param dtg the distance to go from this waypoint in meters
+	 */
+	public void setDtg(double dtg) {
+		this.dtg = dtg;
+	}
+	
+	/**
+	 * Gets the time to go from this waypoint (to the next one).
+	 * 
+	 * @return the time to go from this waypoint
+	 */
+	public Duration getTtg() {
+		return this.ttg;
+	}
+	
+	/**
+	 * Sets the time to go from this waypoint (to the next one).
+	 * 
+	 * @param ttg the time to go from this waypoint
+	 */
+	public void setTtg(Duration ttg) {
+		this.ttg = ttg;
+	}
+	
+	/**
 	 * Gets the estimated time at this waypoint.
 	 * 
 	 * @return the estimated time at this waypoint
 	 */
 	public ZonedDateTime getEto() {
-		return eto;
+		return this.eto;
 	}
 	
 	/**
@@ -287,6 +333,24 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	 */
 	public void setEto(ZonedDateTime eto) {
 		this.eto = eto;
+	}
+	
+	/**
+	 * Gets the actual time at this waypoint.
+	 * 
+	 * @return the actual time at this waypoint
+	 */
+	public ZonedDateTime getAto() {
+		return this.ato;
+	}
+	
+	/**
+	 * Sets the actual time at this waypoint.
+	 * 
+	 * @param ato the actual time at this waypoint
+	 */
+	public void setAto(ZonedDateTime ato) {
+		this.ato = ato;
 	}
 	
 	/**

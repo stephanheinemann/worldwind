@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai.astar;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -115,6 +116,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		while ((null != waypoint)) {
 			this.plan.addFirst(waypoint);
 			waypoint = waypoint.getParent();
+			if (null != waypoint) {
+				// TODO: this is not good enough and environment airdata intervals are required
+				waypoint.setTtg(Duration.between(waypoint.getEto(), this.plan.getFirst().getEto()));
+				waypoint.setDtg(this.getEnvironment().getDistance(waypoint,  this.plan.getFirst()));
+			}
 		}
 		
 		return new Trajectory(this.getPlan());
