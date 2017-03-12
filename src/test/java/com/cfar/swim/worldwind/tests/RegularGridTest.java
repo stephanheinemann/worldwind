@@ -431,7 +431,7 @@ public class RegularGridTest {
 		path.getAttributes().setOutlineWidth(5d);
 		path.getAttributes().setOutlineOpacity(0.5d);
 		
-		for (Waypoint positionEstimate : planner.getPlan()) {
+		for (Waypoint positionEstimate : (Iterable<Waypoint>) planner.getPlan().getPositions()) {
 			System.out.println(positionEstimate + " at " + positionEstimate.getEto());
 		}
 		((RenderableLayer) layer).addRenderable(path);
@@ -466,7 +466,7 @@ public class RegularGridTest {
 		((RenderableLayer) layer).addRenderable(path2);
 		
 		// Theta*
-		for (Waypoint p : planner2.getPlan()) {
+		for (Waypoint p : (Iterable<Waypoint>) planner2.getPlan().getPositions()) {
 			GlobeAnnotation ga = new GlobeAnnotation(p.getEto().toString() , p);
 			((RenderableLayer) layer).addRenderable(ga);
 		}

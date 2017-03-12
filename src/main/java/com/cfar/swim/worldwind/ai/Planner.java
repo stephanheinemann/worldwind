@@ -119,13 +119,6 @@ public interface Planner {
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
 	
 	/**
-	 * Gets a copy of the last computed plan.
-	 * 
-	 * @return a copy of the last computed plan
-	 */
-	public List<? extends Position> getPlan();
-	
-	/**
 	 * Indicates whether or not this planner supports a specified aircraft.
 	 * 
 	 * @param aircraft the aircraft

@@ -65,19 +65,22 @@ import gov.nasa.worldwind.render.Path;
 public class ForwardAStarPlanner extends AbstractPlanner {
 	
 	/** the priority queue of expandable waypoints */
-	private PriorityQueue<Waypoint> open = new PriorityQueue<Waypoint>();
+	protected PriorityQueue<Waypoint> open = new PriorityQueue<Waypoint>();
 	
 	/** the set of expanded waypoints */
-	private Set<Waypoint> closed = new HashSet<Waypoint>();
+	protected Set<Waypoint> closed = new HashSet<Waypoint>();
 	
 	/** the start waypoint */
-	private Waypoint start = null;
+	protected Waypoint start = null;
 	
 	/** the goal waypoint */
-	private Waypoint goal = null;
+	protected Waypoint goal = null;
+	
+	/** the goal region */
+	protected Set<PrecisionPosition> goalRegion;
 	
 	/** the last computed path */
-	private LinkedList<Waypoint> plan = new LinkedList<Waypoint>();
+	protected LinkedList<Waypoint> plan = new LinkedList<Waypoint>();
 	
 	/**
 	 * Constructs a basic forward A* planner for a specified aircraft and
@@ -90,27 +93,64 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		super(aircraft, environment);
 	}
 	
-	/**
-	 * Gets a copy of the last computed plan.
-	 * 
-	 * @return a copy of last computed plan
-	 * 
-	 * @see Planner#getPlan()
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public List<? extends Waypoint> getPlan() {
-		return (List<Waypoint>) this.plan.clone();
+	protected AStarWaypoint createWaypoint(Position position) {
+		return new AStarWaypoint(position);
+	}
+	
+	protected AStarWaypoint getStart() {
+		return (AStarWaypoint) this.start;
+	}
+	
+	protected AStarWaypoint getGoal() {
+		return (AStarWaypoint) this.goal;
+	}
+	
+	protected boolean isExpandable() {
+		return !(this.open.isEmpty());
+	}
+	
+	protected AStarWaypoint peekExpandable() {
+		return (AStarWaypoint) this.open.peek();
+	}
+	
+	protected AStarWaypoint pollExpandable() {
+		return (AStarWaypoint) this.open.poll();
+	}
+	
+	protected AStarWaypoint findExpandable(Waypoint waypoint) {
+		return (AStarWaypoint) this.open.stream()
+				.filter(s -> s.equals(waypoint))
+				.findFirst().get();
+	}
+	
+	protected AStarWaypoint findExpanded(Waypoint waypoint) {
+		return (AStarWaypoint) this.closed.stream()
+				.filter(s -> s.equals(waypoint))
+				.findFirst().get();
+	}
+	
+	protected Set<Position> expand(Waypoint source) {
+		Set<Position> neighbors = this.getEnvironment().getNeighbors(source);
+		// if a start has no neighbors, then it is not a waypoint in the
+		// environment and its adjacent waypoints have to be determined for
+		// initial expansion
+		if (neighbors.isEmpty()) {
+			neighbors = this.getEnvironment().getAdjacentWaypoints(source);
+		}
+		// expand a goal region position towards the goal
+		if (this.goalRegion.contains(source.getPrecisionPosition())) {
+			neighbors.add(this.goal);
+		}
+		
+		return neighbors;
 	}
 	
 	/**
-	 * Computes a trajectory of specified waypoints.
+	 * Connects a trajectory of specified waypoints.
 	 * 
-	 * @param waypoint the waypoints
-	 * 
-	 * @return the trajectory of waypoints
+	 * @param waypoint the last waypoint of a computed trajectory
 	 */
-	protected Trajectory computeTrajectory(Waypoint waypoint) {
+	protected void connectTrajectory(Waypoint waypoint) {
 		this.plan.clear();
 		
 		while ((null != waypoint)) {
@@ -119,11 +159,9 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			if (null != waypoint) {
 				// TODO: this is not good enough and environment airdata intervals are required
 				waypoint.setTtg(Duration.between(waypoint.getEto(), this.plan.getFirst().getEto()));
-				waypoint.setDtg(this.getEnvironment().getDistance(waypoint,  this.plan.getFirst()));
+				waypoint.setDtg(this.getEnvironment().getDistance(waypoint, this.plan.getFirst()));
 			}
 		}
-		
-		return new Trajectory(this.getPlan());
 	}
 	
 	/**
@@ -133,7 +171,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @param source the source waypoint in globe coordinates
 	 * @param target the target waypoint in globe coordinates
 	 */
-	protected void updateWaypoint(Waypoint source, Waypoint target) {
+	protected void updateWaypoint(AStarWaypoint source, AStarWaypoint target) {
 		double gOld = target.getG();
 		this.computeCost(source, target);
 		if (target.getG() < gOld) {
@@ -155,7 +193,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @param source the source waypoint in globe coordinates
 	 * @param target the target waypoint in globe coordinates
 	 */
-	protected void computeCost(Waypoint source, Waypoint target) {
+	protected void computeCost(AStarWaypoint source, AStarWaypoint target) {
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
@@ -175,6 +213,64 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Initializes the planner to plan a trajectory from an origin to a
+	 * destination at a specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 */
+	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
+		this.open.clear();
+		this.closed.clear();
+		this.plan.clear();
+		
+		this.start = this.createWaypoint(origin);
+		this.getStart().setG(0);
+		this.getStart().setH(this.getEnvironment().getNormalizedDistance(origin, destination));
+		this.start.setEto(etd);
+		
+		this.goal = this.createWaypoint(destination);
+		this.getGoal().setH(0);
+		// if a goal is not a waypoint in the environment, then its
+		// goal region has to be determined for the final expansion
+		this.goalRegion = this.getEnvironment().getAdjacentWaypoints(destination)
+				.stream()
+				.map(PrecisionPosition::new)
+				.collect(Collectors.toSet());
+		
+		this.open.add(this.start);
+	}
+	
+	/**
+	 * Computes a planned trajectory.
+	 */
+	protected void compute() {
+		while (this.isExpandable()) {
+			AStarWaypoint source = this.pollExpandable();
+			if (source.equals(this.goal)) {
+				this.connectTrajectory(source);
+				return;
+			}
+			this.closed.add(source);
+			
+			Set<Position> neighbors = this.expand(source);
+			
+			for (Position neighbor : neighbors) {
+				AStarWaypoint target = this.createWaypoint(neighbor);
+				if (!this.closed.contains(target)) {
+					if (this.open.contains(target)) {
+						AStarWaypoint visited = this.findExpandable(target);
+						this.updateWaypoint(source, visited);
+					} else {
+						this.updateWaypoint(source, target);
+					}
+				}
+			}
+		}
+	}
+	
+	/**
 	 * Plans a trajectory from an origin to a destination at a specified
 	 * estimated time of departure.
 	 * 
@@ -187,63 +283,12 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * 
 	 * @see Planner#plan(Position, Position, ZonedDateTime)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-		this.open.clear();
-		this.closed.clear();
-		this.plan.clear();
-		
-		this.start = new Waypoint(origin);
-		this.start.setG(0);
-		this.start.setH(this.getEnvironment().getNormalizedDistance(origin, destination));
-		this.start.setEto(etd);
-		
-		this.goal = new Waypoint(destination);
-		this.goal.setH(0);
-		// if a goal is not a waypoint in the environment, then its
-		// goal region has to be determined for the final expansion
-		Set<PrecisionPosition> goalRegion = this.getEnvironment().getAdjacentWaypoints(destination)
-				.stream()
-				.map(PrecisionPosition::new)
-				.collect(Collectors.toSet());
-		
-		this.open.add(this.start);
-		
-		while (null != this.open.peek()) {
-			Waypoint source = this.open.poll();
-			this.setWaypoint(source);
-			if (source.equals(this.goal)) {
-				return this.computeTrajectory(source);
-			}
-			this.closed.add(source);
-			
-			Set<Position> neighbors = this.getEnvironment().getNeighbors(source);
-			// if a start has no neighbors, then it is not a waypoint in the
-			// environment and its adjacent waypoints have to be determined for
-			// initial expansion
-			if (neighbors.isEmpty()) {
-				neighbors = this.getEnvironment().getAdjacentWaypoints(source);
-			}
-			// expand a goal region position towards the goal
-			if (goalRegion.contains(source.getPrecisionPosition())) {
-				neighbors.add(destination);
-			}
-			
-			for (Position neighbor : neighbors) {
-				Waypoint target = new Waypoint(neighbor);
-				if (!closed.contains(target)) {
-					if (open.contains(target)) {
-						Waypoint visited = open.stream().filter(s -> s.equals(target)).findFirst().get();
-						this.updateWaypoint(source, visited);
-					} else {
-						this.updateWaypoint(source, target);
-					}
-				}
-			}
-		}
-		
-		// if no plan could be found, return an empty trajectory
-		return new Trajectory();
+		this.initialize(origin, destination, etd);
+		this.compute();
+		return new Trajectory((List<Waypoint>) this.plan.clone());
 	}
 	
 	/**
@@ -260,6 +305,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * 
 	 * @see Planner#plan(Position, Position, List, ZonedDateTime)
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		LinkedList<Waypoint> plan = new LinkedList<Waypoint>();
@@ -298,7 +344,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 		this.plan.clear();
 		this.plan.addAll(plan);
-		return new Trajectory(plan);
+		return new Trajectory((List<Waypoint>) this.plan.clone());
 	}
 
 	/**

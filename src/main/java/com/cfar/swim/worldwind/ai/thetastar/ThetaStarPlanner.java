@@ -31,11 +31,11 @@ package com.cfar.swim.worldwind.ai.thetastar;
 
 import java.time.ZonedDateTime;
 
+import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -71,14 +71,14 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 	 * @param target the target waypoint in globe coordinates
 	 */
 	@Override
-	protected void computeCost(Waypoint source, Waypoint target) {
+	protected void computeCost(AStarWaypoint source, AStarWaypoint target) {
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
 		// TODO: catch IllegalArgumentException (incapable) and exit
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
-		Waypoint parent = null;
+		AStarWaypoint parent = null;
 		double straightCost = Double.POSITIVE_INFINITY;
 		double straightTargetG = Double.POSITIVE_INFINITY;
 		ZonedDateTime straightEnd = null;

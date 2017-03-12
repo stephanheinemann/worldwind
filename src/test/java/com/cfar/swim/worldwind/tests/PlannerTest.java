@@ -47,6 +47,7 @@ import com.cfar.swim.worldwind.geom.Neighborhood;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
+import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -73,23 +74,23 @@ public class PlannerTest {
         ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, planningGrid);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);
-		assertEquals(7, planner.getPlan().size());
+		assertEquals(7, Iterables.size(path.getPositions()));
 		
 		planningGrid.setNeighborhood(Neighborhood.VERTEX_26);
 		path = planner.plan(origin, destination, etd);
         assertNotNull(path);
-		assertEquals(3, planner.getPlan().size());
+		assertEquals(3, Iterables.size(path.getPositions()));
 		
 		planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
 		List<Position> waypoints = Arrays.asList(planningGrid.getCornerPositions());
-		planner.plan(origin, destination, waypoints, etd);
+		path = planner.plan(origin, destination, waypoints, etd);
 		assertEquals(8, waypoints.size());
-		assertEquals(19 , planner.getPlan().size());
+		assertEquals(19 , Iterables.size(path.getPositions()));
 		
 		destination = planningGrid.getCornerPositions()[7];
-		planner.plan(origin, destination, waypoints, etd);
+		path = planner.plan(origin, destination, waypoints, etd);
 		assertEquals(8, waypoints.size());
-		assertEquals(17 , planner.getPlan().size());
+		assertEquals(17 , Iterables.size(path.getPositions()));
 		
 		PlanningGrid child = planningGrid.getChild(0, 0, 1);
 		ZonedDateTime start = ZonedDateTime.now().minusYears(1);
@@ -98,7 +99,7 @@ public class PlannerTest {
 		destination = planningGrid.getCornerPositions()[6];
 		path = planner.plan(origin, destination, etd);
 		assertNotNull(path);
-		assertEquals(7, planner.getPlan().size());
+		assertEquals(7, Iterables.size(path.getPositions()));
 		
 		Iterator<Position> positions = (Iterator<Position>) path.getPositions().iterator();
 		while (positions.hasNext()) {
@@ -111,7 +112,7 @@ public class PlannerTest {
 		child.addCostInterval(new CostInterval("ci3", start, end, 50d));
 		path = planner.plan(origin, destination, etd);
 		assertNotNull(path);
-		assertEquals(7, planner.getPlan().size());
+		assertEquals(7, Iterables.size(path.getPositions()));
 		
 		positions = (Iterator<Position>) path.getPositions().iterator();
 		child = planningGrid.getChild(0, 0, 1);
@@ -125,13 +126,13 @@ public class PlannerTest {
 		
 		planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
 		path = planner.plan(origin, destination, etd);
-		assertEquals(0, planner.getPlan().size());
+		assertEquals(0, Iterables.size(path.getPositions()));
 		
 		planner.setRiskPolicy(RiskPolicy.IGNORANCE);
 		origin = planningGrid.getChild(0, 0, 0).getCenterPosition();
         destination = planningGrid.getChild(1, 1, 1).getCenterPosition();
         path = planner.plan(origin, destination, etd);
-        assertEquals(3, planner.getPlan().size());
+        assertEquals(3, Iterables.size(path.getPositions()));
 	}
 
 }

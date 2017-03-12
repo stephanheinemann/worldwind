@@ -88,14 +88,6 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	/** the precision position of this waypoint */
 	private PrecisionPosition position = null;
 	
-	/** the estimated current cost of this waypoint */
-	private double g = Double.POSITIVE_INFINITY;
-	
-	// TODO: (position, estimated cost tuple: (g1, g2)) for more advanced versions
-	
-	/** the estimated remaining cost of this waypoint */
-	private double h = Double.POSITIVE_INFINITY;
-	
 	/** the distance to go from this waypoint (to the next one) */
 	private double dtg = Double.POSITIVE_INFINITY;
 	
@@ -150,51 +142,6 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 			this.depiction.setDesignation(this.designator);
 		}
 	}
-
-	/**
-	 * Gets the estimated current cost of this waypoint.
-	 * 
-	 * @return the estimated current cost of this waypoint
-	 */
-	public double getG() {
-		return g;
-	}
-	
-	/**
-	 * Sets the estimated current cost of this waypoint.
-	 * 
-	 * @param g the estimated current cost of this waypoint
-	 */
-	public void setG(double g) {
-		this.g = g;
-	}
-	
-	/**
-	 * Gets the estimated remaining cost of this waypoint.
-	 * 
-	 * @return the estimated remaining cost of this waypoint
-	 */
-	public double getH() {
-		return h;
-	}
-	
-	/**
-	 * Sets the estimated remaining cost of this waypoint.
-	 * 
-	 * @param h the estimated remaining cost of this waypoint
-	 */
-	public void setH(double h) {
-		this.h = h;
-	}
-	
-	/**
-	 * Gets the estimated total cost of this waypoint.
-	 * 
-	 * @return the estimated total cost of this waypoint
-	 */
-	public double getF() {
-		return this.g + this.h;
-	}
 	
 	/**
 	 * Gets the parent waypoint of this waypoint.
@@ -224,24 +171,28 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	}
 	
 	/**
-	 * Compares this waypoint to another waypoint based on their estimated
-	 * total costs. It the estimated total costs of both waypoints is equal,
-	 * then break ties in favor of higher estimated current costs.
+	 * Compares this waypoint to another waypoint based on their actual time
+	 * over (primary), estimated time over (secondary), position (tertiary).
 	 * 
-	 * @param o the other waypoint
+	 * @param waypoint the other waypoint
 	 * 
 	 * @return -1, 0, 1, if this waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their total
-	 *         estimated cost
+	 *         respectively, than the other waypoint based on their actual time
+	 *         over (primary), estimated time over (secondary), position
+	 *         (tertiary)
 	 * 
 	 * @see Comparable#compareTo(Object)
 	 */
 	@Override
-	public int compareTo(Waypoint o) {
-		int compareTo = new Double(this.getF()).compareTo(o.getF());
-		if (0 == compareTo) {
-			// break ties in favor of higher G-values
-			compareTo = new Double(o.getG()).compareTo(this.getG());
+	public int compareTo(Waypoint waypoint) {
+		int compareTo = 0;
+		
+		if ((null != this.ato) && (null != waypoint.ato)) {
+			compareTo = this.ato.compareTo(waypoint.ato);
+		} else if ((null != this.eto) && (null != waypoint.eto)) {
+			compareTo = this.eto.compareTo(waypoint.eto);
+		} else {
+			compareTo = this.position.compareTo(waypoint);
 		}
 		
 		return compareTo;
