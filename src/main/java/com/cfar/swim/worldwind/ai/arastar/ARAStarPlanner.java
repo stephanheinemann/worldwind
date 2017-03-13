@@ -1,7 +1,5 @@
 package com.cfar.swim.worldwind.ai.arastar;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -22,15 +20,69 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	/** the set of inconsistent already expanded waypoints */
 	protected Set<Waypoint> incons = new HashSet<Waypoint>();
 	
-	protected double inflationFactor = 1d;
-	protected double deflationAmount = 1d;
-	
-	/** the property change support of this ARA* planner */
-	protected final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
+	private double initialInflation = 1d;
+	private double finalInflation = 1d;
+	private double deflationAmount = 1d;
+	private double inflation = 1d;
 	
 	public ARAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 	}
+	
+	@Override
+	public double getMinimumQuality() {
+		return this.initialInflation;
+	}
+
+	@Override
+	public void setMinimumQuality(double initialInflation) {
+		if (1d <= initialInflation) {
+			this.initialInflation = initialInflation;
+		} else {
+			throw new IllegalArgumentException("initial inflation is invalid");
+		}
+	}
+	
+	@Override
+	public double getMaximumQuality() {
+		return this.finalInflation;
+	}
+
+	@Override
+	public void setMaximumQuality(double finalInflation) {
+		if ((1d <= finalInflation) && (this.initialInflation < finalInflation)) {
+			this.finalInflation = finalInflation;
+		} else {
+			throw new IllegalArgumentException("final defalation is invalid");
+		}
+	}
+	
+	@Override
+	public double getQualityImprovement() {
+		return this.deflationAmount;
+	}
+
+	@Override
+	public void setQualityImprovement(double deflationAmount) {
+		if (0d < deflationAmount) {
+			this.deflationAmount = deflationAmount;
+		} else {
+			throw new IllegalArgumentException("deflation amount is invalid");
+		}
+	}
+	
+	protected void deflate() {
+		if (this.finalInflation > (this.inflation - this.deflationAmount)) {
+			this.inflation -= this.deflationAmount;
+		} else {
+			this.inflation = this.finalInflation;
+		}
+	}
+	
+	protected boolean isDeflated() {
+		return (this.inflation == this.finalInflation);
+	}
+	
 	
 	@Override
 	protected ARAStarWaypoint createWaypoint(Position position) {
@@ -82,7 +134,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	//@Override
 	protected void processTarget(Waypoint target) {
 		ARAStarWaypoint t = (ARAStarWaypoint) target;
-		t.setEpsilon(this.inflationFactor);
+		t.setEpsilon(this.inflation);
 	}
 	
 	/**
@@ -95,19 +147,22 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	protected void connectTrajectory(Waypoint waypoint) {
 		super.connectTrajectory(waypoint);
 		// TODO: published waypoints may be modified later - clone each waypoint?
-		this.pcs.firePropertyChange("plan", null, new Trajectory((List<Waypoint>) this.plan.clone()));
+		this.revisePlan(new Trajectory((List<Waypoint>) this.plan.clone()));
 	}
 	
 	@Override
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		super.initialize(origin, destination, etd);
-		this.getGoal().setEpsilon(this.inflationFactor);
-		this.getStart().setEpsilon(this.inflationFactor);
+		this.inflation = this.initialInflation;
+		this.getGoal().setEpsilon(this.inflation);
+		this.getStart().setEpsilon(this.inflation);
 		this.incons.clear();
 	}
 	
 	/**
 	 * Computes a planned trajectory.
+	 * 
+	 * @see ForwardAStarPlanner#compute()
 	 */
 	@Override
 	protected void compute() {
@@ -148,10 +203,10 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			this.deflate();
 			PriorityQueue<Waypoint> updatedOpen = new PriorityQueue<>();
 			this.open.stream().forEach(w ->
-				{((ARAStarWaypoint) w).setEpsilon(this.inflationFactor); updatedOpen.add(w);});
+				{((ARAStarWaypoint) w).setEpsilon(this.inflation); updatedOpen.add(w);});
 			this.open = updatedOpen;
 			this.incons.stream().forEach(w ->
-				{((ARAStarWaypoint) w).setEpsilon(this.inflationFactor); updatedOpen.add(w);});
+				{((ARAStarWaypoint) w).setEpsilon(this.inflation); open.add(w);});
 			this.incons.clear();
 			this.closed.clear();
 			this.compute();
@@ -165,51 +220,6 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		this.compute();
 		this.improve();
 		return new Trajectory((List<Waypoint>) this.plan.clone());
-	}
-
-	@Override
-	public double getInflationFactor() {
-		return this.inflationFactor;
-	}
-
-	@Override
-	public void setInflationFactor(double inflationFactor) {
-		if (1d <= inflationFactor) {
-			this.inflationFactor = inflationFactor;
-		} else {
-			throw new IllegalArgumentException("inflation factor is less than 1");
-		}
-	}
-
-	@Override
-	public double getDeflationAmount() {
-		return this.deflationAmount;
-	}
-
-	@Override
-	public void setDeflationAmount(double deflationAmount) {
-		if (0d < deflationAmount) {
-			this.deflationAmount = deflationAmount;
-		} else {
-			throw new IllegalArgumentException("deflation amount is less than or equal 0");
-		}
-	}
-	
-	protected void deflate() {
-		if (1d > (this.inflationFactor - this.deflationAmount)) {
-			this.inflationFactor -= this.deflationAmount;
-		} else {
-			this.inflationFactor = 1d;
-		}
-	}
-	
-	protected boolean isDeflated() {
-		return (1d == this.inflationFactor);
-	}
-
-	@Override
-	public void addPlanChangeListener(PropertyChangeListener listener) {
-		this.pcs.addPropertyChangeListener("plan", listener);
 	}
 	
 }

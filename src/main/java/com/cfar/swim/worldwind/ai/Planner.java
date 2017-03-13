@@ -119,6 +119,25 @@ public interface Planner {
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
 	
 	/**
+	 * Adds a plan revision listener to this planner that will be notified
+	 * whenever a plan has been revised.
+	 * 
+	 * @param listener the plan revision listener to be added
+	 * 
+	 * @see PlanRevisionListener
+	 */
+	public void addPlanRevisionListener(PlanRevisionListener listener);
+	
+	/**
+	 * Removes a plan revision listener from this planner.
+	 * 
+	 * @param listener the plan revision listener to be removed
+	 * 
+	 * @see PlanRevisionListener
+	 */
+	public void removePlanRevisionListener(PlanRevisionListener listener);
+	
+	/**
 	 * Indicates whether or not this planner supports a specified aircraft.
 	 * 
 	 * @param aircraft the aircraft
@@ -154,4 +173,5 @@ public interface Planner {
 	// TODO: computed paths can be associated with symbols (e.g. minimum risk path)
 	// TODO: think about required time constraints for waypoints (4D positions)
 	// TODO: higher costs might be acceptable to meet timing constraints
+	// TODO: a planner needs to publish its performance (computation time, achieved quality)
 }

@@ -49,6 +49,9 @@ import java.time.Duration;
  */
 public class Waypoint extends Position implements Comparable<Waypoint>, Depictable, Designatable {
 	
+	// TODO: possibly extend Waypoint with PrecisionWaypoint
+	// TODO: use markers for actual track data (class Track)
+	
 	/** the symbol identification code for an action waypoint */
 	public static final String SICD_NAV_WAYPOINT_ACTION = "GFGPGPPW------X"; // G*GPGPPW--****X
 	
@@ -76,9 +79,6 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	/** the symbol identification code for a route reference waypoint */
 	public static final String SICD_NAV_WAYPOINT_ROUTE_REFERENCE = "GFGPGPOR------X"; // G*GPGPOR--****X
 	
-	// TODO: possibly extend Waypoint with PrecisionWaypoint
-	// TODO: use markers for actual track data (class Track)
-	
 	/** the designator of this waypoint */
 	private String designator = "?";
 	
@@ -87,6 +87,9 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	
 	/** the precision position of this waypoint */
 	private PrecisionPosition position = null;
+	
+	/** the estimated cost of this waypoint in a trajectory */ 
+	private double cost = Double.POSITIVE_INFINITY;
 	
 	/** the distance to go from this waypoint (to the next one) */
 	private double dtg = Double.POSITIVE_INFINITY;
@@ -171,6 +174,24 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	}
 	
 	/**
+	 * Gets the estimated cost of this waypoint in a trajectory.
+	 * 
+	 * @return the estimated cost of this wayppoint in a trajectory
+	 */
+	public double getCost() {
+		return this.cost;
+	}
+	
+	/**
+	 * Sets the estimated cost of this waypoint in a trajectory.
+	 * 
+	 * @param cost the estimated cost of this waypoint in a trajectory
+	 */
+	public void setCost(double cost) {
+		this.cost = cost;
+	}
+	
+	/**
 	 * Compares this waypoint to another waypoint based on their actual time
 	 * over (primary), estimated time over (secondary), position (tertiary).
 	 * 
@@ -187,6 +208,7 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	public int compareTo(Waypoint waypoint) {
 		int compareTo = 0;
 		
+		// TODO: actuals versus estimates (waypoint versus trackpoint)
 		if ((null != this.ato) && (null != waypoint.ato)) {
 			compareTo = this.ato.compareTo(waypoint.ato);
 		} else if ((null != this.eto) && (null != waypoint.eto)) {
@@ -285,6 +307,8 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	public void setEto(ZonedDateTime eto) {
 		this.eto = eto;
 	}
+	
+	// TODO: actuals belong to track points instead?
 	
 	/**
 	 * Gets the actual time at this waypoint.

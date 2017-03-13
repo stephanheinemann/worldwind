@@ -29,8 +29,11 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import java.time.Duration;
+
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
+import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.geom.Position;
@@ -48,6 +51,7 @@ public class Trajectory extends Path implements Depictable {
 
 	/** the depiction of this trajectory */
 	private Depiction depiction = null;
+	
 	
 	/**
 	 * Constructs an empty trajectory.
@@ -79,6 +83,62 @@ public class Trajectory extends Path implements Depictable {
 	 */
 	public Trajectory(Iterable<? extends Waypoint> waypoints) {
 		super(waypoints);
+	}
+	
+	/**
+	 * Gets the distance of this trajectory in meters.
+	 * 
+	 * @return the distance of this trajectory in meters
+	 */
+	public double getDistance() {
+		double distance = 0d;
+		
+		for (Waypoint waypoint : this.getWaypoints()) {
+			distance += waypoint.getDtg();
+		}
+		
+		return distance;
+	}
+	
+	/**
+	 * Gets the estimated duration of this trajectory.
+	 * 
+	 * @return the estimated duration of this trajectory
+	 */
+	public Duration getDuration() {
+		Duration duration = Duration.ZERO;
+		
+		for (Waypoint waypoint : this.getWaypoints()) {
+			duration = duration.plus(waypoint.getTtg());
+		}
+		
+		return duration;
+	}
+	
+	/**
+	 * Gets the estimated total cost of this trajectory.
+	 * 
+	 * @return the estimated total cost of this trajectory
+	 */
+	public double getCost() {
+		return Iterables.getLast(this.getWaypoints()).getCost();
+	}
+	
+	/**
+	 * Gets the estimated risk (maximum cost) of this trajectory.
+	 * 
+	 * @return the estimated risk (maximum cost) of this trajectory
+	 */
+	public double getRisk() {
+		double risk = 0d;
+		
+		for (Waypoint waypoint : this.getWaypoints()) {
+			if (risk < waypoint.getCost()) {
+				risk = waypoint.getCost();
+			}
+		}
+		
+		return risk;
 	}
 	
 	/**
