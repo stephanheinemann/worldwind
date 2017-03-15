@@ -13,6 +13,9 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class AStarWaypoint extends Waypoint {
 	
+	/** the parent A* waypoint of this A* waypoint in a trajectory */
+	private AStarWaypoint parent = null;
+	
 	/** the estimated remaining cost (h-value) of this A* waypoint */
 	private double h;
 	
@@ -33,12 +36,18 @@ public class AStarWaypoint extends Waypoint {
 	 * Gets the parent A* waypoint of this A* waypoint.
 	 * 
 	 * @return the parent A* waypoint of this A* waypoint
-	 * 
-	 * @see Waypoint#getParent()
 	 */
-	@Override
 	public AStarWaypoint getParent() {
-		return (AStarWaypoint) super.getParent();
+		return parent;
+	}
+	
+	/**
+	 * Sets the parent A* waypoint of this A* waypoint.
+	 * 
+	 * @param parent the parent A* waypoint of this A* waypoint
+	 */
+	public void setParent(AStarWaypoint parent) {
+		this.parent = parent;
 	}
 	
 	/**
@@ -90,6 +99,20 @@ public class AStarWaypoint extends Waypoint {
 	 */
 	public double getF() {
 		return this.getG() + this.getH();
+	}
+	
+	/**
+	 * Clones this A* waypoint without its parent and depiction.
+	 * 
+	 * @return the clone of this A* waypoint without its parent and depiction
+	 * 
+	 * @see Object#clone()
+	 */
+	@Override
+	public AStarWaypoint clone() {
+		AStarWaypoint waypoint = (AStarWaypoint) super.clone();
+		waypoint.setParent(null);
+		return waypoint;
 	}
 	
 	/**

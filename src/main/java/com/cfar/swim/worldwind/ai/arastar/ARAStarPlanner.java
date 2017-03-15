@@ -2,11 +2,11 @@ package com.cfar.swim.worldwind.ai.arastar;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.AnytimePlanner;
+import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -18,7 +18,7 @@ import gov.nasa.worldwind.geom.Position;
 public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanner {
 
 	/** the set of inconsistent already expanded waypoints */
-	protected Set<Waypoint> incons = new HashSet<Waypoint>();
+	protected Set<ARAStarWaypoint> incons = new HashSet<>();
 	
 	private double initialInflation = 1d;
 	private double finalInflation = 1d;
@@ -50,7 +50,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 
 	@Override
 	public void setMaximumQuality(double finalInflation) {
-		if ((1d <= finalInflation) && (this.initialInflation < finalInflation)) {
+		if ((1d <= finalInflation) && (this.initialInflation <= finalInflation)) {
 			this.finalInflation = finalInflation;
 		} else {
 			throw new IllegalArgumentException("final defalation is invalid");
@@ -83,7 +83,6 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		return (this.inflation == this.finalInflation);
 	}
 	
-	
 	@Override
 	protected ARAStarWaypoint createWaypoint(Position position) {
 		return new ARAStarWaypoint(position);
@@ -91,17 +90,17 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	
 	@Override
 	protected ARAStarWaypoint getStart() {
-		return (ARAStarWaypoint) this.start;
+		return (ARAStarWaypoint) super.getStart();
 	}
 	
 	@Override
 	protected ARAStarWaypoint getGoal() {
-		return (ARAStarWaypoint) this.goal;
+		return (ARAStarWaypoint) super.getGoal();
 	}
 	
 	@Override
-	protected boolean isExpandable() {
-		return super.isExpandable() &&
+	protected boolean canExpand() {
+		return super.canExpand() &&
 				(this.getGoal().getF() > this.peekExpandable().getF());
 	}
 	
@@ -116,13 +115,19 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	@Override
-	protected ARAStarWaypoint findExpandable(Waypoint waypoint) {
+	protected ARAStarWaypoint findExpandable(AStarWaypoint waypoint) {
 		return (ARAStarWaypoint) super.findExpandable(waypoint);
 	}
 	
 	@Override
-	protected ARAStarWaypoint findExpanded(Waypoint waypoint) {
+	protected ARAStarWaypoint findExpanded(AStarWaypoint waypoint) {
 		return (ARAStarWaypoint) super.findExpanded(waypoint);
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Set<? extends ARAStarWaypoint> expand(AStarWaypoint waypoint) {
+		return (Set<ARAStarWaypoint>) super.expand(waypoint);
 	}
 	
 	//@Override
@@ -135,19 +140,6 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	protected void processTarget(Waypoint target) {
 		ARAStarWaypoint t = (ARAStarWaypoint) target;
 		t.setEpsilon(this.inflation);
-	}
-	
-	/**
-	 * Connects a trajectory of specified waypoints.
-	 * 
-	 * @param waypoint the last waypoint of a computed trajectory
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	protected void connectTrajectory(Waypoint waypoint) {
-		super.connectTrajectory(waypoint);
-		// TODO: published waypoints may be modified later - clone each waypoint?
-		this.revisePlan(new Trajectory((List<Waypoint>) this.plan.clone()));
 	}
 	
 	@Override
@@ -166,22 +158,20 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected void compute() {
-		while (this.isExpandable()) {
+		while (this.canExpand()) {
 			ARAStarWaypoint source = this.pollExpandable();
 			this.processSource(source);
-			if (source.equals(this.goal)) {
-				this.connectTrajectory(source);
+			if (source.equals(this.getGoal())) {
+				this.connectPlan(source);
 				return;
 			}
-			this.closed.add(source);
 			
-			Set<Position> neighbors = this.expand(source);
+			Set<? extends ARAStarWaypoint> neighbors = this.expand(source);
 			
-			for (Position neighbor : neighbors) {
-				ARAStarWaypoint target = this.createWaypoint(neighbor);
+			for (ARAStarWaypoint target : neighbors) {
 				// TODO: always compute cost first
-				if (!this.closed.contains(target)) {
-					if (this.open.contains(target)) {
+				if (!this.isExpanded(target)) {
+					if (this.isExpandable(target)) {
 						ARAStarWaypoint visited = this.findExpandable(target);
 						this.processTarget(visited);
 						this.updateWaypoint(source, visited);
@@ -201,25 +191,28 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	protected void improve() {
 		while (!this.isDeflated()) {
 			this.deflate();
-			PriorityQueue<Waypoint> updatedOpen = new PriorityQueue<>();
-			this.open.stream().forEach(w ->
-				{((ARAStarWaypoint) w).setEpsilon(this.inflation); updatedOpen.add(w);});
+			PriorityQueue<AStarWaypoint> updatedOpen = new PriorityQueue<>();
+			this.open.stream().forEach(w -> {
+				((ARAStarWaypoint) w).setEpsilon(this.inflation);
+				updatedOpen.add(w);
+			});
 			this.open = updatedOpen;
-			this.incons.stream().forEach(w ->
-				{((ARAStarWaypoint) w).setEpsilon(this.inflation); open.add(w);});
+			this.incons.stream().forEach(w -> {
+				((ARAStarWaypoint) w).setEpsilon(this.inflation);
+				open.add(w);
+			});
 			this.incons.clear();
 			this.closed.clear();
 			this.compute();
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initialize(origin, destination, etd);
 		this.compute();
 		this.improve();
-		return new Trajectory((List<Waypoint>) this.plan.clone());
+		return this.createTrajectory();
 	}
 	
 }

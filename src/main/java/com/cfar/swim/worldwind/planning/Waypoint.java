@@ -47,7 +47,8 @@ import java.time.Duration;
  * @author Stephan Heinemann
  *
  */
-public class Waypoint extends Position implements Comparable<Waypoint>, Depictable, Designatable {
+public class Waypoint extends Position
+implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	
 	// TODO: possibly extend Waypoint with PrecisionWaypoint
 	// TODO: use markers for actual track data (class Track)
@@ -81,9 +82,6 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	
 	/** the designator of this waypoint */
 	private String designator = "?";
-	
-	/** the parent waypoint of this waypoint in a trajectory */
-	private Waypoint parent = null;
 	
 	/** the precision position of this waypoint */
 	private PrecisionPosition position = null;
@@ -147,24 +145,6 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	}
 	
 	/**
-	 * Gets the parent waypoint of this waypoint.
-	 * 
-	 * @return the parent waypoint of this waypoint
-	 */
-	public Waypoint getParent() {
-		return parent;
-	}
-	
-	/**
-	 * Sets the parent waypoint of this waypoint.
-	 * 
-	 * @param parent the parent waypoint of this waypoint
-	 */
-	public void setParent(Waypoint parent) {
-		this.parent = parent;
-	}
-	
-	/**
 	 * Gets the precision position of this waypoint.
 	 * 
 	 * @return the precision position of this waypoint
@@ -189,69 +169,6 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	 */
 	public void setCost(double cost) {
 		this.cost = cost;
-	}
-	
-	/**
-	 * Compares this waypoint to another waypoint based on their actual time
-	 * over (primary), estimated time over (secondary), position (tertiary).
-	 * 
-	 * @param waypoint the other waypoint
-	 * 
-	 * @return -1, 0, 1, if this waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their actual time
-	 *         over (primary), estimated time over (secondary), position
-	 *         (tertiary)
-	 * 
-	 * @see Comparable#compareTo(Object)
-	 */
-	@Override
-	public int compareTo(Waypoint waypoint) {
-		int compareTo = 0;
-		
-		// TODO: actuals versus estimates (waypoint versus trackpoint)
-		if ((null != this.ato) && (null != waypoint.ato)) {
-			compareTo = this.ato.compareTo(waypoint.ato);
-		} else if ((null != this.eto) && (null != waypoint.eto)) {
-			compareTo = this.eto.compareTo(waypoint.eto);
-		} else {
-			compareTo = this.position.compareTo(waypoint);
-		}
-		
-		return compareTo;
-	}
-	
-	/**
-	 * Indicates whether or not this waypoint equals another waypoint based on
-	 * their precision position.
-	 * 
-	 * @param o the other waypoint
-	 * 
-	 * @return true, if the precision position of this waypoint equals the
-	 *         precision position of the other waypoint, false otherwise
-	 * 
-	 * @see Object#equals(Object)
-	 */
-	@Override
-	public boolean equals(Object o) {
-		boolean equals = false;
-		
-		if (o instanceof Waypoint) {
-			equals = this.position.equals(((Waypoint) o).position);
-		}
-	
-		return equals;
-	}
-	
-	/**
-	 * Gets the hash code of this waypoint based on its precision position.
-	 * 
-	 * @return the hash code of this waypoint based on its precision position
-	 * 
-	 * @see Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		return this.position.hashCode();
 	}
 	
 	/**
@@ -363,6 +280,90 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	@Override
 	public boolean hasDepiction() {
 		return (null != this.depiction);
+	}
+	
+	/**
+	 * Clones this waypoint without its depiction.
+	 * 
+	 * @return the clone of this waypoint without its depiction 
+	 * 
+	 * @see Object#clone()
+	 */
+	@Override
+	public Waypoint clone() {
+		Waypoint waypoint = null;
+		
+		try {
+			waypoint = (Waypoint) super.clone();
+			waypoint.setDepiction(null);
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		
+		return waypoint;
+	}
+	
+	/**
+	 * Compares this waypoint to another waypoint based on their actual time
+	 * over (primary), estimated time over (secondary), position (tertiary).
+	 * 
+	 * @param waypoint the other waypoint
+	 * 
+	 * @return -1, 0, 1, if this waypoint is less than, equal, or greater,
+	 *         respectively, than the other waypoint based on their actual time
+	 *         over (primary), estimated time over (secondary), position
+	 *         (tertiary)
+	 * 
+	 * @see Comparable#compareTo(Object)
+	 */
+	@Override
+	public int compareTo(Waypoint waypoint) {
+		int compareTo = 0;
+		
+		// TODO: actuals versus estimates (waypoint versus trackpoint)
+		if ((null != this.ato) && (null != waypoint.ato)) {
+			compareTo = this.ato.compareTo(waypoint.ato);
+		} else if ((null != this.eto) && (null != waypoint.eto)) {
+			compareTo = this.eto.compareTo(waypoint.eto);
+		} else {
+			compareTo = this.position.compareTo(waypoint);
+		}
+		
+		return compareTo;
+	}
+	
+	/**
+	 * Indicates whether or not this waypoint equals another waypoint based on
+	 * their precision position.
+	 * 
+	 * @param o the other waypoint
+	 * 
+	 * @return true, if the precision position of this waypoint equals the
+	 *         precision position of the other waypoint, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (o instanceof Waypoint) {
+			equals = this.position.equals(((Waypoint) o).position);
+		}
+	
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this waypoint based on its precision position.
+	 * 
+	 * @return the hash code of this waypoint based on its precision position
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return this.position.hashCode();
 	}
 	
 	/**
