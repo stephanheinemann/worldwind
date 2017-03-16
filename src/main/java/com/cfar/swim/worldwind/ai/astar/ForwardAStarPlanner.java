@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -149,54 +150,136 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.goalRegion = goalRegion;
 	}
 	
+	/**
+	 * Indicates whether or not a position is within the goal region.
+	 * 
+	 * @param position the position
+	 * 
+	 * @return true if the position is within the goal region, false otherwise
+	 */
 	protected boolean isInGoalRegion(Position position) {
 		return this.goalRegion.contains(position);
 	}
 	
-	protected void addExpandable(AStarWaypoint waypoint) {
-		this.open.add(waypoint);
+	/**
+	 * Adds an A* waypoint to the expandable A* waypoints.
+	 * 
+	 * @param waypoint the A* waypoint
+	 * 
+	 * @return true if the A* waypoint has been added to the expandable
+	 *         A* waypoints, false otherwise
+	 */
+	protected boolean addExpandable(AStarWaypoint waypoint) {
+		return this.open.add(waypoint);
 	}
 	
-	protected void removeExpandable(AStarWaypoint waypoint) {
-		this.open.remove(waypoint);
+	/**
+	 * Removes an A* waypoint from the expandable A* waypoints.
+	 * 
+	 * @param waypoint the A* waypoint
+	 * 
+	 * @return true if the A* waypoint has been removed from the expandable
+	 *         A* waypoints, false otherwise
+	 */
+	protected boolean removeExpandable(AStarWaypoint waypoint) {
+		return this.open.remove(waypoint);
 	}
 	
+	/**
+	 * Clears the expandable A* waypoints.
+	 */
 	protected void clearExpandables() {
 		this.open.clear();
 	}
 	
+	/**
+	 * Determines whether or not an A* waypoint is expandable.
+	 * 
+	 * @param waypoint the A* waypoint
+	 * 
+	 * @return true if the A* waypoint is expandable, false otherwise
+	 */
 	protected boolean isExpandable(AStarWaypoint waypoint) {
 		return this.open.contains(waypoint);
 	}
 	
+	/**
+	 * Determines whether or not A* waypoints can be expanded.
+	 * 
+	 * @return true if A* waypoints can be expanded, false otherwise
+	 */
 	protected boolean canExpand() {
 		return !(this.open.isEmpty());
 	}
 	
+	/**
+	 * Peeks an A* waypoint from the expandable A* waypoints.
+	 * 
+	 * @return the peeked A* waypoint from the expandable A* waypoints if any,
+	 *         null otherwise
+	 */
 	protected AStarWaypoint peekExpandable() {
 		return this.open.peek();
 	}
 	
+	/**
+	 * Polls an A* waypoint from the expandable A* waypoints.
+	 * 
+	 * @return the polled A* waypoint from the expandable A* waypoints if any,
+	 *         null otherwise
+	 */
 	protected AStarWaypoint pollExpandable() {
 		return this.open.poll();
 	}
 	
-	protected AStarWaypoint findExpandable(AStarWaypoint waypoint) {
+	/**
+	 * Finds an expandable A* waypoint.
+	 * 
+	 * @param waypoint the expandable A* waypoint to be found
+	 * 
+	 * @return the found expandable A* waypoint if any
+	 */
+	protected Optional<? extends AStarWaypoint>
+		findExpandable(AStarWaypoint waypoint) {
+		
 		return this.open.stream()
-				.filter(s -> s.equals(waypoint))
-				.findFirst().get();
+				.filter(w -> w.equals(waypoint))
+				.findFirst();
 	}
 	
-	protected void addExpanded(AStarWaypoint waypoint) {
-		this.closed.add(waypoint);
+	/**
+	 * Adds an A* waypoint to the expanded A* waypoints.
+	 * 
+	 * @param waypoint the A* waypoint
+	 * 
+	 * @return true if the A* waypoint has been added to the expanded
+	 *         A* waypoints, false otherwise
+	 */
+	protected boolean addExpanded(AStarWaypoint waypoint) {
+		return this.closed.add(waypoint);
 	}
 	
+	/**
+	 * Removes an A* waypoint from the expanded A* waypoints.
+	 * 
+	 * @param waypoint the A* waypoint
+	 * 
+	 * @return true if the A* waypoint has been removed from the expanded
+	 *         A* waypoints, false otherwise
+	 */
+	protected boolean removeExpanded(AStarWaypoint waypoint) {
+		return this.closed.remove(waypoint);
+	}
+	
+	/**
+	 * Clears the expanded A* waypoints.
+	 */
 	protected void clearExpanded() {
 		this.closed.clear();
 	}
 	
 	/**
-	 * Determines if an A* waypoint has been expanded.
+	 * Determines whether or not an A* waypoint has been expanded.
 	 * 
 	 * @param waypoint the A* waypoint
 	 * 
@@ -209,14 +292,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	/**
 	 * Finds an expanded A* waypoint.
 	 * 
-	 * @param waypoint the A* waypoint to be found
+	 * @param waypoint the expanded A* waypoint to be found
 	 * 
-	 * @return the found expanded A* waypoint
+	 * @return the found expanded A* waypoint, if any
 	 */
-	protected AStarWaypoint findExpanded(AStarWaypoint waypoint) {
+	protected Optional<? extends AStarWaypoint>
+		findExpanded(AStarWaypoint waypoint) {
+		
 		return this.closed.stream()
-				.filter(s -> s.equals(waypoint))
-				.findFirst().get();
+				.filter(w -> w.equals(waypoint))
+				.findFirst();
 	}
 	
 	/**
@@ -247,24 +332,47 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Gets the first A* waypoint of the current plan.
+	 * 
+	 * @return the first A* waypoint of the current plan
+	 */
+	protected AStarWaypoint getFirstWaypoint() {
+		return this.plan.getFirst();
+	}
+	
+	/**
+	 * Adds a first A* waypoint to the current plan.
+	 * 
+	 * @param waypoint the first A* waypoint to be added to the current plan
+	 */
+	protected void addFirstWaypoint(AStarWaypoint waypoint) {
+		this.plan.addFirst(waypoint);
+	}
+	
+	/**
+	 * Clears the waypoints of the current plan.
+	 */
+	protected void clearWaypoints() {
+		this.plan.clear();
+	}
+	
+	/**
 	 * Connects a plan of specified A* waypoints.
 	 * 
 	 * @param waypoint the last A* waypoint of a computed plan
 	 */
 	protected void connectPlan(AStarWaypoint waypoint) {
-		this.plan.clear();
+		this.clearWaypoints();
 		
 		while ((null != waypoint)) {
-			this.plan.addFirst(waypoint.clone());
+			this.addFirstWaypoint(waypoint.clone());
 			waypoint = waypoint.getParent();
 			if (null != waypoint) {
 				// TODO: this is not good enough and environment airdata intervals are required
-				waypoint.setTtg(Duration.between(waypoint.getEto(), this.plan.getFirst().getEto()));
-				waypoint.setDtg(this.getEnvironment().getDistance(waypoint, this.plan.getFirst()));
+				waypoint.setTtg(Duration.between(waypoint.getEto(), this.getFirstWaypoint().getEto()));
+				waypoint.setDtg(this.getEnvironment().getDistance(waypoint, this.getFirstWaypoint()));
 			}
 		}
-		
-		this.revisePlan(this.createTrajectory());
 	}
 	
 	/**
@@ -278,6 +386,20 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Updates the open set for an updated A* waypoint.
+	 * 
+	 * @param waypoint the updated A* waypoint
+	 */
+	protected void updateSets(AStarWaypoint waypoint) {
+		// priority queue requires re-insertion of contained modified object
+		if (!this.removeExpandable(waypoint)) {
+			waypoint.setH(this.getEnvironment()
+					.getNormalizedDistance(waypoint, this.getGoal()));
+		}
+		this.addExpandable(waypoint);
+	}
+	
+	/**
 	 * Updates the estimated cost of a specified target A* waypoint when
 	 * reached via a specified source A* waypoint.
 	 * 
@@ -288,14 +410,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		double gOld = target.getG();
 		this.computeCost(source, target);
 		if (target.getG() < gOld) {
-			if (!this.isExpandable(target)) {
-				target.setH(this.getEnvironment().getNormalizedDistance(target, this.getGoal()));
-				this.addExpandable(target);
-			} else {
-				// priority queue requires re-insertion of modified object
-				this.removeExpandable(target);
-				this.addExpandable(target);
-			}
+			this.updateSets(target);
 		}
 	}
 	
@@ -336,7 +451,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		this.clearExpandables();
 		this.clearExpanded();
-		this.plan.clear();
+		this.clearWaypoints();
 		
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setG(0);
@@ -371,9 +486,10 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			
 			for (AStarWaypoint target : neighbors) {
 				if (!this.isExpanded(target)) {
-					if (this.isExpandable(target)) {
-						AStarWaypoint visited = this.findExpandable(target);
-						this.updateWaypoint(source, visited);
+					Optional<? extends AStarWaypoint> visited =
+							this.findExpandable(target);
+					if (visited.isPresent()) {
+						this.updateWaypoint(source, visited.get());
 					} else {
 						this.updateWaypoint(source, target);
 					}
@@ -399,7 +515,9 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initialize(origin, destination, etd);
 		this.compute();
-		return this.createTrajectory();
+		Trajectory trajectory = this.createTrajectory();
+		this.revisePlan(trajectory);
+		return trajectory;
 	}
 	
 	/**
@@ -428,12 +546,17 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		destinations.add(new Waypoint(destination));
 		Iterator<Waypoint> destinationsIterator = destinations.iterator();
 		
+		// plan and concatenate partial trajectories
 		while (destinationsIterator.hasNext()) {
 			Waypoint currentDestination = destinationsIterator.next();
 			
 			if (!(currentOrigin.equals(currentDestination))) {
-				Trajectory part = this.plan(currentOrigin, currentDestination, currentEtd);
+				// plan partial trajectory
+				this.initialize(currentOrigin, currentDestination, currentEtd);
+				this.compute();
+				Trajectory part = this.createTrajectory();
 				
+				// append partial trajectory to plan
 				for (AStarWaypoint waypoint : (List<AStarWaypoint>) part.getWaypoints()) {
 					if ((!plan.isEmpty()) &&  (null == waypoint.getParent())) {
 						plan.pollLast();
@@ -444,8 +567,9 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				
 				if (plan.peekLast().equals(currentOrigin)) {
 					// if no plan could be found, return an empty trajectory
-					this.plan.clear();
-					return new Trajectory();
+					Trajectory trajectory = new Trajectory();
+					this.revisePlan(trajectory);
+					return trajectory;
 				} else {
 					currentOrigin = plan.peekLast();
 					currentEtd = currentOrigin.getEto();
@@ -453,18 +577,10 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			}
 		}
 		
-		this.plan.clear();
-		//this.plan.addAll(plan);
-		return new Trajectory(plan/*this.plan.clone()*/);
+		Trajectory trajectory = new Trajectory(plan);
+		this.revisePlan(trajectory);
+		return trajectory;
 	}
-
-	/**
-	 * Post-processes a previously expanded waypoint upon its own expansion.
-	 * This method is intended to be overridden by lazy evaluation algorithms.
-	 * 
-	 * @param waypoint the expanded waypoint
-	 */
-	protected void setWaypoint(Waypoint waypoint) {}
 	
 	/**
 	 * Indicates whether or not this forward A* planner supports a specified

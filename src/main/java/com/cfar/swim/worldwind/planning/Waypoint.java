@@ -267,7 +267,9 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	@Override
 	public void setDepiction(Depiction depiction) {
 		this.depiction = depiction;
-		this.depiction.setDesignation(this.designator);
+		if (null != this.depiction) {
+			this.depiction.setDesignation(this.designator);
+		}
 	}
 	
 	/**

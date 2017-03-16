@@ -13,6 +13,7 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class ARAStarWaypoint extends AStarWaypoint {
 	
+	// TODO: v-values and consistency is only relevant for AD*
 	/** the estimated previous expansion cost (v-value) of this ARA* waypoint */
 	private double v;
 	
@@ -144,6 +145,15 @@ public class ARAStarWaypoint extends AStarWaypoint {
 	 */
 	public boolean isUnderConsistent() {
 		return this.getG() > this.getV();
+	}
+	
+	/**
+	 * Makes this ARA* waypoint consistent.
+	 * 
+	 * @see #isConsistent()
+	 */
+	public void makeConsistent() {
+		this.setV(this.getG());
 	}
 
 }
