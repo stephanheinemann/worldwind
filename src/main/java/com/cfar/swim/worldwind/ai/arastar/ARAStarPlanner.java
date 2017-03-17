@@ -30,7 +30,9 @@
 package com.cfar.swim.worldwind.ai.arastar;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -384,11 +386,18 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
+		this.backup();
+		this.backupIndex++;
+		
 		super.initialize(origin, destination, etd);
-		this.setInflation(this.getMinimumQuality());
+		this.clearInconsistent();
+		
+		if (!this.restore()) {
+			this.setInflation(this.getMinimumQuality());
+		}
+		
 		this.getGoal().setEpsilon(this.getInflation());
 		this.getStart().setEpsilon(this.getInflation());
-		this.clearInconsistent();
 	}
 	
 	/**
@@ -444,41 +453,18 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		}
 	}
 	
-	/*
-	protected PriorityQueue<? extends ARAStarWaypoint> computeImprovement() {
-		this.deflate();
-		PriorityQueue<AStarWaypoint> updatedOpen = new PriorityQueue<>();
-		this.open.stream().forEach(w -> {
-			((ARAStarWaypoint) w).setEpsilon(this.getInflation());
-			updatedOpen.add(w);
-		});
-		this.open = updatedOpen;
-		this.incons.stream().forEach(w -> {
-			((ARAStarWaypoint) w).setEpsilon(this.getInflation());
-			this.addExpandable(w);
-		});
-		this.clearInconsistent();
-		this.clearExpanded();
-		this.compute();
-	}
-	*/
-	
+	/**
+	 * Improves a plan incrementally.
+	 */
 	protected void improve() {
 		while (!this.isDeflated()) {
-			
+			this.backup();
 			this.deflate();
-			PriorityQueue<AStarWaypoint> updatedOpen = new PriorityQueue<>();
-			this.open.stream().forEach(w -> {
-				((ARAStarWaypoint) w).setEpsilon(this.getInflation());
-				updatedOpen.add(w);
-			});
-			this.open = updatedOpen;
-			this.incons.stream().forEach(w -> {
-				((ARAStarWaypoint) w).setEpsilon(this.getInflation());
-				this.addExpandable(w);
-			});
+			this.restore();
+			
 			this.clearInconsistent();
 			this.clearExpanded();
+			
 			this.compute();
 			Trajectory trajectory = this.createTrajectory();
 			this.revisePlan(trajectory);
@@ -500,16 +486,113 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		this.initBackups(1);
 		this.initialize(origin, destination, etd);
+		
 		this.compute();
+		this.revisePlan(this.createTrajectory());
 		this.improve();
+		
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
 		return trajectory;
 	}
 	
-	// TODO: compute all partial trajectories of one quality before improving
-	// TODO: store new open for each partial iteration with one quality
-	// TODO: updatedOpen is not a local variable, a list of open sets is required
-	// TODO: ARA* could synchronize deflation!
+	/**
+	 * Plans a trajectory from an origin to a destination along waypoints at a
+	 * specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param waypoints the waypoints in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination along
+	 *         the waypoints with the estimated time of departure
+	 * 
+	 * @see ForwardAStarPlanner#plan(Position, Position, List, ZonedDateTime)
+	 */
+	@Override
+	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+		this.initBackups(waypoints.size() + 1);
+		
+		Trajectory trajectory = super.plan(origin, destination, waypoints, etd);
+		
+		while (!this.isDeflated()) {
+			this.deflate();
+			this.backupIndex = -1;
+			trajectory = super.plan(origin, destination, waypoints, etd);
+		}
+		
+		return trajectory;
+	}
+	
+	private int backupIndex = -1;
+	private ArrayList<PriorityQueue<AStarWaypoint>> opens = new ArrayList<>();
+	
+	/**
+	 * Initializes a number of open backup priority queues.
+	 * 
+	 * @param size the number of open backup priority queues
+	 */
+	protected void initBackups(int size) {
+		this.opens.clear();
+		for (int openIndex = 0; openIndex < size; openIndex++) {
+			this.opens.add(openIndex, new PriorityQueue<AStarWaypoint>());
+		}
+		this.backupIndex = -1;
+	}
+	
+	/**
+	 * Determines whether or not a backup can be performed.
+	 * 
+	 * @return true if a backup can be performed, false otherwise
+	 */
+	protected boolean canBackup() {
+		return (-1 < this.backupIndex) && (this.backupIndex < this.opens.size());
+	}
+	
+	/**
+	 * Determines whether or not a backup is available.
+	 * 
+	 * @return true if a backup is available, false otherwise
+	 */
+	protected boolean hasBackup() {
+		return this.canBackup() && (!this.opens.get(this.backupIndex).isEmpty());
+	}
+	
+	/**
+	 * Backs up inconsistent and expandable ARA* waypoints for improvement.
+	 * 
+	 * @return true if a backup has been performed, false otherwise
+	 */
+	protected boolean backup() {
+		boolean backedup = false;
+		if (this.canBackup()) {
+			this.opens.get(this.backupIndex).clear();
+			this.opens.get(this.backupIndex).addAll(this.open);
+			this.opens.get(this.backupIndex).addAll(this.incons);
+			backedup = true;
+		}
+		return backedup;
+	}
+	
+	/**
+	 * Restores expandable ARA* waypoints for improvement.
+	 * 
+	 * @return true if a restore has been performed, false otherwise
+	 */
+	protected boolean restore() {
+		boolean restored = false;
+		if (this.hasBackup()) {
+			this.open.clear();
+			for (AStarWaypoint waypoint : this.opens.get(this.backupIndex)) {
+				((ARAStarWaypoint) waypoint).setEpsilon(this.getInflation());
+				this.open.add(waypoint);
+			}
+			restored = true;
+		}
+		return restored;
+	}
+	
 }

@@ -33,7 +33,6 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
@@ -537,19 +536,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	@SuppressWarnings("unchecked")
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		LinkedList<AStarWaypoint> plan = new LinkedList<AStarWaypoint>();
+		LinkedList<AStarWaypoint> plan = new LinkedList<>();
 		Waypoint currentOrigin = new Waypoint(origin);
 		ZonedDateTime currentEtd = etd;
 		
 		ArrayList<Waypoint> destinations = waypoints
 				.stream().map(Waypoint::new).collect(Collectors.toCollection(ArrayList::new));
 		destinations.add(new Waypoint(destination));
-		Iterator<Waypoint> destinationsIterator = destinations.iterator();
 		
 		// plan and concatenate partial trajectories
-		while (destinationsIterator.hasNext()) {
-			Waypoint currentDestination = destinationsIterator.next();
-			
+		for (Waypoint currentDestination : destinations) {
 			if (!(currentOrigin.equals(currentDestination))) {
 				// plan partial trajectory
 				this.initialize(currentOrigin, currentDestination, currentEtd);
