@@ -86,6 +86,24 @@ public class Trajectory extends Path implements Depictable {
 	}
 	
 	/**
+	 * Determines whether or not this trajectory is empty (has no waypoints).
+	 * 
+	 * @return true if this trajectory is empty, false otherwise
+	 */
+	public boolean isEmpty() {
+		return (0 == this.getLength());
+	}
+	
+	/**
+	 * Gets the length of this trajectory in number of waypoints.
+	 * 
+	 * @return the length of this trajectory in number of waypoints
+	 */
+	public int getLength() {
+		return Iterables.size(this.getWaypoints());
+	}
+	
+	/**
 	 * Gets the distance of this trajectory in meters.
 	 * 
 	 * @return the distance of this trajectory in meters
@@ -181,6 +199,24 @@ public class Trajectory extends Path implements Depictable {
 	@SuppressWarnings("unchecked")
 	public Iterable<? extends Waypoint> getWaypoints() {
 		return (Iterable<Waypoint>) super.getPositions();
+	}
+	
+	/**
+	 * Gets the first waypoint of this trajectory.
+	 * 
+	 * @return the first waypoint of this trajectory if any, null otherwise
+	 */
+	public Waypoint getFirstWaypoint() {
+		return Iterables.getFirst(this.getWaypoints(), null);
+	}
+	
+	/**
+	 * Gets the last waypoint of this trajectory.
+	 * 
+	 * @return the last waypoint of this trajectory if any, null otherwise
+	 */
+	public Waypoint getLastWaypoint() {
+		return Iterables.getLast(this.getWaypoints(), null);
 	}
 	
 	/**

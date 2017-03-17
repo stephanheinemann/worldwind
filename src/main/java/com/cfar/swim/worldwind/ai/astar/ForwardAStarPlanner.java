@@ -533,15 +533,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * 
 	 * @see Planner#plan(Position, Position, List, ZonedDateTime)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		LinkedList<AStarWaypoint> plan = new LinkedList<>();
+		LinkedList<Waypoint> plan = new LinkedList<>();
 		Waypoint currentOrigin = new Waypoint(origin);
 		ZonedDateTime currentEtd = etd;
 		
-		ArrayList<Waypoint> destinations = waypoints
-				.stream().map(Waypoint::new).collect(Collectors.toCollection(ArrayList::new));
+		// collect intermediate destinations
+		ArrayList<Waypoint> destinations = waypoints.stream()
+				.map(Waypoint::new)
+				.collect(Collectors.toCollection(ArrayList::new));
 		destinations.add(new Waypoint(destination));
 		
 		// plan and concatenate partial trajectories
@@ -553,11 +554,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				Trajectory part = this.createTrajectory();
 				
 				// append partial trajectory to plan
-				for (AStarWaypoint waypoint : (List<AStarWaypoint>) part.getWaypoints()) {
-					if ((!plan.isEmpty()) &&  (null == waypoint.getParent())) {
-						plan.pollLast();
-						waypoint.setParent(plan.peekLast());
-					}
+				if ((!plan.isEmpty()) &&  (!part.isEmpty())) {
+					plan.pollLast();
+				}
+				
+				for (Waypoint waypoint : part.getWaypoints()) {
 					plan.add(waypoint);
 				}
 				

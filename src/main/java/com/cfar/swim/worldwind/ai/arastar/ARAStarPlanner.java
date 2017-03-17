@@ -185,7 +185,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * the final deflation.
 	 */
 	protected void deflate() {
-		if (this.finalInflation > (this.inflation - this.deflationAmount)) {
+		if (this.finalInflation < (this.inflation - this.deflationAmount)) {
 			this.inflation -= this.deflationAmount;
 		} else {
 			this.inflation = this.finalInflation;

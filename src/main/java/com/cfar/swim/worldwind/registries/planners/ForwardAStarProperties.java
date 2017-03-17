@@ -38,7 +38,7 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  * @author Stephan Heinemann
  *
  */
-public class ForwardAStarProperties extends PlannerProperties {
+public class ForwardAStarProperties extends AbstractPlannerProperties {
 
 	/**
 	 * Constructs a new forward A* planner properties bean.

@@ -33,6 +33,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import com.cfar.swim.worldwind.ai.Planner;
+import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.registries.Factory;
@@ -110,7 +111,7 @@ public class PlannerFactory implements Factory<Planner> {
 	public Planner createInstance(Specification<Planner> specification) {
 		Planner planner = null;
 		
-		// TODO: validate scenario for planner creation?
+		// TODO: validate scenario for planner creation? (supports)
 		
 		if (specification.getId().equals(Specification.PLANNER_FAS_ID)) {
 			ForwardAStarProperties properties = (ForwardAStarProperties) specification.getProperties();
@@ -122,6 +123,14 @@ public class PlannerFactory implements Factory<Planner> {
 			planner = new ThetaStarPlanner(scenario.getAircraft(), scenario.getEnvironment());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
+		} else if (specification.getId().equals(Specification.PLANNER_ARAS_ID)) {
+			ARAStarProperties properties = (ARAStarProperties) specification.getProperties();
+			planner = new ARAStarPlanner(scenario.getAircraft(), scenario.getEnvironment());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((ARAStarPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((ARAStarPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((ARAStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		}
 		// TODO: implement more planners
 		
