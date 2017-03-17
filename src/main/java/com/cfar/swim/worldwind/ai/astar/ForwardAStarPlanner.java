@@ -88,6 +88,8 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * 
 	 * @param aircraft the aircraft
 	 * @param environment the environment
+	 * 
+	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
 	 */
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);

@@ -77,6 +77,8 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * 
 	 * @param aircraft the aircraft
 	 * @param environment the environment
+	 * 
+	 * @see ForwardAStarPlanner#ForwardAStarPlanner(Aircraft, Environment)
 	 */
 	public ARAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
@@ -338,7 +340,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Set<? extends ARAStarWaypoint> expand(AStarWaypoint waypoint) {
-		((ARAStarWaypoint) waypoint).makeConsistent();
+		//((ARAStarWaypoint) waypoint).makeConsistent();
 		return (Set<ARAStarWaypoint>) super.expand(waypoint);
 	}
 	

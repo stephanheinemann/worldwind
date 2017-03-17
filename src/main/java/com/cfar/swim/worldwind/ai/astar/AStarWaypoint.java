@@ -149,7 +149,7 @@ public class AStarWaypoint extends Waypoint {
 	 * total costs (f-values). It the estimated total costs of both A*
 	 * waypoints is equal, then ties are broken in favor of higher estimated
 	 * current costs (g-values). If the other waypoint is not an A* waypoint,
-	 * then the natural order of waypoint applies.
+	 * then the natural order of general waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
@@ -164,11 +164,11 @@ public class AStarWaypoint extends Waypoint {
 		int compareTo = 0;
 		
 		if (waypoint instanceof AStarWaypoint) {
-			AStarWaypoint asWaypoint = (AStarWaypoint) waypoint;
-			compareTo = new Double(this.getF()).compareTo(asWaypoint.getF());
+			AStarWaypoint asw = (AStarWaypoint) waypoint;
+			compareTo = new Double(this.getF()).compareTo(asw.getF());
 			if (0 == compareTo) {
 				// break ties in favor of higher G-values
-				compareTo = new Double(asWaypoint.getG()).compareTo(this.getG());
+				compareTo = new Double(asw.getG()).compareTo(this.getG());
 			}
 		} else {
 			compareTo = super.compareTo(waypoint);
