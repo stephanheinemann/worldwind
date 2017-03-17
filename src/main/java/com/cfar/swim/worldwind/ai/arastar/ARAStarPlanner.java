@@ -34,7 +34,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.PriorityQueue;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.AnytimePlanner;
@@ -376,7 +375,8 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	
 	/**
 	 * Initializes the planner to plan from an origin to a destination at a
-	 * specified estimated time of departure.
+	 * specified estimated time of departure. Performs backups and restorations
+	 * of expandable and inconsistent waypoints in case of a multi-part plan.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
@@ -392,7 +392,9 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		super.initialize(origin, destination, etd);
 		this.clearInconsistent();
 		
-		if (!this.restore()) {
+		if (this.improving) {
+			this.restore();
+		} else {
 			this.setInflation(this.getMinimumQuality());
 		}
 		
@@ -518,17 +520,25 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		
 		Trajectory trajectory = super.plan(origin, destination, waypoints, etd);
 		
+		this.improving = true;
 		while (!this.isDeflated()) {
 			this.deflate();
 			this.backupIndex = -1;
 			trajectory = super.plan(origin, destination, waypoints, etd);
 		}
+		this.improving = false;
 		
 		return trajectory;
 	}
 	
+	/** indicates whether or not a multi-part plan is being improved */
+	private boolean improving = false;
+	
+	/** the index of the backed up expandable and inconsistent waypoints */
 	private int backupIndex = -1;
-	private ArrayList<PriorityQueue<AStarWaypoint>> opens = new ArrayList<>();
+	
+	/** the backed up expandable and inconsistent waypoints */
+	private ArrayList<ArrayList<AStarWaypoint>> backups = new ArrayList<>();
 	
 	/**
 	 * Initializes a number of open backup priority queues.
@@ -536,9 +546,9 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @param size the number of open backup priority queues
 	 */
 	protected void initBackups(int size) {
-		this.opens.clear();
+		this.backups.clear();
 		for (int openIndex = 0; openIndex < size; openIndex++) {
-			this.opens.add(openIndex, new PriorityQueue<AStarWaypoint>());
+			this.backups.add(openIndex, new ArrayList<AStarWaypoint>());
 		}
 		this.backupIndex = -1;
 	}
@@ -549,7 +559,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @return true if a backup can be performed, false otherwise
 	 */
 	protected boolean canBackup() {
-		return (-1 < this.backupIndex) && (this.backupIndex < this.opens.size());
+		return (-1 < this.backupIndex) && (this.backupIndex < this.backups.size());
 	}
 	
 	/**
@@ -558,7 +568,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @return true if a backup is available, false otherwise
 	 */
 	protected boolean hasBackup() {
-		return this.canBackup() && (!this.opens.get(this.backupIndex).isEmpty());
+		return this.canBackup() && (!this.backups.get(this.backupIndex).isEmpty());
 	}
 	
 	/**
@@ -569,9 +579,9 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	protected boolean backup() {
 		boolean backedup = false;
 		if (this.canBackup()) {
-			this.opens.get(this.backupIndex).clear();
-			this.opens.get(this.backupIndex).addAll(this.open);
-			this.opens.get(this.backupIndex).addAll(this.incons);
+			this.backups.get(this.backupIndex).clear();
+			this.backups.get(this.backupIndex).addAll(this.open);
+			this.backups.get(this.backupIndex).addAll(this.incons);
 			backedup = true;
 		}
 		return backedup;
@@ -580,13 +590,13 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	/**
 	 * Restores expandable ARA* waypoints for improvement.
 	 * 
-	 * @return true if a restore has been performed, false otherwise
+	 * @return true if a restoral has been performed, false otherwise
 	 */
 	protected boolean restore() {
 		boolean restored = false;
 		if (this.hasBackup()) {
 			this.open.clear();
-			for (AStarWaypoint waypoint : this.opens.get(this.backupIndex)) {
+			for (AStarWaypoint waypoint : this.backups.get(this.backupIndex)) {
 				((ARAStarWaypoint) waypoint).setEpsilon(this.getInflation());
 				this.open.add(waypoint);
 			}
