@@ -340,7 +340,6 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Set<? extends ARAStarWaypoint> expand(AStarWaypoint waypoint) {
-		//((ARAStarWaypoint) waypoint).makeConsistent();
 		return (Set<ARAStarWaypoint>) super.expand(waypoint);
 	}
 	

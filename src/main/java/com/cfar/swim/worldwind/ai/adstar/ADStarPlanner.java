@@ -29,7 +29,11 @@
  */
 package com.cfar.swim.worldwind.ai.adstar;
 
+import java.util.Set;
+
 import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
+import com.cfar.swim.worldwind.ai.arastar.ARAStarWaypoint;
+import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
 
@@ -103,8 +107,70 @@ public class ADStarPlanner extends ARAStarPlanner {
 	 */
 	@Override
 	protected boolean canExpand() {
-		return super.canExpand() ||
-				(this.getGoal().isUnderConsistent());
+		return super.canExpand() || (this.getGoal().isUnderConsistent());
 	}
-
+	
+	/**
+	 * Polls an AD* waypoint from the expandable AD* waypoints.
+	 * 
+	 * @return the polled AD* waypoint from the expandable AD* waypoints
+	 *         if any, null otherwise
+	 * 
+	 * @see ARAStarWaypoint#pollExpandable()
+	 */
+	@Override
+	protected ADStarWaypoint pollExpandable() {
+		return (ADStarWaypoint) super.pollExpandable();
+	}
+	
+	/**
+	 * Expands an AD* waypoint towards its neighbors in the environment.
+	 * 
+	 * @param waypoint the AD* waypoint to be expanded
+	 * 
+	 * @return the neighbors of the expanded AD* waypoint
+	 * 
+	 * @see ARAStarPlanner#expand(AStarWaypoint)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Set<? extends ADStarWaypoint> expand(AStarWaypoint waypoint) {
+		Set<ADStarWaypoint> neighbors = (Set<ADStarWaypoint>) super.expand(waypoint);
+		ADStarWaypoint adsw = (ADStarWaypoint) waypoint;
+		
+		// TODO: think about consistency and sets again (implicit closed addition)
+		if (adsw.isOverConsistent()) {
+			adsw.makeConsistent();
+		} else {
+			adsw.setV(Double.POSITIVE_INFINITY);
+			this.removeExpanded(adsw);
+			this.updateSets(adsw);
+		}
+		
+		return neighbors;
+	}
+	
+	/**
+	 * Computes a plan.
+	 * 
+	 * @see ARAStarPlanner#compute()
+	 */
+	@Override
+	protected void compute() {
+		while (this.canExpand()) {
+			ADStarWaypoint source = this.pollExpandable();
+			
+			if (source.equals(this.getGoal())) {
+				this.connectPlan(source);
+				return;
+			}
+			
+			Set<? extends ADStarWaypoint> neighbors = this.expand(source);
+			
+			for (ARAStarWaypoint target : neighbors) {
+				System.out.println(target);
+			}
+		}
+	}
+	
 }
