@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai.adstar;
 
+import java.util.Optional;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
@@ -124,6 +125,53 @@ public class ADStarPlanner extends ARAStarPlanner {
 	}
 	
 	/**
+	 * Finds an expandable AD* waypoint.
+	 * 
+	 * @param waypoint the expandable AD* waypoint to be found
+	 * 
+	 * @return the found expandable AD* waypoint if any
+	 * 
+	 * @see ARAStarPlanner#findExpandable(AStarWaypoint)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Optional<? extends ADStarWaypoint>
+		findExpandable(AStarWaypoint waypoint) {
+		return (Optional<ADStarWaypoint>) super.findExpandable(waypoint);
+	}
+	
+	/**
+	 * Finds an expanded AD* waypoint.
+	 * 
+	 * @param waypoint the expanded AD* waypoint to be found
+	 * 
+	 * @return the found expanded AD* waypoint, if any
+	 * 
+	 * @see ARAStarPlanner#findExpanded(ARAStarWaypoint)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Optional<? extends ADStarWaypoint>
+		findExpanded(AStarWaypoint waypoint) {
+		return (Optional<ADStarWaypoint>) super.findExpanded(waypoint);
+	}
+	
+	/**
+	 * Finds the dependent target of an expanded AD* source waypoint.
+	 * The source waypoint is the parent of the target waypoint.
+	 *  
+	 * @param source the source AD* waypoint
+	 * @param target the dependent target AD* waypoint to be found
+	 * @return the found dependent target AD* waypoint, if any
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Optional<? extends ADStarWaypoint>
+		findDependent(AStarWaypoint source, AStarWaypoint target) {
+		return (Optional<ADStarWaypoint>) super.findDependent(source, target);
+	}
+	
+	/**
 	 * Expands an AD* waypoint towards its neighbors in the environment.
 	 * 
 	 * @param waypoint the AD* waypoint to be expanded
@@ -135,19 +183,58 @@ public class ADStarPlanner extends ARAStarPlanner {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Set<? extends ADStarWaypoint> expand(AStarWaypoint waypoint) {
+		// super.expand implicitly adds the expanded waypoint to the expanded set
 		Set<ADStarWaypoint> neighbors = (Set<ADStarWaypoint>) super.expand(waypoint);
 		ADStarWaypoint adsw = (ADStarWaypoint) waypoint;
 		
-		// TODO: think about consistency and sets again (implicit closed addition)
 		if (adsw.isOverConsistent()) {
+			// establish consistency
 			adsw.makeConsistent();
 		} else {
+			// eliminate under-consistency
 			adsw.setV(Double.POSITIVE_INFINITY);
 			this.removeExpanded(adsw);
 			this.updateSets(adsw);
 		}
 		
 		return neighbors;
+	}
+	
+	@Override
+	protected void updateSets(AStarWaypoint waypoint) {
+		// TODO: finding the expandable is actually not required since no
+		// updates to it are necessary, isExpandable should be sufficient
+		// check precisely which waypoints should be retained and moved
+		// between the sets!
+		Optional<? extends ADStarWaypoint> expandable =
+				this.findExpandable(waypoint);
+		
+		if (((ADStarWaypoint) waypoint).isConsistent()) {
+			if (expandable.isPresent()) {
+				this.removeExpandable(expandable.get());
+			} else if (this.isInconsistent((ADStarWaypoint) waypoint)) {
+				this.removeInconsistent((ADStarWaypoint) waypoint);
+			}
+		} else {
+			if (!this.isExpanded(waypoint)) {
+				if (expandable.isPresent()) {
+					this.removeExpandable(waypoint);
+					this.addExpandable(waypoint);
+				} else {
+					this.addExpandable(waypoint);
+				}
+			} else if (this.isInconsistent((ADStarWaypoint) waypoint)) {
+				this.addInconsistent((ADStarWaypoint) waypoint);
+			}
+		}
+	}
+	
+	protected void repairCost(ADStarWaypoint waypoint) {
+		// TODO: Fig. 18 (lines 25/26)
+		// TODO: find neighbors including start if in start region
+		// TODO: identify minimum v-cost neighbor if any (expandable, expanded)
+		// TODO: repair g-cost based on minimum v-cost and update parent
+		// TODO: maybe visited predecessors and successors should be stored...
 	}
 	
 	/**
@@ -167,8 +254,23 @@ public class ADStarPlanner extends ARAStarPlanner {
 			
 			Set<? extends ADStarWaypoint> neighbors = this.expand(source);
 			
-			for (ARAStarWaypoint target : neighbors) {
-				System.out.println(target);
+			if (source.isOverConsistent()) {
+				// propagate over-consistency
+				for (ADStarWaypoint target : neighbors) {
+					this.updateWaypoint(source, target);
+				}
+			} else {
+				// propagate under-consistency
+				for (ADStarWaypoint target : neighbors) {
+					// find target that depends on under-consistent source
+					Optional<? extends ADStarWaypoint> dependent =
+							this.findDependent(source, target);
+					
+					if (dependent.isPresent()) {
+						this.repairCost(dependent.get());
+						this.updateSets(dependent.get());
+					}
+				}
 			}
 		}
 	}

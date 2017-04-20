@@ -169,7 +169,7 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 
 	/**
 	 * Compares this AD* waypoint to another waypoint based on their estimated
-	 * total costs (f-values). It the estimated total costs of both AD*
+	 * total costs (f-values). If the estimated total costs of both AD*
 	 * waypoints is equal, then ties are broken in favor of higher estimated
 	 * current costs (g-values) or under-consistent costs (v-values). If the
 	 * other waypoint is not an AD* waypoint, then the natural order of

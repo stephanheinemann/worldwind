@@ -329,6 +329,21 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
+	 * Finds the dependent target of an expanded ARA* source waypoint.
+	 * The source waypoint is the parent of the target waypoint.
+	 *  
+	 * @param source the source ARA* waypoint
+	 * @param target the dependent target ARA* waypoint to be found
+	 * @return the found dependent target ARA* waypoint, if any
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Optional<? extends ARAStarWaypoint>
+		findDependent(AStarWaypoint source, AStarWaypoint target) {
+		return (Optional<ARAStarWaypoint>) super.findDependent(source, target);
+	}
+	
+	/**
 	 * Expands an ARA* waypoint towards its neighbors in the environment.
 	 * 
 	 * @param waypoint the ARA* waypoint to be expanded
@@ -372,6 +387,18 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	protected void clearInconsistent() {
 		this.incons.clear();
+	}
+	
+	/**
+	 * Determines whether or not an ARA* waypoint has been made inconsistent.
+	 * 
+	 * @param waypoint the ARA* waypoint
+	 * 
+	 * @return true if the ARA* waypoint has been made inconsistent,
+	 *         false otherwise
+	 */
+	protected boolean isInconsistent(ARAStarWaypoint waypoint) {
+		return this.incons.contains(waypoint);
 	}
 	
 	/**
@@ -539,7 +566,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	private int backupIndex = -1;
 	
 	/** the backed up expandable and inconsistent waypoints */
-	private ArrayList<ArrayList<AStarWaypoint>> backups = new ArrayList<>();
+	private final ArrayList<ArrayList<AStarWaypoint>> backups = new ArrayList<>();
 	
 	/**
 	 * Initializes a number of open backup priority queues.

@@ -350,6 +350,9 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 		boolean equals = false;
 		
 		if (o instanceof Waypoint) {
+			// TODO: waypoint is defined via position and time, position only
+			// is problematic when revisiting a position at different times
+			// TODO: possibly refine with ETO or waypoint designator
 			equals = this.position.equals(((Waypoint) o).position);
 		}
 	

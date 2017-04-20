@@ -146,7 +146,7 @@ public class AStarWaypoint extends Waypoint {
 	
 	/**
 	 * Compares this A* waypoint to another waypoint based on their estimated
-	 * total costs (f-values). It the estimated total costs of both A*
+	 * total costs (f-values). If the estimated total costs of both A*
 	 * waypoints is equal, then ties are broken in favor of higher estimated
 	 * current costs (g-values). If the other waypoint is not an A* waypoint,
 	 * then the natural order of general waypoints applies.

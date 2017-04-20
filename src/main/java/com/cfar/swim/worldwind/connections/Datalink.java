@@ -257,6 +257,17 @@ public abstract class Datalink implements Connection {
 	// TODO: take-off specification / setup
 	// flight envelope (initial altitude, vertical speed, horizontal speed)
 	
+	// isAirborne
+	// isAutonomous
+	// uploadMission
+	// downloadMission
+	// getNextWaypoint (Position)
+	// getAttitude (Pitch, Roll, Yaw)
+	// getGroundSpeed
+	// getAirSpeed (True, Equivalent, Calibrated, Indicated)
+	// TODO: have Scenario listen for track changes towards the next
+	// waypoint if airborne and update ATO accordingly
+	
 	/**
 	 * Initiates a take-off for the aircraft connected via this datalink.
 	 */
