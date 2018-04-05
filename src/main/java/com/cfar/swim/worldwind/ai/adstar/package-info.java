@@ -27,35 +27,4 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
-
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-
-/**
- * Realizes the properties bean of a forward A* planner.
- * 
- * @author Stephan Heinemann
- *
- */
-public class ForwardAStarProperties extends AbstractPlannerProperties {
-
-	/**
-	 * Constructs a new forward A* planner properties bean.
-	 */
-	public ForwardAStarProperties() {
-		super();
-	}
-
-	/**
-	 * Constructs a new forward A* planner properties bean with
-	 * specified cost and risk policy property values.
-	 * 
-	 * @param costPolicy the cost policy of this forward A* planner properties bean
-	 * @param riskPolicy the risk policy of this forward A* planner properties bean
-	 */
-	public ForwardAStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		super(costPolicy, riskPolicy);
-	}
-
-}
+package com.cfar.swim.worldwind.ai.adstar;

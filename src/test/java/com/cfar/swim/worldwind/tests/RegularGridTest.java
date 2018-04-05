@@ -57,6 +57,7 @@ import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
+import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.BasicModel;
@@ -422,32 +423,32 @@ public class RegularGridTest {
 		*/
 		
 		ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, tsGrid);
-		Path path = planner.plan(origin, destination, ZonedDateTime.now());
-		path.setVisible(true);
-		path.setShowPositions(true);
-		path.setDrawVerticals(true);
-		path.setAttributes(new BasicShapeAttributes());
-		path.getAttributes().setOutlineMaterial(Material.MAGENTA);
-		path.getAttributes().setOutlineWidth(5d);
-		path.getAttributes().setOutlineOpacity(0.5d);
+		Trajectory trajectory = planner.plan(origin, destination, ZonedDateTime.now());
+		trajectory.setVisible(true);
+		trajectory.setShowPositions(true);
+		trajectory.setDrawVerticals(true);
+		trajectory.setAttributes(new BasicShapeAttributes());
+		trajectory.getAttributes().setOutlineMaterial(Material.MAGENTA);
+		trajectory.getAttributes().setOutlineWidth(5d);
+		trajectory.getAttributes().setOutlineOpacity(0.5d);
 		
-		for (Waypoint positionEstimate : planner.getPlan()) {
+		for (Waypoint positionEstimate : (Iterable<Waypoint>) trajectory.getWaypoints()) {
 			System.out.println(positionEstimate + " at " + positionEstimate.getEto());
 		}
-		((RenderableLayer) layer).addRenderable(path);
+		((RenderableLayer) layer).addRenderable(trajectory);
 		
 		List<Position> waypoints = Arrays.asList(tsGrid.getCornerPositions());
 		//ArrayList<Position> wp = new ArrayList<Position>(waypoints);
 		//wp.add(tsGrid.getCenterPosition());
-		path = planner.plan(origin, destination, waypoints, ZonedDateTime.now());
-		path.setVisible(true);
-		path.setShowPositions(true);
-		path.setDrawVerticals(true);
-		path.setAttributes(new BasicShapeAttributes());
-		path.getAttributes().setOutlineMaterial(Material.GREEN);
-		path.getAttributes().setOutlineWidth(5d);
-		path.getAttributes().setOutlineOpacity(0.5d);
-		((RenderableLayer) layer).addRenderable(path);
+		trajectory = planner.plan(origin, destination, waypoints, ZonedDateTime.now());
+		trajectory.setVisible(true);
+		trajectory.setShowPositions(true);
+		trajectory.setDrawVerticals(true);
+		trajectory.setAttributes(new BasicShapeAttributes());
+		trajectory.getAttributes().setOutlineMaterial(Material.GREEN);
+		trajectory.getAttributes().setOutlineWidth(5d);
+		trajectory.getAttributes().setOutlineOpacity(0.5d);
+		((RenderableLayer) layer).addRenderable(trajectory);
 		
 		// A*
 		Position paris = new Position(Angle.fromDegrees(48.864716d), Angle.fromDegrees(2.349014d), 10000);
@@ -455,18 +456,18 @@ public class RegularGridTest {
 		A320 a320 = new A320(paris, 5000, CombatIdentification.FRIEND);
 		ZonedDateTime start = ZonedDateTime.of(2012, 8, 10, 14, 0, 0, 0, ZoneId.of("UTC"));
 		ForwardAStarPlanner planner2 = new ForwardAStarPlanner(a320, tsGrid);
-		Path path2 = planner2.plan(paris, goal, start);
-		path2.setVisible(true);
-		path2.setShowPositions(true);
-		path2.setDrawVerticals(true);
-		path2.setAttributes(new BasicShapeAttributes());
-		path2.getAttributes().setOutlineMaterial(Material.ORANGE);
-		path2.getAttributes().setOutlineWidth(5d);
-		path2.getAttributes().setOutlineOpacity(0.5d);
-		((RenderableLayer) layer).addRenderable(path2);
+		Trajectory trajectory2 = planner2.plan(paris, goal, start);
+		trajectory2.setVisible(true);
+		trajectory2.setShowPositions(true);
+		trajectory2.setDrawVerticals(true);
+		trajectory2.setAttributes(new BasicShapeAttributes());
+		trajectory2.getAttributes().setOutlineMaterial(Material.ORANGE);
+		trajectory2.getAttributes().setOutlineWidth(5d);
+		trajectory2.getAttributes().setOutlineOpacity(0.5d);
+		((RenderableLayer) layer).addRenderable(trajectory2);
 		
 		// Theta*
-		for (Waypoint p : planner2.getPlan()) {
+		for (Waypoint p : (Iterable<Waypoint>) trajectory2.getWaypoints()) {
 			GlobeAnnotation ga = new GlobeAnnotation(p.getEto().toString() , p);
 			((RenderableLayer) layer).addRenderable(ga);
 		}

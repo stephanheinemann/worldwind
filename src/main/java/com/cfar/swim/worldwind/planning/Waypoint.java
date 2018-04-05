@@ -47,7 +47,11 @@ import java.time.Duration;
  * @author Stephan Heinemann
  *
  */
-public class Waypoint extends Position implements Comparable<Waypoint>, Depictable, Designatable {
+public class Waypoint extends Position
+implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
+	
+	// TODO: possibly extend Waypoint with PrecisionWaypoint
+	// TODO: use markers for actual track data (class Track)
 	
 	/** the symbol identification code for an action waypoint */
 	public static final String SICD_NAV_WAYPOINT_ACTION = "GFGPGPPW------X"; // G*GPGPPW--****X
@@ -76,25 +80,14 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	/** the symbol identification code for a route reference waypoint */
 	public static final String SICD_NAV_WAYPOINT_ROUTE_REFERENCE = "GFGPGPOR------X"; // G*GPGPOR--****X
 	
-	// TODO: possibly extend Waypoint with PrecisionWaypoint
-	// TODO: use markers for actual track data (class Track)
-	
 	/** the designator of this waypoint */
 	private String designator = "?";
-	
-	/** the parent waypoint of this waypoint in a trajectory */
-	private Waypoint parent = null;
 	
 	/** the precision position of this waypoint */
 	private PrecisionPosition position = null;
 	
-	/** the estimated current cost of this waypoint */
-	private double g = Double.POSITIVE_INFINITY;
-	
-	// TODO: (position, estimated cost tuple: (g1, g2)) for more advanced versions
-	
-	/** the estimated remaining cost of this waypoint */
-	private double h = Double.POSITIVE_INFINITY;
+	/** the estimated cost of this waypoint in a trajectory */ 
+	private double cost = Double.POSITIVE_INFINITY;
 	
 	/** the distance to go from this waypoint (to the next one) */
 	private double dtg = Double.POSITIVE_INFINITY;
@@ -150,69 +143,6 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 			this.depiction.setDesignation(this.designator);
 		}
 	}
-
-	/**
-	 * Gets the estimated current cost of this waypoint.
-	 * 
-	 * @return the estimated current cost of this waypoint
-	 */
-	public double getG() {
-		return g;
-	}
-	
-	/**
-	 * Sets the estimated current cost of this waypoint.
-	 * 
-	 * @param g the estimated current cost of this waypoint
-	 */
-	public void setG(double g) {
-		this.g = g;
-	}
-	
-	/**
-	 * Gets the estimated remaining cost of this waypoint.
-	 * 
-	 * @return the estimated remaining cost of this waypoint
-	 */
-	public double getH() {
-		return h;
-	}
-	
-	/**
-	 * Sets the estimated remaining cost of this waypoint.
-	 * 
-	 * @param h the estimated remaining cost of this waypoint
-	 */
-	public void setH(double h) {
-		this.h = h;
-	}
-	
-	/**
-	 * Gets the estimated total cost of this waypoint.
-	 * 
-	 * @return the estimated total cost of this waypoint
-	 */
-	public double getF() {
-		return this.g + this.h;
-	}
-	
-	/**
-	 * Gets the parent waypoint of this waypoint.
-	 * 
-	 * @return the parent waypoint of this waypoint
-	 */
-	public Waypoint getParent() {
-		return parent;
-	}
-	
-	/**
-	 * Sets the parent waypoint of this waypoint.
-	 * 
-	 * @param parent the parent waypoint of this waypoint
-	 */
-	public void setParent(Waypoint parent) {
-		this.parent = parent;
-	}
 	
 	/**
 	 * Gets the precision position of this waypoint.
@@ -224,61 +154,21 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	}
 	
 	/**
-	 * Compares this waypoint to another waypoint based on their estimated
-	 * total costs. It the estimated total costs of both waypoints is equal,
-	 * then break ties in favor of higher estimated current costs.
+	 * Gets the estimated cost of this waypoint in a trajectory.
 	 * 
-	 * @param o the other waypoint
-	 * 
-	 * @return -1, 0, 1, if this waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their total
-	 *         estimated cost
-	 * 
-	 * @see Comparable#compareTo(Object)
+	 * @return the estimated cost of this wayppoint in a trajectory
 	 */
-	@Override
-	public int compareTo(Waypoint o) {
-		int compareTo = new Double(this.getF()).compareTo(o.getF());
-		if (0 == compareTo) {
-			// break ties in favor of higher G-values
-			compareTo = new Double(o.getG()).compareTo(this.getG());
-		}
-		
-		return compareTo;
+	public double getCost() {
+		return this.cost;
 	}
 	
 	/**
-	 * Indicates whether or not this waypoint equals another waypoint based on
-	 * their precision position.
+	 * Sets the estimated cost of this waypoint in a trajectory.
 	 * 
-	 * @param o the other waypoint
-	 * 
-	 * @return true, if the precision position of this waypoint equals the
-	 *         precision position of the other waypoint, false otherwise
-	 * 
-	 * @see Object#equals(Object)
+	 * @param cost the estimated cost of this waypoint in a trajectory
 	 */
-	@Override
-	public boolean equals(Object o) {
-		boolean equals = false;
-		
-		if (o instanceof Waypoint) {
-			equals = this.position.equals(((Waypoint) o).position);
-		}
-	
-		return equals;
-	}
-	
-	/**
-	 * Gets the hash code of this waypoint based on its precision position.
-	 * 
-	 * @return the hash code of this waypoint based on its precision position
-	 * 
-	 * @see Object#hashCode()
-	 */
-	@Override
-	public int hashCode() {
-		return this.position.hashCode();
+	public void setCost(double cost) {
+		this.cost = cost;
 	}
 	
 	/**
@@ -335,6 +225,8 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 		this.eto = eto;
 	}
 	
+	// TODO: actuals belong to track points instead?
+	
 	/**
 	 * Gets the actual time at this waypoint.
 	 * 
@@ -375,7 +267,9 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	@Override
 	public void setDepiction(Depiction depiction) {
 		this.depiction = depiction;
-		this.depiction.setDesignation(this.designator);
+		if (null != this.depiction) {
+			this.depiction.setDesignation(this.designator);
+		}
 	}
 	
 	/**
@@ -388,6 +282,93 @@ public class Waypoint extends Position implements Comparable<Waypoint>, Depictab
 	@Override
 	public boolean hasDepiction() {
 		return (null != this.depiction);
+	}
+	
+	/**
+	 * Clones this waypoint without its depiction.
+	 * 
+	 * @return the clone of this waypoint without its depiction 
+	 * 
+	 * @see Object#clone()
+	 */
+	@Override
+	public Waypoint clone() {
+		Waypoint waypoint = null;
+		
+		try {
+			waypoint = (Waypoint) super.clone();
+			waypoint.setDepiction(null);
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		
+		return waypoint;
+	}
+	
+	/**
+	 * Compares this waypoint to another waypoint based on their actual time
+	 * over (primary), estimated time over (secondary), position (tertiary).
+	 * 
+	 * @param waypoint the other waypoint
+	 * 
+	 * @return -1, 0, 1, if this waypoint is less than, equal, or greater,
+	 *         respectively, than the other waypoint based on their actual time
+	 *         over (primary), estimated time over (secondary), position
+	 *         (tertiary)
+	 * 
+	 * @see Comparable#compareTo(Object)
+	 */
+	@Override
+	public int compareTo(Waypoint waypoint) {
+		int compareTo = 0;
+		
+		// TODO: actuals versus estimates (waypoint versus trackpoint)
+		if ((null != this.ato) && (null != waypoint.ato)) {
+			compareTo = this.ato.compareTo(waypoint.ato);
+		} else if ((null != this.eto) && (null != waypoint.eto)) {
+			compareTo = this.eto.compareTo(waypoint.eto);
+		} else {
+			compareTo = this.position.compareTo(waypoint);
+		}
+		
+		return compareTo;
+	}
+	
+	/**
+	 * Indicates whether or not this waypoint equals another waypoint based on
+	 * their precision position.
+	 * 
+	 * @param o the other waypoint
+	 * 
+	 * @return true, if the precision position of this waypoint equals the
+	 *         precision position of the other waypoint, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (o instanceof Waypoint) {
+			// TODO: waypoint is defined via position and time, position only
+			// is problematic when revisiting a position at different times
+			// TODO: possibly refine with ETO or waypoint designator
+			equals = this.position.equals(((Waypoint) o).position);
+		}
+	
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this waypoint based on its precision position.
+	 * 
+	 * @return the hash code of this waypoint based on its precision position
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return this.position.hashCode();
 	}
 	
 	/**

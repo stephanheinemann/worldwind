@@ -456,6 +456,7 @@ public class CubicGrid extends RegularGrid {
 	 * 
 	 * @return the reference distances of the two points
 	 */
+	@SuppressWarnings("unused")
 	private double[][] computeDistances(Vec4 source, Vec4 target, int[] directions) {
 		double[][] distances = new double[3][2];
 		double[][] srcMinMax = this.computeMinMax(source, directions);

@@ -38,7 +38,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Stephan Heinemann
  *
  */
-public class PrecisionPosition extends Position implements Precision {
+public class PrecisionPosition extends Position implements Precision, Comparable<Position> {
 
 	/**
 	 * the precision of this precision position
@@ -117,6 +117,27 @@ public class PrecisionPosition extends Position implements Precision {
 	@Override
 	public Position getOriginal() {
 		return this.original;
+	}
+	
+	/**
+	 * Compares this precision position to another position based on their
+	 * latitude (primary) and longitude (secondary) angles.
+	 * 
+	 * @param position the other position
+	 * 
+	 * @return -1, 0, 1, if this precision position is less than, equal, or
+	 *         greater, respectively, than the other position based on their
+	 *         latitude (primary) and longitude (secondary)
+	 * 
+	 * @see Comparable#compareTo(Object)
+	 */
+	@Override
+	public int compareTo(Position position) {
+		int compareTo = this.latitude.compareTo(position.latitude);
+		if (0 == compareTo) {
+			compareTo = this.longitude.compareTo(position.longitude);
+		}
+		return compareTo;
 	}
 	
 }

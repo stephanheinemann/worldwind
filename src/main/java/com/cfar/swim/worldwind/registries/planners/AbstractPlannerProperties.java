@@ -29,46 +29,92 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
-import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.Properties;
 
 /**
- * Describes planner properties applicable to all planners.
+ * Abstracts planner properties applicable to all planners.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface PlannerProperties extends Properties<Planner> {
+public abstract class AbstractPlannerProperties implements PlannerProperties {
 
+	/** the cost policy of this planner properties bean */
+	CostPolicy costPolicy;
+	
+	/** the risk policy of this planner properties bean */
+	RiskPolicy riskPolicy;
+	
+	/**
+	 * Constructs a new planner properties bean using default cost and risk
+	 * policy property values.
+	 */
+	public AbstractPlannerProperties() {
+		this.costPolicy = CostPolicy.AVERAGE;
+		this.riskPolicy = RiskPolicy.SAFETY;
+	}
+	
+	/**
+	 * Constructs a new planner properties bean with specified cost and risk
+	 * policy property values.
+	 * 
+	 * @param costPolicy the cost policy of this planner properties bean
+	 * @param riskPolicy the risk policy of this planner properties bean
+	 */
+	public AbstractPlannerProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		this.costPolicy = costPolicy;
+		this.riskPolicy = riskPolicy;
+	}
+	
 	/**
 	 * Gets the cost policy of this planner properties bean.
 	 * 
 	 * @return the cost policy of this planner properties bean
+	 * 
+	 * @see PlannerProperties#getCostPolicy()
 	 */
-	public CostPolicy getCostPolicy();
+	@Override
+	public CostPolicy getCostPolicy() {
+		return this.costPolicy;
+	}
 	
 	/**
 	 * Sets the cost policy of this planner properties bean.
 	 * 
 	 * @param costPolicy the cost policy to be set
+	 * 
+	 * @see PlannerProperties#setCostPolicy(CostPolicy)
 	 */
-	public void setCostPolicy(CostPolicy costPolicy);
+	@Override
+	public void setCostPolicy(CostPolicy costPolicy) {
+		this.costPolicy = costPolicy;
+	}
 	
 	/**
 	 * Gets the risk policy of this planner properties bean.
 	 * 
 	 * @return the risk policy of this planner properties bean
+	 * 
+	 * @see PlannerProperties#getRiskPolicy()
 	 */
-	public RiskPolicy getRiskPolicy();
+	@Override
+	public RiskPolicy getRiskPolicy() {
+		return this.riskPolicy;
+	}
 	
 	/**
 	 * Sets the risk policy of this planner properties bean.
 	 * 
 	 * @param riskPolicy the risk policy to be set
+	 * 
+	 * @see PlannerProperties#setRiskPolicy(RiskPolicy)
 	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
+	@Override
+	public void setRiskPolicy(RiskPolicy riskPolicy) {
+		this.riskPolicy = riskPolicy;
+	}
 	
 	/**
 	 * Clones this planner properties bean.
@@ -78,6 +124,14 @@ public interface PlannerProperties extends Properties<Planner> {
 	 * @see Properties#clone()
 	 */
 	@Override
-	public PlannerProperties clone();
+	public AbstractPlannerProperties clone() {
+		AbstractPlannerProperties clone = null;
+		try {
+			clone = (AbstractPlannerProperties) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return clone;
+	}
 	
 }
