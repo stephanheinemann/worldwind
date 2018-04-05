@@ -76,6 +76,9 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	/** the goal A* waypoint */
 	private AStarWaypoint goal = null;
 	
+	/** the start region */
+	private Set<PrecisionPosition> startRegion;
+	
 	/** the goal region */
 	private Set<PrecisionPosition> goalRegion;
 	
@@ -140,6 +143,26 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected void setGoal(AStarWaypoint goal) {
 		this.goal = goal;
+	}
+	
+	/**
+	 * Sets the start region of this forward A* planner.
+	 * 
+	 * @param startRegion the start region of this forward A* planner
+	 */
+	protected void setStartRegion(Set<PrecisionPosition> startRegion) {
+		this.startRegion = startRegion;
+	}
+	
+	/**
+	 * Indicates whether or not a position is within the start region.
+	 * 
+	 * @param position the position
+	 * 
+	 * @return true if the position is within the start region, false otherwise
+	 */
+	protected boolean isInStartRegion(Position position) {
+		return this.startRegion.contains(position);
 	}
 	
 	/**
@@ -343,12 +366,19 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected Set<? extends AStarWaypoint> expand(AStarWaypoint waypoint) {
 		Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
+		
 		// if a start has no neighbors, then it is not a waypoint in the
 		// environment and its adjacent waypoints have to be determined for
 		// initial expansion
 		if (neighbors.isEmpty()) {
 			neighbors = this.getEnvironment().getAdjacentWaypoints(waypoint);
 		}
+		
+		// expand start region position towards the start
+		if (this.isInStartRegion(waypoint.getPrecisionPosition())) {
+			neighbors.add(this.getStart());
+		}
+		
 		// expand a goal region position towards the goal
 		if (this.isInGoalRegion(waypoint.getPrecisionPosition())) {
 			neighbors.add(this.getGoal());
@@ -490,8 +520,14 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0);
-		// if a goal is not a waypoint in the environment, then its
-		// goal region has to be determined for the final expansion
+		
+		// the adjacent waypoints to the origin
+		this.setStartRegion(this.getEnvironment().getAdjacentWaypoints(origin)
+				.stream()
+				.map(PrecisionPosition::new)
+				.collect(Collectors.toSet()));
+		
+		// the adjacent waypoints to the destination
 		this.setGoalRegion(this.getEnvironment().getAdjacentWaypoints(destination)
 				.stream()
 				.map(PrecisionPosition::new)

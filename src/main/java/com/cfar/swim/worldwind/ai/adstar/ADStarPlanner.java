@@ -235,6 +235,26 @@ public class ADStarPlanner extends ARAStarPlanner {
 		// TODO: identify minimum v-cost neighbor if any (expandable, expanded)
 		// TODO: repair g-cost based on minimum v-cost and update parent
 		// TODO: maybe visited predecessors and successors should be stored...
+		
+		Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
+		
+		// add start to the start region
+		if (this.isInStartRegion(waypoint)) {
+			neighbors.add(this.getStart());
+		}
+		
+		// add goal to the goal region
+		if (this.isInGoalRegion(waypoint)) {
+			neighbors.add(this.getGoal());
+		}
+		
+		for (Position neighbor : neighbors) {
+			ADStarWaypoint adsw = this.createWaypoint(neighbor);
+			Optional<? extends ADStarWaypoint> expandable =
+					this.findExpandable(adsw);
+		}
+		
+		// TODO: only incons gets backed up, parents have to be considered too
 	}
 	
 	/**

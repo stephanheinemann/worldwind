@@ -29,6 +29,9 @@
  */
 package com.cfar.swim.worldwind.ai.astar;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -44,6 +47,9 @@ public class AStarWaypoint extends Waypoint {
 	
 	/** the parent A* waypoint of this A* waypoint in a trajectory */
 	private AStarWaypoint parent = null;
+	
+	/** the visited neighbors of this A* waypoint in an environment */
+	private final Set<AStarWaypoint> neighbors = new HashSet<>();
 	
 	/** the estimated remaining cost (h-value) of this A* waypoint */
 	private double h;
@@ -77,6 +83,15 @@ public class AStarWaypoint extends Waypoint {
 	 */
 	public void setParent(AStarWaypoint parent) {
 		this.parent = parent;
+	}
+	
+	// TODO: visibility and cloning issues
+	public Set<AStarWaypoint> getNeighbors() {
+		return this.neighbors;
+	}
+	
+	public void setNeighbors(Set<AStarWaypoint> neighbors) {
+		this.neighbors.addAll(neighbors);
 	}
 	
 	/**
