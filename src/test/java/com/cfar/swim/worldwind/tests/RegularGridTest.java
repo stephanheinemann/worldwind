@@ -45,8 +45,8 @@ import javax.xml.bind.JAXBException;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
-import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
-import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.ai.discrete.astar.ForwardAStarPlanner;
+import com.cfar.swim.worldwind.ai.discrete.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;

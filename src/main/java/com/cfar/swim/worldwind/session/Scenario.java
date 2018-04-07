@@ -45,7 +45,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.cfar.swim.worldwind.ai.Planner;
-import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.ai.discrete.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.SimulatedDatalink;

@@ -39,7 +39,7 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
+import com.cfar.swim.worldwind.ai.discrete.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Cube;

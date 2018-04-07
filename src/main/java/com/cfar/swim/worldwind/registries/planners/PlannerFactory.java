@@ -33,9 +33,9 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import com.cfar.swim.worldwind.ai.Planner;
-import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
-import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
-import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.ai.discrete.arastar.ARAStarPlanner;
+import com.cfar.swim.worldwind.ai.discrete.astar.ForwardAStarPlanner;
+import com.cfar.swim.worldwind.ai.discrete.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;

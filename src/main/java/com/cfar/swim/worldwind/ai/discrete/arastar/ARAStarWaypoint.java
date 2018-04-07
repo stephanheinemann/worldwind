@@ -27,9 +27,9 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai.arastar;
+package com.cfar.swim.worldwind.ai.discrete.arastar;
 
-import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
+import com.cfar.swim.worldwind.ai.discrete.astar.AStarWaypoint;
 
 import gov.nasa.worldwind.geom.Position;
 

@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai.arastar;
+package com.cfar.swim.worldwind.ai.discrete.arastar;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -37,8 +37,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.AnytimePlanner;
-import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
-import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
+import com.cfar.swim.worldwind.ai.discrete.astar.AStarWaypoint;
+import com.cfar.swim.worldwind.ai.discrete.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Trajectory;
