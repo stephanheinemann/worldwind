@@ -975,10 +975,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
-	 * @see Environment#isWaypoint(Position)
 	 * @see RegularGrid#isWayoint(Vec4)
 	 */
-	@Override
 	public boolean isWaypoint(Position position) {
 		if (null != this.globe) {
 			return super.isWayoint(this.globe.computePointFromPosition(position));
@@ -997,10 +995,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
-	 * @see Environment#getAdjacentWaypoints(Position)
 	 * @see RegularGrid#getAdjacentWaypoints(Vec4)
 	 */
-	@Override
 	public Set<Position> getAdjacentWaypoints(Position position) {
 		if (null != this.globe) {
 			Set<Vec4> waypoints = super.getAdjacentWaypoints(this.globe.computePointFromPosition(position));
@@ -1025,10 +1021,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
-	 * @see Environment#isAdjacentWaypoint(Position, Position)
 	 * @see RegularGrid#isAdjacentWaypoint(Vec4, Vec4)
 	 */
-	@Override
 	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
 		if (null != this.globe) {
 			return super.isAdjacentWaypoint(
@@ -1099,9 +1093,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @throws IllegalStateException if the globe is not set
 	 * 
 	 * @see CubicGrid#getNeighbors(Vec4)
-	 * @see Environment#getNeighbors(Position)
 	 */
-	@Override
 	public Set<Position> getNeighbors(Position position) {
 		Set<Position> neighbors = new HashSet<Position>();
 		
@@ -1131,10 +1123,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
-	 * @see Environment#areNeighbors(Position, Position)
 	 * @see RegularGrid#areNeighbors(Vec4, Vec4)
 	 */
-	@Override
 	public boolean areNeighbors(Position position, Position neighbor) {
 		if (null != this.globe) {
 			return super.areNeighbors(

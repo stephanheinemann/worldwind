@@ -82,6 +82,6 @@ public interface Sampler {
      * 
      * @return list of k-nearest waypoints sorted by increasing distance
      */
-    List<Position> findNearest(Position waypoint, int k);
+    List<? extends Position> findNearest(Position waypoint, int k);
 
 }

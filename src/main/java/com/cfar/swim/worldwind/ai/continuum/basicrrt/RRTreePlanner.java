@@ -57,6 +57,9 @@ public class RRTreePlanner extends AbstractSampler {
     /** the maximum number of sampling iterations */
     static final int MAX_ITER = 1000_000;
 
+    /** the maximum distance to extend a waypoint in the tree */
+    static final int EPSILON = 10;
+
     // ---------- VARIABLES ----------
 
     /** the start RRT waypoint */
@@ -64,6 +67,9 @@ public class RRTreePlanner extends AbstractSampler {
 
     /** the goal RRT waypoint */
     private RRTreeWaypoint goal = null;
+
+    /** the newest waypoint in the tree */
+    private RRTreeWaypoint waypointNew = null;
 
     /** the set of sampled RRT waypoints */
     protected Set<RRTreeWaypoint> tree = new HashSet<>();
@@ -127,6 +133,24 @@ public class RRTreePlanner extends AbstractSampler {
 	this.goal = goal;
     }
 
+    /**
+     * Gets the newest RRT waypoint added to the tree.
+     * 
+     * @return the waypointNew the newest waypoint added to the tree
+     */
+    public RRTreeWaypoint getWaypointNew() {
+	return waypointNew;
+    }
+
+    /**
+     * Sets the newest RRT waypoint added to the tree.
+     * 
+     * @param waypointNew the newest waypoint added to the tree
+     */
+    public void setWaypointNew(RRTreeWaypoint waypointNew) {
+	this.waypointNew = waypointNew;
+    }
+
     // ---------- PROTECTED METHODS ----------
 
     /**
@@ -136,6 +160,7 @@ public class RRTreePlanner extends AbstractSampler {
      */
     @SuppressWarnings("unchecked")
     protected Trajectory createTrajectory() {
+	// TODO: How does this function work?
 	return new Trajectory((List<Waypoint>) this.plan.clone());
     }
 
@@ -176,9 +201,75 @@ public class RRTreePlanner extends AbstractSampler {
      * @return status the status resulting from the extend
      */
     protected Status extendRRT(RRTreeWaypoint waypoint) {
-	Status status = Status.TRAPPED;
+	Status status;
+	boolean success;
+	RRTreeWaypoint waypointNear, waypointNew;
+
+	// Finds the node in the tree closest to the sampled position
+	// TODO: Find nearest must return a node and not a position
+	waypointNear = new RRTreeWaypoint(super.findNearest(waypoint,1).get(0));
+
+	// Create a new node by extension from near to sampled
+	success = this.newWaypoint(waypoint, waypointNear);
+
+	// Set status variable by checking if extension was possible
+	if (success) {
+	    waypointNew = this.getWaypointNew();
+	    tree.add(waypointNew);
+	    if (waypointNew == waypointNear) {
+		status = Status.REACHED;
+	    } else {
+		status = Status.ADVANCED;
+	    }
+	} else {
+	    status = Status.TRAPPED;
+	}
 
 	return status;
+    }
+
+    /**
+     * Creates a new waypoint by extending a sampled waypoint in the direction
+     * of the nearest waypoint following certain restrictions
+     * 
+     * @param waypoint the waypoint to be reached
+     * @param waypointNear the waypoint to be extended
+     * 
+     * @return true if it was possible to extend in the desired direction (false
+     *         otherwise)
+     */
+    protected boolean newWaypoint(RRTreeWaypoint waypoint,
+	    RRTreeWaypoint waypointNear) {
+	boolean success;
+	RRTreeWaypoint waypointNew;
+
+	// Extend nearest waypoint in the direction of waypoint
+	waypointNew = this.growWaypoint(waypoint, waypointNear);
+	this.setWaypointNew(waypointNew);
+
+	// Check if the new waypoint is in conflict with the environment
+	// TODO: [ENVIRONMENT] How to check if the new waypoint is in conflict
+	success = true;
+
+	return success;
+    }
+    
+    
+    /**
+     * Grows the tree in the direction of the waypoint from the branch ending at  
+     * 
+     * @param waypoint
+     * @param waypointNear
+     * @return
+     */
+    protected RRTreeWaypoint growWaypoint(RRTreeWaypoint waypoint,
+	    RRTreeWaypoint waypointNear) {
+	RRTreeWaypoint waypointNew;
+	
+	// TODO: How to extend a waypoint in a certain direction
+	waypointNew = new RRTreeWaypoint(waypoint);
+	
+	return waypointNew;
     }
 
     /**
@@ -193,7 +284,7 @@ public class RRTreePlanner extends AbstractSampler {
     }
 
     /**
-     * Computes the backwards path from the current waypoint to the starting waypoint 
+     * Computes the path from the current waypoint to the starting waypoint
      */
     protected void computePath() {
 	// TODO: compute the path from the new waypoint to the start by
@@ -236,8 +327,8 @@ public class RRTreePlanner extends AbstractSampler {
     @Override
     public Trajectory plan(Position origin, Position destination,
 	    ZonedDateTime etd) {
-	// TODO Implement the planning strategy according to this algorithm 
-	
+	// TODO Implement the planning strategy according to this algorithm
+
 	// this.initialize(origin, destination, etd);
 	// this.compute();
 	// Trajectory trajectory = this.createTrajectory();
@@ -257,7 +348,7 @@ public class RRTreePlanner extends AbstractSampler {
     public Trajectory plan(Position origin, Position destination,
 	    List<Position> waypoints, ZonedDateTime etd) {
 	// TODO Implement a planning strategy to allow for intermidiate goals
-	
+
 	// Multiple calls to plan (origin, destination, etd) creating an entire
 	// tree between multiple goals
 	return null;

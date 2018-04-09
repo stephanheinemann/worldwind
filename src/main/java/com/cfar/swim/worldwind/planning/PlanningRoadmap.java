@@ -106,18 +106,6 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public Set<Position> getNeighbors(Position position) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean areNeighbors(Position position, Position neighbor) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public Set<? extends Environment> getRefinements() {
 		// TODO Auto-generated method stub
 		return null;
@@ -183,23 +171,6 @@ public class PlanningRoadmap implements Environment {
 		return 0;
 	}
 
-	@Override
-	public boolean isWaypoint(Position position) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public Set<Position> getAdjacentWaypoints(Position position) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
-		// TODO Auto-generated method stub
-		return false;
-	}
 
 	@Override
 	public boolean contains(Position position) {

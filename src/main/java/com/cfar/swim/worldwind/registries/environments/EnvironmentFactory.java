@@ -131,7 +131,7 @@ public class EnvironmentFactory implements Factory<Environment> {
 			environment = new PlanningRoadmap();
 		} else if (specification.getId().equals(Specification.PLANNING_CONTINUUM_ID)) {
 			// TODO: implement
-			environment = new PlanningContinuum();
+//			environment = new PlanningContinuum();
 		}
 		
 		return environment;

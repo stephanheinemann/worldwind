@@ -365,13 +365,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @return the neighbors of the expanded A* waypoint
 	 */
 	protected Set<? extends AStarWaypoint> expand(AStarWaypoint waypoint) {
-		Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
+	    	// TODO find a better alternative to this cast
+	    	PlanningGrid environment = (PlanningGrid) this.getEnvironment();
+		
+	    	Set<Position> neighbors = environment.getNeighbors(waypoint);
 		
 		// if a start has no neighbors, then it is not a waypoint in the
 		// environment and its adjacent waypoints have to be determined for
 		// initial expansion
 		if (neighbors.isEmpty()) {
-			neighbors = this.getEnvironment().getAdjacentWaypoints(waypoint);
+			neighbors = environment.getAdjacentWaypoints(waypoint);
 		}
 		
 		// expand start region position towards the start

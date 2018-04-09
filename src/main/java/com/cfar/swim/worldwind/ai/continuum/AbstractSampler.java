@@ -51,6 +51,7 @@ import gov.nasa.worldwind.geom.Position;
 public abstract class AbstractSampler extends AbstractPlanner
 	implements Sampler {
 
+    // TODO: Should this be defined here or specifically for every algorithm? (Probably not here...)
     /** the list of already sampled waypoints */
     private List<? extends Waypoint> waypointList = null;
 
@@ -132,7 +133,7 @@ public abstract class AbstractSampler extends AbstractPlanner
      * 
      * @return list of k-nearest waypoints sorted by increasing distance
      */
-    public List<Position> findNearest(Position waypoint, int num) {
+    public List<? extends Position> findNearest(Position waypoint, int num) {
 	List<Position> posiNearList = new ArrayList<Position>();
 	List<Position> posiTempList = new ArrayList<Position>(waypointList);
 	
@@ -156,8 +157,5 @@ public abstract class AbstractSampler extends AbstractPlanner
 	}
 	
 	return posiNearList;
-    }    
-    public Position findNearest(Position waypoint) {
-	return this.findNearest(waypoint, 1).get(0);
     }
 }
