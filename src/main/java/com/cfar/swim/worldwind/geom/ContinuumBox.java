@@ -36,6 +36,8 @@ import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
+ * TODO describe
+ * 
  * @author Manuel Rosa
  *
  */

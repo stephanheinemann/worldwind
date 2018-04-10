@@ -85,6 +85,25 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	/** the last computed plan */
 	private final LinkedList<AStarWaypoint> plan = new LinkedList<>();
 	
+	// Manuel and Henrique (fixing errors)
+	/** The environment casted to a planning grid */
+	private PlanningGrid planningGrid = null;
+	
+	/**
+	 * @return the planningGrid
+	 */
+	public PlanningGrid getPlanningGrid() {
+		return planningGrid;
+	}
+	
+	/**
+	 * @param planningGrid the planningGrid to set
+	 */
+	public void setPlanningGrid(PlanningGrid planningGrid) {
+		this.planningGrid = planningGrid;
+	}
+	
+
 	/**
 	 * Constructs a basic forward A* planner for a specified aircraft and
 	 * environment using default local cost and risk policies.
@@ -96,6 +115,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+		this.planningGrid = (PlanningGrid) this.getEnvironment();
 	}
 	
 	/**
@@ -525,13 +545,13 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.getGoal().setH(0);
 		
 		// the adjacent waypoints to the origin
-		this.setStartRegion(this.getEnvironment().getAdjacentWaypoints(origin)
+		this.setStartRegion(this.getPlanningGrid().getAdjacentWaypoints(origin)
 				.stream()
 				.map(PrecisionPosition::new)
 				.collect(Collectors.toSet()));
 		
 		// the adjacent waypoints to the destination
-		this.setGoalRegion(this.getEnvironment().getAdjacentWaypoints(destination)
+		this.setGoalRegion(this.getPlanningGrid().getAdjacentWaypoints(destination)
 				.stream()
 				.map(PrecisionPosition::new)
 				.collect(Collectors.toSet()));

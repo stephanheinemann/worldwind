@@ -107,32 +107,6 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public boolean areNeighbors(Environment neighbor);
 	
 	/**
-	 * Indicates whether or not this environment is refined.
-	 * 
-	 * @return true if this environment is refined, false otherwise
-	 */
-	public boolean isRefined();
-	
-	/**
-	 * Gets the refinements of this environment.
-	 * 
-	 * @return the refinements of this environment
-	 */
-	public Set<? extends Environment> getRefinements();
-	
-	/**
-	 * Refines this environment with a refinement density.
-	 * 
-	 * @param density the refinement density
-	 */
-	public void refine(int density);
-	
-	/**
-	 * Coarsens this environment.
-	 */
-	public void coarsen();
-	
-	/**
 	 * Embeds an obstacle into this environment.
 	 * 
 	 * @param obstacle the obstacle to be embedded
