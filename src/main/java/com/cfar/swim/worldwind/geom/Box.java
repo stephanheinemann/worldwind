@@ -187,7 +187,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
-	
+
 	/**
 	 * Creates a new unit box centered at a specified point.
 	 * 

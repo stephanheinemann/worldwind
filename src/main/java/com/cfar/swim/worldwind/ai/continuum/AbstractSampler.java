@@ -32,13 +32,17 @@ package com.cfar.swim.worldwind.ai.continuum;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
+import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Vec4;
 
 /**
  * Abstracts a sampling based motion planner for an aircraft in an environment
@@ -54,6 +58,9 @@ implements Sampler {
 	// TODO: Should this be defined here or specifically for every algorithm? (Probably not here...)
 	/** the list of already sampled waypoints */
 	private List<? extends Waypoint> waypointList = null;
+	
+	/** the environment casted to a planning continuum */
+	private PlanningContinuum continuumEnvironment =null;
 
 	/**
 	 * Constructs a sampling based motion planner with a specified aircraft and
@@ -64,6 +71,9 @@ implements Sampler {
 	 */
 	public AbstractSampler(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+		if(this.getEnvironment() instanceof PlanningContinuum) {
+			this.setContinuumEnvironment((PlanningContinuum) this.getEnvironment());
+		}
 	}
 
 	/**
@@ -85,16 +95,41 @@ implements Sampler {
 	}
 
 	/**
+	 * @return the continuumEnvironment
+	 */
+	public PlanningContinuum getContinuumEnvironment() {
+		return continuumEnvironment;
+	}
+	
+	/**
+	 * @param continuumEnvironment the continuumEnvironment to set
+	 */
+	public void setContinuumEnvironment(PlanningContinuum continuumEnvironment) {
+		this.continuumEnvironment = continuumEnvironment;
+	}
+	
+	
+
+	/**
 	 * Samples a position from a continuous space defined in the current
 	 * environment
 	 * 
 	 * @return position in global coordinates inside the environment
 	 */
-	public Position sampleRandomPosition() {
-		Position position = new Position(null, null, 0);
+	public Position sampleRandomPosition() {	
+		Vec4[] corners = this.getContinuumEnvironment().getCorners();
+		Vec4 minimum = corners[3]; // Point in box with all minimum coordinates
+		Vec4 maximum = corners[7]; // Point in box with all maximum coordinates
+		
+		double x, y, z;
+		
+		x = minimum.x + (new Random().nextDouble()*(maximum.x-minimum.x));
+		y = minimum.y + (new Random().nextDouble()*(maximum.y-minimum.y));
+		z = minimum.z + (new Random().nextDouble()*(maximum.z-minimum.z));
 
-		// TODO: implement random sampler of position coordinates
-		//     : based on environment borders
+		Vec4 point = new Vec4(x,y,z);
+		
+		Position position = this.getEnvironment().getGlobe().computePositionFromPoint(point);
 
 		return position;
 	}

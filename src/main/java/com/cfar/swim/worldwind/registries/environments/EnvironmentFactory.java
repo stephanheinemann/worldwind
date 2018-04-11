@@ -129,7 +129,7 @@ public class EnvironmentFactory implements Factory<Environment> {
 		    environment.setGlobe(this.scenario.getGlobe());
 		} else if (specification.getId().equals(Specification.PLANNING_ROADMAP_ID)) {
 			// TODO: implement
-			environment = new PlanningRoadmap();
+//			environment = new PlanningRoadmap();
 		} else if (specification.getId().equals(Specification.PLANNING_CONTINUUM_ID)) {
 		    // TODO: Review if implementation is done correctly
 		    
