@@ -817,9 +817,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return true if this planning grid is refined, false otherwise
 	 * 
-	 * @see Environment#isRefined()
 	 */
-	@Override
 	public boolean isRefined() {
 		return this.hasChildren();
 	}
@@ -829,9 +827,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return the refinements of this planning grid
 	 * 
-	 * @see Environment#getRefinements()
 	 */
-	@Override
 	public Set<? extends PlanningGrid> getRefinements() {
 		return this.getChildren();
 	}
@@ -842,9 +838,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @param density the refinement density
 	 * 
-	 * @see Environment#refine(int)
 	 */
-	@Override
 	public void refine(int density) {
 		this.addChildren(density);
 	}
@@ -852,9 +846,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	/**
 	 * Coarsens, that is, removes the children of this planning grid.
 	 *
-	 * @see Environemnt#coarsen
 	 */
-	@Override
 	public void coarsen() {
 		this.removeChildren();
 	}

@@ -33,10 +33,10 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.uvic-cfar.swim</groupId>
 	<artifactId>worldwind</artifactId>
-	<version>1.0.0-alpha2</version>
+	<version>1.0.0-alpha3-SNAPSHOT</version>
 	<packaging>bundle</packaging>
 	<name>SWIM Worldwind</name>
-	<description>NASA Worldwind extensions for SWIM-based planning, decision-making and support.</description>
+	<description>NASA Worldwind Extensions for SWIM-based Planning, Decision-Making and Support</description>
 
 	<inceptionYear>2016</inceptionYear>
 	<licenses>
@@ -315,6 +315,11 @@
 			<groupId>com.uvic-cfar.swim</groupId>
 			<artifactId>iwxxm-jaxb</artifactId>
 			<version>2.0.0-beta5</version>
+		</dependency>
+		<dependency>
+			<groupId>com.uvic-cfar.swim</groupId>
+			<artifactId>droneconnect</artifactId>
+			<version>1.0.0-alpha1</version>
 		</dependency>
 	</dependencies>
 

@@ -116,24 +116,32 @@ public class EnvironmentFactory implements Factory<Environment> {
 		Environment environment = null;
 		
 		if (specification.getId().equals(Specification.PLANNING_GRID_ID)) {
-			PlanningGridProperties properties = (PlanningGridProperties) specification.getProperties();
-			gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
-            Box envBox = new Box(bb);
-            double side = envBox.getRLength() / properties.getDivsion();
-            Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
-            int sCells = (int) Math.ceil(envBox.getSLength() / side);
-            int tCells = (int) Math.ceil(envBox.getTLength() / side);
-            environment = new PlanningGrid(envCube, properties.getDivsion(), sCells, tCells);
-            environment.setThreshold(0d);
-            environment.setGlobe(this.scenario.getGlobe());
+
+		    PlanningGridProperties properties = (PlanningGridProperties) specification.getProperties();
+		    gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
+		    Box envBox = new Box(bb);
+		    double side = envBox.getRLength() / properties.getDivsion();
+		    Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
+		    int sCells = (int) Math.ceil(envBox.getSLength() / side);
+		    int tCells = (int) Math.ceil(envBox.getTLength() / side);
+		    environment = new PlanningGrid(envCube, properties.getDivsion(), sCells, tCells);
+		    environment.setThreshold(0d);
+		    environment.setGlobe(this.scenario.getGlobe());
 		} else if (specification.getId().equals(Specification.PLANNING_ROADMAP_ID)) {
 			// TODO: implement
 			environment = new PlanningRoadmap();
 		} else if (specification.getId().equals(Specification.PLANNING_CONTINUUM_ID)) {
-			// TODO: implement
-//			environment = new PlanningContinuum();
+		    // TODO: Review if implementation is done correctly
+		    
+		    PlanningContinuumProperties properties = (PlanningContinuumProperties) specification.getProperties();
+		    gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
+		    Box envBox = new Box(bb);
+		    
+		    environment = new PlanningContinuum(envBox);
+		    environment.setThreshold(0d);
+		    environment.setGlobe(this.scenario.getGlobe());
 		}
-		
+
 		return environment;
 	}
 
