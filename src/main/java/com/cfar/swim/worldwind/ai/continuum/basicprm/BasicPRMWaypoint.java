@@ -29,6 +29,9 @@
  */
 package com.cfar.swim.worldwind.ai.continuum.basicprm;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -39,9 +42,14 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class BasicPRMWaypoint extends Waypoint {
 	
+	/** the parent BasicPRM waypoint of this BasicPRM waypoint in a trajectory */
+	private BasicPRMWaypoint parent = null;
 	
-	/** the component to which the waypoint is connected to*/
-	private int component;
+	/** the visited neighbors of this BasicPRM waypoint in an environment */
+	private final Set<BasicPRMWaypoint> neighbors = new HashSet<>();
+	
+	/** the estimated remaining cost (h-value) of this BasicPRM waypoint */
+	private double h;
 	
 	/**
 	 * Constructs an BasicPRM waypoint at a specified position.
@@ -53,6 +61,34 @@ public class BasicPRMWaypoint extends Waypoint {
 	public BasicPRMWaypoint(Position position) {
 		super(position);
 		this.setG(Double.POSITIVE_INFINITY);
+		this.setH(Double.POSITIVE_INFINITY);
+	}
+	
+	/**
+	 * Gets the parent BasicPRM waypoint of this BasicPRM waypoint.
+	 * 
+	 * @return the parent BasicPRM waypoint of this BasicPRM waypoint
+	 */
+	public BasicPRMWaypoint getParent() {
+		return parent;
+	}
+	
+	/**
+	 * Sets the parent BasicPRM waypoint of this BasicPRM waypoint.
+	 * 
+	 * @param parent the parent BasicPRM waypoint of this BasicPRM waypoint
+	 */
+	public void setParent(BasicPRMWaypoint parent) {
+		this.parent = parent;
+	}
+	
+	// TODO: visibility and cloning issues
+	public Set<BasicPRMWaypoint> getNeighbors() {
+		return this.neighbors;
+	}
+	
+	public void setNeighbors(Set<BasicPRMWaypoint> neighbors) {
+		this.neighbors.addAll(neighbors);
 	}
 	
 	/**
@@ -76,12 +112,34 @@ public class BasicPRMWaypoint extends Waypoint {
 		super.setCost(g);
 	}
 	
-	public int getComponent() {
-		return component;
+	/**
+	 * Gets the estimated remaining cost (h-value) of this BasicPRM waypoint.
+	 * 
+	 * @return the estimated remaining cost (h-value) of this BasicPRM waypoint
+	 */
+	public double getH() {
+		return this.h;
 	}
 	
-	public void setComponent(int component) {
-		this.component = component;
+	/**
+	 * Sets the estimated remaining cost (h-value) of this BasicPRM waypoint.
+	 * 
+	 * @param h the estimated remaining cost (h-value) of this BasicPRM waypoint
+	 */
+	public void setH(double h) {
+		if (0d > h) {
+			throw new IllegalArgumentException("h is less than 0");
+		}
+		this.h = h;
+	}
+	
+	/**
+	 * Gets the estimated total cost (f-value) of this BasicPRM waypoint.
+	 * 
+	 * @return the estimated total cost (f-value) of this BasicPRM waypoint
+	 */
+	public double getF() {
+		return this.getG() + this.getH();
 	}
 	
 	/**
@@ -94,6 +152,7 @@ public class BasicPRMWaypoint extends Waypoint {
 	@Override
 	public BasicPRMWaypoint clone() {
 		BasicPRMWaypoint waypoint = (BasicPRMWaypoint) super.clone();
+		waypoint.setParent(null);
 		return waypoint;
 	}
 	
@@ -118,9 +177,12 @@ public class BasicPRMWaypoint extends Waypoint {
 		int compareTo = 0;
 		
 		if (waypoint instanceof BasicPRMWaypoint) {
-			BasicPRMWaypoint bprmw = (BasicPRMWaypoint) waypoint;
-			compareTo = new Double(this.getG()).compareTo(bprmw.getG());
-
+			BasicPRMWaypoint asw = (BasicPRMWaypoint) waypoint;
+			compareTo = new Double(this.getF()).compareTo(asw.getF());
+			if (0 == compareTo) {
+				// break ties in favor of higher G-values
+				compareTo = new Double(asw.getG()).compareTo(this.getG());
+			}
 		} else {
 			compareTo = super.compareTo(waypoint);
 		}
@@ -128,15 +190,4 @@ public class BasicPRMWaypoint extends Waypoint {
 		return compareTo;
 	}
 
-	public boolean checkSameComponent(BasicPRMWaypoint neighbor) {
-		if(this.component == neighbor.component)
-			return true;
-		else
-			return false;
-	}
-	
-	@Override
-	public int hashCode() {
-		return super.hashCode();
-	}
 }

@@ -29,32 +29,26 @@
  */
 package com.cfar.swim.worldwind.ai.continuum.basicprm;
 
-import java.awt.Color;
-import java.awt.Graphics;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
-import java.util.PriorityQueue;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.continuum.AbstractSampler;
-import com.cfar.swim.worldwind.ai.discrete.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
+import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.PlanningContinuum;
+import com.cfar.swim.worldwind.planning.PlanningGrid;
+import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.planning.Trajectory;
-import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Path;
 /**
  * @author Henrique Ferreira
  *
@@ -66,6 +60,7 @@ public class BasicPRM extends AbstractSampler{
 	public static final int MAX_DIST = 30;
 
 	public static final int MAX_SAMPLED_WAYPOINTS = 2000;
+	
 
 	private List<BasicPRMWaypoint> waypointList = null;
 	
@@ -135,7 +130,7 @@ public class BasicPRM extends AbstractSampler{
 		return waypoint;
 	}
 
-	public void compute() {
+	public void construct() {
 		
 		int num=0;
 
@@ -144,14 +139,9 @@ public class BasicPRM extends AbstractSampler{
 
 			BasicPRMWaypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
 
-			waypoint.setComponent(num);	
-
 			if(!this.checkConflict(waypoint)) {
 				this.waypointList.add(waypoint);
 				this.connectWaypoint(waypoint);
-				if(this.getStart().checkSameComponent(this.getGoal())) {
-						this.connectPlan(this.getStart());
-				}
 				num++;
 			}
 		}
@@ -161,28 +151,23 @@ public class BasicPRM extends AbstractSampler{
 	public void connectWaypoint(BasicPRMWaypoint waypoint) {
 
 		int numConnectedNeighbor=0;
-		int component=waypoint.getComponent();
 
 		this.waypointList= this.sortNearest(waypoint);
 
 		for (BasicPRMWaypoint neighbor : this.waypointList) {
+			//TODO: create methods for the distance and connected neighbors if statements
 			if(super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST && numConnectedNeighbor < MAX_NEIGHBORS) {
-				if(!waypoint.checkSameComponent(neighbor) && !this.checkConflict(neighbor, waypoint)) {
-						numConnectedNeighbor++;
-						Edge newedge = new Edge(neighbor, waypoint);
-						this.edgeList.add(newedge);
-						component=this.updateComponents(component, neighbor);
+				if(!this.checkConflict(neighbor, waypoint)) {
+					numConnectedNeighbor++;
+					this.createEdge(waypoint, neighbor);
 				}
 			}
 		}
 	}
 	
-	public int updateComponents(int component, BasicPRMWaypoint neighbor) {
-		for (BasicPRMWaypoint waypoint : this.waypointList) {
-			if(waypoint.getComponent()== component)
-				waypoint.setComponent(neighbor.getComponent());
-		}
-		return neighbor.getComponent();		
+	public void createEdge (BasicPRMWaypoint wp, BasicPRMWaypoint nb) {
+		Edge newedge = new Edge(wp, nb);
+		this.edgeList.add(newedge);
 	}
 
 	public List<BasicPRMWaypoint> sortNearest(BasicPRMWaypoint waypoint) {
@@ -257,6 +242,50 @@ public class BasicPRM extends AbstractSampler{
 		}
 	}
 	
+	
+	/**
+	 * Computes the estimated cost of a specified target BasicPRM waypoint when
+	 * reached via a specified source BasicPRM waypoint.
+	 * 
+	 * @param source the source BasicPRM waypoint in globe coordinates
+	 * @param target the target BasicPRM waypoint in globe coordinates
+	 */
+	protected void computeCost(BasicPRMWaypoint source, BasicPRMWaypoint target) {
+		Path leg = new Path(source, target);
+		Capabilities capabilities = this.getAircraft().getCapabilities();
+		Globe globe = this.getEnvironment().getGlobe();
+		// TODO: catch IllegalArgumentException (incapable) and exit
+		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
+		
+		double cost = this.getEnvironment().getStepCost(
+				source, target,
+				source.getEto(), end,
+				this.getCostPolicy(), this.getRiskPolicy());
+		
+		if ((source.getG() + cost) < target.getG()) {
+			target.setParent(source);
+			target.setG(source.getG() + cost);
+			target.setEto(end);
+		}
+	}
+	/**
+	 * Gets the first BasicPRM waypoint of the current plan.
+	 * 
+	 * @return the first BasicPRM waypoint of the current plan
+	 */
+	protected BasicPRMWaypoint getFirstWaypoint() {
+		return this.plan.getFirst();
+	}
+	
+	/**
+	 * Adds a first BasicPRM waypoint to the current plan.
+	 * 
+	 * @param waypoint the first BasicPRM waypoint to be added to the current plan
+	 */
+	protected void addFirstWaypoint(BasicPRMWaypoint waypoint) {
+		this.plan.addFirst(waypoint);
+	}
+
 	/**
 	 * Plans a trajectory from an origin to a destination at a specified
 	 * estimated time of departure.
@@ -273,81 +302,46 @@ public class BasicPRM extends AbstractSampler{
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initialize(origin, destination, etd);
-		this.compute();
-		Trajectory trajectory = this.createTrajectory();
-		this.revisePlan(trajectory);
-		return trajectory;
+		this.construct();
+		return null;
 	}
-	
+
 	/**
-	 * Plans a trajectory from an origin to a destination along waypoints at a
-	 * specified estimated time of departure.
+	 * Indicates whether or not this forward A* planner supports a specified
+	 * environment.
 	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param waypoints the waypoints in globe coordinates
-	 * @param etd the estimated time of departure
+	 * @param environment the environment
 	 * 
-	 * @return the planned trajectory from the origin to the destination along
-	 *         the waypoints with the estimated time of departure
-	 * 
-	 * @see Planner#plan(Position, Position, List, ZonedDateTime)
+	 * @return true if the environment is a planning grid or roadmap,
+	 *         false otherwise
+	 *         
+	 * @see PlanningGrid
+	 * @see PlanningRoadmap
+	 */
+	@Override
+	public boolean supports(Environment environment) {
+		boolean supports = super.supports(environment);
+		
+		if (supports) {
+			supports = (environment instanceof PlanningContinuum);
+		}
+		
+		return supports;
+	}
+
+	/**
+	 * @param origin
+	 * @param destination
+	 * @param waypoints
+	 * @param etd
+	 * @return
+	
+	 * @see com.cfar.swim.worldwind.ai.Planner#plan(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position, java.util.List, java.time.ZonedDateTime)
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		LinkedList<Waypoint> plan = new LinkedList<>();
-		Waypoint currentOrigin = new Waypoint(origin);
-		ZonedDateTime currentEtd = etd;
-		
-		// collect intermediate destinations
-		ArrayList<Waypoint> destinations = waypoints.stream()
-				.map(Waypoint::new)
-				.collect(Collectors.toCollection(ArrayList::new));
-		destinations.add(new Waypoint(destination));
-		
-		// plan and concatenate partial trajectories
-		for (Waypoint currentDestination : destinations) {
-			if (!(currentOrigin.equals(currentDestination))) {
-				// plan partial trajectory
-				this.initialize(currentOrigin, currentDestination, currentEtd);
-				this.compute();
-				Trajectory part = this.createTrajectory();
-				
-				// append partial trajectory to plan
-				if ((!plan.isEmpty()) &&  (!part.isEmpty())) {
-					plan.pollLast();
-				}
-				
-				for (Waypoint waypoint : part.getWaypoints()) {
-					plan.add(waypoint);
-				}
-				
-				if (plan.peekLast().equals(currentOrigin)) {
-					// if no plan could be found, return an empty trajectory
-					Trajectory trajectory = new Trajectory();
-					this.revisePlan(trajectory);
-					return trajectory;
-				} else {
-					currentOrigin = plan.peekLast();
-					currentEtd = currentOrigin.getEto();
-				}
-			}
-		}
-		
-		Trajectory trajectory = new Trajectory(plan);
-		this.revisePlan(trajectory);
-		return trajectory;
+		// TODO Auto-generated method stub
+		return null;
 	}
-
-	/**
-	 * Creates a trajectory of the computed plan.
-	 * 
-	 * @return the trajectory of the computed plan
-	 */
-	@SuppressWarnings("unchecked")
-	protected Trajectory createTrajectory() {
-		return new Trajectory((List<Waypoint>) this.plan.clone());
-	}
-
 }
 
