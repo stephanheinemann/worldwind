@@ -106,12 +106,6 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public Set<? extends Environment> getRefinements() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public double getDistance(Position position1, Position position2) {
 		// TODO Auto-generated method stub
 		return 0;
@@ -185,17 +179,6 @@ public class PlanningRoadmap implements Environment {
 		return 0;
 	}
 
-	@Override
-	public boolean isRefined() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
-	public void refine(int density) {
-		// TODO Auto-generated method stub	
-	}
-	
 	public void coarsen() {
 	}
 

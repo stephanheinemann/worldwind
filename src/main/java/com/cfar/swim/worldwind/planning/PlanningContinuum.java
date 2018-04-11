@@ -55,7 +55,6 @@ import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Polyline;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
-// TODO: the continuum would be used for PRM and RRT approaches
 public class PlanningContinuum extends ContinuumBox implements Environment {
 
 	/** the globe of this planning grid */
@@ -403,8 +402,20 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 
 	@Override
 	public boolean embed(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return false;
+		boolean embedded = false;
+		
+		if (null != this.globe) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
+				this.addCostInterval(obstacle.getCostInterval());
+				this.obstacles.add(obstacle);
+				
+				embedded = true;
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+		
+		return embedded;
 	}
 
 	@Override
