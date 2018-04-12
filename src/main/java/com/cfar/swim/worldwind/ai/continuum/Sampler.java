@@ -43,45 +43,56 @@ import gov.nasa.worldwind.geom.Position;
  */
 public interface Sampler {
 
-    /**
-     * Samples a random position from a continuous space defined in the current
-     * environment
-     * 
-     * @return position in global coordinates inside the environment
-     */
-    Position sampleRandomPosition();
+	/**
+	 * Samples a random position from a continuous space defined in the current
+	 * environment
+	 * 
+	 * @return position in global coordinates inside the environment
+	 */
+	Position sampleRandomPosition();
 
-    /**
-     * Checks if a given position is in conflict with untraversable obstacles in
-     * the environment
-     * 
-     * @param waypoint the waypoint in global coordinates
-     * 
-     * @return boolean value true if there is a conflict
-     */
-    boolean checkConflict(Position waypoint);
+	
+	/**
+	 * Creates a SampledWaypoint embedding the CostInterval tree for respective
+	 * position
+	 * 
+	 * @param position the position for the new waypoint
+	 * 
+	 * @return the SampledWaypoint with position and CostInterval
+	 */
+	SampledWaypoint createSampledWaypoint(Position position);
+	
+	/**
+	 * Checks if a given position is in conflict with untraversable obstacles in
+	 * the environment
+	 * 
+	 * @param waypoint the waypoint in global coordinates
+	 * 
+	 * @return boolean value true if there is a conflict
+	 */
+	boolean checkConflict(Position position);
 
-    /**
-     * Checks if a straight leg between the waypoints is in conflict with
-     * untraversable obstacles in the environment
-     * 
-     * @param waypoint1 the first waypoint in global coordinates
-     * @param waypoint2 the second waypoint in global coordinates
-     * 
-     * @return boolean value true if there is a conflict
-     */
-    // TODO: Check whether the creation of an edge in planning is beneficial
-    boolean checkConflict(Position waypoint1, Position waypoint2);
-    
-    /**
-     * Finds the k-nearest waypoints to the given waypoint considering the
-     * problems metric
-     * 
-     * @param waypoint the waypoint in global coordinates
-     * @param k number of waypoints to return
-     * 
-     * @return list of k-nearest waypoints sorted by increasing distance
-     */
-    List<? extends Position> findNearest(Position waypoint, int k);
+	/**
+	 * Checks if a straight leg between the waypoints is in conflict with
+	 * untraversable obstacles in the environment
+	 * 
+	 * @param waypoint1 the first waypoint in global coordinates
+	 * @param waypoint2 the second waypoint in global coordinates
+	 * 
+	 * @return boolean value true if there is a conflict
+	 */
+	// TODO: Check whether the creation of an edge in planning is beneficial
+	boolean checkConflict(Position position1, Position position2);
+
+	/**
+	 * Finds the k-nearest waypoints to the given waypoint considering the
+	 * problems metric
+	 * 
+	 * @param waypoint the waypoint in global coordinates
+	 * @param k number of waypoints to return
+	 * 
+	 * @return list of k-nearest waypoints sorted by increasing distance
+	 */
+	List<? extends Position> findNearest(Position waypoint, int k);
 
 }

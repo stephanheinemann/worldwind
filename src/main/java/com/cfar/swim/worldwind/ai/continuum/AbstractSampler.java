@@ -31,18 +31,23 @@ package com.cfar.swim.worldwind.ai.continuum;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.render.Obstacle;
 
 import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
+import rrt0.Configuration;
 
 /**
  * Abstracts a sampling based motion planner for an aircraft in an environment
@@ -53,14 +58,15 @@ import gov.nasa.worldwind.geom.Vec4;
  *
  */
 public abstract class AbstractSampler extends AbstractPlanner
-implements Sampler {
+		implements Sampler {
 
-	// TODO: Should this be defined here or specifically for every algorithm? (Probably not here...)
+	// TODO: Should this be defined here or specifically for every algorithm?
+	// (Probably not here...)
 	/** the list of already sampled waypoints */
 	private List<? extends Waypoint> waypointList = null;
-	
+
 	/** the environment casted to a planning continuum */
-	private PlanningContinuum continuumEnvironment =null;
+	private PlanningContinuum continuumEnvironment = null;
 
 	/**
 	 * Constructs a sampling based motion planner with a specified aircraft and
@@ -71,8 +77,9 @@ implements Sampler {
 	 */
 	public AbstractSampler(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		if(this.getEnvironment() instanceof PlanningContinuum) {
-			this.setContinuumEnvironment((PlanningContinuum) this.getEnvironment());
+		if (this.getEnvironment() instanceof PlanningContinuum) {
+			this.setContinuumEnvironment(
+					(PlanningContinuum) this.getEnvironment());
 		}
 	}
 
@@ -100,15 +107,14 @@ implements Sampler {
 	public PlanningContinuum getContinuumEnvironment() {
 		return continuumEnvironment;
 	}
-	
+
 	/**
 	 * @param continuumEnvironment the continuumEnvironment to set
 	 */
-	public void setContinuumEnvironment(PlanningContinuum continuumEnvironment) {
+	public void setContinuumEnvironment(
+			PlanningContinuum continuumEnvironment) {
 		this.continuumEnvironment = continuumEnvironment;
 	}
-	
-	
 
 	/**
 	 * Samples a position from a continuous space defined in the current
@@ -116,20 +122,21 @@ implements Sampler {
 	 * 
 	 * @return position in global coordinates inside the environment
 	 */
-	public Position sampleRandomPosition() {	
+	public Position sampleRandomPosition() {
 		Vec4[] corners = this.getContinuumEnvironment().getCorners();
 		Vec4 minimum = corners[3]; // Point in box with all minimum coordinates
 		Vec4 maximum = corners[7]; // Point in box with all maximum coordinates
-		
-		double x, y, z;
-		
-		x = minimum.x + (new Random().nextDouble()*(maximum.x-minimum.x));
-		y = minimum.y + (new Random().nextDouble()*(maximum.y-minimum.y));
-		z = minimum.z + (new Random().nextDouble()*(maximum.z-minimum.z));
 
-		Vec4 point = new Vec4(x,y,z);
-		
-		Position position = this.getEnvironment().getGlobe().computePositionFromPoint(point);
+		double x, y, z;
+
+		x = minimum.x + (new Random().nextDouble() * (maximum.x - minimum.x));
+		y = minimum.y + (new Random().nextDouble() * (maximum.y - minimum.y));
+		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));
+
+		Vec4 point = new Vec4(x, y, z);
+
+		Position position = this.getEnvironment().getGlobe()
+				.computePositionFromPoint(point);
 
 		return position;
 	}
@@ -142,9 +149,34 @@ implements Sampler {
 	 * 
 	 * @return boolean value true if there is a conflict
 	 */
-	public boolean checkConflict(Position waypoint) {
+	public boolean checkConflict(Position position) {
+		// TODO : Implement a checker for conflict between a position and the
+		// static, time independent and untraversable obstacles in the environment
+//		
+//		HashSet<Terrain> terrainSet = this.getContinuumEnvironment().getTerrain();
+//		
+//		for(Terrain terrain : terrainSet) {
+//			// Check if obstacle contains the waypoint
+//			if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).contains(position)){
+//				return true;
+//			}
+//		}
+//		
 		return false;
 	}
+	
+	/**
+	 * Creates a SampledWaypoint embedding the CostInterval tree for respective
+	 * position
+	 * 
+	 * @param position the position for the new waypoint
+	 * 
+	 * @return the SampledWaypoint with position and CostInterval
+	 */
+	public SampledWaypoint createSampledWaypoint(Position position) {
+		return null;
+	}
+	
 
 	/**
 	 * Checks if a straight leg between the waypoints is in conflict with
@@ -155,7 +187,40 @@ implements Sampler {
 	 * 
 	 * @return boolean value true if there is a conflict
 	 */
-	public boolean checkConflict(Position waypoint1, Position waypoint2) {
+	public boolean checkConflict(Position position1, Position position2) {
+		Position positionAux;
+		Angle lat, lon;
+		double elevation, angle, dist;
+		
+		angle = configI.getAngle(configF);
+		dist = this.getContinuumEnvironment().getDistance(position1, position2);
+		
+		//TODO add resolution as user input parameter in UI
+		double RESOLUTION=1;
+		for(int p=1; dist>RESOLUTION; p=p*2){
+			for(int k=0; k<p; k++){
+//				x = configI.getX() + (dist/2 + k*dist) * Math.cos(angle);
+//				y = configI.getY() + (dist/2 + k*dist) * Math.sin(angle);
+//				positionAux.setX(x); positionAux.setY(y);
+				
+				Bx = Math.cos(lat2) * Math.cos(dLong);
+				By = Math.cos(lat2) * Math.sin(dLong);
+				
+				lat = Math.atan2(Math.sin(lat1+lat2), Math.sqrt( Math.pow( Math.cos(lat1)+Bx, 2)+Math.pow(By, 2) ));
+				lon = lon1 + Math.atan2(By, Math.cos(lat1+Bx));
+				
+				lat = 0;
+				lon = 0;
+				ele = ele1 + (dist/2 + k*dist)*dEle;
+				positionAux = new Position(lat, lon, elevation);
+						
+				if(this.checkConflict(positionAux)) {
+					return true;
+				}
+			}
+			dist = dist/2;
+		}
+		
 		return false;
 	}
 
@@ -176,11 +241,11 @@ implements Sampler {
 		Collections.sort(posiTempList,
 				(a, b) -> super.getEnvironment().getDistance(waypoint,
 						a) < super.getEnvironment().getDistance(waypoint, b)
-				? -1
-						: super.getEnvironment().getDistance(waypoint,
-								a) == super.getEnvironment()
-								.getDistance(waypoint, b) ? 0
-										: 1);
+								? -1
+								: super.getEnvironment().getDistance(waypoint,
+										a) == super.getEnvironment()
+												.getDistance(waypoint, b) ? 0
+														: 1);
 
 		// If there are less than k neighbors on the list
 		if (posiTempList.size() <= num) {

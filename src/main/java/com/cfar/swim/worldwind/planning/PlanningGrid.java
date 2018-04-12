@@ -362,7 +362,8 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	@Override
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		return this.costIntervals.searchInterval(new CostInterval(null, this.time));
+		// return this.costIntervals.searchInterval(new CostInterval(null, this.time)); //BUG?
+		return this.costIntervals.searchInterval(new CostInterval(null, time));
 	}
 	
 	/**

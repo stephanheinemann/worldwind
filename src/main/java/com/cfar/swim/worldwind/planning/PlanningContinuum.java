@@ -68,7 +68,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
 			CostInterval.comparator);
 
-	/** the obstacles embedded into this planning grid */
+	/** the obstacles embedded into this planning continuum must be accessible */
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
 
 	/** the current accumulated active cost of this planning grid */
@@ -164,6 +164,21 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	public Globe getGlobe() {
 		return this.globe;
 	}
+
+	/**
+	 * @return the obstacles
+	 */
+	public HashSet<Obstacle> getObstacles() {
+		return obstacles;
+	}
+	
+	/**
+	 * @param obstacles the obstacles to set
+	 */
+	public void setObstacles(HashSet<Obstacle> obstacles) {
+		this.obstacles = obstacles;
+	}
+	
 
 	/**
 	 * Indicates whether or not this planning grid contains a position.
