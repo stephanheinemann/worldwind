@@ -38,8 +38,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
+import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.ContinuumBox;
 import com.cfar.swim.worldwind.geom.Cube;
@@ -63,15 +63,13 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	/** the current time of this planning grid */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 
-	// TODO Review how to set the interval tree
-	/** the cost interval tree encoding temporal costs */
-	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
-			CostInterval.comparator);
-
-	/** the obstacles embedded into this planning continuum must be accessible */
+	/**
+	 * the obstacles embedded into this planning continuum must be accessible
+	 */
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
 
 	/** the current accumulated active cost of this planning grid */
+	// TODO REeview usage of active cost
 	private double activeCost = 1d;
 
 	/** the threshold cost of this planning grid */
@@ -171,14 +169,13 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	public HashSet<Obstacle> getObstacles() {
 		return obstacles;
 	}
-	
+
 	/**
 	 * @param obstacles the obstacles to set
 	 */
 	public void setObstacles(HashSet<Obstacle> obstacles) {
 		this.obstacles = obstacles;
 	}
-	
 
 	/**
 	 * Indicates whether or not this planning grid contains a position.
@@ -237,7 +234,6 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 		return false;
 	}
 
-
 	@Override
 	public double getDistance(Position position1, Position position2) {
 		if (null != this.globe) {
@@ -269,135 +265,78 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Adds a cost interval to this planning grid.
+	 * Gets the step cost from an origin to a destination position within this
+	 * planning grid between a start and an end time given a cost policy and
+	 * risk policy.
 	 * 
-	 * @param costInterval the cost interval to be added
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
 	 * 
-	 * @see Environment#addCostInterval(CostInterval)
+	 * @return the step cost from the origin to the destination position
 	 */
-	@Override
-	public void addCostInterval(CostInterval costInterval) {
-		this.costIntervals.add(costInterval);
-		this.update();
-		// TODO: Should costs be automatically propagated to the affected child
-		// cells?
-		// TODO: Should added children costs be propagated to parents?
-		// TODO: What happens if children are added and removed?
-		// TODO: Shall parents aggregate all costs?!
-	}
-
-	/**
-	 * Removes a cost interval from this planning grid.
-	 * 
-	 * @param costInterval the cost interval to be removed
-	 * 
-	 * @see Environment#removeCostInterval(CostInterval)
-	 */
-	@Override
-	public void removeCostInterval(CostInterval costInterval) {
-		this.costIntervals.remove(costInterval);
-		this.update();
-	}
-
-	/**
-	 * Gets all cost intervals that are active at a specified time instant.
-	 * 
-	 * @param time the time instant
-	 * 
-	 * @return all cost intervals that are active at the specified time instant
-	 * 
-	 * @see Environment#getCostIntervals(ZonedDateTime)
-	 */
-	@Override
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(
-			ZonedDateTime time) {
-		return this.costIntervals
-				.searchInterval(new CostInterval(null, this.time));
-	}
-
-	/**
-	 * Gets all cost intervals that are active during a specified time interval.
-	 * 
-	 * @param start the start time of the time interval
-	 * @param end the end time of the time interval
-	 * 
-	 * @return all cost intervals that are active during the specified time
-	 *         interval
-	 * 
-	 * @see Environment#getCostIntervals(ZonedDateTime, ZonedDateTime)
-	 */
-	@Override
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(
-			ZonedDateTime start, ZonedDateTime end) {
-		return this.costIntervals
-				.searchInterval(new CostInterval(null, start, end));
-	}
-
-	/**
-	 * Gets the accumulated cost of this planning grid at specified time
-	 * instant.
-	 * 
-	 * @param time the time instant
-	 * 
-	 * @return the accumulated cost of this planning grid at the specified time
-	 *         instant
-	 */
-	public double getCost(ZonedDateTime time) {
-		return this.getCost(time, time);
-	}
-
-	/**
-	 * Gets the accumulated cost of this planning grid within a specified time
-	 * span.
-	 * 
-	 * @param start the start time of the time span
-	 * @param end the end time of the time span
-	 * 
-	 * @return the accumulated cost of this planning grid within the specified
-	 *         time span
-	 * 
-	 * @see Environment#getCost(ZonedDateTime, ZonedDateTime)
-	 */
-	@Override
-	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = 1d; // simple cost of normalized distance
-
-		Set<String> costIntervalIds = new HashSet<String>();
-		// add all (weighted) cost of the cell
-		List<Interval<ChronoZonedDateTime<?>>> intervals = this
-				.getCostIntervals(start, end);
-		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
-			if (interval instanceof CostInterval) {
-				CostInterval costInterval = (CostInterval) interval;
-
-				// only add costs of different overlapping cost intervals
-				if (!costIntervalIds.contains(costInterval.getId())) {
-					costIntervalIds.add(costInterval.getId());
-
-					// TODO: implement a proper weighted cost calculation
-					// normalized from 0 to 100
-					// TODO: the weight is affected by severity (reporting
-					// method) and currency (reporting time)
-
-					if ((interval instanceof WeightedCostInterval)) {
-						cost += ((WeightedCostInterval) interval)
-								.getWeightedCost();
-					} else {
-						cost += costInterval.getCost();
-					}
-				}
-			}
-		}
-
-		return cost;
-	}
-
-	@Override
+	// TODO: We implement the same method defined in the interface but need to
+	// receive an extension of a position (SmapledWaypoint)
 	public double getStepCost(Position origin, Position destination,
 			ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
 			RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	public double getStepCost(SampledWaypoint origin,
+			SampledWaypoint destination, CostPolicy costPolicy,
+			RiskPolicy riskPolicy) {
+
+		double stepCost = 0d;
+		List<SampledWaypoint> waypoints = new ArrayList<SampledWaypoint>();
+
+		waypoints.add(origin);
+		// compute participating cells
+		// TODO: discretize edge in multiple waypoints
+		waypoints.add(destination);
+
+		List<Double> costs = new ArrayList<Double>();
+
+		// compute initial distance cost
+		double distance, cost;
+		SampledWaypoint waypoint1 = waypoints.get(0);
+		SampledWaypoint waypoint2;
+
+		// compute cost of each adjacent waypoint
+		for (int i=0; i<waypoints.size()-1; i++) {
+			waypoint2 =  waypoints.get(i+1);
+			distance = this.getDistance(waypoint1, waypoint2);
+			cost = (waypoint1.getCost() + waypoint2.getCost())/2;
+			
+			// boost cost if local risk is not acceptable
+			if (riskPolicy.satisfies(cost - 1)) {
+				costs.add(distance * cost);
+			} else {
+				costs.add(Double.POSITIVE_INFINITY);
+			}
+			waypoint1 =  waypoint2;
+		}
+
+		// apply cost policy for final cost
+		switch (costPolicy) {
+		case MINIMUM:
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).min()
+					.getAsDouble();
+			break;
+		case MAXIMUM:
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).max()
+					.getAsDouble();
+			break;
+		case AVERAGE:
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).average()
+					.getAsDouble();
+			break;
+		}
+
+		return stepCost;
 	}
 
 	@Override
@@ -418,25 +357,42 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	@Override
 	public boolean embed(Obstacle obstacle) {
 		boolean embedded = false;
-		
+
 		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
-				this.addCostInterval(obstacle.getCostInterval());
+			if (!this.isEmbedded(obstacle)
+					&& this.intersects(obstacle.getExtent(this.globe))) {
 				this.obstacles.add(obstacle);
-				
+
 				embedded = true;
 			}
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return embedded;
 	}
 
+	/**
+	 * Unembeds an obstacle from this planning grid.
+	 * 
+	 * @param obstacle the obstacle to be unembedded
+	 * 
+	 * @return true if the obstacle has been unembedded, false otherwise
+	 * 
+	 * @see Environment#unembed(Obstacle)
+	 */
 	@Override
 	public boolean unembed(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return false;
+		boolean unembedded = false;
+		
+		if (this.isEmbedded(obstacle)) {
+			
+			this.obstacles.remove(obstacle);
+			
+			unembedded = true;
+		}
+		
+		return unembedded;
 	}
 
 	/**
@@ -453,32 +409,37 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 		}
 	}
 
-	@Override
-	public boolean isEmbedded(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
+	/**
+	 * Unembeds all obstacles from this planning grid.
+	 * 
+	 * @see Environment#unembedAll()
+	 */
 	@Override
 	public void unembedAll() {
-		// TODO Auto-generated method stub
-
+		this.obstacles.clear();
+	}
+	
+	/**
+	 * Indicates whether or not an obstacle is embedded in this planning grid.
+	 * 
+	 * @param obstacle the obstacle
+	 * 
+	 * @return true if the obstacle is embedded in this planning grid,
+	 *         false otherwise
+	 * 
+	 * @see Environment#isEmbedded(Obstacle)
+	 */
+	@Override
+	public boolean isEmbedded(Obstacle obstacle) {
+		return this.obstacles.contains(obstacle);
 	}
 
 	/**
 	 * Updates this planning grid.
 	 */
 	protected void update() {
-		this.updateActiveCost();
 		this.updateAppearance();
 		this.updateVisibility();
-	}
-
-	/**
-	 * Updates the accumulated active cost of this planning grid.
-	 */
-	protected void updateActiveCost() {
-		this.activeCost = this.getCost(this.time);
 	}
 
 	/**
@@ -498,6 +459,29 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 		float blue = activeColor.getBlue() / 255.0f;
 		float alpha = activeColor.getAlpha() / 255.0f;
 		this.setColor(red, green, blue, alpha);
+	}
+
+	/**
+	 * Gets the interval tree that is defined for a specified position.
+	 * 
+	 * @param position the position to be checked
+	 * 
+	 * @return the interval tree with all cost intervals
+	 */
+	public IntervalTree<ChronoZonedDateTime<?>> getIntervalTree(
+			Position position) {
+		IntervalTree<ChronoZonedDateTime<?>> intervalTree = new IntervalTree<ChronoZonedDateTime<?>>(
+				CostInterval.comparator);
+
+		if (null != this.globe) {
+			for (Obstacle obstacle : obstacles) {
+				if (this.intersects(obstacle.getExtent(this.globe))) {
+					intervalTree.add(obstacle.getCostInterval());
+				}
+			}
+		}
+
+		return intervalTree;
 	}
 
 }

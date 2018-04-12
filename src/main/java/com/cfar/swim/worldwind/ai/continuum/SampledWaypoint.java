@@ -53,14 +53,34 @@ import gov.nasa.worldwind.geom.Position;
 public class SampledWaypoint extends Waypoint {
 
 	/** the cost interval tree encoding temporal costs */
-	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
+	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
+			CostInterval.comparator);
 
-	
 	public SampledWaypoint(Position position) {
 		super(position);
 	}
-	
-	
+
+	public SampledWaypoint(Position position,
+			IntervalTree<ChronoZonedDateTime<?>> costIntervals) {
+		super(position);
+		this.costIntervals = costIntervals;
+	}
+
+	/**
+	 * @return the costIntervals
+	 */
+	public IntervalTree<ChronoZonedDateTime<?>> getCostIntervals() {
+		return costIntervals;
+	}
+
+	/**
+	 * @param costIntervals the costIntervals to set
+	 */
+	public void setCostIntervals(
+			IntervalTree<ChronoZonedDateTime<?>> costIntervals) {
+		this.costIntervals = costIntervals;
+	}
+
 	/**
 	 * Adds a cost interval to this planning grid.
 	 * 
@@ -70,7 +90,7 @@ public class SampledWaypoint extends Waypoint {
 		this.costIntervals.add(costInterval);
 		this.updateCost();
 	}
-	
+
 	/**
 	 * Removes a cost interval from this planning grid.
 	 * 
@@ -80,7 +100,7 @@ public class SampledWaypoint extends Waypoint {
 		this.costIntervals.remove(costInterval);
 		this.updateCost();
 	}
-	
+
 	/**
 	 * Gets all cost intervals that are active at a specified time instant.
 	 * 
@@ -88,10 +108,11 @@ public class SampledWaypoint extends Waypoint {
 	 * 
 	 * @return all cost intervals that are active at the specified time instant
 	 */
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(
+			ZonedDateTime time) {
 		return this.costIntervals.searchInterval(new CostInterval(null, time));
 	}
-	
+
 	/**
 	 * Gets all cost intervals that are active during a specified time interval.
 	 * 
@@ -101,38 +122,45 @@ public class SampledWaypoint extends Waypoint {
 	 * @return all cost intervals that are active during the specified time
 	 *         interval
 	 */
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
-		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(
+			ZonedDateTime start, ZonedDateTime end) {
+		return this.costIntervals
+				.searchInterval(new CostInterval(null, start, end));
 	}
+
+	
 	
 	private void updateCost() {
-		this.setCost( this.calculateCost( this.getAto() ) );
+		this.setCost(this.calculateCost(this.getAto()));
 	}
+
 	
-	public double calculateCost(ZonedDateTime start) {
-		//TODO: Copied from PlanningGrid, check validity
+	
+	public double calculateCost(ZonedDateTime start){
 		double cost = 1d; // simple cost of normalized distance
-		
+
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
-		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, start);
+		List<Interval<ChronoZonedDateTime<?>>> intervals = this
+				.getCostIntervals(start, start);
 		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
 			if (interval instanceof CostInterval) {
 				CostInterval costInterval = (CostInterval) interval;
-				
+
 				// only add costs of different overlapping cost intervals
 				if (!costIntervalIds.contains(costInterval.getId())) {
 					costIntervalIds.add(costInterval.getId());
-					
+
 					if ((interval instanceof WeightedCostInterval)) {
-						cost += ((WeightedCostInterval) interval).getWeightedCost();
+						cost += ((WeightedCostInterval) interval)
+								.getWeightedCost();
 					} else {
 						cost += costInterval.getCost();
 					}
-				}	
+				}
 			}
 		}
-		
+
 		return cost;
 	}
 

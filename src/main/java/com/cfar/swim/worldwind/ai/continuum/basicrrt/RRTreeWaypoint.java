@@ -29,7 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai.continuum.basicrrt;
 
-import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -37,7 +37,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Manuel Rosa
  *
  */
-public class RRTreeWaypoint extends Waypoint {
+public class RRTreeWaypoint extends SampledWaypoint {
 
     /** the parent RRT waypoint of this RRT waypoint in a trajectory */
     private RRTreeWaypoint parent = null;

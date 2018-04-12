@@ -31,23 +31,17 @@ package com.cfar.swim.worldwind.ai.continuum;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
-import com.cfar.swim.worldwind.planning.Waypoint;
-import com.cfar.swim.worldwind.render.Obstacle;
 
 import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
-import rrt0.Configuration;
 
 /**
  * Abstracts a sampling based motion planner for an aircraft in an environment
@@ -63,7 +57,7 @@ public abstract class AbstractSampler extends AbstractPlanner
 	// TODO: Should this be defined here or specifically for every algorithm?
 	// (Probably not here...)
 	/** the list of already sampled waypoints */
-	private List<? extends Waypoint> waypointList = null;
+	private List<? extends SampledWaypoint> waypointList = null;
 
 	/** the environment casted to a planning continuum */
 	private PlanningContinuum continuumEnvironment = null;
@@ -88,7 +82,7 @@ public abstract class AbstractSampler extends AbstractPlanner
 	 * 
 	 * @return the waypointList
 	 */
-	public List<? extends Waypoint> getWaypointList() {
+	public List<? extends SampledWaypoint> getWaypointList() {
 		return waypointList;
 	}
 
@@ -97,7 +91,7 @@ public abstract class AbstractSampler extends AbstractPlanner
 	 * 
 	 * @param waypointList the waypointList to set
 	 */
-	public void setWaypointList(List<? extends Waypoint> waypointList) {
+	public void setWaypointList(List<? extends SampledWaypoint> waypointList) {
 		this.waypointList = waypointList;
 	}
 
@@ -174,10 +168,14 @@ public abstract class AbstractSampler extends AbstractPlanner
 	 * @return the SampledWaypoint with position and CostInterval
 	 */
 	public SampledWaypoint createSampledWaypoint(Position position) {
-		return null;
+		SampledWaypoint sampledWaypoint = new SampledWaypoint(position);
+		
+		sampledWaypoint.setCostIntervals( this.getContinuumEnvironment().getIntervalTree(position) );
+		
+		return sampledWaypoint;
+		
 	}
 	
-
 	/**
 	 * Checks if a straight leg between the waypoints is in conflict with
 	 * untraversable obstacles in the environment
@@ -189,36 +187,35 @@ public abstract class AbstractSampler extends AbstractPlanner
 	 */
 	public boolean checkConflict(Position position1, Position position2) {
 		Position positionAux;
-		Angle lat, lon;
-		double elevation, angle, dist;
+		double lat, lon, elevation, angle, ddLat, ddLon, ddElevation;
 		
-		angle = configI.getAngle(configF);
-		dist = this.getContinuumEnvironment().getDistance(position1, position2);
+		ddLat = position2.getLatitude().radians - position1.getLatitude().radians;
+		ddLon = position2.getLongitude().radians - position1.getLongitude().radians;
+		ddElevation = position2.getElevation() - position1.getElevation();
+		
+		angle = Math.acos( Math.cos(ddLon)*Math.cos(ddLat) ); // angle (radians) between 2 positions and globe center
 		
 		//TODO add resolution as user input parameter in UI
-		double RESOLUTION=1;
-		for(int p=1; dist>RESOLUTION; p=p*2){
+		double RESOLUTION=1; //meters in globe surface
+		double GLOBE_RADIUS = this.getEnvironment().getGlobe().getEquatorialRadius();
+		
+		for(int p=1; angle*GLOBE_RADIUS>RESOLUTION; p=p*2){
 			for(int k=0; k<p; k++){
-//				x = configI.getX() + (dist/2 + k*dist) * Math.cos(angle);
-//				y = configI.getY() + (dist/2 + k*dist) * Math.sin(angle);
-//				positionAux.setX(x); positionAux.setY(y);
+				// latitude with fraction of angle between positions
+				lat = Math.asin( Math.sin((1/2 + k)*angle) * Math.sin(ddLat) );
+				// longitude using spherical pythagoras theorem
+				lon = Math.acos( Math.cos((1/2 + k)*angle) / Math.cos(lat) );
+				// elevation adding linear fraction of elevation variation
+				elevation = position1.getElevation() + (1/2 + k) * ddElevation;
 				
-				Bx = Math.cos(lat2) * Math.cos(dLong);
-				By = Math.cos(lat2) * Math.sin(dLong);
-				
-				lat = Math.atan2(Math.sin(lat1+lat2), Math.sqrt( Math.pow( Math.cos(lat1)+Bx, 2)+Math.pow(By, 2) ));
-				lon = lon1 + Math.atan2(By, Math.cos(lat1+Bx));
-				
-				lat = 0;
-				lon = 0;
-				ele = ele1 + (dist/2 + k*dist)*dEle;
-				positionAux = new Position(lat, lon, elevation);
+				positionAux = new Position(Angle.fromDegrees(lat), Angle.fromDegrees(lon), elevation);
 						
 				if(this.checkConflict(positionAux)) {
 					return true;
 				}
 			}
-			dist = dist/2;
+			angle = angle/2;
+			ddElevation = ddElevation/2;
 		}
 		
 		return false;
