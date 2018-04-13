@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.ai.continuum.basicprm;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,17 +63,18 @@ public class BasicPRM extends AbstractSampler {
 	/**
 	 * TODO: User input parameters. Consider as tunable parameters...
 	 */
-	public static final int MAX_NEIGHBORS = 30;
+	public static final int MAX_NEIGHBORS = 15;
 
-	public static final int MAX_DIST = 30;
+	public static final int MAX_DIST = 100;
 
-	public static final int MAX_SAMPLED_WAYPOINTS = 2000;
+	public static final int MAX_SAMPLED_WAYPOINTS = 500;
 
+	//TODO: list or set?
 	/** the list of already sampled waypoints */
-	private List<BasicPRMWaypoint> waypointList = null;
+	private List<BasicPRMWaypoint> waypointList = new ArrayList<BasicPRMWaypoint>();
 
 	/** the list of already created edges */
-	private List<Edge> edgeList = null;
+	private List<Edge> edgeList = new ArrayList<Edge>();
 
 	/** the last computed plan */
 	private final LinkedList<BasicPRMWaypoint> plan = new LinkedList<>();
@@ -294,7 +296,7 @@ public class BasicPRM extends AbstractSampler {
 		while (num < MAX_SAMPLED_WAYPOINTS) {
 
 			BasicPRMWaypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
-
+			System.out.println(waypoint);
 			if (!this.checkConflict(waypoint)) {
 				this.waypointList.add(waypoint);
 				this.connectWaypoint(waypoint);
@@ -378,21 +380,45 @@ public class BasicPRM extends AbstractSampler {
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		if (!this.hasRoadmap() || !this.checkEnvironmentCompatibility()) {
 
+			System.out.println("Initializing..(without roadmap)");
 			this.initialize();
+			System.out.println("Constructing..(without roadmap)");
 			this.construct();
+			System.out.println("Extends Construction..(without roadmap)");
 			this.extendsConstruction(origin, destination);
+			System.out.println("Construction ended..(without roadmap)");
+			
+			
+			Vec4[] corners = this.getContinuumEnvironment().getCorners();
 
+
+			for(int i=0; i<8;i++) {
+				corners[i]=this.getContinuumEnvironment().transformModelToBoxOrigin(corners[i]);
+				System.out.println(corners[i]);
+
+			}
+			
+//			for(BasicPRMWaypoint waypoint : waypointList)
+//				System.out.println(waypoint);
 			Box box = this.createBox(this.getContinuumEnvironment());
+			System.out.println("Box created..(without roadmap)");
 			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList());
+			System.out.println("Roadmap created..(without roadmap)");
+
+			System.out.println("Initializing A Star planner.(without roadmap)");
 
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
-
+			
+			System.out.println("Starting A star search ..(without roadmap)");
 			Trajectory trajectory = aStar.plan(origin, destination, etd);
+			System.out.println("Returning trajectory from A star search..(without roadmap)");
 
 			return trajectory;
 		} else {
+			System.out.println("Initializing..");
 			this.extendsConstruction(origin, destination);
 
+			System.out.println("Update Roadmap");
 			this.updateRoadmap(roadmap);
 
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
