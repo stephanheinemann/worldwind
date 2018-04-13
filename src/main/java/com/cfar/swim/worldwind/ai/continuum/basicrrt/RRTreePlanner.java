@@ -44,6 +44,7 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Vec4;
 
 /**
  * Realizes a basic RRT planner that plans a trajectory of an aircraft in an
@@ -59,7 +60,9 @@ public class RRTreePlanner extends AbstractSampler {
 	static final int MAX_ITER = 1000_000;
 
 	/** the maximum distance to extend a waypoint in the tree */
-	static final int EPSILON = 10;
+	static final double EPSILON = 10d; //TODO: Units?
+
+	static final double GOAL_THRESHOLD = 5d;
 
 	// ---------- VARIABLES ----------
 
@@ -82,18 +85,6 @@ public class RRTreePlanner extends AbstractSampler {
 
 	public RRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		// TODO Define how the constructor for the planner should be implemented
-	}
-
-	/**
-	 * Creates an RRT waypoint at a specified position.
-	 * 
-	 * @param position the position
-	 * 
-	 * @return the RRT waypoint at the specified position
-	 */
-	protected RRTreeWaypoint createWaypoint(Position position) {
-		return new RRTreeWaypoint(position);
 	}
 
 	// ---------- Setters and Getters ----------
@@ -161,20 +152,17 @@ public class RRTreePlanner extends AbstractSampler {
 	 */
 	@SuppressWarnings("unchecked")
 	protected Trajectory createTrajectory() {
-		// TODO: How does this function work?
 		return new Trajectory((List<Waypoint>) this.plan.clone());
 	}
 
 	/**
-	 * Samples a new waypoint sampled from a uniformed distribution over the
-	 * environment space
+	 * Creates a new waypoint from a random position sampled from a uniformed
+	 * distribution over the environment space
 	 * 
 	 * @return waypoint the RRTreeWaypoint sampled
 	 */
 	protected RRTreeWaypoint sampleRandom() {
-		// TODO: How to implement a random sampling of the environment
-
-		return null;
+		return new RRTreeWaypoint(super.sampleRandomPosition());
 	}
 
 	/**
@@ -186,7 +174,7 @@ public class RRTreePlanner extends AbstractSampler {
 	 */
 	protected RRTreeWaypoint sampleBiased(int bias) {
 		RRTreeWaypoint waypoint;
-		// TODO: Is there any problem in using the random package?
+		// Is there any problem in using the random package?
 		int rand = new Random().nextInt(100 - 1) + 1;
 
 		waypoint = (rand <= bias) ? this.getGoal() : this.sampleRandom();
@@ -207,9 +195,7 @@ public class RRTreePlanner extends AbstractSampler {
 		RRTreeWaypoint waypointNear, waypointNew;
 
 		// Finds the node in the tree closest to the sampled position
-		// TODO: Find nearest must return a node and not a position
-		waypointNear = new RRTreeWaypoint(
-				super.findNearest(waypoint, 1).get(0));
+		waypointNear = new RRTreeWaypoint(super.findNearest(waypoint, 1).get(0));
 
 		// Create a new node by extension from near to sampled
 		success = this.newWaypoint(waypoint, waypointNear);
@@ -231,8 +217,8 @@ public class RRTreePlanner extends AbstractSampler {
 	}
 
 	/**
-	 * Creates a new waypoint by extending a sampled waypoint in the direction
-	 * of the nearest waypoint following certain restrictions
+	 * Creates a new waypoint by extending a sampled waypoint in the direction of
+	 * the nearest waypoint following certain restrictions
 	 * 
 	 * @param waypoint the waypoint to be reached
 	 * @param waypointNear the waypoint to be extended
@@ -240,18 +226,23 @@ public class RRTreePlanner extends AbstractSampler {
 	 * @return true if it was possible to extend in the desired direction (false
 	 *         otherwise)
 	 */
-	protected boolean newWaypoint(RRTreeWaypoint waypoint,
-			RRTreeWaypoint waypointNear) {
-		boolean success;
-		RRTreeWaypoint waypointNew;
+	protected boolean newWaypoint(RRTreeWaypoint waypoint, RRTreeWaypoint waypointNear) {
+		boolean success = true;
 
 		// Extend nearest waypoint in the direction of waypoint
-		waypointNew = this.growWaypoint(waypoint, waypointNear);
+		Position positionNew = this.growWaypoint(waypoint, waypointNear);
+		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
+		
 		this.setWaypointNew(waypointNew);
 
 		// Check if the new waypoint is in conflict with the environment
-		// TODO: [ENVIRONMENT] How to check if the new waypoint is in conflict
-		success = true;
+		if (super.checkConflict(waypointNew)) {
+			success = false;
+		}
+		// Check if the edge between waypoints is in conflict
+		else if (super.checkConflict(waypointNear, waypointNew)) {
+			success = false;
+		}
 
 		return success;
 	}
@@ -263,33 +254,67 @@ public class RRTreePlanner extends AbstractSampler {
 	 * @param waypointNear
 	 * @return
 	 */
-	protected RRTreeWaypoint growWaypoint(RRTreeWaypoint waypoint,
-			RRTreeWaypoint waypointNear) {
-		RRTreeWaypoint waypointNew;
+	protected Position growWaypoint(Position position, Position positionNear) {
+		// TODO: Incorporate aircraft capabilities
+		Position positionNew;
 
-		// TODO: How to extend a waypoint in a certain direction
-		waypointNew = new RRTreeWaypoint(waypoint);
+		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
+		Vec4 point2 = super.getEnvironment().getGlobe().computePointFromPosition(position);
+		
+		double dist  = point1.distanceTo3(point2);
+		
+		if (dist < EPSILON) {
+			positionNew = position;
+		}
+		else {
+			double x, y, z, dx, dy, dz, dist2, epsilon2;
+			dx = point2.x - point1.x;
+			dy = point2.y - point1.y;
+			dz = point2.z - point1.z;
+			
+			z = point1.z + dz/dist * EPSILON;
+			
+			epsilon2 = Math.sqrt(EPSILON*EPSILON -z*z);
+			dist2 = point1.distanceTo2(point2);
+			
+			x = point1.x + dx/dist2 * epsilon2;
+			y = point1.y + dy/dist2 * epsilon2;
+			
+			Vec4 pointNew = new Vec4(x,y,z); 
+			positionNew = super.getEnvironment().getGlobe().computePositionFromPoint(pointNew);
+		}
 
-		return waypointNew;
+		return positionNew;
 	}
 
 	/**
-	 * Check whether the new waypoint is the goal or within the goal region
+	 * Check whether the waypoint is the goal or within the goal region
+	 * 
+	 * @param waypoint the RRTree Waypoint to be compared (default=this.waypointNew)
 	 * 
 	 * @return true if the new waypoint is within the goal region
 	 */
 	protected boolean checkGoal() {
-		// TODO: Define how to compare if the new waypoint is the goal/in the
-		// goal region
-		return false;
+		return this.checkGoal(waypointNew);
+	}
+	protected boolean checkGoal(RRTreeWaypoint waypoint) {
+		return super.getContinuumEnvironment().getDistance(waypoint, this.getGoal()) < GOAL_THRESHOLD;
 	}
 
 	/**
 	 * Computes the path from the current waypoint to the starting waypoint
+	 * 
+	 * @param waypoint the last RRTree Waypoint in the path (default=this.waypointNew)
 	 */
 	protected void computePath() {
-		// TODO: compute the path from the new waypoint to the start by
-		// repeatedly calling the parent of each node
+		this.computePath(waypointNew);
+	}
+	protected void computePath(RRTreeWaypoint waypoint) {
+		plan.addFirst(waypoint);
+		while (waypoint.getParent() != null) {
+			waypoint = waypoint.getParent();
+			plan.addFirst(waypoint);
+		}
 	}
 
 	/**
@@ -300,12 +325,11 @@ public class RRTreePlanner extends AbstractSampler {
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
 	 */
-	protected void initialize(Position origin, Position destination,
-			ZonedDateTime etd) {
+	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 
-		this.setStart(this.createWaypoint(origin));
+		this.setStart(new RRTreeWaypoint(origin));
 		this.getStart().setEto(etd);
-		this.setGoal(this.createWaypoint(destination));
+		this.setGoal(new RRTreeWaypoint(destination));
 
 	}
 
@@ -327,32 +351,27 @@ public class RRTreePlanner extends AbstractSampler {
 	// ---------- PUBLIC METHODS ----------
 
 	@Override
-	public Trajectory plan(Position origin, Position destination,
-			ZonedDateTime etd) {
-		// TODO Implement the planning strategy according to this algorithm
+	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 
 		this.initialize(origin, destination, etd);
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();
-		// this.revisePlan(trajectory);
-		// return trajectory;
+		this.revisePlan(trajectory); //Not sure what this does
 
 		return trajectory;
 	}
 
 	@Override
-	public Trajectory plan(Position origin, Position destination,
-			List<Position> waypoints, ZonedDateTime etd) {
+	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		// TODO Implement a planning strategy to allow for intermidiate goals
 
 		// Multiple calls to plan (origin, destination, etd) creating an entire
 		// tree between multiple goals
-		return null;
+		return this.plan(origin, destination, etd);
 	}
 
 	/**
-	 * Indicates whether or not this RRT planner supports a specified
-	 * environment.
+	 * Indicates whether or not this RRT planner supports a specified environment.
 	 * 
 	 * @param environment the environment
 	 * 

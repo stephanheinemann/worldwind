@@ -38,37 +38,43 @@ import gov.nasa.worldwind.geom.Position;
  *
  */
 public class RRTreeWaypoint extends SampledWaypoint {
+	// TODO: Possible inclusion of aircraft heading to define actions possible
+	// for extension
 
-    /** the parent RRT waypoint of this RRT waypoint in a trajectory */
-    private RRTreeWaypoint parent = null;
+	/** the parent RRT waypoint of this RRT waypoint in a trajectory */
+	private RRTreeWaypoint parent = null;
 
-    /**
-     * Constructs an RRT waypoint at a specified position.
-     * 
-     * @param position the position in globe coordinates
-     * 
-     * @see Waypoint#Waypoint(Position)
-     */
-    public RRTreeWaypoint(Position position) {
-	super(position);
-    }
+	/**
+	 * Constructs an RRT waypoint at a specified position.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @see Waypoint#Waypoint(Position)
+	 */
+	public RRTreeWaypoint(Position position) {
+		super(position);
+	}
+	public RRTreeWaypoint(Position position, RRTreeWaypoint parent) {
+		super(position);
+		this.parent = parent;
+	}
 
-    /**
-     * Gets the parent RRT waypoint of this RRT waypoint.
-     * 
-     * @return the parent RRT waypoint of this RRT waypoint
-     */
-    public RRTreeWaypoint getParent() {
-	return parent;
-    }
+	/**
+	 * Gets the parent RRT waypoint of this RRT waypoint.
+	 * 
+	 * @return the parent RRT waypoint of this RRT waypoint
+	 */
+	public RRTreeWaypoint getParent() {
+		return parent;
+	}
 
-    /**
-     * Sets the parent RRT waypoint of this RRT waypoint.
-     * 
-     * @param parent the parent RRT waypoint of this RRT waypoint
-     */
-    public void setParent(RRTreeWaypoint parent) {
-	this.parent = parent;
-    }
+	/**
+	 * Sets the parent RRT waypoint of this RRT waypoint.
+	 * 
+	 * @param parent the parent RRT waypoint of this RRT waypoint
+	 */
+	public void setParent(RRTreeWaypoint parent) {
+		this.parent = parent;
+	}
 
 }
