@@ -94,4 +94,8 @@ public interface DiscreteEnvironment extends Environment{
 	 *         time span
 	 */
 	public double getCost(ZonedDateTime start, ZonedDateTime end);
+	
+
+	public Set<Position> getNeighbors(Position position);
+
 }

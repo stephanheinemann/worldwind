@@ -45,6 +45,7 @@ import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
+import com.cfar.swim.worldwind.planning.DiscreteEnvironment;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
@@ -86,21 +87,21 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	private final LinkedList<AStarWaypoint> plan = new LinkedList<>();
 	
 	// Manuel and Henrique (fixing errors)
-	/** The environment casted to a planning grid */
-	private PlanningGrid planningGrid = null;
+	/** The environment casted to a discrete environment */
+	private DiscreteEnvironment discreteEnvironment = null;
 	
 	/**
-	 * @return the planningGrid
+	 * @return the discreteEnvironment
 	 */
-	public PlanningGrid getPlanningGrid() {
-		return planningGrid;
+	public DiscreteEnvironment getDiscreteEnvironment() {
+		return discreteEnvironment;
 	}
 	
 	/**
-	 * @param planningGrid the planningGrid to set
+	 * @param discreteEnvironment the discreteEnvironment to set
 	 */
-	public void setPlanningGrid(PlanningGrid planningGrid) {
-		this.planningGrid = planningGrid;
+	public void setDiscreteEnvironment(DiscreteEnvironment discreteEnvironment) {
+		this.discreteEnvironment = discreteEnvironment;
 	}
 	
 
@@ -115,7 +116,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		this.planningGrid = (PlanningGrid) this.getEnvironment();
+		this.discreteEnvironment = (DiscreteEnvironment) this.getEnvironment();
 	}
 	
 	/**
@@ -386,15 +387,15 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected Set<? extends AStarWaypoint> expand(AStarWaypoint waypoint) {
 	    	// TODO find a better alternative to this cast
-	    	PlanningGrid environment = (PlanningGrid) this.getEnvironment();
+	    	DiscreteEnvironment discreteEnvironment = (DiscreteEnvironment) this.getEnvironment();
 		
-	    	Set<Position> neighbors = environment.getNeighbors(waypoint);
+	    	Set<Position> neighbors = discreteEnvironment.getNeighbors(waypoint);
 		
 		// if a start has no neighbors, then it is not a waypoint in the
 		// environment and its adjacent waypoints have to be determined for
 		// initial expansion
 		if (neighbors.isEmpty()) {
-			neighbors = environment.getAdjacentWaypoints(waypoint);
+			neighbors = discreteEnvironment.getAdjacentWaypoints(waypoint);
 		}
 		
 		// expand start region position towards the start
@@ -543,15 +544,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0);
-		
+		// TODO: code below is only applicable to Planning Grid. suggestion:
+		// (if this.getDiscreteEnvironment() instanceof PlanningGrid).....
 		// the adjacent waypoints to the origin
-		this.setStartRegion(this.getPlanningGrid().getAdjacentWaypoints(origin)
+		this.setStartRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(origin)
 				.stream()
 				.map(PrecisionPosition::new)
 				.collect(Collectors.toSet()));
 		
 		// the adjacent waypoints to the destination
-		this.setGoalRegion(this.getPlanningGrid().getAdjacentWaypoints(destination)
+		this.setGoalRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(destination)
 				.stream()
 				.map(PrecisionPosition::new)
 				.collect(Collectors.toSet()));
