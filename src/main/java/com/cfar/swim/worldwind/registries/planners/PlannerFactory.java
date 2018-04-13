@@ -33,6 +33,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import com.cfar.swim.worldwind.ai.Planner;
+import com.cfar.swim.worldwind.ai.continuum.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.discrete.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.discrete.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.discrete.thetastar.ThetaStarPlanner;
@@ -131,6 +132,11 @@ public class PlannerFactory implements Factory<Planner> {
 			((ARAStarPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ARAStarPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ARAStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+		} else if (specification.getId().equals(Specification.PLANNER_RRT_ID)) {
+			RRTreeProperties properties = (RRTreeProperties) specification.getProperties();
+			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
 		}
 		// TODO: implement more planners
 		

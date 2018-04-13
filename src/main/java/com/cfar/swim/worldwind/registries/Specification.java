@@ -70,6 +70,12 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of an ARA* planner */
 	public static final String PLANNER_ARAS_ID = "ARA*";
 	
+	/** the identifier of an basicPRM planner */
+	public static final String PLANNER_PRM_ID = "PRM";
+	
+	/** the identifier of an RRT planner */
+	public static final String PLANNER_RRT_ID = "RRT";
+	
 	/** the identifier of a simulated datalink */
 	public static final String DATALINK_SIMULATED = "Simulated Datalink";
 	

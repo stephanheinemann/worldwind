@@ -57,12 +57,12 @@ import gov.nasa.worldwind.geom.Vec4;
 public class RRTreePlanner extends AbstractSampler {
 
 	/** the maximum number of sampling iterations */
-	static final int MAX_ITER = 1000_000;
+	static final int MAX_ITER = 3_000;
 
 	/** the maximum distance to extend a waypoint in the tree */
-	static final double EPSILON = 10d; //TODO: Units?
+	static final double EPSILON = 500d; //TODO: Units?
 
-	static final double GOAL_THRESHOLD = 5d;
+	static final double GOAL_THRESHOLD = 100d;
 
 	// ---------- VARIABLES ----------
 
@@ -85,6 +85,7 @@ public class RRTreePlanner extends AbstractSampler {
 
 	public RRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+		System.out.println("I am heree!!!!");
 	}
 
 	// ---------- Setters and Getters ----------
@@ -338,10 +339,15 @@ public class RRTreePlanner extends AbstractSampler {
 	 */
 	protected void compute() {
 		for (int i = 0; i < MAX_ITER; i++) {
+					System.out.println("Iteration #"+i);
 			RRTreeWaypoint waypointRand = this.sampleBiased(5);
+					System.out.println("Iteration #"+i+" Waypoint sampled");
 			if (this.extendRRT(waypointRand) != Status.TRAPPED) {
+						System.out.println("Iteration #"+i+" Not trapped");
 				if (this.checkGoal()) {
+							System.out.println("Iteration #"+i+" Inside goal region");
 					this.computePath();
+							System.out.println("Iteration #"+i+" Path computed");
 					return;
 				}
 			}
@@ -352,12 +358,15 @@ public class RRTreePlanner extends AbstractSampler {
 
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-
+					System.out.println("Initializing...");
 		this.initialize(origin, destination, etd);
+					System.out.println("Computing...");
 		this.compute();
+					System.out.println("Creating trajectory...");
 		Trajectory trajectory = this.createTrajectory();
+					System.out.println("revising...");
 		this.revisePlan(trajectory); //Not sure what this does
-
+					System.out.println("Retunring...");
 		return trajectory;
 	}
 
