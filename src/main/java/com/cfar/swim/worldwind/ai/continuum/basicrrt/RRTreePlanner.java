@@ -196,13 +196,16 @@ public class RRTreePlanner extends AbstractSampler {
 		RRTreeWaypoint waypointNear, waypointNew;
 
 		// Finds the node in the tree closest to the sampled position
+				System.out.println("Finding nearest waypoint...");
 		waypointNear = new RRTreeWaypoint(super.findNearest(waypoint, 1).get(0));
 
 		// Create a new node by extension from near to sampled
+				System.out.println("Creating new waypoint...");
 		success = this.newWaypoint(waypoint, waypointNear);
 
 		// Set status variable by checking if extension was possible
 		if (success) {
+					System.out.println("No conflict with terrain, adding waypoint to tree and setting status...");
 			waypointNew = this.getWaypointNew();
 			tree.add(waypointNew);
 			if (waypointNew == waypointNear) {
@@ -231,6 +234,7 @@ public class RRTreePlanner extends AbstractSampler {
 		boolean success = true;
 
 		// Extend nearest waypoint in the direction of waypoint
+				System.out.println("Growing new position...");
 		Position positionNew = this.growWaypoint(waypoint, waypointNear);
 		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
 		
@@ -238,10 +242,12 @@ public class RRTreePlanner extends AbstractSampler {
 
 		// Check if the new waypoint is in conflict with the environment
 		if (super.checkConflict(waypointNew)) {
+					System.out.println("The new waypoint is in conflict with the terrain...");
 			success = false;
 		}
 		// Check if the edge between waypoints is in conflict
 		else if (super.checkConflict(waypointNear, waypointNew)) {
+					System.out.println("The edge between waypoints is in conflict with the terrain...");
 			success = false;
 		}
 
@@ -259,15 +265,19 @@ public class RRTreePlanner extends AbstractSampler {
 		// TODO: Incorporate aircraft capabilities
 		Position positionNew;
 
+				System.out.println("Computing points from position...");
 		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
 		Vec4 point2 = super.getEnvironment().getGlobe().computePointFromPosition(position);
+		// TODO: Convert from Earth frame to Box frame
 		
 		double dist  = point1.distanceTo3(point2);
 		
 		if (dist < EPSILON) {
+					System.out.println("Distance smaller than epsilon");
 			positionNew = position;
 		}
 		else {
+					System.out.println("Distance bigger than epsilon");
 			double x, y, z, dx, dy, dz, dist2, epsilon2;
 			dx = point2.x - point1.x;
 			dy = point2.y - point1.y;

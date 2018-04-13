@@ -230,6 +230,7 @@ public abstract class AbstractSampler extends AbstractPlanner
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
+	//TODO: Correct implementation
 	public List<? extends Position> findNearest(Position waypoint, int num) {
 		List<Position> posiNearList = new ArrayList<Position>();
 		List<Position> posiTempList = new ArrayList<Position>(waypointList);
