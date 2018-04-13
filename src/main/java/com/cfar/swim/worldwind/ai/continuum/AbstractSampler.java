@@ -195,10 +195,10 @@ public abstract class AbstractSampler extends AbstractPlanner
 		
 		angle = Math.acos( Math.cos(ddLon)*Math.cos(ddLat) ); // angle (radians) between 2 positions and globe center
 		
-		//TODO add resolution as user input parameter in UI
+		// TODO: add resolution as user input parameter in UI
 		double RESOLUTION=1; //meters in globe surface
 		double GLOBE_RADIUS = this.getEnvironment().getGlobe().getEquatorialRadius();
-		
+		// TODO: Review if angles used are correct
 		for(int p=1; angle*GLOBE_RADIUS>RESOLUTION; p=p*2){
 			for(int k=0; k<p; k++){
 				// latitude with fraction of angle between positions
