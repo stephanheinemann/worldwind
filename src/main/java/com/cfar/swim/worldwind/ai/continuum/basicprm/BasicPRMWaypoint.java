@@ -29,9 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai.continuum.basicprm;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -40,19 +38,16 @@ import gov.nasa.worldwind.geom.Position;
  * @author Henrique Ferreira
  *
  */
-public class BasicPRMWaypoint extends Waypoint {
+public class BasicPRMWaypoint extends SampledWaypoint {
 	
 	/** the parent BasicPRM waypoint of this BasicPRM waypoint in a trajectory */
 	private BasicPRMWaypoint parent = null;
-	
-	/** the visited neighbors of this BasicPRM waypoint in an environment */
-	private final Set<BasicPRMWaypoint> neighbors = new HashSet<>();
 	
 	/** the estimated remaining cost (h-value) of this BasicPRM waypoint */
 	private double h;
 	
 	/**
-	 * Constructs an BasicPRM waypoint at a specified position.
+	 * Constructs a BasicPRM waypoint at a specified position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
@@ -80,15 +75,6 @@ public class BasicPRMWaypoint extends Waypoint {
 	 */
 	public void setParent(BasicPRMWaypoint parent) {
 		this.parent = parent;
-	}
-	
-	// TODO: visibility and cloning issues
-	public Set<BasicPRMWaypoint> getNeighbors() {
-		return this.neighbors;
-	}
-	
-	public void setNeighbors(Set<BasicPRMWaypoint> neighbors) {
-		this.neighbors.addAll(neighbors);
 	}
 	
 	/**
@@ -158,8 +144,8 @@ public class BasicPRMWaypoint extends Waypoint {
 	
 	/**
 	 * Compares this BasicPRM waypoint to another waypoint based on their estimated
-	 * total costs (f-values). If the estimated total costs of both A*
-	 * waypoints is equal, then ties are broken in favor of higher estimated
+	 * total costs (f-values). If the estimated total costs of both BasicPRM waypoints
+	 * is equal, then ties are broken in favor of higher estimated
 	 * current costs (g-values). If the other waypoint is not an BasicPRM waypoint,
 	 * then the natural order of general waypoints applies.
 	 * 

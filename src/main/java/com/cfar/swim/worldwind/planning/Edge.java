@@ -29,48 +29,81 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
+
 /**
+ * Realizes an edge of a roadmap based on two sampled waypoints.
+ * 
  * @author Henrique Ferreira
  *
  */
 public class Edge {
 
-	/** the designator of this waypoint */
-	private Waypoint origin;
-	
-	private Waypoint destination;
-	
-	public Edge(Waypoint wpt1, Waypoint wpt2) {
-		this.origin=wpt1;
-		this.destination=wpt2;
-	}
-	
-	public Edge() {
-		
-	}
-	
-	public Waypoint getOrigin() {
-		return origin;
+	/** the origin SampledWaypoint of this edge */
+	private SampledWaypoint wpt1;
+
+	/** the destination SampledWaypoint of this edge */
+	private SampledWaypoint wpt2;
+
+	/**
+	 * Constructs an Edge based on two waypoints.
+	 * 
+	 * @param wpt1
+	 * @param wpt2
+	 */
+	public Edge(SampledWaypoint wpt1, SampledWaypoint wpt2) {
+		this.wpt1 = wpt1;
+		this.wpt2 = wpt2;
 	}
 
-	public void setOrigin(Waypoint origin) {
-		this.origin = origin;
+	/**
+	 * Gets the first waypoint of this edge
+	 * 
+	 * @return the first waypoint of this edge
+	 */
+	public SampledWaypoint getWpt1() {
+		return wpt1;
 	}
 
-	public Waypoint getDestination() {
-		return destination;
+	/**
+	 * Sets the first waypoint of this edge
+	 * 
+	 * @param wpt1 the first waypoint of this edge
+	 */
+	public void setWpt1(SampledWaypoint wpt1) {
+		this.wpt1 = wpt1;
 	}
 
-	public void setDestination(Waypoint destination) {
-		this.destination = destination;
+	/**
+	 * Gets the second waypoint of this edge
+	 * 
+	 * @return the second waypoint of this edge
+	 */
+	public SampledWaypoint getWpt2() {
+		return wpt2;
 	}
 
-    @Override
-    public final int hashCode()
-    {
-        int result;
-        result = origin.hashCode();
-        result = result * destination.hashCode();
-        return result;
-    }
+	/**
+	 * Sets the second waypoint of this edge
+	 * 
+	 * @param wpt1 the second waypoint of this edge
+	 */
+	public void setWpt2(SampledWaypoint wpt2) {
+		this.wpt2 = wpt2;
+	}
+
+	/**
+	 * Gets the hash code of this edge based on the hash code of the two waypoints
+	 * 
+	 * @return the multiplication of the hash code of the two waypoints
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		int result;
+		result = wpt1.hashCode();
+		result = result * wpt2.hashCode();
+		return result;
+	}
 }
