@@ -118,16 +118,22 @@ public abstract class AbstractSampler extends AbstractPlanner
 	 */
 	public Position sampleRandomPosition() {
 		Vec4[] corners = this.getContinuumEnvironment().getCorners();
-		Vec4 minimum = corners[3]; // Point in box with all minimum coordinates
-		Vec4 maximum = corners[7]; // Point in box with all maximum coordinates
+		
+		// Point in box with all minimum coordinates
+		Vec4 minimum = this.getContinuumEnvironment().transformModelToBoxOrigin(corners[0]); 
 
+		// Point in box with all maximum coordinates
+		Vec4 maximum = this.getContinuumEnvironment().transformModelToBoxOrigin(corners[6]); 
+		
 		double x, y, z;
 
 		x = minimum.x + (new Random().nextDouble() * (maximum.x - minimum.x));
 		y = minimum.y + (new Random().nextDouble() * (maximum.y - minimum.y));
-		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));
-
+		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));	
+		
 		Vec4 point = new Vec4(x, y, z);
+		
+		point= this.getContinuumEnvironment().transformBoxOriginToModel(point);
 
 		Position position = this.getEnvironment().getGlobe()
 				.computePositionFromPoint(point);

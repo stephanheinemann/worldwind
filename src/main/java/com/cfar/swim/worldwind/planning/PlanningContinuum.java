@@ -102,7 +102,12 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 
 	/**
 	 * Sets the current time of this planning grid.
-	 * 
+	 * 			for(int i=0; i<8;i++) {
+				Position pos = this.getContinuumEnvironment().getCenterPosition();
+				Position newcorner= pos.subtract(this.getEnvironment().getGlobe()
+					.computePositionFromPoint(corners[i]));
+				corners[i]=this.getEnvironment().getGlobe().computePointFromPosition(newcorner);
+			}
 	 * @param time the current time of this planning grid
 	 * 
 	 * @see TimedRenderable#setTime(ZonedDateTime)

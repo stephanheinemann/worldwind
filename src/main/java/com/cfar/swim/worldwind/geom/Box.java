@@ -266,7 +266,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		return this.origin;
 	}
 	
-	/**
+	/**nasa worldwind change frame
 	 * Indicates whether or not a point in world model coordinates equals the
 	 * origin of this box considering numerical inaccuracies.
 	 * 
@@ -476,6 +476,18 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 */
 	public Vec4 transformModelToBoxOrigin(Vec4 modelPoint) {
 		return modelPoint.transformBy4(this.toLocalOrigin);
+	}
+	
+	/**
+	 * Transforms a Cartesian world model vector into a box vector using the
+	 * first corner of this box as origin.
+	 * 
+	 * @param modelPoint the world model vector
+	 * 
+	 * @return the box vector
+	 */
+	public Vec4 transformBoxOriginToModel(Vec4 modelPoint) {
+		return modelPoint.transformBy4(this.toLocalOrigin.getInverse());
 	}
 	
 	/**
