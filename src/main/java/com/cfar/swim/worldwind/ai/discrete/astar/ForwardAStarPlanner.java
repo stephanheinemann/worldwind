@@ -386,27 +386,28 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @return the neighbors of the expanded A* waypoint
 	 */
 	protected Set<? extends AStarWaypoint> expand(AStarWaypoint waypoint) {
-	    	// TODO find a better alternative to this cast
-	    	DiscreteEnvironment discreteEnvironment = (DiscreteEnvironment) this.getEnvironment();
 		
-	    	Set<Position> neighbors = discreteEnvironment.getNeighbors(waypoint);
-		
+	    Set<Position> neighbors = this.getDiscreteEnvironment().getNeighbors(waypoint);
+
+	    //TODO: code below is not applicable to PlanningRoadmap. suggestion
+		// (if this.getDiscreteEnvironment() instanceof PlanningGrid).....
+	    
 		// if a start has no neighbors, then it is not a waypoint in the
 		// environment and its adjacent waypoints have to be determined for
 		// initial expansion
 		if (neighbors.isEmpty()) {
-			neighbors = discreteEnvironment.getAdjacentWaypoints(waypoint);
+//			neighbors = this.getDiscreteEnvironment().getAdjacentWaypoints(waypoint);
 		}
 		
 		// expand start region position towards the start
-		if (this.isInStartRegion(waypoint.getPrecisionPosition())) {
-			neighbors.add(this.getStart());
-		}
-		
-		// expand a goal region position towards the goal
-		if (this.isInGoalRegion(waypoint.getPrecisionPosition())) {
-			neighbors.add(this.getGoal());
-		}
+//		if (this.isInStartRegion(waypoint.getPrecisionPosition())) {
+//			neighbors.add(this.getStart());
+//		}
+//		
+//		// expand a goal region position towards the goal
+//		if (this.isInGoalRegion(waypoint.getPrecisionPosition())) {
+//			neighbors.add(this.getGoal());
+//		}
 		
 		this.addExpanded(waypoint);
 		
@@ -536,28 +537,30 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.clearExpandables();
 		this.clearExpanded();
 		this.clearWaypoints();
-		
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setG(0);
-		this.getStart().setH(this.getEnvironment().getNormalizedDistance(origin, destination));
+		this.getStart().setH(this.getEnvironment().getDistance(origin, destination));
+
 		this.getStart().setEto(etd);
-		
+
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0);
-		// TODO: code below is only applicable to Planning Grid. suggestion:
+		
+		// TODO: code below is not applicable to PlanningRoadmap. suggestion
 		// (if this.getDiscreteEnvironment() instanceof PlanningGrid).....
+		
 		// the adjacent waypoints to the origin
-		this.setStartRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(origin)
-				.stream()
-				.map(PrecisionPosition::new)
-				.collect(Collectors.toSet()));
+//		this.setStartRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(origin)
+//				.stream()
+//				.map(PrecisionPosition::new)
+//				.collect(Collectors.toSet()));
 		
 		// the adjacent waypoints to the destination
-		this.setGoalRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(destination)
-				.stream()
-				.map(PrecisionPosition::new)
-				.collect(Collectors.toSet()));
-		
+//		this.setGoalRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(destination)
+//				.stream()
+//				.map(PrecisionPosition::new)
+//				.collect(Collectors.toSet()));
+
 		this.addExpandable(this.getStart());
 	}
 	
@@ -566,15 +569,14 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected void compute() {
 		while (this.canExpand()) {
+
 			AStarWaypoint source = this.pollExpandable();
-			
 			if (source.equals(this.getGoal())) {
 				this.connectPlan(source);
 				return;
 			}
-			
 			Set<? extends AStarWaypoint> neighbors = this.expand(source);
-			
+
 			for (AStarWaypoint target : neighbors) {
 				if (!this.isExpanded(target)) {
 					Optional<? extends AStarWaypoint> visited =

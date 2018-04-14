@@ -58,7 +58,8 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
 public class PlanningContinuum extends ContinuumBox implements Environment {
 
 	/** the globe of this planning grid */
-	private Globe globe = null;
+	//HENRIQUE changed globe to protected
+	protected Globe globe = null;
 
 	/** the current time of this planning grid */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));

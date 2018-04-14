@@ -31,15 +31,20 @@ package com.cfar.swim.worldwind.planning;
 
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
+import com.cfar.swim.worldwind.ai.continuum.basicprm.BasicPRMWaypoint;
 import com.cfar.swim.worldwind.geom.Box;
 
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Polyline;
+import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
  * Realizes a planning roadmap that extends a planning continuum, by
@@ -53,10 +58,10 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	// TODO: extends SampledWaypoint??? waypointList defined here or in BasicPRM
 	// planner?
 	/** the list of sampled waypoints of this roadmap */
-	private List<? extends SampledWaypoint> waypointList = null;
+	private List<BasicPRMWaypoint> waypointList = new ArrayList<>();
 
 	/** the list of edges of this roadmap */
-	private List<Edge> edgeList = null;
+	private List<Edge> edgeList = new ArrayList<>();
 
 	/**
 	 * Constructs a planning roadmap based on a box, a waypoint list and a edge list
@@ -65,51 +70,33 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * @param waypointList the list of waypoints
 	 * @param edgeList the list of edges
 	 */
-	public PlanningRoadmap(Box box, List<? extends SampledWaypoint> waypointList, List<Edge> edgeList) {
+	public PlanningRoadmap(Box box, List<BasicPRMWaypoint> waypointList, List<Edge> edgeList, Globe globe) {
 		super(box);
 		this.waypointList = waypointList;
 		this.edgeList = edgeList;
-		this.update();
+		this.globe=globe;
 	}
 
-	/**
-	 * Gets the list of waypoints of this Planning Roadmap.
-	 * 
-	 * @return the list of waypoints of this Planning Roadmap
-	 */
-	public List<? extends Waypoint> getWaypointList() {
+
+	public List<BasicPRMWaypoint> getWaypointList() {
 		return waypointList;
 	}
 
-	/**
-	 * Sets the list of waypoints of this Planning Roadmap.
-	 * 
-	 * @param edgeList the list of waypoints of this Planning Roadmap
-	 */
 
-	public void setWaypointList(List<? extends SampledWaypoint> waypointList) {
+	public void setWaypointList(List<BasicPRMWaypoint> waypointList) {
 		this.waypointList = waypointList;
 	}
 
-	/**
-	 * Gets the list of edges of this Planning Roadmap.
-	 * 
-	 * @return the list of edges of this Planning Roadmap
-	 */
 
 	public List<Edge> getEdgeList() {
 		return edgeList;
 	}
 
-	/**
-	 * Sets the list of edges of this Planning Roadmap.
-	 * 
-	 * @param edgeList the list of edges of this Planning Roadmap
-	 */
 
 	public void setEdgeList(List<Edge> edgeList) {
 		this.edgeList = edgeList;
 	}
+
 
 	/**
 	 * TODO: NOT DONE
@@ -153,8 +140,8 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 		// TODO: review. Look for a better way to cast a set of sampledWaypoints to a
 		// set of positions. Does it make sense to have a method working with positions
 		// instead of SampledWaypoints?
-
-		SampledWaypoint waypoint = this.getWaypoint(position);
+		SampledWaypoint waypoint = null;
+		waypoint = this.getWaypoint(position);
 
 		Set<SampledWaypoint> sampledNeighbors = this.getNeighbors(waypoint);
 
@@ -173,9 +160,9 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 
 		if (null != this.getGlobe()) {
 			for (Edge edge : edgeList) {
-				if (waypoint.equals(edge.getWpt1()))
+				if (waypoint.latitude==edge.getWpt1().latitude && waypoint.longitude==edge.getWpt1().longitude && waypoint.elevation==edge.getWpt1().elevation)
 					neighbors.add(edge.getWpt2());
-				if (waypoint.equals(edge.getWpt2()))
+				if (waypoint.latitude==edge.getWpt2().latitude && waypoint.longitude==edge.getWpt2().longitude && waypoint.elevation==edge.getWpt2().elevation)
 					neighbors.add(edge.getWpt1());
 			}
 
@@ -205,7 +192,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	public SampledWaypoint getWaypoint(Position position) {
 		// TODO: position.equals(waypoint) review....
 		for (SampledWaypoint waypoint : waypointList) {
-			if (position.equals(waypoint))
+			if (position.latitude==waypoint.latitude && position.longitude==waypoint.longitude && position.elevation==waypoint.elevation)
 				return waypoint;
 		}
 		return null;
@@ -325,11 +312,46 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 
 		SampledWaypoint wpt1 = this.getWaypoint(origin);
+		wpt1.setEto(start);
+		wpt1.setCost(wpt1.calculateCost(start));
+		
 		SampledWaypoint wpt2 = this.getWaypoint(destination);
+		wpt2.setEto(end);
+		wpt2.setCost(wpt1.calculateCost(end));
 
 		double cost = this.getStepCost(wpt1, wpt2, costPolicy, riskPolicy);
 
 		return cost;
+	}
+	
+	@Override
+	public double getDistance(Position position1, Position position2) {
+		if (null != this.globe) {
+			ArrayList<Position> positions = new ArrayList<Position>();
+			positions.add(position1);
+			positions.add(position2);
+			LengthMeasurer measurer = new LengthMeasurer(positions);
+			measurer.setPathType(Polyline.LINEAR);
+			measurer.setFollowTerrain(false);
+			return measurer.getLength(this.globe);
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+
+	/**
+	 * Gets the normalized distance between two positions in this planning grid.
+	 * 
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * 
+	 * @return the normalized distance between the two positions in this
+	 *         planning grid
+	 */
+	@Override
+	public double getNormalizedDistance(Position position1,
+			Position position2) {
+		return this.getDistance(position1, position2) / this.getDiameter();
 	}
 
 }

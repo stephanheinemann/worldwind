@@ -31,7 +31,6 @@ package com.cfar.swim.worldwind.ai.continuum.basicprm;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -63,13 +62,13 @@ public class BasicPRM extends AbstractSampler {
 	/**
 	 * TODO: User input parameters. Consider as tunable parameters...
 	 */
-	public static final int MAX_NEIGHBORS = 15;
+	public static final int MAX_NEIGHBORS = 30;
 
-	public static final int MAX_DIST = 100;
+	public static final int MAX_DIST = 150;
 
-	public static final int MAX_SAMPLED_WAYPOINTS = 500;
+	public static final int MAX_SAMPLED_WAYPOINTS = 1000;
 
-	//TODO: list or set?
+	
 	/** the list of already sampled waypoints */
 	private List<BasicPRMWaypoint> waypointList = new ArrayList<BasicPRMWaypoint>();
 
@@ -95,6 +94,10 @@ public class BasicPRM extends AbstractSampler {
 		super(aircraft, environment);
 	}
 
+	public List<BasicPRMWaypoint> getWaypointList() {
+		return waypointList;
+	}
+	
 	/**
 	 * Gets the list of edges of this basic PRM planner.
 	 * 
@@ -227,10 +230,11 @@ public class BasicPRM extends AbstractSampler {
 	 * 
 	 * @param waypoint the BasicPRM waypoint to be connected
 	 */
+	@SuppressWarnings("unchecked")
 	public void connectWaypoint(BasicPRMWaypoint waypoint) {
 		int numConnectedNeighbor = 0;
 
-		this.waypointList = this.sortNearest(waypoint);
+		waypointList = (List<BasicPRMWaypoint>) this.sortNearest(waypoint, waypointList);
 
 		for (BasicPRMWaypoint neighbor : this.waypointList) {
 			// TODO: transform if statements into methods for distance and maximum connected
@@ -243,24 +247,6 @@ public class BasicPRM extends AbstractSampler {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Sorts the waypoint list by increasing distance from a specific waypoint.
-	 * 
-	 * @param waypoint the BasicPRM waypoint
-	 * 
-	 * @return the waypoint list sorted by increasing distance
-	 */
-	public List<BasicPRMWaypoint> sortNearest(BasicPRMWaypoint waypoint) {
-
-		// sorts the list by increasing distance to waypoint
-		Collections.sort(this.waypointList,
-				(a, b) -> super.getEnvironment().getDistance(waypoint, a) < super.getEnvironment().getDistance(waypoint,
-						b) ? -1
-								: super.getEnvironment().getDistance(waypoint, a) == super.getEnvironment()
-										.getDistance(waypoint, b) ? 0 : 1);
-		return waypointList;
 	}
 
 	/**
@@ -296,7 +282,6 @@ public class BasicPRM extends AbstractSampler {
 		while (num < MAX_SAMPLED_WAYPOINTS) {
 
 			BasicPRMWaypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
-			System.out.println(waypoint);
 			if (!this.checkConflict(waypoint)) {
 				this.waypointList.add(waypoint);
 				this.connectWaypoint(waypoint);
@@ -316,7 +301,7 @@ public class BasicPRM extends AbstractSampler {
 
 		BasicPRMWaypoint start = this.createWaypoint(origin);
 
-		BasicPRMWaypoint goal = this.createWaypoint(origin);
+		BasicPRMWaypoint goal = this.createWaypoint(destination);
 
 		if (!this.checkConflict(start)) {
 			this.waypointList.add(start);
@@ -340,7 +325,7 @@ public class BasicPRM extends AbstractSampler {
 
 		BasicPRMWaypoint start = this.createWaypoint(origin);
 
-		BasicPRMWaypoint goal = this.createWaypoint(origin);
+		BasicPRMWaypoint goal = this.createWaypoint(destination);
 
 		if (!this.checkConflict(start)) {
 			this.waypointList.add(start);
@@ -380,45 +365,23 @@ public class BasicPRM extends AbstractSampler {
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		if (!this.hasRoadmap() || !this.checkEnvironmentCompatibility()) {
 
-			System.out.println("Initializing..(without roadmap)");
 			this.initialize();
-			System.out.println("Constructing..(without roadmap)");
 			this.construct();
-			System.out.println("Extends Construction..(without roadmap)");
 			this.extendsConstruction(origin, destination);
-			System.out.println("Construction ended..(without roadmap)");
-			
-			
-			Vec4[] corners = this.getContinuumEnvironment().getCorners();
 
-
-			for(int i=0; i<8;i++) {
-				corners[i]=this.getContinuumEnvironment().transformModelToBoxOrigin(corners[i]);
-				System.out.println(corners[i]);
-
-			}
-			
-//			for(BasicPRMWaypoint waypoint : waypointList)
-//				System.out.println(waypoint);
 			Box box = this.createBox(this.getContinuumEnvironment());
-			System.out.println("Box created..(without roadmap)");
-			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList());
-			System.out.println("Roadmap created..(without roadmap)");
-
-			System.out.println("Initializing A Star planner.(without roadmap)");
-
+			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(), this.getContinuumEnvironment().getGlobe());
+			
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
 			
-			System.out.println("Starting A star search ..(without roadmap)");
 			Trajectory trajectory = aStar.plan(origin, destination, etd);
-			System.out.println("Returning trajectory from A star search..(without roadmap)");
+			
+			this.revisePlan(trajectory);
 
 			return trajectory;
 		} else {
-			System.out.println("Initializing..");
 			this.extendsConstruction(origin, destination);
 
-			System.out.println("Update Roadmap");
 			this.updateRoadmap(roadmap);
 
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
@@ -452,7 +415,7 @@ public class BasicPRM extends AbstractSampler {
 			this.extendsConstruction(origin, destination, waypoints);
 
 			Box box = this.createBox(this.getContinuumEnvironment());
-			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList());
+			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(), this.getContinuumEnvironment().getGlobe());
 
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
 
