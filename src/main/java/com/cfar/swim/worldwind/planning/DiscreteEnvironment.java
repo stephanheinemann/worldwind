@@ -39,15 +39,45 @@ import com.binarydreamers.trees.Interval;
 import gov.nasa.worldwind.geom.Position;
 
 /**
+ * TODO : Describe
+ * 
+ * 
  * @author Henrique Ferreira
  *
  */
 public interface DiscreteEnvironment extends Environment{
+//TODO: Review whether or not cost intervals methods should be defined here
 
+	/**
+	 * Indicates whether or not a position is a waypoint in this discrete environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is a waypoint in this discrete environment,
+	 *         false otherwise
+	 */
 	public boolean isWaypoint(Position position);
 	
+	/**
+	 * Gets the adjacent waypoints of a position in this discrete environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the adjacent waypoints of the position in this
+	 *         discrete environment, or the waypoint position itself
+	 */
 	public Set<Position> getAdjacentWaypoints(Position position);
 	
+	/**
+	 * Indicates whether or not a position is adjacent to a waypoint in this
+	 * discrete environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param waypoint the waypoint in globe coordinates
+	 * 
+	 * @return true if the position is adjacent to the waypoint in this
+	 *         discrete environment, false otherwise
+	 */
 	public boolean isAdjacentWaypoint(Position position, Position waypoint);
 	
 	/**
@@ -95,7 +125,13 @@ public interface DiscreteEnvironment extends Environment{
 	 */
 	public double getCost(ZonedDateTime start, ZonedDateTime end);
 	
-
+	/**
+	 * Gets the neighbors of a position in this discrete environment. 
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the neighbors of the position in this discrete environment
+	 */
 	public Set<Position> getNeighbors(Position position);
 
 }

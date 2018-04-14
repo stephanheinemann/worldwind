@@ -74,7 +74,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 		super(box);
 		this.waypointList = waypointList;
 		this.edgeList = edgeList;
-		this.globe=globe;
+		this.setGlobe(globe);
 	}
 
 
@@ -326,14 +326,14 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	
 	@Override
 	public double getDistance(Position position1, Position position2) {
-		if (null != this.globe) {
+		if (null != this.getGlobe()) {
 			ArrayList<Position> positions = new ArrayList<Position>();
 			positions.add(position1);
 			positions.add(position2);
 			LengthMeasurer measurer = new LengthMeasurer(positions);
 			measurer.setPathType(Polyline.LINEAR);
 			measurer.setFollowTerrain(false);
-			return measurer.getLength(this.globe);
+			return measurer.getLength(this.getGlobe());
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}

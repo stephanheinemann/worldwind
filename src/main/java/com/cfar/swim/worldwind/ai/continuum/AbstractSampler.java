@@ -94,14 +94,19 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	}
 
 	/**
-	 * @return the continuumEnvironment
+	 * Gets the environment of this abstract sampler.
+	 * 
+	 * @return the continuum environment of this abstract sampler
 	 */
 	public PlanningContinuum getContinuumEnvironment() {
 		return continuumEnvironment;
 	}
 
 	/**
-	 * @param continuumEnvironment the continuumEnvironment to set
+	 * Sets the environment of this abstract sampler.
+	 * 
+	 * @param continuumEnvironment the continuum environment of this abstract
+	 *            sampler
 	 */
 	public void setContinuumEnvironment(PlanningContinuum continuumEnvironment) {
 		this.continuumEnvironment = continuumEnvironment;
@@ -137,30 +142,6 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	}
 
 	/**
-	 * Checks if a given position is in conflict with untraversable obstacles in the
-	 * environment
-	 * 
-	 * @param waypoint the waypoint in global coordinates
-	 * 
-	 * @return boolean value true if there is a conflict
-	 */
-	public boolean checkConflict(Position position) {
-		// TODO : Implement a checker for conflict between a position and the
-		// static, time independent and untraversable obstacles in the environment
-		//
-		// HashSet<Terrain> terrainSet = this.getContinuumEnvironment().getTerrain();
-		//
-		// for(Terrain terrain : terrainSet) {
-		// // Check if obstacle contains the waypoint
-		// if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).contains(position)){
-		// return true;
-		// }
-		// }
-		//
-		return false;
-	}
-
-	/**
 	 * Creates a SampledWaypoint embedding the CostInterval tree for respective
 	 * position
 	 * 
@@ -175,6 +156,30 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 
 		return sampledWaypoint;
 
+	}
+
+	/**
+	 * Checks if a given position is in conflict with untraversable obstacles in the
+	 * environment
+	 * 
+	 * @param waypoint the waypoint in global coordinates
+	 * 
+	 * @return boolean value true if there is a conflict
+	 */
+	public boolean checkConflict(Position position) {
+		// TODO : Implement a checker for conflict between a position and the
+		// static, time independent and untraversable obstacles in the environment
+
+		// HashSet<Terrain> terrainSet = this.getContinuumEnvironment().getTerrain();
+		//
+		// for(Terrain terrain : terrainSet) {
+		// // Check if obstacle contains the waypoint
+		// if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).contains(position)){
+		// return true;
+		// }
+		// }
+
+		return false;
 	}
 
 	/**
@@ -223,31 +228,27 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	}
 
 	/**
-	 * Finds the k-nearest waypoints to the given position considering the problems
-	 * metric
+	 * Finds the k-nearest waypoints to the given position
 	 * 
 	 * @param position the position in global coordinates
-	 * @param num number of waypoints to return
+	 * @param kNear number of waypoints to return
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
-	public List<? extends Position> findNearest(Position position, List<? extends Position> list, int num) {
-		// List<? extends Position> list = new ArrayList<>(this.waypointList);
+	public List<? extends Position> findNearest(Position position, List<? extends Position> list, int kNear) {
 		List<? extends Position> posiNearList;
 
 		// sorts the list by increasing distance to waypoint
-				System.out.println("Sorting list by distance to waypoint...");
 		list = this.sortNearest(position, list);
 
 		// If there are less than k neighbors on the list
-		if (list.size() <= num) {
-					System.out.println("There are less than "+num+" points in the list");
+		if (list.size() <= kNear) {
 			posiNearList = new ArrayList<>(list);
-		} else {
-					System.out.println("There are more than "+num+" points in the list");
-			posiNearList = new ArrayList<>(list.subList(0, num));
 		}
-			System.out.println("Returning posiNearList");
+		// If there are more than k neighbors on the list
+		else {
+			posiNearList = new ArrayList<>(list.subList(0, kNear));
+		}
 
 		return posiNearList;
 	}

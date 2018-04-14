@@ -42,6 +42,7 @@ import gov.nasa.worldwind.globes.Globe;
 /**
  * Describes an environment as a renderable on a globe (spatial aspect) with
  * associated cost intervals (temporal aspect).
+ * TODO: Update description
  * 
  * @author Stephan Heinemann
  *

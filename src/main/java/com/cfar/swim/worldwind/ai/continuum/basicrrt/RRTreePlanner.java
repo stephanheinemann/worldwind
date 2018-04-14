@@ -35,8 +35,11 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
+import com.cfar.swim.worldwind.ai.AbstractPlanner;
+import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.continuum.AbstractSampler;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -44,6 +47,8 @@ import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
+import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Path;
 
 /**
  * Realizes a basic RRT planner that plans a trajectory of an aircraft in an
@@ -59,9 +64,10 @@ public class RRTreePlanner extends AbstractSampler {
 	static final int MAX_ITER = 3_000;
 
 	/** the maximum distance to extend a waypoint in the tree */
-	static final double EPSILON = 50d; //TODO: Units?
+	static final double EPSILON = 100d; // meters?
 
-	static final double GOAL_THRESHOLD = 5d;
+	/** the radius of the sphere defining the goal region */
+	static final double GOAL_THRESHOLD = 5d; // meters?
 
 	// ---------- VARIABLES ----------
 
@@ -82,9 +88,17 @@ public class RRTreePlanner extends AbstractSampler {
 
 	// ---------- CONSTRUCTORS ----------
 
+	/**
+	 * Constructs a basic RRT planner for a specified aircraft and environment using
+	 * default local cost and risk policies.
+	 * 
+	 * @param aircraft the aircraft
+	 * @param environment the environment
+	 * 
+	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
+	 */
 	public RRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		System.out.println("I am heree!!!!");
 	}
 
 	// ---------- Setters and Getters ----------
@@ -195,15 +209,12 @@ public class RRTreePlanner extends AbstractSampler {
 		RRTreeWaypoint waypointNear, waypointNew;
 
 		// Finds the node in the tree closest to the sampled position
-				System.out.println("Finding nearest waypoint...");
-		waypointNear = (RRTreeWaypoint) this.findNearest(waypoint,this.tree, 1).get(0);
+		waypointNear = (RRTreeWaypoint) this.findNearest(waypoint, this.tree, 1).get(0);
 		// Create a new node by extension from near to sampled
-				System.out.println("Creating new waypoint...");
 		success = this.newWaypoint(waypoint, waypointNear);
 
 		// Set status variable by checking if extension was possible
 		if (success) {
-					System.out.println("No conflict with terrain, adding waypoint to tree and setting status...");
 			waypointNew = this.getWaypointNew();
 			tree.add(waypointNew);
 			if (waypointNew == waypointNear) {
@@ -232,29 +243,20 @@ public class RRTreePlanner extends AbstractSampler {
 		boolean success = true;
 
 		// Extend nearest waypoint in the direction of waypoint
-				System.out.println("Growing new position...");
 		Position positionNew = this.growWaypoint(waypoint, waypointNear);
-				System.out.println("Creating new waypoint from grown position..."+positionNew);
 		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
-				System.out.println("Setting new waypoint time..."); //TODO: Review
-//		double dtime = this.getEnvironment().getDistance(waypointNear, waypointNew)*this.getAircraft().getCapabilities().getCruiseSpeed()
-		waypointNew.setEto(waypointNear.getEto());
-				System.out.println("Setting new waypoint...");
+		waypointNew.setEto(this.computeTime(waypointNear, waypointNew)); // TODO: Review
 		this.setWaypointNew(waypointNew);
 
-				System.out.println("Checking conflict...");
 		// Check if the new waypoint is in conflict with the environment
 		if (super.checkConflict(waypointNew)) {
-					System.out.println("The new waypoint is in conflict with the terrain...");
 			success = false;
 		}
 		// Check if the edge between waypoints is in conflict
 		else if (super.checkConflict(waypointNear, waypointNew)) {
-					System.out.println("The edge between waypoints is in conflict with the terrain...");
 			success = false;
 		}
 
-				System.out.println("Returning success value...");
 		return success;
 	}
 
@@ -269,39 +271,50 @@ public class RRTreePlanner extends AbstractSampler {
 		// TODO: Incorporate aircraft capabilities
 		Position positionNew;
 
-				System.out.println("Computing points from position...");
 		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
 		Vec4 point2 = super.getEnvironment().getGlobe().computePointFromPosition(position);
-		
-		double dist  = point1.distanceTo3(point2);
-		
+
+		double dist = point1.distanceTo3(point2);
+
 		if (dist < EPSILON) {
-					System.out.println("Distance smaller than epsilon");
 			positionNew = position;
-		}
-		else {
-					System.out.println("Distance bigger than epsilon");
+		} else {
 			double x, y, z, dx, dy, dz, dist2, epsilon2, ddz;
 			dx = point2.x - point1.x;
 			dy = point2.y - point1.y;
 			dz = point2.z - point1.z;
-			System.out.println("dx = "+dx+" dy = "+dy+" dz = "+dz);
-			
-			ddz = dz/dist * EPSILON;
-			epsilon2 = Math.sqrt(EPSILON*EPSILON - ddz*ddz);
+
+			ddz = dz / dist * EPSILON;
+			epsilon2 = Math.sqrt(EPSILON * EPSILON - ddz * ddz);
 			dist2 = point1.distanceTo2(point2);
-			
-			x = point1.x + dx/dist2 * epsilon2;
-			y = point1.y + dy/dist2 * epsilon2;
+
+			x = point1.x + dx / dist2 * epsilon2;
+			y = point1.y + dy / dist2 * epsilon2;
 			z = point1.z + ddz;
-			
-			Vec4 pointNew = new Vec4(x,y,z); 
-					System.out.println("New point calculated");
+
+			Vec4 pointNew = new Vec4(x, y, z);
 			positionNew = super.getEnvironment().getGlobe().computePositionFromPoint(pointNew);
-					System.out.println("New position calculated... "+positionNew);
 		}
 
 		return positionNew;
+	}
+
+	/**
+	 * Computes the estimated time over(eto) an waypoint using the eto of the
+	 * previous waypoint and the aircraft capabilities
+	 * 
+	 * @param source the previous waypoint with known eto
+	 * @param target the following waypoint with eto to be calculated
+	 * 
+	 * @return the eto for the following waypoint
+	 */
+	protected ZonedDateTime computeTime(RRTreeWaypoint source, RRTreeWaypoint target) {
+		Path leg = new Path(source, target);
+		Capabilities capabilities = this.getAircraft().getCapabilities();
+		Globe globe = this.getEnvironment().getGlobe();
+
+		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
+		return end;
 	}
 
 	/**
@@ -321,17 +334,16 @@ public class RRTreePlanner extends AbstractSampler {
 	/**
 	 * Computes the path from the current waypoint to the starting waypoint
 	 * 
-	 * @param waypoint the last RRTree Waypoint in the path (default=this.waypointNew)
+	 * @param waypoint the last RRTree Waypoint in the path
+	 *            (default=this.waypointNew)
 	 */
 	protected void computePath() {
 		this.computePath(waypointNew);
 	}
 	protected void computePath(RRTreeWaypoint waypoint) {
 		plan.addFirst(waypoint);
-		System.out.println(waypoint);
 		while (waypoint.getParent() != null) {
 			waypoint = waypoint.getParent();
-			System.out.println(waypoint);
 			plan.addFirst(waypoint);
 		}
 	}
@@ -349,7 +361,7 @@ public class RRTreePlanner extends AbstractSampler {
 		this.setStart(new RRTreeWaypoint(origin));
 		this.getStart().setEto(etd);
 		this.tree.add(start);
-		
+
 		this.setGoal(new RRTreeWaypoint(destination));
 
 	}
@@ -359,41 +371,59 @@ public class RRTreePlanner extends AbstractSampler {
 	 */
 	protected void compute() {
 		for (int i = 0; i < MAX_ITER; i++) {
-					System.out.println("Iteration #"+i);
 			RRTreeWaypoint waypointRand = this.sampleBiased(5);
-					System.out.println("Iteration #"+i+" Waypoint sampled");
 			if (this.extendRRT(waypointRand) != Status.TRAPPED) {
-						System.out.println("Iteration #"+i+" Not trapped");
 				if (this.checkGoal()) {
-							System.out.println("Iteration #"+i+" Inside goal region");
 					this.computePath();
-							System.out.println("Iteration #"+i+" Path computed");
 					return;
 				}
 			}
 		}
+		// TODO: Review what happens when no path is found
 	}
 
 	// ---------- PUBLIC METHODS ----------
 
+	/**
+	 * Plans a trajectory from an origin to a destination at a specified
+	 * estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination with
+	 *         the estimated time of departure
+	 * 
+	 * @see Planner#plan(Position, Position, ZonedDateTime)
+	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-					System.out.println("Initializing...");
 		this.initialize(origin, destination, etd);
-					System.out.println("Computing...");
 		this.compute();
-					System.out.println("Creating trajectory...");
 		Trajectory trajectory = this.createTrajectory();
-					System.out.println("Trajectory null? " + trajectory.getLength() + "revising...");
-		this.revisePlan(trajectory); //Not sure what this does
-					System.out.println("Retunring...");
+		this.revisePlan(trajectory); // Not sure what this does
 		return trajectory;
 	}
 
+	/**
+	 * Plans a trajectory from an origin to a destination along waypoints at a
+	 * specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param waypoints the waypoints in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination along
+	 *         the waypoints with the estimated time of departure
+	 * 
+	 * @see Planner#plan(Position, Position, List, ZonedDateTime)
+	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		// TODO Implement a planning strategy to allow for intermidiate goals
-
+		
 		// Multiple calls to plan (origin, destination, etd) creating an entire
 		// tree between multiple goals
 		return this.plan(origin, destination, etd);
@@ -418,5 +448,5 @@ public class RRTreePlanner extends AbstractSampler {
 
 		return supports;
 	}
-	
+
 }

@@ -51,7 +51,6 @@ public interface Sampler {
 	 */
 	Position sampleRandomPosition();
 
-	
 	/**
 	 * Creates a SampledWaypoint embedding the CostInterval tree for respective
 	 * position
@@ -81,19 +80,18 @@ public interface Sampler {
 	 * 
 	 * @return boolean value true if there is a conflict
 	 */
-	// TODO: Check whether the creation of an edge in planning is beneficial
 	boolean checkConflict(Position position1, Position position2);
+	// TODO: Check whether the creation of an edge in planning is beneficial
 
 	/**
-	 * Finds the k-nearest waypoints to the given position considering the problems
-	 * metric
+	 * Finds the k-nearest waypoints to the given position 
 	 * 
 	 * @param position the position in global coordinates
-	 * @param num number of waypoints to return
+	 * @param kNear number of waypoints to return
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
-	public List<? extends Position> findNearest(Position position, List<? extends Position> list, int num);
+	public List<? extends Position> findNearest(Position position, List<? extends Position> list, int kNear);
 	
 	/**
 	 * Sorts a list of elements by increasing distance to a given position

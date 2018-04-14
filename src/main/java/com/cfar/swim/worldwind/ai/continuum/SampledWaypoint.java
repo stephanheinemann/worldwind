@@ -56,17 +56,30 @@ public class SampledWaypoint extends Waypoint {
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
 			CostInterval.comparator);
 
+	/**
+	 * Creates a new sampled waypoint based on a given position
+	 * 
+	 * @param position the position in global coordinates
+	 */
 	public SampledWaypoint(Position position) {
 		super(position);
 	}
 
-	public SampledWaypoint(Position position,
-			IntervalTree<ChronoZonedDateTime<?>> costIntervals) {
+	/**
+	 * Creates a new sampled waypoint based on a given position and the associated
+	 * costIntervals
+	 * 
+	 * @param position the position in global coordinates
+	 * @param costIntervals the interval tree with cost intervals for this position
+	 */
+	public SampledWaypoint(Position position, IntervalTree<ChronoZonedDateTime<?>> costIntervals) {
 		super(position);
 		this.costIntervals = costIntervals;
 	}
 
 	/**
+	 * Gets the interval tree with cost intervals.
+	 * 
 	 * @return the costIntervals
 	 */
 	public IntervalTree<ChronoZonedDateTime<?>> getCostIntervals() {
@@ -74,15 +87,16 @@ public class SampledWaypoint extends Waypoint {
 	}
 
 	/**
+	 * Sets the interval tree with cost intervals.
+	 * 
 	 * @param costIntervals the costIntervals to set
 	 */
-	public void setCostIntervals(
-			IntervalTree<ChronoZonedDateTime<?>> costIntervals) {
+	public void setCostIntervals(IntervalTree<ChronoZonedDateTime<?>> costIntervals) {
 		this.costIntervals = costIntervals;
 	}
 
 	/**
-	 * Adds a cost interval to this planning grid.
+	 * Adds a cost interval to this sampled waypoint.
 	 * 
 	 * @param costInterval the cost interval to be added
 	 */
@@ -92,7 +106,7 @@ public class SampledWaypoint extends Waypoint {
 	}
 
 	/**
-	 * Removes a cost interval from this planning grid.
+	 * Removes a cost interval from this sampled waypoint.
 	 * 
 	 * @param costInterval the cost interval to be removed
 	 */
@@ -108,8 +122,7 @@ public class SampledWaypoint extends Waypoint {
 	 * 
 	 * @return all cost intervals that are active at the specified time instant
 	 */
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(
-			ZonedDateTime time) {
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
 		return this.costIntervals.searchInterval(new CostInterval(null, time));
 	}
 
@@ -119,30 +132,33 @@ public class SampledWaypoint extends Waypoint {
 	 * @param start the start time of the time interval
 	 * @param end the end time of the time interval
 	 * 
-	 * @return all cost intervals that are active during the specified time
-	 *         interval
+	 * @return all cost intervals that are active during the specified time interval
 	 */
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(
-			ZonedDateTime start, ZonedDateTime end) {
-		return this.costIntervals
-				.searchInterval(new CostInterval(null, start, end));
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
+		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
 	}
 
-	
-	
+	/**
+	 * Updates the active cost of this sampled waypoint using its ato to search the
+	 * costInterval tree.
+	 */
 	private void updateCost() {
 		this.setCost(this.calculateCost(this.getAto()));
 	}
 
-	
-	
-	public double calculateCost(ZonedDateTime start){
+	/**
+	 * Calculates the cost of this waypoint at a given time by searching the
+	 * costInterval tree.
+	 * 
+	 * @param start the time at this waypoint
+	 * @return the cost of this waypoint at the given time
+	 */
+	public double calculateCost(ZonedDateTime start) {
 		double cost = 1d; // simple cost of normalized distance
 
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
-		List<Interval<ChronoZonedDateTime<?>>> intervals = this
-				.getCostIntervals(start, start);
+		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, start);
 		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
 			if (interval instanceof CostInterval) {
 				CostInterval costInterval = (CostInterval) interval;
@@ -152,8 +168,7 @@ public class SampledWaypoint extends Waypoint {
 					costIntervalIds.add(costInterval.getId());
 
 					if ((interval instanceof WeightedCostInterval)) {
-						cost += ((WeightedCostInterval) interval)
-								.getWeightedCost();
+						cost += ((WeightedCostInterval) interval).getWeightedCost();
 					} else {
 						cost += costInterval.getCost();
 					}

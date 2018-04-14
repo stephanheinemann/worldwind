@@ -42,8 +42,6 @@ import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.ContinuumBox;
-import com.cfar.swim.worldwind.geom.Cube;
-import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
@@ -55,34 +53,38 @@ import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Polyline;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
+/**
+ * Realizes a planning continuum that implements an environment, can be used for
+ * sampled based motion planning.
+ * 
+ * @author Manuel Rosa
+ * @author Henrique Ferreira
+ *
+ */
 public class PlanningContinuum extends ContinuumBox implements Environment {
 
-	/** the globe of this planning grid */
-	//HENRIQUE changed globe to protected
-	protected Globe globe = null;
+	/** the globe of this planning continuum */
+	private Globe globe = null;
 
-	/** the current time of this planning grid */
+	/** the current time of this planning continuum */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 
-	/**
-	 * the obstacles embedded into this planning continuum must be accessible
-	 */
+	/** the obstacles embedded into this planning continuum*/
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
 
-	/** the current accumulated active cost of this planning grid */
-	// TODO REeview usage of active cost
+	/** the current accumulated active cost of this planning continuum */
+	// TODO Review usage of active cost
 	private double activeCost = 1d;
 
-	/** the threshold cost of this planning grid */
+	/** the threshold cost of this planning continuum */
 	private double thresholdCost = 0d;
 
 	/**
-	 * Constructs a planning grid based on a geometric cube without any
-	 * children.
+	 * Constructs a planning continuum based on a geometric box.
 	 * 
-	 * @param cube the geometric cube
+	 * @param box the geometric box
 	 * 
-	 * @see CubicGrid#CubicGrid(Cube)
+	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
 	public PlanningContinuum(Box box) {
 		super(box);
@@ -90,9 +92,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the current time of this planning grid.
+	 * Gets the current time of this planning continuum.
 	 * 
-	 * @return the current time of this planning grid
+	 * @return the current time of this planning continuum
 	 * 
 	 * @see TimedRenderable#getTime()
 	 */
@@ -102,14 +104,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the current time of this planning grid.
-	 * 			for(int i=0; i<8;i++) {
-				Position pos = this.getContinuumEnvironment().getCenterPosition();
-				Position newcorner= pos.subtract(this.getEnvironment().getGlobe()
-					.computePositionFromPoint(corners[i]));
-				corners[i]=this.getEnvironment().getGlobe().computePointFromPosition(newcorner);
-			}
-	 * @param time the current time of this planning grid
+	 * Sets the current time of this planning continuum.
+	 * 
+	 * @param time the current time of this planning continuum
 	 * 
 	 * @see TimedRenderable#setTime(ZonedDateTime)
 	 */
@@ -121,9 +118,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the threshold cost of this planning grid.
+	 * Gets the threshold cost of this planning continuum.
 	 * 
-	 * @return the threshold cost of this planning grid
+	 * @return the threshold cost of this planning continuum
 	 * 
 	 * @see ThresholdRenderable#setThreshold(double)
 	 */
@@ -133,9 +130,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the threshold cost of this planning grid.
+	 * Sets the threshold cost of this planning continuum.
 	 * 
-	 * @param thresholdCost the threshold cost of this planning grid
+	 * @param thresholdCost the threshold cost of this planning continuum
 	 * 
 	 * @see ThresholdRenderable#setThreshold(double)
 	 */
@@ -146,9 +143,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the globe of this planning grid.
+	 * Sets the globe of this planning continuum.
 	 * 
-	 * @param globe the globe of this planning grid
+	 * @param globe the globe of this planning continuum
 	 * 
 	 * @see Environment#setGlobe(Globe)
 	 */
@@ -158,9 +155,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the globe of this planning grid.
+	 * Gets the globe of this planning continuum.
 	 * 
-	 * @return the globe of this planning grid
+	 * @return the globe of this planning continuum
 	 * 
 	 * @see Environment#getGlobe()
 	 */
@@ -170,6 +167,8 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
+	 * Gets the obstacles of this planning continuum.
+	 * 
 	 * @return the obstacles
 	 */
 	public HashSet<Obstacle> getObstacles() {
@@ -177,6 +176,8 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
+	 * Sets the obstacles of this planning continuum.
+	 * 
 	 * @param obstacles the obstacles to set
 	 */
 	public void setObstacles(HashSet<Obstacle> obstacles) {
@@ -184,11 +185,11 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not this planning grid contains a position.
+	 * Indicates whether or not this planning continuum contains a position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if this planning grid contains the position, false otherwise
+	 * @return true if this planning continuum contains the position, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -198,17 +199,16 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	@Override
 	public boolean contains(Position position) {
 		if (null != this.globe) {
-			return super.contains(
-					this.globe.computePointFromPosition(position));
+			return super.contains(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
 
 	/**
-	 * Gets the center position in globe coordinates of this planning grid.
+	 * Gets the center position in globe coordinates of this planning continuum.
 	 * 
-	 * @return the center position in globe coordinates of this planning grid
+	 * @return the center position in globe coordinates of this planning continuum
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -219,8 +219,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 		Position centerPosition = null;
 
 		if (null != this.globe) {
-			centerPosition = this.globe
-					.computePositionFromPoint(this.getCenter());
+			centerPosition = this.globe.computePositionFromPoint(this.getCenter());
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
@@ -228,18 +227,29 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 		return centerPosition;
 	}
 
+	// TODO What are neighboring environments?
 	@Override
 	public Set<? extends Environment> getNeighbors() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
 	public boolean areNeighbors(Environment neighbor) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
+	/**
+	 * Gets the distance between two positions in this planning continuum.
+	 * 
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * 
+	 * @return the distance between the two positions in this planning continuum
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
+	 * @see Environment#getDistance(Position, Position)
+	 */
 	@Override
 	public double getDistance(Position position1, Position position2) {
 		if (null != this.globe) {
@@ -256,24 +266,23 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the normalized distance between two positions in this planning grid.
+	 * Gets the normalized distance between two positions in this planning continuum.
 	 * 
 	 * @param position1 the first position
 	 * @param position2 the second position
 	 * 
-	 * @return the normalized distance between the two positions in this
-	 *         planning grid
+	 * @return the normalized distance between the two positions in this planning
+	 *         continuum
 	 */
 	@Override
-	public double getNormalizedDistance(Position position1,
-			Position position2) {
+	public double getNormalizedDistance(Position position1, Position position2) {
 		return this.getDistance(position1, position2) / this.getDiameter();
 	}
 
 	/**
 	 * Gets the step cost from an origin to a destination position within this
-	 * planning grid between a start and an end time given a cost policy and
-	 * risk policy.
+	 * planning continuum between a start and an end time given a cost policy and risk
+	 * policy.
 	 * 
 	 * @param origin the origin position in globe coordinates
 	 * @param destination the destination position in globe coordinates
@@ -286,14 +295,12 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	 */
 	// TODO: We implement the same method defined in the interface but need to
 	// receive an extension of a position (SmapledWaypoint)
-	public double getStepCost(Position origin, Position destination,
-			ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
-			RiskPolicy riskPolicy) {
+	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		return 0;
 	}
 
-	public double getStepCost(SampledWaypoint origin,
-			SampledWaypoint destination, CostPolicy costPolicy,
+	public double getStepCost(SampledWaypoint origin, SampledWaypoint destination, CostPolicy costPolicy,
 			RiskPolicy riskPolicy) {
 
 		double stepCost = 0d;
@@ -312,33 +319,30 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 		SampledWaypoint waypoint2;
 
 		// compute cost of each adjacent waypoint
-		for (int i=0; i<waypoints.size()-1; i++) {
-			waypoint2 =  waypoints.get(i+1);
+		for (int i = 0; i < waypoints.size() - 1; i++) {
+			waypoint2 = waypoints.get(i + 1);
 			distance = this.getDistance(waypoint1, waypoint2);
-			cost = (waypoint1.getCost() + waypoint2.getCost())/2;
-			
+			cost = (waypoint1.getCost() + waypoint2.getCost()) / 2;
+
 			// boost cost if local risk is not acceptable
 			if (riskPolicy.satisfies(cost - 1)) {
 				costs.add(distance * cost);
 			} else {
 				costs.add(Double.POSITIVE_INFINITY);
 			}
-			waypoint1 =  waypoint2;
+			waypoint1 = waypoint2;
 		}
 
 		// apply cost policy for final cost
 		switch (costPolicy) {
 		case MINIMUM:
-			stepCost = costs.stream().mapToDouble(Double::doubleValue).min()
-					.getAsDouble();
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
 			break;
 		case MAXIMUM:
-			stepCost = costs.stream().mapToDouble(Double::doubleValue).max()
-					.getAsDouble();
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
 			break;
 		case AVERAGE:
-			stepCost = costs.stream().mapToDouble(Double::doubleValue).average()
-					.getAsDouble();
+			stepCost = costs.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
 			break;
 		}
 
@@ -346,27 +350,34 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	@Override
-	public double getLegCost(Position origin, Position destination,
-			ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
+	public double getLegCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getLegCost(Environment destination, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
 			RiskPolicy riskPolicy) {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
-	@Override
-	public double getLegCost(Environment destination, ZonedDateTime start,
-			ZonedDateTime end, CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
+	/**
+	 * Embeds an obstacle into this planning continuum.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 * 
+	 * @return true if the obstacle has been embedded, false otherwise
+	 * 
+	 * @see Environment#embed(Obstacle)
+	 */
 	@Override
 	public boolean embed(Obstacle obstacle) {
 		boolean embedded = false;
 
 		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle)
-					&& this.intersects(obstacle.getExtent(this.globe))) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.obstacles.add(obstacle);
 
 				embedded = true;
@@ -379,7 +390,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Unembeds an obstacle from this planning grid.
+	 * Unembeds an obstacle from this planning continuum.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
 	 * 
@@ -390,19 +401,19 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	@Override
 	public boolean unembed(Obstacle obstacle) {
 		boolean unembedded = false;
-		
+
 		if (this.isEmbedded(obstacle)) {
-			
+
 			this.obstacles.remove(obstacle);
-			
+
 			unembedded = true;
 		}
-		
+
 		return unembedded;
 	}
 
 	/**
-	 * Updates this planning grid for an embedded obstacle.
+	 * Updates this planning continuum for an embedded obstacle.
 	 * 
 	 * @param obstacle the embedded obstacle
 	 * 
@@ -416,7 +427,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Unembeds all obstacles from this planning grid.
+	 * Unembeds all obstacles from this planning continuum.
 	 * 
 	 * @see Environment#unembedAll()
 	 */
@@ -424,14 +435,14 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	public void unembedAll() {
 		this.obstacles.clear();
 	}
-	
+
 	/**
-	 * Indicates whether or not an obstacle is embedded in this planning grid.
+	 * Indicates whether or not an obstacle is embedded in this planning continuum.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
-	 * @return true if the obstacle is embedded in this planning grid,
-	 *         false otherwise
+	 * @return true if the obstacle is embedded in this planning continuum, false
+	 *         otherwise
 	 * 
 	 * @see Environment#isEmbedded(Obstacle)
 	 */
@@ -441,7 +452,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Updates this planning grid.
+	 * Updates this planning continuum.
 	 */
 	protected void update() {
 		this.updateAppearance();
@@ -449,14 +460,14 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Updates the visibility of this planning grid.
+	 * Updates the visibility of this planning continuum.
 	 */
 	protected void updateVisibility() {
 		this.setVisible(this.activeCost > this.thresholdCost);
 	}
 
 	/**
-	 * Updates the appearance of this planning grid.
+	 * Updates the appearance of this planning continuum.
 	 */
 	protected void updateAppearance() {
 		Color activeColor = ObstacleColor.getColor(activeCost);
@@ -474,8 +485,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	 * 
 	 * @return the interval tree with all cost intervals
 	 */
-	public IntervalTree<ChronoZonedDateTime<?>> getIntervalTree(
-			Position position) {
+	public IntervalTree<ChronoZonedDateTime<?>> getIntervalTree(Position position) {
 		IntervalTree<ChronoZonedDateTime<?>> intervalTree = new IntervalTree<ChronoZonedDateTime<?>>(
 				CostInterval.comparator);
 

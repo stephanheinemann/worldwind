@@ -39,10 +39,10 @@ import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
  */
 public class Edge {
 
-	/** the origin SampledWaypoint of this edge */
+	/** the first SampledWaypoint of this edge */
 	private SampledWaypoint wpt1;
 
-	/** the destination SampledWaypoint of this edge */
+	/** the second SampledWaypoint of this edge */
 	private SampledWaypoint wpt2;
 
 	/**
@@ -100,10 +100,34 @@ public class Edge {
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public final int hashCode() {
+	public int hashCode() {
 		int result;
 		result = wpt1.hashCode();
 		result = result * wpt2.hashCode();
 		return result;
 	}
+
+	/**
+	 * Indicates whether or not this edge equals another edge based on their
+	 * waypoints.
+	 * 
+	 * @param obj the other edge
+	 * 
+	 * @return true, if the waypoints in this edge equals the waypoints of the other
+	 *         edge (regardless of order), false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object obj) {
+		boolean equals = false;
+
+		if (obj instanceof Edge) {
+			equals = this.wpt1.equals(((Edge) obj).wpt1) && this.wpt2.equals(((Edge) obj).wpt2)
+					|| this.wpt1.equals(((Edge) obj).wpt2) && this.wpt2.equals(((Edge) obj).wpt1);
+		}
+
+		return equals;
+	}
+
 }
