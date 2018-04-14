@@ -85,14 +85,24 @@ public interface Sampler {
 	boolean checkConflict(Position position1, Position position2);
 
 	/**
-	 * Finds the k-nearest waypoints to the given waypoint considering the
-	 * problems metric
+	 * Finds the k-nearest waypoints to the given position considering the problems
+	 * metric
 	 * 
-	 * @param waypoint the waypoint in global coordinates
-	 * @param k number of waypoints to return
+	 * @param position the position in global coordinates
+	 * @param num number of waypoints to return
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
-	List<? extends Position> findNearest(Position waypoint, int k);
+	public List<? extends Position> findNearest(Position position, List<? extends Position> list, int num);
+	
+	/**
+	 * Sorts a list of elements by increasing distance to a given position
+	 * 
+	 * @param position the position in global coordinates
+	 * @param list the list of elements to be sorted
+	 * 
+	 * @return list of elements sorted by increasing distance to the position
+	 */
+	public List<? extends Position> sortNearest(Position position, List<? extends Position> list);
 
 }

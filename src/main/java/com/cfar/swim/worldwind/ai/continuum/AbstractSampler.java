@@ -51,8 +51,7 @@ import gov.nasa.worldwind.geom.Vec4;
  * @author Henrique Ferreira
  *
  */
-public abstract class AbstractSampler extends AbstractPlanner
-		implements Sampler {
+public abstract class AbstractSampler extends AbstractPlanner implements Sampler {
 
 	// TODO: Should this be defined here or specifically for every algorithm?
 	// (Probably not here...)
@@ -72,8 +71,7 @@ public abstract class AbstractSampler extends AbstractPlanner
 	public AbstractSampler(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 		if (this.getEnvironment() instanceof PlanningContinuum) {
-			this.setContinuumEnvironment(
-					(PlanningContinuum) this.getEnvironment());
+			this.setContinuumEnvironment((PlanningContinuum) this.getEnvironment());
 		}
 	}
 
@@ -105,45 +103,42 @@ public abstract class AbstractSampler extends AbstractPlanner
 	/**
 	 * @param continuumEnvironment the continuumEnvironment to set
 	 */
-	public void setContinuumEnvironment(
-			PlanningContinuum continuumEnvironment) {
+	public void setContinuumEnvironment(PlanningContinuum continuumEnvironment) {
 		this.continuumEnvironment = continuumEnvironment;
 	}
 
 	/**
-	 * Samples a position from a continuous space defined in the current
-	 * environment
+	 * Samples a position from a continuous space defined in the current environment
 	 * 
 	 * @return position in global coordinates inside the environment
 	 */
 	public Position sampleRandomPosition() {
 		Vec4[] corners = this.getContinuumEnvironment().getCorners();
-		
-		// Point in box with all minimum coordinates
-		Vec4 minimum = this.getContinuumEnvironment().transformModelToBoxOrigin(corners[0]); 
 
-		// Point in box with all maximum coordinates
-		Vec4 maximum = this.getContinuumEnvironment().transformModelToBoxOrigin(corners[6]); 
-		
+		// Point in box frame with all minimum coordinates
+		Vec4 minimum = this.getContinuumEnvironment().transformModelToBoxOrigin(corners[0]);
+		// Point in box frame with all maximum coordinates
+		Vec4 maximum = this.getContinuumEnvironment().transformModelToBoxOrigin(corners[6]);
+
 		double x, y, z;
 
 		x = minimum.x + (new Random().nextDouble() * (maximum.x - minimum.x));
 		y = minimum.y + (new Random().nextDouble() * (maximum.y - minimum.y));
-		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));	
-		
-		Vec4 point = new Vec4(x, y, z);
-		
-		point= this.getContinuumEnvironment().transformBoxOriginToModel(point);
+		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));
 
-		Position position = this.getEnvironment().getGlobe()
-				.computePositionFromPoint(point);
+		Vec4 point = new Vec4(x, y, z);
+
+		// Transform point from box frame to earth frame
+		point = this.getContinuumEnvironment().transformBoxOriginToModel(point);
+
+		Position position = this.getEnvironment().getGlobe().computePositionFromPoint(point);
 
 		return position;
 	}
 
 	/**
-	 * Checks if a given position is in conflict with untraversable obstacles in
-	 * the environment
+	 * Checks if a given position is in conflict with untraversable obstacles in the
+	 * environment
 	 * 
 	 * @param waypoint the waypoint in global coordinates
 	 * 
@@ -152,19 +147,19 @@ public abstract class AbstractSampler extends AbstractPlanner
 	public boolean checkConflict(Position position) {
 		// TODO : Implement a checker for conflict between a position and the
 		// static, time independent and untraversable obstacles in the environment
-//		
-//		HashSet<Terrain> terrainSet = this.getContinuumEnvironment().getTerrain();
-//		
-//		for(Terrain terrain : terrainSet) {
-//			// Check if obstacle contains the waypoint
-//			if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).contains(position)){
-//				return true;
-//			}
-//		}
-//		
+		//
+		// HashSet<Terrain> terrainSet = this.getContinuumEnvironment().getTerrain();
+		//
+		// for(Terrain terrain : terrainSet) {
+		// // Check if obstacle contains the waypoint
+		// if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).contains(position)){
+		// return true;
+		// }
+		// }
+		//
 		return false;
 	}
-	
+
 	/**
 	 * Creates a SampledWaypoint embedding the CostInterval tree for respective
 	 * position
@@ -175,13 +170,13 @@ public abstract class AbstractSampler extends AbstractPlanner
 	 */
 	public SampledWaypoint createSampledWaypoint(Position position) {
 		SampledWaypoint sampledWaypoint = new SampledWaypoint(position);
-		
-		sampledWaypoint.setCostIntervals( this.getContinuumEnvironment().getIntervalTree(position) );
-		
+
+		sampledWaypoint.setCostIntervals(this.getContinuumEnvironment().getIntervalTree(position));
+
 		return sampledWaypoint;
-		
+
 	}
-	
+
 	/**
 	 * Checks if a straight leg between the waypoints is in conflict with
 	 * untraversable obstacles in the environment
@@ -194,72 +189,85 @@ public abstract class AbstractSampler extends AbstractPlanner
 	public boolean checkConflict(Position position1, Position position2) {
 		Position positionAux;
 		double lat, lon, elevation, angle, ddLat, ddLon, ddElevation;
-		
+
 		ddLat = position2.getLatitude().radians - position1.getLatitude().radians;
 		ddLon = position2.getLongitude().radians - position1.getLongitude().radians;
 		ddElevation = position2.getElevation() - position1.getElevation();
-		
-		angle = Math.acos( Math.cos(ddLon)*Math.cos(ddLat) ); // angle (radians) between 2 positions and globe center
-		
+
+		angle = Math.acos(Math.cos(ddLon) * Math.cos(ddLat)); // angle (radians) between 2 positions and globe center
+
 		// TODO: add resolution as user input parameter in UI
-		double RESOLUTION=1; //meters in globe surface
+		double RESOLUTION = 1; // meters in globe surface
 		double GLOBE_RADIUS = this.getEnvironment().getGlobe().getEquatorialRadius();
 		// TODO: Review if angles used are correct
-		for(int p=1; angle*GLOBE_RADIUS>RESOLUTION; p=p*2){
-			for(int k=0; k<p; k++){
+		for (int p = 1; angle * GLOBE_RADIUS > RESOLUTION; p = p * 2) {
+			for (int k = 0; k < p; k++) {
 				// latitude with fraction of angle between positions
-				lat = Math.asin( Math.sin((1/2 + k)*angle) * Math.sin(ddLat) );
+				lat = Math.asin(Math.sin((1 / 2 + k) * angle) * Math.sin(ddLat));
 				// longitude using spherical pythagoras theorem
-				lon = Math.acos( Math.cos((1/2 + k)*angle) / Math.cos(lat) );
+				lon = Math.acos(Math.cos((1 / 2 + k) * angle) / Math.cos(lat));
 				// elevation adding linear fraction of elevation variation
-				elevation = position1.getElevation() + (1/2 + k) * ddElevation;
-				
+				elevation = position1.getElevation() + (1 / 2 + k) * ddElevation;
+
 				positionAux = new Position(Angle.fromDegrees(lat), Angle.fromDegrees(lon), elevation);
-						
-				if(this.checkConflict(positionAux)) {
+
+				if (this.checkConflict(positionAux)) {
 					return true;
 				}
 			}
-			angle = angle/2;
-			ddElevation = ddElevation/2;
+			angle = angle / 2;
+			ddElevation = ddElevation / 2;
 		}
-		
+
 		return false;
 	}
 
 	/**
-	 * Finds the k-nearest waypoints to the given waypoint considering the
-	 * problems metric
+	 * Finds the k-nearest waypoints to the given position considering the problems
+	 * metric
 	 * 
-	 * @param waypoint the waypoint in global coordinates
+	 * @param position the position in global coordinates
 	 * @param num number of waypoints to return
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
-	//TODO: Correct implementation
-	public List<? extends Position> findNearest(Position waypoint, int num) {
-		List<Position> posiNearList = new ArrayList<Position>();
-		List<Position> posiTempList = new ArrayList<Position>(waypointList);
+	public List<? extends Position> findNearest(Position position, List<? extends Position> list, int num) {
+		// List<? extends Position> list = new ArrayList<>(this.waypointList);
+		List<? extends Position> posiNearList;
 
 		// sorts the list by increasing distance to waypoint
-		Collections.sort(posiTempList,
-				(a, b) -> super.getEnvironment().getDistance(waypoint,
-						a) < super.getEnvironment().getDistance(waypoint, b)
-								? -1
-								: super.getEnvironment().getDistance(waypoint,
-										a) == super.getEnvironment()
-												.getDistance(waypoint, b) ? 0
-														: 1);
+				System.out.println("Sorting list by distance to waypoint...");
+		list = this.sortNearest(position, list);
 
 		// If there are less than k neighbors on the list
-		if (posiTempList.size() <= num) {
-			posiNearList = posiTempList;
+		if (list.size() <= num) {
+					System.out.println("There are less than "+num+" points in the list");
+			posiNearList = new ArrayList<>(list);
 		} else {
-			for (int k = 0; k < num; k++) {
-				posiNearList.add(posiTempList.get(k));
-			}
+					System.out.println("There are more than "+num+" points in the list");
+			posiNearList = new ArrayList<>(list.subList(0, num));
 		}
+			System.out.println("Returning posiNearList");
 
 		return posiNearList;
+	}
+
+	/**
+	 * Sorts a list of elements by increasing distance to a given position
+	 * 
+	 * @param position the position in global coordinates
+	 * @param list the list of elements to be sorted
+	 * 
+	 * @return list of elements sorted by increasing distance to the position
+	 */
+	public List<? extends Position> sortNearest(Position position, List<? extends Position> list) {
+
+		Collections.sort(list,
+				(a, b) -> super.getEnvironment().getDistance(position, a) < super.getEnvironment().getDistance(position,
+						b) ? -1
+								: super.getEnvironment().getDistance(position, a) == super.getEnvironment()
+										.getDistance(position, b) ? 0 : 1);
+
+		return list;
 	}
 }

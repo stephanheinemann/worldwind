@@ -30,11 +30,10 @@
 package com.cfar.swim.worldwind.ai.continuum.basicrrt;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.continuum.AbstractSampler;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -60,9 +59,9 @@ public class RRTreePlanner extends AbstractSampler {
 	static final int MAX_ITER = 3_000;
 
 	/** the maximum distance to extend a waypoint in the tree */
-	static final double EPSILON = 500d; //TODO: Units?
+	static final double EPSILON = 50d; //TODO: Units?
 
-	static final double GOAL_THRESHOLD = 100d;
+	static final double GOAL_THRESHOLD = 5d;
 
 	// ---------- VARIABLES ----------
 
@@ -76,7 +75,7 @@ public class RRTreePlanner extends AbstractSampler {
 	private RRTreeWaypoint waypointNew = null;
 
 	/** the set of sampled RRT waypoints */
-	protected Set<RRTreeWaypoint> tree = new HashSet<>();
+	protected List<RRTreeWaypoint> tree = new ArrayList<RRTreeWaypoint>();
 
 	/** the last computed plan */
 	private final LinkedList<RRTreeWaypoint> plan = new LinkedList<>();
@@ -197,8 +196,7 @@ public class RRTreePlanner extends AbstractSampler {
 
 		// Finds the node in the tree closest to the sampled position
 				System.out.println("Finding nearest waypoint...");
-		waypointNear = new RRTreeWaypoint(super.findNearest(waypoint, 1).get(0));
-
+		waypointNear = (RRTreeWaypoint) this.findNearest(waypoint,this.tree, 1).get(0);
 		// Create a new node by extension from near to sampled
 				System.out.println("Creating new waypoint...");
 		success = this.newWaypoint(waypoint, waypointNear);
@@ -236,10 +234,15 @@ public class RRTreePlanner extends AbstractSampler {
 		// Extend nearest waypoint in the direction of waypoint
 				System.out.println("Growing new position...");
 		Position positionNew = this.growWaypoint(waypoint, waypointNear);
+				System.out.println("Creating new waypoint from grown position..."+positionNew);
 		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
-		
+				System.out.println("Setting new waypoint time..."); //TODO: Review
+//		double dtime = this.getEnvironment().getDistance(waypointNear, waypointNew)*this.getAircraft().getCapabilities().getCruiseSpeed()
+		waypointNew.setEto(waypointNear.getEto());
+				System.out.println("Setting new waypoint...");
 		this.setWaypointNew(waypointNew);
 
+				System.out.println("Checking conflict...");
 		// Check if the new waypoint is in conflict with the environment
 		if (super.checkConflict(waypointNew)) {
 					System.out.println("The new waypoint is in conflict with the terrain...");
@@ -251,6 +254,7 @@ public class RRTreePlanner extends AbstractSampler {
 			success = false;
 		}
 
+				System.out.println("Returning success value...");
 		return success;
 	}
 
@@ -268,7 +272,6 @@ public class RRTreePlanner extends AbstractSampler {
 				System.out.println("Computing points from position...");
 		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
 		Vec4 point2 = super.getEnvironment().getGlobe().computePointFromPosition(position);
-		// TODO: Convert from Earth frame to Box frame
 		
 		double dist  = point1.distanceTo3(point2);
 		
@@ -278,21 +281,24 @@ public class RRTreePlanner extends AbstractSampler {
 		}
 		else {
 					System.out.println("Distance bigger than epsilon");
-			double x, y, z, dx, dy, dz, dist2, epsilon2;
+			double x, y, z, dx, dy, dz, dist2, epsilon2, ddz;
 			dx = point2.x - point1.x;
 			dy = point2.y - point1.y;
 			dz = point2.z - point1.z;
+			System.out.println("dx = "+dx+" dy = "+dy+" dz = "+dz);
 			
-			z = point1.z + dz/dist * EPSILON;
-			
-			epsilon2 = Math.sqrt(EPSILON*EPSILON -z*z);
+			ddz = dz/dist * EPSILON;
+			epsilon2 = Math.sqrt(EPSILON*EPSILON - ddz*ddz);
 			dist2 = point1.distanceTo2(point2);
 			
 			x = point1.x + dx/dist2 * epsilon2;
 			y = point1.y + dy/dist2 * epsilon2;
+			z = point1.z + ddz;
 			
 			Vec4 pointNew = new Vec4(x,y,z); 
+					System.out.println("New point calculated");
 			positionNew = super.getEnvironment().getGlobe().computePositionFromPoint(pointNew);
+					System.out.println("New position calculated... "+positionNew);
 		}
 
 		return positionNew;
@@ -322,8 +328,10 @@ public class RRTreePlanner extends AbstractSampler {
 	}
 	protected void computePath(RRTreeWaypoint waypoint) {
 		plan.addFirst(waypoint);
+		System.out.println(waypoint);
 		while (waypoint.getParent() != null) {
 			waypoint = waypoint.getParent();
+			System.out.println(waypoint);
 			plan.addFirst(waypoint);
 		}
 	}
@@ -340,6 +348,8 @@ public class RRTreePlanner extends AbstractSampler {
 
 		this.setStart(new RRTreeWaypoint(origin));
 		this.getStart().setEto(etd);
+		this.tree.add(start);
+		
 		this.setGoal(new RRTreeWaypoint(destination));
 
 	}
@@ -374,7 +384,7 @@ public class RRTreePlanner extends AbstractSampler {
 		this.compute();
 					System.out.println("Creating trajectory...");
 		Trajectory trajectory = this.createTrajectory();
-					System.out.println("revising...");
+					System.out.println("Trajectory null? " + trajectory.getLength() + "revising...");
 		this.revisePlan(trajectory); //Not sure what this does
 					System.out.println("Retunring...");
 		return trajectory;
@@ -408,5 +418,5 @@ public class RRTreePlanner extends AbstractSampler {
 
 		return supports;
 	}
-
+	
 }
