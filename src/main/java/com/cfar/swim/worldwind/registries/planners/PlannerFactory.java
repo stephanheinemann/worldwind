@@ -43,8 +43,8 @@ import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
 
 /**
- * Realizes a planner factory to create planners according to
- * customized planner specifications.
+ * Realizes a planner factory to create planners according to customized planner
+ * specifications.
  * 
  * @author Stephan Heinemann
  * 
@@ -55,24 +55,24 @@ public class PlannerFactory implements Factory<Planner> {
 
 	// TODO: Both, environment and planner factory need the active scenario
 	// maybe pull up scenario functionality into abstract factory
-	
+
 	/** the scenario of this planner factory */
 	private Scenario scenario;
-	
+
 	/** the active scenario change listener of this planner factory */
 	private ActiveScenarioChangeListener ascl = new ActiveScenarioChangeListener();
-	
+
 	/**
-	 * Constructs a new planner factory with a specified scenario.
-	 * The scenario aggregates an aircraft and environment which shall not be
-	 * part of the planner specification.
+	 * Constructs a new planner factory with a specified scenario. The scenario
+	 * aggregates an aircraft and environment which shall not be part of the planner
+	 * specification.
 	 * 
 	 * @param scenario the scenario of this planner factory
 	 */
 	public PlannerFactory(Scenario scenario) {
 		this.scenario = scenario;
 	}
-	
+
 	/**
 	 * Gets the scenario of this planner factory.
 	 * 
@@ -81,7 +81,7 @@ public class PlannerFactory implements Factory<Planner> {
 	public Scenario getScenario() {
 		return this.scenario;
 	}
-	
+
 	/**
 	 * Sets the scenario of this planner factory.
 	 * 
@@ -90,7 +90,7 @@ public class PlannerFactory implements Factory<Planner> {
 	public void setScenario(Scenario scenario) {
 		this.scenario = scenario;
 	}
-	
+
 	/**
 	 * Gets the active scenario change listener of this planner factory.
 	 * 
@@ -99,7 +99,7 @@ public class PlannerFactory implements Factory<Planner> {
 	public PropertyChangeListener getActiveScenarioChangeListener() {
 		return this.ascl;
 	}
-	
+
 	/**
 	 * Creates a new planner according to a customized planner specification.
 	 * 
@@ -112,9 +112,9 @@ public class PlannerFactory implements Factory<Planner> {
 	@Override
 	public Planner createInstance(Specification<Planner> specification) {
 		Planner planner = null;
-		
+
 		// TODO: validate scenario for planner creation? (supports)
-		
+
 		if (specification.getId().equals(Specification.PLANNER_FAS_ID)) {
 			ForwardAStarProperties properties = (ForwardAStarProperties) specification.getProperties();
 			planner = new ForwardAStarPlanner(scenario.getAircraft(), scenario.getEnvironment());
@@ -140,15 +140,17 @@ public class PlannerFactory implements Factory<Planner> {
 			planner.setRiskPolicy(properties.getRiskPolicy());
 		} else if (specification.getId().equals(Specification.PLANNER_RRT_ID)) {
 			RRTreeProperties properties = (RRTreeProperties) specification.getProperties();
-			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment());
+			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
+					properties.getEpsilon(), properties.getBias(), properties.getMaxIter());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
+			((RRTreePlanner) planner).setStrategy(properties.getStrategy());
 		}
 		// TODO: implement more planners
-		
+
 		return planner;
 	}
-	
+
 	/**
 	 * Realizes an active scenario change listener for this planner factory.
 	 * 
@@ -156,7 +158,7 @@ public class PlannerFactory implements Factory<Planner> {
 	 * 
 	 */
 	private class ActiveScenarioChangeListener implements PropertyChangeListener {
-		
+
 		@Override
 		public void propertyChange(PropertyChangeEvent evt) {
 			if (evt.getNewValue() instanceof Scenario) {
@@ -164,5 +166,5 @@ public class PlannerFactory implements Factory<Planner> {
 			}
 		}
 	}
-	
+
 }
