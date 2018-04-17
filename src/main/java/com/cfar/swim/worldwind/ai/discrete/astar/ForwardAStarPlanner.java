@@ -539,7 +539,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.clearWaypoints();
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setG(0);
-		this.getStart().setH(this.getEnvironment().getDistance(origin, destination));
+		this.getStart().setH(this.getEnvironment().getNormalizedDistance(origin, destination));
 
 		this.getStart().setEto(etd);
 
@@ -589,6 +589,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				}
 			}
 		}
+		System.out.println("Open list is empty");
 	}
 	
 	/**

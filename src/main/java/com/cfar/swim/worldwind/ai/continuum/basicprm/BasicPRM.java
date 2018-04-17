@@ -64,7 +64,7 @@ public class BasicPRM extends AbstractSampler {
 	 */
 	public static final int MAX_NEIGHBORS = 30;
 
-	public static final int MAX_DIST = 150;
+	public static final int MAX_DIST = 200;
 
 	public static final int MAX_SAMPLED_WAYPOINTS = 1000;
 
@@ -282,7 +282,9 @@ public class BasicPRM extends AbstractSampler {
 		while (num < MAX_SAMPLED_WAYPOINTS) {
 
 			BasicPRMWaypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
+			waypoint.setAto(this.getContinuumEnvironment().getTime());
 			if (!this.checkConflict(waypoint)) {
+				waypoint.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(waypoint));
 				this.waypointList.add(waypoint);
 				this.connectWaypoint(waypoint);
 				num++;
@@ -304,11 +306,13 @@ public class BasicPRM extends AbstractSampler {
 		BasicPRMWaypoint goal = this.createWaypoint(destination);
 
 		if (!this.checkConflict(start)) {
+			start.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(start));
 			this.waypointList.add(start);
 			this.connectWaypoint(start);
 		}
 
 		if (!this.checkConflict(goal)) {
+			goal.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(goal));
 			this.waypointList.add(goal);
 			this.connectWaypoint(goal);
 		}
@@ -373,6 +377,8 @@ public class BasicPRM extends AbstractSampler {
 			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(), this.getContinuumEnvironment().getGlobe());
 			
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
+			aStar.setCostPolicy(this.getCostPolicy());
+			aStar.setRiskPolicy(this.getRiskPolicy());
 			
 			Trajectory trajectory = aStar.plan(origin, destination, etd);
 			

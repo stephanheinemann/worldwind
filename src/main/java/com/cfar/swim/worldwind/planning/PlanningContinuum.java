@@ -46,6 +46,7 @@ import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -332,7 +333,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 			}
 			waypoint1 = waypoint2;
 		}
-
+			
 		// apply cost policy for final cost
 		switch (costPolicy) {
 		case MINIMUM:
@@ -363,6 +364,31 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 		return 0;
 	}
 
+	/**
+	 * Embeds an obstacle into this planning continuum.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 * 
+	 * @return true if the obstacle has been embedded, false otherwise
+	 * 
+	 * @see Environment#embed(Obstacle)
+	 */
+	public boolean embed(ObstacleCylinder obstacle) {
+		boolean embedded = false;
+
+		if (null != this.globe) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
+				this.obstacles.add(obstacle);
+
+				embedded = true;
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+
+		return embedded;
+	}
+	
 	/**
 	 * Embeds an obstacle into this planning continuum.
 	 * 
@@ -498,6 +524,38 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 		}
 
 		return intervalTree;
+	}
+	
+	public IntervalTree<ChronoZonedDateTime<?>> embedIntervalTree(Position position) {
+		IntervalTree<ChronoZonedDateTime<?>> intervalTree = new IntervalTree<ChronoZonedDateTime<?>>(
+				CostInterval.comparator);
+		
+		Box box = this.createBoundingBox(position);
+		
+		for (Obstacle obstacle : this.getObstacles()) {
+			if(obstacle.getExtent(this.getGlobe()).intersects(box.getFrustum())) {
+				intervalTree.add(obstacle.getCostInterval());
+			}
+		}
+		
+		return intervalTree;
+	}
+	
+	private Box createBoundingBox(Position position) {
+		Vec4 point = this.getGlobe().computePointFromPosition(position);
+		List<Vec4> corners = new ArrayList<Vec4>();
+		
+		//TODO: create box according to aircraft dimensions
+		double halfDistance = 0.1d;
+		
+		corners.add(point.add3(-halfDistance, +halfDistance, -halfDistance));
+		corners.add(point.add3(+halfDistance, +halfDistance, -halfDistance));
+		corners.add(point.add3(+halfDistance, -halfDistance, -halfDistance));
+		corners.add(point.add3(+halfDistance, -halfDistance, +halfDistance));
+		corners.add(point.add3(-halfDistance, -halfDistance, +halfDistance));
+		corners.add(point.add3(-halfDistance, +halfDistance, +halfDistance));
+		
+		return new Box(gov.nasa.worldwind.geom.Box.computeBoundingBox(corners));
 	}
 
 }

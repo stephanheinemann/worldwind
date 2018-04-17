@@ -142,7 +142,7 @@ public class SampledWaypoint extends Waypoint {
 	 * Updates the active cost of this sampled waypoint using its ato to search the
 	 * costInterval tree.
 	 */
-	private void updateCost() {
+	public void updateCost() {
 		this.setCost(this.calculateCost(this.getAto()));
 	}
 

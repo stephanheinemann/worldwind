@@ -55,8 +55,6 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  */
 public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnvironment {
 
-	// TODO: extends SampledWaypoint??? waypointList defined here or in BasicPRM
-	// planner?
 	/** the list of sampled waypoints of this roadmap */
 	private List<BasicPRMWaypoint> waypointList = new ArrayList<>();
 
@@ -160,9 +158,9 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 
 		if (null != this.getGlobe()) {
 			for (Edge edge : edgeList) {
-				if (waypoint.latitude==edge.getWpt1().latitude && waypoint.longitude==edge.getWpt1().longitude && waypoint.elevation==edge.getWpt1().elevation)
+				if(waypoint.equals(edge.getWpt1()))
 					neighbors.add(edge.getWpt2());
-				if (waypoint.latitude==edge.getWpt2().latitude && waypoint.longitude==edge.getWpt2().longitude && waypoint.elevation==edge.getWpt2().elevation)
+				if(waypoint.equals(edge.getWpt2()))
 					neighbors.add(edge.getWpt1());
 			}
 
@@ -181,7 +179,6 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 */
 	@Override
 	public boolean isWaypoint(Position position) {
-		// TODO: position.equals(waypoint) review....
 		for (SampledWaypoint waypoint : waypointList) {
 			if (position.equals(waypoint))
 				return true;
@@ -190,9 +187,8 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	}
 
 	public SampledWaypoint getWaypoint(Position position) {
-		// TODO: position.equals(waypoint) review....
 		for (SampledWaypoint waypoint : waypointList) {
-			if (position.latitude==waypoint.latitude && position.longitude==waypoint.longitude && position.elevation==waypoint.elevation)
+			if(position.equals(waypoint))
 				return waypoint;
 		}
 		return null;
@@ -220,7 +216,6 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 */
 	@Override
 	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
-		// TODO: position.equals(waypoint) review...
 		for (Edge edge : edgeList) {
 			if (position.equals(edge.getWpt1()) && waypoint.equals(edge.getWpt2()))
 				return true;
@@ -313,11 +308,13 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 
 		SampledWaypoint wpt1 = this.getWaypoint(origin);
 		wpt1.setEto(start);
-		wpt1.setCost(wpt1.calculateCost(start));
+		wpt1.setAto(start);		
+		wpt1.updateCost();
 		
 		SampledWaypoint wpt2 = this.getWaypoint(destination);
 		wpt2.setEto(end);
-		wpt2.setCost(wpt1.calculateCost(end));
+		wpt2.setAto(end);	
+		wpt2.updateCost();
 
 		double cost = this.getStepCost(wpt1, wpt2, costPolicy, riskPolicy);
 
