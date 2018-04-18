@@ -204,7 +204,7 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Export-Package>${local-packages};-split-package:=merge-first</Export-Package>
+						<Export-Package>${local-packages}, com.cfar.swim.worldwind.util, gov.nasa.worldwind.geom;-split-package:=merge-first</Export-Package>
 						<Private-Package>
 						com.binarydreamers.trees
 						</Private-Package>
