@@ -56,6 +56,7 @@ import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties
 import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.BasicPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.ForwardAStarProperties;
+import com.cfar.swim.worldwind.registries.planners.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.RRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.ThetaStarProperties;
@@ -178,6 +179,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, new ARAStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_PRM_ID, new BasicPRMProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRT_ID, new RRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_HRRT_ID, new HRRTreeProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		this.datalinkRegistry.clearSpecifications();
@@ -190,7 +192,7 @@ public class Session implements Identifiable {
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_CONTINUUM_ID));
-		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_RRT_ID));
+		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_HRRT_ID));
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
 	}
 	
