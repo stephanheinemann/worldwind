@@ -43,8 +43,8 @@
     
     <iwxxm:validPeriod>
         <gml:TimePeriod gml:id="tp-20161130T1200Z-20161130T1600Z">
-            <gml:beginPosition>2016-11-30T12:00:00Z</gml:beginPosition>
-            <gml:endPosition>2016-11-30T16:00:00Z</gml:endPosition>
+            <gml:beginPosition>2018-04-17T14:00:00Z</gml:beginPosition>
+            <gml:endPosition>2018-04-17T14:10:00Z</gml:endPosition>
         </gml:TimePeriod>
     </iwxxm:validPeriod>
 
@@ -56,7 +56,7 @@
             <om:phenomenonTime nilReason="missing"/>
             <om:resultTime>
                 <gml:TimeInstant gml:id="ti-201611301200Z">
-                    <gml:timePosition>2016-11-30T12:00:00Z</gml:timePosition>
+                    <gml:timePosition>2018-04-17T14:00:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:resultTime>
             <om:validTime xlink:href="#tp-20161130T1200Z-20161130T1600Z"/>
@@ -90,7 +90,7 @@
                     <iwxxm:directionOfMotion uom="deg">90</iwxxm:directionOfMotion>
                     <iwxxm:geometry>
                         <aixm:AirspaceVolume gml:id="as1">
-                            <aixm:upperLimit uom="FL">80</aixm:upperLimit>
+                            <aixm:upperLimit uom="FL">3</aixm:upperLimit>
                             <aixm:upperLimitReference>STD</aixm:upperLimitReference>
                             <aixm:horizontalProjection>
                                 <aixm:Surface gml:id="tc-obs-N2706-sfc" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
@@ -102,8 +102,8 @@
                                                         <gml:Curve gml:id="curve01">
                                                             <gml:segments>
                                                                 <gml:CircleByCenterPoint numArc="1">
-                                                                    <gml:pos>48.45 -123.6</gml:pos>
-                                                                    <gml:radius uom="[nmi_i]">10</gml:radius>
+                                                                    <gml:pos>48.453342 -123.29</gml:pos>
+                                                                    <gml:radius uom="[nmi_i]">0.2</gml:radius>
                                                                 </gml:CircleByCenterPoint>
                                                             </gml:segments>
                                                         </gml:Curve>
@@ -116,7 +116,7 @@
                             </aixm:horizontalProjection>
                         </aixm:AirspaceVolume>
                     </iwxxm:geometry>
-                    <iwxxm:speedOfMotion uom="[kn_i]">18</iwxxm:speedOfMotion>
+                    <iwxxm:speedOfMotion uom="[kn_i]">0</iwxxm:speedOfMotion>
                 </iwxxm:EvolvingMeteorologicalCondition>
             </om:result>
         </om:OM_Observation>
@@ -127,12 +127,12 @@
             <om:type xlink:href="http://codes.wmo.int/49-2/observation-type/IWXXM/2.0/SIGMETPositionAnalysis"/>
             <om:phenomenonTime>
                 <gml:TimeInstant gml:id="ti-20161130T1600Z2">
-                    <gml:timePosition>2016-11-30T16:00:00Z</gml:timePosition>
+                    <gml:timePosition>2018-04-17T14:10:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:phenomenonTime>
             <om:resultTime>
                 <gml:TimeInstant gml:id="ti-201611301200Z3">
-                    <gml:timePosition>2016-11-30T12:00:00Z</gml:timePosition>
+                    <gml:timePosition>2018-04-17T14:00:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:resultTime>
             <om:validTime xlink:href="#tp-20161130T1200Z-20161130T1600Z"/>
@@ -145,7 +145,7 @@
                         <iwxxm:MeteorologicalPosition gml:id="sigmet-fcst-N2706">
                             <iwxxm:geometry>
                                 <aixm:AirspaceVolume gml:id="as2">
-                                	<aixm:upperLimit uom="FL">100</aixm:upperLimit>
+                                	<aixm:upperLimit uom="FL">3</aixm:upperLimit>
                             		<aixm:upperLimitReference>STD</aixm:upperLimitReference>
                                     <aixm:horizontalProjection>
                                         <aixm:Surface gml:id="sfc002" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
@@ -157,8 +157,8 @@
                                                                 <gml:Curve gml:id="curve001">
                                                                     <gml:segments>
                                                                         <gml:CircleByCenterPoint numArc="1">
-                                                                            <gml:pos>48.45 -123.1</gml:pos>
-                                                                            <gml:radius uom="[nmi_i]">5</gml:radius>
+                                                                            <gml:pos>48.453342 -123.27</gml:pos>
+                                                                            <gml:radius uom="[nmi_i]">0.2</gml:radius>
                                                                         </gml:CircleByCenterPoint>
                                                                     </gml:segments>
                                                                 </gml:Curve>
