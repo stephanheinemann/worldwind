@@ -213,7 +213,6 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 		theta = Math.atan2(dz, dist2);
 		phi = Math.atan2(dy, dx);
 
-//		// TODO: add resolution as user input parameter in UI
 		double resolution = this.getContinuumEnvironment().getResolution(); // meters in globe surface
 		for(int p=1; dist>resolution; p=p*2) {
 			for(int k=0; k<p; k++) {
@@ -278,16 +277,7 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	public boolean isInsideGlobe(Globe globe, Position position) {
 		Vec4 point;
 		
-//		earthRadius = this.getContinuumEnvironment().getGlobe().getRadiusAt(position.getLatitude(),
-//				this.getContinuumEnvironment().getGlobe().getMinAndMaxElevations(latitude, longitude)
-//				position.getLongitude());
 		point = this.getContinuumEnvironment().getGlobe().computePointFromPosition(position);
 		return !globe.isPointAboveElevation(point, globe.getElevation(position.latitude, position.longitude));
-//
-//		if(point.getLength3() < earthRadius) {
-//			return true;
-//		}
-//		else
-//			return false;
 	}
 }
