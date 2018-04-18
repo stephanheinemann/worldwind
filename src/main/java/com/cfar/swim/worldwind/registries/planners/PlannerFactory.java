@@ -135,13 +135,14 @@ public class PlannerFactory implements Factory<Planner> {
 			((ARAStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		} else if (specification.getId().equals(Specification.PLANNER_PRM_ID)) {
 			BasicPRMProperties properties = (BasicPRMProperties) specification.getProperties();
-			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment());
+			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
+					properties.getMaxNeighbors(), properties.getMaxDistance());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 		} else if (specification.getId().equals(Specification.PLANNER_RRT_ID)) {
 			RRTreeProperties properties = (RRTreeProperties) specification.getProperties();
-			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
-					properties.getEpsilon(), properties.getBias(), properties.getMaxIter());
+			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((RRTreePlanner) planner).setStrategy(properties.getStrategy());

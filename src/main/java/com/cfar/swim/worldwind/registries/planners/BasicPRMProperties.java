@@ -40,6 +40,15 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  */
 public class BasicPRMProperties extends AbstractPlannerProperties {
 
+	/** the maximum number of sampling iterations */
+	private int maxIter = 1_000;
+	
+	/** the maximum number of neighbors a waypoint can be connected to */
+	private int maxNeighbors = 30;
+	
+	/** the maximum distance between two neighboring waypoints */
+	private double maxDistance = 200;
+
 	/**
 	 * Constructs a new basic PRM planner properties bean.
 	 */
@@ -56,5 +65,80 @@ public class BasicPRMProperties extends AbstractPlannerProperties {
 	 */
 	public BasicPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
+	}
+	
+	/**
+	 * Constructs a new basic PRM planner properties bean with specified cost and
+	 * risk policy property values as well as specified maximum number of
+	 * iterations, maximum number of neighbors and maximum distance.
+	 * 
+	 * @param costPolicy the cost policy of this basic PRM planner properties
+	 *            bean
+	 * @param riskPolicy the risk policy of this basic PRM planner properties
+	 *            bean
+	 * @param maxIter the maximum number of sampling iterations
+	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
+	 * @param maxDistance the maximum distance between two connected waypoints
+	 */
+	public BasicPRMProperties( CostPolicy costPolicy, RiskPolicy riskPolicy,
+			int maxIter, int maxNeighbors, double maxDistance) {
+		super(costPolicy, riskPolicy);
+		this.setMaxIter(maxIter);
+		this.setMaxNeighbors(maxNeighbors);
+		this.setMaxDistance(maxDistance);
+	}
+
+	/**
+	 * Gets the maximum number of sampling iterations
+	 * 
+	 * @return the maximum number of sampling iterations
+	 */
+	public int getMaxIter() {
+		return maxIter;
+	}
+
+	/**
+	 * Sets the maximum number of sampling iterations
+	 * 
+	 * @param maxIter the maximum number of sampling iterations
+	 */
+	public void setMaxIter(int maxIter) {
+		this.maxIter = maxIter;
+	}
+
+	/**
+	 * Gets the maximum number of neighbors a waypoint can have
+	 * 
+	 * @return the maximum number of neighbors a waypoint can have
+	 */
+	public int getMaxNeighbors() {
+		return maxNeighbors;
+	}
+
+	/**
+	 * Sets the maximum number of neighbors a waypoint can have
+	 * 
+	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
+	 */
+	public void setMaxNeighbors(int maxNeighbors) {
+		this.maxNeighbors = maxNeighbors;
+	}
+
+	/**
+	 * Gets the maximum distance between two connected waypoints
+	 * 
+	 * @return the maximum distance between two connected waypoints
+	 */
+	public double getMaxDistance() {
+		return maxDistance;
+	}
+
+	/**
+	 * Sets the maximum distance between two connected waypoints
+	 * 
+	 * @param maxDistance maximum distance between two connected waypoints
+	 */
+	public void setMaxDistance(double maxDistance) {
+		this.maxDistance = maxDistance;
 	}
 }

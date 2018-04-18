@@ -70,31 +70,31 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  *
  */
 public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
-	
+
 	/** the globe of this planning grid */
 	private Globe globe = null;
-	
+
 	/** the cost interval tree encoding temporal costs */
-	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
-	
+	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
+			CostInterval.comparator);
+
 	/** the current time of this planning grid */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
-	
+
 	/** the current accumulated active cost of this planning grid */
 	private double activeCost = 1d;
-	
+
 	/** the threshold cost of this planning grid */
 	private double thresholdCost = 0d;
-	
+
 	/** the obstacles embedded into this planning grid */
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
-	
+
 	/** the affected children of obstacle embeddings */
 	private HashMap<Obstacle, List<PlanningGrid>> affectedChildren = new HashMap<Obstacle, List<PlanningGrid>>();
-	
+
 	/**
-	 * Constructs a planning grid based on a geometric cube without any
-	 * children.
+	 * Constructs a planning grid based on a geometric cube without any children.
 	 * 
 	 * @param cube the geometric cube
 	 * 
@@ -104,10 +104,10 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		super(cube);
 		this.update();
 	}
-	
+
 	/**
-	 * Constructs a planning grid from a geometric cube representing a
-	 * reference child.
+	 * Constructs a planning grid from a geometric cube representing a reference
+	 * child.
 	 * 
 	 * @param refChild the geometric cube representing the reference child
 	 * @param rCells the number of cubic children along the <code>R</code> axis
@@ -120,35 +120,31 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		super(refChild, rCells, sCells, tCells);
 		this.refresh();
 	}
-	
+
 	/**
-	 * Constructs a new planning grid from three plane normals and six
-	 * distances for each of the six faces of a geometric box without any
-	 * children.
+	 * Constructs a new planning grid from three plane normals and six distances for
+	 * each of the six faces of a geometric box without any children.
 	 * 
 	 * This factory method is used during child construction and supposed to be
 	 * overridden by specializing classes.
 	 * 
-	 * @see CubicGrid#newInstance(Vec4[], double, double, double, double, double, double)
+	 * @see CubicGrid#newInstance(Vec4[], double, double, double, double, double,
+	 *      double)
 	 */
 	@Override
-	protected PlanningGrid newInstance(
-			Vec4[] axes,
-			double rMin, double rMax,
-			double sMin, double sMax,
-			double tMin, double tMax) {
-		
+	protected PlanningGrid newInstance(Vec4[] axes, double rMin, double rMax, double sMin, double sMax, double tMin,
+			double tMax) {
+
 		Box b = new Box(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 		return new PlanningGrid(new Cube(b.getOrigin(), axes, b.getRLength()));
 	}
-	
+
 	/**
 	 * Indicates whether or not this planning grid contains a position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if this planning grid contains the position,
-	 *         false otherwise
+	 * @return true if this planning grid contains the position, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -163,21 +159,19 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-	
+
 	/**
-	 * Gets the eight corner positions in globe coordinates of this
-	 * planning grid.
-	 *  
-	 * @return the eight corner positions in globe coordinates of this
-	 *         planning grid
+	 * Gets the eight corner positions in globe coordinates of this planning grid.
+	 * 
+	 * @return the eight corner positions in globe coordinates of this planning grid
 	 * 
 	 * @throws IllegalStateException if the globe is not set
-	 *         
+	 * 
 	 * @see Box#getCorners()
 	 */
 	public Position[] getCornerPositions() {
 		Position[] cornerPositions = null;
-		
+
 		if (null != this.globe) {
 			cornerPositions = new Position[8];
 			Vec4[] corners = this.getCorners();
@@ -187,18 +181,18 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return cornerPositions;
 	}
-	
+
 	/**
-	 * Indicates whether or not a position in globe coordinates is a corner of
-	 * this planning grid considering numerical inaccuracies.
+	 * Indicates whether or not a position in globe coordinates is a corner of this
+	 * planning grid considering numerical inaccuracies.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if the position is a corner of this planning grid
-	 *         considering numerical inaccuracies, false otherwise
+	 * @return true if the position is a corner of this planning grid considering
+	 *         numerical inaccuracies, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -206,16 +200,16 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	public boolean isCorner(Position position) {
 		boolean isCorner = false;
-		
+
 		if (null != this.globe) {
 			isCorner = this.isCorner(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return isCorner;
 	}
-	
+
 	/**
 	 * Gets the center position in globe coordinates of this planning grid.
 	 * 
@@ -228,24 +222,24 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	@Override
 	public Position getCenterPosition() {
 		Position centerPosition = null;
-		
+
 		if (null != this.globe) {
 			centerPosition = this.globe.computePositionFromPoint(this.getCenter());
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return centerPosition;
 	}
-	
+
 	/**
-	 * Indicates whether or not a position in globe coordinates is the center
-	 * of this planning grid considering numerical inaccuracies.
+	 * Indicates whether or not a position in globe coordinates is the center of
+	 * this planning grid considering numerical inaccuracies.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if the position is the center of this planning grid
-	 *         considering numerical inaccuracies, false otherwise
+	 * @return true if the position is the center of this planning grid considering
+	 *         numerical inaccuracies, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -253,24 +247,24 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	public boolean isCenter(Position position) {
 		boolean isCenter = false;
-		
+
 		if (null != this.globe) {
 			isCenter = this.isCenter(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return isCenter;
 	}
-	
+
 	/**
-	 * Gets the neighbor corner positions of a specified corner position of
-	 * this planning grid.
+	 * Gets the neighbor corner positions of a specified corner position of this
+	 * planning grid.
 	 * 
 	 * @param position the specified corner position
 	 * 
-	 * @return the neighbor corner positions of a the specified corner position
-	 *         if a corner position, null otherwise
+	 * @return the neighbor corner positions of a the specified corner position if a
+	 *         corner position, null otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -278,11 +272,11 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	public Position[] getNeighborCorners(Position position) {
 		Position[] neighborCorners = null;
-		
+
 		if (null != this.globe) {
 			neighborCorners = new Position[3];
 			Vec4[] corners = this.getNeighborCorners(globe.computePointFromPosition(position));
-			
+
 			if (null != corners) {
 				neighborCorners[0] = this.globe.computePositionFromPoint(corners[0]);
 				neighborCorners[1] = this.globe.computePositionFromPoint(corners[1]);
@@ -291,10 +285,10 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return neighborCorners;
 	}
-	
+
 	/**
 	 * Sets the globe of this planning grid.
 	 * 
@@ -308,7 +302,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			grid.globe = globe;
 		}
 	}
-	
+
 	/**
 	 * Gets the globe of this planning grid.
 	 * 
@@ -320,15 +314,12 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Globe getGlobe() {
 		return this.globe;
 	}
-	
+
 	/**
 	 * Adds a cost interval to this planning grid.
 	 * 
 	 * @param costInterval the cost interval to be added
-	 * 
-	 * @see Environment#addCostInterval(CostInterval)
 	 */
-	@Override
 	public void addCostInterval(CostInterval costInterval) {
 		this.costIntervals.add(costInterval);
 		this.update();
@@ -337,20 +328,18 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		// TODO: What happens if children are added and removed?
 		// TODO: Shall parents aggregate all costs?!
 	}
-	
+
 	/**
 	 * Removes a cost interval from this planning grid.
 	 * 
 	 * @param costInterval the cost interval to be removed
 	 * 
-	 * @see Environment#removeCostInterval(CostInterval)
 	 */
-	@Override
 	public void removeCostInterval(CostInterval costInterval) {
 		this.costIntervals.remove(costInterval);
 		this.update();
 	}
-	
+
 	/**
 	 * Gets all cost intervals that are active at a specified time instant.
 	 * 
@@ -358,85 +347,77 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 * 
 	 * @return all cost intervals that are active at the specified time instant
 	 * 
-	 * @see Environment#getCostIntervals(ZonedDateTime)
 	 */
-	@Override
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		// return this.costIntervals.searchInterval(new CostInterval(null, this.time)); //BUG?
+		// return this.costIntervals.searchInterval(new CostInterval(null, this.time));
+		// //BUG?
 		return this.costIntervals.searchInterval(new CostInterval(null, time));
 	}
-	
+
 	/**
 	 * Gets all cost intervals that are active during a specified time interval.
 	 * 
 	 * @param start the start time of the time interval
 	 * @param end the end time of the time interval
 	 * 
-	 * @return all cost intervals that are active during the specified time
-	 *         interval
+	 * @return all cost intervals that are active during the specified time interval
 	 * 
-	 * @see Environment#getCostIntervals(ZonedDateTime, ZonedDateTime)
 	 */
-	@Override
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
 		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
 	}
-	
+
 	/**
-	 * Gets the accumulated cost of this planning grid at specified time
-	 * instant.
+	 * Gets the accumulated cost of this planning grid at specified time instant.
 	 * 
 	 * @param time the time instant
 	 * 
-	 * @return the accumulated cost of this planning grid at the specified
-	 *         time instant
+	 * @return the accumulated cost of this planning grid at the specified time
+	 *         instant
 	 */
 	public double getCost(ZonedDateTime time) {
 		return this.getCost(time, time);
 	}
-	
+
 	/**
-	 * Gets the accumulated cost of this planning grid within a specified time
-	 * span.
+	 * Gets the accumulated cost of this planning grid within a specified time span.
 	 * 
 	 * @param start the start time of the time span
 	 * @param end the end time of the time span
 	 * 
-	 * @return the accumulated cost of this planning grid within the specified
-	 *         time span
-	 * 
-	 * @see Environment#getCost(ZonedDateTime, ZonedDateTime)
+	 * @return the accumulated cost of this planning grid within the specified time
+	 *         span
 	 */
-	@Override
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
 		double cost = 1d; // simple cost of normalized distance
-		
+
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
 		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
 		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
 			if (interval instanceof CostInterval) {
 				CostInterval costInterval = (CostInterval) interval;
-				
+
 				// only add costs of different overlapping cost intervals
 				if (!costIntervalIds.contains(costInterval.getId())) {
 					costIntervalIds.add(costInterval.getId());
-					
+
 					// TODO: implement a proper weighted cost calculation normalized from 0 to 100
-					// TODO: the weight is affected by severity (reporting method) and currency (reporting time)
-					
+					// TODO: the weight is affected by severity (reporting method) and currency
+					// (reporting time)
+
 					if ((interval instanceof WeightedCostInterval)) {
 						cost += ((WeightedCostInterval) interval).getWeightedCost();
 					} else {
 						cost += costInterval.getCost();
 					}
-				}	
+				}
 			}
 		}
-		
+
 		return cost;
 	}
-	
+
 	/**
 	 * Gets the current time of this planning grid.
 	 * 
@@ -448,7 +429,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public ZonedDateTime getTime() {
 		return this.time;
 	}
-	
+
 	/**
 	 * Sets the current time of this planning grid.
 	 * 
@@ -463,7 +444,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			grid.update();
 		}
 	}
-	
+
 	/**
 	 * Gets the threshold cost of this planning grid.
 	 * 
@@ -475,7 +456,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public double getThreshold() {
 		return this.thresholdCost;
 	}
-	
+
 	/**
 	 * Sets the threshold cost of this planning grid.
 	 * 
@@ -490,7 +471,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			grid.updateVisibility();
 		}
 	}
-	
+
 	/**
 	 * Updates this planning grid with all its children.
 	 */
@@ -499,7 +480,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			grid.update();
 		}
 	}
-	
+
 	/**
 	 * Updates this planning grid for an embedded obstacle.
 	 * 
@@ -514,11 +495,11 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			if (this.affectedChildren.containsKey(obstacle)) {
 				for (PlanningGrid child : affectedChildren.get(obstacle)) {
 					child.refresh(obstacle);
-				}				
+				}
 			}
 		}
 	}
-	
+
 	/**
 	 * Updates this planning grid.
 	 */
@@ -527,21 +508,21 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		this.updateAppearance();
 		this.updateVisibility();
 	}
-	
+
 	/**
 	 * Updates the accumulated active cost of this planning grid.
 	 */
 	protected void updateActiveCost() {
 		this.activeCost = this.getCost(this.time);
 	}
-	
+
 	/**
 	 * Updates the visibility of this planning grid.
 	 */
 	protected void updateVisibility() {
 		this.setVisible(this.activeCost > this.thresholdCost);
 	}
-	
+
 	/**
 	 * Updates the appearance of this planning grid.
 	 */
@@ -553,7 +534,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		float alpha = activeColor.getAlpha() / 255.0f;
 		this.setColor(red, green, blue, alpha);
 	}
-	
+
 	/**
 	 * Embeds an obstacle cylinder with an associated cost interval into this
 	 * planning grid.
@@ -566,27 +547,27 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	public boolean embed(ObstacleCylinder obstacle) {
 		boolean embedded = false;
-		
+
 		if (null != this.globe) {
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
-				
+
 				for (PlanningGrid child : this.getChildren()) {
 					if (child.embed(obstacle)) {
 						this.addAffectedChild(obstacle, child);
 					}
 				}
-				
+
 				embedded = true;
 			}
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return embedded;
 	}
-	
+
 	/**
 	 * Embeds an obstacle into this planning grid.
 	 * 
@@ -599,34 +580,36 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	@Override
 	public boolean embed(Obstacle obstacle) {
 		boolean embedded = false;
-		
+
 		if (null != this.globe) {
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
-				
+
 				for (PlanningGrid child : this.getChildren()) {
 					if (child.embed(obstacle)) {
 						this.addAffectedChild(obstacle, child);
 					}
 				}
-				
+
 				embedded = true;
 			}
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return embedded;
 	}
-	
+
 	// TODO: embed all relevant kinds of (airspace, aircraft) rigid shapes
 	// TODO: think about dynamically changing the resolution and embedded shapes
-	// TODO: embedding should be a recursive operation starting at the root grid cell
+	// TODO: embedding should be a recursive operation starting at the root grid
+	// cell
 	// TODO: only if parent grid is affected, propagation to children will occur
-	// TODO: performance can be substantially improved by only considering relevant children for propagation
+	// TODO: performance can be substantially improved by only considering relevant
+	// children for propagation
 	// TODO: maximum obstacle radius/extension can limit possible children.
-	
+
 	/**
 	 * Unembeds an obstacle from this planning grid.
 	 * 
@@ -639,24 +622,24 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	@Override
 	public boolean unembed(Obstacle obstacle) {
 		boolean unembedded = false;
-		
+
 		if (this.isEmbedded(obstacle)) {
 			this.removeCostInterval(obstacle.getCostInterval());
 			this.obstacles.remove(obstacle);
-			
+
 			if (this.affectedChildren.containsKey(obstacle)) {
 				for (PlanningGrid child : this.affectedChildren.get(obstacle)) {
 					child.unembed(obstacle);
 				}
 				this.affectedChildren.remove(obstacle);
 			}
-			
+
 			unembedded = true;
 		}
-		
+
 		return unembedded;
 	}
-	
+
 	/**
 	 * Unembeds all obstacles from this planning grid.
 	 * 
@@ -669,7 +652,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			Obstacle obstacle = obstaclesIterator.next();
 			this.removeCostInterval(obstacle.getCostInterval());
 			obstaclesIterator.remove();
-			
+
 			if (this.affectedChildren.containsKey(obstacle)) {
 				for (PlanningGrid child : this.affectedChildren.get(obstacle)) {
 					child.unembed(obstacle);
@@ -678,14 +661,14 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			}
 		}
 	}
-	
+
 	/**
 	 * Indicates whether or not an obstacle is embedded in this planning grid.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
-	 * @return true if the obstacle is embedded in this planning grid,
-	 *         false otherwise
+	 * @return true if the obstacle is embedded in this planning grid, false
+	 *         otherwise
 	 * 
 	 * @see Environment#isEmbedded(Obstacle)
 	 */
@@ -693,7 +676,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public boolean isEmbedded(Obstacle obstacle) {
 		return this.obstacles.contains(obstacle);
 	}
-	
+
 	/**
 	 * Adds an affected child to an obstacle embedding.
 	 * 
@@ -711,8 +694,8 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	}
 
 	/**
-	 * Adds the specified number of children on each axis to this planning grid
-	 * and propagates existing obstacle embeddings.
+	 * Adds the specified number of children on each axis to this planning grid and
+	 * propagates existing obstacle embeddings.
 	 * 
 	 * @param rCells the number of children on the <code>R</code> axis
 	 * @param sCells the number of children on the <code>S</code> axis
@@ -723,14 +706,14 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	@Override
 	public void addChildren(int rCells, int sCells, int tCells) {
 		super.addChildren(rCells, sCells, tCells);
-		
+
 		for (PlanningGrid child : this.getChildren()) {
 			// initialize children
 			child.setGlobe(this.globe);
 			child.setTime(this.time);
 			child.setThreshold(this.thresholdCost);
 			child.update();
-			
+
 			// propagate obstacle embeddings
 			for (Obstacle obstacle : this.obstacles) {
 				if (obstacle instanceof ObstacleCylinder) {
@@ -754,7 +737,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		// remove affected children of all obstacle embeddings
 		this.affectedChildren.clear();
 	}
-	
+
 	/**
 	 * Gets the children of this planning grid.
 	 * 
@@ -768,7 +751,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<? extends PlanningGrid> getChildren() {
 		return (Set<PlanningGrid>) super.getChildren();
 	}
-	
+
 	/**
 	 * Gets a particular child of this planning grid if present.
 	 * 
@@ -776,8 +759,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 * @param s the <code>S</code> index of the child cell
 	 * @param t the <code>T</code> index of the child cell
 	 * 
-	 * @return the particular child of this planning grid if present,
-	 *         null otherwise
+	 * @return the particular child of this planning grid if present, null otherwise
 	 * 
 	 * @see CubicGrid#getChild(int, int, int)
 	 */
@@ -785,12 +767,11 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public PlanningGrid getChild(int r, int s, int t) {
 		return (PlanningGrid) super.getChild(r, s, t);
 	}
-	
+
 	/**
 	 * Gets the parent of this planning grid if present.
 	 * 
-	 * @return the parent of this planning grid if present,
-	 *         null otherwise
+	 * @return the parent of this planning grid if present, null otherwise
 	 * 
 	 * @see CubicGrid#getParent()
 	 */
@@ -798,7 +779,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public PlanningGrid getParent() {
 		return (PlanningGrid) super.getParent();
 	}
-	
+
 	/**
 	 * Gets all planning grids associated with this planning grid.
 	 * 
@@ -811,10 +792,10 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<? extends PlanningGrid> getAll() {
 		return (Set<PlanningGrid>) super.getAll();
 	}
-	
+
 	/**
-	 * Indicates whether or not this planning grid is refined, that is,
-	 * has children.
+	 * Indicates whether or not this planning grid is refined, that is, has
+	 * children.
 	 * 
 	 * @return true if this planning grid is refined, false otherwise
 	 * 
@@ -822,7 +803,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public boolean isRefined() {
 		return this.hasChildren();
 	}
-	
+
 	/**
 	 * Gets the refinements, that is, children of this planning grid.
 	 * 
@@ -832,10 +813,10 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<? extends PlanningGrid> getRefinements() {
 		return this.getChildren();
 	}
-	
+
 	/**
-	 * Refines, that is, adds children with a specified density to this
-	 * planning grid.
+	 * Refines, that is, adds children with a specified density to this planning
+	 * grid.
 	 * 
 	 * @param density the refinement density
 	 * 
@@ -843,7 +824,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public void refine(int density) {
 		this.addChildren(density);
 	}
-	
+
 	/**
 	 * Coarsens, that is, removes the children of this planning grid.
 	 *
@@ -851,10 +832,10 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public void coarsen() {
 		this.removeChildren();
 	}
-	
+
 	/**
-	 * Looks up the planning grid cells (maximum eight) containing a specified
-	 * point in world model coordinates considering numerical inaccuracies.
+	 * Looks up the planning grid cells (maximum eight) containing a specified point
+	 * in world model coordinates considering numerical inaccuracies.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
@@ -867,7 +848,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<? extends PlanningGrid> lookupCells(Vec4 modelPoint) {
 		return (Set<PlanningGrid>) super.lookupCells(modelPoint);
 	}
-	
+
 	/**
 	 * Looks up the planning grid cells (maximum eight) containing a specified
 	 * position in globe coordinates considering numerical inaccuracies.
@@ -883,19 +864,19 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	@SuppressWarnings("unchecked")
 	public Set<? extends PlanningGrid> lookupCells(Position position) {
 		Set<PlanningGrid> cells = null;
-		
+
 		if (null != this.globe) {
 			cells = (Set<PlanningGrid>) super.lookupCells(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return cells;
 	}
-	
+
 	/**
-	 * Finds all cells of this planning grid that satisfy a specified predicate.
-	 * A full recursive search is performed considering only non-parent cells.
+	 * Finds all cells of this planning grid that satisfy a specified predicate. A
+	 * full recursive search is performed considering only non-parent cells.
 	 * 
 	 * @param predicate the predicate
 	 * 
@@ -908,18 +889,18 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<? extends PlanningGrid> findCells(Predicate<RegularGrid> predicate) {
 		return (Set<PlanningGrid>) super.findCells(predicate);
 	}
-	
+
 	/**
 	 * Finds all cells of this planning grid that satisfy a specified predicate
-	 * taking a specified hierarchical depth into account. A zero depth does
-	 * not consider any children. A negative depth performs a full recursive
-	 * search and considers non-parent cells only.
+	 * taking a specified hierarchical depth into account. A zero depth does not
+	 * consider any children. A negative depth performs a full recursive search and
+	 * considers non-parent cells only.
 	 * 
 	 * @param predicate the predicate
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return the cells of this planning grid that satisfy a predicate taking
-	 *         the hierarchical depth into account
+	 * @return the cells of this planning grid that satisfy a predicate taking the
+	 *         hierarchical depth into account
 	 * 
 	 * @see CubicGrid#findCells(Predicate, int)
 	 */
@@ -928,7 +909,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<? extends PlanningGrid> findCells(Predicate<RegularGrid> predicate, int depth) {
 		return (Set<PlanningGrid>) super.findCells(predicate, depth);
 	}
-	
+
 	/**
 	 * Gets the intersection positions of a straight leg with the cells of this
 	 * planning grid. A full recursive search is performed considering only
@@ -937,8 +918,8 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 * @param origin the origin of the leg in globe coordinates
 	 * @param destination the destination of the leg in globe coordinates
 	 * 
-	 * @return the intersection positions of the straight leg with the cells of
-	 *         this planning grid
+	 * @return the intersection positions of the straight leg with the cells of this
+	 *         planning grid
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -946,25 +927,21 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	public Iterable<? extends Position> getIntersectedPositions(Position origin, Position destination) {
 		if (null != this.globe) {
-			return
-				super.getIntersectionPoints(
-					this.globe.computePointFromPosition(origin),
-					this.globe.computePointFromPosition(destination))
-				.stream()
-				.map(this.globe::computePositionFromPoint)
-				.collect(Collectors.toCollection(LinkedHashSet<Position>::new));
+			return super.getIntersectionPoints(this.globe.computePointFromPosition(origin),
+					this.globe.computePointFromPosition(destination)).stream().map(this.globe::computePositionFromPoint)
+							.collect(Collectors.toCollection(LinkedHashSet<Position>::new));
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-	
+
 	/**
 	 * Indicates whether or not a position is a waypoint in this planning grid.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if the position is a waypoint in this planning grid,
-	 *         false otherwise
+	 * @return true if the position is a waypoint in this planning grid, false
+	 *         otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -977,14 +954,14 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-	
+
 	/**
 	 * Gets the adjacent waypoints of a position in this planning grid.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return the adjacent waypoints of the position in this
-	 *         planning grid, or the waypoint position itself
+	 * @return the adjacent waypoints of the position in this planning grid, or the
+	 *         waypoint position itself
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -993,15 +970,12 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<Position> getAdjacentWaypoints(Position position) {
 		if (null != this.globe) {
 			Set<Vec4> waypoints = super.getAdjacentWaypoints(this.globe.computePointFromPosition(position));
-			return waypoints
-					.stream()
-					.map(this.globe::computePositionFromPoint)
-					.collect(Collectors.toSet());
+			return waypoints.stream().map(this.globe::computePositionFromPoint).collect(Collectors.toSet());
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-	
+
 	/**
 	 * Indicates whether or not a position is adjacent to a waypoint in this
 	 * planning grid.
@@ -1009,8 +983,8 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 * @param position the position in globe coordinates
 	 * @param waypoint the waypoint in globe coordinates
 	 * 
-	 * @return true if the position is adjacent to the waypoint in this
-	 *         planning grid, false otherwise
+	 * @return true if the position is adjacent to the waypoint in this planning
+	 *         grid, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -1018,14 +992,13 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
 		if (null != this.globe) {
-			return super.isAdjacentWaypoint(
-					this.globe.computePointFromPosition(position),
+			return super.isAdjacentWaypoint(this.globe.computePointFromPosition(position),
 					this.globe.computePointFromPosition(waypoint));
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-	
+
 	/**
 	 * Gets the neighbors of this planning grid. A full recursive search is
 	 * performed considering only non-parent neighbors.
@@ -1040,12 +1013,12 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<? extends PlanningGrid> getNeighbors() {
 		return (Set<PlanningGrid>) super.getNeighbors();
 	}
-	
+
 	/**
 	 * Gets the neighbors of this planning grid taking a specified hierarchical
-	 * depth into account. A zero depth does not consider any neighboring
-	 * children. A negative depth performs a full recursive search and
-	 * considers non-parent neighbors only.
+	 * depth into account. A zero depth does not consider any neighboring children.
+	 * A negative depth performs a full recursive search and considers non-parent
+	 * neighbors only.
 	 * 
 	 * @param depth the hierarchical depth for finding neighbors
 	 * 
@@ -1058,15 +1031,15 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public Set<? extends PlanningGrid> getNeighbors(int depth) {
 		return (Set<PlanningGrid>) super.getNeighbors(depth);
 	}
-	
+
 	/**
 	 * Indicates whether or not this planning grid is a neighbor of another
 	 * environment.
 	 * 
 	 * @param neighbor the potential neighbor
 	 * 
-	 * @return true if this planning grid is a neighbor of the other
-	 *         environment, false otherwise
+	 * @return true if this planning grid is a neighbor of the other environment,
+	 *         false otherwise
 	 * 
 	 * @see RegularGrid#areNeighbors(RegularGrid)
 	 */
@@ -1074,7 +1047,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	public boolean areNeighbors(Environment neighbor) {
 		return this.getNeighbors().contains(neighbor);
 	}
-	
+
 	/**
 	 * Gets the neighbors of a position in this planning grid. A full recursive
 	 * search is performed considering non-parent cells only.
@@ -1089,10 +1062,11 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	public Set<Position> getNeighbors(Position position) {
 		Set<Position> neighbors = new HashSet<Position>();
-		
+
 		// TODO: coordinate transformations might be too expensive for planning
-		// TODO: planning could be based on Vec4 with a final transformation of the route
-		
+		// TODO: planning could be based on Vec4 with a final transformation of the
+		// route
+
 		if (null != this.globe) {
 			Set<Vec4> neighborPoints = super.getNeighbors(this.globe.computePointFromPosition(position));
 			for (Vec4 neighbor : neighborPoints) {
@@ -1101,13 +1075,12 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
-		
+
 		return neighbors;
 	}
-	
+
 	/**
-	 * Indicates whether or not two positions are neighbors in this planning
-	 * grid.
+	 * Indicates whether or not two positions are neighbors in this planning grid.
 	 * 
 	 * @param position the position
 	 * @param neighbor the potential neighbor of the position
@@ -1120,8 +1093,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 */
 	public boolean areNeighbors(Position position, Position neighbor) {
 		if (null != this.globe) {
-			return super.areNeighbors(
-					this.globe.computePointFromPosition(position),
+			return super.areNeighbors(this.globe.computePointFromPosition(position),
 					this.globe.computePointFromPosition(neighbor));
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -1154,25 +1126,25 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-	
+
 	/**
 	 * Gets the normalized distance between two positions in this planning grid.
 	 * 
 	 * @param position1 the first position
 	 * @param position2 the second position
 	 * 
-	 * @return the normalized distance between the two positions in this
-	 *         planning grid
+	 * @return the normalized distance between the two positions in this planning
+	 *         grid
 	 */
 	@Override
 	public double getNormalizedDistance(Position position1, Position position2) {
 		return this.getDistance(position1, position2) / this.getNormalizer();
 	}
-	
+
 	/**
 	 * Gets the step cost from an origin to a destination position within this
-	 * planning grid between a start and an end time given a cost policy and
-	 * risk policy.
+	 * planning grid between a start and an end time given a cost policy and risk
+	 * policy.
 	 * 
 	 * @param origin the origin position in globe coordinates
 	 * @param destination the destination position in globe coordinates
@@ -1183,29 +1155,27 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 * 
 	 * @return the step cost from the origin to the destination position
 	 */
-	public double getStepCost(
-			Position origin, Position destination,
-			ZonedDateTime start, ZonedDateTime end,
+	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		
+
 		double stepCost = 0d;
-		
+
 		// compute participating cells
 		Set<? extends PlanningGrid> segmentCells = this.lookupCells(origin);
 		segmentCells.retainAll(this.lookupCells(destination));
-		
+
 		// an invalid step results in infinite costs
 		if (segmentCells.isEmpty()) {
 			return Double.POSITIVE_INFINITY;
 		}
-		
+
 		List<Double> costs = new ArrayList<Double>();
-		
+
 		// compute initial distance cost
 		// explicit distance cost computation is required if neighboring
 		// cells are of different size (different level in the hierarchy)
 		double distance = this.getNormalizedDistance(origin, destination);
-		
+
 		// compute cost of each adjacent cell
 		for (PlanningGrid segmentCell : segmentCells) {
 			// add all (weighted) cost of the cell
@@ -1217,7 +1187,7 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 				costs.add(Double.POSITIVE_INFINITY);
 			}
 		}
-		
+
 		// apply cost policy for final cost
 		switch (costPolicy) {
 		case MINIMUM:
@@ -1230,14 +1200,14 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 			stepCost = costs.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
 			break;
 		}
-		
+
 		return stepCost;
 	}
-	
+
 	/**
 	 * Gets the leg cost from an origin to a destination position within this
-	 * planning grid between a start and an end time given a cost policy and
-	 * risk policy.
+	 * planning grid between a start and an end time given a cost policy and risk
+	 * policy.
 	 * 
 	 * @param origin the origin position in globe coordinates
 	 * @param destination the destination position in globe coordinates
@@ -1248,54 +1218,51 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 * 
 	 * @return the leg cost from the origin to the destination position
 	 * 
-	 * @see Environment#getLegCost(Position, Position, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
+	 * @see Environment#getLegCost(Position, Position, ZonedDateTime, ZonedDateTime,
+	 *      CostPolicy, RiskPolicy)
 	 */
 	@Override
-	public double getLegCost(
-			Position origin, Position destination,
-			ZonedDateTime start, ZonedDateTime end,
+	public double getLegCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		
+
 		double legCost = Double.POSITIVE_INFINITY;
-		
+
 		// compute leg performance
 		Duration legDuration = Duration.between(start, end);
 		double legDistance = this.getDistance(origin, destination);
 		double legSpeed = legDistance / legDuration.getSeconds();
-		
+
 		// compute all intersection positions on this straight leg
-		Iterator<? extends Position> positionIterator =
-				this.getIntersectedPositions(origin, destination).iterator();
-		
+		Iterator<? extends Position> positionIterator = this.getIntersectedPositions(origin, destination).iterator();
+
 		// compute the cost of each leg segment
 		if (positionIterator.hasNext()) {
 			legCost = 0d;
 			ZonedDateTime currentEto = start;
 			Position current = positionIterator.next();
-			
+
 			while (positionIterator.hasNext()) {
 				Position next = positionIterator.next();
-				
+
 				// compute step performance
 				double stepDistance = this.getDistance(current, next);
-				Duration stepDuration =  Duration.ofSeconds(Math.round((stepDistance / legSpeed)));
+				Duration stepDuration = Duration.ofSeconds(Math.round((stepDistance / legSpeed)));
 				ZonedDateTime nextEto = currentEto.plus(stepDuration);
-				
-				legCost += this.getStepCost(
-						current, next, currentEto, nextEto, costPolicy, riskPolicy);
-				
+
+				legCost += this.getStepCost(current, next, currentEto, nextEto, costPolicy, riskPolicy);
+
 				currentEto = nextEto;
 				current = next;
 			}
 		}
-		
+
 		return legCost;
 	}
 
 	/**
-	 * Gets the leg cost from the center of this planning grid to the center
-	 * of another environment between a start and an end time given a
-	 * cost policy and risk policy. 
+	 * Gets the leg cost from the center of this planning grid to the center of
+	 * another environment between a start and an end time given a cost policy and
+	 * risk policy.
 	 * 
 	 * @param destination the destination environment
 	 * @param start the start time
@@ -1303,54 +1270,49 @@ public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
 	 * @param costPolicy the cost policy
 	 * @param riskPolicy the risk policy
 	 * 
-	 * @return the leg cost from the center of this environment to the center
-	 *         of the destination environment
+	 * @return the leg cost from the center of this environment to the center of the
+	 *         destination environment
 	 * 
-	 * @see Environment#getLegCost(Environment, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
+	 * @see Environment#getLegCost(Environment, ZonedDateTime, ZonedDateTime,
+	 *      CostPolicy, RiskPolicy)
 	 */
 	@Override
-	public double getLegCost(
-			Environment destination,
-			ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		
+	public double getLegCost(Environment destination, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
+			RiskPolicy riskPolicy) {
+
 		double legCost = Double.POSITIVE_INFINITY;
-		
+
 		// compute leg performance
 		Duration legDuration = Duration.between(start, end);
-		double legDistance = this.getDistance(
-				this.getCenterPosition(), destination.getCenterPosition());
+		double legDistance = this.getDistance(this.getCenterPosition(), destination.getCenterPosition());
 		double legSpeed = legDistance / legDuration.getSeconds();
-		
+
 		// compute all intersection positions on this straight leg
-		Iterator<? extends Position> positionIterator =
-				this.getIntersectedPositions(
-						this.getCenterPosition(),
-						destination.getCenterPosition()).iterator();
-		
+		Iterator<? extends Position> positionIterator = this
+				.getIntersectedPositions(this.getCenterPosition(), destination.getCenterPosition()).iterator();
+
 		// compute the cost of each leg segment
 		if (positionIterator.hasNext()) {
 			legCost = 0d;
 			ZonedDateTime currentEto = start;
 			Position current = positionIterator.next();
-			
+
 			while (positionIterator.hasNext()) {
 				Position next = positionIterator.next();
-				
+
 				// compute step performance
 				double stepDistance = this.getDistance(current, next);
-				Duration stepDuration =  Duration.ofSeconds(Math.round((stepDistance / legSpeed)));
+				Duration stepDuration = Duration.ofSeconds(Math.round((stepDistance / legSpeed)));
 				ZonedDateTime nextEto = currentEto.plus(stepDuration);
-				
-				legCost += this.getStepCost(
-						current, next, currentEto, nextEto, costPolicy, riskPolicy);
-				
+
+				legCost += this.getStepCost(current, next, currentEto, nextEto, costPolicy, riskPolicy);
+
 				currentEto = nextEto;
 				current = next;
 			}
 		}
-		
+
 		return legCost;
 	}
-	
+
 }

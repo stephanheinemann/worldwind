@@ -30,21 +30,17 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.time.ZonedDateTime;
-import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
 import com.cfar.swim.worldwind.ai.continuum.basicprm.BasicPRMWaypoint;
 import com.cfar.swim.worldwind.geom.Box;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
-import gov.nasa.worldwind.render.Polyline;
-import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
  * Realizes a planning roadmap that extends a planning continuum, by
@@ -64,7 +60,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	/**
 	 * Constructs a planning roadmap based on a box, a waypoint list and a edge list
 	 * 
-	 * @param box
+	 * @param box the box used to define this environment
 	 * @param waypointList the list of waypoints
 	 * @param edgeList the list of edges
 	 */
@@ -75,30 +71,44 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 		this.setGlobe(globe);
 	}
 
-
+	/**
+	 * Gets the list of waypoints of this planning roadmap.
+	 * 
+	 * @return the list of waypoints of this planning roadmap.
+	 */
 	public List<BasicPRMWaypoint> getWaypointList() {
 		return waypointList;
 	}
 
-
+	/**
+	 * Sets the list of waypoints of this planning roadmap.
+	 * 
+	 * @param waypointList the new list of waypoints
+	 */
 	public void setWaypointList(List<BasicPRMWaypoint> waypointList) {
 		this.waypointList = waypointList;
 	}
 
-
+	/**
+	 * Gets the list of edges of this planning roadmap.
+	 * 
+	 * @return the list of edges of this planning roadmap.
+	 */
 	public List<Edge> getEdgeList() {
 		return edgeList;
 	}
 
-
+	/**
+	 * Sets the list of edges of this planning roadmap.
+	 * 
+	 * @param edgeList the new list of edges
+	 */
 	public void setEdgeList(List<Edge> edgeList) {
 		this.edgeList = edgeList;
 	}
 
-
 	/**
-	 * TODO: NOT DONE
-	 * 
+	 * TODO
 	 * @param position
 	 * @param neighbor
 	 * @param start
@@ -106,13 +116,9 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * @param costPolicy
 	 * @param riskPolicy
 	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.PlanningContinuum#getLegCost(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime,
-	 *      java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy,
-	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
+	
+	 * @see com.cfar.swim.worldwind.planning.PlanningContinuum#getLegCost(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
 	 */
-
 	@Override
 	public double getLegCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
@@ -120,6 +126,17 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 		return 0;
 	}
 
+	/**
+	 * TODO
+	 * @param neighbor
+	 * @param start
+	 * @param end
+	 * @param costPolicy
+	 * @param riskPolicy
+	 * @return
+	
+	 * @see com.cfar.swim.worldwind.planning.PlanningContinuum#getLegCost(com.cfar.swim.worldwind.planning.Environment, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
+	 */
 	@Override
 	public double getLegCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
 			RiskPolicy riskPolicy) {
@@ -128,8 +145,10 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	}
 
 	/**
-	 * @param position
-	 * @return
+	 * Gets the neighbors positions of a position in this roadmap.
+	 * 
+	 * @param position the position in global coordinates
+	 * @return the neighbors of the position in this planning roadmap
 	 * 
 	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#getNeighbors(gov.nasa.worldwind.geom.Position)
 	 */
@@ -153,14 +172,20 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 		return neighbors;
 	}
 
+	/**
+	 * Gets the neighbors waypoints of a specific waypoint in this roadmap.
+	 * 
+	 * @param waypoint the sampled waypoint
+	 * @return the neighboring sampled waypoints in this roadmap
+	 */
 	public Set<SampledWaypoint> getNeighbors(SampledWaypoint waypoint) {
 		Set<SampledWaypoint> neighbors = new HashSet<SampledWaypoint>();
 
 		if (null != this.getGlobe()) {
 			for (Edge edge : edgeList) {
-				if(waypoint.equals(edge.getWpt1()))
+				if (waypoint.equals(edge.getWpt1()))
 					neighbors.add(edge.getWpt2());
-				if(waypoint.equals(edge.getWpt2()))
+				if (waypoint.equals(edge.getWpt2()))
 					neighbors.add(edge.getWpt1());
 			}
 
@@ -172,9 +197,12 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	}
 
 	/**
-	 * @param position
-	 * @return
+	 * Checks if a position coincides with a waypoint in this planning roadmap.
 	 * 
+	 * @param position the position in global coordinates
+	 * 
+	 * @return true if the position is a waypoint in this planning roadmap, false
+	 *         otherwise
 	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#isWaypoint(gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
@@ -186,15 +214,24 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 		return false;
 	}
 
+	/**
+	 * Gets the waypoint from the waypoint list whose position coincides with a
+	 * specific position.
+	 * 
+	 * @param position the position in global coordinates
+	 * 
+	 * @return the waypoint from the waypoint list
+	 */
 	public SampledWaypoint getWaypoint(Position position) {
 		for (SampledWaypoint waypoint : waypointList) {
-			if(position.equals(waypoint))
+			if (position.equals(waypoint))
 				return waypoint;
 		}
 		return null;
 	}
 
 	/**
+	 * TODO
 	 * @param position
 	 * @return
 	 * 
@@ -207,9 +244,14 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	}
 
 	/**
-	 * @param position
-	 * @param waypoint
-	 * @return
+	 * Indicates whether or not a position is adjacent to a waypoint in this
+	 * planning roadmap.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param waypoint the waypoint in globe coordinates
+	 * 
+	 * @return true if the position is adjacent to the waypoint in this planning
+	 *         roadmap, false otherwise
 	 * 
 	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#isAdjacentWaypoint(gov.nasa.worldwind.geom.Position,
 	 *      gov.nasa.worldwind.geom.Position)
@@ -226,76 +268,18 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	}
 
 	/**
-	 * @param costInterval
+	 * Gets the step cost from an origin to a destination position within this
+	 * planning roadmap between a start and an end time given a cost policy and risk
+	 * policy.
 	 * 
-	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#addCostInterval(com.cfar.swim.worldwind.planning.CostInterval)
-	 */
-	@Override
-	public void addCostInterval(CostInterval costInterval) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * @param costInterval
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
 	 * 
-	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#removeCostInterval(com.cfar.swim.worldwind.planning.CostInterval)
-	 */
-	@Override
-	public void removeCostInterval(CostInterval costInterval) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * @param time
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#getCostIntervals(java.time.ZonedDateTime)
-	 */
-	@Override
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param start
-	 * @param end
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#getCostIntervals(java.time.ZonedDateTime,
-	 *      java.time.ZonedDateTime)
-	 */
-	@Override
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param start
-	 * @param end
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#getCost(java.time.ZonedDateTime,
-	 *      java.time.ZonedDateTime)
-	 */
-	@Override
-	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/**
-	 * 
-	 * @param origin
-	 * @param destination
-	 * @param start
-	 * @param end
-	 * @param costPolicy
-	 * @param riskPolicy
-	 * @return
+	 * @return the step cost from the origin to the destination position
 	 * 
 	 * @see com.cfar.swim.worldwind.planning.PlanningContinuum#getStepCost(gov.nasa.worldwind.geom.Position,
 	 *      gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime,
@@ -308,47 +292,16 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 
 		SampledWaypoint wpt1 = this.getWaypoint(origin);
 		wpt1.setEto(start);
-		wpt1.setAto(start);		
+		wpt1.setAto(start);
 		wpt1.updateCost();
-		
+
 		SampledWaypoint wpt2 = this.getWaypoint(destination);
 		wpt2.setEto(end);
-		wpt2.setAto(end);	
+		wpt2.setAto(end);
 		wpt2.updateCost();
 
 		double cost = this.getStepCost(wpt1, wpt2, costPolicy, riskPolicy);
 
 		return cost;
 	}
-	
-	@Override
-	public double getDistance(Position position1, Position position2) {
-		if (null != this.getGlobe()) {
-			ArrayList<Position> positions = new ArrayList<Position>();
-			positions.add(position1);
-			positions.add(position2);
-			LengthMeasurer measurer = new LengthMeasurer(positions);
-			measurer.setPathType(Polyline.LINEAR);
-			measurer.setFollowTerrain(false);
-			return measurer.getLength(this.getGlobe());
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * Gets the normalized distance between two positions in this planning grid.
-	 * 
-	 * @param position1 the first position
-	 * @param position2 the second position
-	 * 
-	 * @return the normalized distance between the two positions in this
-	 *         planning grid
-	 */
-	@Override
-	public double getNormalizedDistance(Position position1,
-			Position position2) {
-		return this.getDistance(position1, position2) / this.getDiameter();
-	}
-
 }
