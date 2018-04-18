@@ -44,6 +44,8 @@ import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.ContinuumBox;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
+import com.cfar.swim.worldwind.render.TerrainCylinder;
+import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
@@ -72,6 +74,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 
 	/** the obstacles embedded into this planning continuum*/
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
+	
+	/** the terrain obstacles embedded into this planning continuum*/
+	private HashSet<TerrainObstacle> terrainObstacles = new HashSet<TerrainObstacle>();
 
 	/** the current accumulated active cost of this planning continuum */
 	// TODO Review usage of active cost
@@ -79,6 +84,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 
 	/** the threshold cost of this planning continuum */
 	private double thresholdCost = 0d;
+	
+	/** the resolution of this planning continuum */
+	private double resolution = 1d;
 
 	/**
 	 * Constructs a planning continuum based on a geometric box.
@@ -89,6 +97,20 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	 */
 	public PlanningContinuum(Box box) {
 		super(box);
+		this.update();
+	}
+	
+	/**
+	 * Constructs a planning continuum based on a geometric box.
+	 * 
+	 * @param box the geometric box
+	 * @param resolution the resolution of this planning continuum
+	 * 
+	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
+	 */
+	public PlanningContinuum(Box box, double resolution) {
+		super(box);
+		this.resolution = resolution;
 		this.update();
 	}
 
@@ -183,6 +205,42 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	 */
 	public void setObstacles(HashSet<Obstacle> obstacles) {
 		this.obstacles = obstacles;
+	}
+
+	/**
+	 * Gets the resolution of this planning continuum
+	 * 
+	 * @return the resolution of this planning continuum
+	 */
+	public double getResolution() {
+		return resolution;
+	}
+	
+	/**
+	 * Sets the resolution of this planning continuum
+	 * 
+	 * @param resolution the resolution to set
+	 */
+	public void setResolution(double resolution) {
+		this.resolution = resolution;
+	}
+
+	/**
+	 * Gets the terrain obstacles of this planning continuum.
+	 * 
+	 * @return the terrain obstacles
+	 */
+	public HashSet<TerrainObstacle> getTerrainObstacles() {
+		return terrainObstacles;
+	}
+
+	/**
+	 * Sets the terrain obstacles of this planning continuum.
+	 * 
+	 * @param terrainObstacles the terrain obstacles to set
+	 */
+	public void setTerrainObstacles(HashSet<TerrainObstacle> terrainObstacles) {
+		this.terrainObstacles = terrainObstacles;
 	}
 
 	/**
@@ -478,6 +536,155 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
+	 * Embeds an obstacle into this planning continuum.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 * 
+	 * @return true if the obstacle has been embedded, false otherwise
+	 * 
+	 * @see Environment#embed(Obstacle)
+	 */
+	public boolean embed(TerrainCylinder obstacle) {
+		boolean embedded = false;
+
+		if (null != this.globe) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
+				this.terrainObstacles.add(obstacle);
+
+				embedded = true;
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+
+		return embedded;
+	}
+	
+	/**
+	 * Embeds an obstacle into this planning continuum.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 * 
+	 * @return true if the obstacle has been embedded, false otherwise
+	 * 
+	 * @see Environment#embed(Obstacle)
+	 */
+	public boolean embed(TerrainObstacle obstacle) {
+		boolean embedded = false;
+
+		if (null != this.globe) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
+				this.terrainObstacles.add(obstacle);
+
+				embedded = true;
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+
+		return embedded;
+	}
+
+	/**
+	 * Unembeds an obstacle from this planning continuum.
+	 * 
+	 * @param obstacle the obstacle to be unembedded
+	 * 
+	 * @return true if the obstacle has been unembedded, false otherwise
+	 * 
+	 * @see Environment#unembed(Obstacle)
+	 */
+	public boolean unembed(TerrainObstacle obstacle) {
+		boolean unembedded = false;
+
+		if (this.isEmbedded(obstacle)) {
+
+			this.terrainObstacles.remove(obstacle);
+
+			unembedded = true;
+		}
+
+		return unembedded;
+	}
+
+	/**
+	 * Updates this planning continuum for an embedded obstacle.
+	 * 
+	 * @param obstacle the embedded obstacle
+	 * 
+	 * @see Environment#refresh(Obstacle)
+	 */
+	public void refresh(TerrainObstacle obstacle) {
+		if (this.terrainObstacles.contains(obstacle)) {
+			this.update();
+		}
+	}
+
+	/**
+	 * Unembeds all obstacles from this planning continuum.
+	 * 
+	 * @see Environment#unembedAll()
+	 */
+	public void unembedTerrainAll() {
+		this.terrainObstacles.clear();
+	}
+
+	/**
+	 * Indicates whether or not an obstacle is embedded in this planning continuum.
+	 * 
+	 * @param obstacle the obstacle
+	 * 
+	 * @return true if the obstacle is embedded in this planning continuum, false
+	 *         otherwise
+	 * 
+	 * @see Environment#isEmbedded(Obstacle)
+	 */
+	public boolean isEmbedded(TerrainObstacle obstacle) {
+		return this.terrainObstacles.contains(obstacle);
+	}
+	
+	/**
+	 * Indicates whether or not this planning grid is refined, that is, has
+	 * children.
+	 * 
+	 * @return true if this planning grid is refined, false otherwise
+	 * 
+	 */
+	public boolean isRefined() {
+		//TODO: review maximum resolution
+		return this.getResolution()<=0.01;
+	}
+
+//	/**
+//	 * Gets the refinements, that is, children of this planning grid.
+//	 * 
+//	 * @return the refinements of this planning grid
+//	 * 
+//	 */
+//	public Set<? extends PlanningGrid> getRefinements() {
+//		return this.getChildren();
+//	}
+
+	/**
+	 * Refines, that is, adds children with a specified density to this planning
+	 * grid.
+	 * 
+	 * @param density the refinement density
+	 * 
+	 */
+	public void refine(int percentage) {
+		this.setResolution(this.getResolution()*(1-percentage/100d));
+	}
+
+	/**
+	 * Coarsens, that is, removes the children of this planning grid.
+	 *
+	 */
+	public void coarsen() {
+		this.setResolution(this.getResolution()*1.5);
+	}
+	
+	/**
 	 * Updates this planning continuum.
 	 */
 	protected void update() {
@@ -529,7 +736,6 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	public IntervalTree<ChronoZonedDateTime<?>> embedIntervalTree(Position position) {
 		IntervalTree<ChronoZonedDateTime<?>> intervalTree = new IntervalTree<ChronoZonedDateTime<?>>(
 				CostInterval.comparator);
-		
 		Box box = this.createBoundingBox(position);
 		
 		for (Obstacle obstacle : this.getObstacles()) {
@@ -537,11 +743,10 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 				intervalTree.add(obstacle.getCostInterval());
 			}
 		}
-		
 		return intervalTree;
 	}
 	
-	private Box createBoundingBox(Position position) {
+	public Box createBoundingBox(Position position) {
 		Vec4 point = this.getGlobe().computePointFromPosition(position);
 		List<Vec4> corners = new ArrayList<Vec4>();
 		

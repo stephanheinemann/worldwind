@@ -39,13 +39,15 @@ import gov.nasa.worldwind.geom.Position;
  *
  */
 public class BasicPRMWaypoint extends SampledWaypoint {
-	
+
+	// These variables are not used yet (will be used in FADPRM)
+
 	/** the parent BasicPRM waypoint of this BasicPRM waypoint in a trajectory */
 	private BasicPRMWaypoint parent = null;
-	
+
 	/** the estimated remaining cost (h-value) of this BasicPRM waypoint */
 	private double h;
-	
+
 	/**
 	 * Constructs a BasicPRM waypoint at a specified position.
 	 * 
@@ -58,7 +60,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 		this.setG(Double.POSITIVE_INFINITY);
 		this.setH(Double.POSITIVE_INFINITY);
 	}
-	
+
 	/**
 	 * Gets the parent BasicPRM waypoint of this BasicPRM waypoint.
 	 * 
@@ -67,7 +69,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 	public BasicPRMWaypoint getParent() {
 		return parent;
 	}
-	
+
 	/**
 	 * Sets the parent BasicPRM waypoint of this BasicPRM waypoint.
 	 * 
@@ -76,7 +78,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 	public void setParent(BasicPRMWaypoint parent) {
 		this.parent = parent;
 	}
-	
+
 	/**
 	 * Gets the estimated current cost (g-value) of this BasicPRM waypoint.
 	 * 
@@ -85,7 +87,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 	public double getG() {
 		return super.getCost();
 	}
-	
+
 	/**
 	 * Sets the estimated current cost (g-value) of this BasicPRM waypoint.
 	 * 
@@ -97,7 +99,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 		}
 		super.setCost(g);
 	}
-	
+
 	/**
 	 * Gets the estimated remaining cost (h-value) of this BasicPRM waypoint.
 	 * 
@@ -106,7 +108,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 	public double getH() {
 		return this.h;
 	}
-	
+
 	/**
 	 * Sets the estimated remaining cost (h-value) of this BasicPRM waypoint.
 	 * 
@@ -118,7 +120,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 		}
 		this.h = h;
 	}
-	
+
 	/**
 	 * Gets the estimated total cost (f-value) of this BasicPRM waypoint.
 	 * 
@@ -127,7 +129,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 	public double getF() {
 		return this.getG() + this.getH();
 	}
-	
+
 	/**
 	 * Clones this BasicPRM waypoint without its parent and depiction.
 	 * 
@@ -141,19 +143,19 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 		waypoint.setParent(null);
 		return waypoint;
 	}
-	
+
 	/**
 	 * Compares this BasicPRM waypoint to another waypoint based on their estimated
-	 * total costs (f-values). If the estimated total costs of both BasicPRM waypoints
-	 * is equal, then ties are broken in favor of higher estimated
-	 * current costs (g-values). If the other waypoint is not an BasicPRM waypoint,
-	 * then the natural order of general waypoints applies.
+	 * total costs (f-values). If the estimated total costs of both BasicPRM
+	 * waypoints is equal, then ties are broken in favor of higher estimated current
+	 * costs (g-values). If the other waypoint is not an BasicPRM waypoint, then the
+	 * natural order of general waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
 	 * @return -1, 0, 1, if this BasicPRM waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their total
-	 *         estimated cost
+	 *         respectively, than the other waypoint based on their total estimated
+	 *         cost
 	 * 
 	 * @see Waypoint#compareTo(Waypoint)
 	 */
@@ -161,7 +163,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 	@Override
 	public int compareTo(Waypoint waypoint) {
 		int compareTo = 0;
-		
+
 		if (waypoint instanceof BasicPRMWaypoint) {
 			BasicPRMWaypoint asw = (BasicPRMWaypoint) waypoint;
 			compareTo = new Double(this.getF()).compareTo(asw.getF());
@@ -172,7 +174,7 @@ public class BasicPRMWaypoint extends SampledWaypoint {
 		} else {
 			compareTo = super.compareTo(waypoint);
 		}
-		
+
 		return compareTo;
 	}
 

@@ -44,7 +44,7 @@
     <iwxxm:validPeriod>
         <gml:TimePeriod gml:id="tp-20161130T1200Z-20161130T1600Z">
             <gml:beginPosition>2018-04-17T14:00:00Z</gml:beginPosition>
-            <gml:endPosition>2018-04-17T15:00:00Z</gml:endPosition>
+            <gml:endPosition>2018-04-17T14:10:00Z</gml:endPosition>
         </gml:TimePeriod>
     </iwxxm:validPeriod>
 
@@ -127,7 +127,7 @@
             <om:type xlink:href="http://codes.wmo.int/49-2/observation-type/IWXXM/2.0/SIGMETPositionAnalysis"/>
             <om:phenomenonTime>
                 <gml:TimeInstant gml:id="ti-20161130T1600Z2">
-                    <gml:timePosition>2018-04-17T15:00:00Z</gml:timePosition>
+                    <gml:timePosition>2018-04-17T14:10:00Z</gml:timePosition>
                 </gml:TimeInstant>
             </om:phenomenonTime>
             <om:resultTime>

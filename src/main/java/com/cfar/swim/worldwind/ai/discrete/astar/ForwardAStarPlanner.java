@@ -392,23 +392,25 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	    //TODO: code below is not applicable to PlanningRoadmap. suggestion
 		// (if this.getDiscreteEnvironment() instanceof PlanningGrid).....
 	    
-		// if a start has no neighbors, then it is not a waypoint in the
-		// environment and its adjacent waypoints have to be determined for
-		// initial expansion
-		if (neighbors.isEmpty()) {
-//			neighbors = this.getDiscreteEnvironment().getAdjacentWaypoints(waypoint);
-		}
-		
-		// expand start region position towards the start
-//		if (this.isInStartRegion(waypoint.getPrecisionPosition())) {
-//			neighbors.add(this.getStart());
-//		}
-//		
-//		// expand a goal region position towards the goal
-//		if (this.isInGoalRegion(waypoint.getPrecisionPosition())) {
-//			neighbors.add(this.getGoal());
-//		}
-		
+	    if(this.getDiscreteEnvironment() instanceof PlanningGrid) {
+			// if a start has no neighbors, then it is not a waypoint in the
+			// environment and its adjacent waypoints have to be determined for
+			// initial expansion
+			if (neighbors.isEmpty()) {
+				neighbors = this.getDiscreteEnvironment().getAdjacentWaypoints(waypoint);
+			}
+			
+			// expand start region position towards the start
+			if (this.isInStartRegion(waypoint.getPrecisionPosition())) {
+				neighbors.add(this.getStart());
+			}
+			
+//			// expand a goal region position towards the goal
+			if (this.isInGoalRegion(waypoint.getPrecisionPosition())) {
+				neighbors.add(this.getGoal());
+			}
+	    }
+	
 		this.addExpanded(waypoint);
 		
 		return neighbors.stream()
@@ -547,19 +549,19 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.getGoal().setH(0);
 		
 		// TODO: code below is not applicable to PlanningRoadmap. suggestion
-		// (if this.getDiscreteEnvironment() instanceof PlanningGrid).....
-		
-		// the adjacent waypoints to the origin
-//		this.setStartRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(origin)
-//				.stream()
-//				.map(PrecisionPosition::new)
-//				.collect(Collectors.toSet()));
-		
-		// the adjacent waypoints to the destination
-//		this.setGoalRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(destination)
-//				.stream()
-//				.map(PrecisionPosition::new)
-//				.collect(Collectors.toSet()));
+		if (this.getDiscreteEnvironment() instanceof PlanningGrid) {
+			// the adjacent waypoints to the origin
+			this.setStartRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(origin)
+					.stream()
+					.map(PrecisionPosition::new)
+					.collect(Collectors.toSet()));
+			
+			// the adjacent waypoints to the destination
+			this.setGoalRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(destination)
+					.stream()
+					.map(PrecisionPosition::new)
+					.collect(Collectors.toSet()));
+		}
 
 		this.addExpandable(this.getStart());
 	}

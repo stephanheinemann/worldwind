@@ -39,12 +39,33 @@ package com.cfar.swim.worldwind.registries.environments;
  */
 public class PlanningContinuumProperties extends EnvironmentProperties {
 
+	/** the resolution of this planning continuum */
+	private double resolution = 1d;
+
 	/**
 	 * Calls EnvironmentProperties constructor to construct a new environment
 	 * properties bean using default floor and ceiling property values.
 	 */
 	public PlanningContinuumProperties() {
 		super();
+	}
+	
+	/**
+	 * Gets the resolution of this planning continuum
+	 * 
+	 * @return the resolution of this planning continuum
+	 */
+	public double getResolution() {
+		return resolution;
+	}
+	
+	/**
+	 * Sets the resolution of this planning continuum
+	 * 
+	 * @param resolution the resolution to set
+	 */
+	public void setResolution(double resolution) {
+		this.resolution = resolution;
 	}
 
 }

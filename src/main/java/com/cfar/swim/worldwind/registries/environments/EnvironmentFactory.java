@@ -137,7 +137,7 @@ public class EnvironmentFactory implements Factory<Environment> {
 		    gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
 		    Box envBox = new Box(bb);
 		    
-		    environment = new PlanningContinuum(envBox);
+		    environment = new PlanningContinuum(envBox, properties.getResolution());
 		    environment.setThreshold(0d);
 		    environment.setGlobe(this.scenario.getGlobe());
 		}

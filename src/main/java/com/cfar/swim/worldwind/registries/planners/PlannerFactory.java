@@ -36,6 +36,7 @@ import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.continuum.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.continuum.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.continuum.hrrt.HRRTreePlanner;
+import com.cfar.swim.worldwind.ai.continuum.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.ai.discrete.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.discrete.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.discrete.thetastar.ThetaStarPlanner;
@@ -136,13 +137,20 @@ public class PlannerFactory implements Factory<Planner> {
 			((ARAStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		} else if (specification.getId().equals(Specification.PLANNER_PRM_ID)) {
 			BasicPRMProperties properties = (BasicPRMProperties) specification.getProperties();
-			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment());
+			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
+					properties.getMaxNeighbors(), properties.getMaxDistance());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+		} else if (specification.getId().equals(Specification.PLANNER_LAZYPRM_ID)) {
+			LazyPRMProperties properties = (LazyPRMProperties) specification.getProperties();
+			planner = new LazyPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
+					properties.getMaxNeighbors(), properties.getMaxDistance());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 		} else if (specification.getId().equals(Specification.PLANNER_RRT_ID)) {
 			RRTreeProperties properties = (RRTreeProperties) specification.getProperties();
-			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
-					properties.getEpsilon(), properties.getBias(), properties.getMaxIter());
+			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((RRTreePlanner) planner).setStrategy(properties.getStrategy());
