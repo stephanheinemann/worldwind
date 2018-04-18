@@ -43,6 +43,7 @@ import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -170,20 +171,23 @@ public class LazyPRM extends BasicPRM {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	protected boolean correctTrajectory(Trajectory trajectory) {
 		// TODO: only waypoint conflict checks are done. Edge conflicts are still not
 		// done
+		if(trajectory==null)
+			return false;
+		System.out.println("entered correct trajectory");
+		
+		HashSet<Waypoint> conflictWaypoints = new HashSet<Waypoint>();
+		System.out.println("starting iterating trajectory");
 
-		HashSet<BasicPRMWaypoint> conflictWaypoints = new HashSet<BasicPRMWaypoint>();
-		Iterable<BasicPRMWaypoint> iter = (Iterable<BasicPRMWaypoint>) trajectory.getWaypoints();
-
-		for (BasicPRMWaypoint waypoint : iter) {
+		for (Waypoint waypoint : trajectory.getWaypoints()) {
 			System.out.println(waypoint);
 			if (this.checkConflict(waypoint))
 				conflictWaypoints.add(waypoint);
 		}
 
+		System.out.println("trajectory iterated");
 		if (!conflictWaypoints.isEmpty()) {
 			this.correctLists(conflictWaypoints);
 			return false;
@@ -191,8 +195,8 @@ public class LazyPRM extends BasicPRM {
 		return true;
 	}
 
-	protected void correctLists(HashSet<BasicPRMWaypoint> conflictWaypoints) {
-		for (BasicPRMWaypoint waypoint : conflictWaypoints) {
+	protected void correctLists(HashSet<Waypoint> conflictWaypoints) {
+		for (Waypoint waypoint : conflictWaypoints) {
 			this.getWaypointList().remove(waypoint);
 //			2nd approach
 //			this.getEdgeList().removeIf(s ->  { 
@@ -226,20 +230,26 @@ public class LazyPRM extends BasicPRM {
 		Trajectory trajectory = null;
 
 		if (!this.hasRoadmap() || !this.checkEnvironmentCompatibility()) {
+			System.out.println("initializing");
 			this.initialize();
+			System.out.println("constructing");
 			this.construct();
+			System.out.println("extendidng constructing");
 			this.extendsConstruction(origin, destination);
 
 			Box box = this.createBox(this.getContinuumEnvironment());
 			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(),
 					this.getContinuumEnvironment().getGlobe());
 
+			System.out.println("is trajectory correct?");
 			while (!this.correctTrajectory(trajectory)) {
-				this.updateRoadmap(this.getRoadmap());
+				System.out.println("updating roadmap");
+				this.updateRoadmap(roadmap);
+				System.out.println("creating astar");
 				ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
 				aStar.setCostPolicy(this.getCostPolicy());
 				aStar.setRiskPolicy(this.getRiskPolicy());
-
+				System.out.println("new trajectory");
 				trajectory = aStar.plan(origin, destination, etd);
 			}
 
@@ -294,7 +304,7 @@ public class LazyPRM extends BasicPRM {
 					this.getContinuumEnvironment().getGlobe());
 
 			while (!this.correctTrajectory(trajectory)) {
-				this.updateRoadmap(this.getRoadmap());
+				this.updateRoadmap(roadmap);
 				ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
 				aStar.setCostPolicy(this.getCostPolicy());
 				aStar.setRiskPolicy(this.getRiskPolicy());

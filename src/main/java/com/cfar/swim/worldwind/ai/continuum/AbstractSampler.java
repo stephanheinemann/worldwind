@@ -276,17 +276,18 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	}
 	
 	public boolean isInsideGlobe(Globe globe, Position position) {
-		double earthRadius;
 		Vec4 point;
 		
-		earthRadius = this.getContinuumEnvironment().getGlobe().getRadiusAt(position.getLatitude(),
-				position.getLongitude());
+//		earthRadius = this.getContinuumEnvironment().getGlobe().getRadiusAt(position.getLatitude(),
+//				this.getContinuumEnvironment().getGlobe().getMinAndMaxElevations(latitude, longitude)
+//				position.getLongitude());
 		point = this.getContinuumEnvironment().getGlobe().computePointFromPosition(position);
-
-		if(point.getLength3() < earthRadius) {
-			return true;
-		}
-		else
-			return false;
+		return !globe.isPointAboveElevation(point, globe.getElevation(position.latitude, position.longitude));
+//
+//		if(point.getLength3() < earthRadius) {
+//			return true;
+//		}
+//		else
+//			return false;
 	}
 }
