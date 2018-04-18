@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2018, Henrique Ferreira (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -27,45 +27,53 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.environments;
+package com.cfar.swim.worldwind.registries.planners;
+
+import com.cfar.swim.worldwind.planning.CostPolicy;
+import com.cfar.swim.worldwind.planning.RiskPolicy;
 
 /**
- * Realizes the properties bean of a planning continuum environment.
+ * Realizes the properties bean of a basic PRM planner.
  * 
- * @author Stephan Heinemann
- * @author Manuel Rosa
  * @author Henrique Ferreira
  *
  */
-public class PlanningContinuumProperties extends EnvironmentProperties {
-
-	/** the resolution of this planning continuum */
-	private double resolution = 1d;
+public class LazyPRMProperties extends BasicPRMProperties {
 
 	/**
-	 * Calls EnvironmentProperties constructor to construct a new environment
-	 * properties bean using default floor and ceiling property values.
+	 * Constructs a new basic PRM planner properties bean.
 	 */
-	public PlanningContinuumProperties() {
+	public LazyPRMProperties() {
 		super();
 	}
-	
+
 	/**
-	 * Gets the resolution of this planning continuum
+	 * Constructs a new basic PRM planner properties bean with
+	 * specified cost and risk policy property values.
 	 * 
-	 * @return the resolution of this planning continuum
+	 * @param costPolicy the cost policy of this basic PRM planner properties bean
+	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
 	 */
-	public double getResolution() {
-		return resolution;
+	public LazyPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		super(costPolicy, riskPolicy);
 	}
 	
 	/**
-	 * Sets the resolution of this planning continuum
+	 * Constructs a new basic PRM planner properties bean with specified cost and
+	 * risk policy property values as well as specified maximum number of
+	 * iterations, maximum number of neighbors and maximum distance.
 	 * 
-	 * @param resolution the resolution to set
+	 * @param costPolicy the cost policy of this basic PRM planner properties
+	 *            bean
+	 * @param riskPolicy the risk policy of this basic PRM planner properties
+	 *            bean
+	 * @param maxIter the maximum number of sampling iterations
+	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
+	 * @param maxDistance the maximum distance between two connected waypoints
 	 */
-	public void setResolution(double resolution) {
-		this.resolution = resolution;
+	public LazyPRMProperties( CostPolicy costPolicy, RiskPolicy riskPolicy,
+			int maxIter, int maxNeighbors, double maxDistance) {
+		super(costPolicy, riskPolicy, maxIter, maxNeighbors, maxDistance);
 	}
 
 }

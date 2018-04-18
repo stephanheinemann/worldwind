@@ -31,17 +31,20 @@ package com.cfar.swim.worldwind.ai.continuum;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
+import com.cfar.swim.worldwind.render.TerrainObstacle;
 
-import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
+import gov.nasa.worldwind.globes.Globe;
 
 /**
  * Abstracts a sampling based motion planner for an aircraft in an environment
@@ -167,18 +170,21 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	 * @return boolean value true if there is a conflict
 	 */
 	public boolean checkConflict(Position position) {
+		
+		Box box = this.getContinuumEnvironment().createBoundingBox(position);
+		HashSet<TerrainObstacle> terrainSet = this.getContinuumEnvironment().getTerrainObstacles();
+		
+		if(this.isInsideGlobe(this.getContinuumEnvironment().getGlobe(), position))
+			return true;
+			
 		// TODO : Implement a checker for conflict between a position and the
 		// static, time independent and untraversable obstacles in the environment
-
-		// HashSet<Terrain> terrainSet = this.getContinuumEnvironment().getTerrain();
-		//
-		// for(Terrain terrain : terrainSet) {
-		// // Check if obstacle contains the waypoint
-		// if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).contains(position)){
-		// return true;
-		// }
-		// }
-
+//		for(TerrainObstacle terrain : terrainSet) {
+//			// // Check if obstacle contains the waypoint
+//			if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).intersects(box.getFrustum())){
+//				return true;
+//			}
+//		}
 		return false;
 	}
 
@@ -192,36 +198,33 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	 * @return boolean value true if there is a conflict
 	 */
 	public boolean checkConflict(Position position1, Position position2) {
-		Position positionAux;
-		double lat, lon, elevation, angle, ddLat, ddLon, ddElevation;
+		Vec4 point1 = this.getContinuumEnvironment().getGlobe().computePointFromPosition(position1);
+		Vec4 point2 = this.getContinuumEnvironment().getGlobe().computePointFromPosition(position2);
+		Vec4 aux;
 
-		ddLat = position2.getLatitude().radians - position1.getLatitude().radians;
-		ddLon = position2.getLongitude().radians - position1.getLongitude().radians;
-		ddElevation = position2.getElevation() - position1.getElevation();
+		double x, y, z, dx, dy, dz, dist, dist2, theta, phi;
 
-		angle = Math.acos(Math.cos(ddLon) * Math.cos(ddLat)); // angle (radians) between 2 positions and globe center
+		dx = point2.x - point1.x;
+		dy = point2.y - point1.y;
+		dz = point2.z - point1.z;
+		
+		dist = point1.distanceTo3(point2);
+		dist2 = point1.distanceTo2(point2);
+		theta = Math.atan2(dz, dist2);
+		phi = Math.atan2(dy, dx);
 
-		// TODO: add resolution as user input parameter in UI
-		double RESOLUTION = 1; // meters in globe surface
-		double GLOBE_RADIUS = this.getEnvironment().getGlobe().getEquatorialRadius();
-		// TODO: Review if angles used are correct
-		for (int p = 1; angle * GLOBE_RADIUS > RESOLUTION; p = p * 2) {
-			for (int k = 0; k < p; k++) {
-				// latitude with fraction of angle between positions
-				lat = Math.asin(Math.sin((1 / 2 + k) * angle) * Math.sin(ddLat));
-				// longitude using spherical pythagoras theorem
-				lon = Math.acos(Math.cos((1 / 2 + k) * angle) / Math.cos(lat));
-				// elevation adding linear fraction of elevation variation
-				elevation = position1.getElevation() + (1 / 2 + k) * ddElevation;
-
-				positionAux = new Position(Angle.fromDegrees(lat), Angle.fromDegrees(lon), elevation);
-
-				if (this.checkConflict(positionAux)) {
+//		// TODO: add resolution as user input parameter in UI
+		double resolution = this.getContinuumEnvironment().getResolution(); // meters in globe surface
+		for(int p=1; dist>resolution; p=p*2) {
+			for(int k=0; k<p; k++) {
+				x = point1.x + (1/2 + k)*dist*Math.cos(theta)*Math.cos(phi);
+				y = point1.y + (1/2 + k)*dist*Math.cos(theta)*Math.sin(phi);
+				z = point1.z + (1/2 + k)*dist*Math.sin(theta);
+				aux = new Vec4(x, y, z);
+				if(this.checkConflict(this.getContinuumEnvironment().getGlobe().computePositionFromPoint(aux)))
 					return true;
-				}
 			}
-			angle = angle / 2;
-			ddElevation = ddElevation / 2;
+			dist=dist/2;
 		}
 
 		return false;
@@ -270,5 +273,20 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 										.getDistance(position, b) ? 0 : 1);
 
 		return list;
+	}
+	
+	public boolean isInsideGlobe(Globe globe, Position position) {
+		double earthRadius;
+		Vec4 point;
+		
+		earthRadius = this.getContinuumEnvironment().getGlobe().getRadiusAt(position.getLatitude(),
+				position.getLongitude());
+		point = this.getContinuumEnvironment().getGlobe().computePointFromPosition(position);
+
+		if(point.getLength3() < earthRadius) {
+			return true;
+		}
+		else
+			return false;
 	}
 }

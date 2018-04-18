@@ -56,6 +56,7 @@ import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties
 import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.BasicPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.ForwardAStarProperties;
+import com.cfar.swim.worldwind.registries.planners.LazyPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.RRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.ThetaStarProperties;
@@ -177,6 +178,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, new ARAStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_PRM_ID, new BasicPRMProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_LAZYPRM_ID, new LazyPRMProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRT_ID, new RRTreeProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		

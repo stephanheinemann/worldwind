@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2018, Henrique Ferreira (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -27,45 +27,25 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.environments;
+package com.cfar.swim.worldwind.render;
+
+import com.cfar.swim.worldwind.util.Depictable;
+
+import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.globes.Globe;
 
 /**
- * Realizes the properties bean of a planning continuum environment.
- * 
- * @author Stephan Heinemann
- * @author Manuel Rosa
  * @author Henrique Ferreira
  *
  */
-public class PlanningContinuumProperties extends EnvironmentProperties {
-
-	/** the resolution of this planning continuum */
-	private double resolution = 1d;
+public interface TerrainObstacle extends ThresholdRenderable, Depictable {
 
 	/**
-	 * Calls EnvironmentProperties constructor to construct a new environment
-	 * properties bean using default floor and ceiling property values.
-	 */
-	public PlanningContinuumProperties() {
-		super();
-	}
-	
-	/**
-	 * Gets the resolution of this planning continuum
+	 * Gets the geometric extent of this obstacle for a specified globe.
 	 * 
-	 * @return the resolution of this planning continuum
-	 */
-	public double getResolution() {
-		return resolution;
-	}
-	
-	/**
-	 * Sets the resolution of this planning continuum
+	 * @param globe the globe to be used for the conversion
 	 * 
-	 * @param resolution the resolution to set
+	 * @return the geometric extent of this obstacle
 	 */
-	public void setResolution(double resolution) {
-		this.resolution = resolution;
-	}
-
+	public Extent getExtent(Globe globe);
 }
