@@ -202,7 +202,35 @@ public class RRTreePlanner extends AbstractSampler {
 	public void setStrategy(Strategy strategy) {
 		this.strategy = strategy;
 	}
-
+	
+	/**
+	 * Gets the maximum number of iterations for the planner to attempt to connect
+	 * to goal
+	 * 
+	 * @return the maximum number of sampling iterations
+	 */
+	public int getMAX_ITER() {
+		return MAX_ITER;
+	}
+	
+	/**
+	 * Gets the maximum distance to extend a waypoint in the tree
+	 * 
+	 * @return the maximum distance to extend
+	 */
+	public double getEPSILON() {
+		return EPSILON;
+	}
+	
+	/**
+	 * Gets the bias of the sampling algorithm towards goal
+	 * 
+	 * @return the bias of the sampling algorithm
+	 */
+	public int getBIAS() {
+		return BIAS;
+	}
+	
 	// ---------- PROTECTED METHODS ----------
 
 	/**
@@ -311,6 +339,7 @@ public class RRTreePlanner extends AbstractSampler {
 		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
 		
 		waypointNew.setEto(this.computeTime(waypointNear, waypointNew)); // TODO: Review
+		waypointNew.setAto(waypointNew.getEto());
 		this.setWaypointNew(waypointNew);
 
 		// Check if the new waypoint is in conflict with the environment

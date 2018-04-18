@@ -35,6 +35,7 @@ import java.beans.PropertyChangeListener;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.continuum.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.continuum.basicrrt.RRTreePlanner;
+import com.cfar.swim.worldwind.ai.continuum.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.ai.continuum.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.ai.discrete.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.discrete.astar.ForwardAStarPlanner;
@@ -153,6 +154,15 @@ public class PlannerFactory implements Factory<Planner> {
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((RRTreePlanner) planner).setStrategy(properties.getStrategy());
+		} else if (specification.getId().equals(Specification.PLANNER_HRRT_ID)) {
+			HRRTreeProperties properties = (HRRTreeProperties) specification.getProperties();
+			planner = new HRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
+					properties.getEpsilon(), properties.getBias(), properties.getMaxIter(),
+					properties.getProbFloor(), properties.getNeighbors());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((HRRTreePlanner) planner).setStrategy(properties.getStrategy());
+			((HRRTreePlanner) planner).setHeuristic(properties.getHeuristic());
 		}
 		// TODO: implement more planners
 

@@ -44,6 +44,12 @@ public class RRTreeWaypoint extends SampledWaypoint {
 	/** the parent RRT waypoint of this RRT waypoint in a trajectory */
 	private RRTreeWaypoint parent = null;
 
+	/** the cost (g-value) to get to this this waypoint */
+	private double g = Double.POSITIVE_INFINITY;
+
+	/** the estimated remaining cost (h-value) of this waypoint */
+	private double h = Double.POSITIVE_INFINITY;
+
 	/**
 	 * Constructs an RRT waypoint at a specified position.
 	 * 
@@ -54,6 +60,7 @@ public class RRTreeWaypoint extends SampledWaypoint {
 	public RRTreeWaypoint(Position position) {
 		super(position);
 	}
+
 	public RRTreeWaypoint(Position position, RRTreeWaypoint parent) {
 		super(position);
 		this.parent = parent;
@@ -76,5 +83,57 @@ public class RRTreeWaypoint extends SampledWaypoint {
 	public void setParent(RRTreeWaypoint parent) {
 		this.parent = parent;
 	}
+
+	/**
+	 * Gets the cost (g-value) to get to this this waypoint.
+	 * 
+	 * @return the cost (g-value) to get to this this waypoint
+	 */
+	public double getG() {
+		return g;
+	}
+
+	/**
+	 * Gets the cost (g-value) to get to this this waypoint.
+	 * 
+	 * @param g the cost (g-value) to get to this this waypoint
+	 */
+	public void setG(double g) {
+		this.g = g;
+	}
+
+	/**
+	 * Gets the estimated remaining cost (h-value) of this waypoint.
+	 * 
+	 * @return the estimated remaining cost (h-value) of this waypoint
+	 */
+	public double getH() {
+		return h;
+	}
+
+	/**
+	 * Sets the estimated remaining cost (h-value) of this waypoint.
+	 * 
+	 * @param h the estimated remaining cost (h-value) of this waypoint
+	 */
+	public void setH(double h) {
+		this.h = h;
+	}
+
+	/**
+	 * Gets the total cost (f-value) of this waypoint from start to goal by adding the actual cost to this
+	 * point from start and the estimated cost to goal.
+	 * 
+	 * @return the total cost (f-value) of this waypoint
+	 */
+	public double getF() {
+		return g + h;
+	}
+	
+    public String toString() {
+    	return String.format("( %.6f*, %.6f*, %3.1fm ) g=%.2f h=%.2f f=%.2f",
+    			this.latitude.degrees, this.longitude.degrees, this.elevation,
+    			this.getG(), this.getH(), this.getF());
+    }
 
 }

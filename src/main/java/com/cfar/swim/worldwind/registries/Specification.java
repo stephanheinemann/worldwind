@@ -79,6 +79,9 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of an RRT planner */
 	public static final String PLANNER_RRT_ID = "RRT";
 	
+	/** the identifier of an hRRT planner */
+	public static final String PLANNER_HRRT_ID = "Heuristic RRT";
+	
 	/** the identifier of a simulated datalink */
 	public static final String DATALINK_SIMULATED = "Simulated Datalink";
 	
