@@ -84,9 +84,6 @@ public class RRTreePlanner extends AbstractSampler {
 	/** the newest waypoint in the tree */
 	private RRTreeWaypoint waypointNew = null;
 
-	/** the set of sampled RRT waypoints */
-	protected List<RRTreeWaypoint> tree = new ArrayList<RRTreeWaypoint>();
-
 	/** the last computed plan */
 	private final LinkedList<RRTreeWaypoint> plan = new LinkedList<>();
 
@@ -131,6 +128,32 @@ public class RRTreePlanner extends AbstractSampler {
 	}
 
 	// ---------- Setters and Getters ----------
+	
+//	/**
+//	 * Gets the list of already sampled waypoints
+//	 * 
+//	 * @return the waypointList
+//	 * 
+//	 * @see AbstractSampler#getWaypointList
+//	 */
+//	@SuppressWarnings("unchecked")
+//	@Override
+//	public List<RRTreeWaypoint> getWaypointList() {
+//		return (List<RRTreeWaypoint>) super.getWaypointList();
+//	}
+//
+//	/**
+//	 * Sets the list of waypoints previously sampled
+//	 * 
+//	 * @param waypointList the waypointList to set
+//	 * 
+//	 * @see AbstractSampler#setWaypointList
+//	 */
+//	@SuppressWarnings("unchecked")
+//	@Override
+//	public void setWaypointList(List<? extends SampledWaypoint> waypointList) {
+//		super.setWaypointList((List<RRTreeWaypoint>) waypointList);
+//	}
 
 	/**
 	 * Gets the start RRT waypoint of this RRT planner.
@@ -238,7 +261,7 @@ public class RRTreePlanner extends AbstractSampler {
 	 * Clears the waypoints in the waypoint list and in the plan
 	 */
 	protected void clearWaypoints() {
-		this.tree.clear();
+		this.getWaypointList().clear();
 		this.plan.clear();
 	}
 	
@@ -310,14 +333,14 @@ public class RRTreePlanner extends AbstractSampler {
 		RRTreeWaypoint waypointNear, waypointNew;
 
 		// Finds the node in the tree closest to the sampled position
-		waypointNear = (RRTreeWaypoint) this.findNearest(waypoint, this.tree, 1).get(0);
+		waypointNear = (RRTreeWaypoint) this.findNearest(waypoint, 1).get(0);
 		// Create a new node by extension from near to sampled
 		success = this.newWaypoint(waypoint, waypointNear);
 
 		// Set status variable by checking if extension was possible
 		if (success) {
 			waypointNew = this.getWaypointNew();
-			tree.add(waypointNew);
+			this.getWaypointList().add(waypointNew);
 			if (waypointNew.getPrecisionPosition().equals(waypoint.getPrecisionPosition())) {
 				status = Status.REACHED;
 			} else {
@@ -467,7 +490,7 @@ public class RRTreePlanner extends AbstractSampler {
 		
 		this.setStart(new RRTreeWaypoint(origin));
 		this.getStart().setEto(etd);
-		this.tree.add(start);
+		this.getWaypointList().add(start);
 		this.setWaypointNew(start);
 
 		this.setGoal(new RRTreeWaypoint(destination));

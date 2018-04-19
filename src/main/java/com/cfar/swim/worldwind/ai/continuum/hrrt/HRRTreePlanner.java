@@ -172,7 +172,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		while (rand > quality) {
 			waypointRand = super.sampleBiased(super.getBIAS());
-			waypointNear = (RRTreeWaypoint) this.findNearest(waypointRand, this.tree, 1).get(0);
+			waypointNear = (RRTreeWaypoint) this.findNearest(waypointRand, 1).get(0);
 
 			quality = 1 - (waypointNear.getF() - costOpt) / (costMax - costOpt);
 			quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR;
@@ -203,7 +203,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		while (true) {
 			waypointRand = super.sampleBiased(super.getBIAS());
-			neighborsList = (ArrayList<RRTreeWaypoint>) this.findNearest(waypointRand, this.tree, neighbors);
+			neighborsList = (ArrayList<RRTreeWaypoint>) this.findNearest(waypointRand, neighbors);
 			neighborsList = this.sortByQuality(neighborsList);
 
 			for (RRTreeWaypoint neighbor : neighborsList) {
@@ -238,7 +238,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		while (rand > quality) {
 			waypointRand = super.sampleBiased(super.getBIAS());
-			neighborsList = (ArrayList<RRTreeWaypoint>) this.findNearest(waypointRand, this.tree, neighbors);
+			neighborsList = (ArrayList<RRTreeWaypoint>) this.findNearest(waypointRand, neighbors);
 			neighborsList = this.sortByQuality(neighborsList);
 			waypointNear = neighborsList.get(0);
 
@@ -305,7 +305,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 		// Set status variable by checking if extension was possible
 		if (success) {
 			waypointNew = this.getWaypointNew();
-			tree.add(waypointNew);
+			this.getWaypointList().add(waypointNew);
 			waypointNew.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(waypointNew));
 			waypointNew.updateCost();
 			waypointNew.setG(this.computeCost(waypointNew));
@@ -377,7 +377,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 		start.setH(this.getEnvironment().getDistance(origin, destination));
 
 		this.setStart(start);
-		this.tree.add(start);
+		this.getWaypointList().add(start);
 		this.setWaypointNew(start);
 
 		this.setGoal(new RRTreeWaypoint(destination));

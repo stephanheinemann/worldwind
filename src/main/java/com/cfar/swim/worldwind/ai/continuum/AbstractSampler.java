@@ -31,16 +31,13 @@ package com.cfar.swim.worldwind.ai.continuum;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
-import com.cfar.swim.worldwind.render.TerrainObstacle;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -56,10 +53,8 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public abstract class AbstractSampler extends AbstractPlanner implements Sampler {
 
-	// TODO: Should this be defined here or specifically for every algorithm?
-	// (Probably not here...)
 	/** the list of already sampled waypoints */
-	private List<? extends SampledWaypoint> waypointList = new ArrayList<>();
+	private List<SampledWaypoint> waypointList = new ArrayList<SampledWaypoint>();
 
 	/** the environment casted to a planning continuum */
 	private PlanningContinuum continuumEnvironment = null;
@@ -83,7 +78,7 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	 * 
 	 * @return the waypointList
 	 */
-	public List<? extends SampledWaypoint> getWaypointList() {
+	public List<SampledWaypoint> getWaypointList() {
 		return waypointList;
 	}
 
@@ -92,7 +87,7 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	 * 
 	 * @param waypointList the waypointList to set
 	 */
-	public void setWaypointList(List<? extends SampledWaypoint> waypointList) {
+	public void setWaypointList(List<SampledWaypoint> waypointList) {
 		this.waypointList = waypointList;
 	}
 
@@ -162,6 +157,20 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	}
 
 	/**
+	 * Checks whether the given position is inside the given globe
+	 * 
+	 * @param globe the globe
+	 * @param position the position in global coordinates
+	 * @return true if the position is inside the globe and false otherwise
+	 */
+	public boolean isInsideGlobe(Globe globe, Position position) {
+		Vec4 point;
+
+		point = this.getContinuumEnvironment().getGlobe().computePointFromPosition(position);
+		return !globe.isPointAboveElevation(point, globe.getElevation(position.latitude, position.longitude));
+	}
+
+	/**
 	 * Checks if a given position is in conflict with untraversable obstacles in the
 	 * environment
 	 * 
@@ -170,21 +179,22 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	 * @return boolean value true if there is a conflict
 	 */
 	public boolean checkConflict(Position position) {
-		
-		Box box = this.getContinuumEnvironment().createBoundingBox(position);
-		HashSet<TerrainObstacle> terrainSet = this.getContinuumEnvironment().getTerrainObstacles();
-		
-		if(this.isInsideGlobe(this.getContinuumEnvironment().getGlobe(), position))
+
+		if (this.isInsideGlobe(this.getContinuumEnvironment().getGlobe(), position))
 			return true;
-			
+
 		// TODO : Implement a checker for conflict between a position and the
 		// static, time independent and untraversable obstacles in the environment
-//		for(TerrainObstacle terrain : terrainSet) {
-//			// // Check if obstacle contains the waypoint
-//			if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).intersects(box.getFrustum())){
-//				return true;
-//			}
-//		}
+
+		// Box box = this.getContinuumEnvironment().createBoundingBox(position);
+		// HashSet<TerrainObstacle> terrainSet =
+		// this.getContinuumEnvironment().getTerrainObstacles();
+		// for(TerrainObstacle terrain : terrainSet) {
+		// // // Check if obstacle contains the waypoint
+		// if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).intersects(box.getFrustum())){
+		// return true;
+		// }
+		// }
 		return false;
 	}
 
@@ -207,23 +217,23 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 		dx = point2.x - point1.x;
 		dy = point2.y - point1.y;
 		dz = point2.z - point1.z;
-		
+
 		dist = point1.distanceTo3(point2);
 		dist2 = point1.distanceTo2(point2);
 		theta = Math.atan2(dz, dist2);
 		phi = Math.atan2(dy, dx);
 
 		double resolution = this.getContinuumEnvironment().getResolution(); // meters in globe surface
-		for(int p=1; dist>resolution; p=p*2) {
-			for(int k=0; k<p; k++) {
-				x = point1.x + (1/2 + k)*dist*Math.cos(theta)*Math.cos(phi);
-				y = point1.y + (1/2 + k)*dist*Math.cos(theta)*Math.sin(phi);
-				z = point1.z + (1/2 + k)*dist*Math.sin(theta);
+		for (int p = 1; dist > resolution; p = p * 2) {
+			for (int k = 0; k < p; k++) {
+				x = point1.x + (1 / 2 + k) * dist * Math.cos(theta) * Math.cos(phi);
+				y = point1.y + (1 / 2 + k) * dist * Math.cos(theta) * Math.sin(phi);
+				z = point1.z + (1 / 2 + k) * dist * Math.sin(theta);
 				aux = new Vec4(x, y, z);
-				if(this.checkConflict(this.getContinuumEnvironment().getGlobe().computePositionFromPoint(aux)))
+				if (this.checkConflict(this.getContinuumEnvironment().getGlobe().computePositionFromPoint(aux)))
 					return true;
 			}
-			dist=dist/2;
+			dist = dist / 2;
 		}
 
 		return false;
@@ -237,19 +247,19 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
-	public List<? extends Position> findNearest(Position position, List<? extends Position> list, int kNear) {
+	public List<? extends Position> findNearest(Position position, int kNear) {
 		List<? extends Position> posiNearList;
 
 		// sorts the list by increasing distance to waypoint
-		list = this.sortNearest(position, list);
+		this.sortNearest(position);
 
 		// If there are less than k neighbors on the list
-		if (list.size() <= kNear) {
-			posiNearList = new ArrayList<>(list);
+		if (this.waypointList.size() <= kNear) {
+			posiNearList = new ArrayList<>(this.waypointList);
 		}
 		// If there are more than k neighbors on the list
 		else {
-			posiNearList = new ArrayList<>(list.subList(0, kNear));
+			posiNearList = new ArrayList<>(this.waypointList.subList(0, kNear));
 		}
 
 		return posiNearList;
@@ -259,25 +269,14 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	 * Sorts a list of elements by increasing distance to a given position
 	 * 
 	 * @param position the position in global coordinates
-	 * @param list the list of elements to be sorted
-	 * 
-	 * @return list of elements sorted by increasing distance to the position
 	 */
-	public List<? extends Position> sortNearest(Position position, List<? extends Position> list) {
+	public void sortNearest(Position position) {
 
-		Collections.sort(list,
+		Collections.sort(this.waypointList,
 				(a, b) -> super.getEnvironment().getDistance(position, a) < super.getEnvironment().getDistance(position,
 						b) ? -1
 								: super.getEnvironment().getDistance(position, a) == super.getEnvironment()
 										.getDistance(position, b) ? 0 : 1);
 
-		return list;
-	}
-	
-	public boolean isInsideGlobe(Globe globe, Position position) {
-		Vec4 point;
-		
-		point = this.getContinuumEnvironment().getGlobe().computePointFromPosition(position);
-		return !globe.isPointAboveElevation(point, globe.getElevation(position.latitude, position.longitude));
 	}
 }

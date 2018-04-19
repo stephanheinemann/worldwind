@@ -81,7 +81,6 @@ public interface Sampler {
 	 * @return boolean value true if there is a conflict
 	 */
 	boolean checkConflict(Position position1, Position position2);
-	// TODO: Check whether the creation of an edge in planning is beneficial
 
 	/**
 	 * Finds the k-nearest waypoints to the given position 
@@ -91,16 +90,13 @@ public interface Sampler {
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
-	public List<? extends Position> findNearest(Position position, List<? extends Position> list, int kNear);
+	public List<? extends Position> findNearest(Position position, int kNear);
 	
 	/**
 	 * Sorts a list of elements by increasing distance to a given position
 	 * 
 	 * @param position the position in global coordinates
-	 * @param list the list of elements to be sorted
-	 * 
-	 * @return list of elements sorted by increasing distance to the position
 	 */
-	public List<? extends Position> sortNearest(Position position, List<? extends Position> list);
+	public void sortNearest(Position position);
 
 }
