@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.ai.Planner;
@@ -232,7 +233,15 @@ public class RRTreePlanner extends AbstractSampler {
 	}
 	
 	// ---------- PROTECTED METHODS ----------
-
+	
+	/**
+	 * Clears the waypoints in the waypoint list and in the plan
+	 */
+	protected void clearWaypoints() {
+		this.tree.clear();
+		this.plan.clear();
+	}
+	
 	/**
 	 * Creates a trajectory of the computed plan.
 	 * 
@@ -454,7 +463,8 @@ public class RRTreePlanner extends AbstractSampler {
 	 * @param etd the estimated time of departure
 	 */
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
-
+		this.clearWaypoints();
+		
 		this.setStart(new RRTreeWaypoint(origin));
 		this.getStart().setEto(etd);
 		this.tree.add(start);
@@ -532,11 +542,47 @@ public class RRTreePlanner extends AbstractSampler {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		// TODO Implement a planning strategy to allow for intermidiate goals
-
-		// Multiple calls to plan (origin, destination, etd) creating an entire
-		// tree between multiple goals
-		return this.plan(origin, destination, etd);
+		
+		LinkedList<Waypoint> plan = new LinkedList<>();
+		Waypoint currentOrigin = new Waypoint(origin);
+		ZonedDateTime currentEtd = etd;
+		
+		// collect intermediate destinations
+		ArrayList<Waypoint> destinations = waypoints.stream()
+				.map(Waypoint::new)
+				.collect(Collectors.toCollection(ArrayList::new));
+		destinations.add(new Waypoint(destination));
+		
+		// plan and concatenate partial trajectories
+		for (Waypoint currentDestination : destinations) {
+			if (!(currentOrigin.equals(currentDestination))) {
+				// plan partial trajectory
+				this.initialize(currentOrigin, currentDestination, currentEtd);
+				this.compute();
+				Trajectory part = this.createTrajectory();
+				
+				// append partial trajectory to plan
+				if ((!plan.isEmpty()) &&  (!part.isEmpty())) {
+					plan.pollLast();
+				}
+				
+				for (Waypoint waypoint : part.getWaypoints()) {
+					plan.add(waypoint);
+				}
+				if (plan.peekLast().equals(currentOrigin)) {
+					// if no plan could be found, return an empty trajectory
+					Trajectory trajectory = new Trajectory();
+					this.revisePlan(trajectory);
+					return trajectory;
+				} else {
+					currentOrigin = plan.peekLast();
+					currentEtd = currentOrigin.getEto();
+				}
+			}
+		}
+		Trajectory trajectory = new Trajectory(plan);
+		this.revisePlan(trajectory);
+		return trajectory;
 	}
 
 	/**
