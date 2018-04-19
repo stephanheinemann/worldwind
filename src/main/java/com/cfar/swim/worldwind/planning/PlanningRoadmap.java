@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
-import com.cfar.swim.worldwind.ai.continuum.basicprm.BasicPRMWaypoint;
 import com.cfar.swim.worldwind.geom.Box;
 
 import gov.nasa.worldwind.geom.Position;
@@ -52,7 +51,7 @@ import gov.nasa.worldwind.globes.Globe;
 public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnvironment {
 
 	/** the list of sampled waypoints of this roadmap */
-	private List<BasicPRMWaypoint> waypointList = new ArrayList<>();
+	private List<SampledWaypoint> waypointList = new ArrayList<>();
 
 	/** the list of edges of this roadmap */
 	private List<Edge> edgeList = new ArrayList<>();
@@ -64,7 +63,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * @param waypointList the list of waypoints
 	 * @param edgeList the list of edges
 	 */
-	public PlanningRoadmap(Box box, List<BasicPRMWaypoint> waypointList, List<Edge> edgeList, Globe globe) {
+	public PlanningRoadmap(Box box, List<SampledWaypoint> waypointList, List<Edge> edgeList, Globe globe) {
 		super(box);
 		this.waypointList = waypointList;
 		this.edgeList = edgeList;
@@ -76,7 +75,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * 
 	 * @return the list of waypoints of this planning roadmap.
 	 */
-	public List<BasicPRMWaypoint> getWaypointList() {
+	public List<? extends SampledWaypoint> getWaypointList() {
 		return waypointList;
 	}
 
@@ -85,7 +84,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * 
 	 * @param waypointList the new list of waypoints
 	 */
-	public void setWaypointList(List<BasicPRMWaypoint> waypointList) {
+	public void setWaypointList(List<SampledWaypoint> waypointList) {
 		this.waypointList = waypointList;
 	}
 

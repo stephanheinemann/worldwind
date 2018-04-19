@@ -36,6 +36,7 @@ import java.util.List;
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.continuum.AbstractSampler;
+import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
 import com.cfar.swim.worldwind.ai.discrete.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.geom.Box;
@@ -58,7 +59,6 @@ import gov.nasa.worldwind.geom.Vec4;
  */
 public class BasicPRM extends AbstractSampler {
 
-	// User inputs
 	/** the maximum number of sampling iterations */
 	public final int MAX_ITER;
 
@@ -67,10 +67,6 @@ public class BasicPRM extends AbstractSampler {
 
 	/** the maximum distance between two neighboring waypoints */
 	public final double MAX_DIST;
-
-	// Variables
-	/** the list of already sampled waypoints */
-	private List<BasicPRMWaypoint> waypointList = new ArrayList<BasicPRMWaypoint>();
 
 	/** the list of already created edges */
 	private List<Edge> edgeList = new ArrayList<Edge>();
@@ -95,11 +91,17 @@ public class BasicPRM extends AbstractSampler {
 	}
 
 	/**
-	 * Constructs a basic PRM planner for a specified aircraft and environment using
-	 * default local cost and risk policies.
+	 * Constructs a basic PRM planner for a specified aircraft and environment,
+	 * using default local cost and risk policies. Also, this planner is constructed
+	 * with a specified maximum number of iterations (SampledWaypoints), a maximum
+	 * number of neighbors (of a single Waypoint) and a maximum distance between two
+	 * connected neighbors.
 	 * 
 	 * @param aircraft the aircraft
 	 * @param environment the environment
+	 * @param maxIter the maximum number of iterations
+	 * @param maxNeighbors the maximum number of neighbors
+	 * @param maxDist the maximum distance between two connected neighbors
 	 * 
 	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
 	 */
@@ -109,11 +111,7 @@ public class BasicPRM extends AbstractSampler {
 		MAX_NEIGHBORS = maxNeighbors;
 		MAX_DIST = maxDist;
 	}
-
-	public List<BasicPRMWaypoint> getWaypointList() {
-		return waypointList;
-	}
-
+	
 	/**
 	 * Gets the list of edges of this basic PRM planner.
 	 * 
@@ -205,31 +203,31 @@ public class BasicPRM extends AbstractSampler {
 	}
 
 	/**
-	 * Creates a BasicPRMWaypoint at a specified position.
+	 * Creates a SampledWaypoint at a specified position.
 	 * 
 	 * @param position the position
 	 * 
-	 * @return the BasicPRMWaypoint at the specified position
+	 * @return the SampledWaypoint at the specified position
 	 */
-	protected BasicPRMWaypoint createWaypoint(Position position) {
-		BasicPRMWaypoint newWaypoint = new BasicPRMWaypoint(position);
+	protected SampledWaypoint createWaypoint(Position position) {
+		SampledWaypoint newWaypoint = new SampledWaypoint(position);
 		newWaypoint.setAto(this.getContinuumEnvironment().getTime());
 		return newWaypoint;
 	}
 
 	/**
 	 * Connects this waypoint to another waypoints already sampled, which are closer
-	 * than a MAX_DIST.
+	 * than a MAX_DIST. The maximum number of neighbors a waypoint can be connected
+	 * to is defined by MAX_NEIGHBORS.
 	 * 
 	 * @param waypoint the BasicPRM waypoint to be connected
 	 */
-	@SuppressWarnings("unchecked")
-	protected void connectWaypoint(BasicPRMWaypoint waypoint) {
+	protected void connectWaypoint(SampledWaypoint waypoint) {
 		int numConnectedNeighbor = 0;
 
-		waypointList = (List<BasicPRMWaypoint>) this.sortNearest(waypoint, waypointList);
+		this.sortNearest(waypoint);
 
-		for (BasicPRMWaypoint neighbor : this.waypointList) {
+		for (SampledWaypoint neighbor : this.getWaypointList()) {
 			if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
 					&& numConnectedNeighbor < MAX_NEIGHBORS) {
 				if (!this.checkConflict(neighbor, waypoint)) {
@@ -247,7 +245,7 @@ public class BasicPRM extends AbstractSampler {
 	 * @param source the source Basic PRM waypoint
 	 * @param target the target Basic PRM waypoint
 	 */
-	protected void createEdge(BasicPRMWaypoint source, BasicPRMWaypoint target) {
+	protected void createEdge(SampledWaypoint source, SampledWaypoint target) {
 		Edge newedge = new Edge(source, target);
 		this.edgeList.add(newedge);
 	}
@@ -256,7 +254,7 @@ public class BasicPRM extends AbstractSampler {
 	 * Initializes the planner clearing the waypoint, edge and plan lists.
 	 */
 	protected void initialize() {
-		this.waypointList.clear();
+		this.getWaypointList().clear();
 		this.edgeList.clear();
 	}
 
@@ -270,11 +268,11 @@ public class BasicPRM extends AbstractSampler {
 		int num = 0;
 
 		while (num < MAX_ITER) {
-			BasicPRMWaypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
+			SampledWaypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
 
 			if (!this.checkConflict(waypoint)) {
 				waypoint.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(waypoint));
-				this.waypointList.add(waypoint);
+				this.getWaypointList().add(waypoint);
 				this.connectWaypoint(waypoint);
 				num++;
 			}
@@ -289,18 +287,18 @@ public class BasicPRM extends AbstractSampler {
 	 * @param destination the destination position in global coordinates
 	 */
 	protected void extendsConstruction(Position origin, Position destination) {
-		BasicPRMWaypoint start = this.createWaypoint(origin);
-		BasicPRMWaypoint goal = this.createWaypoint(destination);
+		SampledWaypoint start = this.createWaypoint(origin);
+		SampledWaypoint goal = this.createWaypoint(destination);
 
 		if (!this.checkConflict(start)) {
 			start.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(start));
-			this.waypointList.add(start);
+			this.getWaypointList().add(start);
 			this.connectWaypoint(start);
 		}
 
 		if (!this.checkConflict(goal)) {
 			goal.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(goal));
-			this.waypointList.add(goal);
+			this.getWaypointList().add(goal);
 			this.connectWaypoint(goal);
 		}
 	}
@@ -314,27 +312,27 @@ public class BasicPRM extends AbstractSampler {
 	 * @param waypoints the list of intermediate positions in global coordinates
 	 */
 	protected void extendsConstruction(Position origin, Position destination, List<Position> waypoints) {
-		BasicPRMWaypoint start = this.createWaypoint(origin);
-		BasicPRMWaypoint goal = this.createWaypoint(destination);
+		SampledWaypoint start = this.createWaypoint(origin);
+		SampledWaypoint goal = this.createWaypoint(destination);
 
 		if (!this.checkConflict(start)) {
 			start.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(start));
-			this.waypointList.add(start);
+			this.getWaypointList().add(start);
 			this.connectWaypoint(start);
 		}
 
 		if (!this.checkConflict(goal)) {
 			goal.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(goal));
-			this.waypointList.add(goal);
+			this.getWaypointList().add(goal);
 			this.connectWaypoint(goal);
 		}
 
 		for (Position pos : waypoints) {
-			BasicPRMWaypoint waypoint = this.createWaypoint(pos);
+			SampledWaypoint waypoint = this.createWaypoint(pos);
 
 			if (!this.checkConflict(waypoint)) {
 				waypoint.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(waypoint));
-				this.waypointList.add(waypoint);
+				this.getWaypointList().add(waypoint);
 				this.connectWaypoint(waypoint);
 			}
 		}
@@ -440,6 +438,7 @@ public class BasicPRM extends AbstractSampler {
 			return trajectory;
 		}
 	}
+	
 
 	/**
 	 * Indicates whether or not this Basic PRM planner supports a specified
