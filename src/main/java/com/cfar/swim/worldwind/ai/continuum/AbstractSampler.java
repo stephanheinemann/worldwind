@@ -59,7 +59,7 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 	// TODO: Should this be defined here or specifically for every algorithm?
 	// (Probably not here...)
 	/** the list of already sampled waypoints */
-	private List<? extends SampledWaypoint> waypointList = null;
+	private List<? extends SampledWaypoint> waypointList = new ArrayList<>();
 
 	/** the environment casted to a planning continuum */
 	private PlanningContinuum continuumEnvironment = null;
