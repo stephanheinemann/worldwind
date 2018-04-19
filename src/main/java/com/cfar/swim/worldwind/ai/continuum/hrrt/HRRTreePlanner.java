@@ -367,8 +367,9 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 */
 	@Override
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
-		RRTreeWaypoint start = new RRTreeWaypoint(origin);
+		this.clearWaypoints();
 
+		RRTreeWaypoint start = new RRTreeWaypoint(origin);
 		start.setEto(etd); start.setAto(etd);
 		start.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(start));
 		start.updateCost();
