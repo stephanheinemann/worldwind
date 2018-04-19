@@ -31,13 +31,16 @@ package com.cfar.swim.worldwind.ai.continuum;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
+import com.cfar.swim.worldwind.render.TerrainObstacle;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -186,15 +189,16 @@ public abstract class AbstractSampler extends AbstractPlanner implements Sampler
 		// TODO : Implement a checker for conflict between a position and the
 		// static, time independent and untraversable obstacles in the environment
 
-		// Box box = this.getContinuumEnvironment().createBoundingBox(position);
-		// HashSet<TerrainObstacle> terrainSet =
-		// this.getContinuumEnvironment().getTerrainObstacles();
-		// for(TerrainObstacle terrain : terrainSet) {
-		// // // Check if obstacle contains the waypoint
-		// if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).intersects(box.getFrustum())){
-		// return true;
-		// }
-		// }
+		Box box = this.getContinuumEnvironment().createBoundingBox(position);
+		HashSet<TerrainObstacle> terrainSet =
+				this.getContinuumEnvironment().getTerrainObstacles();
+		for(TerrainObstacle terrain : terrainSet) {
+			// // Check if obstacle contains the waypoint
+			System.out.println("Terrain");
+			if(terrain.getExtent(this.getContinuumEnvironment().getGlobe()).intersects(box.getFrustum())){
+				return true;
+			}
+		}
 		return false;
 	}
 
