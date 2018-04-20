@@ -117,7 +117,7 @@ public class ADStarPlanner extends ARAStarPlanner {
 	 * @return the polled AD* waypoint from the expandable AD* waypoints
 	 *         if any, null otherwise
 	 * 
-	 * @see ARAStarWaypoint#pollExpandable()
+	 * @see ARAStarPlanner#pollExpandable()
 	 */
 	@Override
 	protected ADStarWaypoint pollExpandable() {
