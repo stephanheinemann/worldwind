@@ -29,7 +29,7 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
-import com.cfar.swim.worldwind.ai.continuum.hrrt.Heuristic;
+import com.cfar.swim.worldwind.ai.rrt.hrrt.Heuristic;
 
 /**
  * Realizes the properties bean of an heuristic RRTree planner.

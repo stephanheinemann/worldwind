@@ -35,7 +35,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
+import com.cfar.swim.worldwind.ai.SampledWaypoint;
 import com.cfar.swim.worldwind.geom.Box;
 
 import gov.nasa.worldwind.geom.Position;

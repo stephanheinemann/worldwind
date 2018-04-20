@@ -29,7 +29,7 @@
  */
 package com.cfar.swim.worldwind.planning;
 
-import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
+import com.cfar.swim.worldwind.ai.SampledWaypoint;
 
 /**
  * Realizes an edge of a roadmap based on two sampled waypoints.

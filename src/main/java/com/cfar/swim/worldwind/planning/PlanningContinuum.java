@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.binarydreamers.trees.IntervalTree;
-import com.cfar.swim.worldwind.ai.continuum.SampledWaypoint;
+import com.cfar.swim.worldwind.ai.SampledWaypoint;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.ContinuumBox;
 import com.cfar.swim.worldwind.render.Obstacle;
