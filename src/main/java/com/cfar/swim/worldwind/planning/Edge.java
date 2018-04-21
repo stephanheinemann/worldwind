@@ -29,91 +29,281 @@
  */
 package com.cfar.swim.worldwind.planning;
 
-import com.cfar.swim.worldwind.ai.SampledWaypoint;
+import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.binarydreamers.trees.Interval;
+import com.binarydreamers.trees.IntervalTree;
+
+import gov.nasa.worldwind.geom.Line;
+import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes an edge of a roadmap based on two sampled waypoints.
+ * Realizes an edge of a roadmap based on two sampled positions.
  * 
  * @author Henrique Ferreira
+ * @author Manuel Rosa
  *
  */
 public class Edge {
 
-	/** the first SampledWaypoint of this edge */
-	private SampledWaypoint wpt1;
+	// TODO: Should we store an edge cost? It would be beneficial to not call
+	// calculate cost every time and if drawing edges is desired
 
-	/** the second SampledWaypoint of this edge */
-	private SampledWaypoint wpt2;
+	/** the first position of this edge */
+	private Position position1;
+
+	/** the second position of this edge */
+	private Position position2;
+
+	/** the geometric line between the two positions */
+	private Line line;
+
+	/** the cost interval tree encoding temporal costs */
+	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
+			CostInterval.comparator);
 
 	/**
-	 * Constructs an Edge based on two waypoints.
+	 * Constructs an Edge based on two positions.
 	 * 
-	 * @param wpt1
-	 * @param wpt2
+	 * @param position1
+	 * @param position2
 	 */
-	public Edge(SampledWaypoint wpt1, SampledWaypoint wpt2) {
-		this.wpt1 = wpt1;
-		this.wpt2 = wpt2;
+	public Edge(Position position1, Position position2) {
+		this.position1 = position1;
+		this.position2 = position2;
 	}
 
 	/**
-	 * Gets the first waypoint of this edge
+	 * Constructs an Edge based on two positions.
 	 * 
-	 * @return the first waypoint of this edge
+	 * @param position1
+	 * @param position2
+	 * @param line
 	 */
-	public SampledWaypoint getWpt1() {
-		return wpt1;
+	public Edge(Position position1, Position position2, Line line) {
+		this.position1 = position1;
+		this.position2 = position2;
+		this.line = line;
 	}
 
 	/**
-	 * Sets the first waypoint of this edge
+	 * Gets the first position of this edge
 	 * 
-	 * @param wpt1 the first waypoint of this edge
+	 * @return the first position of this edge
 	 */
-	public void setWpt1(SampledWaypoint wpt1) {
-		this.wpt1 = wpt1;
+	public Position getPosition1() {
+		return position1;
 	}
 
 	/**
-	 * Gets the second waypoint of this edge
+	 * Sets the first position of this edge
 	 * 
-	 * @return the second waypoint of this edge
+	 * @param position1 the first position of this edge
 	 */
-	public SampledWaypoint getWpt2() {
-		return wpt2;
+	public void setPosition1(Position position1) {
+		this.position1 = position1;
 	}
 
 	/**
-	 * Sets the second waypoint of this edge
+	 * Gets the second position of this edge
 	 * 
-	 * @param wpt1 the second waypoint of this edge
+	 * @return the second position of this edge
 	 */
-	public void setWpt2(SampledWaypoint wpt2) {
-		this.wpt2 = wpt2;
+	public Position getPosition2() {
+		return position2;
 	}
 
 	/**
-	 * Gets the hash code of this edge based on the hash code of the two waypoints
+	 * Sets the second position of this edge
 	 * 
-	 * @return the multiplication of the hash code of the two waypoints
+	 * @param position1 the second position of this edge
+	 */
+	public void setPosition2(Position position2) {
+		this.position2 = position2;
+	}
+	
+	/**
+	 * Receives one position and gets the other position of this edge
+	 * 
+	 * @param position the position to be checked
+	 * 
+	 * @return the other position of this edge
+	 */
+	public Position getOtherPosition(Position position) {
+		if(position.equals(position1)) {
+			return position2;
+		}
+		else if(position.equals(position2)) {
+			return position1;
+		}
+		else {
+			return null;
+		}
+	}
+
+	/**
+	 * Sets the line between the two positions in this edge
+	 * 
+	 * @return the line between positions
+	 */
+	public Line getLine() {
+		return line;
+	}
+
+	/**
+	 * Gets the line between the two positions in this edge
+	 * 
+	 * @param line the line between positions to set
+	 */
+	public void setLine(Line line) {
+		this.line = line;
+	}
+
+	/**
+	 * Gets the interval tree with cost intervals.
+	 * 
+	 * @return the costIntervals
+	 */
+	public IntervalTree<ChronoZonedDateTime<?>> getCostIntervals() {
+		return costIntervals;
+	}
+
+	/**
+	 * Sets the interval tree with cost intervals.
+	 * 
+	 * @param costIntervals the costIntervals to set
+	 */
+	public void setCostIntervals(IntervalTree<ChronoZonedDateTime<?>> costIntervals) {
+		this.costIntervals = costIntervals;
+	}
+
+	/**
+	 * TODO: Comment Adds a cost interval to this sampled position.
+	 * 
+	 * @param costInterval the cost interval to be added
+	 */
+	public void addCostInterval(CostInterval costInterval) {
+		this.costIntervals.add(costInterval);
+		// this.updateCost();
+	}
+
+	/**
+	 * TODO: Comment Removes a cost interval from this sampled position.
+	 * 
+	 * @param costInterval the cost interval to be removed
+	 */
+	public void removeCostInterval(CostInterval costInterval) {
+		this.costIntervals.remove(costInterval);
+		// this.updateCost();
+	}
+
+	/**
+	 * TODO: Comment Gets all cost intervals that are active at a specified time
+	 * instant.
+	 * 
+	 * @param time the time instant
+	 * 
+	 * @return all cost intervals that are active at the specified time instant
+	 */
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
+		return this.costIntervals.searchInterval(new CostInterval(null, time));
+	}
+
+	/**
+	 * TODO: Comment Gets all cost intervals that are active during a specified time
+	 * interval.
+	 * 
+	 * @param start the start time of the time interval
+	 * @param end the end time of the time interval
+	 * 
+	 * @return all cost intervals that are active during the specified time interval
+	 */
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
+		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
+	}
+
+	/**
+	 * TODO: Comment Calculates the cost of this position at a given time by
+	 * searching the costInterval tree.
+	 * 
+	 * @param start the time at this position
+	 * @param end
+	 * @return the cost of this position at the given time
+	 */
+	public double calculateCost(ZonedDateTime start, ZonedDateTime end) {
+		double cost = 1d; // simple cost of normalized distance
+
+		Set<String> costIntervalIds = new HashSet<String>();
+		// add all (weighted) cost of the cell
+		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
+		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
+			if (interval instanceof CostInterval) {
+				CostInterval costInterval = (CostInterval) interval;
+
+				// only add costs of different overlapping cost intervals
+				if (!costIntervalIds.contains(costInterval.getId())) {
+					costIntervalIds.add(costInterval.getId());
+
+					if ((interval instanceof WeightedCostInterval)) {
+						cost += ((WeightedCostInterval) interval).getWeightedCost();
+					} else {
+						cost += costInterval.getCost();
+					}
+				}
+			}
+		}
+
+		return cost;
+	}
+
+	/**
+	 * Checks whether or not the given position is part of this edge
+	 * 
+	 * @param position the position to be checked
+	 * @return true if the position is part of this edge, false otherwise
+	 */
+	public boolean contains(Position position) {
+		if(position.equals(position1) || position.equals(position2))
+			return true;
+		else
+			return false;
+	}
+
+	
+//	/**
+//	 * Updates the active cost of this sampled position using its ato to search the
+//	 * costInterval tree.
+//	 */
+//	public void updateCost() {
+//		this.setCost(this.calculateCost(this.getAto()));
+//	}
+	
+	/**
+	 * Gets the hash code of this edge based on the hash code of the two positions
+	 * 
+	 * @return the multiplication of the hash code of the two positions
 	 * 
 	 * @see Object#hashCode()
 	 */
 	@Override
 	public int hashCode() {
 		int result;
-		result = wpt1.hashCode();
-		result = result * wpt2.hashCode();
+		result = position1.hashCode();
+		result = result * position2.hashCode();
 		return result;
 	}
 
 	/**
 	 * Indicates whether or not this edge equals another edge based on their
-	 * waypoints.
+	 * positions.
 	 * 
 	 * @param obj the other edge
 	 * 
-	 * @return true, if the waypoints in this edge equals the waypoints of the other
+	 * @return true, if the positions in this edge equals the positions of the other
 	 *         edge (regardless of order), false otherwise
 	 * 
 	 * @see Object#equals(Object)
@@ -123,8 +313,8 @@ public class Edge {
 		boolean equals = false;
 
 		if (obj instanceof Edge) {
-			equals = this.wpt1.equals(((Edge) obj).wpt1) && this.wpt2.equals(((Edge) obj).wpt2)
-					|| this.wpt1.equals(((Edge) obj).wpt2) && this.wpt2.equals(((Edge) obj).wpt1);
+			equals = this.position1.equals(((Edge) obj).position1) && this.position2.equals(((Edge) obj).position2)
+					|| this.position1.equals(((Edge) obj).position2) && this.position2.equals(((Edge) obj).position1);
 		}
 
 		return equals;

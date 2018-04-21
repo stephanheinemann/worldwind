@@ -31,6 +31,8 @@ package com.cfar.swim.worldwind.ai;
 
 import java.util.List;
 
+import com.cfar.swim.worldwind.planning.Waypoint;
+
 import gov.nasa.worldwind.geom.Position;
 
 /**
@@ -59,7 +61,7 @@ public interface Sampler {
 	 * 
 	 * @return the SampledWaypoint with position and CostInterval
 	 */
-	SampledWaypoint createSampledWaypoint(Position position);
+	Waypoint createSampledWaypoint(Position position);
 	
 	/**
 	 * Checks if a given position is in conflict with untraversable obstacles in

@@ -32,12 +32,14 @@ package com.cfar.swim.worldwind.ai.rrt.hrrt;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Status;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 
 import gov.nasa.worldwind.geom.Position;
@@ -54,8 +56,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 	/** floor value to ensure the search is not overly biased against exploration */
 	private final double PROB_FLOOR; // Value in [0,1] 0=basic RRT
-	
-	/** number of neighbors to consider to test a sampled waypoint  */
+
+	/** number of neighbors to consider to test a sampled waypoint */
 	private final int NEIGHBORS;
 
 	/** the nearest waypoint in the tree */
@@ -139,6 +141,25 @@ public class HRRTreePlanner extends RRTreePlanner {
 	public void setHeuristic(Heuristic heuristic) {
 		this.heuristic = heuristic;
 	}
+	
+	/**
+	 * Gets the list of already sampled edges
+	 * 
+	 * @return the list of edges
+	 */
+	public List<Edge> getEdgeList() {
+		return this.getEnvironment().getEdgeList();
+	}
+	
+	/**
+	 * Sets the list of edges previously sampled
+	 * 
+	 * @param edgetList the list of edges to set
+	 * 
+	 */
+	public void setEdgeList(List<Edge> edgeList) {
+		this.getEnvironment().setEdgeList(edgeList);
+	}
 
 	/**
 	 * Gets the probability floor for the acceptance of a sampled waypoint
@@ -148,7 +169,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	public double getPROB_FLOOR() {
 		return PROB_FLOOR;
 	}
-	
+
 	/**
 	 * Gets number of neighbors to consider to test a sampled waypoint
 	 * 
@@ -172,7 +193,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		while (rand > quality) {
 			waypointRand = super.sampleBiased(super.getBIAS());
-			waypointNear = (RRTreeWaypoint) this.findNearest(waypointRand, 1).get(0);
+			waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypointRand, 1).get(0);
 
 			quality = 1 - (waypointNear.getF() - costOpt) / (costMax - costOpt);
 			quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR;
@@ -203,7 +224,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		while (true) {
 			waypointRand = super.sampleBiased(super.getBIAS());
-			neighborsList = (ArrayList<RRTreeWaypoint>) this.findNearest(waypointRand, neighbors);
+			neighborsList = (ArrayList<RRTreeWaypoint>) this.getEnvironment().findNearest(waypointRand, neighbors);
 			neighborsList = this.sortByQuality(neighborsList);
 
 			for (RRTreeWaypoint neighbor : neighborsList) {
@@ -238,7 +259,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		while (rand > quality) {
 			waypointRand = super.sampleBiased(super.getBIAS());
-			neighborsList = (ArrayList<RRTreeWaypoint>) this.findNearest(waypointRand, neighbors);
+			neighborsList = (ArrayList<RRTreeWaypoint>) this.getEnvironment().findNearest(waypointRand, neighbors);
 			neighborsList = this.sortByQuality(neighborsList);
 			waypointNear = neighborsList.get(0);
 
@@ -247,7 +268,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 			rand = r.nextDouble();
 		}
-		
+
 		this.waypointNear = waypointNear;
 		return waypointRand;
 	}
@@ -263,7 +284,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 		Collections.sort(waypointList, (a, b) -> a.getF() < b.getF() ? -1 : a.getF() == b.getF() ? 0 : 1);
 		return waypointList;
 	}
-	
+
 	/**
 	 * Connects the tree in the direction of the given waypoint until it is reached
 	 * or the tree is trapped. Repeatedly calls extendRRT and returns the status
@@ -297,7 +318,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	@Override
 	protected Status extendRRT(RRTreeWaypoint waypoint) {
 		Status status;
-		RRTreeWaypoint waypointNear =this.getWaypointNear() ,waypointNew;
+		RRTreeWaypoint waypointNear = this.getWaypointNear(), waypointNew;
 
 		// Create a new node by extension from near to sampled
 		boolean success = this.newWaypoint(waypoint, waypointNear);
@@ -306,12 +327,14 @@ public class HRRTreePlanner extends RRTreePlanner {
 		if (success) {
 			waypointNew = this.getWaypointNew();
 			this.getWaypointList().add(waypointNew);
-			waypointNew.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(waypointNew));
-			waypointNew.updateCost();
+			Edge edgeNew = new Edge(waypointNear, waypointNew);
+			edgeNew.setCostIntervals(this.getEnvironment().embedIntervalTree(edgeNew.getLine()));
+			this.getEdgeList().add(edgeNew);
+
 			waypointNew.setG(this.computeCost(waypointNew));
 			waypointNew.setH(this.computeHeuristic(waypointNew, super.getGoal()));
 			this.setWaypointNew(waypointNew); // Needed??
-
+			
 			costMax = (costMax > waypointNew.getF()) ? costMax : waypointNew.getF();
 
 			if (waypointNew.getPrecisionPosition().equals(waypoint.getPrecisionPosition())) {
@@ -335,8 +358,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 */
 	protected double computeCost(RRTreeWaypoint waypoint) {
 		double g = waypoint.getParent().getG();
-		g += this.getContinuumEnvironment().getStepCost(waypoint.getParent(), waypoint,
-				this.getCostPolicy(), this.getRiskPolicy());
+		g += this.getEnvironment().getStepCost(waypoint.getParent(), waypoint, waypoint.getParent().getAto(),
+				waypoint.getAto(), this.getCostPolicy(), this.getRiskPolicy());
 
 		return g;
 	}
@@ -371,11 +394,10 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		this.setGoal(new RRTreeWaypoint(destination));
 		this.getGoal().setH(0d);
-		
+
 		RRTreeWaypoint start = new RRTreeWaypoint(origin);
-		start.setEto(etd); start.setAto(etd);
-		start.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(start));
-		start.updateCost();
+		start.setEto(etd);
+		start.setAto(etd);
 		start.setG(0d);
 		start.setH(this.computeHeuristic(start, this.getGoal()));
 

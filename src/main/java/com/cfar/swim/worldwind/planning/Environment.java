@@ -30,8 +30,11 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.time.ZonedDateTime;
+import java.time.chrono.ChronoZonedDateTime;
+import java.util.List;
 import java.util.Set;
 
+import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
@@ -42,7 +45,6 @@ import gov.nasa.worldwind.globes.Globe;
 /**
  * Describes an environment as a renderable on a globe (spatial aspect) with
  * associated cost intervals (temporal aspect).
- * TODO: Update description
  * 
  * @author Stephan Heinemann
  *
@@ -78,6 +80,37 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 */
 	public boolean contains(Position position);
 	
+	/**
+	 * Indicates whether or not a position is a waypoint in this environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is a waypoint in this environment,
+	 *         false otherwise
+	 */
+	public boolean isWaypoint(Position position);
+	
+	/**
+	 * Gets the adjacent waypoints of a position in this environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the adjacent waypoints of the position in this
+	 *         environment, or the waypoint position itself
+	 */
+	public Set<Position> getAdjacentWaypoints(Position position);
+	
+	/**
+	 * Indicates whether or not a position is adjacent to a waypoint in this
+	 * environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param waypoint the waypoint in globe coordinates
+	 * 
+	 * @return true if the position is adjacent to the waypoint in this
+	 *         environment, false otherwise
+	 */
+	public boolean isAdjacentWaypoint(Position position, Position waypoint);
 	
 	/**
 	 * Gets the center position of this environment in globe coordinates.
@@ -103,6 +136,52 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 *         false otherwise
 	 */
 	public boolean areNeighbors(Environment neighbor);
+	
+	/**
+	 * Gets the neighbor positions of a position in this environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the neighbor positions of the position
+	 */
+	public Set<Position> getNeighbors(Position position);
+	
+	/**
+	 * Indicates whether or not two positions are neighbors in this
+	 * environment.
+	 * 
+	 * @param position the position
+	 * @param neighbor the potential neighbor of the position
+	 * 
+	 * @return true if the two positions are neighbors, false otherwise
+	 */
+	public boolean areNeighbors(Position position, Position neighbor);
+	
+	/**
+	 * Indicates whether or not this environment is refined.
+	 * 
+	 * @return true if this environment is refined, false otherwise
+	 */
+	public boolean isRefined();
+	
+	/**
+	 * Gets the refinements of this environment.
+	 * 
+	 * @return the refinements of this environment
+	 */
+	public Set<? extends Environment> getRefinements();
+	
+	/**
+	 * Refines this environment with a refinement density.
+	 * 
+	 * @param density the refinement density
+	 */
+	public void refine(int density);
+	
+	/**
+	 * Coarsens this environment.
+	 */
+	public void coarsen();
 	
 	/**
 	 * Embeds an obstacle into this environment.
@@ -164,7 +243,51 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 *         environment
 	 */
 	public double getNormalizedDistance(Position position1, Position position2);
+	
+	/**
+	 * Adds a cost interval to this environment.
+	 * 
+	 * @param costInterval the cost interval to be added to this environment
+	 */
+	public void addCostInterval(CostInterval costInterval);
+	
+	/**
+	 * Removes a cost interval from this environment.
+	 * 
+	 * @param costInterval the cost interval to be removed from this environment
+	 */
+	public void removeCostInterval(CostInterval costInterval);
+	
+	/**
+	 * Gets all (overlapping) cost intervals at a specified time instant.
+	 * 
+	 * @param time the time instant
+	 * 
+	 * @return the cost intervals at the specified time instant
+	 */
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time);
+	
+	/**
+	 * Gets all (overlapping) cost intervals within a specified time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the cost intervals within the specified time span
+	 */
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end);
 
+	/**
+	 * Gets the accumulated cost of this environment within a specified time
+	 * span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the accumulated cost of this environment within a the specified
+	 *         time span
+	 */
+	public double getCost(ZonedDateTime start, ZonedDateTime end);
 	
 	/**
 	 * Gets the step cost from an origin to a destination position within this

@@ -35,7 +35,6 @@ import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.ai.Planner;
-import com.cfar.swim.worldwind.ai.SampledWaypoint;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -74,7 +73,7 @@ public class LazyPRM extends BasicPRM {
 	/**
 	 * Constructs a lazy PRM planner for a specified aircraft and environment using
 	 * default local cost and risk policies. Also, this planner is constructed with
-	 * a specified maximum number of iterations (SampledWaypoints), a maximum number
+	 * a specified maximum number of iterations (Waypoints), a maximum number
 	 * of neighbors (of a single Waypoint) and a maximum distance between two
 	 * connected neighbors.
 	 * 
@@ -98,12 +97,12 @@ public class LazyPRM extends BasicPRM {
 	 * @param waypoint the BasicPRM waypoint to be connected
 	 */
 	@Override
-	protected void connectWaypoint(SampledWaypoint waypoint) {
+	protected void connectWaypoint(Waypoint waypoint) {
 		int numConnectedNeighbor = 0;
 
-		this.sortNearest(waypoint);
+		this.getEnvironment().sortNearest(waypoint);
 
-		for (SampledWaypoint neighbor : this.getWaypointList()) {
+		for (Waypoint neighbor : this.getWaypointList()) {
 			if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
 					&& numConnectedNeighbor < MAX_NEIGHBORS) {
 				numConnectedNeighbor++;
@@ -123,8 +122,8 @@ public class LazyPRM extends BasicPRM {
 		int num = 0;
 
 		while (num < MAX_ITER) {
-			SampledWaypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
-			waypoint.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(waypoint));
+			Waypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
+			waypoint.setCostIntervals(this.getEnvironment().embedIntervalTree(waypoint));
 			this.getWaypointList().add(waypoint);
 			this.connectWaypoint(waypoint);
 			num++;
@@ -140,16 +139,16 @@ public class LazyPRM extends BasicPRM {
 	 */
 	@Override
 	protected void extendsConstruction(Position origin, Position destination) {
-		SampledWaypoint start = this.createWaypoint(origin);
-		SampledWaypoint goal = this.createWaypoint(destination);
+		Waypoint start = this.createWaypoint(origin);
+		Waypoint goal = this.createWaypoint(destination);
 
 		// Start and goal may be located at inacessible positions (conflict with terrain
 		// is not checked)
-		start.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(start));
+		start.setCostIntervals(this.getEnvironment().embedIntervalTree(start));
 		this.getWaypointList().add(start);
 		this.connectWaypoint(start);
 
-		goal.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(goal));
+		goal.setCostIntervals(this.getEnvironment().embedIntervalTree(goal));
 		this.getWaypointList().add(goal);
 		this.connectWaypoint(goal);
 	}
@@ -164,22 +163,22 @@ public class LazyPRM extends BasicPRM {
 	 */
 	@Override
 	protected void extendsConstruction(Position origin, Position destination, List<Position> waypoints) {
-		SampledWaypoint start = this.createWaypoint(origin);
-		SampledWaypoint goal = this.createWaypoint(destination);
+		Waypoint start = this.createWaypoint(origin);
+		Waypoint goal = this.createWaypoint(destination);
 
 		// waypoints may be located at inacessible positions (conflict with terrain
 		// is not checked)
-		start.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(start));
+		start.setCostIntervals(this.getEnvironment().embedIntervalTree(start));
 		this.getWaypointList().add(start);
 		this.connectWaypoint(start);
 
-		goal.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(goal));
+		goal.setCostIntervals(this.getEnvironment().embedIntervalTree(goal));
 		this.getWaypointList().add(goal);
 		this.connectWaypoint(goal);
 
 		for (Position pos : waypoints) {
-			SampledWaypoint waypoint = this.createWaypoint(pos);
-			waypoint.setCostIntervals(this.getContinuumEnvironment().embedIntervalTree(waypoint));
+			Waypoint waypoint = this.createWaypoint(pos);
+			waypoint.setCostIntervals(this.getEnvironment().embedIntervalTree(waypoint));
 			this.getWaypointList().add(waypoint);
 			this.connectWaypoint(waypoint);
 		}
@@ -202,7 +201,7 @@ public class LazyPRM extends BasicPRM {
 		HashSet<Waypoint> conflictWaypoints = new HashSet<Waypoint>();
 
 		for (Waypoint waypoint : trajectory.getWaypoints()) {
-			if (this.checkConflict(waypoint))
+			if (this.getEnvironment().checkConflict(waypoint))
 				conflictWaypoints.add(waypoint);
 		}
 
@@ -223,7 +222,7 @@ public class LazyPRM extends BasicPRM {
 	protected void correctLists(HashSet<Waypoint> conflictWaypoints) {
 		for (Waypoint waypoint : conflictWaypoints) {
 			this.getWaypointList().remove(waypoint);
-			this.getEdgeList().removeIf(s -> s.getWpt1().equals(waypoint) || s.getWpt2().equals(waypoint));
+			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
 		}
 		return;
 	}
@@ -251,9 +250,9 @@ public class LazyPRM extends BasicPRM {
 			this.construct();
 			this.extendsConstruction(origin, destination);
 
-			Box box = this.createBox(this.getContinuumEnvironment());
+			Box box = this.createBox(this.getEnvironment());
 			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(),
-					this.getContinuumEnvironment().getGlobe());
+					this.getEnvironment().getGlobe());
 
 			while (!this.correctTrajectory(trajectory)) {
 				this.updateRoadmap(roadmap);
@@ -309,9 +308,9 @@ public class LazyPRM extends BasicPRM {
 			this.construct();
 			this.extendsConstruction(origin, destination, waypoints);
 
-			Box box = this.createBox(this.getContinuumEnvironment());
+			Box box = this.createBox(this.getEnvironment());
 			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(),
-					this.getContinuumEnvironment().getGlobe());
+					this.getEnvironment().getGlobe());
 
 			while (!this.correctTrajectory(trajectory)) {
 				this.updateRoadmap(roadmap);

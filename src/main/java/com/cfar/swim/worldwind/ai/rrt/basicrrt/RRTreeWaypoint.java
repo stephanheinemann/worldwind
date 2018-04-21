@@ -29,7 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai.rrt.basicrrt;
 
-import com.cfar.swim.worldwind.ai.SampledWaypoint;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -37,7 +37,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Manuel Rosa
  *
  */
-public class RRTreeWaypoint extends SampledWaypoint {
+public class RRTreeWaypoint extends Waypoint {
 	// TODO: Possible inclusion of aircraft heading to define actions possible
 	// for extension
 

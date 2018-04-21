@@ -37,7 +37,6 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
-import com.cfar.swim.worldwind.ai.AbstractSampler;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
@@ -59,7 +58,7 @@ import gov.nasa.worldwind.render.Path;
  * @author Manuel Rosa
  *
  */
-public class RRTreePlanner extends AbstractSampler {
+public class RRTreePlanner extends AbstractPlanner {
 
 	/** the radius of the sphere defining the goal region */
 	private static final double GOAL_THRESHOLD = 5d; // meters?
@@ -128,33 +127,16 @@ public class RRTreePlanner extends AbstractSampler {
 	}
 
 	// ---------- Setters and Getters ----------
-	
-//	/**
-//	 * Gets the list of already sampled waypoints
-//	 * 
-//	 * @return the waypointList
-//	 * 
-//	 * @see AbstractSampler#getWaypointList
-//	 */
-//	@SuppressWarnings("unchecked")
-//	@Override
-//	public List<RRTreeWaypoint> getWaypointList() {
-//		return (List<RRTreeWaypoint>) super.getWaypointList();
-//	}
-//
-//	/**
-//	 * Sets the list of waypoints previously sampled
-//	 * 
-//	 * @param waypointList the waypointList to set
-//	 * 
-//	 * @see AbstractSampler#setWaypointList
-//	 */
-//	@SuppressWarnings("unchecked")
-//	@Override
-//	public void setWaypointList(List<? extends SampledWaypoint> waypointList) {
-//		super.setWaypointList((List<RRTreeWaypoint>) waypointList);
-//	}
 
+	/**
+	 * Gets the continuum environment of this planner
+	 * 
+	 * @return the continuum environment
+	 */
+	public PlanningContinuum getEnvironment() {
+		return (PlanningContinuum) super.getEnvironment();
+	}
+	
 	/**
 	 * Gets the start RRT waypoint of this RRT planner.
 	 * 
@@ -258,6 +240,27 @@ public class RRTreePlanner extends AbstractSampler {
 	// ---------- PROTECTED METHODS ----------
 	
 	/**
+	 * Gets the list of already sampled waypoints
+	 * 
+	 * @return the list of waypoints
+	 */
+	@SuppressWarnings("unchecked")
+	public List<RRTreeWaypoint> getWaypointList() {
+		return (List<RRTreeWaypoint>) this.getEnvironment().getWaypointList();
+	}
+
+	/**
+	 * Sets the list of waypoints previously sampled
+	 * 
+	 * @param waypointList the list of waypoints to set
+	 * 
+	 */
+	@SuppressWarnings("unchecked")
+	public void setWaypointList(List<? extends Waypoint> waypointList) {
+		this.getEnvironment().setWaypointList((List<Waypoint>) waypointList);
+	}
+	
+	/**
 	 * Clears the waypoints in the waypoint list and in the plan
 	 */
 	protected void clearWaypoints() {
@@ -282,7 +285,7 @@ public class RRTreePlanner extends AbstractSampler {
 	 * @return waypoint the RRTreeWaypoint sampled
 	 */
 	protected RRTreeWaypoint sampleRandom() {
-		return new RRTreeWaypoint(super.sampleRandomPosition());
+		return new RRTreeWaypoint(this.getEnvironment().sampleRandomPosition());
 	}
 
 	/**
@@ -333,7 +336,7 @@ public class RRTreePlanner extends AbstractSampler {
 		RRTreeWaypoint waypointNear, waypointNew;
 
 		// Finds the node in the tree closest to the sampled position
-		waypointNear = (RRTreeWaypoint) this.findNearest(waypoint, 1).get(0);
+		waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypoint, 1).get(0);
 		// Create a new node by extension from near to sampled
 		success = this.newWaypoint(waypoint, waypointNear);
 
@@ -375,11 +378,11 @@ public class RRTreePlanner extends AbstractSampler {
 		this.setWaypointNew(waypointNew);
 
 		// Check if the new waypoint is in conflict with the environment
-		if (super.checkConflict(waypointNew)) {
+		if (this.getEnvironment().checkConflict(waypointNew)) {
 			success = false;
 		}
 		// Check if the edge between waypoints is in conflict
-		else if (super.checkConflict(waypointNear, waypointNew)) {
+		else if (this.getEnvironment().checkConflict(waypointNear, waypointNew)) {
 			success = false;
 		}
 
@@ -456,7 +459,7 @@ public class RRTreePlanner extends AbstractSampler {
 	}
 
 	protected boolean checkGoal(RRTreeWaypoint waypoint) {
-		return super.getContinuumEnvironment().getDistance(waypoint, this.getGoal()) < GOAL_THRESHOLD;
+		return this.getEnvironment().getDistance(waypoint, this.getGoal()) < GOAL_THRESHOLD;
 	}
 
 	/**
