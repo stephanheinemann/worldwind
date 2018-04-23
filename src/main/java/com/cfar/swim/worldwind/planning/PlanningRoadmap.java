@@ -35,7 +35,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.cfar.swim.worldwind.ai.SampledWaypoint;
 import com.cfar.swim.worldwind.geom.Box;
 
 import gov.nasa.worldwind.geom.Position;
@@ -51,7 +50,7 @@ import gov.nasa.worldwind.globes.Globe;
 public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnvironment {
 
 	/** the list of sampled waypoints of this roadmap */
-	private List<SampledWaypoint> waypointList = new ArrayList<>();
+	private List<Waypoint> waypointList = new ArrayList<>();
 
 	/** the list of edges of this roadmap */
 	private List<Edge> edgeList = new ArrayList<>();
@@ -63,7 +62,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * @param waypointList the list of waypoints
 	 * @param edgeList the list of edges
 	 */
-	public PlanningRoadmap(Box box, List<SampledWaypoint> waypointList, List<Edge> edgeList, Globe globe) {
+	public PlanningRoadmap(Box box, List<Waypoint> waypointList, List<Edge> edgeList, Globe globe) {
 		super(box);
 		this.waypointList = waypointList;
 		this.edgeList = edgeList;
@@ -75,7 +74,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * 
 	 * @return the list of waypoints of this planning roadmap.
 	 */
-	public List<? extends SampledWaypoint> getWaypointList() {
+	public List<? extends Waypoint> getWaypointList() {
 		return waypointList;
 	}
 
@@ -84,7 +83,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * 
 	 * @param waypointList the new list of waypoints
 	 */
-	public void setWaypointList(List<SampledWaypoint> waypointList) {
+	public void setWaypointList(List<Waypoint> waypointList) {
 		this.waypointList = waypointList;
 	}
 
@@ -153,17 +152,17 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 */
 	@Override
 	public Set<Position> getNeighbors(Position position) {
-		// TODO: review. Look for a better way to cast a set of sampledWaypoints to a
+		// TODO: review. Look for a better way to cast a set of Waypoints to a
 		// set of positions. Does it make sense to have a method working with positions
-		// instead of SampledWaypoints?
-		SampledWaypoint waypoint = null;
+		// instead of Waypoints?
+		Waypoint waypoint = null;
 		waypoint = this.getWaypoint(position);
 
-		Set<SampledWaypoint> sampledNeighbors = this.getNeighbors(waypoint);
+		Set<Waypoint> sampledNeighbors = this.getNeighbors(waypoint);
 
 		Set<Position> neighbors = new HashSet<Position>();
 
-		for (SampledWaypoint wpt : sampledNeighbors) {
+		for (Waypoint wpt : sampledNeighbors) {
 			Position pos = (Position) wpt;
 			neighbors.add(pos);
 		}
@@ -177,15 +176,15 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * @param waypoint the sampled waypoint
 	 * @return the neighboring sampled waypoints in this roadmap
 	 */
-	public Set<SampledWaypoint> getNeighbors(SampledWaypoint waypoint) {
-		Set<SampledWaypoint> neighbors = new HashSet<SampledWaypoint>();
+	public Set<Waypoint> getNeighbors(Waypoint waypoint) {
+		Set<Waypoint> neighbors = new HashSet<Waypoint>();
 
 		if (null != this.getGlobe()) {
 			for (Edge edge : edgeList) {
-				if (waypoint.equals(edge.getWpt1()))
-					neighbors.add(edge.getWpt2());
-				if (waypoint.equals(edge.getWpt2()))
-					neighbors.add(edge.getWpt1());
+				if (waypoint.equals(edge.getPosition1()))
+					neighbors.add((Waypoint) edge.getPosition2());
+				if (waypoint.equals(edge.getPosition2()))
+					neighbors.add((Waypoint) edge.getPosition1());
 			}
 
 		} else {
@@ -206,7 +205,7 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 */
 	@Override
 	public boolean isWaypoint(Position position) {
-		for (SampledWaypoint waypoint : waypointList) {
+		for (Waypoint waypoint : waypointList) {
 			if (position.equals(waypoint))
 				return true;
 		}
@@ -221,8 +220,8 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * 
 	 * @return the waypoint from the waypoint list
 	 */
-	public SampledWaypoint getWaypoint(Position position) {
-		for (SampledWaypoint waypoint : waypointList) {
+	public Waypoint getWaypoint(Position position) {
+		for (Waypoint waypoint : waypointList) {
 			if (position.equals(waypoint))
 				return waypoint;
 		}
@@ -258,9 +257,9 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	@Override
 	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
 		for (Edge edge : edgeList) {
-			if (position.equals(edge.getWpt1()) && waypoint.equals(edge.getWpt2()))
+			if (position.equals(edge.getPosition1()) && waypoint.equals(edge.getPosition2()))
 				return true;
-			if (position.equals(edge.getWpt2()) && waypoint.equals(edge.getWpt1()))
+			if (position.equals(edge.getPosition2()) && waypoint.equals(edge.getPosition1()))
 				return true;
 		}
 		return false;
@@ -289,18 +288,6 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 
-		SampledWaypoint wpt1 = this.getWaypoint(origin);
-		wpt1.setEto(start);
-		wpt1.setAto(start);
-		wpt1.updateCost();
-
-		SampledWaypoint wpt2 = this.getWaypoint(destination);
-		wpt2.setEto(end);
-		wpt2.setAto(end);
-		wpt2.updateCost();
-
-		double cost = this.getStepCost(wpt1, wpt2, costPolicy, riskPolicy);
-
-		return cost;
+		return super.getStepCost(origin, destination, start, end, costPolicy, riskPolicy);
 	}
 }

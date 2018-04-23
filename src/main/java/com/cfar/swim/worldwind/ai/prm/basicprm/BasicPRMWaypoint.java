@@ -29,7 +29,6 @@
  */
 package com.cfar.swim.worldwind.ai.prm.basicprm;
 
-import com.cfar.swim.worldwind.ai.SampledWaypoint;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -38,7 +37,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Henrique Ferreira
  *
  */
-public class BasicPRMWaypoint extends SampledWaypoint {
+public class BasicPRMWaypoint extends Waypoint {
 
 	// These variables are not used yet (will be used in FADPRM)
 

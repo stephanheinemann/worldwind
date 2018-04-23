@@ -106,7 +106,7 @@ public class LazyPRM extends BasicPRM {
 			if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
 					&& numConnectedNeighbor < MAX_NEIGHBORS) {
 				numConnectedNeighbor++;
-				this.createEdge(waypoint, neighbor);
+				super.createEdge(waypoint, neighbor);
 			}
 		}
 	}
@@ -122,8 +122,7 @@ public class LazyPRM extends BasicPRM {
 		int num = 0;
 
 		while (num < MAX_ITER) {
-			Waypoint waypoint = this.createWaypoint(this.sampleRandomPosition());
-			waypoint.setCostIntervals(this.getEnvironment().embedIntervalTree(waypoint));
+			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 			this.getWaypointList().add(waypoint);
 			this.connectWaypoint(waypoint);
 			num++;
@@ -144,11 +143,9 @@ public class LazyPRM extends BasicPRM {
 
 		// Start and goal may be located at inacessible positions (conflict with terrain
 		// is not checked)
-		start.setCostIntervals(this.getEnvironment().embedIntervalTree(start));
 		this.getWaypointList().add(start);
 		this.connectWaypoint(start);
 
-		goal.setCostIntervals(this.getEnvironment().embedIntervalTree(goal));
 		this.getWaypointList().add(goal);
 		this.connectWaypoint(goal);
 	}
@@ -168,17 +165,14 @@ public class LazyPRM extends BasicPRM {
 
 		// waypoints may be located at inacessible positions (conflict with terrain
 		// is not checked)
-		start.setCostIntervals(this.getEnvironment().embedIntervalTree(start));
 		this.getWaypointList().add(start);
 		this.connectWaypoint(start);
 
-		goal.setCostIntervals(this.getEnvironment().embedIntervalTree(goal));
 		this.getWaypointList().add(goal);
 		this.connectWaypoint(goal);
 
 		for (Position pos : waypoints) {
 			Waypoint waypoint = this.createWaypoint(pos);
-			waypoint.setCostIntervals(this.getEnvironment().embedIntervalTree(waypoint));
 			this.getWaypointList().add(waypoint);
 			this.connectWaypoint(waypoint);
 		}

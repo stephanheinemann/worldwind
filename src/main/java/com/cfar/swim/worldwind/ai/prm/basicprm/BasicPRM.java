@@ -30,7 +30,6 @@
 package com.cfar.swim.worldwind.ai.prm.basicprm;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
@@ -238,7 +237,7 @@ public class BasicPRM extends AbstractPlanner {
 	 */
 	protected Waypoint createWaypoint(Position position) {
 		Waypoint newWaypoint = new Waypoint(position);
-		newWaypoint.setAto(this.getEnvironment().getTime());
+		newWaypoint.setEto(this.getEnvironment().getTime());
 		return newWaypoint;
 	}
 
@@ -273,8 +272,9 @@ public class BasicPRM extends AbstractPlanner {
 	 * @param target the target Basic PRM waypoint
 	 */
 	protected void createEdge(Waypoint source, Waypoint target) {
-		Edge newedge = new Edge(source, target);
-		this.getEdgeList().add(newedge);
+		Edge edgeNew = new Edge(source, target);
+		edgeNew.setCostIntervals(this.getEnvironment().embedIntervalTree(edgeNew.getLine()));
+		this.getEdgeList().add(edgeNew);
 	}
 
 	/**
@@ -298,7 +298,6 @@ public class BasicPRM extends AbstractPlanner {
 			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 
 			if (!this.getEnvironment().checkConflict(waypoint)) {
-				waypoint.setCostIntervals(this.getEnvironment().embedIntervalTree(waypoint));
 				this.getWaypointList().add(waypoint);
 				this.connectWaypoint(waypoint);
 				num++;
@@ -318,13 +317,11 @@ public class BasicPRM extends AbstractPlanner {
 		Waypoint goal = this.createWaypoint(destination);
 
 		if (!this.getEnvironment().checkConflict(start)) {
-			start.setCostIntervals(this.getEnvironment().embedIntervalTree(start));
 			this.getWaypointList().add(start);
 			this.connectWaypoint(start);
 		}
 
 		if (!this.getEnvironment().checkConflict(goal)) {
-			goal.setCostIntervals(this.getEnvironment().embedIntervalTree(goal));
 			this.getWaypointList().add(goal);
 			this.connectWaypoint(goal);
 		}
@@ -342,14 +339,12 @@ public class BasicPRM extends AbstractPlanner {
 		Waypoint start = this.createWaypoint(origin);
 		Waypoint goal = this.createWaypoint(destination);
 
-		if (!this.checkConflict(start)) {
-			start.setCostIntervals(this.getEnvironment().embedIntervalTree(start));
+		if (!this.getEnvironment().checkConflict(start)) {
 			this.getWaypointList().add(start);
 			this.connectWaypoint(start);
 		}
 
-		if (!this.checkConflict(goal)) {
-			goal.setCostIntervals(this.getEnvironment().embedIntervalTree(goal));
+		if (!this.getEnvironment().checkConflict(goal)) {
 			this.getWaypointList().add(goal);
 			this.connectWaypoint(goal);
 		}
@@ -357,8 +352,7 @@ public class BasicPRM extends AbstractPlanner {
 		for (Position pos : waypoints) {
 			Waypoint waypoint = this.createWaypoint(pos);
 
-			if (!this.checkConflict(waypoint)) {
-				waypoint.setCostIntervals(this.getEnvironment().embedIntervalTree(waypoint));
+			if (!this.getEnvironment().checkConflict(waypoint)) {
 				this.getWaypointList().add(waypoint);
 				this.connectWaypoint(waypoint);
 			}
