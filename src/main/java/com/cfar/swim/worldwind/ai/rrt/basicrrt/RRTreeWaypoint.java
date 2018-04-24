@@ -38,14 +38,9 @@ import gov.nasa.worldwind.geom.Position;
  *
  */
 public class RRTreeWaypoint extends Waypoint {
-	// TODO: Possible inclusion of aircraft heading to define actions possible
-	// for extension
 
 	/** the parent RRT waypoint of this RRT waypoint in a trajectory */
 	private RRTreeWaypoint parent = null;
-
-	/** the cost (g-value) to get to this this waypoint */
-	private double g = Double.POSITIVE_INFINITY;
 
 	/** the estimated remaining cost (h-value) of this waypoint */
 	private double h = Double.POSITIVE_INFINITY;
@@ -83,23 +78,28 @@ public class RRTreeWaypoint extends Waypoint {
 	public void setParent(RRTreeWaypoint parent) {
 		this.parent = parent;
 	}
-
+	
 	/**
-	 * Gets the cost (g-value) to get to this this waypoint.
+	 * Gets the estimated current cost (g-value) of this waypoint.
 	 * 
-	 * @return the cost (g-value) to get to this this waypoint
+	 * @return the estimated current cost (g-value) of this waypoint
 	 */
 	public double getG() {
-		return g;
+		return super.getCost();
 	}
-
+	
 	/**
-	 * Gets the cost (g-value) to get to this this waypoint.
+	 * Sets the estimated current cost (g-value) of this waypoint.
 	 * 
-	 * @param g the cost (g-value) to get to this this waypoint
+	 * @param g the estimated current cost (g-value) of this waypoint
+	 * 
+	 * @throws IllegalArgumentException when g-value is negative
 	 */
 	public void setG(double g) {
-		this.g = g;
+		if (0d > g) {
+			throw new IllegalArgumentException("g is less than 0");
+		}
+		super.setCost(g);
 	}
 
 	/**
@@ -127,7 +127,7 @@ public class RRTreeWaypoint extends Waypoint {
 	 * @return the total cost (f-value) of this waypoint
 	 */
 	public double getF() {
-		return g + h;
+		return this.getG() + this.getH();
 	}
 	
     public String toString() {

@@ -32,14 +32,12 @@ package com.cfar.swim.worldwind.ai.rrt.hrrt;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Status;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 
 import gov.nasa.worldwind.geom.Position;
@@ -140,25 +138,6 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 */
 	public void setHeuristic(Heuristic heuristic) {
 		this.heuristic = heuristic;
-	}
-	
-	/**
-	 * Gets the list of already sampled edges
-	 * 
-	 * @return the list of edges
-	 */
-	public List<Edge> getEdgeList() {
-		return this.getEnvironment().getEdgeList();
-	}
-	
-	/**
-	 * Sets the list of edges previously sampled
-	 * 
-	 * @param edgetList the list of edges to set
-	 * 
-	 */
-	public void setEdgeList(List<Edge> edgeList) {
-		this.getEnvironment().setEdgeList(edgeList);
 	}
 
 	/**
@@ -326,14 +305,12 @@ public class HRRTreePlanner extends RRTreePlanner {
 		// Set status variable by checking if extension was possible
 		if (success) {
 			waypointNew = this.getWaypointNew();
-			this.getWaypointList().add(waypointNew);
-			Edge edgeNew = new Edge(waypointNear, waypointNew);
-			edgeNew.setCostIntervals(this.getEnvironment().embedIntervalTree(edgeNew.getLine()));
-			this.getEdgeList().add(edgeNew);
-
+			this.addVertex(waypointNew);
+			this.addEdge(waypointNew);
+			
 			waypointNew.setG(this.computeCost(waypointNew));
 			waypointNew.setH(this.computeHeuristic(waypointNew, super.getGoal()));
-			this.setWaypointNew(waypointNew); // Needed??
+			this.setWaypointNew(waypointNew);
 			
 			costMax = (costMax > waypointNew.getF()) ? costMax : waypointNew.getF();
 
@@ -347,21 +324,6 @@ public class HRRTreePlanner extends RRTreePlanner {
 		}
 
 		return status;
-	}
-
-	/**
-	 * Computes the estimated cost of a specified RRT waypoint.
-	 * 
-	 * @param waypoint the specified RRT waypoint in globe coordinates
-	 * 
-	 * @return g the estimated cost (g-value)
-	 */
-	protected double computeCost(RRTreeWaypoint waypoint) {
-		double g = waypoint.getParent().getG();
-		g += this.getEnvironment().getStepCost(waypoint.getParent(), waypoint, waypoint.getParent().getAto(),
-				waypoint.getAto(), this.getCostPolicy(), this.getRiskPolicy());
-
-		return g;
 	}
 
 	/**
@@ -397,7 +359,6 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		RRTreeWaypoint start = new RRTreeWaypoint(origin);
 		start.setEto(etd);
-		start.setAto(etd);
 		start.setG(0d);
 		start.setH(this.computeHeuristic(start, this.getGoal()));
 

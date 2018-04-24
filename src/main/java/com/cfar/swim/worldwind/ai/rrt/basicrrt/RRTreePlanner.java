@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai.rrt.basicrrt;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -40,11 +41,13 @@ import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
+import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
@@ -84,7 +87,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	private RRTreeWaypoint waypointNew = null;
 
 	/** the last computed plan */
-	private final LinkedList<RRTreeWaypoint> plan = new LinkedList<>();
+	private final LinkedList<Waypoint> plan = new LinkedList<>();
 
 	/** the expanding strategy for the planner */
 	private Strategy strategy = Strategy.EXTEND;
@@ -136,7 +139,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	public PlanningContinuum getEnvironment() {
 		return (PlanningContinuum) super.getEnvironment();
 	}
-	
+
 	/**
 	 * Gets the start RRT waypoint of this RRT planner.
 	 * 
@@ -208,7 +211,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	public void setStrategy(Strategy strategy) {
 		this.strategy = strategy;
 	}
-	
+
 	/**
 	 * Gets the maximum number of iterations for the planner to attempt to connect
 	 * to goal
@@ -218,7 +221,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	public int getMAX_ITER() {
 		return MAX_ITER;
 	}
-	
+
 	/**
 	 * Gets the maximum distance to extend a waypoint in the tree
 	 * 
@@ -227,7 +230,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	public double getEPSILON() {
 		return EPSILON;
 	}
-	
+
 	/**
 	 * Gets the bias of the sampling algorithm towards goal
 	 * 
@@ -236,9 +239,9 @@ public class RRTreePlanner extends AbstractPlanner {
 	public int getBIAS() {
 		return BIAS;
 	}
-	
+
 	// ---------- PROTECTED METHODS ----------
-	
+
 	/**
 	 * Gets the list of already sampled waypoints
 	 * 
@@ -259,7 +262,26 @@ public class RRTreePlanner extends AbstractPlanner {
 	public void setWaypointList(List<? extends Waypoint> waypointList) {
 		this.getEnvironment().setWaypointList((List<Waypoint>) waypointList);
 	}
-	
+
+	/**
+	 * Gets the list of already sampled edges
+	 * 
+	 * @return the list of edges
+	 */
+	public List<Edge> getEdgeList() {
+		return this.getEnvironment().getEdgeList();
+	}
+
+	/**
+	 * Sets the list of edges previously sampled
+	 * 
+	 * @param edgetList the list of edges to set
+	 * 
+	 */
+	public void setEdgeList(List<Edge> edgeList) {
+		this.getEnvironment().setEdgeList(edgeList);
+	}
+
 	/**
 	 * Clears the waypoints in the waypoint list and in the plan
 	 */
@@ -267,7 +289,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.getWaypointList().clear();
 		this.plan.clear();
 	}
-	
+
 	/**
 	 * Creates a trajectory of the computed plan.
 	 * 
@@ -343,7 +365,12 @@ public class RRTreePlanner extends AbstractPlanner {
 		// Set status variable by checking if extension was possible
 		if (success) {
 			waypointNew = this.getWaypointNew();
-			this.getWaypointList().add(waypointNew);
+			this.addVertex(waypointNew);
+			this.addEdge(waypointNew);
+			
+			waypointNew.setG(this.computeCost(waypointNew));
+			this.setWaypointNew(waypointNew);
+			
 			if (waypointNew.getPrecisionPosition().equals(waypoint.getPrecisionPosition())) {
 				status = Status.REACHED;
 			} else {
@@ -372,9 +399,8 @@ public class RRTreePlanner extends AbstractPlanner {
 		// Extend nearest waypoint in the direction of waypoint
 		Position positionNew = this.growPosition(waypoint, waypointNear);
 		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
-		
+
 		waypointNew.setEto(this.computeTime(waypointNear, waypointNew)); // TODO: Review
-		waypointNew.setAto(waypointNew.getEto());
 		this.setWaypointNew(waypointNew);
 
 		// Check if the new waypoint is in conflict with the environment
@@ -448,6 +474,49 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	/**
+	 * Adds the expanded waypoint to the list of waypoints
+	 * 
+	 * @param waypointNew the expanded waypoint
+	 */
+	protected void addVertex(RRTreeWaypoint waypointNew) {
+		this.getWaypointList().add(waypointNew);
+	}
+
+	/**
+	 * Adds an edge (with set cost intervals) between the expanded waypoint and its
+	 * parent to the list of edges
+	 * 
+	 * @param waypoint the expanded waypoint
+	 */
+	protected void addEdge(RRTreeWaypoint waypoint) {
+		RRTreeWaypoint parent = waypoint.getParent();
+
+		Vec4 source = this.getEnvironment().getGlobe().computePointFromPosition(parent);
+		Vec4 target = this.getEnvironment().getGlobe().computePointFromPosition(waypoint);
+
+		Edge edge = new Edge(parent, waypoint, new Line(source, target));
+		edge.setCostIntervals(this.getEnvironment().embedIntervalTree(edge.getLine()));
+
+		this.getEdgeList().add(edge);
+	}
+
+
+	/**
+	 * Computes the estimated cost of a specified RRT waypoint.
+	 * 
+	 * @param waypoint the specified RRT waypoint in globe coordinates
+	 * 
+	 * @return g the estimated cost (g-value)
+	 */
+	protected double computeCost(RRTreeWaypoint waypoint) {
+		double g = waypoint.getParent().getG();
+		g += this.getEnvironment().getStepCost(waypoint.getParent(), waypoint, waypoint.getParent().getEto(),
+				waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
+
+		return g;
+	}
+	
+	/**
 	 * Check whether the waypoint is the goal or within the goal region
 	 * 
 	 * @param waypoint the RRTree Waypoint to be compared (default=this.waypointNew)
@@ -473,10 +542,12 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	protected void computePath(RRTreeWaypoint waypoint) {
-		plan.addFirst(waypoint);
+		plan.addFirst(waypoint.clone());
 		while (waypoint.getParent() != null) {
 			waypoint = waypoint.getParent();
-			plan.addFirst(waypoint);
+			waypoint.setTtg(Duration.between(waypoint.getEto(), plan.getFirst().getEto()));
+			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, plan.getFirst()));
+			plan.addFirst(waypoint.clone());
 		}
 	}
 
@@ -490,9 +561,10 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		this.clearWaypoints();
-		
+
 		this.setStart(new RRTreeWaypoint(origin));
 		this.getStart().setEto(etd);
+		this.getStart().setG(0d);
 		this.getWaypointList().add(start);
 		this.setWaypointNew(start);
 
@@ -524,7 +596,7 @@ public class RRTreePlanner extends AbstractPlanner {
 			}
 		}
 		// TODO: Review what happens when no path is found
-		System.out.println("No path found after "+MAX_ITER+" iterations.");
+		System.out.println("No path found after " + MAX_ITER + " iterations.");
 		return;
 	}
 
@@ -568,17 +640,16 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		
+
 		LinkedList<Waypoint> plan = new LinkedList<>();
 		Waypoint currentOrigin = new Waypoint(origin);
 		ZonedDateTime currentEtd = etd;
-		
+
 		// collect intermediate destinations
-		ArrayList<Waypoint> destinations = waypoints.stream()
-				.map(Waypoint::new)
+		ArrayList<Waypoint> destinations = waypoints.stream().map(Waypoint::new)
 				.collect(Collectors.toCollection(ArrayList::new));
 		destinations.add(new Waypoint(destination));
-		
+
 		// plan and concatenate partial trajectories
 		for (Waypoint currentDestination : destinations) {
 			if (!(currentOrigin.equals(currentDestination))) {
@@ -586,12 +657,12 @@ public class RRTreePlanner extends AbstractPlanner {
 				this.initialize(currentOrigin, currentDestination, currentEtd);
 				this.compute();
 				Trajectory part = this.createTrajectory();
-				
+
 				// append partial trajectory to plan
-				if ((!plan.isEmpty()) &&  (!part.isEmpty())) {
+				if ((!plan.isEmpty()) && (!part.isEmpty())) {
 					plan.pollLast();
 				}
-				
+
 				for (Waypoint waypoint : part.getWaypoints()) {
 					plan.add(waypoint);
 				}
