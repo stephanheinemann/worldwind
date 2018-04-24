@@ -36,6 +36,7 @@ import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.registries.Factory;
@@ -149,6 +150,16 @@ public class PlannerFactory implements Factory<Planner> {
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((HRRTreePlanner) planner).setStrategy(properties.getStrategy());
 			((HRRTreePlanner) planner).setHeuristic(properties.getHeuristic());
+		} else if (specification.getId().equals(Specification.PLANNER_ARRT_ID)) {
+			ARRTreeProperties properties = (ARRTreeProperties) specification.getProperties();
+			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
+					properties.getEpsilon(), properties.getBias(), properties.getMaxIter());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((ARRTreePlanner) planner).setStrategy(properties.getStrategy());
+			((ARRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((ARRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((ARRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		}
 		// TODO: implement more planners
 

@@ -327,19 +327,6 @@ public class HRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
-	 * Computes the estimated remaining cost (h-value) of a specified source RRT
-	 * waypoint to reach the target RRT waypoint.
-	 * 
-	 * @param source the source RRT waypoint in globe coordinates
-	 * @param target the target RRT waypoint in globe coordinates
-	 * 
-	 * @return the estimated remaining cost (h-value)
-	 */
-	protected double computeHeuristic(RRTreeWaypoint source, RRTreeWaypoint target) {
-		return this.getEnvironment().getNormalizedDistance(source, target);
-	}
-
-	/**
 	 * Initializes the planner to plan from an origin to a destination at a
 	 * specified estimated time of departure.
 	 * 
@@ -352,7 +339,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 */
 	@Override
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
-		this.clearWaypoints();
+		this.clearExpendables();
 
 		this.setGoal(new RRTreeWaypoint(destination));
 		this.getGoal().setH(0d);
@@ -363,7 +350,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 		start.setH(this.computeHeuristic(start, this.getGoal()));
 
 		this.setStart(start);
-		this.getWaypointList().add(start);
+		this.addVertex(start);
 		this.setWaypointNew(start);
 
 		this.costOpt = start.getF();

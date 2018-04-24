@@ -283,10 +283,11 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Clears the waypoints in the waypoint list and in the plan
+	 * Clears the waypoint list, the edge list and the plan
 	 */
-	protected void clearWaypoints() {
+	protected void clearExpendables() {
 		this.getWaypointList().clear();
+		this.getEdgeList().clear();
 		this.plan.clear();
 	}
 
@@ -499,6 +500,18 @@ public class RRTreePlanner extends AbstractPlanner {
 
 		this.getEdgeList().add(edge);
 	}
+	
+	/**
+	 * Removes an edge from the list of edges
+	 * 
+	 * @param waypoint the waypoint whose edge (to its parent) is to be removed
+	 */
+	protected void removeEdge(RRTreeWaypoint waypoint) {
+		List<Edge> edgeList = this.getEdgeList();
+		Edge edge = new Edge(waypoint.getParent(), waypoint);
+		
+		edgeList.removeIf(e -> e.equals(edge));
+	}
 
 
 	/**
@@ -514,6 +527,20 @@ public class RRTreePlanner extends AbstractPlanner {
 				waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
 
 		return g;
+	}
+	
+
+	/**
+	 * Computes the estimated remaining cost (h-value) of a specified source RRT
+	 * waypoint to reach the target RRT waypoint.
+	 * 
+	 * @param source the source RRT waypoint in globe coordinates
+	 * @param target the target RRT waypoint in globe coordinates
+	 * 
+	 * @return the estimated remaining cost (h-value)
+	 */
+	protected double computeHeuristic(RRTreeWaypoint source, RRTreeWaypoint target) {
+		return this.getEnvironment().getNormalizedDistance(source, target);
 	}
 	
 	/**
@@ -560,12 +587,12 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @param etd the estimated time of departure
 	 */
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
-		this.clearWaypoints();
+		this.clearExpendables();
 
 		this.setStart(new RRTreeWaypoint(origin));
 		this.getStart().setEto(etd);
 		this.getStart().setG(0d);
-		this.getWaypointList().add(start);
+		this.addVertex(start);
 		this.setWaypointNew(start);
 
 		this.setGoal(new RRTreeWaypoint(destination));
