@@ -40,7 +40,7 @@ package com.cfar.swim.worldwind.registries.environments;
 public class PlanningContinuumProperties extends EnvironmentProperties {
 
 	/** the resolution of this planning continuum */
-	private double resolution = 1d;
+	private double resolution = 100d;
 
 	/**
 	 * Calls EnvironmentProperties constructor to construct a new environment

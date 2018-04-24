@@ -387,30 +387,29 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected Set<? extends AStarWaypoint> expand(AStarWaypoint waypoint) {
 		
-	    Set<Position> neighbors = this.getDiscreteEnvironment().getNeighbors(waypoint);
+	    Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
 
 	    //TODO: code below is not applicable to PlanningRoadmap. suggestion
 		// (if this.getDiscreteEnvironment() instanceof PlanningGrid).....
 	    
-	    if(this.getDiscreteEnvironment() instanceof PlanningGrid) {
-			// if a start has no neighbors, then it is not a waypoint in the
-			// environment and its adjacent waypoints have to be determined for
-			// initial expansion
-			if (neighbors.isEmpty()) {
-				neighbors = this.getDiscreteEnvironment().getAdjacentWaypoints(waypoint);
-			}
-			
-			// expand start region position towards the start
-			if (this.isInStartRegion(waypoint.getPrecisionPosition())) {
-				neighbors.add(this.getStart());
-			}
-			
-//			// expand a goal region position towards the goal
-			if (this.isInGoalRegion(waypoint.getPrecisionPosition())) {
-				neighbors.add(this.getGoal());
-			}
+
+	    // if a start has no neighbors, then it is not a waypoint in the
+	    // environment and its adjacent waypoints have to be determined for
+	    // initial expansion
+	    if (neighbors.isEmpty()) {
+	    	neighbors = this.getEnvironment().getAdjacentWaypoints(waypoint);
 	    }
-	
+
+	    // expand start region position towards the start
+	    if (this.isInStartRegion(waypoint.getPrecisionPosition())) {
+	    	neighbors.add(this.getStart());
+	    }
+
+	    // expand a goal region position towards the goal
+	    if (this.isInGoalRegion(waypoint.getPrecisionPosition())) {
+	    	neighbors.add(this.getGoal());
+	    }
+
 		this.addExpanded(waypoint);
 		
 		return neighbors.stream()
@@ -495,6 +494,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected void updateWaypoint(AStarWaypoint source, AStarWaypoint target) {
 		double gOld = target.getG();
+
 		this.computeCost(source, target);
 		if (target.getG() < gOld) {
 			this.updateSets(target);
@@ -514,12 +514,12 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		Globe globe = this.getEnvironment().getGlobe();
 		// TODO: catch IllegalArgumentException (incapable) and exit
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
-		
+
 		double cost = this.getEnvironment().getStepCost(
 				source, target,
 				source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy());
-		
+
 		if ((source.getG() + cost) < target.getG()) {
 			target.setParent(source);
 			target.setG(source.getG() + cost);
@@ -549,19 +549,17 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.getGoal().setH(0);
 		
 		// TODO: code below is not applicable to PlanningRoadmap. suggestion
-		if (this.getDiscreteEnvironment() instanceof PlanningGrid) {
-			// the adjacent waypoints to the origin
-			this.setStartRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(origin)
-					.stream()
-					.map(PrecisionPosition::new)
-					.collect(Collectors.toSet()));
-			
-			// the adjacent waypoints to the destination
-			this.setGoalRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(destination)
-					.stream()
-					.map(PrecisionPosition::new)
-					.collect(Collectors.toSet()));
-		}
+		// the adjacent waypoints to the origin
+		this.setStartRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(origin)
+				.stream()
+				.map(PrecisionPosition::new)
+				.collect(Collectors.toSet()));
+
+		// the adjacent waypoints to the destination
+		this.setGoalRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(destination)
+				.stream()
+				.map(PrecisionPosition::new)
+				.collect(Collectors.toSet()));
 
 		this.addExpandable(this.getStart());
 	}

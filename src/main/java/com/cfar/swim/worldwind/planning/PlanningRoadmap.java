@@ -30,13 +30,15 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
+import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
+import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.geom.Box;
 
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 
@@ -49,12 +51,15 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnvironment {
 
-	/** the list of sampled waypoints of this roadmap */
-	private List<Waypoint> waypointList = new ArrayList<>();
+	/** the maximum number of sampling iterations */
+	public final int MAX_ITER;
 
-	/** the list of edges of this roadmap */
-	private List<Edge> edgeList = new ArrayList<>();
+	/** the maximum number of neighbors a waypoint can be connected to */
+	public final int MAX_NEIGHBORS;
 
+	/** the maximum distance between two neighboring waypoints */
+	public final double MAX_DIST;
+	
 	/**
 	 * Constructs a planning roadmap based on a box, a waypoint list and a edge list
 	 * 
@@ -64,82 +69,35 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 */
 	public PlanningRoadmap(Box box, List<Waypoint> waypointList, List<Edge> edgeList, Globe globe) {
 		super(box);
-		this.waypointList = waypointList;
-		this.edgeList = edgeList;
+		super.setWaypointList(waypointList);
+		super.setEdgeList(edgeList);
 		this.setGlobe(globe);
+		MAX_ITER = 1000;
+		MAX_NEIGHBORS = 30;
+		MAX_DIST = 200d;
 	}
-
-	/**
-	 * Gets the list of waypoints of this planning roadmap.
-	 * 
-	 * @return the list of waypoints of this planning roadmap.
-	 */
-	public List<? extends Waypoint> getWaypointList() {
-		return waypointList;
-	}
-
-	/**
-	 * Sets the list of waypoints of this planning roadmap.
-	 * 
-	 * @param waypointList the new list of waypoints
-	 */
-	public void setWaypointList(List<Waypoint> waypointList) {
-		this.waypointList = waypointList;
-	}
-
-	/**
-	 * Gets the list of edges of this planning roadmap.
-	 * 
-	 * @return the list of edges of this planning roadmap.
-	 */
-	public List<Edge> getEdgeList() {
-		return edgeList;
-	}
-
-	/**
-	 * Sets the list of edges of this planning roadmap.
-	 * 
-	 * @param edgeList the new list of edges
-	 */
-	public void setEdgeList(List<Edge> edgeList) {
-		this.edgeList = edgeList;
-	}
-
-	/**
-	 * TODO
-	 * @param position
-	 * @param neighbor
-	 * @param start
-	 * @param end
-	 * @param costPolicy
-	 * @param riskPolicy
-	 * @return
 	
-	 * @see com.cfar.swim.worldwind.planning.PlanningContinuum#getLegCost(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
-	 */
-	@Override
-	public double getLegCost(Position position, Position neighbor, ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
 	/**
-	 * TODO
-	 * @param neighbor
-	 * @param start
-	 * @param end
-	 * @param costPolicy
-	 * @param riskPolicy
-	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.PlanningContinuum#getLegCost(com.cfar.swim.worldwind.planning.Environment, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
+	 * Constructs a planning roadmap based on a box.
+	 * 
+	 * @param box the box used to define this environment
+	 * @param resolution the resolution of this planning continuum
 	 */
-	@Override
-	public double getLegCost(Environment neighbor, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
-			RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
+	public PlanningRoadmap(Box box, double resolution, RoadmapConstructor roadmapConstructor, Globe globe, int maxIter, int maxNeighbors, double maxDist) {
+		super(box, resolution);
+		this.setGlobe(globe);
+		MAX_ITER = maxIter;
+		MAX_NEIGHBORS = maxNeighbors;
+		MAX_DIST = maxDist;
+		if(roadmapConstructor==RoadmapConstructor.BASICPRM) {
+			BasicPRM basicPRM = new BasicPRM(this, MAX_ITER, MAX_NEIGHBORS, MAX_DIST);
+			basicPRM.construct();
+		}
+		if(roadmapConstructor==RoadmapConstructor.LAZYPRM) {
+			LazyPRM lazyPRM = new LazyPRM(this, MAX_ITER, MAX_NEIGHBORS, MAX_DIST);
+			lazyPRM.construct();
+		}
+
 	}
 
 	/**
@@ -152,65 +110,9 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 */
 	@Override
 	public Set<Position> getNeighbors(Position position) {
-		// TODO: review. Look for a better way to cast a set of Waypoints to a
-		// set of positions. Does it make sense to have a method working with positions
-		// instead of Waypoints?
-		Waypoint waypoint = null;
-		waypoint = this.getWaypoint(position);
-
-		Set<Waypoint> sampledNeighbors = this.getNeighbors(waypoint);
-
-		Set<Position> neighbors = new HashSet<Position>();
-
-		for (Waypoint wpt : sampledNeighbors) {
-			Position pos = (Position) wpt;
-			neighbors.add(pos);
-		}
-
-		return neighbors;
+		return super.getNeighbors(position);
 	}
 
-	/**
-	 * Gets the neighbors waypoints of a specific waypoint in this roadmap.
-	 * 
-	 * @param waypoint the sampled waypoint
-	 * @return the neighboring sampled waypoints in this roadmap
-	 */
-	public Set<Waypoint> getNeighbors(Waypoint waypoint) {
-		Set<Waypoint> neighbors = new HashSet<Waypoint>();
-
-		if (null != this.getGlobe()) {
-			for (Edge edge : edgeList) {
-				if (waypoint.equals(edge.getPosition1()))
-					neighbors.add((Waypoint) edge.getPosition2());
-				if (waypoint.equals(edge.getPosition2()))
-					neighbors.add((Waypoint) edge.getPosition1());
-			}
-
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return neighbors;
-	}
-
-	/**
-	 * Checks if a position coincides with a waypoint in this planning roadmap.
-	 * 
-	 * @param position the position in global coordinates
-	 * 
-	 * @return true if the position is a waypoint in this planning roadmap, false
-	 *         otherwise
-	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#isWaypoint(gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public boolean isWaypoint(Position position) {
-		for (Waypoint waypoint : waypointList) {
-			if (position.equals(waypoint))
-				return true;
-		}
-		return false;
-	}
 
 	/**
 	 * Gets the waypoint from the waypoint list whose position coincides with a
@@ -221,48 +123,11 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * @return the waypoint from the waypoint list
 	 */
 	public Waypoint getWaypoint(Position position) {
-		for (Waypoint waypoint : waypointList) {
+		for (Waypoint waypoint : this.getWaypointList()) {
 			if (position.equals(waypoint))
 				return waypoint;
 		}
 		return null;
-	}
-
-	/**
-	 * TODO
-	 * @param position
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#getAdjacentWaypoints(gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public Set<Position> getAdjacentWaypoints(Position position) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * Indicates whether or not a position is adjacent to a waypoint in this
-	 * planning roadmap.
-	 * 
-	 * @param position the position in globe coordinates
-	 * @param waypoint the waypoint in globe coordinates
-	 * 
-	 * @return true if the position is adjacent to the waypoint in this planning
-	 *         roadmap, false otherwise
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.DiscreteEnvironment#isAdjacentWaypoint(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
-		for (Edge edge : edgeList) {
-			if (position.equals(edge.getPosition1()) && waypoint.equals(edge.getPosition2()))
-				return true;
-			if (position.equals(edge.getPosition2()) && waypoint.equals(edge.getPosition1()))
-				return true;
-		}
-		return false;
 	}
 
 	/**
@@ -288,6 +153,48 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 
-		return super.getStepCost(origin, destination, start, end, costPolicy, riskPolicy);
+		Edge edge = null;
+		Optional<Edge> optEdge = this.getEdge(origin, destination);
+		if (!optEdge.isPresent()) {
+			Line line = new Line(this.getGlobe().computePointFromPosition(origin), this.getGlobe().computePointFromPosition(destination));
+			edge = new Edge(origin, destination, line);
+			edge.setCostIntervals(this.embedIntervalTree(edge.getLine()));
+			this.getEdgeList().add(edge);
+			//throw new IllegalStateException("no edge containing both positions");
+		}
+		else
+			edge = optEdge.get();
+
+		double stepCost = 0d, distance, cost;
+
+		distance = this.getNormalizedDistance(origin, destination);
+
+		cost = edge.calculateCost(start, end);
+
+		if (riskPolicy.satisfies(cost - 1)) {
+			cost = distance * cost;
+		} else {
+			cost = Double.POSITIVE_INFINITY;
+		}
+		// TODO: Review how to apply cost Policy
+		stepCost = cost;
+
+		return stepCost;
+	}
+	
+	/**
+	 * Updates this planning continuum.
+	 */
+	protected void update() {
+		this.updateActiveCost();
+		this.updateAppearance();
+		this.updateVisibility();
+		this.updateEdges();
+	}
+	
+	protected void updateEdges() {
+		for(Edge edge : this.getEdgeList()) {
+			edge.setCostIntervals(this.embedIntervalTree(edge.getLine()));
+		}
 	}
 }

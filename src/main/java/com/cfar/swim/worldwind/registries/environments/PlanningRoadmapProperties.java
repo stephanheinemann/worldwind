@@ -29,11 +29,108 @@
  */
 package com.cfar.swim.worldwind.registries.environments;
 
+import com.cfar.swim.worldwind.planning.RoadmapConstructor;
+
 /**
  * Realizes the properties bean of a planning roadmap environment.
  * 
  * @author Stephan Heinemann
  *
  */
-public class PlanningRoadmapProperties extends EnvironmentProperties {
+public class PlanningRoadmapProperties extends PlanningContinuumProperties {
+	
+	/** the algorithm used to construct the roadmap of this Planning Roadmap properties bean */
+	RoadmapConstructor roadmapConstructor = RoadmapConstructor.BASICPRM;
+	
+	/** the maximum number of sampling iterations */
+	private int maxIter = 1_000;
+	
+	/** the maximum number of neighbors a waypoint can be connected to */
+	private int maxNeighbors = 30;
+	
+	/** the maximum distance between two neighboring waypoints */
+	private double maxDistance = 200;
+	
+	public PlanningRoadmapProperties() {
+		super();
+	}
+	
+	public PlanningRoadmapProperties(int maxIter, int maxNeighbors, double maxDistance) {
+		super();
+		this.setMaxIter(maxIter);
+		this.setMaxNeighbors(maxNeighbors);
+		this.setMaxDistance(maxDistance);
+	}
+	
+	/**
+	 * Gets the constructor of this Planning Roadmap properties bean.
+	 * 
+	 * @return the constructor of this Planning Roadmap properties bean
+	 */
+	public RoadmapConstructor getRoadmapConstructor() {
+		return this.roadmapConstructor;
+	}
+	
+	/**
+	 * Sets the constructor of this Planning Roadmap properties bean.
+	 * 
+	 * @param roadmapConstructor the constructor to be set
+	 */
+	public void setRoadmapConstructor(RoadmapConstructor roadmapConstructor) {
+		this.roadmapConstructor = roadmapConstructor;
+	}
+	
+	/**
+	 * Gets the maximum number of sampling iterations
+	 * 
+	 * @return the maximum number of sampling iterations
+	 */
+	public int getMaxIter() {
+		return maxIter;
+	}
+
+	/**
+	 * Sets the maximum number of sampling iterations
+	 * 
+	 * @param maxIter the maximum number of sampling iterations
+	 */
+	public void setMaxIter(int maxIter) {
+		this.maxIter = maxIter;
+	}
+
+	/**
+	 * Gets the maximum number of neighbors a waypoint can have
+	 * 
+	 * @return the maximum number of neighbors a waypoint can have
+	 */
+	public int getMaxNeighbors() {
+		return maxNeighbors;
+	}
+
+	/**
+	 * Sets the maximum number of neighbors a waypoint can have
+	 * 
+	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
+	 */
+	public void setMaxNeighbors(int maxNeighbors) {
+		this.maxNeighbors = maxNeighbors;
+	}
+
+	/**
+	 * Gets the maximum distance between two connected waypoints
+	 * 
+	 * @return the maximum distance between two connected waypoints
+	 */
+	public double getMaxDistance() {
+		return maxDistance;
+	}
+
+	/**
+	 * Sets the maximum distance between two connected waypoints
+	 * 
+	 * @param maxDistance maximum distance between two connected waypoints
+	 */
+	public void setMaxDistance(double maxDistance) {
+		this.maxDistance = maxDistance;
+	}
 }

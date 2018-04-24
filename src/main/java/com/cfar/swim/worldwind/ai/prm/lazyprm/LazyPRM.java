@@ -29,18 +29,11 @@
  */
 package com.cfar.swim.worldwind.ai.prm.lazyprm;
 
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.List;
 
-import com.cfar.swim.worldwind.ai.AbstractPlanner;
-import com.cfar.swim.worldwind.ai.Planner;
-import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
-import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -57,37 +50,10 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class LazyPRM extends BasicPRM {
 
-	/**
-	 * Constructs a basic PRM planner for a specified aircraft and environment using
-	 * default local cost and risk policies.
-	 * 
-	 * @param aircraft the aircraft
-	 * @param environment the environment
-	 * 
-	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
-	 */
-	public LazyPRM(Aircraft aircraft, Environment environment) {
-		super(aircraft, environment);
+	public LazyPRM(Environment environment, int maxIter, int maxNeighbors, double maxDist) {
+		super(environment, maxIter, maxNeighbors, maxDist);
 	}
-
-	/**
-	 * Constructs a lazy PRM planner for a specified aircraft and environment using
-	 * default local cost and risk policies. Also, this planner is constructed with
-	 * a specified maximum number of iterations (Waypoints), a maximum number
-	 * of neighbors (of a single Waypoint) and a maximum distance between two
-	 * connected neighbors.
-	 * 
-	 * @param aircraft the aircraft
-	 * @param environment the environment
-	 * @param maxIter the maximum number of iterations
-	 * @param maxNeighbors the maximum number of neighbors
-	 * @param maxDist the maximum distance between two connected neighbors
-	 * 
-	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
-	 */
-	public LazyPRM(Aircraft aircraft, Environment environment, int maxIter, int maxNeighbors, double maxDist) {
-		super(aircraft, environment, maxIter, maxNeighbors, maxDist);
-	}
+	
 
 	/**
 	 * Connects this waypoint to another waypoints already sampled, which are closer
@@ -103,8 +69,8 @@ public class LazyPRM extends BasicPRM {
 		this.getEnvironment().sortNearest(waypoint);
 
 		for (Waypoint neighbor : this.getWaypointList()) {
-			if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
-					&& numConnectedNeighbor < MAX_NEIGHBORS) {
+			if (super.getEnvironment().getDistance(neighbor, waypoint) < this.maxDist
+					&& numConnectedNeighbor < this.maxNeighbors) {
 				numConnectedNeighbor++;
 				super.createEdge(waypoint, neighbor);
 			}
@@ -118,10 +84,10 @@ public class LazyPRM extends BasicPRM {
 	 * After that, tries to connect this waypoint to others already sampled.
 	 */
 	@Override
-	protected void construct() {
+	public void construct() {
 		int num = 0;
 
-		while (num < MAX_ITER) {
+		while (num < this.maxIter) {
 			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 			this.getWaypointList().add(waypoint);
 			this.connectWaypoint(waypoint);
@@ -221,120 +187,4 @@ public class LazyPRM extends BasicPRM {
 		return;
 	}
 
-	/**
-	 * Plans a trajectory from an origin to a destination at a specified estimated
-	 * time of departure.
-	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param etd the estimated time of departure
-	 * 
-	 * @return the planned trajectory from the origin to the destination with the
-	 *         estimated time of departure
-	 * 
-	 * @see com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM#plan(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime)
-	 */
-	@Override
-	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-		Trajectory trajectory = null;
-
-		if (!this.hasRoadmap() || !this.checkEnvironmentCompatibility()) {
-			this.initialize();
-			this.construct();
-			this.extendsConstruction(origin, destination);
-
-			Box box = this.createBox(this.getEnvironment());
-			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(),
-					this.getEnvironment().getGlobe());
-
-			while (!this.correctTrajectory(trajectory)) {
-				this.updateRoadmap(roadmap);
-				ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
-				aStar.setCostPolicy(this.getCostPolicy());
-				aStar.setRiskPolicy(this.getRiskPolicy());
-				trajectory = aStar.plan(origin, destination, etd);
-			}
-
-			this.revisePlan(trajectory);
-
-			return trajectory;
-		} else {
-			this.extendsConstruction(origin, destination);
-
-			this.updateRoadmap(this.getRoadmap());
-
-			while (!this.correctTrajectory(trajectory)) {
-				this.updateRoadmap(this.getRoadmap());
-				ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getRoadmap());
-				aStar.setCostPolicy(this.getCostPolicy());
-				aStar.setRiskPolicy(this.getRiskPolicy());
-
-				trajectory = aStar.plan(origin, destination, etd);
-			}
-
-			this.revisePlan(trajectory);
-
-			return trajectory;
-		}
-	}
-
-	/**
-	 * Plans a trajectory from an origin to a destination along waypoints at a
-	 * specified estimated time of departure.
-	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param waypoints the waypoints in globe coordinates
-	 * @param etd the estimated time of departure
-	 * 
-	 * @return the planned trajectory from the origin to the destination along the
-	 *         waypoints with the estimated time of departure
-	 * 
-	 * @see Planner#plan(Position, Position, List, ZonedDateTime)
-	 */
-	@Override
-	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		Trajectory trajectory = null;
-
-		if (!this.hasRoadmap() || !this.checkEnvironmentCompatibility()) {
-			this.initialize();
-			this.construct();
-			this.extendsConstruction(origin, destination, waypoints);
-
-			Box box = this.createBox(this.getEnvironment());
-			PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(),
-					this.getEnvironment().getGlobe());
-
-			while (!this.correctTrajectory(trajectory)) {
-				this.updateRoadmap(roadmap);
-				ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
-				aStar.setCostPolicy(this.getCostPolicy());
-				aStar.setRiskPolicy(this.getRiskPolicy());
-
-				trajectory = aStar.plan(origin, destination, waypoints, etd);
-			}
-
-			this.revisePlan(trajectory);
-
-			return trajectory;
-		} else {
-			this.extendsConstruction(origin, destination, waypoints);
-
-			this.updateRoadmap(this.getRoadmap());
-
-			while (!this.correctTrajectory(trajectory)) {
-				this.updateRoadmap(this.getRoadmap());
-				ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getRoadmap());
-				aStar.setCostPolicy(this.getCostPolicy());
-				aStar.setRiskPolicy(this.getRiskPolicy());
-
-				trajectory = aStar.plan(origin, destination, waypoints, etd);
-			}
-
-			this.revisePlan(trajectory);
-
-			return trajectory;
-		}
-	}
 }

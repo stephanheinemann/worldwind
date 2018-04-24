@@ -27,53 +27,21 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
-
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-
+package com.cfar.swim.worldwind.planning;
+ 
 /**
- * Realizes the properties bean of a basic PRM planner.
+ * Enumerates available constructors for a planning roadmap.
  * 
  * @author Henrique Ferreira
  *
  */
-public class LazyPRMProperties extends BasicPRMProperties {
-
+public enum RoadmapConstructor {
 	/**
-	 * Constructs a new basic PRM planner properties bean.
+	 * the basic PRM planner
 	 */
-	public LazyPRMProperties() {
-		super();
-	}
-
+	BASICPRM,
 	/**
-	 * Constructs a new basic PRM planner properties bean with
-	 * specified cost and risk policy property values.
-	 * 
-	 * @param costPolicy the cost policy of this basic PRM planner properties bean
-	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
+	 * the lazyPRM planner
 	 */
-	public LazyPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		super(costPolicy, riskPolicy);
-	}
-	
-	/**
-	 * Constructs a new basic PRM planner properties bean with specified cost and
-	 * risk policy property values as well as specified maximum number of
-	 * iterations, maximum number of neighbors and maximum distance.
-	 * 
-	 * @param costPolicy the cost policy of this basic PRM planner properties
-	 *            bean
-	 * @param riskPolicy the risk policy of this basic PRM planner properties
-	 *            bean
-	 * @param maxIter the maximum number of sampling iterations
-	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
-	 * @param maxDistance the maximum distance between two connected waypoints
-	 */
-	public LazyPRMProperties( CostPolicy costPolicy, RiskPolicy riskPolicy,
-			int maxIter, int maxNeighbors, double maxDistance) {
-		super(costPolicy, riskPolicy, maxIter, maxNeighbors, maxDistance);
-	}
-
+	LAZYPRM
 }
