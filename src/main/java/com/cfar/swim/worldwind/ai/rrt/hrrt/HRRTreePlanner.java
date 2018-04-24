@@ -363,7 +363,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @see RRTreePlanner#compute()
 	 */
 	@Override
-	protected void compute() {
+	protected boolean compute() {
 		for (int i = 0; i < super.getMAX_ITER(); i++) {
 			RRTreeWaypoint waypointRand;
 			boolean status;
@@ -392,12 +392,14 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 			if (status) {
 				if (this.checkGoal()) {
+					this.getGoal().setG(this.computeCost(getWaypointNew()));
 					this.computePath();
-					return;
+					return true;
 				}
 			}
 		}
 		System.out.println("No path found after " + super.getMAX_ITER() + " iterations.");
+		return false;
 	}
 
 }

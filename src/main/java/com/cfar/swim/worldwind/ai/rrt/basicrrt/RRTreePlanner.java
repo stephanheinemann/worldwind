@@ -601,8 +601,10 @@ public class RRTreePlanner extends AbstractPlanner {
 
 	/**
 	 * Computes a plan by growing a tree until the goal is reached
+	 * 
+	 * @return true if the goal was reached, false otherwise
 	 */
-	protected void compute() {
+	protected boolean compute() {
 		boolean status = false;
 		for (int i = 0; i < MAX_ITER; i++) {
 			RRTreeWaypoint waypointRand = this.sampleBiased(BIAS);
@@ -617,14 +619,15 @@ public class RRTreePlanner extends AbstractPlanner {
 			}
 			if (status) {
 				if (this.checkGoal()) {
+					this.getGoal().setG(this.computeCost(getWaypointNew()));
 					this.computePath();
-					return;
+					return true;
 				}
 			}
 		}
 		// TODO: Review what happens when no path is found
 		System.out.println("No path found after " + MAX_ITER + " iterations.");
-		return;
+		return false;
 	}
 
 	// ---------- PUBLIC METHODS ----------

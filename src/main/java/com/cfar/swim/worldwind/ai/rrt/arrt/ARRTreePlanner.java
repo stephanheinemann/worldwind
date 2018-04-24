@@ -73,7 +73,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 
 	/** the step used to modify the relative weights of distances and costs */
 	// TODO: might be interesting to define proportionally to improvementFactor
-	private double step = 0.1;
+	private double step = 0.2;
 
 	/** the cost value bounding any new solution to be generated */
 	private double costBound = Double.POSITIVE_INFINITY;
@@ -263,7 +263,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected boolean isImproved() {
 		// TODO: How to define if the function can no longer be improved?
-		return false;
+		return getCostBias() >= getMaximumQuality();
 	}
 
 	/**
@@ -271,6 +271,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected void updateCostBound() {
 		this.setCostBound((1 - improvementFactor) * getGoal().getCost());
+		System.out.println("New cost bound: "+this.getCostBound());
 	}
 
 	/**
@@ -304,6 +305,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			waypoint = this.sampleRandom();
 			attempts++;
 			if (attempts > MAX_SAMPLE_ATTEMPTS)
+				System.out.println("Maximum number of attempts was reached");
 				return null; // TODO: Review what should happen when null is returned
 		}
 
@@ -311,7 +313,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	}
 
 	/**
-	 * TODO
+	 * TODO: Comment
 	 * 
 	 * @param waypointSamp
 	 */
@@ -326,21 +328,22 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		neighborsList = this.sortSelectedCost(neighborsList, waypointSamp);
 
 		for (RRTreeWaypoint waypointNear : neighborsList) {
-			this.newWaypoint(waypointSamp, waypointNear); //Review alternative extensions
-			waypointNew = this.getWaypointNew();
-			this.addEdge(waypointNew); 
+			if(this.newWaypoint(waypointSamp, waypointNear)) { //Review alternative extensions
+				waypointNew = this.getWaypointNew();
+				this.addEdge(waypointNew); 
 
-			waypointNew.setG(computeCost(waypointNew));
-			waypointNew.setH(computeHeuristic(waypointNew, getGoal()));
+				waypointNew.setG(computeCost(waypointNew));
+				waypointNew.setH(computeHeuristic(waypointNew, getGoal()));
 
-			if (waypointNew.getF() < this.getCostBound()) {
-				this.addVertex(waypointNew);
-				this.setWaypointNew(waypointNew);
-				return true;
-			}
-			else {
-				// Edge should only stay in tree if previous test is passed
-				this.removeEdge(waypointNew);
+				if (waypointNew.getF() < this.getCostBound()) {
+					this.addVertex(waypointNew);
+					this.setWaypointNew(waypointNew);
+					return true;
+				}
+				else {
+					// Edge should only stay in tree if previous test is passed
+					this.removeEdge(waypointNew);
+				}
 			}
 		}
 		
@@ -399,32 +402,38 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see RRTreePlanner#compute()
 	 */
 	@Override
-	protected void compute() {
+	protected boolean compute() {
 		while (!this.checkGoal()) {
 			RRTreeWaypoint waypointRand = this.sampleTarget(this.getBIAS());
-			this.extendToTarget(waypointRand);
+			if (waypointRand!=null)
+				this.extendToTarget(waypointRand);
 			// if(time>max-time-per-rrt)
-			// return null; // TODO: Review what should happen when null is returned
+			// return false; // TODO: Review what should happen when null is returned
 		}
+		this.getGoal().setG(this.computeCost(getWaypointNew()));
 		this.computePath();
-		return;
+		return true;
 	}
 
 	/**
 	 * Improves a plan incrementally.
 	 */
 	protected void improve() {
+		boolean newPlan;
 		while (!this.isImproved()) {
-			this.updateCostBound();
-			this.updateWeights();
-
 			this.clearExpendables();
 			this.addVertex(getStart());
 			this.setWaypointNew(getStart());
-
-			this.compute();
-			Trajectory trajectory = this.createTrajectory();
-			this.revisePlan(trajectory);
+			
+			newPlan = this.compute();
+			
+			if(newPlan) {
+				this.updateCostBound();
+				this.updateWeights();
+				
+				Trajectory trajectory = this.createTrajectory();
+				this.revisePlan(trajectory);
+			}
 		}
 	}
 
@@ -445,8 +454,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initialize(origin, destination, etd);
 
-		this.compute();
-		this.revisePlan(this.createTrajectory());
 		this.improve();
 
 		Trajectory trajectory = this.createTrajectory();
