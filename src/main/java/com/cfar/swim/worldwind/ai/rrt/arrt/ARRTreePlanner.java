@@ -90,10 +90,10 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	public ARRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 	}
-	
+
 	/**
-	 * Constructs an anytime RRT planner for a specified aircraft and environment using
-	 * default local cost and risk policies.
+	 * Constructs an anytime RRT planner for a specified aircraft and environment
+	 * using default local cost and risk policies.
 	 * 
 	 * @param aircraft the aircraft
 	 * @param environment the environment
@@ -261,9 +261,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * 
 	 * @return true if improvements reached a maximum, false otherwise
 	 */
-	protected boolean isImproved() {
+	protected boolean isImproved(double costOld) {
 		// TODO: How to define if the function can no longer be improved?
-		return getCostBias() >= getMaximumQuality();
+		double costDiff = (costOld - this.getGoal().getCost()) / costOld;
+		System.out.println(
+				"Cost diff = " + costDiff + "\tCostOld = " + costOld + "\tCostGoal = " + this.getGoal().getCost());
+		return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
 	}
 
 	/**
@@ -271,15 +274,15 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected void updateCostBound() {
 		this.setCostBound((1 - improvementFactor) * getGoal().getCost());
-		System.out.println("New cost bound: "+this.getCostBound());
+		System.out.println("New cost bound: " + this.getCostBound());
 	}
 
 	/**
 	 * Updates the relative weights of distances and costs.
 	 */
 	protected void updateWeights() {
-		this.setDistBias(distBias - step < 0 ? 0 : distBias - step);
-		this.setCostBias(costBias + step > 1 ? 1 : costBias + step);
+		this.setDistBias(distBias - step < 1 - getMaximumQuality() ? 1 - getMaximumQuality() : distBias - step);
+		this.setCostBias(costBias + step > getMaximumQuality() ? getMaximumQuality() : costBias + step);
 	}
 
 	/**
@@ -294,8 +297,10 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		RRTreeWaypoint waypoint;
 		int rand = new Random().nextInt(100 - 1) + 1;
 
-		if (rand <= bias)
+		if (rand <= bias) {
+			System.out.println("Goal Sampled!!");
 			return this.getGoal();
+		}
 
 		waypoint = this.sampleRandom();
 
@@ -304,9 +309,10 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 				.getCostBound()) {
 			waypoint = this.sampleRandom();
 			attempts++;
-			if (attempts > MAX_SAMPLE_ATTEMPTS)
+			if (attempts > MAX_SAMPLE_ATTEMPTS) {
 				System.out.println("Maximum number of attempts was reached");
 				return null; // TODO: Review what should happen when null is returned
+			}
 		}
 
 		return waypoint;
@@ -328,9 +334,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		neighborsList = this.sortSelectedCost(neighborsList, waypointSamp);
 
 		for (RRTreeWaypoint waypointNear : neighborsList) {
-			if(this.newWaypoint(waypointSamp, waypointNear)) { //Review alternative extensions
+			if (this.newWaypoint(waypointSamp, waypointNear)) { // Review alternative extensions
 				waypointNew = this.getWaypointNew();
-				this.addEdge(waypointNew); 
+				this.addEdge(waypointNew);
 
 				waypointNew.setG(computeCost(waypointNew));
 				waypointNew.setH(computeHeuristic(waypointNew, getGoal()));
@@ -339,14 +345,13 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 					this.addVertex(waypointNew);
 					this.setWaypointNew(waypointNew);
 					return true;
-				}
-				else {
+				} else {
 					// Edge should only stay in tree if previous test is passed
 					this.removeEdge(waypointNew);
 				}
 			}
 		}
-		
+
 		return false;
 	}
 
@@ -405,8 +410,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	protected boolean compute() {
 		while (!this.checkGoal()) {
 			RRTreeWaypoint waypointRand = this.sampleTarget(this.getBIAS());
-			if (waypointRand!=null)
+			System.out.println("[After SampleTarget] WaypointRand = "+waypointRand);
+			if (waypointRand != null) {
 				this.extendToTarget(waypointRand);
+				System.out.println("[After ExtendToTarget] WaypointNew = "+this.getWaypointNew());
+			}
+			
 			// if(time>max-time-per-rrt)
 			// return false; // TODO: Review what should happen when null is returned
 		}
@@ -420,17 +429,21 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected void improve() {
 		boolean newPlan;
-		while (!this.isImproved()) {
+		double costOld = Double.POSITIVE_INFINITY;
+		while (!this.isImproved(costOld)) {
 			this.clearExpendables();
 			this.addVertex(getStart());
 			this.setWaypointNew(getStart());
-			
+
+			costOld = this.getGoal().getCost();
+			System.out.println("Computing...");
 			newPlan = this.compute();
-			
-			if(newPlan) {
+
+			if (newPlan) {
+				System.out.println("New plan available");
 				this.updateCostBound();
 				this.updateWeights();
-				
+
 				Trajectory trajectory = this.createTrajectory();
 				this.revisePlan(trajectory);
 			}
@@ -455,6 +468,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		this.initialize(origin, destination, etd);
 
 		this.improve();
+		System.out.println("Improved");
 
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
@@ -465,7 +479,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * Sorts a list of elements by increasing selected cost to a given waypoint
 	 * 
 	 * @param list the list with the elements to be sorted by selected cost
-	 * @param waypoint the waypoint to be considered as reference for the selected cost
+	 * @param waypoint the waypoint to be considered as reference for the selected
+	 *            cost
 	 * 
 	 * @return a new array list with its elements sorted by selected cost
 	 */
