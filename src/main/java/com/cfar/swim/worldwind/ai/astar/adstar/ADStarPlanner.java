@@ -236,7 +236,7 @@ public class ADStarPlanner extends ARAStarPlanner {
 		// TODO: repair g-cost based on minimum v-cost and update parent
 		// TODO: maybe visited predecessors and successors should be stored...
 		
-		Set<Position> neighbors = this.getDiscreteEnvironment().getNeighbors(waypoint);
+		Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
 		
 		// add start to the start region
 		if (this.isInStartRegion(waypoint)) {

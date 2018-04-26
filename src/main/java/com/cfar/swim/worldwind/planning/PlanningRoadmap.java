@@ -60,6 +60,8 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	/** the maximum distance between two neighboring waypoints */
 	public final double MAX_DIST;
 	
+	public RoadmapConstructor roadmapConstructor;
+	
 	/**
 	 * Constructs a planning roadmap based on a box, a waypoint list and a edge list
 	 * 
@@ -67,9 +69,10 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	 * @param waypointList the list of waypoints
 	 * @param edgeList the list of edges
 	 */
-	public PlanningRoadmap(Box box, List<Waypoint> waypointList, List<Edge> edgeList, Globe globe) {
+	@SuppressWarnings("unchecked")
+	public PlanningRoadmap(Box box, List<? extends Waypoint> waypointList, List<Edge> edgeList, Globe globe) {
 		super(box);
-		super.setWaypointList(waypointList);
+		super.setWaypointList((List<Waypoint>)waypointList);
 		super.setEdgeList(edgeList);
 		this.setGlobe(globe);
 		MAX_ITER = 1000;
@@ -89,15 +92,8 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 		MAX_ITER = maxIter;
 		MAX_NEIGHBORS = maxNeighbors;
 		MAX_DIST = maxDist;
-		if(roadmapConstructor==RoadmapConstructor.BASICPRM) {
-			BasicPRM basicPRM = new BasicPRM(this, MAX_ITER, MAX_NEIGHBORS, MAX_DIST);
-			basicPRM.construct();
-		}
-		if(roadmapConstructor==RoadmapConstructor.LAZYPRM) {
-			LazyPRM lazyPRM = new LazyPRM(this, MAX_ITER, MAX_NEIGHBORS, MAX_DIST);
-			lazyPRM.construct();
-		}
-
+		this.roadmapConstructor=roadmapConstructor;
+		this.constructRoadmap();
 	}
 
 	/**
@@ -195,6 +191,17 @@ public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnviro
 	protected void updateEdges() {
 		for(Edge edge : this.getEdgeList()) {
 			edge.setCostIntervals(this.embedIntervalTree(edge.getLine()));
+		}
+	}
+	
+	protected void constructRoadmap() {
+		if(this.roadmapConstructor==RoadmapConstructor.BASICPRM) {
+			BasicPRM basicPRM = new BasicPRM(this, MAX_ITER, MAX_NEIGHBORS, MAX_DIST);
+			basicPRM.construct();
+		}
+		if(this.roadmapConstructor==RoadmapConstructor.LAZYPRM) {
+			LazyPRM lazyPRM = new LazyPRM(this, MAX_ITER, MAX_NEIGHBORS, MAX_DIST);
+			lazyPRM.construct();
 		}
 	}
 }

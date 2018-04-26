@@ -45,7 +45,6 @@ import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
-import com.cfar.swim.worldwind.planning.DiscreteEnvironment;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
@@ -86,25 +85,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	/** the last computed plan */
 	private final LinkedList<AStarWaypoint> plan = new LinkedList<>();
 	
-	// Manuel and Henrique (fixing errors)
-	/** The environment casted to a discrete environment */
-	private DiscreteEnvironment discreteEnvironment = null;
-	
-	/**
-	 * @return the discreteEnvironment
-	 */
-	public DiscreteEnvironment getDiscreteEnvironment() {
-		return discreteEnvironment;
-	}
-	
-	/**
-	 * @param discreteEnvironment the discreteEnvironment to set
-	 */
-	public void setDiscreteEnvironment(DiscreteEnvironment discreteEnvironment) {
-		this.discreteEnvironment = discreteEnvironment;
-	}
-	
-
 	/**
 	 * Constructs a basic forward A* planner for a specified aircraft and
 	 * environment using default local cost and risk policies.
@@ -116,7 +96,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		this.discreteEnvironment = (DiscreteEnvironment) this.getEnvironment();
 	}
 	
 	/**
@@ -550,13 +529,13 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 		// TODO: code below is not applicable to PlanningRoadmap. suggestion
 		// the adjacent waypoints to the origin
-		this.setStartRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(origin)
+		this.setStartRegion(this.getEnvironment().getAdjacentWaypoints(origin)
 				.stream()
 				.map(PrecisionPosition::new)
 				.collect(Collectors.toSet()));
 
 		// the adjacent waypoints to the destination
-		this.setGoalRegion(this.getDiscreteEnvironment().getAdjacentWaypoints(destination)
+		this.setGoalRegion(this.getEnvironment().getAdjacentWaypoints(destination)
 				.stream()
 				.map(PrecisionPosition::new)
 				.collect(Collectors.toSet()));
