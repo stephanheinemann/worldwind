@@ -83,9 +83,10 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	/** the cost value bounding any new solution to be generated */
 	private double costBound = Double.POSITIVE_INFINITY;
 
-	/** the last computed plan */
+	/*
 	private LinkedList<LinkedList<Waypoint>> backupPlans = new LinkedList<>();
 	private double[] backupCostBounds;
+	*/
 
 	/**
 	 * Constructs an anytime RRT planner for a specified aircraft and environment
@@ -294,7 +295,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected boolean isImproved(double costOld) {
 		double costDiff = (costOld - this.getGoal().getCost()) / costOld;
-		System.out.println("CostDif=" + costDiff + "\tCostOld=" + costOld + "\tCostGoal=" + this.getGoal().getCost());
 		return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
 	}
 
@@ -303,7 +303,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected void updateCostBound() {
 		this.setCostBound((1 - improvementFactor) * getGoal().getCost());
-		System.out.println("New cost bound: " + this.getCostBound());
 	}
 
 	/**
@@ -312,7 +311,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	protected void updateWeights() {
 		this.setDistBias(distBias - step < 1 - getMaximumQuality() ? 1 - getMaximumQuality() : distBias - step);
 		this.setCostBias(costBias + step > getMaximumQuality() ? getMaximumQuality() : costBias + step);
-		System.out.println("CostBias=" + this.getCostBias() + " DistBias=" + this.getDistBias());
 	}
 
 	/**
@@ -466,14 +464,11 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			this.setWaypointNew(getStart());
 
 			costOld = this.getGoal().getCost();
-			System.out.println("Computing...");
 			newPlan = this.compute();
 
 			this.updateWeights();
 			if (newPlan) {
-				System.out.println("New plan available");
 				this.updateCostBound();
-
 				Trajectory trajectory = this.createTrajectory();
 				this.revisePlan(trajectory);
 			}
@@ -502,8 +497,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		this.setCostBound(Double.POSITIVE_INFINITY);
 
 		this.improve();
-		System.out.println("Improved!!!!!!!!!!!!!! CostBias=" + this.getCostBias() + " DistBias=" + this.getDistBias()
-				+ "\n\n\n\n");
+		System.out.println("Improved");
 
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
@@ -535,9 +529,11 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		// if (trajectory.isEmpty())
 		// return trajectory;
 
+		return super.plan(origin, destination, waypoints, etd);
+		
 		// TODO: Review Implementation
 
-		LinkedList<Waypoint> plan = new LinkedList<>();
+/*		LinkedList<Waypoint> plan = new LinkedList<>();
 		Waypoint currentOrigin;
 		ZonedDateTime currentEtd;
 		Trajectory trajectory;
@@ -650,6 +646,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
 		return trajectory;
+		*/
 
 	}
 
