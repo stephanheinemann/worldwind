@@ -36,6 +36,7 @@ import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
 import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
@@ -160,7 +161,16 @@ public class PlannerFactory implements Factory<Planner> {
 			((ARRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ARRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ARRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+		} else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
+			FADPRMProperties properties = (FADPRMProperties) specification.getProperties();
+			planner = new FADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((FADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((FADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((FADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		}
+		
 		// TODO: implement more planners
 
 		return planner;
