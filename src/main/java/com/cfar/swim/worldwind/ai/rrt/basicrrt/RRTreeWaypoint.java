@@ -56,6 +56,12 @@ public class RRTreeWaypoint extends Waypoint {
 		super(position);
 	}
 
+	/**
+	 * Constructs an RRT waypoint at a specified position.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param parent the parent waypoint of this waypoint
+	 */
 	public RRTreeWaypoint(Position position, RRTreeWaypoint parent) {
 		super(position);
 		this.parent = parent;
@@ -78,7 +84,7 @@ public class RRTreeWaypoint extends Waypoint {
 	public void setParent(RRTreeWaypoint parent) {
 		this.parent = parent;
 	}
-	
+
 	/**
 	 * Gets the estimated current cost (g-value) of this waypoint.
 	 * 
@@ -87,7 +93,7 @@ public class RRTreeWaypoint extends Waypoint {
 	public double getG() {
 		return super.getCost();
 	}
-	
+
 	/**
 	 * Sets the estimated current cost (g-value) of this waypoint.
 	 * 
@@ -121,19 +127,24 @@ public class RRTreeWaypoint extends Waypoint {
 	}
 
 	/**
-	 * Gets the total cost (f-value) of this waypoint from start to goal by adding the actual cost to this
-	 * point from start and the estimated cost to goal.
+	 * Gets the total cost (f-value) of this waypoint from start to goal by adding
+	 * the actual cost to this point from start and the estimated cost to goal.
 	 * 
 	 * @return the total cost (f-value) of this waypoint
 	 */
 	public double getF() {
 		return this.getG() + this.getH();
 	}
-	
-    public String getInfo() {
-    	return String.format("( %.6f*, %.6f*, %3.1fm ) g=%.2f h=%.2f f=%.2f",
-    			this.latitude.degrees, this.longitude.degrees, this.elevation,
-    			this.getG(), this.getH(), this.getF());
-    }
+
+	/**
+	 * Creates a string with the content of all relevant variables of this RRT
+	 * waypoint
+	 * 
+	 * @return the string with the content of this RRT waypoint
+	 */
+	public String getInfo() {
+		return String.format("( %.6f*, %.6f*, %3.1fm ) g=%.2f h=%.2f f=%.2f", this.latitude.degrees,
+				this.longitude.degrees, this.elevation, this.getG(), this.getH(), this.getF());
+	}
 
 }
