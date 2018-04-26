@@ -403,7 +403,17 @@ public class RRTreePlanner extends AbstractPlanner {
 		Position positionNew = this.growPosition(waypoint, waypointNear);
 		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
 
-		waypointNew.setEto(this.computeTime(waypointNear, waypointNew));
+		// Check if path is feasible for the aircraft
+		ZonedDateTime eto = null;
+		try {
+			eto = this.computeTime(waypointNear, waypointNew);
+		}
+		catch (IllegalArgumentException e) {
+			System.err.println("Caught IllegalArgumentException: " + e.getMessage());
+			return false;
+		}
+		
+		waypointNew.setEto(eto);
 		this.setWaypointNew(waypointNew);
 
 		// Check if the new waypoint is in conflict with the environment

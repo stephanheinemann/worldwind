@@ -130,7 +130,7 @@ public class RRTreeWaypoint extends Waypoint {
 		return this.getG() + this.getH();
 	}
 	
-    public String toString() {
+    public String getInfo() {
     	return String.format("( %.6f*, %.6f*, %3.1fm ) g=%.2f h=%.2f f=%.2f",
     			this.latitude.degrees, this.longitude.degrees, this.elevation,
     			this.getG(), this.getH(), this.getF());
