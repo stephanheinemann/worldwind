@@ -78,7 +78,7 @@ public class FADPRMWaypoint extends Waypoint {
 		super(position);
 		this.setG(0d);
 		this.setH(0d);
-		lambda=0.5;
+		lambda=1;
 	}
 
 
