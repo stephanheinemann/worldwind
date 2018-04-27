@@ -479,7 +479,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Transforms a Cartesian world model vector into a box vector using the
+	 * Transforms a box vector into a Cartesian world model vector using the
 	 * first corner of this box as origin.
 	 * 
 	 * @param modelPoint the world model vector
