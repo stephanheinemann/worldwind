@@ -31,6 +31,8 @@ package com.cfar.swim.worldwind.ai.rrt.arrt;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -40,6 +42,7 @@ import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -54,7 +57,9 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 
+	// TODO: How to define this values?
 	private static final int MAX_SAMPLE_ATTEMPTS = 50;
+	private static final int MAX_NEIGHBORS = 5;
 
 	/** the initial relative weight of costs to calculate the cost of a waypoint */
 	private double initialCostBias; // Change to final?
@@ -73,10 +78,15 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 
 	/** the step used to modify the relative weights of distances and costs */
 	// TODO: might be interesting to define proportionally to improvementFactor
-	private double step = 0.2;
+	private double step = 0.1;
 
 	/** the cost value bounding any new solution to be generated */
 	private double costBound = Double.POSITIVE_INFINITY;
+
+	/*
+	private LinkedList<LinkedList<Waypoint>> backupPlans = new LinkedList<>();
+	private double[] backupCostBounds;
+	*/
 
 	/**
 	 * Constructs an anytime RRT planner for a specified aircraft and environment
@@ -255,6 +265,28 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		this.costBound = costBound;
 	}
 
+	// TODO comment
+	@SuppressWarnings("unchecked")
+	protected Trajectory partialTrajectory(Trajectory trajectory, Waypoint origin, Waypoint destination) {
+		if (trajectory.isEmpty())
+			return trajectory;
+
+		LinkedList<Waypoint> partialPlan = new LinkedList<>();
+		boolean contained = false;
+
+		for (Waypoint waypoint : trajectory.getWaypoints()) {
+			if (!contained)
+				contained = waypoint == origin;
+			if (contained) {
+				partialPlan.add(waypoint);
+				if (waypoint == destination)
+					break;
+			}
+		}
+
+		return new Trajectory((List<Waypoint>) partialPlan.clone());
+	}
+
 	/**
 	 * Checks whether or not the current solution can be considered as having the
 	 * maximum improvement possible.
@@ -262,10 +294,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @return true if improvements reached a maximum, false otherwise
 	 */
 	protected boolean isImproved(double costOld) {
-		// TODO: How to define if the function can no longer be improved?
 		double costDiff = (costOld - this.getGoal().getCost()) / costOld;
-		System.out.println(
-				"Cost diff = " + costDiff + "\tCostOld = " + costOld + "\tCostGoal = " + this.getGoal().getCost());
 		return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
 	}
 
@@ -274,7 +303,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected void updateCostBound() {
 		this.setCostBound((1 - improvementFactor) * getGoal().getCost());
-		System.out.println("New cost bound: " + this.getCostBound());
 	}
 
 	/**
@@ -294,47 +322,49 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @return waypoint the RRTreeWaypoint sampled
 	 */
 	protected RRTreeWaypoint sampleTarget(double bias) {
-		RRTreeWaypoint waypoint;
+		RRTreeWaypoint waypoint = null;
 		int rand = new Random().nextInt(100 - 1) + 1;
 
 		if (rand <= bias) {
-			System.out.println("Goal Sampled!!");
 			return this.getGoal();
 		}
 
-		waypoint = this.sampleRandom();
-
+		// Most points sampled from environment will not be inside heuristic region
+		// TODO: Should another sampling method be used? Heuristically based sampling?
+		double heuristic = Double.POSITIVE_INFINITY;
 		int attempts = 0;
-		while (this.computeHeuristic(getStart(), waypoint) + this.computeHeuristic(waypoint, getGoal()) > this
-				.getCostBound()) {
+		while (heuristic >= this.getCostBound()) {
+			if (attempts > MAX_SAMPLE_ATTEMPTS)
+				return null;
 			waypoint = this.sampleRandom();
+			heuristic = this.computeHeuristic(getStart(), waypoint) + this.computeHeuristic(waypoint, getGoal());
 			attempts++;
-			if (attempts > MAX_SAMPLE_ATTEMPTS) {
-				System.out.println("Maximum number of attempts was reached");
-				return null; // TODO: Review what should happen when null is returned
-			}
 		}
 
 		return waypoint;
 	}
 
 	/**
-	 * TODO: Comment
+	 * Extends the tree in the direction of the target waypoint, choosing to expand
+	 * the waypoint from the neighbors in the tree sorted by increasing selected
+	 * cost
 	 * 
-	 * @param waypointSamp
+	 * @param waypointSamp the waypoint set as the goal for extension
+	 * 
+	 * @return true if an extension was successful and false otherwise
 	 */
 	@SuppressWarnings("unchecked")
 	protected boolean extendToTarget(RRTreeWaypoint waypointSamp) {
 		RRTreeWaypoint waypointNew;
-		int neighbors = 5; // TODO: Review how this should enter the function
 
 		ArrayList<RRTreeWaypoint> neighborsList = (ArrayList<RRTreeWaypoint>) this.getEnvironment()
-				.findNearest(waypointSamp, neighbors);
+				.findNearest(waypointSamp, MAX_NEIGHBORS);
 
 		neighborsList = this.sortSelectedCost(neighborsList, waypointSamp);
 
 		for (RRTreeWaypoint waypointNear : neighborsList) {
-			if (this.newWaypoint(waypointSamp, waypointNear)) { // Review alternative extensions
+			// TODO: Review alternative extension strategies
+			if (this.newWaypoint(waypointSamp, waypointNear)) {
 				waypointNew = this.getWaypointNew();
 				this.addEdge(waypointNew);
 
@@ -395,10 +425,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		this.setStart(start);
 		this.getWaypointList().add(start);
 		this.setWaypointNew(start);
-
-		this.setCostBias(this.getMinimumQuality());
-		this.setDistBias(1 - this.getCostBias());
-		this.setCostBound(Double.POSITIVE_INFINITY);
 	}
 
 	/**
@@ -408,20 +434,22 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	protected boolean compute() {
-		while (!this.checkGoal()) {
+		boolean status = false;
+		for (int i = 0; i < this.getMAX_ITER(); i++) {
 			RRTreeWaypoint waypointRand = this.sampleTarget(this.getBIAS());
-			System.out.println("[After SampleTarget] WaypointRand = "+waypointRand);
 			if (waypointRand != null) {
-				this.extendToTarget(waypointRand);
-				System.out.println("[After ExtendToTarget] WaypointNew = "+this.getWaypointNew());
+				status = this.extendToTarget(waypointRand);
+				if (status) {
+					if (this.checkGoal()) {
+						this.getGoal().setG(this.computeCost(getWaypointNew()));
+						this.computePath();
+						return true;
+					}
+				}
 			}
-			
-			// if(time>max-time-per-rrt)
-			// return false; // TODO: Review what should happen when null is returned
+
 		}
-		this.getGoal().setG(this.computeCost(getWaypointNew()));
-		this.computePath();
-		return true;
+		return false;
 	}
 
 	/**
@@ -436,14 +464,11 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			this.setWaypointNew(getStart());
 
 			costOld = this.getGoal().getCost();
-			System.out.println("Computing...");
 			newPlan = this.compute();
 
+			this.updateWeights();
 			if (newPlan) {
-				System.out.println("New plan available");
 				this.updateCostBound();
-				this.updateWeights();
-
 				Trajectory trajectory = this.createTrajectory();
 				this.revisePlan(trajectory);
 			}
@@ -467,12 +492,162 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initialize(origin, destination, etd);
 
+		this.setCostBias(this.getMinimumQuality());
+		this.setDistBias(1 - this.getCostBias());
+		this.setCostBound(Double.POSITIVE_INFINITY);
+
 		this.improve();
 		System.out.println("Improved");
 
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
 		return trajectory;
+	}
+
+	/**
+	 * Plans a trajectory from an origin to a destination along waypoints at a
+	 * specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param waypoints the waypoints in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination along the
+	 *         waypoints with the estimated time of departure
+	 * 
+	 * @see RRTree#plan(Position, Position, List, ZonedDateTime)
+	 */
+	@Override
+	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+
+		// create first plan by using basic RRT
+		// Trajectory trajectory = super.plan(origin, destination, waypoints, etd);
+		// return trajectory;
+		// System.out.println("First trajectory from basic RRT");
+		// if no plan could be found, return an empty trajectory
+		// if (trajectory.isEmpty())
+		// return trajectory;
+
+		return super.plan(origin, destination, waypoints, etd);
+		
+		// TODO: Review Implementation
+
+/*		LinkedList<Waypoint> plan = new LinkedList<>();
+		Waypoint currentOrigin;
+		ZonedDateTime currentEtd;
+		Trajectory trajectory;
+
+		// collect intermediate destinations
+		ArrayList<Waypoint> destinations = waypoints.stream().map(Waypoint::new)
+				.collect(Collectors.toCollection(ArrayList::new));
+		destinations.add(new Waypoint(destination));
+
+		Trajectory part;
+		LinkedList<Waypoint> partPlan = new LinkedList<>();
+		Waypoint currentDestination;
+		double costOld;
+		boolean newPlan, newPart, allImproved = false;
+
+		// Initialize backup plans with number of intermediate plans needed
+		backupCostBounds = new double[destinations.size()];
+		for (int i = 0; i < destinations.size(); i++) {
+			backupPlans.add(new LinkedList<Waypoint>());
+			backupCostBounds[i] = Double.POSITIVE_INFINITY;
+		}
+		System.out.println("BackupPlans size=" + backupPlans.size());
+
+		System.out.println("setting initial parametes");
+		this.setCostBias(this.getMinimumQuality());
+		this.setDistBias(1 - this.getCostBias());
+		this.setCostBound(Double.POSITIVE_INFINITY);
+
+		// Create new trajectories until it is considered improved
+		while (!allImproved) {
+			System.out.println("Entering while cycle");
+			// reset boolean values
+			allImproved = true;
+			newPlan = false;
+
+			currentOrigin = new Waypoint(origin);
+			currentEtd = etd;
+
+			// plan and concatenate partial trajectories
+			// for (Waypoint currentDestination : destinations) {
+			for (int i = 0; i < destinations.size(); i++) {
+				System.out.println("Entering for cycle");
+				currentDestination = destinations.get(i);
+
+				System.out.println("Initializing");
+				this.initialize(currentOrigin, currentDestination, currentEtd);
+				this.clearExpendables();
+				this.addVertex(getStart());
+				this.setWaypointNew(getStart());
+				
+				// Retrieve last plan for this part
+				System.out.println("backingUp");
+				this.setCostBound(backupCostBounds[i]);
+				partPlan = backupPlans.get(i);
+				System.out.println("PartPlan size = "+partPlan.size());
+				if (partPlan.isEmpty()) {
+					System.out.println("This 121212");
+					costOld = Double.POSITIVE_INFINITY;
+				}
+				else {
+					System.out.println("Else 121212");
+					costOld = partPlan.get(partPlan.size()-1).getCost();
+				}
+				System.out.println("Updated cost old = " + costOld);
+
+				
+				// newPlan must be true when at least one segment has a new plan
+				newPart = this.compute();
+				if (newPart) {
+					System.out.println("\t\tThissssssssss");
+					System.out.println("plansize: "+this.getPlan().size());
+					backupPlans.set(i, (LinkedList<Waypoint>) this.getPlan().clone());
+					this.updateCostBound();
+					backupCostBounds[i]=this.getCostBound();
+					part = this.createTrajectory();
+					System.out.println("This ---- BackUp("+i+") size = "+backupPlans.get(i).size());
+				} else { // TODO: review
+					System.out.println("Elseeeeeee");
+					part = new Trajectory((List<Waypoint>) partPlan.clone());
+				}
+				newPlan = newPlan || newPart;
+
+				// allImporved is true only when all segments are improved
+				allImproved = allImproved && this.isImproved(costOld);
+
+				// append partial trajectory to plan
+				if ((!plan.isEmpty()) && (!part.isEmpty()))
+					plan.pollLast();
+				for (Waypoint waypoint : part.getWaypoints())
+					plan.add(waypoint);
+
+				// set current origin from last waypoint in plan to be used in next iteration
+				currentOrigin = plan.peekLast();
+				currentEtd = currentOrigin.getEto();
+			}
+
+			// update weights to be used in next iteration
+			this.updateWeights();
+
+			// if the plan was modified
+			if (newPlan) {
+				System.out.println("New plan");
+				// create trajectory from plan
+				trajectory = new Trajectory(plan);
+				this.revisePlan(trajectory);
+			}
+		}
+
+		System.out.println("Exiting...");
+		trajectory = this.createTrajectory();
+		this.revisePlan(trajectory);
+		return trajectory;
+		*/
+
 	}
 
 	/**

@@ -399,8 +399,10 @@ public class Capabilities {
 	 * @return the estimated duration to travel directly from the start to the
 	 *         goal position at cruise speed including climbs and descents in
 	 *         still air
+	 *         
+	 * @throws IllegalArgumentException if aircraft is incapable of traveling from start to goal
 	 */
-	public Duration getEstimatedDuration(Position start, Position goal, Globe globe) {
+	public Duration getEstimatedDuration(Position start, Position goal, Globe globe) throws IllegalArgumentException {
 		// Henrique changed from seconds to milliseconds
 		Duration estimatedDuration = Duration.ZERO;
 		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
