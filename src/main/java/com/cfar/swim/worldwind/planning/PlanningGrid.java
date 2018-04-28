@@ -69,7 +69,7 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  * @author Stephan Heinemann
  *
  */
-public class PlanningGrid extends CubicGrid implements DiscreteEnvironment {
+public class PlanningGrid extends CubicGrid implements Environment {
 
 	/** the globe of this planning grid */
 	private Globe globe = null;

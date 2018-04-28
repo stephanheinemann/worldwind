@@ -49,7 +49,7 @@ import gov.nasa.worldwind.globes.Globe;
  * @author Henrique Ferreira
  *
  */
-public class PlanningRoadmap extends PlanningContinuum implements DiscreteEnvironment {
+public class PlanningRoadmap extends PlanningContinuum implements Environment {
 
 	/** the maximum number of sampling iterations */
 	public final int MAX_ITER;
