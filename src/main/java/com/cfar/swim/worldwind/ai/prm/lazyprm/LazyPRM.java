@@ -66,13 +66,13 @@ public class LazyPRM extends BasicPRM {
 	protected void connectWaypoint(Waypoint waypoint) {
 		int numConnectedNeighbor = 0;
 
-		this.getEnvironment().sortNearest(waypoint);
+		this.sortNearest(waypoint);
 
 		for (Waypoint neighbor : this.getWaypointList()) {
 			if (super.getEnvironment().getDistance(neighbor, waypoint) < this.maxDist
 					&& numConnectedNeighbor < this.maxNeighbors) {
 				numConnectedNeighbor++;
-				super.createEdge(waypoint, neighbor);
+				this.getEnvironment().addChild(waypoint, neighbor);
 			}
 		}
 	}

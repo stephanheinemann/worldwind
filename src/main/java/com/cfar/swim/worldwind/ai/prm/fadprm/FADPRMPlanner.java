@@ -59,6 +59,11 @@ import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
 
 /**
+ * Realizes a Flexible Anytime Dynamic Probabilistic Roadmap planner (FADPRM)
+ * that plans a trajectory of an aircraft in an environment considering a local
+ * cost and risk policy.
+ * 
+ * 
  * @author Henrique Ferreira
  *
  */
@@ -114,7 +119,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the counter value of this FADPRM planner.
 	 * 
-	 * @param counter the counter to set
+	 * @param counter
+	 *            the counter to set
 	 */
 	public void setCounter(int counter) {
 		this.counter = counter;
@@ -142,9 +148,11 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the minimum quality (initial beta) of this FADPRM planner.
 	 * 
-	 * @param initialBeta the minimum quality (initial beta) of this FADPRM planner
+	 * @param initialBeta
+	 *            the minimum quality (initial beta) of this FADPRM planner
 	 * 
-	 * @throws IllegalArgumentException if the initial beta is invalid
+	 * @throws IllegalArgumentException
+	 *             if the initial beta is invalid
 	 * 
 	 * @see AnytimePlanner#setMinimumQuality(double)
 	 */
@@ -172,9 +180,11 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the maximum quality (final beta) of this FADPRM planner.
 	 * 
-	 * @param finalBeta the maximum quality (final beta) of this FADPRM planner
+	 * @param finalBeta
+	 *            the maximum quality (final beta) of this FADPRM planner
 	 * 
-	 * @throws IllegalArgumentException if the final inflation is invalid
+	 * @throws IllegalArgumentException
+	 *             if the final inflation is invalid
 	 * 
 	 * @see AnytimePlanner#setMaximumQuality(double)
 	 */
@@ -202,10 +212,11 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the quality improvement (stepBeta) of this FADPRM planner.
 	 * 
-	 * @param deflationAmount the quality improvement (stepBeta) of this FADPRM
-	 *            planner
+	 * @param deflationAmount
+	 *            the quality improvement (stepBeta) of this FADPRM planner
 	 * 
-	 * @throws IllegalArgumentException if the deflation amount is invalid
+	 * @throws IllegalArgumentException
+	 *             if the deflation amount is invalid
 	 * 
 	 * @see AnytimePlanner#setQualityImprovement(double)
 	 */
@@ -250,7 +261,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the current beta of this FADPRM planner.
 	 * 
-	 * @param beta the current beta of this FADPRM planner
+	 * @param beta
+	 *            the current beta of this FADPRM planner
 	 */
 	protected void setInflation(double beta) {
 		this.beta = beta;
@@ -278,7 +290,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the list of waypoints previously sampled
 	 * 
-	 * @param waypointList the list of waypoints to set
+	 * @param waypointList
+	 *            the list of waypoints to set
 	 * 
 	 */
 	@SuppressWarnings("unchecked")
@@ -298,7 +311,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the list of edges previously sampled
 	 * 
-	 * @param edgetList the list of edges to set
+	 * @param edgetList
+	 *            the list of edges to set
 	 * 
 	 */
 	public void setEdgeList(List<Edge> edgeList) {
@@ -317,7 +331,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the start FADPRM waypoint of this forward FADPRM planner.
 	 * 
-	 * @param start the start waypoint of this forward FADPRM planner
+	 * @param start
+	 *            the start waypoint of this forward FADPRM planner
 	 */
 	protected void setStart(FADPRMWaypoint start) {
 		this.start = start;
@@ -335,7 +350,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Sets the goal FADPRM waypoint of this forward FADPRM planner.
 	 * 
-	 * @param goal the goal FADPRM waypoint of this forward FADPRM planner
+	 * @param goal
+	 *            the goal FADPRM waypoint of this forward FADPRM planner
 	 */
 	protected void setGoal(FADPRMWaypoint goal) {
 		this.goal = goal;
@@ -344,7 +360,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Indicates whether or not a position is within the start region.
 	 * 
-	 * @param position the position
+	 * @param position
+	 *            the position
 	 * 
 	 * @return true if the position is within the start region, false otherwise
 	 */
@@ -355,7 +372,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Indicates whether or not a position is within the goal region.
 	 * 
-	 * @param position the position
+	 * @param position
+	 *            the position
 	 * 
 	 * @return true if the position is within the goal region, false otherwise
 	 */
@@ -366,7 +384,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Adds an FADPRM waypoint to the expandable FADPRM waypoints.
 	 * 
-	 * @param waypoint the FADPRM waypoint
+	 * @param waypoint
+	 *            the FADPRM waypoint
 	 * 
 	 * @return true if the FADPRM waypoint has been added to the expandable FADPRM
 	 *         waypoints, false otherwise
@@ -378,7 +397,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Removes an FADPRM waypoint from the expandable FADPRM waypoints.
 	 * 
-	 * @param waypoint the FADPRM waypoint
+	 * @param waypoint
+	 *            the FADPRM waypoint
 	 * 
 	 * @return true if the FADPRM waypoint has been removed from the expandable
 	 *         FADPRM waypoints, false otherwise
@@ -397,7 +417,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Determines whether or not an FADPRM waypoint is expandable.
 	 * 
-	 * @param waypoint the FADPRM waypoint
+	 * @param waypoint
+	 *            the FADPRM waypoint
 	 * 
 	 * @return true if the FADPRM waypoint is expandable, false otherwise
 	 */
@@ -427,7 +448,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Adds an FADPRM waypoint to the expanded FADPRM waypoints.
 	 * 
-	 * @param waypoint the FADPRM waypoint
+	 * @param waypoint
+	 *            the FADPRM waypoint
 	 * 
 	 * @return true if the FADPRM waypoint has been added to the expanded FADPRM
 	 *         waypoints, false otherwise
@@ -472,7 +494,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	/**
 	 * Expands an FADPRM waypoint towards its neighbors in the environment.
 	 * 
-	 * @param waypoint the FADPRM waypoint to be expanded
+	 * @param waypoint
+	 *            the FADPRM waypoint to be expanded
 	 * 
 	 * @return the new sampled waypoint
 	 */
@@ -492,8 +515,10 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 * Creates an edge between a source waypoint and a target waypoint, and adds it
 	 * to the edge list
 	 * 
-	 * @param source the source FADPRM waypoint
-	 * @param target the target FADPRM waypoint
+	 * @param source
+	 *            the source FADPRM waypoint
+	 * @param target
+	 *            the target FADPRM waypoint
 	 */
 	protected void createEdge(Waypoint source, Waypoint target) {
 		Globe globe = this.getEnvironment().getGlobe();
@@ -507,7 +532,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 * Creates a waypoint at a specified position, initializes its search value to
 	 * 0, and adds it to the waypoint list.
 	 * 
-	 * @param position the position in global coordinates
+	 * @param position
+	 *            the position in global coordinates
 	 * @return the new created waypoint
 	 */
 	protected FADPRMWaypoint createWaypoint(Position position) {
@@ -521,11 +547,13 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 * Computes the estimated cost of a specified target FADPRM waypoint when
 	 * reached via a specified source FADPRM waypoint.
 	 * 
-	 * @param source the source FADPRM waypoint in globe coordinates
-	 * @param target the target FADPRM waypoint in globe coordinates
+	 * @param source
+	 *            the source FADPRM waypoint in globe coordinates
+	 * @param target
+	 *            the target FADPRM waypoint in globe coordinates
 	 */
 	protected void computeCost(FADPRMWaypoint source, FADPRMWaypoint target) {
-		
+
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
@@ -541,13 +569,13 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		target.setCost(source.getCost() + distance);
 		target.setPathDD((source.getPathDD() + pathDD) / 2);
 		target.setG(target.getPathDD() / (1 + target.getLambda() * distance));
-//		this.updateWaypointH(target);
+		// this.updateWaypointH(target);
 	}
 
 	protected void updateWaypoint(FADPRMWaypoint waypoint) {
 		if (waypoint.getSearch() != 0) {
-			if (waypoint.getG() + waypoint.getH() < pathCost.get((waypoint.getSearch()-1))) {
-				waypoint.setH(pathCost.get(waypoint.getSearch()-1) - waypoint.getG());
+			if (waypoint.getG() + waypoint.getH() < pathCost.get((waypoint.getSearch() - 1))) {
+				waypoint.setH(pathCost.get(waypoint.getSearch() - 1) - waypoint.getG());
 				waypoint.setG(0);
 			}
 		} else if (waypoint.getSearch() == 0) {
@@ -557,7 +585,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	}
 
 	protected void addPathCost() {
-		this.pathCost.add(this.getGoal().getSearch()-1, this.getGoal().getG());
+		this.pathCost.add(this.getGoal().getSearch() - 1, this.getGoal().getG());
 	}
 
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
@@ -637,24 +665,27 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 
 	protected void updateWaypointH(FADPRMWaypoint waypoint) {
 
-//		Path leg = new Path(waypoint, this.getGoal());
-//		Capabilities capabilities = this.getAircraft().getCapabilities();
-//		Globe globe = this.getEnvironment().getGlobe();
-//		// TODO: catch IllegalArgumentException (incapable) and exit
-//		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, waypoint.getEto());
-//
-//		double distance = this.getEnvironment().getNormalizedDistance(waypoint, this.getGoal());
-//
-//		// Edge edge = this.createEdge(waypoint, this.getGoal());
-//		Line line = new Line(this.getEnvironment().getGlobe().computePointFromPosition(waypoint),
-//				this.getEnvironment().getGlobe().computePointFromPosition(this.getGoal()));
-//		Edge edge = new Edge(waypoint, this.getGoal(), line);
-//		edge.setCostIntervals(this.getEnvironment().embedIntervalTree(edge.getLine()));
-//		// waypoint eto not set
-//		double pathDD = 1 / edge.calculateCost(waypoint.getEto(), end);
-//
-//		waypoint.setH(pathDD / (1 + waypoint.getLambda() * distance));
-		
+		// Path leg = new Path(waypoint, this.getGoal());
+		// Capabilities capabilities = this.getAircraft().getCapabilities();
+		// Globe globe = this.getEnvironment().getGlobe();
+		// // TODO: catch IllegalArgumentException (incapable) and exit
+		// ZonedDateTime end = capabilities.getEstimatedTime(leg, globe,
+		// waypoint.getEto());
+		//
+		// double distance = this.getEnvironment().getNormalizedDistance(waypoint,
+		// this.getGoal());
+		//
+		// // Edge edge = this.createEdge(waypoint, this.getGoal());
+		// Line line = new
+		// Line(this.getEnvironment().getGlobe().computePointFromPosition(waypoint),
+		// this.getEnvironment().getGlobe().computePointFromPosition(this.getGoal()));
+		// Edge edge = new Edge(waypoint, this.getGoal(), line);
+		// edge.setCostIntervals(this.getEnvironment().embedIntervalTree(edge.getLine()));
+		// // waypoint eto not set
+		// double pathDD = 1 / edge.calculateCost(waypoint.getEto(), end);
+		//
+		// waypoint.setH(pathDD / (1 + waypoint.getLambda() * distance));
+
 		waypoint.setH(this.getEnvironment().getNormalizedDistance(waypoint, this.getGoal()));
 	}
 
@@ -784,7 +815,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 * Indicates whether or not this FADPRM planner supports a specified
 	 * environment.
 	 * 
-	 * @param environment the environment
+	 * @param environment
+	 *            the environment
 	 * 
 	 * @return true if the environment is a planning continuum, false otherwise
 	 * 
@@ -805,7 +837,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 * Creates a new box equivalent to the one used to construct the
 	 * PlanningContinuum of this Basic PRM planner
 	 * 
-	 * @param cont the planning Continuum environment of this Basic PRM planner
+	 * @param cont
+	 *            the planning Continuum environment of this Basic PRM planner
 	 * 
 	 * @return the box of the environment of this planner
 	 */
@@ -820,13 +853,14 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	}
 
 	public Trajectory aStarPlan(Position origin, Position destination, ZonedDateTime etd) {
-		Box box = this.createBox(this.getEnvironment());
-		PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(),
-				this.getEnvironment().getGlobe());
-
-		ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
-		aStar.setCostPolicy(this.getCostPolicy());
-		aStar.setRiskPolicy(this.getRiskPolicy());
-		return aStar.plan(origin, destination, etd);
+//		Box box = this.createBox(this.getEnvironment());
+//		PlanningRoadmap roadmap = new PlanningRoadmap(box, this.getWaypointList(), this.getEdgeList(),
+//				this.getEnvironment().getGlobe());
+//
+//		ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), roadmap);
+//		aStar.setCostPolicy(this.getCostPolicy());
+//		aStar.setRiskPolicy(this.getRiskPolicy());
+//		return aStar.plan(origin, destination, etd);
+		return null;
 	}
 }

@@ -61,6 +61,9 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of a planning continuum environment */
 	public static final String PLANNING_CONTINUUM_ID = "Planning Continuum";
 	
+	/** the identifier of a planning continuum environment */
+	public static final String PLANNING_SAMPLING_ID = "Sampling Environment";
+	
 	/** the identifier of a forward A* planner */
 	public static final String PLANNER_FAS_ID = "Forward A*";
 	

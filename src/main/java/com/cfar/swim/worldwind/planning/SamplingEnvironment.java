@@ -97,7 +97,23 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 
 	public SamplingEnvironment(Box box) {
 		super(box);
+		this.update();
 	}
+	
+	public SamplingEnvironment(Box box, double resolution) {
+		super(box);
+		this.resolution=resolution;
+		this.update();
+	}
+	
+	@SuppressWarnings("unchecked")
+	public SamplingEnvironment(HierarchicalBox box) {
+		super(box);
+		this.parent=box.getParent();
+		this.cells=(HashSet<HierarchicalBox>) box.getChildren();
+		this.update();
+	}
+
 
 	// ------------------ SETTERS AND GETTERS ----------------
 
@@ -322,6 +338,15 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 		child.setTime(this.time);
 		child.setThreshold(this.thresholdCost);
 		child.update();
+		
+		// propagate obstacle embeddings
+		for (Obstacle obstacle : this.obstacles) {
+			if (obstacle instanceof ObstacleCylinder) {
+				child.embed((ObstacleCylinder) obstacle);
+			}
+			// TODO: implement propagations for other extents
+		}
+//		System.out.println(child.obstacles.size());
 
 		// TODO: Propagate Obstacles
 	}
@@ -337,7 +362,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	protected SamplingEnvironment createChild(Vec4 point1, Vec4 point2) {
-		return (SamplingEnvironment) super.createInstance(point1, point2);
+		return new SamplingEnvironment(super.createInstance(point1, point2));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -814,15 +839,15 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 		// TODO : Implement a checker for conflict between a position and the
 		// static, time independent and untraversable obstacles in the environment
 
-		Box box = this.createBoundingBox(position);
-		HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
-		for (TerrainObstacle terrain : terrainSet) {
-			// Check if obstacle contains the waypoint
-			System.out.println("Terrain");
-			if (terrain.getExtent(this.getGlobe()).intersects(box.getFrustum())) {
-				return true;
-			}
-		}
+//		Box box = this.createBoundingBox(position);
+//		HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
+//		for (TerrainObstacle terrain : terrainSet) {
+//			// Check if obstacle contains the waypoint
+//			System.out.println("Terrain");
+//			if (terrain.getExtent(this.getGlobe()).intersects(box.getFrustum())) {
+//				return true;
+//			}
+//		}
 		return false;
 	}
 
@@ -875,26 +900,26 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
-	public List<? extends Position> findNearest(Position position, int kNear) {
-
-		return this.getWaypointList().stream().sorted((p1, p2) -> Double
-				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
-				.limit(kNear).collect(Collectors.toList());
-
-	}
-
-	/**
-	 * Sorts a list of elements by increasing distance to a given position
-	 * 
-	 * @param position the position in global coordinates
-	 */
-	public void sortNearest(Position position) {
-
-		this.setWaypointList(this.getWaypointList().stream().sorted((p1, p2) -> Double
-				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
-				.collect(Collectors.toList()));
-
-	}
+//	public List<? extends Position> findNearest(Position position, int kNear) {
+//
+//		return this.getWaypointList().stream().sorted((p1, p2) -> Double
+//				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
+//				.limit(kNear).collect(Collectors.toList());
+//
+//	}
+//
+//	/**
+//	 * Sorts a list of elements by increasing distance to a given position
+//	 * 
+//	 * @param position the position in global coordinates
+//	 */
+//	public void sortNearest(Position position) {
+//
+//		this.setWaypointList(this.getWaypointList().stream().sorted((p1, p2) -> Double
+//				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
+//				.collect(Collectors.toList()));
+//
+//	}
 	
 	/**
 	 * Checks whether or not the given position is part of this edge
@@ -904,6 +929,63 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	 */
 	public boolean containsWaypoint(Waypoint waypoint) {
 		return waypoint.equals(waypoints[0]) || waypoint.equals(waypoints[1]);
+	}
+
+	@Override
+	public Set<Position> getAdjacentWaypoints(Position position) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Set<? extends Environment> getNeighbors() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean areNeighbors(Environment neighbor) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public Set<Position> getNeighbors(Position position) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean areNeighbors(Position position, Position neighbor) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getLegCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getLegCost(Environment destination, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
+			RiskPolicy riskPolicy) {
+		// TODO Auto-generated method stub
+		return 0;
 	}
 	
 }

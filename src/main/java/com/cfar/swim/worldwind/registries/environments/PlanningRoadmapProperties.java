@@ -37,7 +37,7 @@ import com.cfar.swim.worldwind.planning.RoadmapConstructor;
  * @author Stephan Heinemann
  *
  */
-public class PlanningRoadmapProperties extends PlanningContinuumProperties {
+public class PlanningRoadmapProperties extends SamplingEnvironmentProperties {
 	
 	/** the algorithm used to construct the roadmap of this Planning Roadmap properties bean */
 	RoadmapConstructor roadmapConstructor = RoadmapConstructor.BASICPRM;

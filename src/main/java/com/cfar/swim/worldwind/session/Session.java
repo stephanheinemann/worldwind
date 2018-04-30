@@ -53,6 +53,7 @@ import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties;
+import com.cfar.swim.worldwind.registries.environments.SamplingEnvironmentProperties;
 import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.ARRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.FADPRMProperties;
@@ -172,6 +173,7 @@ public class Session implements Identifiable {
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_GRID_ID, new PlanningGridProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_SAMPLING_ID, new SamplingEnvironmentProperties()));
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		
 		this.plannerRegistry.clearSpecifications();

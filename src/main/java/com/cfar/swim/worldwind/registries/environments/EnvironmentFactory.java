@@ -38,6 +38,7 @@ import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
+import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
@@ -152,7 +153,19 @@ public class EnvironmentFactory implements Factory<Environment> {
 			environment = new PlanningContinuum(envBox, properties.getResolution());
 			environment.setThreshold(0d);
 			environment.setGlobe(this.scenario.getGlobe());
+		} else if (specification.getId().equals(Specification.PLANNING_SAMPLING_ID)) {
+			// TODO: Review if implementation is done correctly
+
+			SamplingEnvironmentProperties properties = (SamplingEnvironmentProperties) specification.getProperties();
+			gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d,
+					this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
+			Box envBox = new Box(bb);
+
+			environment = new SamplingEnvironment(envBox, properties.getResolution());
+			environment.setThreshold(0d);
+			environment.setGlobe(this.scenario.getGlobe());
 		}
+		
 
 		return environment;
 	}
