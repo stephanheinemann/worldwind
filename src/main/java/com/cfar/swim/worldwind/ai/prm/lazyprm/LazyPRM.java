@@ -68,7 +68,7 @@ public class LazyPRM extends BasicPRM {
 
 		this.sortNearest(waypoint);
 
-		for (Waypoint neighbor : this.getWaypointList()) {
+		for (Position neighbor : this.getWaypointList()) {
 			if (super.getEnvironment().getDistance(neighbor, waypoint) < this.maxDist
 					&& numConnectedNeighbor < this.maxNeighbors) {
 				numConnectedNeighbor++;
@@ -154,7 +154,7 @@ public class LazyPRM extends BasicPRM {
 	protected void correctLists(HashSet<Waypoint> conflictWaypoints) {
 		for (Waypoint waypoint : conflictWaypoints) {
 			this.getWaypointList().remove(waypoint);
-			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
+//			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
 		}
 		return;
 	}

@@ -35,9 +35,9 @@ import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
+import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -63,10 +63,7 @@ public class BasicPRM {
 	public Environment environment;
 
 	/** the list of already sampled waypoints */
-	private List<Waypoint> waypointList = new ArrayList<Waypoint>();
-
-	/** the list of edges in this environment */
-	private List<Edge> edgeList = new ArrayList<Edge>();
+	private List<Position> waypointList = new ArrayList<Position>();
 
 	/**
 	 * Constructs a basic PRM planner for a specified aircraft and environment,
@@ -75,16 +72,11 @@ public class BasicPRM {
 	 * of neighbors (of a single Waypoint) and a maximum distance between two
 	 * connected neighbors.
 	 * 
-	 * @param aircraft
-	 *            the aircraft
-	 * @param environment
-	 *            the environment
-	 * @param maxIter
-	 *            the maximum number of iterations
-	 * @param maxNeighbors
-	 *            the maximum number of neighbors
-	 * @param maxDist
-	 *            the maximum distance between two connected neighbors
+	 * @param aircraft the aircraft
+	 * @param environment the environment
+	 * @param maxIter the maximum number of iterations
+	 * @param maxNeighbors the maximum number of neighbors
+	 * @param maxDist the maximum distance between two connected neighbors
 	 * 
 	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
 	 */
@@ -109,47 +101,24 @@ public class BasicPRM {
 	 * 
 	 * @return the list of waypoints
 	 */
-	public List<Waypoint> getWaypointList() {
+	public List<Position> getWaypointList() {
 		return waypointList;
 	}
 
 	/**
 	 * Sets the list of waypoints previously sampled
 	 * 
-	 * @param waypointList
-	 *            the list of waypoints to set
+	 * @param waypointList the list of waypoints to set
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
-	public void setWaypointList(List<? extends Waypoint> waypointList) {
-		this.waypointList = (List<Waypoint>) waypointList;
-	}
-
-	/**
-	 * Gets the list of already sampled edges
-	 * 
-	 * @return the list of edges
-	 */
-	public List<Edge> getEdgeList() {
-		return edgeList;
-	}
-
-	/**
-	 * Sets the list of edges previously sampled
-	 * 
-	 * @param edgetList
-	 *            the list of edges to set
-	 * 
-	 */
-	public void setEdgeList(List<Edge> edgeList) {
-		this.edgeList = edgeList;
+	public void setWaypointList(List<Position> waypointList) {
+		this.waypointList = waypointList;
 	}
 
 	/**
 	 * Creates a Waypoint at a specified position.
 	 * 
-	 * @param position
-	 *            the position
+	 * @param position the position
 	 * 
 	 * @return the Waypoint at the specified position
 	 */
@@ -164,15 +133,14 @@ public class BasicPRM {
 	 * than a MAX_DIST. The maximum number of neighbors a waypoint can be connected
 	 * to is defined by MAX_NEIGHBORS.
 	 * 
-	 * @param waypoint
-	 *            the BasicPRM waypoint to be connected
+	 * @param waypoint the BasicPRM waypoint to be connected
 	 */
 	protected void connectWaypoint(Waypoint waypoint) {
 		int numConnectedNeighbor = 0;
 
 		this.sortNearest(waypoint);
 
-		for (Waypoint neighbor : this.getWaypointList()) {
+		for (Position neighbor : this.getWaypointList()) {
 			if (environment.getDistance(neighbor, waypoint) < this.maxDist
 					&& numConnectedNeighbor < this.maxNeighbors) {
 				if (!this.getEnvironment().checkConflict(neighbor, waypoint)) {
@@ -184,14 +152,6 @@ public class BasicPRM {
 	}
 
 	/**
-	 * Initializes the planner clearing the waypoint, edge and plan lists.
-	 */
-	protected void initialize() {
-		this.getWaypointList().clear();
-		this.getEdgeList().clear();
-	}
-
-	/**
 	 * Creates the roadmap by sampling positions from a continuous environment.
 	 * First, checks if the waypoint position has conflicts with terrain. Then the
 	 * IntervalTree is embedded and the waypoint is added to the waypoint list.
@@ -199,7 +159,17 @@ public class BasicPRM {
 	 */
 	public void construct() {
 		int num = 0;
-
+		
+		//TODO: review if code below is working correctly
+		for(SamplingEnvironment env : this.getEnvironment().getAll()) {
+			if(env.hasParent()) {
+				this.waypointList.add(env.getGlobe().computePositionFromPoint(env.getOrigin()));
+				this.waypointList.add(env.getGlobe().computePositionFromPoint(env.get3DOpposite()));
+			}
+		}
+		this.setWaypointList(
+				this.getWaypointList().stream().distinct().collect(Collectors.toList()));
+		
 		while (num < this.maxIter) {
 			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 
@@ -214,8 +184,7 @@ public class BasicPRM {
 	/**
 	 * Extends the roadmap to incorporate new positions.
 	 * 
-	 * @param waypoints
-	 *            the list of positions in global coordinates
+	 * @param waypoints the list of positions in global coordinates
 	 */
 	protected void extendsConstruction(List<Position> waypoints) {
 		for (Position pos : waypoints) {
@@ -231,10 +200,8 @@ public class BasicPRM {
 	/**
 	 * Finds the k-nearest waypoints to the given position
 	 * 
-	 * @param position
-	 *            the position in global coordinates
-	 * @param kNear
-	 *            number of waypoints to return
+	 * @param position the position in global coordinates
+	 * @param kNear number of waypoints to return
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
@@ -250,8 +217,7 @@ public class BasicPRM {
 	/**
 	 * Sorts a list of elements by increasing distance to a given position
 	 * 
-	 * @param position
-	 *            the position in global coordinates
+	 * @param position the position in global coordinates
 	 */
 	public void sortNearest(Position position) {
 

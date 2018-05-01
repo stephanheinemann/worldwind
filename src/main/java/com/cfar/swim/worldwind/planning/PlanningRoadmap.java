@@ -32,6 +32,12 @@ package com.cfar.swim.worldwind.planning;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.geom.Box;
+import com.cfar.swim.worldwind.geom.HierarchicalBox;
+import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
+
+import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 
 /**
@@ -44,13 +50,13 @@ import gov.nasa.worldwind.globes.Globe;
 public class PlanningRoadmap extends SamplingEnvironment {
 
 	/** the maximum number of sampling iterations */
-	public final int MAX_ITER;
+	public int MAX_ITER;
 
 	/** the maximum number of neighbors a waypoint can be connected to */
-	public final int MAX_NEIGHBORS;
+	public int MAX_NEIGHBORS;
 
 	/** the maximum distance between two neighboring waypoints */
-	public final double MAX_DIST;
+	public double MAX_DIST;
 
 	public RoadmapConstructor roadmapConstructor;
 
@@ -87,6 +93,67 @@ public class PlanningRoadmap extends SamplingEnvironment {
 		this.constructRoadmap();
 		this.update();
 	}
+	
+	public PlanningRoadmap(HierarchicalBox box) {
+		super(box);
+		this.refresh();
+	}
+
+	/**
+	 * @return the mAX_ITER
+	 */
+	public int getMAX_ITER() {
+		return MAX_ITER;
+	}
+
+	/**
+	 * @param mAX_ITER the mAX_ITER to set
+	 */
+	public void setMAX_ITER(int mAX_ITER) {
+		MAX_ITER = mAX_ITER;
+	}
+
+	/**
+	 * @return the mAX_NEIGHBORS
+	 */
+	public int getMAX_NEIGHBORS() {
+		return MAX_NEIGHBORS;
+	}
+
+	/**
+	 * @param mAX_NEIGHBORS the mAX_NEIGHBORS to set
+	 */
+	public void setMAX_NEIGHBORS(int mAX_NEIGHBORS) {
+		MAX_NEIGHBORS = mAX_NEIGHBORS;
+	}
+
+	/**
+	 * @return the mAX_DIST
+	 */
+	public double getMAX_DIST() {
+		return MAX_DIST;
+	}
+
+	/**
+	 * @param mAX_DIST the mAX_DIST to set
+	 */
+	public void setMAX_DIST(double mAX_DIST) {
+		MAX_DIST = mAX_DIST;
+	}
+
+	/**
+	 * @return the roadmapConstructor
+	 */
+	public RoadmapConstructor getRoadmapConstructor() {
+		return roadmapConstructor;
+	}
+
+	/**
+	 * @param roadmapConstructor the roadmapConstructor to set
+	 */
+	public void setRoadmapConstructor(RoadmapConstructor roadmapConstructor) {
+		this.roadmapConstructor = roadmapConstructor;
+	}
 
 	protected void constructRoadmap() {
 		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
@@ -99,6 +166,37 @@ public class PlanningRoadmap extends SamplingEnvironment {
 		}
 	}
 	
+	@Override
+	public void addChild(Position origin, Position other) {
+		Globe globe = this.getGlobe();
+		Vec4 pointOrigin = globe.computePointFromPosition(origin);
+		Vec4 pointOther = globe.computePointFromPosition(other);
+
+		PlanningRoadmap child = new PlanningRoadmap(super.createChild(pointOrigin, pointOther));
+
+		child.setGlobe(globe);
+		child.setTime(this.getTime());
+		child.setThreshold(this.getThreshold());
+		child.update();
+		child.parent = this;
+		this.cells.add(child);
+		child.setOrigin(pointOrigin);
+		
+//		 propagate obstacle embeddings
+		for (Obstacle obstacle : this.getObstacles()) {
+			if (obstacle instanceof ObstacleCylinder) {
+				if (child.embed((ObstacleCylinder) obstacle)) {
+					this.addAffectedChild(obstacle, child);
+				}
+			}
+		}
+		child.setMAX_DIST(this.MAX_DIST);
+		child.setMAX_ITER(this.MAX_ITER);
+		child.setMAX_NEIGHBORS(this.MAX_NEIGHBORS);
+		child.setRoadmapConstructor(this.roadmapConstructor);
+	}
+	
+	
 	/**
 	 * Refines, that is, adds children with a specified density to this planning
 	 * grid.
@@ -109,13 +207,22 @@ public class PlanningRoadmap extends SamplingEnvironment {
 	@Override
 	public void refine(int density) {
 		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
-			BasicPRM basicPRM = new BasicPRM(this, density, MAX_NEIGHBORS, MAX_DIST);
+			BasicPRM basicPRM = new BasicPRM(this, density, this.MAX_NEIGHBORS, this.MAX_DIST);
 			basicPRM.construct();
 		}
 		if (this.roadmapConstructor == RoadmapConstructor.LAZYPRM) {
-			LazyPRM lazyPRM = new LazyPRM(this, density, MAX_NEIGHBORS, MAX_DIST);
+			LazyPRM lazyPRM = new LazyPRM(this, density, this.MAX_NEIGHBORS, this.MAX_DIST);
 			lazyPRM.construct();
 		}
+	}
+	
+	/**
+	 * Coarsens, that is, removes the children of this planning grid.
+	 *
+	 */
+	@Override
+	public void coarsen() {
+		this.removeChildren();
 	}
 
 }

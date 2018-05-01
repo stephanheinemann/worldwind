@@ -281,6 +281,13 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
+	 * @return the affectedChildren
+	 */
+	public HashMap<Obstacle, List<SamplingEnvironment>> getAffectedChildren() {
+		return affectedChildren;
+	}
+
+	/**
 	 * Gets the threshold cost of this planning continuum.
 	 * 
 	 * @return the threshold cost of this planning continuum
@@ -354,7 +361,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	// ------------------ NEW METHODS ----------------
-	public void addChild(Waypoint origin, Waypoint other) {
+	public void addChild(Position origin, Position other) {
 		Vec4 pointOrigin = globe.computePointFromPosition(origin);
 		Vec4 pointOther = globe.computePointFromPosition(other);
 
@@ -731,7 +738,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	 * @param obstacle the obstacle of the embedding
 	 * @param child the affected child
 	 */
-	private void addAffectedChild(Obstacle obstacle, SamplingEnvironment child) {
+	protected void addAffectedChild(Obstacle obstacle, SamplingEnvironment child) {
 		if (this.affectedChildren.containsKey(obstacle)) {
 			this.affectedChildren.get(obstacle).add(child);
 		} else {
