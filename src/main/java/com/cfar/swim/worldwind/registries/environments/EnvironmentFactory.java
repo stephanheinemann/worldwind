@@ -161,7 +161,7 @@ public class EnvironmentFactory implements Factory<Environment> {
 					this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
 			Box envBox = new Box(bb);
 
-			environment = new SamplingEnvironment(envBox, properties.getResolution());
+			environment = new SamplingEnvironment(envBox);
 			environment.setThreshold(0d);
 			environment.setGlobe(this.scenario.getGlobe());
 		}

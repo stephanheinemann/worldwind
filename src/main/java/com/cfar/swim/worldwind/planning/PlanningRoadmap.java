@@ -77,7 +77,7 @@ public class PlanningRoadmap extends SamplingEnvironment {
 	 */
 	public PlanningRoadmap(Box box, double resolution, RoadmapConstructor roadmapConstructor, Globe globe, int maxIter,
 			int maxNeighbors, double maxDist) {
-		super(box, resolution);
+		super(box);
 		this.setGlobe(globe);
 		this.update();
 		MAX_ITER = maxIter;

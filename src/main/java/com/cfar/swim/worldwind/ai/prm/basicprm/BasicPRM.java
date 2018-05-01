@@ -214,8 +214,6 @@ public class BasicPRM {
 				num++;
 			}
 		}
-		System.out.println(this.getEnvironment().getChildren().size());
-
 	}
 
 	/**

@@ -55,80 +55,79 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * the bottom lower left corner index of this box
 	 */
 	public static final int CORNER_INDEX_BOTTOM_LOWER_LEFT = 0;
-	
+
 	/**
 	 * the bottom lower right corner index of this box
 	 */
 	public static final int CORNER_INDEX_BOTTOM_LOWER_RIGHT = 1;
-	
+
 	/**
 	 * the bottom upper right corner index of this box
 	 */
 	public static final int CORNER_INDEX_BOTTOM_UPPER_RIGHT = 2;
-	
+
 	/**
 	 * the bottom upper left corner index of this box
 	 */
 	public static final int CORNER_INDEX_BOTTOM_UPPER_LEFT = 3;
-	
+
 	/**
 	 * the top lower left corner index of this box
 	 */
 	public static final int CORNER_INDEX_TOP_LOWER_LEFT = 4;
-	
+
 	/**
 	 * the bottom lower right corner index of this box
 	 */
 	public static final int CORNER_INDEX_TOP_LOWER_RIGHT = 5;
-	
+
 	/**
 	 * the top upper right corner index of this box
 	 */
 	public static final int CORNER_INDEX_TOP_UPPER_RIGHT = 6;
-	
+
 	/**
 	 * the top upper left corner index of this box
 	 */
 	public static final int CORNER_INDEX_TOP_UPPER_LEFT = 7;
-	
+
 	/**
 	 * the origin of this box
 	 */
 	protected Vec4 origin = Vec4.ZERO;
-	
+
 	/**
 	 * the local transformation matrix of this box
 	 */
 	protected Matrix toLocalOrigin = null;
-	
+
 	/**
 	 * {@inheritDoc}
+	 * 
 	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4)
 	 */
 	public Box(Vec4 point) {
-		// TODO: file bug report for worldwind 2.0 
+		// TODO: file bug report for worldwind 2.0
 		// gov.nasa.worldwind.geom.Box#Box(Vec4)
-		// constructs box completely wrong - center and dimensions 
-		//super(point);
+		// constructs box completely wrong - center and dimensions
+		// super(point);
 		this(Box.createInstance(point));
 		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
-	
+
 	/**
 	 * {@inheritDoc}
-	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4[], double, double, double, double, double, double)
+	 * 
+	 * @see gov.nasa.worldwind.geom.Box#Box(Vec4[], double, double, double, double,
+	 *      double, double)
 	 */
-	public Box(
-			Vec4[] axes,
-			double rMin, double rMax,
-			double sMin, double sMax,
-			double tMin, double tMax) {
+	public Box(Vec4[] axes, double rMin, double rMax, double sMin, double sMax, double tMin, double tMax) {
 		super(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
-	
+
 	/**
 	 * Constructs a new box from a geometric box.
 	 * 
@@ -137,25 +136,13 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @see gov.nasa.worldwind.geom.Box
 	 */
 	public Box(gov.nasa.worldwind.geom.Box box) {
-		super(
-			box.getBottomCenter(),
-			box.getTopCenter(),
-			box.getCenter(),
-			box.getRAxis(),
-			box.getSAxis(),
-			box.getTAxis(),
-			box.getUnitRAxis(),
-			box.getUnitSAxis(),
-			box.getUnitTAxis(),
-			box.getRLength(),
-			box.getSLength(),
-			box.getTLength(),
-			box.getPlanes()
-			);
+		super(box.getBottomCenter(), box.getTopCenter(), box.getCenter(), box.getRAxis(), box.getSAxis(),
+				box.getTAxis(), box.getUnitRAxis(), box.getUnitSAxis(), box.getUnitTAxis(), box.getRLength(),
+				box.getSLength(), box.getTLength(), box.getPlanes());
 		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
-	
+
 	/**
 	 * Constructs a new box with specified origin, unit axes and side lengths.
 	 * 
@@ -166,23 +153,17 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @param tLength the side length along the <code>T</code> axes of this box
 	 */
 	public Box(Vec4 origin, Vec4[] axes, double rLength, double sLength, double tLength) {
-		super(
-			axes,
-			axes[0].dot3(origin), axes[0].dot3(origin) + rLength,
-			axes[1].dot3(origin), axes[1].dot3(origin) + sLength,
-			axes[2].dot3(origin), axes[2].dot3(origin) + tLength);
+		super(axes, axes[0].dot3(origin), axes[0].dot3(origin) + rLength, axes[1].dot3(origin),
+				axes[1].dot3(origin) + sLength, axes[2].dot3(origin), axes[2].dot3(origin) + tLength);
 		this.origin = origin;
 		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
-	protected Box(
-			Vec4 bottomCenter, Vec4 topCenter, Vec4 center,
-			Vec4 r, Vec4 s, Vec4 t, Vec4 ru, Vec4 su, Vec4 tu,
-	        double rLength, double sLength, double tLength,
-	        Plane[] planes) {
+	protected Box(Vec4 bottomCenter, Vec4 topCenter, Vec4 center, Vec4 r, Vec4 s, Vec4 t, Vec4 ru, Vec4 su, Vec4 tu,
+			double rLength, double sLength, double tLength, Plane[] planes) {
 		super(bottomCenter, topCenter, center, r, s, t, ru, su, tu, rLength, sLength, tLength, planes);
 		this.origin = super.getCorners()[Box.CORNER_INDEX_BOTTOM_LOWER_LEFT];
 		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
@@ -196,67 +177,62 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return a new unit box centered at the center point
 	 */
 	protected static Box createInstance(Vec4 center) {
-		if (center == null)
-        {
-            String msg = Logging.getMessage("nullValue.PointIsNull");
-            Logging.logger().severe(msg);
-            throw new IllegalArgumentException(msg);
-        }
+		if (center == null) {
+			String msg = Logging.getMessage("nullValue.PointIsNull");
+			Logging.logger().severe(msg);
+			throw new IllegalArgumentException(msg);
+		}
 
-        Vec4 ru = new Vec4(1, 0, 0, 1);
-        Vec4 su = new Vec4(0, 1, 0, 1);
-        Vec4 tu = new Vec4(0, 0, 1, 1);
+		Vec4 ru = new Vec4(1, 0, 0, 1);
+		Vec4 su = new Vec4(0, 1, 0, 1);
+		Vec4 tu = new Vec4(0, 0, 1, 1);
 
-        Vec4 r = ru;
-        Vec4 s = su;
-        Vec4 t = tu;
+		Vec4 r = ru;
+		Vec4 s = su;
+		Vec4 t = tu;
 
-        double rLength = 1d;
-        double sLength = 1d;
-        double tLength = 1d;
+		double rLength = 1d;
+		double sLength = 1d;
+		double tLength = 1d;
 
-        // Plane normals point outwards from the box.
-        Plane[] planes = new Plane[6];
-        double d = center.getLength3();
-        double dr = (center.x < 0) ? 0.5d : -0.5d;
-        double ds = (center.y < 0) ? 0.5d : -0.5d;
-        double dt = (center.z < 0) ? 0.5d : -0.5d;
-        planes[0] = new Plane(-ru.x, -ru.y, -ru.z, d + dr);
-        planes[1] = new Plane(+ru.x, +ru.y, +ru.z, d - dr);
-        planes[2] = new Plane(-su.x, -su.y, -su.z, d + ds);
-        planes[3] = new Plane(+su.x, +su.y, +su.z, d - ds);
-        planes[4] = new Plane(-tu.x, -tu.y, -tu.z, d + dt);
-        planes[5] = new Plane(+tu.x, +tu.y, +tu.z, d - dt);
+		// Plane normals point outwards from the box.
+		Plane[] planes = new Plane[6];
+		double d = center.getLength3();
+		double dr = (center.x < 0) ? 0.5d : -0.5d;
+		double ds = (center.y < 0) ? 0.5d : -0.5d;
+		double dt = (center.z < 0) ? 0.5d : -0.5d;
+		planes[0] = new Plane(-ru.x, -ru.y, -ru.z, d + dr);
+		planes[1] = new Plane(+ru.x, +ru.y, +ru.z, d - dr);
+		planes[2] = new Plane(-su.x, -su.y, -su.z, d + ds);
+		planes[3] = new Plane(+su.x, +su.y, +su.z, d - ds);
+		planes[4] = new Plane(-tu.x, -tu.y, -tu.z, d + dt);
+		planes[5] = new Plane(+tu.x, +tu.y, +tu.z, d - dt);
 
-        Vec4 rHalf = r.multiply3(0.5);
-        Vec4 topCenter = center.add3(rHalf);
-        Vec4 bottomCenter = center.subtract3(rHalf);
-        
-        return new Box(
-        		bottomCenter, topCenter, center,
-        		r, s, t, ru, su, tu,
-		        rLength, sLength, tLength,
-		        planes);
+		Vec4 rHalf = r.multiply3(0.5);
+		Vec4 topCenter = center.add3(rHalf);
+		Vec4 bottomCenter = center.subtract3(rHalf);
+
+		return new Box(bottomCenter, topCenter, center, r, s, t, ru, su, tu, rLength, sLength, tLength, planes);
 	}
-	
+
 	/**
 	 * Gets the axes of this box.
 	 * 
 	 * @return the axes of this box
 	 */
 	public Vec4[] getAxes() {
-		return new Vec4[] {this.r, this.s, this.t };
+		return new Vec4[] { this.r, this.s, this.t };
 	}
-	
+
 	/**
 	 * Gets the unit axes of this box.
 	 * 
 	 * @return the unit axes of this box
 	 */
 	public Vec4[] getUnitAxes() {
-		return new Vec4[] {this.ru, this.su, this.tu};
+		return new Vec4[] { this.ru, this.su, this.tu };
 	}
-	
+
 	/**
 	 * Gets the origin of this box.
 	 * 
@@ -265,49 +241,117 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public Vec4 getOrigin() {
 		return this.origin;
 	}
-	
-	/**nasa worldwind change frame
-	 * Indicates whether or not a point in world model coordinates equals the
-	 * origin of this box considering numerical inaccuracies.
+
+	/**
+	 * Gets the 3D opposite corner of the origin of this box.
+	 * 
+	 * @return the 3D opposite corner of the origin of this box
+	 */
+	public Vec4 get3DOpposite() {
+		return this.getOppositeCorners(this.origin)[1];
+	}
+
+	/**
+	 * Sets the origin of this box and the local transformation matrix.
+	 * 
+	 * @param origin the origin of this box
+	 */
+	public void setOrigin(Vec4 origin) {
+		int index = this.getCornerIndex(origin);
+		Vec4 r=this.r, s=this.s, t=this.t;
+		this.origin = origin;
+		switch (index) {
+		case (0):
+			break;
+		case (1):
+			r = this.r.getNegative3();
+			break;
+		case (2):
+			r = this.r.getNegative3();
+			s = this.s.getNegative3();
+			break;
+		case (3):
+			s = this.s.getNegative3();
+			break;
+		case (4):
+			t = this.t.getNegative3();
+			break;
+		case (5):
+			t = this.t.getNegative3();
+			r = this.r.getNegative3();
+			break;
+		case (6):
+			t = this.t.getNegative3();
+			r = this.r.getNegative3();
+			s = this.s.getNegative3();
+			break;
+		case (7):
+			t = this.t.getNegative3();
+			s = this.s.getNegative3();
+			break;
+		}
+		Vec4[] axes = {r,s,t};
+		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, axes);
+	}
+
+	/**
+	 * nasa worldwind change frame Indicates whether or not a point in world model
+	 * coordinates equals the origin of this box considering numerical inaccuracies.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
-	 * @return true if the point equals the origin of this box considering
-	 *         numerical inaccuracies, false otherwise
+	 * @return true if the point equals the origin of this box considering numerical
+	 *         inaccuracies, false otherwise
 	 */
 	public boolean isOrigin(Vec4 point) {
 		PrecisionVec4 v1 = new PrecisionVec4(point.toHomogeneousPoint3());
 		PrecisionVec4 v2 = new PrecisionVec4(this.origin.toHomogeneousPoint3());
 		return v1.equals(v2);
 	}
-	
+
 	/**
-	 * Indicates whether or not a point in world model coordinates equals the
-	 * center of this box considering numerical inaccuracies.
+	 * nasa worldwind change frame Indicates whether or not a point in world model
+	 * coordinates equals the 3D opposite corner of the origin of this box
+	 * considering numerical inaccuracies.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
-	 * @return true if the point equals the center of this box considering
-	 *         numerical inaccuracies, false otherwise
+	 * @return true if the point equals the 3D opposite corner of the origin of this
+	 *         box considering numerical inaccuracies, false otherwise
+	 */
+	public boolean is3DOpposite(Vec4 point) {
+		PrecisionVec4 v1 = new PrecisionVec4(point.toHomogeneousPoint3());
+		PrecisionVec4 v2 = new PrecisionVec4(this.getOppositeCorners(origin)[1].toHomogeneousPoint3());
+		return v1.equals(v2);
+	}
+
+	/**
+	 * Indicates whether or not a point in world model coordinates equals the center
+	 * of this box considering numerical inaccuracies.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return true if the point equals the center of this box considering numerical
+	 *         inaccuracies, false otherwise
 	 */
 	public boolean isCenter(Vec4 point) {
 		PrecisionVec4 v1 = new PrecisionVec4(point.toHomogeneousPoint3());
 		PrecisionVec4 v2 = new PrecisionVec4(this.getCenter().toHomogeneousPoint3());
 		return v1.equals(v2);
 	}
-	
+
 	/**
-	 * Indicates whether or not a point in world model coordinates equals a
-	 * corner of this box considering numerical inaccuracies. 
+	 * Indicates whether or not a point in world model coordinates equals a corner
+	 * of this box considering numerical inaccuracies.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
-	 * @return true if the point equals a corner of this box considering
-	 *         numerical inaccuracies, false otherwise
+	 * @return true if the point equals a corner of this box considering numerical
+	 *         inaccuracies, false otherwise
 	 */
 	public boolean isCorner(Vec4 point) {
 		boolean isCorner = false;
-		
+
 		for (Vec4 corner : super.getCorners()) {
 			PrecisionVec4 v1 = new PrecisionVec4(point.toHomogeneousPoint3());
 			PrecisionVec4 v2 = new PrecisionVec4(corner.toHomogeneousPoint3());
@@ -316,10 +360,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 				break;
 			}
 		}
-		
+
 		return isCorner;
 	}
-	
+
 	/**
 	 * Gets the corner index of a specified corner.
 	 * 
@@ -330,7 +374,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public int getCornerIndex(Vec4 corner) {
 		int cornerIndex = -1;
 		Vec4[] corners = super.getCorners();
-		
+
 		for (int index = 0; index < 8; index++) {
 			PrecisionVec4 v1 = new PrecisionVec4(corner.toHomogeneousPoint3());
 			PrecisionVec4 v2 = new PrecisionVec4(corners[index].toHomogeneousPoint3());
@@ -339,10 +383,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 				break;
 			}
 		}
-		
+
 		return cornerIndex;
 	}
-	
+
 	/**
 	 * Gets the neighbor corners of a specified corner of this box.
 	 * 
@@ -354,7 +398,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		Vec4[] neighborCorners = null;
 		Vec4[] corners = super.getCorners();
 		int cornerIndex = this.getCornerIndex(corner);
-		
+
 		if ((cornerIndex >= 0) && (cornerIndex < corners.length)) {
 			neighborCorners = new Vec4[3];
 			if (Box.CORNER_INDEX_BOTTOM_LOWER_LEFT == cornerIndex) {
@@ -391,10 +435,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 				neighborCorners[2] = corners[Box.CORNER_INDEX_TOP_UPPER_RIGHT];
 			}
 		}
-		
+
 		return neighborCorners;
 	}
-	
+
 	/**
 	 * Gets the opposite corners of a specified corner of this box.
 	 * 
@@ -406,10 +450,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		Vec4[] oppositeCorners = null;
 		Vec4[] corners = super.getCorners();
 		int cornerIndex = this.getCornerIndex(corner);
-		
+
 		if ((cornerIndex >= 0) && (cornerIndex < corners.length)) {
 			oppositeCorners = new Vec4[2];
-		
+
 			if (Box.CORNER_INDEX_BOTTOM_LOWER_LEFT == cornerIndex) {
 				oppositeCorners[0] = corners[Box.CORNER_INDEX_BOTTOM_UPPER_RIGHT];
 				oppositeCorners[1] = corners[Box.CORNER_INDEX_TOP_UPPER_RIGHT];
@@ -436,10 +480,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 				oppositeCorners[1] = corners[Box.CORNER_INDEX_BOTTOM_LOWER_RIGHT];
 			}
 		}
-		
+
 		return oppositeCorners;
 	}
-	
+
 	/**
 	 * Gets the other corners of a specified corner of this box.
 	 * 
@@ -451,10 +495,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		Vec4[] otherCorners = null;
 		Vec4[] corners = super.getCorners();
 		int cornerIndex = this.getCornerIndex(corner);
-		
+
 		if ((cornerIndex >= 0) && (cornerIndex < corners.length)) {
 			otherCorners = new Vec4[7];
-			
+
 			for (int index = 0, otherIndex = 0; index < corners.length; index++) {
 				if (cornerIndex != index) {
 					otherCorners[otherIndex] = corners[index];
@@ -462,13 +506,13 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 				}
 			}
 		}
-		
+
 		return otherCorners;
 	}
-	
+
 	/**
-	 * Transforms a Cartesian world model vector into a box vector using the
-	 * first corner of this box as origin.
+	 * Transforms a Cartesian world model vector into a box vector using the first
+	 * corner of this box as origin.
 	 * 
 	 * @param modelPoint the world model vector
 	 * 
@@ -477,10 +521,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public Vec4 transformModelToBoxOrigin(Vec4 modelPoint) {
 		return modelPoint.transformBy4(this.toLocalOrigin);
 	}
-	
+
 	/**
-	 * Transforms a box vector into a Cartesian world model vector using the
-	 * first corner of this box as origin.
+	 * Transforms a box vector into a Cartesian world model vector using the first
+	 * corner of this box as origin.
 	 * 
 	 * @param modelPoint the world model vector
 	 * 
@@ -489,10 +533,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public Vec4 transformBoxOriginToModel(Vec4 modelPoint) {
 		return modelPoint.transformBy4(this.toLocalOrigin.getInverse());
 	}
-	
+
 	/**
-	 * Transforms a Cartesian world model vector into a box vector using the
-	 * center of this box as origin.
+	 * Transforms a Cartesian world model vector into a box vector using the center
+	 * of this box as origin.
 	 * 
 	 * @param modelPoint the world model vector
 	 * 
@@ -502,10 +546,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		Matrix transformMatrix = TransformationMatrix.toLocalOrientation(this.getCenter(), this.getAxes());
 		return modelPoint.transformBy4(transformMatrix);
 	}
-	
+
 	/**
-	 * Indicates whether or not a value lies on the <code>R</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Indicates whether or not a value lies on the <code>R</code> axis of this box
+	 * considering numerical inaccuracies.
 	 * 
 	 * @param r the value
 	 * 
@@ -515,10 +559,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	protected boolean containsR(double r) {
 		return (new PrecisionDouble(r)).isInRange(0.0, this.rLength);
 	}
-	
+
 	/**
-	 * Indicates whether or not a value lies on the <code>S</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Indicates whether or not a value lies on the <code>S</code> axis of this box
+	 * considering numerical inaccuracies.
 	 * 
 	 * @param s the value
 	 * 
@@ -528,10 +572,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	protected boolean containsS(double s) {
 		return (new PrecisionDouble(s)).isInRange(0.0, this.sLength);
 	}
-	
+
 	/**
-	 * Indicates whether or not a value lies on the <code>T</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Indicates whether or not a value lies on the <code>T</code> axis of this box
+	 * considering numerical inaccuracies.
 	 * 
 	 * @param t the value
 	 * 
@@ -541,10 +585,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	protected boolean containsT(double t) {
 		return (new PrecisionDouble(t)).isInRange(0.0, this.tLength);
 	}
-	
+
 	/**
-	 * Indicates whether or not a vector in box coordinates is contained in
-	 * this box considering numerical inaccuracies.
+	 * Indicates whether or not a vector in box coordinates is contained in this box
+	 * considering numerical inaccuracies.
 	 * 
 	 * @param v the vector in box coordinates
 	 * 
@@ -553,10 +597,10 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	protected boolean containsV(Vec4 v) {
 		return this.containsR(v.x) && this.containsS(v.y) && this.containsT(v.z);
 	}
-	
+
 	/**
-	 * Indicates whether or not a point in world model coordinates is contained
-	 * in this box.
+	 * Indicates whether or not a point in world model coordinates is contained in
+	 * this box.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
@@ -564,44 +608,44 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 */
 	public boolean contains(Vec4 modelPoint) {
 		boolean contains = false;
-		
+
 		Vec4 localPoint = this.transformModelToBoxOrigin(modelPoint);
 		if (this.containsV(localPoint)) {
 			contains = true;
 		}
-		
+
 		return contains;
 	}
-	
+
 	/**
-	 * Indicates whether or not a line segment intersects this box when
-	 * expanding its sides with an expansion vector.
+	 * Indicates whether or not a line segment intersects this box when expanding
+	 * its sides with an expansion vector.
 	 * 
 	 * @param p0 the first point of the line segment
 	 * @param p1 the second point of the line segment
 	 * @param expansion the expansion vector to expand the box
 	 * 
-	 * @return true if the line segment intersects this box when expanding its
-	 *         sides with the expansion vector, false otherwise
+	 * @return true if the line segment intersects this box when expanding its sides
+	 *         with the expansion vector, false otherwise
 	 */
 	protected boolean intersectsLineSegment(Vec4 p0, Vec4 p1, Vec4 expansion) {
-		// transform line segment end points to box coordinates 
+		// transform line segment end points to box coordinates
 		p0 = this.transformModelToBoxCenter(p0);
 		p1 = this.transformModelToBoxCenter(p1);
-		
+
 		// line segment midpoint in box coordinates
 		Vec4 midpoint = p0.add3(p1).multiply3(0.5);
 		Vec4 midpointLength = midpoint.getAbs3();
-		
+
 		// line half segment in box coordinates
 		Vec4 halfSegment = p1.subtract3(midpoint);
 		Vec4 halfSegmentLength = halfSegment.getAbs3();
-		
+
 		// box sides half lengths
 		Vec4 halfSideLength = new Vec4(this.rLength, this.sLength, this.tLength);
 		halfSideLength = halfSideLength.multiply3(0.5);
 		halfSideLength = halfSideLength.add3(expansion);
-		
+
 		// world coordinate axes as separating axes
 		if (midpointLength.x > (halfSideLength.x + halfSegmentLength.x))
 			return false; // segment cannot intersect on x axis
@@ -609,26 +653,27 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			return false; // segment cannot intersect on y axis
 		if (midpointLength.z > (halfSideLength.z + halfSegmentLength.z))
 			return false; // segment cannot intersect on z axis
-		
-		halfSegmentLength = halfSegmentLength.add3(
-			PrecisionDouble.EPSILON,
-			PrecisionDouble.EPSILON,
-			PrecisionDouble.EPSILON);
-		
+
+		halfSegmentLength = halfSegmentLength.add3(PrecisionDouble.EPSILON, PrecisionDouble.EPSILON,
+				PrecisionDouble.EPSILON);
+
 		// cross products of segment direction vector with coordinate axes
-		if (Math.abs((midpoint.y * halfSegment.z) - (midpoint.z * halfSegment.y)) >
-			((halfSideLength.y * halfSegmentLength.z) + (halfSideLength.z * halfSegmentLength.y)))
+		if (Math.abs(
+				(midpoint.y * halfSegment.z) - (midpoint.z * halfSegment.y)) > ((halfSideLength.y * halfSegmentLength.z)
+						+ (halfSideLength.z * halfSegmentLength.y)))
 			return false;
-		if (Math.abs((midpoint.z * halfSegment.x) - (midpoint.x * halfSegment.z)) >
-			((halfSideLength.x * halfSegmentLength.z) + (halfSideLength.z * halfSegmentLength.x)))
+		if (Math.abs(
+				(midpoint.z * halfSegment.x) - (midpoint.x * halfSegment.z)) > ((halfSideLength.x * halfSegmentLength.z)
+						+ (halfSideLength.z * halfSegmentLength.x)))
 			return false;
-		if (Math.abs((midpoint.x * halfSegment.y) - (midpoint.y * halfSegment.x)) >
-			((halfSideLength.x * halfSegmentLength.y) + (halfSideLength.y * halfSegmentLength.x)))
+		if (Math.abs(
+				(midpoint.x * halfSegment.y) - (midpoint.y * halfSegment.x)) > ((halfSideLength.x * halfSegmentLength.y)
+						+ (halfSideLength.y * halfSegmentLength.x)))
 			return false;
-		
+
 		return true;
 	}
-	
+
 	/**
 	 * Indicates whether or not a line segment intersects this box.
 	 * 
@@ -640,15 +685,15 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public boolean intersectsLineSegment(Vec4 p0, Vec4 p1) {
 		return this.intersectsLineSegment(p0, p1, Vec4.ZERO);
 	}
-	
+
 	/**
 	 * Indicates whether or not (the bounding box of) a cylinder intersects this
-	 * box. 
+	 * box.
 	 * 
 	 * @param cylinder the cylinder
 	 * 
-	 * @return true if the (bounding box of the) cylinder intersects this box,
-	 *         false otherwise
+	 * @return true if the (bounding box of the) cylinder intersects this box, false
+	 *         otherwise
 	 */
 	public boolean intersectsCylinder(Cylinder cylinder) {
 		// expand box by effective cylinder radii
@@ -657,20 +702,21 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		double rz = cylinder.getEffectiveRadius(this.planes[4]); // t-min plane
 		// the expansion includes the bounding box of the cylinder
 		Vec4 expansion = new Vec4(rx, ry, rz);
-		// perform the conservatively approximate (cylinder bounding box) intersection check
+		// perform the conservatively approximate (cylinder bounding box) intersection
+		// check
 		return this.intersectsLineSegment(cylinder.getBottomCenter(), cylinder.getTopCenter(), expansion);
 	}
-	
+
 	/**
-	 * Gets a frustum representation of this box which is slightly expanded
-	 * to account for numerical inaccuracies.
+	 * Gets a frustum representation of this box which is slightly expanded to
+	 * account for numerical inaccuracies.
 	 * 
 	 * @return a frustum representation of this box
 	 */
 	public Frustum getFrustum() {
 		// TODO: other intersection methods can be removed
 		Plane[] frustumPlanes = new Plane[6];
-		
+
 		// frustum planes point inwards, box planes point outwards
 		// xMin <= xMax must be satisfied for any box axes x
 		for (int index = 0; index < this.planes.length; index++) {
@@ -679,22 +725,14 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			// expand frustum by epsilon to detect touching extents
 			// the expansion must be a fraction of the default epsilon
 			// to allow for a contraction within the default epsilon
-			frustumPlanes[index] = new Plane(
-					-planeNormal.x,
-					-planeNormal.y,
-					-planeNormal.z,
+			frustumPlanes[index] = new Plane(-planeNormal.x, -planeNormal.y, -planeNormal.z,
 					-planeNormal.w + (PrecisionDouble.EPSILON * 0.001d));
 		}
-		
-	    return new Frustum(
-	    		frustumPlanes[0],
-	    		frustumPlanes[1],
-	    		frustumPlanes[2],
-	    		frustumPlanes[3],
-	    		frustumPlanes[4],
-	    		frustumPlanes[5]);
+
+		return new Frustum(frustumPlanes[0], frustumPlanes[1], frustumPlanes[2], frustumPlanes[3], frustumPlanes[4],
+				frustumPlanes[5]);
 	}
-	
+
 	/**
 	 * Indicates whether or not an extent intersects this box.
 	 * 
@@ -707,43 +745,36 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public boolean intersects(Extent extent) {
 		return extent.intersects(this.getFrustum());
 	}
-	
+
 	/**
 	 * Indicates whether or not a line segment intersects this box.
 	 * 
 	 * @param pa one end of the line segment
 	 * @param pb the other end of the line segment
-	 *  
+	 * 
 	 * @return true if the line segment intersects or is contained in this box,
 	 *         false otherwise
 	 * 
 	 * @see Frustum#intersectsSegment(Vec4, Vec4)
 	 */
 	public boolean intersectsSegment(Vec4 pa, Vec4 pb) {
-		// TODO: file bug report for worldwind 2.0 
+		// TODO: file bug report for worldwind 2.0
 		// gov.nasa.worldwind.geom.Frustum#intersectsSegment(Vec4)
 		// detects false intersects since one successful plane clip is not sufficient
-		//return this.getFrustum().intersectsSegment(pa, pb);
+		// return this.getFrustum().intersectsSegment(pa, pb);
 		return (null != Line.clipToFrustum(pa, pb, this.getFrustum()));
 	}
-	
+
 	/*
-	@Override
-	public Intersection[] intersect(Line line) {
-		Plane[] boxPlanes = new Plane[6];
-		
-		for (int index = 0; index < this.planes.length; index++) {
-			Vec4 planeNormal = this.planes[index].getNormal();
-			// expand box by epsilon for intersection		
-			boxPlanes[index] = new Plane(
-					planeNormal.x,
-					planeNormal.y,
-					planeNormal.z,
-					planeNormal.w - (PrecisionDouble.EPSILON * 0.001d));
-		}
-		
-		return WWMath.polytopeIntersect(line, boxPlanes);
-	}
-	*/
-	
+	 * @Override public Intersection[] intersect(Line line) { Plane[] boxPlanes =
+	 * new Plane[6];
+	 * 
+	 * for (int index = 0; index < this.planes.length; index++) { Vec4 planeNormal =
+	 * this.planes[index].getNormal(); // expand box by epsilon for intersection
+	 * boxPlanes[index] = new Plane( planeNormal.x, planeNormal.y, planeNormal.z,
+	 * planeNormal.w - (PrecisionDouble.EPSILON * 0.001d)); }
+	 * 
+	 * return WWMath.polytopeIntersect(line, boxPlanes); }
+	 */
+
 }

@@ -43,7 +43,7 @@ public class PlanningRoadmapProperties extends SamplingEnvironmentProperties {
 	RoadmapConstructor roadmapConstructor = RoadmapConstructor.BASICPRM;
 	
 	/** the maximum number of sampling iterations */
-	private int maxIter = 1_000;
+	private int maxIter = 300;
 	
 	/** the maximum number of neighbors a waypoint can be connected to */
 	private int maxNeighbors = 30;

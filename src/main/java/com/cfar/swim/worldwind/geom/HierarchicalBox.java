@@ -29,15 +29,21 @@
  */
 package com.cfar.swim.worldwind.geom;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import javax.media.opengl.GL2;
 
+import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
+
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.util.Logging;
 import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
@@ -59,7 +65,7 @@ public class HierarchicalBox extends Box {
 	/**
 	 * the drawing color of this regular grid
 	 */
-	private float[] color = { 1.0f, 1.0f, 1.0f, 1.0f };
+	private float[] color = { 0f, 1.0f, 0f, 1.0f };
 
 	/**
 	 * the visibility state of this regular grid
@@ -70,8 +76,7 @@ public class HierarchicalBox extends Box {
 	/**
 	 * Constructs a new continuum box a geometric box without any children.
 	 * 
-	 * @param box
-	 *            the geometric box
+	 * @param box the geometric box
 	 * 
 	 * @see com.cfar.swim.worldwind.geom.Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
@@ -83,20 +88,13 @@ public class HierarchicalBox extends Box {
 	 * Constructs a new regular grid from three plane normals and six distances for
 	 * each of the six faces of a geometric box without any children.
 	 * 
-	 * @param axes
-	 *            the three plane normals
-	 * @param rMin
-	 *            the minimum distance on the <code>R</code> axis
-	 * @param rMax
-	 *            the maximum distance on the <code>R</code> axis
-	 * @param sMin
-	 *            the minimum distance on the <code>S</code> axis
-	 * @param sMax
-	 *            the maximum distance on the <code>S</code> axis
-	 * @param tMin
-	 *            the minimum distance on the <code>T</code> axis
-	 * @param tMax
-	 *            the maximum distance on the <code>T</code> axis
+	 * @param axes the three plane normals
+	 * @param rMin the minimum distance on the <code>R</code> axis
+	 * @param rMax the maximum distance on the <code>R</code> axis
+	 * @param sMin the minimum distance on the <code>S</code> axis
+	 * @param sMax the maximum distance on the <code>S</code> axis
+	 * @param tMin the minimum distance on the <code>T</code> axis
+	 * @param tMax the maximum distance on the <code>T</code> axis
 	 * 
 	 * @see com.cfar.swim.worldwind.geom.Box#Box(Vec4[], double, double, double,
 	 *      double, double, double)
@@ -112,18 +110,15 @@ public class HierarchicalBox extends Box {
 	// ------------------ NEW METHODS ----------------
 	public HierarchicalBox createInstance(Vec4 point1, Vec4 point2) {
 		Vec4[] axes = this.getUnitAxes();
+		List<Vec4> points = new ArrayList<Vec4>();
 
-		// TODO: check if axes need to be rotated (r stores the longest axis, s the next
-		// one, and t the shortest one)
-		double rLength = Math.abs(point1.x - point2.x);
-		double sLength = Math.abs(point1.y - point2.y);
-		double tLength = Math.abs(point1.z - point2.z);
-		// Vec4 boxPoint1 = this.transformModelToBoxOrigin(point1);
-		// Vec4 boxPoint2 = this.transformModelToBoxOrigin(point2);
+		points.add(point1);
+		points.add(point2);
+		Box box = HierarchicalBox.computeBoundingBox(points, axes);
 
-		HierarchicalBox hierarchicalBox = new HierarchicalBox(point1, axes, rLength, sLength, tLength);
-		hierarchicalBox.parent = this;
-		cells.add(hierarchicalBox);
+		HierarchicalBox hierarchicalBox = new HierarchicalBox(box);
+		hierarchicalBox.setOrigin(point1);
+//		hierarchicalBox.parent = this;
 
 		return hierarchicalBox;
 	}
@@ -208,8 +203,7 @@ public class HierarchicalBox extends Box {
 	 * in world model coordinates considering numerical inaccuracies. Cells are
 	 * looked up recursively and only non-parent cells are considered.
 	 * 
-	 * @param modelPoint
-	 *            the point in world model coordinates
+	 * @param modelPoint the point in world model coordinates
 	 * 
 	 * @return the regular non-parent grid cells containing the specified point
 	 */
@@ -218,16 +212,14 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Looks up the regular grid cells (maximum eight) containing a specified point
-	 * in world model coordinates considering numerical inaccuracies. Cells are
-	 * looked up recursively to a specified depth level. A zero depth does not
-	 * consider any children. A negative depth performs a full recursive search and
-	 * considers non-parent cells only.
+	 * Looks up the regular grid cells containing a specified point in world model
+	 * coordinates considering numerical inaccuracies. Cells are looked up
+	 * recursively to a specified depth level. A zero depth does not consider any
+	 * children. A negative depth performs a full recursive search and considers
+	 * non-parent cells only.
 	 * 
-	 * @param modelPoint
-	 *            the point in world model coordinates
-	 * @param depth
-	 *            the hierarchical depth of the lookup operation
+	 * @param modelPoint the point in world model coordinates
+	 * @param depth the hierarchical depth of the lookup operation
 	 * 
 	 * @return the regular grid cells containing the specified point
 	 */
@@ -239,13 +231,12 @@ public class HierarchicalBox extends Box {
 		Vec4 cellPoint = this.transformModelToBoxOrigin(modelPoint);
 
 		if (this.containsV(cellPoint)) {
+			lookedUpCells.add(this);
 			if (this.hasChildren() && (0 != depth)) {
 				for (HierarchicalBox child : this.getChildren()) {
 					lookedUpCells.addAll(child.lookupCells(modelPoint, depth - 1));
 				}
 			}
-		} else {
-			lookedUpCells.add(this);
 		}
 
 		return lookedUpCells;
@@ -256,8 +247,7 @@ public class HierarchicalBox extends Box {
 	 * Finds all cells of this regular grid that satisfy a specified predicate. A
 	 * full recursive search is performed considering only non-parent cells.
 	 * 
-	 * @param predicate
-	 *            the predicate
+	 * @param predicate the predicate
 	 * 
 	 * @return the cells of this regular grid that satisfy a predicate
 	 */
@@ -271,10 +261,8 @@ public class HierarchicalBox extends Box {
 	 * consider any children. A negative depth performs a full recursive search and
 	 * considers non-parent cells only.
 	 * 
-	 * @param predicate
-	 *            the predicate
-	 * @param depth
-	 *            the hierarchical depth
+	 * @param predicate the predicate
+	 * @param depth the hierarchical depth
 	 * 
 	 * @return the cells of this regular grid that satisfy a predicate taking the
 	 *         hierarchical depth into account
@@ -299,8 +287,7 @@ public class HierarchicalBox extends Box {
 	 * Indicates whether or not a point is a waypoint in this regular grid. A full
 	 * recursive search is performed considering only non-parent cells.
 	 * 
-	 * @param point
-	 *            the point in world model coordinates
+	 * @param point the point in world model coordinates
 	 * 
 	 * @return true if the point is a waypoint in this regular grid, false otherwise
 	 * 
@@ -316,10 +303,8 @@ public class HierarchicalBox extends Box {
 	 * children. A negative depth performs a full recursive search and considers
 	 * non-parent cells only.
 	 * 
-	 * @param point
-	 *            the point in world model coordinates
-	 * @param depth
-	 *            the hierarchical depth
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth
 	 * 
 	 * @return true if the point is a waypoint in this regular grid taking the
 	 *         hierarchical depth into account, false otherwise
@@ -327,7 +312,240 @@ public class HierarchicalBox extends Box {
 	public boolean isWaypoint(Vec4 point, int depth) {
 		Set<? extends HierarchicalBox> cells = this.lookupCells(point, depth);
 
-		return 0 < cells.stream().filter(c -> c.isCenter(point)).count();
+		// Corners of the first environment are not waypoints
+		cells.removeIf(c -> !c.hasParent());
+		return 0 < cells.stream().filter(c -> c.isOrigin(point) || c.is3DOpposite(point)).count();
+	}
+
+	/**
+	 * Gets the adjacent waypoints of a point in this regular grid. A full recursive
+	 * search is performed considering only non-parent cells.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return the adjacent waypoints of the point in this regular grid, or the
+	 *         waypoint itself
+	 * 
+	 * @see RegularGrid#getAdjacentWaypoints(Vec4, int)
+	 */
+	public Set<Vec4> getAdjacentWaypoints(Vec4 point) {
+		return this.getAdjacentWaypoints(point, -1);
+	}
+
+	/**
+	 * Gets the adjacent waypoints of a point in this regular grid taking a
+	 * specified hierarchical depth into account. A zero depth does not consider any
+	 * children. A negative depth performs a full recursive search and considers
+	 * non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return the adjacent waypoints of the point in this regular grid taking the
+	 *         hierarchical depth into account, or the waypoint itself
+	 */
+	public Set<Vec4> getAdjacentWaypoints(Vec4 point, int depth) {
+		Set<Vec4> adjacentWaypoints = new HashSet<Vec4>();
+		Set<? extends HierarchicalBox> cells = this.lookupCells(point, depth);
+		System.out.println("getAdjacentWaypoints, cells size: " + cells.size());
+		cells.removeIf(c -> !c.hasParent());
+
+		if (cells.isEmpty()) {
+			Set<Vec4> auxiliarWaypoints = new HashSet<Vec4>();
+			for (HierarchicalBox cell : this.getAll()) {
+				auxiliarWaypoints.add(cell.getOrigin());
+				auxiliarWaypoints.add(cell.get3DOpposite());
+			}
+			adjacentWaypoints = auxiliarWaypoints.stream()
+					.sorted((o1, o2) -> ((Double) o1.distanceTo3(point)).compareTo((Double) o2.distanceTo3(point)))
+					.limit(1).collect(Collectors.toSet());
+		} else {
+			for (HierarchicalBox cell : cells) {
+				adjacentWaypoints.add(cell.getOrigin());
+				adjacentWaypoints.add(cell.get3DOpposite());
+			}
+		}
+		System.out.println("getAdjacentWaypoints, adj size: " + adjacentWaypoints.size());
+
+		return adjacentWaypoints;
+	}
+
+	/**
+	 * Indicates whether or not a point is adjacent to a waypoint in this regular
+	 * grid.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param waypoint the waypoint in world model coordinates
+	 * 
+	 * @return true if the point is adjacent to the waypoint in this regular grid,
+	 *         false otherwise
+	 */
+	public boolean isAdjacentWaypoint(Vec4 point, Vec4 waypoint) {
+		return this.getAdjacentWaypoints(point).stream().map(PrecisionVec4::new).collect(Collectors.toSet())
+				.contains(new PrecisionVec4(waypoint));
+	}
+
+	/**
+	 * Gets the neighbors of this regular grid. A full recursive search is performed
+	 * considering only non-parent neighbors.
+	 * 
+	 * @return the non-parent neighbors of this regular grid
+	 * 
+	 * @see RegularGrid#getNeighbors(int)
+	 */
+	public Set<? extends HierarchicalBox> getNeighbors() {
+		return this.getNeighbors(-1);
+	}
+
+	/**
+	 * Gets the neighbors of this regular grid taking a specified hierarchical depth
+	 * into account. A zero depth does not consider any neighboring children. A
+	 * negative depth performs a full recursive search and considers non-parent
+	 * neighbors only.
+	 * 
+	 * @param depth the hierarchical depth for finding neighbors
+	 * 
+	 * @return the neighbors of this regular grid
+	 */
+	public Set<? extends HierarchicalBox> getNeighbors(int depth) {
+		// TODO: review implementation
+		Set<HierarchicalBox> neighbors = new HashSet<HierarchicalBox>();
+
+		if (this.hasParent()) {
+			Set<HierarchicalBox> flatNeighbors = new HashSet<HierarchicalBox>();
+
+			Vec4[] corners = new Vec4[2];
+			corners[0] = this.getOrigin();
+			corners[1] = this.get3DOpposite();
+			// compute same level neighbors first
+			for (Vec4 corner : corners) {
+				flatNeighbors.addAll(this.parent.lookupCells(corner, 0));
+			}
+			flatNeighbors.remove(this);
+
+			if (0 != depth) {
+				for (HierarchicalBox neighbor : flatNeighbors) {
+					neighbors.addAll(neighbor.findCells(c -> c.intersects(this), depth));
+				}
+			}
+
+		}
+
+		return neighbors;
+	}
+
+	/**
+	 * Indicates whether or not this regular grid is a neighbor of another regular
+	 * grid.
+	 * 
+	 * @param neighbor the potential neighbor
+	 * 
+	 * @return true if this regular grid is a neighbor of the other regular grid,
+	 *         false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors()
+	 */
+	public boolean areNeighbors(HierarchicalBox neighbor) {
+		return this.getNeighbors().contains(neighbor);
+	}
+
+	/**
+	 * Indicates whether or not this regular grid is a neighbor of another regular
+	 * grid taking a specified hierarchical depth into account.
+	 * 
+	 * @param neighbor the potential neighbor
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return true if this regular grid is a neighbor of the other regular grid
+	 *         taking the hierarchical depth into account, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(int)
+	 */
+	public boolean areNeighbors(HierarchicalBox neighbor, int depth) {
+		return this.getNeighbors(depth).contains(neighbor);
+	}
+
+	/**
+	 * Gets the neighbors of a point in this regular grid. A full recursive search
+	 * is performed considering non-parent cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * 
+	 * @return the neighbors of the point in this regular grid
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4, int)
+	 */
+	public Set<Vec4> getNeighbors(Vec4 point) {
+		return this.getNeighbors(point, -1);
+	}
+
+	/**
+	 * Gets the neighbors of a point in this regular grid taking a specified
+	 * hierarchical depth into account. A zero depth does not consider any children.
+	 * A negative depth performs a full recursive search and considers non-parent
+	 * cells only.
+	 * 
+	 * @param point the point in world model coordinates
+	 * @param depth the hierarchical depth for finding neighbors
+	 * 
+	 * @return the neighbors of the point in this regular grid
+	 */
+	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
+		Set<Vec4> neighbors = new HashSet<Vec4>();
+		Set<? extends HierarchicalBox> cells = this.lookupCells(point, depth);
+		cells.removeIf(c -> !c.hasParent());
+		Set<HierarchicalBox> cells2 = new HashSet<>();
+
+		for (HierarchicalBox cell : cells) {
+			cells2.addAll(cell.getNeighbors());
+		}
+		System.out.println("Cells size1 = "+cells2.size());
+		cells2.removeIf(c -> !c.hasParent());
+//		Set<? extends HierarchicalBox> cells = this.getAll();
+		System.out.println("Cells size2 = "+cells2.size());
+		
+		for (HierarchicalBox cell : cells) {
+			if (cell.isOrigin(point))
+				neighbors.add(cell.get3DOpposite());
+			else if (cell.is3DOpposite(point))
+				neighbors.add(cell.getOrigin());
+		}
+		System.out.println("Neig size1 = "+neighbors.size());
+
+		return neighbors;
+	}
+
+	/**
+	 * Indicates whether or not two points are neighbors in this regular grid.
+	 * 
+	 * @param point the point
+	 * @param neighbor the potential neighbor of the point
+	 * 
+	 * @return true if the two points are neighbors, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4)
+	 */
+	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
+		return this.getNeighbors(point).stream().map(Vec4::toHomogeneousPoint3).map(PrecisionVec4::new)
+				.collect(Collectors.toSet()).contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
+	}
+
+	/**
+	 * Indicates whether or not two points are neighbors in this regular grid taking
+	 * a specified hierarchical depth into account.
+	 * 
+	 * @param point the point
+	 * @param neighbor the potential neighbor of the point
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return true if the two points are neighbors taking the hierarchical depth
+	 *         into account, false otherwise
+	 * 
+	 * @see RegularGrid#getNeighbors(Vec4, int)
+	 */
+	public boolean areNeighbors(Vec4 point, Vec4 neighbor, int depth) {
+		return this.getNeighbors(point, depth).stream().map(Vec4::toHomogeneousPoint3).map(PrecisionVec4::new)
+				.collect(Collectors.toSet()).contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
 	}
 
 	// ------------------ DRAWING METHODS ----------------
@@ -338,19 +556,17 @@ public class HierarchicalBox extends Box {
 	 * Renders this regular grid. If a grid cell has children, then only the
 	 * children are rendered.
 	 * 
-	 * @param dc
-	 *            the drawing context
+	 * @param dc the drawing context
 	 */
 	@Override
 	public void render(DrawContext dc) {
 		if (this.visible) {
+			super.render(dc);
 			if (this.hasChildren()) {
 				for (HierarchicalBox child : this.getChildren()) {
 					child.render(dc);
 
 				}
-			} else {
-				super.render(dc);
 			}
 		}
 	}
@@ -389,14 +605,10 @@ public class HierarchicalBox extends Box {
 	/**
 	 * Sets the drawing color of this regular grid.
 	 * 
-	 * @param red
-	 *            the red color component between 0.0 and 1.0
-	 * @param green
-	 *            the green color component between 0.0 and 1.0
-	 * @param blue
-	 *            the blue color component between 0.0 and 1.0
-	 * @param alpha
-	 *            the alpha component between 0.0 and 1.0
+	 * @param red the red color component between 0.0 and 1.0
+	 * @param green the green color component between 0.0 and 1.0
+	 * @param blue the blue color component between 0.0 and 1.0
+	 * @param alpha the alpha component between 0.0 and 1.0
 	 */
 	public void setColor(float red, float green, float blue, float alpha) {
 		this.color[0] = red;
@@ -408,11 +620,68 @@ public class HierarchicalBox extends Box {
 	/**
 	 * Sets the visibility state of this regular grid.
 	 * 
-	 * @param visible
-	 *            true if this regular grid is visible, false otherwise
+	 * @param visible true if this regular grid is visible, false otherwise
 	 */
 	public void setVisible(boolean visible) {
 		this.visible = visible;
+	}
+
+	public static Box computeBoundingBox(Iterable<? extends Vec4> points, Vec4[] axes) {
+		if (points == null) {
+			String msg = Logging.getMessage("nullValue.PointListIsNull");
+			Logging.logger().severe(msg);
+			throw new IllegalArgumentException(msg);
+		}
+
+		if (axes == null) {
+			String msg = Logging.getMessage("generic.ListIsEmpty");
+			Logging.logger().severe(msg);
+			throw new IllegalArgumentException(msg);
+		}
+
+		Vec4 r = axes[0];
+		Vec4 s = axes[1];
+		Vec4 t = axes[2];
+
+		// Find the extremes along each axis.
+		double minDotR = Double.MAX_VALUE;
+		double maxDotR = -minDotR;
+		double minDotS = Double.MAX_VALUE;
+		double maxDotS = -minDotS;
+		double minDotT = Double.MAX_VALUE;
+		double maxDotT = -minDotT;
+
+		for (Vec4 p : points) {
+			if (p == null)
+				continue;
+
+			double pdr = p.dot3(r);
+			if (pdr < minDotR)
+				minDotR = pdr;
+			if (pdr > maxDotR)
+				maxDotR = pdr;
+
+			double pds = p.dot3(s);
+			if (pds < minDotS)
+				minDotS = pds;
+			if (pds > maxDotS)
+				maxDotS = pds;
+
+			double pdt = p.dot3(t);
+			if (pdt < minDotT)
+				minDotT = pdt;
+			if (pdt > maxDotT)
+				maxDotT = pdt;
+		}
+
+		if (maxDotR == minDotR)
+			maxDotR = minDotR + 1;
+		if (maxDotS == minDotS)
+			maxDotS = minDotS + 1;
+		if (maxDotT == minDotT)
+			maxDotT = minDotT + 1;
+
+		return new Box(axes, minDotR, maxDotR, minDotS, maxDotS, minDotT, maxDotT);
 	}
 
 }
