@@ -98,5 +98,24 @@ public class PlanningRoadmap extends SamplingEnvironment {
 			lazyPRM.construct();
 		}
 	}
+	
+	/**
+	 * Refines, that is, adds children with a specified density to this planning
+	 * grid.
+	 * 
+	 * @param density the refinement density
+	 * 
+	 */
+	@Override
+	public void refine(int density) {
+		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
+			BasicPRM basicPRM = new BasicPRM(this, density, MAX_NEIGHBORS, MAX_DIST);
+			basicPRM.construct();
+		}
+		if (this.roadmapConstructor == RoadmapConstructor.LAZYPRM) {
+			LazyPRM lazyPRM = new LazyPRM(this, density, MAX_NEIGHBORS, MAX_DIST);
+			lazyPRM.construct();
+		}
+	}
 
 }

@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.geom;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
@@ -43,6 +44,8 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
 
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.render.Material;
+import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.util.Logging;
 import gov.nasa.worldwind.util.OGLStackHandler;
 
@@ -59,7 +62,7 @@ public class HierarchicalBox extends Box {
 	protected HashSet<HierarchicalBox> cells = new HashSet<HierarchicalBox>();
 
 	/** the drawing color of this hierarchical box */
-	private float[] color = { 0f, 1.0f, 0f, 1.0f };
+	private float[] color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	/** the visibility state of this hierarchical box */
 	protected boolean visible = true;
@@ -329,9 +332,10 @@ public class HierarchicalBox extends Box {
 				auxiliarWaypoints.add(cell.getOrigin());
 				auxiliarWaypoints.add(cell.get3DOpposite());
 			}
+			//TODO: review maximum number of adjacent waypoints
 			adjacentWaypoints = auxiliarWaypoints.stream()
 					.sorted((o1, o2) -> ((Double) o1.distanceTo3(point)).compareTo((Double) o2.distanceTo3(point)))
-					.limit(1).collect(Collectors.toSet());
+					.limit(5).collect(Collectors.toSet());
 		} else {
 			for (HierarchicalBox cell : cells) {
 				adjacentWaypoints.add(cell.getOrigin());
@@ -519,24 +523,6 @@ public class HierarchicalBox extends Box {
 
 	// TODO: include construction from axes, origin and lengths
 
-	/**
-	 * Renders this hierarchical box. If a grid cell has children, then only the
-	 * children are rendered.
-	 * 
-	 * @param dc the drawing context
-	 */
-	@Override
-	public void render(DrawContext dc) {
-		if (this.visible) {
-			super.render(dc);
-			if (this.hasChildren()) {
-				for (HierarchicalBox child : this.getChildren()) {
-					child.render(dc);
-
-				}
-			}
-		}
-	}
 
 	/**
 	 * Draws this hierarchical box.
@@ -582,6 +568,10 @@ public class HierarchicalBox extends Box {
 		this.color[1] = green;
 		this.color[2] = blue;
 		this.color[3] = alpha;
+	}
+	
+	public Material getMaterial() {
+		return new Material(new Color(this.color[0], this.color[1], this.color[2], this.color[3]));
 	}
 
 	/**

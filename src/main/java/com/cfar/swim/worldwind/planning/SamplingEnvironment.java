@@ -58,6 +58,9 @@ import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.BasicShapeAttributes;
+import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.render.Polyline;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
@@ -1229,4 +1232,37 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 		return 0;
 	}
 	
+	/**
+	 * Renders this hierarchical box. If a grid cell has children, then only the
+	 * children are rendered.
+	 * 
+	 * @param dc the drawing context
+	 */
+	@Override
+	public void render(DrawContext dc) {
+		if (this.visible) {
+			if(this.hasParent()) {
+				Path diagonal = this.createRenderableDiagonal();
+				diagonal.render(dc);
+			}
+			else {
+				super.render(dc);
+			}
+			if (this.hasChildren()) {
+				for (SamplingEnvironment child : this.getChildren()) {
+					child.render(dc);
+
+				}
+			}
+		}
+	}
+	
+	public Path createRenderableDiagonal() {
+		Position originPosition = globe.computePositionFromPoint(this.getOrigin());
+		Position oppositePosition = globe.computePositionFromPoint(this.get3DOpposite());
+		Path diagonal = new Path(originPosition, oppositePosition);
+		diagonal.setAttributes(new BasicShapeAttributes());
+		diagonal.getAttributes().setOutlineMaterial(this.getMaterial());
+		return diagonal;
+	}
 }
