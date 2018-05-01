@@ -33,12 +33,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.cfar.swim.worldwind.ai.AbstractPlanner;
-import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
-import com.cfar.swim.worldwind.planning.SamplingEnvironment;
-import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -52,33 +48,29 @@ import gov.nasa.worldwind.geom.Position;
 public class BasicPRM {
 
 	/** the maximum number of sampling iterations */
-	public int maxIter;
+	protected int maxIter;
 
-	/** the maximum number of neighbors a waypoint can be connected to */
-	public int maxNeighbors;
+	/** the maximum number of neighbors a position can be connected to */
+	protected int maxNeighbors;
 
-	/** the maximum distance between two neighboring waypoints */
-	public double maxDist;
+	/** the maximum distance between two neighboring sampled positions */
+	protected double maxDist;
 
-	public Environment environment;
+	/** the environment of this basic PRM */
+	protected Environment environment = null;
 
-	/** the list of already sampled waypoints */
-	private List<Position> waypointList = new ArrayList<Position>();
+	/** the list of already sampled positions */
+	protected List<Position> positionList = new ArrayList<Position>();
 
 	/**
-	 * Constructs a basic PRM planner for a specified aircraft and environment,
-	 * using default local cost and risk policies. Also, this planner is constructed
-	 * with a specified maximum number of iterations (Waypoints), a maximum number
-	 * of neighbors (of a single Waypoint) and a maximum distance between two
-	 * connected neighbors.
+	 * Constructs a basic PRM for a specified environment, a maximum number of
+	 * iterations (Positions), a maximum number of neighbors (of a single Position)
+	 * and a maximum distance between two connected neighbors.
 	 * 
-	 * @param aircraft the aircraft
 	 * @param environment the environment
 	 * @param maxIter the maximum number of iterations
 	 * @param maxNeighbors the maximum number of neighbors
 	 * @param maxDist the maximum distance between two connected neighbors
-	 * 
-	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
 	 */
 	public BasicPRM(Environment environment, int maxIter, int maxNeighbors, double maxDist) {
 		this.environment = environment;
@@ -88,126 +80,126 @@ public class BasicPRM {
 	}
 
 	/**
-	 * Gets the continuum environment of this planner
+	 * Gets the planning roadmap of this planner
 	 * 
-	 * @return the continuum environment
+	 * @return the planning roadmap
 	 */
 	public PlanningRoadmap getEnvironment() {
 		return (PlanningRoadmap) environment;
 	}
 
 	/**
-	 * Gets the list of already sampled waypoints
+	 * Gets the list of already sampled positions
 	 * 
-	 * @return the list of waypoints
+	 * @return the list of positions
 	 */
-	public List<Position> getWaypointList() {
-		return waypointList;
+	public List<Position> getPositionList() {
+		return positionList;
 	}
 
 	/**
-	 * Sets the list of waypoints previously sampled
+	 * Sets the list of positions previously sampled
 	 * 
-	 * @param waypointList the list of waypoints to set
+	 * @param positionList the list of positions to set
 	 * 
 	 */
-	public void setWaypointList(List<Position> waypointList) {
-		this.waypointList = waypointList;
+	public void setPositionList(List<Position> positionList) {
+		this.positionList = positionList;
 	}
 
 	/**
-	 * Creates a Waypoint at a specified position.
+	 * Connects this position to another positions already sampled, checking if the
+	 * two positions are connectable. Then, creates a new planning roadmap based on
+	 * the two positions.
 	 * 
-	 * @param position the position
-	 * 
-	 * @return the Waypoint at the specified position
+	 * @param position the position to be connected
 	 */
-	protected Waypoint createWaypoint(Position position) {
-		Waypoint newWaypoint = new Waypoint(position);
-		newWaypoint.setEto(this.getEnvironment().getTime());
-		return newWaypoint;
-	}
-
-	/**
-	 * Connects this waypoint to another waypoints already sampled, which are closer
-	 * than a MAX_DIST. The maximum number of neighbors a waypoint can be connected
-	 * to is defined by MAX_NEIGHBORS.
-	 * 
-	 * @param waypoint the BasicPRM waypoint to be connected
-	 */
-	protected void connectWaypoint(Waypoint waypoint) {
+	protected void connectPosition(Position position) {
 		int numConnectedNeighbor = 0;
 
-		this.sortNearest(waypoint);
+		this.sortNearest(position);
 
-		for (Position neighbor : this.getWaypointList()) {
-			if (environment.getDistance(neighbor, waypoint) < this.maxDist
-					&& numConnectedNeighbor < this.maxNeighbors) {
-				if (!this.getEnvironment().checkConflict(neighbor, waypoint)) {
+		for (Position neighbor : this.getPositionList()) {
+			if (this.canConnectPositions(position, neighbor, numConnectedNeighbor)) {
+				if(!this.getEnvironment().checkConflict(neighbor, position)) {
+					this.getEnvironment().addChild(position, neighbor);
 					numConnectedNeighbor++;
-					this.getEnvironment().addChild(waypoint, neighbor);
 				}
 			}
+
 		}
+	}
+
+	/**
+	 * Indicates whether or not the two positions are connectable. In order to be
+	 * connectable the two positions must be closer than a maximum distance and the
+	 * number of connected neighbors must be less than a defined maximum number of
+	 * neighbors.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param neighbor the neighbor position in globe coordinates
+	 * @param num the number of connected neighbors
+	 * @return true if the two positions are connectable, false otherwise
+	 */
+	protected boolean canConnectPositions(Position position, Position neighbor, int num) {
+		boolean connectable = false;
+
+		if (environment.getDistance(neighbor, position) < this.maxDist && num < this.maxNeighbors) {
+			connectable = true;
+		}
+
+		return connectable;
 	}
 
 	/**
 	 * Creates the roadmap by sampling positions from a continuous environment.
-	 * First, checks if the waypoint position has conflicts with terrain. Then the
-	 * IntervalTree is embedded and the waypoint is added to the waypoint list.
-	 * After that, tries to connect this waypoint to others already sampled.
+	 * Checks if the position has conflicts with terrain. Then, adds the position to
+	 * positions list and tries to connect to other already sampled positions.
 	 */
 	public void construct() {
 		int num = 0;
-		
-		//TODO: review if code below is working correctly
-		for(SamplingEnvironment env : this.getEnvironment().getAll()) {
-			if(env.hasParent()) {
-				this.waypointList.add(env.getGlobe().computePositionFromPoint(env.getOrigin()));
-				this.waypointList.add(env.getGlobe().computePositionFromPoint(env.get3DOpposite()));
-			}
-		}
-		this.setWaypointList(
-				this.getWaypointList().stream().distinct().collect(Collectors.toList()));
-		
-		while (num < this.maxIter) {
-			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 
-			if (!this.getEnvironment().checkConflict(waypoint)) {
-				this.getWaypointList().add(waypoint);
-				this.connectWaypoint(waypoint);
+		this.getAllPositions();
+
+		while (num < this.maxIter) {
+			Position position = this.getEnvironment().sampleRandomPosition();
+
+			if (!this.getEnvironment().checkConflict(position)) {
+				this.positionList.add(position);
+				this.connectPosition(position);
 				num++;
 			}
 		}
 	}
 
 	/**
-	 * Extends the roadmap to incorporate new positions.
-	 * 
-	 * @param waypoints the list of positions in global coordinates
+	 * Gets all the positions associated with this environment. Adds the origin and
+	 * the 3D opposite corner of the origin of all environments to the positions
+	 * list.
 	 */
-	protected void extendsConstruction(List<Position> waypoints) {
-		for (Position pos : waypoints) {
-			Waypoint waypoint = this.createWaypoint(pos);
-
-			if (!this.getEnvironment().checkConflict(waypoint)) {
-				this.getWaypointList().add(waypoint);
-				this.connectWaypoint(waypoint);
+	protected void getAllPositions() {
+		// TODO: review if code below is working correctly
+		for (PlanningRoadmap env : this.getEnvironment().getAll()) {
+			if (env.hasParent()) {
+				this.positionList.add(env.getGlobe().computePositionFromPoint(env.getOrigin()));
+				this.positionList.add(env.getGlobe().computePositionFromPoint(env.get3DOpposite()));
 			}
 		}
+		this.setPositionList(this.getPositionList().stream().distinct().collect(Collectors.toList()));
+
 	}
 
 	/**
-	 * Finds the k-nearest waypoints to the given position
+	 * Finds the k-nearest positions to the given position
 	 * 
 	 * @param position the position in global coordinates
-	 * @param kNear number of waypoints to return
+	 * @param kNear number of positions to return
 	 * 
-	 * @return list of k-nearest waypoints sorted by increasing distance
+	 * @return list of k-nearest positions sorted by increasing distance
 	 */
-	public List<? extends Position> findNearest(Position position, int kNear) {
+	public List<Position> findNearest(Position position, int kNear) {
 
-		return this.getWaypointList().stream()
+		return this.getPositionList().stream()
 				.sorted((p1, p2) -> Double.compare(this.getEnvironment().getNormalizedDistance(p1, position),
 						this.getEnvironment().getNormalizedDistance(p2, position)))
 				.limit(kNear).collect(Collectors.toList());
@@ -221,14 +213,22 @@ public class BasicPRM {
 	 */
 	public void sortNearest(Position position) {
 
-		this.setWaypointList(
-				this.getWaypointList().stream()
+		this.setPositionList(
+				this.getPositionList().stream()
 						.sorted((p1, p2) -> Double.compare(this.getEnvironment().getNormalizedDistance(p1, position),
 								this.getEnvironment().getNormalizedDistance(p2, position)))
 						.collect(Collectors.toList()));
 
 	}
 
+	/**
+	 * Indicates whether or not this basic PRM supports a specified
+	 * environment.
+	 * 
+	 * @param environment the environment
+	 * 
+	 * @return true if the environment is supported, false otherwise
+	 */
 	public boolean supports(Environment environment) {
 		boolean supports = false;
 		if (null != environment)
@@ -240,5 +240,4 @@ public class BasicPRM {
 
 		return supports;
 	}
-
 }

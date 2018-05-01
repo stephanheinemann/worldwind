@@ -30,7 +30,6 @@
 package com.cfar.swim.worldwind.ai.prm.lazyprm;
 
 import java.util.HashSet;
-import java.util.List;
 
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -40,84 +39,76 @@ import com.cfar.swim.worldwind.planning.Waypoint;
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes a Lazy PRM planner that constructs a Planning Roadmap by sampling
- * points in a continuous environment, without taking terrain obstacles into
- * account and plans a trajectory of an aircraft in an environment considering a
- * local cost and risk policy.
+ * Realizes a Lazy PRM that constructs a Planning Roadmap by sampling points in
+ * a continuous environment without taking terrain obstacles into account.
  * 
  * @author Henrique Ferreira
  *
  */
 public class LazyPRM extends BasicPRM {
 
+	/**
+	 * Constructs a Lazy PRM for a specified environment, a maximum number of
+	 * iterations (Positions), a maximum number of neighbors (of a single Position)
+	 * and a maximum distance between two connected neighbors.
+	 * 
+	 * @param environment the environment
+	 * @param maxIter the maximum number of iterations
+	 * @param maxNeighbors the maximum number of neighbors
+	 * @param maxDist the maximum distance between two connected neighbors
+	 */
 	public LazyPRM(Environment environment, int maxIter, int maxNeighbors, double maxDist) {
 		super(environment, maxIter, maxNeighbors, maxDist);
 	}
-	
 
 	/**
-	 * Connects this waypoint to another waypoints already sampled, which are closer
-	 * than a MAX_DIST. The maximum number of neighbors a waypoint can be connected
-	 * to is defined by MAX_NEIGHBORS.
+	 * Connects this position to another positions already sampled, checking if the
+	 * two positions are connectable. Then, creates a new planning roadmap based on
+	 * the two positions.
 	 * 
-	 * @param waypoint the BasicPRM waypoint to be connected
+	 * @param position the position to be connected
+	 *
+	 * @see com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM#connectPosition(gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
-	protected void connectWaypoint(Waypoint waypoint) {
+	protected void connectPosition(Position position) {
 		int numConnectedNeighbor = 0;
 
-		this.sortNearest(waypoint);
+		this.sortNearest(position);
 
-		for (Position neighbor : this.getWaypointList()) {
-			if (super.getEnvironment().getDistance(neighbor, waypoint) < this.maxDist
-					&& numConnectedNeighbor < this.maxNeighbors) {
+		for (Position neighbor : this.getPositionList()) {
+			if (this.canConnectPositions(position, neighbor, numConnectedNeighbor)) {
+				this.getEnvironment().addChild(position, neighbor);
 				numConnectedNeighbor++;
-				this.getEnvironment().addChild(waypoint, neighbor);
 			}
 		}
 	}
 
 	/**
-	 * Creates the roadmap by sampling positions from a continuous environment. It
-	 * doesn't check if the waypoint position has conflicts with terrain. The
-	 * IntervalTree is embedded and the waypoint is added to the waypoint list.
-	 * After that, tries to connect this waypoint to others already sampled.
+	 * Creates the roadmap by sampling positions from a continuous environment. Does
+	 * not check if the position has conflicts with terrain. Then, adds the position
+	 * to positions list and tries to connect to other already sampled positions.
+	 * 
+	 * @see com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM#construct()
 	 */
 	@Override
 	public void construct() {
 		int num = 0;
 
+		this.getAllPositions();
+
 		while (num < this.maxIter) {
-			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
-			this.getWaypointList().add(waypoint);
-			this.connectWaypoint(waypoint);
+			Position position = this.getEnvironment().sampleRandomPosition();
+			this.positionList.add(position);
+			this.connectPosition(position);
 			num++;
 		}
 
 	}
 
-
+	// TODO: correct Trajectory, remove conflicting environments.
 	/**
-	 * Extends the roadmap to incorporate the origin, intermediate and destination
-	 * positions.
-	 * 
-	 * @param origin the origin position in global coordinates
-	 * @param destination the destination position in global coordinates
-	 * @param waypoints the list of intermediate positions in global coordinates
-	 */
-	@Override
-	protected void extendsConstruction(List<Position> waypoints) {
-		// waypoints may be located at inacessible positions (conflict with terrain
-		// is not checked)
-		for (Position pos : waypoints) {
-			Waypoint waypoint = this.createWaypoint(pos);
-			this.getWaypointList().add(waypoint);
-			this.connectWaypoint(waypoint);
-		}
-	}
-
-	/**
-	 * Corrects a trajectory, checking if any of its waypoints or edges is in
+	 * Corrects a trajectory, checking if any of its positions or edges is in
 	 * conflict with terrain obstacles.
 	 * 
 	 * @param trajectory the planned trajectory
@@ -125,8 +116,7 @@ public class LazyPRM extends BasicPRM {
 	 * @return true if this trajectory is feasible, false otherwise
 	 */
 	protected boolean correctTrajectory(Trajectory trajectory) {
-		// TODO: only waypoint conflict checks are done. Edge conflicts are still not
-		// done
+		// TODO: only position checks are done. Edge conflicts are still not done
 		if (trajectory == null)
 			return false;
 
@@ -153,8 +143,9 @@ public class LazyPRM extends BasicPRM {
 	 */
 	protected void correctLists(HashSet<Waypoint> conflictWaypoints) {
 		for (Waypoint waypoint : conflictWaypoints) {
-			this.getWaypointList().remove(waypoint);
-//			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
+			this.getPositionList().remove(waypoint);
+			// this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) ||
+			// s.getPosition2().equals(waypoint));
 		}
 		return;
 	}

@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import java.util.Set;
+
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.geom.Box;
@@ -41,8 +43,8 @@ import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 
 /**
- * Realizes a planning roadmap that extends a planning continuum, by
- * incorporating waypoint and edge lists. Can be used for motion planning.
+ * Realizes a planning roadmap that extends a sampling environment,
+ * incorporating a roadmap constructor, which populates the environment.
  * 
  * @author Henrique Ferreira
  *
@@ -50,129 +52,159 @@ import gov.nasa.worldwind.globes.Globe;
 public class PlanningRoadmap extends SamplingEnvironment {
 
 	/** the maximum number of sampling iterations */
-	public int MAX_ITER;
+	protected int maxIter;
 
-	/** the maximum number of neighbors a waypoint can be connected to */
-	public int MAX_NEIGHBORS;
+	/** the maximum number of neighbors a position can be connected to */
+	protected int maxNeighbors;
 
-	/** the maximum distance between two neighboring waypoints */
-	public double MAX_DIST;
+	/** the maximum distance between two neighboring sampled positions */
+	protected double maxDist;
 
-	public RoadmapConstructor roadmapConstructor;
-
-	/**
-	 * Constructs a planning roadmap based on a box, a waypoint list and a edge list
-	 * 
-	 * @param box the box used to define this environment
-	 * @param waypointList the list of waypoints
-	 * @param edgeList the list of edges
-	 */
-	public PlanningRoadmap(Box box, Globe globe) {
-		super(box);
-		this.setGlobe(globe);
-		MAX_ITER = 1000;
-		MAX_NEIGHBORS = 30;
-		MAX_DIST = 200d;
-	}
+	/** the constructor used to populate this planning roadmap */
+	protected RoadmapConstructor roadmapConstructor;
 
 	/**
 	 * Constructs a planning roadmap based on a box.
 	 * 
-	 * @param box the box used to define this environment
-	 * @param resolution the resolution of this planning continuum
+	 * @param box the geometric box
+	 * @param resolution the resolution of this planning roadmap
+	 * @param roadmapConstructor the constructor used to populate this planning
+	 *            roadmap
+	 * @param globe the globe
+	 * @param maxIter the maximum number of iterations
+	 * @param maxNeighbors the maximum number of neighbors
+	 * @param maxDist the maximum distance between two connected neighbors
 	 */
 	public PlanningRoadmap(Box box, double resolution, RoadmapConstructor roadmapConstructor, Globe globe, int maxIter,
 			int maxNeighbors, double maxDist) {
 		super(box);
 		this.setGlobe(globe);
 		this.update();
-		MAX_ITER = maxIter;
-		MAX_NEIGHBORS = maxNeighbors;
-		MAX_DIST = maxDist;
+		this.maxIter = maxIter;
+		this.maxNeighbors = maxNeighbors;
+		this.maxDist = maxDist;
 		this.roadmapConstructor = roadmapConstructor;
 		this.constructRoadmap();
 		this.update();
 	}
-	
+
+	/**
+	 * Constructs a planning roadmap based on a hierarchical box.
+	 * 
+	 * @param box the hierarchical box used to define this environment
+	 */
 	public PlanningRoadmap(HierarchicalBox box) {
 		super(box);
 		this.refresh();
 	}
 
 	/**
-	 * @return the mAX_ITER
+	 * Gets the maximum number of sampling iterations of this planning roadmap.
+	 * 
+	 * @return the maxIter the maximum number of sampling iterations of this
+	 *         planning roadmap
 	 */
-	public int getMAX_ITER() {
-		return MAX_ITER;
+	public int getMaxIter() {
+		return maxIter;
 	}
 
 	/**
-	 * @param mAX_ITER the mAX_ITER to set
+	 * Sets the maximum number of sampling iterations of this planning roadmap.
+	 * 
+	 * @param maxIter the maxIter to set
 	 */
-	public void setMAX_ITER(int mAX_ITER) {
-		MAX_ITER = mAX_ITER;
+	public void setMaxIter(int maxIter) {
+		this.maxIter = maxIter;
 	}
 
 	/**
-	 * @return the mAX_NEIGHBORS
+	 * Gets the maximum number of neighbors a position can be connected to.
+	 * 
+	 * @return the maxNeighbors the maximum number of neighbors a position can be
+	 *         connected to
 	 */
-	public int getMAX_NEIGHBORS() {
-		return MAX_NEIGHBORS;
+	public int getMaxNeighbors() {
+		return maxNeighbors;
 	}
 
 	/**
-	 * @param mAX_NEIGHBORS the mAX_NEIGHBORS to set
+	 * Sets the maximum number of neighbors a position can be connected to.
+	 * 
+	 * @param maxNeighbors the maxNeighbors to set
 	 */
-	public void setMAX_NEIGHBORS(int mAX_NEIGHBORS) {
-		MAX_NEIGHBORS = mAX_NEIGHBORS;
+	public void setMaxNeighbors(int maxNeighbors) {
+		this.maxNeighbors = maxNeighbors;
 	}
 
 	/**
-	 * @return the mAX_DIST
+	 * Gets the maximum distance between two neighboring sampled positions.
+	 * 
+	 * @return the maxDist the maximum distance between two neighboring sampled
+	 *         positions
 	 */
-	public double getMAX_DIST() {
-		return MAX_DIST;
+	public double getMaxDist() {
+		return maxDist;
 	}
 
 	/**
-	 * @param mAX_DIST the mAX_DIST to set
+	 * Sets the maximum distance between two neighboring sampled positions.
+	 * 
+	 * @param maxDist the maxDist to set
 	 */
-	public void setMAX_DIST(double mAX_DIST) {
-		MAX_DIST = mAX_DIST;
+	public void setMaxDist(double maxDist) {
+		this.maxDist = maxDist;
 	}
 
 	/**
-	 * @return the roadmapConstructor
+	 * Gets the constructor used to populate this planning roadmap.
+	 * 
+	 * @return the roadmapConstructor the constructor used to populate this planning
+	 *         roadmap
 	 */
 	public RoadmapConstructor getRoadmapConstructor() {
 		return roadmapConstructor;
 	}
 
 	/**
+	 * Sets the constructor used to populate this planning roadmap.
+	 * 
 	 * @param roadmapConstructor the roadmapConstructor to set
 	 */
 	public void setRoadmapConstructor(RoadmapConstructor roadmapConstructor) {
 		this.roadmapConstructor = roadmapConstructor;
 	}
 
+	/**
+	 * Populates this planning roadmap based on the constructor stored in the
+	 * variable roadmapConstructor.
+	 */
 	protected void constructRoadmap() {
 		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
-			BasicPRM basicPRM = new BasicPRM(this, MAX_ITER, MAX_NEIGHBORS, MAX_DIST);
+			BasicPRM basicPRM = new BasicPRM(this, maxIter, maxNeighbors, maxDist);
 			basicPRM.construct();
 		}
 		if (this.roadmapConstructor == RoadmapConstructor.LAZYPRM) {
-			LazyPRM lazyPRM = new LazyPRM(this, MAX_ITER, MAX_NEIGHBORS, MAX_DIST);
+			LazyPRM lazyPRM = new LazyPRM(this, maxIter, maxNeighbors, maxDist);
 			lazyPRM.construct();
 		}
 	}
-	
+
+	/**
+	 * Adds a child to this planning roadmap, constructing a new planning roadmap based on two positions.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param other the other position in globe coordinates
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.SamplingEnvironment#addChild(gov.nasa.worldwind.geom.Position,
+	 *      gov.nasa.worldwind.geom.Position)
+	 */
 	@Override
 	public void addChild(Position origin, Position other) {
 		Globe globe = this.getGlobe();
 		Vec4 pointOrigin = globe.computePointFromPosition(origin);
 		Vec4 pointOther = globe.computePointFromPosition(other);
 
-		PlanningRoadmap child = new PlanningRoadmap(super.createChild(pointOrigin, pointOther));
+		PlanningRoadmap child = new PlanningRoadmap(super.createInstance(pointOrigin, pointOther));
 
 		child.setGlobe(globe);
 		child.setTime(this.getTime());
@@ -181,8 +213,8 @@ public class PlanningRoadmap extends SamplingEnvironment {
 		child.parent = this;
 		this.cells.add(child);
 		child.setOrigin(pointOrigin);
-		
-//		 propagate obstacle embeddings
+
+		// propagate obstacle embeddings
 		for (Obstacle obstacle : this.getObstacles()) {
 			if (obstacle instanceof ObstacleCylinder) {
 				if (child.embed((ObstacleCylinder) obstacle)) {
@@ -190,39 +222,52 @@ public class PlanningRoadmap extends SamplingEnvironment {
 				}
 			}
 		}
-		child.setMAX_DIST(this.MAX_DIST);
-		child.setMAX_ITER(this.MAX_ITER);
-		child.setMAX_NEIGHBORS(this.MAX_NEIGHBORS);
+		child.setMaxDist(this.maxDist);
+		child.setMaxIter(this.maxIter);
+		child.setMaxNeighbors(this.maxNeighbors);
 		child.setRoadmapConstructor(this.roadmapConstructor);
 	}
-	
-	
+
 	/**
 	 * Refines, that is, adds children with a specified density to this planning
-	 * grid.
+	 * roadmap.
 	 * 
-	 * @param density the refinement density
+	 * @param density the maximum number of positions to sample
 	 * 
+	 * @see com.cfar.swim.worldwind.planning.SamplingEnvironment#refine(int)
 	 */
 	@Override
 	public void refine(int density) {
 		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
-			BasicPRM basicPRM = new BasicPRM(this, density, this.MAX_NEIGHBORS, this.MAX_DIST);
+			BasicPRM basicPRM = new BasicPRM(this, density, this.maxNeighbors, this.maxDist);
 			basicPRM.construct();
 		}
 		if (this.roadmapConstructor == RoadmapConstructor.LAZYPRM) {
-			LazyPRM lazyPRM = new LazyPRM(this, density, this.MAX_NEIGHBORS, this.MAX_DIST);
+			LazyPRM lazyPRM = new LazyPRM(this, density, this.maxNeighbors, this.maxDist);
 			lazyPRM.construct();
 		}
 	}
-	
+
 	/**
-	 * Coarsens, that is, removes the children of this planning grid.
+	 * Coarsens, that is, removes the children of this planning roadmap.
 	 *
+	 * @see com.cfar.swim.worldwind.planning.SamplingEnvironment#coarsen()
 	 */
 	@Override
 	public void coarsen() {
 		this.removeChildren();
 	}
 
+	/**
+	 * Gets all planning roadmaps associated with this planning roadmap.
+	 * 
+	 * @return all planning roadmaps associated with this planning roadmap
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.SamplingEnvironment#getAll()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends PlanningRoadmap> getAll() {
+		return (Set<PlanningRoadmap>) super.getAll();
+	}
 }
