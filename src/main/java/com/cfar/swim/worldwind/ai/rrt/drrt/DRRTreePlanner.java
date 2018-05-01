@@ -30,10 +30,15 @@
 package com.cfar.swim.worldwind.ai.rrt.drrt;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.render.Obstacle;
@@ -91,7 +96,7 @@ public class DRRTreePlanner extends RRTreePlanner {
 	public DRRTreeWaypoint getStart() {
 		return (DRRTreeWaypoint) super.getStart();
 	}
-	
+
 	/**
 	 * Gets the goal DRRT waypoint of this RRT planner.
 	 * 
@@ -103,7 +108,7 @@ public class DRRTreePlanner extends RRTreePlanner {
 	public DRRTreeWaypoint getGoal() {
 		return (DRRTreeWaypoint) super.getGoal();
 	}
-	
+
 	/**
 	 * Gets the newest DRRT waypoint added to the tree.
 	 * 
@@ -116,20 +121,44 @@ public class DRRTreePlanner extends RRTreePlanner {
 		return (DRRTreeWaypoint) super.getWaypointNew();
 	}
 	
-	
 	/**
-	 * Regrows an RRTree by trimming the invalidated nodes and computing a new one
+	 * Gets the child waypoint from the two waypoints in the given edge
+	 * 
+	 * @param edge the edge to be considered
+	 * 
+	 * @return the child waypoint of the edge
+	 */
+	protected DRRTreeWaypoint getEdgeChild(Edge edge) {
+		DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
+		DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
+		
+		return waypoint2.getParent().equals(waypoint1) ? waypoint2 : waypoint1;
+	}
+
+	/**
+	 * Regrows an RRTree by trimming the invalidated nodes and computing a new one.
 	 */
 	protected void regrowRRT() {
-		// TODO: Implement
+		this.trimRRT();
+		this.compute();
 	}
 
 	/**
 	 * Searches the tree and recursively invalidates all nodes whose parent is
-	 * invalidated
+	 * invalidated.
 	 */
 	protected void trimRRT() {
-		// TODO: Implement
+		List<DRRTreeWaypoint> validWaypoints = new ArrayList<DRRTreeWaypoint>();
+		for (int i = 0; i < this.getWaypointList().size(); i++) {
+			DRRTreeWaypoint waypoint = (DRRTreeWaypoint) this.getWaypointList().get(i);
+			DRRTreeWaypoint parent = waypoint.getParent();
+			// Special case for start (no parent)
+			if (parent != null)
+				waypoint.setValidity(parent.isValid());
+			if (waypoint.isValid())
+				validWaypoints.add(waypoint);
+		}
+		// TODO: set waypoint list to validWaypoints
 	}
 
 	/**
@@ -138,9 +167,38 @@ public class DRRTreePlanner extends RRTreePlanner {
 	 * @param obstacle the new obstacle in the environment
 	 */
 	protected void invalidateWaypoints(Obstacle obstacle) {
-		// TODO: Implement
+		for(Edge edge : this.findAffectedEdges(obstacle)) {
+			this.getEdgeChild(edge).setValidity(false);
+		}
 	}
-	
+
+	/**
+	 * Finds all the edges in the edge list which are affected by the given obstacle
+	 * 
+	 * @param obstacle the obstacle to be considered for intersection
+	 * 
+	 * @return the list of affected edges
+	 */
+	protected List<Edge> findAffectedEdges(Obstacle obstacle) {
+		return this.getEdgeList().stream()
+				.filter(e -> obstacle.getExtent(this.getEnvironment().getGlobe()).intersects(e.getLine()))
+				.collect(Collectors.toList());
+	}
+
+	/**
+	 * Checks whether the current path to goal contains nodes which are marked as
+	 * invalid due to new obstacles in the environment
+	 * 
+	 * @return true is the path is invalid, false otherwise
+	 */
+	protected boolean isPathInvalid() {
+		return this.isPathInvalid(0);
+	}
+
+	protected boolean isPathInvalid(int index) {
+		return 0 < this.backupPlans.get(index).stream().filter(c -> !((DRRTreeWaypoint) c).isValid()).count();
+	}
+
 	/**
 	 * Plans a trajectory from an origin to a destination at a specified estimated
 	 * time of departure.
@@ -156,10 +214,33 @@ public class DRRTreePlanner extends RRTreePlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-		// TODO: Implement
-		return super.plan(origin, destination, etd);
+		// TODO: newObstacles must listen to changes in environment obstacles
+		HashSet<Obstacle> newObstacles = new HashSet<>();
+
+		this.initialize(origin, destination, etd);
+		this.compute();
+		Trajectory trajectory = this.createTrajectory();
+		this.revisePlan(trajectory);
+
+		// Check for new obstacles until the goal is reached
+		while (this.checkGoal(getStart())) {
+			// TODO: Update starting position of acft to current position
+			this.setStart(getStart());
+			if (!newObstacles.isEmpty()) {
+				for (Obstacle obstacle : newObstacles) {
+					this.invalidateWaypoints(obstacle);
+				}
+				if (this.isPathInvalid()) {
+					this.regrowRRT();
+					trajectory = this.createTrajectory();
+					this.revisePlan(trajectory);
+				}
+			}
+		}
+
+		return trajectory;
 	}
-	
+
 	/**
 	 * Plans a trajectory from an origin to a destination along waypoints at a
 	 * specified estimated time of departure.
@@ -180,4 +261,7 @@ public class DRRTreePlanner extends RRTreePlanner {
 		return super.plan(origin, destination, waypoints, etd);
 	}
 
+	private final ArrayList<ArrayList<RRTreeWaypoint>> backupPlans = new ArrayList<>();
+	
+	// TODO: Override planPath to make a backup copy of new plan
 }
