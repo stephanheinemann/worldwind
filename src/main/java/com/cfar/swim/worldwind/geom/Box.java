@@ -257,41 +257,41 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @param origin the origin of this box
 	 */
 	public void setOrigin(Vec4 origin) {
-		int index = this.getCornerIndex(origin);
-		Vec4 r=this.r, s=this.s, t=this.t;
+//		int index = this.getCornerIndex(origin);
+//		Vec4 r=this.r, s=this.s, t=this.t;
 		this.origin = origin;
-		switch (index) {
-		case (0):
-			break;
-		case (1):
-			r = this.r.getNegative3();
-			break;
-		case (2):
-			r = this.r.getNegative3();
-			s = this.s.getNegative3();
-			break;
-		case (3):
-			s = this.s.getNegative3();
-			break;
-		case (4):
-			t = this.t.getNegative3();
-			break;
-		case (5):
-			t = this.t.getNegative3();
-			r = this.r.getNegative3();
-			break;
-		case (6):
-			t = this.t.getNegative3();
-			r = this.r.getNegative3();
-			s = this.s.getNegative3();
-			break;
-		case (7):
-			t = this.t.getNegative3();
-			s = this.s.getNegative3();
-			break;
-		}
-		Vec4[] axes = {r,s,t};
-		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, axes);
+//		switch (index) {
+//		case (0):
+//			break;
+//		case (1):
+//			r = this.r.getNegative3();
+//			break;
+//		case (2):
+//			r = this.r.getNegative3();
+//			s = this.s.getNegative3();
+//			break;
+//		case (3):
+//			s = this.s.getNegative3();
+//			break;
+//		case (4):
+//			t = this.t.getNegative3();
+//			break;
+//		case (5):
+//			t = this.t.getNegative3();
+//			r = this.r.getNegative3();
+//			break;
+//		case (6):
+//			t = this.t.getNegative3();
+//			r = this.r.getNegative3();
+//			s = this.s.getNegative3();
+//			break;
+//		case (7):
+//			t = this.t.getNegative3();
+//			s = this.s.getNegative3();
+//			break;
+//		}
+//		Vec4[] axes = {r,s,t};
+		this.toLocalOrigin = TransformationMatrix.toLocalOrientation(this.origin, this.getAxes());
 	}
 
 	/**

@@ -37,18 +37,14 @@ import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
-import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.globes.Globe;
 
 /**
- * Realizes a basic PRM planner that constructs a Planning Roadmap by sampling
- * points in a continuous environment and plans a trajectory of an aircraft in
- * an environment considering a local cost and risk policy.
+ * Realizes a basic PRM that constructs a Planning Roadmap by sampling points in
+ * a continuous environment.
  * 
  * @author Henrique Ferreira
  *
@@ -113,7 +109,6 @@ public class BasicPRM {
 	 * 
 	 * @return the list of waypoints
 	 */
-	@SuppressWarnings("unchecked")
 	public List<Waypoint> getWaypointList() {
 		return waypointList;
 	}
@@ -217,53 +212,12 @@ public class BasicPRM {
 	}
 
 	/**
-	 * Extends the roadmap to incorporate the origin and destination positions.
+	 * Extends the roadmap to incorporate new positions.
 	 * 
-	 * @param origin
-	 *            the origin position in global coordinates
-	 * @param destination
-	 *            the destination position in global coordinates
-	 */
-	protected void extendsConstruction(Position origin, Position destination) {
-		Waypoint start = this.createWaypoint(origin);
-		Waypoint goal = this.createWaypoint(destination);
-
-		if (!this.getEnvironment().checkConflict(start)) {
-			this.getWaypointList().add(start);
-			this.connectWaypoint(start);
-		}
-
-		if (!this.getEnvironment().checkConflict(goal)) {
-			this.getWaypointList().add(goal);
-			this.connectWaypoint(goal);
-		}
-	}
-
-	/**
-	 * Extends the roadmap to incorporate the origin, intermediate and destination
-	 * positions.
-	 * 
-	 * @param origin
-	 *            the origin position in global coordinates
-	 * @param destination
-	 *            the destination position in global coordinates
 	 * @param waypoints
-	 *            the list of intermediate positions in global coordinates
+	 *            the list of positions in global coordinates
 	 */
-	protected void extendsConstruction(Position origin, Position destination, List<Position> waypoints) {
-		Waypoint start = this.createWaypoint(origin);
-		Waypoint goal = this.createWaypoint(destination);
-
-		if (!this.getEnvironment().checkConflict(start)) {
-			this.getWaypointList().add(start);
-			this.connectWaypoint(start);
-		}
-
-		if (!this.getEnvironment().checkConflict(goal)) {
-			this.getWaypointList().add(goal);
-			this.connectWaypoint(goal);
-		}
-
+	protected void extendsConstruction(List<Position> waypoints) {
 		for (Position pos : waypoints) {
 			Waypoint waypoint = this.createWaypoint(pos);
 
@@ -315,7 +269,7 @@ public class BasicPRM {
 			supports = true;
 
 		if (supports) {
-			supports = (environment instanceof PlanningContinuum);
+			supports = (environment instanceof PlanningRoadmap);
 		}
 
 		return supports;

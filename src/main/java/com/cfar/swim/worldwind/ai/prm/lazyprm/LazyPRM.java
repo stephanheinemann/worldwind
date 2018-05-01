@@ -96,25 +96,6 @@ public class LazyPRM extends BasicPRM {
 
 	}
 
-	/**
-	 * Extends the roadmap to incorporate the origin and destination positions.
-	 * 
-	 * @param origin the origin position in global coordinates
-	 * @param destination the destination position in global coordinates
-	 */
-	@Override
-	protected void extendsConstruction(Position origin, Position destination) {
-		Waypoint start = this.createWaypoint(origin);
-		Waypoint goal = this.createWaypoint(destination);
-
-		// Start and goal may be located at inacessible positions (conflict with terrain
-		// is not checked)
-		this.getWaypointList().add(start);
-		this.connectWaypoint(start);
-
-		this.getWaypointList().add(goal);
-		this.connectWaypoint(goal);
-	}
 
 	/**
 	 * Extends the roadmap to incorporate the origin, intermediate and destination
@@ -125,18 +106,9 @@ public class LazyPRM extends BasicPRM {
 	 * @param waypoints the list of intermediate positions in global coordinates
 	 */
 	@Override
-	protected void extendsConstruction(Position origin, Position destination, List<Position> waypoints) {
-		Waypoint start = this.createWaypoint(origin);
-		Waypoint goal = this.createWaypoint(destination);
-
+	protected void extendsConstruction(List<Position> waypoints) {
 		// waypoints may be located at inacessible positions (conflict with terrain
 		// is not checked)
-		this.getWaypointList().add(start);
-		this.connectWaypoint(start);
-
-		this.getWaypointList().add(goal);
-		this.connectWaypoint(goal);
-
 		for (Position pos : waypoints) {
 			Waypoint waypoint = this.createWaypoint(pos);
 			this.getWaypointList().add(waypoint);

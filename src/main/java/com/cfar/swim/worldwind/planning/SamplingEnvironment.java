@@ -363,6 +363,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 		child.update();
 		child.parent = this;
 		this.cells.add(child);
+		child.setOrigin(pointOrigin);
 		
 //		 propagate obstacle embeddings
 		for (Obstacle obstacle : this.obstacles) {
@@ -744,10 +745,6 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 		this.updateActiveCost();
 		this.updateAppearance();
 		this.updateVisibility();
-//		if(this.hasChildren()) {
-//			for(SamplingEnvironment child : this.getChildren())
-//				child.update();	
-//		}
 	}
 
 	/**

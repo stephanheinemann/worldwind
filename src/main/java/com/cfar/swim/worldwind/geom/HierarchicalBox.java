@@ -52,29 +52,21 @@ import gov.nasa.worldwind.util.OGLStackHandler;
  */
 public class HierarchicalBox extends Box {
 
-	/**
-	 * the parent of this regular grid
-	 */
+	/** the parent of this hierarchical box */
 	protected HierarchicalBox parent = null;
 
-	/**
-	 * the children of this regular grid
-	 */
+	/** the children of this hierarchical box */
 	protected HashSet<HierarchicalBox> cells = new HashSet<HierarchicalBox>();
 
-	/**
-	 * the drawing color of this regular grid
-	 */
+	/** the drawing color of this hierarchical box */
 	private float[] color = { 0f, 1.0f, 0f, 1.0f };
 
-	/**
-	 * the visibility state of this regular grid
-	 */
+	/** the visibility state of this hierarchical box */
 	protected boolean visible = true;
 
 	// ------------------ CONSTRUCTORS ----------------
 	/**
-	 * Constructs a new continuum box a geometric box without any children.
+	 * Constructs a new hierarchical box based on a geometric box without any children.
 	 * 
 	 * @param box the geometric box
 	 * 
@@ -84,21 +76,6 @@ public class HierarchicalBox extends Box {
 		super(box);
 	}
 
-	/**
-	 * Constructs a new regular grid from three plane normals and six distances for
-	 * each of the six faces of a geometric box without any children.
-	 * 
-	 * @param axes the three plane normals
-	 * @param rMin the minimum distance on the <code>R</code> axis
-	 * @param rMax the maximum distance on the <code>R</code> axis
-	 * @param sMin the minimum distance on the <code>S</code> axis
-	 * @param sMax the maximum distance on the <code>S</code> axis
-	 * @param tMin the minimum distance on the <code>T</code> axis
-	 * @param tMax the maximum distance on the <code>T</code> axis
-	 * 
-	 * @see com.cfar.swim.worldwind.geom.Box#Box(Vec4[], double, double, double,
-	 *      double, double, double)
-	 */
 	public HierarchicalBox(Vec4[] axes, double rMin, double rMax, double sMin, double sMax, double tMin, double tMax) {
 		super(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 	}
@@ -117,8 +94,6 @@ public class HierarchicalBox extends Box {
 		Box box = HierarchicalBox.computeBoundingBox(points, axes);
 
 		HierarchicalBox hierarchicalBox = new HierarchicalBox(box);
-		hierarchicalBox.setOrigin(point1);
-//		hierarchicalBox.parent = this;
 
 		return hierarchicalBox;
 	}
@@ -133,16 +108,16 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Removes all children from this regular grid.
+	 * Removes all children from this hierarchical box.
 	 */
 	public void removeChildren() {
 		this.cells.clear();
 	}
 
 	/**
-	 * Indicates whether or not this regular grid has children.
+	 * Indicates whether or not this hierarchical box has children.
 	 * 
-	 * @return true if this regular grid has children, false otherwise
+	 * @return true if this hierarchical box has children, false otherwise
 	 */
 	public boolean hasChildren() {
 		return !this.cells.isEmpty();
@@ -163,27 +138,27 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Indicates whether or not this regular grid has a parent.
+	 * Indicates whether or not this hierarchical box has a parent.
 	 * 
-	 * @return true if this regular grid has a parent, false otherwise
+	 * @return true if this hierarchical box has a parent, false otherwise
 	 */
 	public boolean hasParent() {
 		return (null != this.parent);
 	}
 
 	/**
-	 * Gets the parent of this regular grid if present.
+	 * Gets the parent of this hierarchical box if present.
 	 * 
-	 * @return the parent of this regular grid if present, null otherwise
+	 * @return the parent of this hierarchical box if present, null otherwise
 	 */
 	public HierarchicalBox getParent() {
 		return this.parent;
 	}
 
 	/**
-	 * Gets all regular grids associated with this regular grid.
+	 * Gets all hierarchical boxes associated with this hierarchical box.
 	 * 
-	 * @return all regular grids associated with this regular grid
+	 * @return all hierarchical boxes associated with this hierarchical box
 	 */
 	public Set<? extends HierarchicalBox> getAll() {
 		Set<HierarchicalBox> all = new LinkedHashSet<HierarchicalBox>();
@@ -199,7 +174,7 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Looks up the regular grid cells (maximum eight) containing a specified point
+	 * Looks up the hierarchical box cells (maximum eight) containing a specified point
 	 * in world model coordinates considering numerical inaccuracies. Cells are
 	 * looked up recursively and only non-parent cells are considered.
 	 * 
@@ -212,7 +187,7 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Looks up the regular grid cells containing a specified point in world model
+	 * Looks up the hierarchical box cells containing a specified point in world model
 	 * coordinates considering numerical inaccuracies. Cells are looked up
 	 * recursively to a specified depth level. A zero depth does not consider any
 	 * children. A negative depth performs a full recursive search and considers
@@ -221,7 +196,7 @@ public class HierarchicalBox extends Box {
 	 * @param modelPoint the point in world model coordinates
 	 * @param depth the hierarchical depth of the lookup operation
 	 * 
-	 * @return the regular grid cells containing the specified point
+	 * @return the hierarchical box cells containing the specified point
 	 */
 	public Set<? extends HierarchicalBox> lookupCells(Vec4 modelPoint, int depth) {
 		Set<HierarchicalBox> lookedUpCells = new HashSet<HierarchicalBox>(8);
@@ -238,25 +213,24 @@ public class HierarchicalBox extends Box {
 				}
 			}
 		}
-
 		return lookedUpCells;
 
 	}
 
 	/**
-	 * Finds all cells of this regular grid that satisfy a specified predicate. A
+	 * Finds all cells of this hierarchical box that satisfy a specified predicate. A
 	 * full recursive search is performed considering only non-parent cells.
 	 * 
 	 * @param predicate the predicate
 	 * 
-	 * @return the cells of this regular grid that satisfy a predicate
+	 * @return the cells of this hierarchical box that satisfy a predicate
 	 */
 	public Set<? extends HierarchicalBox> findCells(Predicate<HierarchicalBox> predicate) {
 		return this.findCells(predicate, -1);
 	}
 
 	/**
-	 * Finds all cells of this regular grid that satisfy a specified predicate
+	 * Finds all cells of this hierarchical box that satisfy a specified predicate
 	 * taking a specified hierarchical depth into account. A zero depth does not
 	 * consider any children. A negative depth performs a full recursive search and
 	 * considers non-parent cells only.
@@ -264,7 +238,7 @@ public class HierarchicalBox extends Box {
 	 * @param predicate the predicate
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return the cells of this regular grid that satisfy a predicate taking the
+	 * @return the cells of this hierarchical box that satisfy a predicate taking the
 	 *         hierarchical depth into account
 	 */
 	public Set<? extends HierarchicalBox> findCells(Predicate<HierarchicalBox> predicate, int depth) {
@@ -284,12 +258,12 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Indicates whether or not a point is a waypoint in this regular grid. A full
+	 * Indicates whether or not a point is a waypoint in this hierarchical box. A full
 	 * recursive search is performed considering only non-parent cells.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
-	 * @return true if the point is a waypoint in this regular grid, false otherwise
+	 * @return true if the point is a waypoint in this hierarchical box, false otherwise
 	 * 
 	 * @see RegularGrid#isWaypoint(Vec4, int)
 	 */
@@ -298,7 +272,7 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Indicates whether or not a point is a waypoint in this regular grid taking a
+	 * Indicates whether or not a point is a waypoint in this hierarchical box taking a
 	 * specified hierarchical depth into account. A zero depth does not consider any
 	 * children. A negative depth performs a full recursive search and considers
 	 * non-parent cells only.
@@ -306,7 +280,7 @@ public class HierarchicalBox extends Box {
 	 * @param point the point in world model coordinates
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return true if the point is a waypoint in this regular grid taking the
+	 * @return true if the point is a waypoint in this hierarchical box taking the
 	 *         hierarchical depth into account, false otherwise
 	 */
 	public boolean isWaypoint(Vec4 point, int depth) {
@@ -318,12 +292,12 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Gets the adjacent waypoints of a point in this regular grid. A full recursive
+	 * Gets the adjacent waypoints of a point in this hierarchical box. A full recursive
 	 * search is performed considering only non-parent cells.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
-	 * @return the adjacent waypoints of the point in this regular grid, or the
+	 * @return the adjacent waypoints of the point in this hierarchical box, or the
 	 *         waypoint itself
 	 * 
 	 * @see RegularGrid#getAdjacentWaypoints(Vec4, int)
@@ -333,7 +307,7 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Gets the adjacent waypoints of a point in this regular grid taking a
+	 * Gets the adjacent waypoints of a point in this hierarchical box taking a
 	 * specified hierarchical depth into account. A zero depth does not consider any
 	 * children. A negative depth performs a full recursive search and considers
 	 * non-parent cells only.
@@ -341,13 +315,12 @@ public class HierarchicalBox extends Box {
 	 * @param point the point in world model coordinates
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return the adjacent waypoints of the point in this regular grid taking the
+	 * @return the adjacent waypoints of the point in this hierarchical box taking the
 	 *         hierarchical depth into account, or the waypoint itself
 	 */
 	public Set<Vec4> getAdjacentWaypoints(Vec4 point, int depth) {
 		Set<Vec4> adjacentWaypoints = new HashSet<Vec4>();
 		Set<? extends HierarchicalBox> cells = this.lookupCells(point, depth);
-		System.out.println("getAdjacentWaypoints, cells size: " + cells.size());
 		cells.removeIf(c -> !c.hasParent());
 
 		if (cells.isEmpty()) {
@@ -365,7 +338,6 @@ public class HierarchicalBox extends Box {
 				adjacentWaypoints.add(cell.get3DOpposite());
 			}
 		}
-		System.out.println("getAdjacentWaypoints, adj size: " + adjacentWaypoints.size());
 
 		return adjacentWaypoints;
 	}
@@ -377,7 +349,7 @@ public class HierarchicalBox extends Box {
 	 * @param point the point in world model coordinates
 	 * @param waypoint the waypoint in world model coordinates
 	 * 
-	 * @return true if the point is adjacent to the waypoint in this regular grid,
+	 * @return true if the point is adjacent to the waypoint in this hierarchical box,
 	 *         false otherwise
 	 */
 	public boolean isAdjacentWaypoint(Vec4 point, Vec4 waypoint) {
@@ -386,10 +358,10 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Gets the neighbors of this regular grid. A full recursive search is performed
+	 * Gets the neighbors of this hierarchical box. A full recursive search is performed
 	 * considering only non-parent neighbors.
 	 * 
-	 * @return the non-parent neighbors of this regular grid
+	 * @return the non-parent neighbors of this hierarchical box
 	 * 
 	 * @see RegularGrid#getNeighbors(int)
 	 */
@@ -398,14 +370,14 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Gets the neighbors of this regular grid taking a specified hierarchical depth
+	 * Gets the neighbors of this hierarchical box taking a specified hierarchical depth
 	 * into account. A zero depth does not consider any neighboring children. A
 	 * negative depth performs a full recursive search and considers non-parent
 	 * neighbors only.
 	 * 
 	 * @param depth the hierarchical depth for finding neighbors
 	 * 
-	 * @return the neighbors of this regular grid
+	 * @return the neighbors of this hierarchical box
 	 */
 	public Set<? extends HierarchicalBox> getNeighbors(int depth) {
 		// TODO: review implementation
@@ -435,12 +407,12 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Indicates whether or not this regular grid is a neighbor of another regular
+	 * Indicates whether or not this hierarchical box is a neighbor of another regular
 	 * grid.
 	 * 
 	 * @param neighbor the potential neighbor
 	 * 
-	 * @return true if this regular grid is a neighbor of the other regular grid,
+	 * @return true if this hierarchical box is a neighbor of the other hierarchical box,
 	 *         false otherwise
 	 * 
 	 * @see RegularGrid#getNeighbors()
@@ -450,13 +422,13 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Indicates whether or not this regular grid is a neighbor of another regular
+	 * Indicates whether or not this hierarchical box is a neighbor of another regular
 	 * grid taking a specified hierarchical depth into account.
 	 * 
 	 * @param neighbor the potential neighbor
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return true if this regular grid is a neighbor of the other regular grid
+	 * @return true if this hierarchical box is a neighbor of the other hierarchical box
 	 *         taking the hierarchical depth into account, false otherwise
 	 * 
 	 * @see RegularGrid#getNeighbors(int)
@@ -466,12 +438,12 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Gets the neighbors of a point in this regular grid. A full recursive search
+	 * Gets the neighbors of a point in this hierarchical box. A full recursive search
 	 * is performed considering non-parent cells only.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
-	 * @return the neighbors of the point in this regular grid
+	 * @return the neighbors of the point in this hierarchical box
 	 * 
 	 * @see RegularGrid#getNeighbors(Vec4, int)
 	 */
@@ -480,7 +452,7 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Gets the neighbors of a point in this regular grid taking a specified
+	 * Gets the neighbors of a point in this hierarchical box taking a specified
 	 * hierarchical depth into account. A zero depth does not consider any children.
 	 * A negative depth performs a full recursive search and considers non-parent
 	 * cells only.
@@ -488,35 +460,30 @@ public class HierarchicalBox extends Box {
 	 * @param point the point in world model coordinates
 	 * @param depth the hierarchical depth for finding neighbors
 	 * 
-	 * @return the neighbors of the point in this regular grid
+	 * @return the neighbors of the point in this hierarchical box
 	 */
 	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
 		Set<Vec4> neighbors = new HashSet<Vec4>();
 		Set<? extends HierarchicalBox> cells = this.lookupCells(point, depth);
 		cells.removeIf(c -> !c.hasParent());
 		Set<HierarchicalBox> cells2 = new HashSet<>();
-
 		for (HierarchicalBox cell : cells) {
 			cells2.addAll(cell.getNeighbors());
 		}
-		System.out.println("Cells size1 = "+cells2.size());
 		cells2.removeIf(c -> !c.hasParent());
-//		Set<? extends HierarchicalBox> cells = this.getAll();
-		System.out.println("Cells size2 = "+cells2.size());
 		
-		for (HierarchicalBox cell : cells) {
+		for (HierarchicalBox cell : cells2) {
 			if (cell.isOrigin(point))
 				neighbors.add(cell.get3DOpposite());
 			else if (cell.is3DOpposite(point))
 				neighbors.add(cell.getOrigin());
 		}
-		System.out.println("Neig size1 = "+neighbors.size());
 
 		return neighbors;
 	}
 
 	/**
-	 * Indicates whether or not two points are neighbors in this regular grid.
+	 * Indicates whether or not two points are neighbors in this hierarchical box.
 	 * 
 	 * @param point the point
 	 * @param neighbor the potential neighbor of the point
@@ -531,7 +498,7 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Indicates whether or not two points are neighbors in this regular grid taking
+	 * Indicates whether or not two points are neighbors in this hierarchical box taking
 	 * a specified hierarchical depth into account.
 	 * 
 	 * @param point the point
@@ -553,7 +520,7 @@ public class HierarchicalBox extends Box {
 	// TODO: include construction from axes, origin and lengths
 
 	/**
-	 * Renders this regular grid. If a grid cell has children, then only the
+	 * Renders this hierarchical box. If a grid cell has children, then only the
 	 * children are rendered.
 	 * 
 	 * @param dc the drawing context
@@ -572,7 +539,7 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Draws this regular grid.
+	 * Draws this hierarchical box.
 	 * 
 	 * @see gov.nasa.worldwind.geom.Box
 	 */
@@ -603,7 +570,7 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Sets the drawing color of this regular grid.
+	 * Sets the drawing color of this hierarchical box.
 	 * 
 	 * @param red the red color component between 0.0 and 1.0
 	 * @param green the green color component between 0.0 and 1.0
@@ -618,9 +585,9 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Sets the visibility state of this regular grid.
+	 * Sets the visibility state of this hierarchical box.
 	 * 
-	 * @param visible true if this regular grid is visible, false otherwise
+	 * @param visible true if this hierarchical box is visible, false otherwise
 	 */
 	public void setVisible(boolean visible) {
 		this.visible = visible;
