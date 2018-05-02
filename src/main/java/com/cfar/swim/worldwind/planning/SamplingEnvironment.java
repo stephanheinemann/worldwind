@@ -46,9 +46,7 @@ import java.util.stream.Collectors;
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
-import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.HierarchicalBox;
-import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
@@ -65,67 +63,120 @@ import gov.nasa.worldwind.render.Polyline;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
+ * Realizes a sampling environment that can encode spatial and temporal costs,
+ * and can be used for motion planning.
+ * 
  * @author Manuel Rosa
+ * @author Henrique Ferreira
  *
  */
 public class SamplingEnvironment extends HierarchicalBox implements Environment {
 
-	/** the globe of this planning continuum */
+	/** the globe of this sampling environment */
 	private Globe globe = null;
 
 	/** the cost interval tree encoding temporal costs */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
 			CostInterval.comparator);
 
-	/** the current time of this planning continuum */
+	/** the current time of this sampling environment */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 
-	/** the obstacles embedded into this planning continuum */
-	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
-
-	/** the current accumulated active cost of this planning continuum */
+	/** the current accumulated active cost of this sampling environment */
 	private double activeCost = 1d;
 
-	/** the threshold cost of this planning continuum */
+	/** the threshold cost of this sampling environment */
 	private double thresholdCost = 0d;
-	
-	/** the resolution of this planning continuum */
-	private double resolution = 1d;
-	
+
+	/** the obstacles embedded into this sampling environment */
+	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
+
 	/** the affected children of obstacle embeddings */
 	private HashMap<Obstacle, List<SamplingEnvironment>> affectedChildren = new HashMap<Obstacle, List<SamplingEnvironment>>();
 
-	// ------------------ CONSTRUCTORS ----------------
+	/** the resolution of this sampling environment */
+	private double resolution = 100d;
 
+	/**
+	 * Constructs a sampling environment based on a geometric box.
+	 * 
+	 * @param box the geometric box
+	 */
 	public SamplingEnvironment(Box box) {
 		super(box);
 		this.update();
 	}
-	
+
+	/**
+	 * Constructs a sampling environment based on a hierachical box.
+	 * 
+	 * @param box the hierarchical box
+	 */
 	public SamplingEnvironment(HierarchicalBox box) {
 		super(box);
 		this.refresh();
 	}
 
-
-	// ------------------ SETTERS AND GETTERS ----------------
-
 	/**
-	 * Gets the globe of this planning continuum.
+	 * Constructs a sampling environment based on two points.
 	 * 
-	 * @return the globe of this planning continuum
+	 * @param point1 the first point in world model coordinates
+	 * @param point2 the second point in world model coordinates
 	 * 
-	 * @see Environment#getGlobe()
+	 * @return the new sampling environment
 	 */
-	@Override
-	public Globe getGlobe() {
-		return this.globe;
+	protected SamplingEnvironment createChild(Vec4 point1, Vec4 point2) {
+		return new SamplingEnvironment(super.createInstance(point1, point2));
 	}
 
 	/**
-	 * Sets the globe of this planning continuum.
+	 * Indicates whether or not this sampling environment contains a position.
 	 * 
-	 * @param globe the globe of this planning continuum
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if this sampling environment contains the position, false
+	 *         otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
+	 * @see Environment#contains(Position)
+	 * @see Box#contains(Vec4)
+	 */
+	@Override
+	public boolean contains(Position position) {
+		if (null != this.globe) {
+			return super.contains(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+
+	/**
+	 * Gets the center position in globe coordinates of this sampling environment.
+	 * 
+	 * @return the center position in globe coordinates of this sampling environment
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 * 
+	 * @see Box#getCenter()
+	 */
+	@Override
+	public Position getCenterPosition() {
+		Position centerPosition = null;
+
+		if (null != this.globe) {
+			centerPosition = this.globe.computePositionFromPoint(this.getCenter());
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+
+		return centerPosition;
+	}
+
+	/**
+	 * Sets the globe of this sampling environment.
+	 * 
+	 * @param globe the globe of this sampling environment
 	 * 
 	 * @see Environment#setGlobe(Globe)
 	 */
@@ -137,7 +188,19 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Adds a cost interval to this planning grid.
+	 * Gets the globe of this sampling environment.
+	 * 
+	 * @return the globe of this sampling environment
+	 * 
+	 * @see Environment#getGlobe()
+	 */
+	@Override
+	public Globe getGlobe() {
+		return this.globe;
+	}
+
+	/**
+	 * Adds a cost interval to this sampling environment.
 	 * 
 	 * @param costInterval the cost interval to be added
 	 */
@@ -151,7 +214,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Removes a cost interval from this planning grid.
+	 * Removes a cost interval from this sampling environment.
 	 * 
 	 * @param costInterval the cost interval to be removed
 	 * 
@@ -170,8 +233,6 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	 * 
 	 */
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		// return this.costIntervals.searchInterval(new CostInterval(null, this.time));
-		// //BUG?
 		return this.costIntervals.searchInterval(new CostInterval(null, time));
 	}
 
@@ -189,25 +250,27 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Gets the accumulated cost of this planning grid at specified time instant.
+	 * Gets the accumulated cost of this sampling environment at specified time
+	 * instant.
 	 * 
 	 * @param time the time instant
 	 * 
-	 * @return the accumulated cost of this planning grid at the specified time
-	 *         instant
+	 * @return the accumulated cost of this sampling environment at the specified
+	 *         time instant
 	 */
 	public double getCost(ZonedDateTime time) {
 		return this.getCost(time, time);
 	}
 
 	/**
-	 * Gets the accumulated cost of this planning grid within a specified time span.
+	 * Gets the accumulated cost of this sampling environment within a specified
+	 * time span.
 	 * 
 	 * @param start the start time of the time span
 	 * @param end the end time of the time span
 	 * 
-	 * @return the accumulated cost of this planning grid within the specified time
-	 *         span
+	 * @return the accumulated cost of this sampling environment within the
+	 *         specified time span
 	 */
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
 		double cost = 1d; // simple cost of normalized distance
@@ -236,9 +299,9 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Gets the current time of this planning continuum.
+	 * Gets the current time of this sampling environment.
 	 * 
-	 * @return the current time of this planning continuum
+	 * @return the current time of this sampling environment
 	 * 
 	 * @see TimedRenderable#getTime()
 	 */
@@ -248,9 +311,9 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Sets the current time of this planning grid.
+	 * Sets the current time of this sampling environment.
 	 * 
-	 * @param time the current time of this planning grid
+	 * @param time the current time of this sampling environment
 	 * 
 	 * @see TimedRenderable#setTime(ZonedDateTime)
 	 */
@@ -263,7 +326,34 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Gets the obstacles of this planning continuum.
+	 * Gets the threshold cost of this sampling environment.
+	 * 
+	 * @return the threshold cost of this sampling environment
+	 * 
+	 * @see ThresholdRenderable#setThreshold(double)
+	 */
+	@Override
+	public double getThreshold() {
+		return this.thresholdCost;
+	}
+
+	/**
+	 * Sets the threshold cost of this sampling environment.
+	 * 
+	 * @param thresholdCost the threshold cost of this sampling environment
+	 * 
+	 * @see ThresholdRenderable#setThreshold(double)
+	 */
+	@Override
+	public void setThreshold(double thresholdCost) {
+		for (SamplingEnvironment env : this.getAll()) {
+			env.thresholdCost = thresholdCost;
+			env.updateVisibility();
+		}
+	}
+
+	/**
+	 * Gets the obstacles of this sampling environment.
 	 * 
 	 * @return the obstacles
 	 */
@@ -272,7 +362,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Sets the obstacles of this planning continuum.
+	 * Sets the obstacles of this sampling environment.
 	 * 
 	 * @param obstacles the obstacles to set
 	 */
@@ -288,43 +378,34 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Gets the threshold cost of this planning continuum.
+	 * Gets the resolution of this sampling environment
 	 * 
-	 * @return the threshold cost of this planning continuum
-	 * 
-	 * @see ThresholdRenderable#setThreshold(double)
+	 * @return the resolution of this sampling environment
 	 */
-	@Override
-	public double getThreshold() {
-		return this.thresholdCost;
+	public double getResolution() {
+		return resolution;
 	}
 
 	/**
-	 * Sets the threshold cost of this planning continuum.
+	 * Sets the resolution of this sampling environment
 	 * 
-	 * @param thresholdCost the threshold cost of this planning continuum
-	 * 
-	 * @see ThresholdRenderable#setThreshold(double)
+	 * @param resolution the resolution to set
 	 */
-	@Override
-	public void setThreshold(double thresholdCost) {
-		for (SamplingEnvironment env : this.getAll()) {
-			env.thresholdCost = thresholdCost;
-			env.updateVisibility();
-		}
+	public void setResolution(double resolution) {
+		this.resolution = resolution;
 	}
-	
+
 	/**
-	 * Updates this planning grid with all its children.
+	 * Updates this sampling environment with all its children.
 	 */
 	public void refresh() {
 		for (SamplingEnvironment env : this.getAll()) {
 			env.update();
 		}
 	}
-	
+
 	/**
-	 * Updates this planning grid for an embedded obstacle.
+	 * Updates this sampling environment for an embedded obstacle.
 	 * 
 	 * @param obstacle the embedded obstacle
 	 * 
@@ -341,270 +422,44 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 			}
 		}
 	}
-	
+
 	/**
-	 * Gets the resolution of this planning continuum
-	 * 
-	 * @return the resolution of this planning continuum
+	 * Updates this sampling environment.
 	 */
-	public double getResolution() {
-		return resolution;
+	protected void update() {
+		this.updateActiveCost();
+		this.updateAppearance();
+		this.updateVisibility();
 	}
 
 	/**
-	 * Sets the resolution of this planning continuum
-	 * 
-	 * @param resolution the resolution to set
+	 * Updates the accumulated active cost of this sampling environment.
 	 */
-	public void setResolution(double resolution) {
-		this.resolution = resolution;
-	}
-
-	// ------------------ NEW METHODS ----------------
-	public void addChild(Position origin, Position other) {
-		Vec4 pointOrigin = globe.computePointFromPosition(origin);
-		Vec4 pointOther = globe.computePointFromPosition(other);
-
-		SamplingEnvironment child = this.createChild(pointOrigin, pointOther);
-
-		child.setGlobe(this.globe);
-		child.setTime(this.time);
-		child.setThreshold(this.thresholdCost);
-		child.update();
-		child.parent = this;
-		this.cells.add(child);
-		child.setOrigin(pointOrigin);
-		
-//		 propagate obstacle embeddings
-		for (Obstacle obstacle : this.obstacles) {
-			if (obstacle instanceof ObstacleCylinder) {
-				if (child.embed((ObstacleCylinder) obstacle)) {
-					this.addAffectedChild(obstacle, child);
-				}
-			}
-		}
+	protected void updateActiveCost() {
+		this.activeCost = this.getCost(this.time);
 	}
 
 	/**
-	 * Removes all children from this planning grid.
-	 * 
-	 * @see CubicGrid#removeChildren()
+	 * Updates the visibility of this sampling environment.
 	 */
-	@Override
-	public void removeChild(HierarchicalBox child) {
-		super.removeChild(child);
+	protected void updateVisibility() {
+		this.setVisible(this.activeCost > this.thresholdCost);
 	}
 
 	/**
-	 * Removes all children from this planning grid.
+	 * Updates the appearance of this sampling environment.
 	 */
-	public void removeChildren() {
-		super.removeChildren();
-		// remove affected children of all obstacle embeddings
-		this.affectedChildren.clear();
-	}
-	
-	protected SamplingEnvironment createChild(Vec4 point1, Vec4 point2) {
-		return new SamplingEnvironment(super.createInstance(point1, point2));
-	}
-
-	@SuppressWarnings("unchecked")
-	@Override
-	public Set<? extends SamplingEnvironment> getChildren() {
-		return (Set<SamplingEnvironment>) super.getChildren();
+	protected void updateAppearance() {
+		Color activeColor = ObstacleColor.getColor(activeCost);
+		float red = activeColor.getRed() / 255.0f;
+		float green = activeColor.getGreen() / 255.0f;
+		float blue = activeColor.getBlue() / 255.0f;
+		float alpha = activeColor.getAlpha() / 255.0f;
+		this.setColor(red, green, blue, alpha);
 	}
 
 	/**
-	 * Gets the parent of this planning grid if present.
-	 * 
-	 * @return the parent of this planning grid if present, null otherwise
-	 * 
-	 * @see CubicGrid#getParent()
-	 */
-	@Override
-	public SamplingEnvironment getParent() {
-		return (SamplingEnvironment) super.getParent();
-	}
-
-	/**
-	 * Gets all planning grids associated with this planning grid.
-	 * 
-	 * @return all planning grids associated with this planning grid
-	 * 
-	 * @see CubicGrid#getAll()
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public Set<? extends SamplingEnvironment> getAll() {
-		return (Set<SamplingEnvironment>) super.getAll();
-	}
-
-	/**
-	 * Indicates whether or not this planning continuum contains a position.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return true if this planning continuum contains the position, false
-	 *         otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see Environment#contains(Position)
-	 * @see Box#contains(Vec4)
-	 */
-	@Override
-	public boolean contains(Position position) {
-		if (null != this.globe) {
-			return super.contains(this.globe.computePointFromPosition(position));
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * Gets the center position in globe coordinates of this planning continuum.
-	 * 
-	 * @return the center position in globe coordinates of this planning continuum
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see Box#getCenter()
-	 */
-	@Override
-	public Position getCenterPosition() {
-		Position centerPosition = null;
-
-		if (null != this.globe) {
-			centerPosition = this.globe.computePositionFromPoint(this.getCenter());
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return centerPosition;
-	}
-	
-	/**
-	 * Indicates whether or not this planning grid is refined, that is, has
-	 * children.
-	 * 
-	 * @return true if this planning grid is refined, false otherwise
-	 * 
-	 */
-	public boolean isRefined() {
-		return this.hasChildren();
-	}
-
-	/**
-	 * Gets the refinements, that is, children of this planning grid.
-	 * 
-	 * @return the refinements of this planning grid
-	 * 
-	 */
-	public Set<? extends SamplingEnvironment> getRefinements() {
-		return this.getChildren();
-	}
-
-	/**
-	 * Refines, that is, adds children with a specified density to this planning
-	 * grid.
-	 * 
-	 * @param density the refinement density
-	 * 
-	 */
-	public void refine(int density) {
-		// TODO: review how to use integer to refine
-		// this.addChildren(density);
-	}
-
-	/**
-	 * Coarsens, that is, removes the children of this planning grid.
-	 *
-	 */
-	public void coarsen() {
-		this.removeChildren();
-	}
-
-	/**
-	 * Looks up the planning grid cells (maximum eight) containing a specified point
-	 * in world model coordinates considering numerical inaccuracies.
-	 * 
-	 * @param modelPoint the point in world model coordinates
-	 * 
-	 * @return the planning grid cells containing the specified point
-	 * 
-	 * @see CubicGrid#lookupCells(Vec4)
-	 */
-	@Override
-	@SuppressWarnings("unchecked")
-	public Set<? extends SamplingEnvironment> lookupCells(Vec4 modelPoint) {
-		return (Set<SamplingEnvironment>) super.lookupCells(modelPoint);
-	}
-
-	/**
-	 * Looks up the planning grid cells (maximum eight) containing a specified
-	 * position in globe coordinates considering numerical inaccuracies.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return the planning grid cells containing the specified position
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see CubicGrid#lookupCells(Vec4)
-	 */
-	@SuppressWarnings("unchecked")
-	public Set<? extends SamplingEnvironment> lookupCells(Position position) {
-		Set<SamplingEnvironment> cells = null;
-
-		if (null != this.globe) {
-			cells = (Set<SamplingEnvironment>) super.lookupCells(this.globe.computePointFromPosition(position));
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return cells;
-	}
-	
-	/**
-	 * Finds all cells of this planning grid that satisfy a specified predicate. A
-	 * full recursive search is performed considering only non-parent cells.
-	 * 
-	 * @param predicate the predicate
-	 * 
-	 * @return the cells of this planning grid that satisfy a predicate
-	 * 
-	 * @see CubicGrid#findCells(Predicate)
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public Set<? extends SamplingEnvironment> findCells(Predicate<HierarchicalBox> predicate) {
-		return (Set<SamplingEnvironment>) super.findCells(predicate);
-	}
-
-	/**
-	 * Finds all cells of this planning grid that satisfy a specified predicate
-	 * taking a specified hierarchical depth into account. A zero depth does not
-	 * consider any children. A negative depth performs a full recursive search and
-	 * considers non-parent cells only.
-	 * 
-	 * @param predicate the predicate
-	 * @param depth the hierarchical depth
-	 * 
-	 * @return the cells of this planning grid that satisfy a predicate taking the
-	 *         hierarchical depth into account
-	 * 
-	 * @see CubicGrid#findCells(Predicate, int)
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public Set<? extends SamplingEnvironment> findCells(Predicate<HierarchicalBox> predicate, int depth) {
-		return (Set<SamplingEnvironment>) super.findCells(predicate, depth);
-	}
-	
-	// ------------------ OLD METHODS ----------------
-
-	/**
-	 * Embeds an obstacle into this planning continuum.
+	 * Embeds an obstacle into this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be embedded
 	 * 
@@ -635,7 +490,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Embeds an obstacle into this planning continuum.
+	 * Embeds an obstacle into this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be embedded
 	 * 
@@ -667,7 +522,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Unembeds an obstacle from this planning continuum.
+	 * Unembeds an obstacle from this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
 	 * 
@@ -682,7 +537,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 		if (this.isEmbedded(obstacle)) {
 			this.removeCostInterval(obstacle.getCostInterval());
 			this.obstacles.remove(obstacle);
-			
+
 			if (this.affectedChildren.containsKey(obstacle)) {
 				for (SamplingEnvironment child : this.affectedChildren.get(obstacle)) {
 					child.unembed(obstacle);
@@ -696,7 +551,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Unembeds all obstacles from this planning continuum.
+	 * Unembeds all obstacles from this sampling environment.
 	 * 
 	 * @see Environment#unembedAll()
 	 */
@@ -707,7 +562,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 			Obstacle obstacle = obstaclesIterator.next();
 			this.removeCostInterval(obstacle.getCostInterval());
 			obstaclesIterator.remove();
-			
+
 			if (this.affectedChildren.containsKey(obstacle)) {
 				for (SamplingEnvironment child : this.affectedChildren.get(obstacle)) {
 					child.unembed(obstacle);
@@ -718,11 +573,12 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Indicates whether or not an obstacle is embedded in this planning continuum.
+	 * Indicates whether or not an obstacle is embedded in this sampling
+	 * environment.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
-	 * @return true if the obstacle is embedded in this planning continuum, false
+	 * @return true if the obstacle is embedded in this sampling environment, false
 	 *         otherwise
 	 * 
 	 * @see Environment#isEmbedded(Obstacle)
@@ -731,7 +587,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	public boolean isEmbedded(Obstacle obstacle) {
 		return this.obstacles.contains(obstacle);
 	}
-	
+
 	/**
 	 * Adds an affected child to an obstacle embedding.
 	 * 
@@ -747,49 +603,378 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 			this.affectedChildren.put(obstacle, children);
 		}
 	}
-	
+
 	/**
-	 * Updates this planning continuum.
+	 * Adds a child to this sampling environment, by creating a new sampling
+	 * environment based on two positions.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param other the other position in globe coordinates
 	 */
-	protected void update() {
-		this.updateActiveCost();
-		this.updateAppearance();
-		this.updateVisibility();
+	public void addChild(Position origin, Position other) {
+		Vec4 pointOrigin = globe.computePointFromPosition(origin);
+		Vec4 pointOther = globe.computePointFromPosition(other);
+
+		SamplingEnvironment child = this.createChild(pointOrigin, pointOther);
+
+		child.setGlobe(this.globe);
+		child.setTime(this.time);
+		child.setThreshold(this.thresholdCost);
+		child.update();
+		child.parent = this;
+		this.cells.add(child);
+		child.setOrigin(pointOrigin);
+
+		// propagate obstacle embeddings
+		for (Obstacle obstacle : this.obstacles) {
+			if (obstacle instanceof ObstacleCylinder) {
+				if (child.embed((ObstacleCylinder) obstacle)) {
+					this.addAffectedChild(obstacle, child);
+				}
+			}
+		}
 	}
 
 	/**
-	 * Updates the accumulated active cost of this planning continuum.
+	 * Removes a specific child from this sampling environment.
 	 */
-	protected void updateActiveCost() {
-		this.activeCost = this.getCost(this.time);
+	@Override
+	public void removeChild(HierarchicalBox child) {
+		super.removeChild(child);
 	}
 
 	/**
-	 * Updates the visibility of this planning continuum.
+	 * Removes all children from this sampling environment.
 	 */
-	protected void updateVisibility() {
-		this.setVisible(this.activeCost > this.thresholdCost);
+	public void removeChildren() {
+		super.removeChildren();
+		// remove affected children of all obstacle embeddings
+		this.affectedChildren.clear();
 	}
 
 	/**
-	 * Updates the appearance of this planning continuum.
+	 * Gets the children of this sampling environment.
+	 * 
+	 * @return the children of this sampling environment
+	 * 
+	 * @see com.cfar.swim.worldwind.geom.HierarchicalBox#getChildren()
 	 */
-	protected void updateAppearance() {
-		Color activeColor = ObstacleColor.getColor(activeCost);
-		float red = activeColor.getRed() / 255.0f;
-		float green = activeColor.getGreen() / 255.0f;
-		float blue = activeColor.getBlue() / 255.0f;
-		float alpha = activeColor.getAlpha() / 255.0f;
-		this.setColor(red, green, blue, alpha);
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends SamplingEnvironment> getChildren() {
+		return (Set<SamplingEnvironment>) super.getChildren();
 	}
 
 	/**
-	 * Gets the distance between two positions in this planning continuum.
+	 * Gets a particular child of this sampling environment if present.
+	 * 
+	 * @param child the child sampling environment
+	 * 
+	 * @return the particular child of sampling environment if present, null
+	 *         otherwise
+	 */
+	public SamplingEnvironment getChild(SamplingEnvironment child) {
+		return (SamplingEnvironment) super.getChild(child);
+	}
+
+	/**
+	 * Gets the parent of this sampling environment if present.
+	 * 
+	 * @return the parent of this sampling environment if present, null otherwise
+	 */
+	@Override
+	public SamplingEnvironment getParent() {
+		return (SamplingEnvironment) super.getParent();
+	}
+
+	/**
+	 * Gets all sampling environments associated with this sampling environment.
+	 * 
+	 * @return all sampling environments associated with this sampling environment
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends SamplingEnvironment> getAll() {
+		return (Set<SamplingEnvironment>) super.getAll();
+	}
+
+	/**
+	 * Indicates whether or not this sampling environment is refined, that is, has
+	 * children.
+	 * 
+	 * @return true if this sampling environment is refined, false otherwise
+	 * 
+	 */
+	public boolean isRefined() {
+		return this.hasChildren();
+	}
+
+	/**
+	 * Gets the refinements, that is, children of this sampling environment.
+	 * 
+	 * @return the refinements of this sampling environment
+	 * 
+	 */
+	public Set<? extends SamplingEnvironment> getRefinements() {
+		return this.getChildren();
+	}
+
+	/**
+	 * Refines, that is, adds children with a specified density to this sampling
+	 * environment.
+	 * 
+	 * @param density the refinement density
+	 * 
+	 */
+	public void refine(int density) {
+		// TODO: review how to use integer to refine
+		// this.addChildren(density);
+	}
+
+	/**
+	 * Coarsens, that is, removes the children of this sampling environment.
+	 *
+	 */
+	public void coarsen() {
+		this.removeChildren();
+	}
+
+	/**
+	 * Looks up the sampling environment cells containing a specified point in world
+	 * model coordinates considering numerical inaccuracies.
+	 * 
+	 * @param modelPoint the point in world model coordinates
+	 * 
+	 * @return the sampling environment cells containing the specified point
+	 * 
+	 * @see com.cfar.swim.worldwind.geom.HierarchicalBox#lookupCells(gov.nasa.worldwind.geom.Vec4)
+	 */
+	@Override
+	@SuppressWarnings("unchecked")
+	public Set<? extends SamplingEnvironment> lookupCells(Vec4 modelPoint) {
+		return (Set<SamplingEnvironment>) super.lookupCells(modelPoint);
+	}
+
+	/**
+	 * Looks up the sampling environment cells containing a specified position in
+	 * globe coordinates considering numerical inaccuracies.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the sampling environment cells containing the specified position
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 */
+	@SuppressWarnings("unchecked")
+	public Set<? extends SamplingEnvironment> lookupCells(Position position) {
+		Set<SamplingEnvironment> cells = null;
+
+		if (null != this.globe) {
+			cells = (Set<SamplingEnvironment>) super.lookupCells(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+
+		return cells;
+	}
+
+	/**
+	 * Finds all cells of this sampling environment that satisfy a specified
+	 * predicate. A full recursive search is performed considering only non-parent
+	 * cells.
+	 * 
+	 * @param predicate the predicate
+	 * 
+	 * @return the cells of this sampling environment that satisfy a predicate
+	 * 
+	 * @see com.cfar.swim.worldwind.geom.HierarchicalBox#findCells(java.util.function.Predicate)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends SamplingEnvironment> findCells(Predicate<HierarchicalBox> predicate) {
+		return (Set<SamplingEnvironment>) super.findCells(predicate);
+	}
+
+	/**
+	 * Finds all cells of this sampling environment that satisfy a specified
+	 * predicate taking a specified hierarchical depth into account. A zero depth
+	 * does not consider any children. A negative depth performs a full recursive
+	 * search and considers non-parent cells only.
+	 * 
+	 * @param predicate the predicate
+	 * @param depth the hierarchical depth
+	 * 
+	 * @return the cells of this sampling environment that satisfy a predicate
+	 *         taking the hierarchical depth into account
+	 * 
+	 * @see com.cfar.swim.worldwind.geom.HierarchicalBox#findCells(java.util.function.Predicate,
+	 *      int)
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends SamplingEnvironment> findCells(Predicate<HierarchicalBox> predicate, int depth) {
+		return (Set<SamplingEnvironment>) super.findCells(predicate, depth);
+	}
+
+	/**
+	 * Indicates whether or not a position is a waypoint in this sampling
+	 * environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is a waypoint in this sampling environment,
+	 *         false otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 */
+	public boolean isWaypoint(Position position) {
+		if (null != this.globe) {
+			return super.isWaypoint(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+
+	/**
+	 * Gets the adjacent waypoints of a position in this sampling environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the adjacent waypoints of the position in this sampling environment,
+	 *         or the waypoint position itself
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 */
+	public Set<Position> getAdjacentWaypoints(Position position) {
+		if (null != this.globe) {
+			Set<Vec4> waypoints = super.getAdjacentWaypoints(this.globe.computePointFromPosition(position));
+			return waypoints.stream().map(this.globe::computePositionFromPoint).collect(Collectors.toSet());
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+
+	/**
+	 * Indicates whether or not a position is adjacent to a waypoint in this
+	 * sampling environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param waypoint the waypoint in globe coordinates
+	 * 
+	 * @return true if the position is adjacent to the waypoint in this planning
+	 *         grid, false otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 */
+	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
+		if (null != this.globe) {
+			return super.isAdjacentWaypoint(this.globe.computePointFromPosition(position),
+					this.globe.computePointFromPosition(waypoint));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+
+	/**
+	 * Gets the neighbors of this sampling environment. A full recursive search is
+	 * performed considering only non-parent neighbors.
+	 * 
+	 * @return the non-parent neighbors of this sampling environment
+	 * 
+	 * @see Environment#getNeighbors()
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends SamplingEnvironment> getNeighbors() {
+		return (Set<SamplingEnvironment>) super.getNeighbors();
+	}
+
+	/**
+	 * Gets the neighbors of this sampling environment taking a specified
+	 * hierarchical depth into account. A zero depth does not consider any
+	 * neighboring children. A negative depth performs a full recursive search and
+	 * considers non-parent neighbors only.
+	 * 
+	 * @param depth the hierarchical depth for finding neighbors
+	 * 
+	 * @return the neighbors of this sampling environment
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<? extends SamplingEnvironment> getNeighbors(int depth) {
+		return (Set<SamplingEnvironment>) super.getNeighbors(depth);
+	}
+
+	/**
+	 * Indicates whether or not this sampling environment is a neighbor of another
+	 * environment.
+	 * 
+	 * @param neighbor the potential neighbor
+	 * 
+	 * @return true if this sampling environment is a neighbor of the other
+	 *         environment, false otherwise
+	 */
+	@Override
+	public boolean areNeighbors(Environment neighbor) {
+		return this.getNeighbors().contains(neighbor);
+	}
+
+	/**
+	 * Gets the neighbors of a position in this sampling environment. A full
+	 * recursive search is performed considering non-parent cells only.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the neighbors of the position in this sampling environment
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 */
+	public Set<Position> getNeighbors(Position position) {
+		Set<Position> neighbors = new HashSet<Position>();
+
+		// TODO: coordinate transformations might be too expensive for planning
+		// TODO: planning could be based on Vec4 with a final transformation of the
+		// route
+
+		if (null != this.globe) {
+			Set<Vec4> neighborPoints = super.getNeighbors(this.globe.computePointFromPosition(position));
+			for (Vec4 neighbor : neighborPoints) {
+				neighbors.add(this.globe.computePositionFromPoint(neighbor));
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+
+		return neighbors;
+	}
+
+	/**
+	 * Indicates whether or not two positions are neighbors in this sampling
+	 * environment.
+	 * 
+	 * @param position the position
+	 * @param neighbor the potential neighbor of the position
+	 * 
+	 * @return true if the two positions are neighbors, false otherwise
+	 * 
+	 * @throws IllegalStateException if the globe is not set
+	 */
+	public boolean areNeighbors(Position position, Position neighbor) {
+		if (null != this.globe) {
+			return super.areNeighbors(this.globe.computePointFromPosition(position),
+					this.globe.computePointFromPosition(neighbor));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+
+	/**
+	 * Gets the distance between two positions in this sampling environment.
 	 * 
 	 * @param position1 the first position
 	 * @param position2 the second position
 	 * 
-	 * @return the distance between the two positions in this planning continuum
+	 * @return the distance between the two positions in this sampling environment
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -824,335 +1009,20 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	public double getNormalizedDistance(Position position1, Position position2) {
 		return this.getDistance(position1, position2) / this.getDiameter();
 	}
-	
-	/**
-	 * Samples a position from a continuous space defined in the current environment
-	 * 
-	 * @return position in global coordinates inside the environment
-	 */
-	public Position sampleRandomPosition() {
-		Vec4[] corners = this.getCorners();
-
-		// Point in box frame with all minimum coordinates
-		Vec4 minimum = this.transformModelToBoxOrigin(corners[0]);
-		// Point in box frame with all maximum coordinates
-		Vec4 maximum = this.transformModelToBoxOrigin(corners[6]);
-
-		double x, y, z;
-
-		x = minimum.x + (new Random().nextDouble() * (maximum.x - minimum.x));
-		y = minimum.y + (new Random().nextDouble() * (maximum.y - minimum.y));
-		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));
-
-		Vec4 point = new Vec4(x, y, z);
-
-		// Transform point from box frame to earth frame
-		point = this.transformBoxOriginToModel(point);
-
-		Position position = this.getGlobe().computePositionFromPoint(point);
-
-		return position;
-	}
 
 	/**
-	 * Checks whether the given position is inside the given globe
+	 * Gets the step cost from an origin to a destination position within this
+	 * sampling environment between a start and an end time given a cost policy and
+	 * risk policy.
 	 * 
-	 * @param globe the globe
-	 * @param position the position in global coordinates
-	 * @return true if the position is inside the globe and false otherwise
-	 */
-	public boolean isInsideGlobe(Globe globe, Position position) {
-		Vec4 point;
-
-		point = this.getGlobe().computePointFromPosition(position);
-		return !globe.isPointAboveElevation(point, globe.getElevation(position.latitude, position.longitude));
-	}
-
-	/**
-	 * Checks if a given position is in conflict with untraversable obstacles in the
-	 * environment
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
 	 * 
-	 * @param waypoint the waypoint in global coordinates
-	 * 
-	 * @return boolean value true if there is a conflict
-	 */
-	public boolean checkConflict(Position position) {
-
-		if (this.isInsideGlobe(this.getGlobe(), position))
-			return true;
-
-		// TODO : Implement a checker for conflict between a position and the
-		// static, time independent and untraversable obstacles in the environment
-
-//		Box box = this.createBoundingBox(position);
-//		HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
-//		for (TerrainObstacle terrain : terrainSet) {
-//			// Check if obstacle contains the waypoint
-//			System.out.println("Terrain");
-//			if (terrain.getExtent(this.getGlobe()).intersects(box.getFrustum())) {
-//				return true;
-//			}
-//		}
-		return false;
-	}
-
-	/**
-	 * Checks if a straight leg between the waypoints is in conflict with
-	 * untraversable obstacles in the environment
-	 * 
-	 * @param waypoint1 the first waypoint in global coordinates
-	 * @param waypoint2 the second waypoint in global coordinates
-	 * 
-	 * @return boolean value true if there is a conflict
-	 */
-	public boolean checkConflict(Position position1, Position position2) {
-		Vec4 point1 = this.getGlobe().computePointFromPosition(position1);
-		Vec4 point2 = this.getGlobe().computePointFromPosition(position2);
-		Vec4 aux;
-
-		double x, y, z, dx, dy, dz, dist, dist2, theta, phi;
-
-		dx = point2.x - point1.x;
-		dy = point2.y - point1.y;
-		dz = point2.z - point1.z;
-
-		dist = point1.distanceTo3(point2);
-		dist2 = point1.distanceTo2(point2);
-		theta = Math.atan2(dz, dist2);
-		phi = Math.atan2(dy, dx);
-
-		double resolution = this.getResolution(); // meters in globe surface
-		for (int p = 1; dist > resolution; p = p * 2) {
-			for (int k = 0; k < p; k++) {
-				x = point1.x + (1 / 2 + k) * dist * Math.cos(theta) * Math.cos(phi);
-				y = point1.y + (1 / 2 + k) * dist * Math.cos(theta) * Math.sin(phi);
-				z = point1.z + (1 / 2 + k) * dist * Math.sin(theta);
-				aux = new Vec4(x, y, z);
-				if (this.checkConflict(this.getGlobe().computePositionFromPoint(aux)))
-					return true;
-			}
-			dist = dist / 2;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Finds the k-nearest waypoints to the given position
-	 * 
-	 * @param position the position in global coordinates
-	 * @param kNear number of waypoints to return
-	 * 
-	 * @return list of k-nearest waypoints sorted by increasing distance
-	 */
-//	public List<? extends Position> findNearest(Position position, int kNear) {
-//
-//		return this.getWaypointList().stream().sorted((p1, p2) -> Double
-//				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
-//				.limit(kNear).collect(Collectors.toList());
-//
-//	}
-//
-//	/**
-//	 * Sorts a list of elements by increasing distance to a given position
-//	 * 
-//	 * @param position the position in global coordinates
-//	 */
-//	public void sortNearest(Position position) {
-//
-//		this.setWaypointList(this.getWaypointList().stream().sorted((p1, p2) -> Double
-//				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
-//				.collect(Collectors.toList()));
-//
-//	}
-	
-	/**
-	 * Checks whether or not the given position is part of this edge
-	 * 
-	 * @param position the position to be checked
-	 * @return true if the position is part of this edge, false otherwise
-	 */
-	public boolean containsWaypoint(Waypoint waypoint) {
-//		return waypoint.equals(waypoints[0]) || waypoint.equals(waypoints[1]);
-		return false;
-	}
-
-	/**
-	 * Indicates whether or not a position is a waypoint in this planning grid.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return true if the position is a waypoint in this planning grid, false
-	 *         otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see RegularGrid#isWayoint(Vec4)
-	 */
-	public boolean isWaypoint(Position position) {
-		if (null != this.globe) {
-			return super.isWaypoint(this.globe.computePointFromPosition(position));
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-	
-	/**
-	 * Gets the adjacent waypoints of a position in this planning grid.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return the adjacent waypoints of the position in this planning grid, or the
-	 *         waypoint position itself
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see RegularGrid#getAdjacentWaypoints(Vec4)
-	 */
-	public Set<Position> getAdjacentWaypoints(Position position) {
-		if (null != this.globe) {
-			Set<Vec4> waypoints = super.getAdjacentWaypoints(this.globe.computePointFromPosition(position));
-			return waypoints.stream().map(this.globe::computePositionFromPoint).collect(Collectors.toSet());
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * Indicates whether or not a position is adjacent to a waypoint in this
-	 * planning grid.
-	 * 
-	 * @param position the position in globe coordinates
-	 * @param waypoint the waypoint in globe coordinates
-	 * 
-	 * @return true if the position is adjacent to the waypoint in this planning
-	 *         grid, false otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see RegularGrid#isAdjacentWaypoint(Vec4, Vec4)
-	 */
-	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
-		if (null != this.globe) {
-			return super.isAdjacentWaypoint(this.globe.computePointFromPosition(position),
-					this.globe.computePointFromPosition(waypoint));
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * Gets the neighbors of this planning grid. A full recursive search is
-	 * performed considering only non-parent neighbors.
-	 * 
-	 * @return the non-parent neighbors of this planning grid
-	 * 
-	 * @see CubicGrid#getNeighbors()
-	 * @see Environment#getNeighbors()
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public Set<? extends SamplingEnvironment> getNeighbors() {
-		return (Set<SamplingEnvironment>) super.getNeighbors();
-	}
-
-	/**
-	 * Gets the neighbors of this planning grid taking a specified hierarchical
-	 * depth into account. A zero depth does not consider any neighboring children.
-	 * A negative depth performs a full recursive search and considers non-parent
-	 * neighbors only.
-	 * 
-	 * @param depth the hierarchical depth for finding neighbors
-	 * 
-	 * @return the neighbors of this planning grid
-	 * 
-	 * @see CubicGrid#getNeighbors(int)
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	public Set<? extends SamplingEnvironment> getNeighbors(int depth) {
-		return (Set<SamplingEnvironment>) super.getNeighbors(depth);
-	}
-	
-	/**
-	 * Indicates whether or not this planning grid is a neighbor of another
-	 * environment.
-	 * 
-	 * @param neighbor the potential neighbor
-	 * 
-	 * @return true if this planning grid is a neighbor of the other environment,
-	 *         false otherwise
-	 * 
-	 * @see RegularGrid#areNeighbors(RegularGrid)
-	 */
-	@Override
-	public boolean areNeighbors(Environment neighbor) {
-		return this.getNeighbors().contains(neighbor);
-	}
-
-
-	/**
-	 * Gets the neighbors of a position in this planning grid. A full recursive
-	 * search is performed considering non-parent cells only.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return the neighbors of the position in this planning grid
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see CubicGrid#getNeighbors(Vec4)
-	 */
-	public Set<Position> getNeighbors(Position position) {
-		Set<Position> neighbors = new HashSet<Position>();
-
-		// TODO: coordinate transformations might be too expensive for planning
-		// TODO: planning could be based on Vec4 with a final transformation of the
-		// route
-
-		if (null != this.globe) {
-			Set<Vec4> neighborPoints = super.getNeighbors(this.globe.computePointFromPosition(position));
-			for (Vec4 neighbor : neighborPoints) {
-				neighbors.add(this.globe.computePositionFromPoint(neighbor));
-			}
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return neighbors;
-	}
-
-	/**
-	 * Indicates whether or not two positions are neighbors in this planning grid.
-	 * 
-	 * @param position the position
-	 * @param neighbor the potential neighbor of the position
-	 * 
-	 * @return true if the two positions are neighbors, false otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see RegularGrid#areNeighbors(Vec4, Vec4)
-	 */
-	public boolean areNeighbors(Position position, Position neighbor) {
-		if (null != this.globe) {
-			return super.areNeighbors(this.globe.computePointFromPosition(position),
-					this.globe.computePointFromPosition(neighbor));
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * @param origin
-	 * @param destination
-	 * @param start
-	 * @param end
-	 * @param costPolicy
-	 * @param riskPolicy
-	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getStepCost(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
+	 * @return the step cost from the origin to the destination position
 	 */
 	@Override
 	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
@@ -1205,6 +1075,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
+	 * TODO: NOT IMPLEMENTED YET
 	 * @param origin
 	 * @param destination
 	 * @param start
@@ -1212,8 +1083,11 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	 * @param costPolicy
 	 * @param riskPolicy
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(gov.nasa.worldwind.geom.Position,
+	 *      gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime,
+	 *      java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy,
+	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
 	 */
 	@Override
 	public double getLegCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
@@ -1223,14 +1097,18 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
+	 * TODO: NOT IMPLEMENTED YET
 	 * @param destination
 	 * @param start
 	 * @param end
 	 * @param costPolicy
 	 * @param riskPolicy
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(com.cfar.swim.worldwind.planning.Environment, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(com.cfar.swim.worldwind.planning.Environment,
+	 *      java.time.ZonedDateTime, java.time.ZonedDateTime,
+	 *      com.cfar.swim.worldwind.planning.CostPolicy,
+	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
 	 */
 	@Override
 	public double getLegCost(Environment destination, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
@@ -1238,21 +1116,20 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
+
 	/**
-	 * Renders this hierarchical box. If a grid cell has children, then only the
-	 * children are rendered.
+	 * Renders this sampling environment. If it has children, then the children are
+	 * also rendered.
 	 * 
 	 * @param dc the drawing context
 	 */
 	@Override
 	public void render(DrawContext dc) {
 		if (this.visible) {
-			if(this.hasParent()) {
+			if (this.hasParent()) {
 				Path diagonal = this.createRenderableDiagonal();
 				diagonal.render(dc);
-			}
-			else {
+			} else {
 				super.render(dc);
 			}
 			if (this.hasChildren()) {
@@ -1263,7 +1140,12 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 			}
 		}
 	}
-	
+
+	/**
+	 * Creates a path between the two implicit waypoints of this sampling environment.
+	 * 
+	 * @return the diagonal between the two waypoints of this sampling environment
+	 */
 	public Path createRenderableDiagonal() {
 		Position originPosition = globe.computePositionFromPoint(this.getOrigin());
 		Position oppositePosition = globe.computePositionFromPoint(this.get3DOpposite());
@@ -1271,5 +1153,118 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 		diagonal.setAttributes(new BasicShapeAttributes());
 		diagonal.getAttributes().setOutlineMaterial(this.getMaterial());
 		return diagonal;
+	}
+
+	/**
+	 * Samples a position from a continuous space defined in the sampling environment
+	 * 
+	 * @return position in global coordinates inside this sampling environment
+	 */
+	public Position sampleRandomPosition() {
+		Vec4[] corners = this.getCorners();
+
+		// Point in box frame with all minimum coordinates
+		Vec4 minimum = this.transformModelToBoxOrigin(corners[0]);
+		// Point in box frame with all maximum coordinates
+		Vec4 maximum = this.transformModelToBoxOrigin(corners[6]);
+
+		double x, y, z;
+
+		x = minimum.x + (new Random().nextDouble() * (maximum.x - minimum.x));
+		y = minimum.y + (new Random().nextDouble() * (maximum.y - minimum.y));
+		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));
+
+		Vec4 point = new Vec4(x, y, z);
+
+		// Transform point from box frame to earth frame
+		point = this.transformBoxOriginToModel(point);
+
+		Position position = this.getGlobe().computePositionFromPoint(point);
+
+		return position;
+	}
+
+	/**
+	 * Checks whether the given position is inside the given globe
+	 * 
+	 * @param globe the globe
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is inside the globe and false otherwise
+	 */
+	public boolean isInsideGlobe(Globe globe, Position position) {
+		Vec4 point;
+
+		point = this.getGlobe().computePointFromPosition(position);
+		return !globe.isPointAboveElevation(point, globe.getElevation(position.latitude, position.longitude));
+	}
+
+	/**
+	 * Checks if a given position is in conflict with untraversable obstacles in the
+	 * environment
+	 * 
+	 * @param waypoint the waypoint in globe coordinates
+	 * 
+	 * @return true if there is a conflict, and false otherwise
+	 */
+	public boolean checkConflict(Position position) {
+
+		if (this.isInsideGlobe(this.getGlobe(), position))
+			return true;
+
+		// TODO : Implement a checker for conflict between a position and the
+		// static, time independent and untraversable obstacles in the environment
+
+		// Box box = this.createBoundingBox(position);
+		// HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
+		// for (TerrainObstacle terrain : terrainSet) {
+		// // Check if obstacle contains the waypoint
+		// System.out.println("Terrain");
+		// if (terrain.getExtent(this.getGlobe()).intersects(box.getFrustum())) {
+		// return true;
+		// }
+		// }
+		return false;
+	}
+
+	/**
+	 * Checks if a straight leg between the waypoints is in conflict with
+	 * untraversable obstacles in the environment
+	 * 
+	 * @param waypoint1 the first waypoint in globe coordinates
+	 * @param waypoint2 the second waypoint in globe coordinates
+	 * 
+	 * @return true if there is a conflict, and false otherwise
+	 */
+	public boolean checkConflict(Position position1, Position position2) {
+		Vec4 point1 = this.getGlobe().computePointFromPosition(position1);
+		Vec4 point2 = this.getGlobe().computePointFromPosition(position2);
+		Vec4 aux;
+
+		double x, y, z, dx, dy, dz, dist, dist2, theta, phi;
+
+		dx = point2.x - point1.x;
+		dy = point2.y - point1.y;
+		dz = point2.z - point1.z;
+
+		dist = point1.distanceTo3(point2);
+		dist2 = point1.distanceTo2(point2);
+		theta = Math.atan2(dz, dist2);
+		phi = Math.atan2(dy, dx);
+
+		double resolution = this.getResolution(); // meters in globe surface
+		for (int p = 1; dist > resolution; p = p * 2) {
+			for (int k = 0; k < p; k++) {
+				x = point1.x + (1 / 2 + k) * dist * Math.cos(theta) * Math.cos(phi);
+				y = point1.y + (1 / 2 + k) * dist * Math.cos(theta) * Math.sin(phi);
+				z = point1.z + (1 / 2 + k) * dist * Math.sin(theta);
+				aux = new Vec4(x, y, z);
+				if (this.checkConflict(this.getGlobe().computePositionFromPoint(aux)))
+					return true;
+			}
+			dist = dist / 2;
+		}
+
+		return false;
 	}
 }

@@ -69,7 +69,6 @@ public class HierarchicalBox extends Box {
 	/** the visibility state of this hierarchical box */
 	protected boolean visible = true;
 
-	// ------------------ CONSTRUCTORS ----------------
 	/**
 	 * Constructs a new hierarchical box based on a geometric box without any
 	 * children.
@@ -98,7 +97,6 @@ public class HierarchicalBox extends Box {
 		super(origin, axes, rLength, sLength, tLength);
 	}
 
-	// ------------------ NEW METHODS ----------------
 	/**
 	 * Constructs a new hierarchical box from two points in world model coordinates.
 	 * 
@@ -107,7 +105,8 @@ public class HierarchicalBox extends Box {
 	 * 
 	 * @param point1 the point1 in world model coordinates
 	 * @param point2 the point2 in world model coordinates
-	 * @return
+	 * 
+	 * @return the created hierarchical box
 	 */
 	protected HierarchicalBox createInstance(Vec4 point1, Vec4 point2) {
 		Vec4[] axes = this.getUnitAxes();
@@ -122,11 +121,11 @@ public class HierarchicalBox extends Box {
 		return hierarchicalBox;
 	}
 
-	public void addChild(Vec4 point1, Vec4 point2) {
-		HierarchicalBox child = this.createInstance(point1, point2);
-		cells.add(child);
-	}
-
+	/**
+	 * Gets the children of this hierarchical box.
+	 * 
+	 * @return the children of this hierarchical box
+	 */
 	public Set<? extends HierarchicalBox> getChildren() {
 		return this.cells;
 	}
@@ -147,18 +146,40 @@ public class HierarchicalBox extends Box {
 		return !this.cells.isEmpty();
 	}
 
+	/**
+	 * Removes a specific child from the children of this hierarchical box.
+	 * 
+	 * @param child the hierarchical box child to remove
+	 */
 	public void removeChild(HierarchicalBox child) {
 		cells.remove(child);
 	}
 
-	public HierarchicalBox getChild() {
-		// TODO
-		return null;
+	/**
+	 * Indicates whether or not this hierarchical box has a particular child.
+	 * 
+	 * @param child the child hierarchical box
+	 * 
+	 * @return true if this hierarchical box has the particular child, false
+	 *         otherwise
+	 */
+	public boolean hasChild(HierarchicalBox child) {
+		return 0 < this.getChildren().stream().filter(s -> s.equals(child)).count();
 	}
 
-	public boolean hasChild(HierarchicalBox child) {
-		// TODO
-		return false;
+	/**
+	 * Gets a particular child of this hierarchical box if present.
+	 * 
+	 * @param child the child hierarchical box
+	 * 
+	 * @return the particular child of this hierarchical box if present, null
+	 *         otherwise
+	 */
+	public HierarchicalBox getChild(HierarchicalBox child) {
+		if (this.hasChild(child)) {
+			return this.getChildren().stream().filter(s -> s.equals(child)).findFirst().get();
+		}
+		return null;
 	}
 
 	/**
@@ -198,13 +219,13 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Looks up the hierarchical box cells (maximum eight) containing a specified
-	 * point in world model coordinates considering numerical inaccuracies. Cells
-	 * are looked up recursively and only non-parent cells are considered.
+	 * Looks up the hierarchical box cells containing a specified point in world
+	 * model coordinates considering numerical inaccuracies. Cells are looked up
+	 * recursively.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
-	 * @return the regular non-parent grid cells containing the specified point
+	 * @return the hierarchical box cells containing the specified point
 	 */
 	public Set<? extends HierarchicalBox> lookupCells(Vec4 modelPoint) {
 		return this.lookupCells(modelPoint, -1);
@@ -214,8 +235,7 @@ public class HierarchicalBox extends Box {
 	 * Looks up the hierarchical box cells containing a specified point in world
 	 * model coordinates considering numerical inaccuracies. Cells are looked up
 	 * recursively to a specified depth level. A zero depth does not consider any
-	 * children. A negative depth performs a full recursive search and considers
-	 * non-parent cells only.
+	 * children. A negative depth performs a full recursive search.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * @param depth the hierarchical depth of the lookup operation
@@ -243,7 +263,7 @@ public class HierarchicalBox extends Box {
 
 	/**
 	 * Finds all cells of this hierarchical box that satisfy a specified predicate.
-	 * A full recursive search is performed considering only non-parent cells.
+	 * A full recursive search is performed.
 	 * 
 	 * @param predicate the predicate
 	 * 
@@ -256,8 +276,7 @@ public class HierarchicalBox extends Box {
 	/**
 	 * Finds all cells of this hierarchical box that satisfy a specified predicate
 	 * taking a specified hierarchical depth into account. A zero depth does not
-	 * consider any children. A negative depth performs a full recursive search and
-	 * considers non-parent cells only.
+	 * consider any children. A negative depth performs a full recursive search.
 	 * 
 	 * @param predicate the predicate
 	 * @param depth the hierarchical depth
@@ -269,28 +288,26 @@ public class HierarchicalBox extends Box {
 		Set<HierarchicalBox> foundCells = new HashSet<HierarchicalBox>();
 
 		if (predicate.test(this)) {
+			foundCells.add(this);
 			if (this.hasChildren() && depth != 0) {
 				for (HierarchicalBox child : this.getChildren()) {
 					foundCells.addAll(child.findCells(predicate, depth - 1));
 				}
-			} else {
-				foundCells.add(this);
 			}
 		}
-
 		return foundCells;
 	}
 
 	/**
 	 * Indicates whether or not a point is a waypoint in this hierarchical box. A
-	 * full recursive search is performed considering only non-parent cells.
+	 * full recursive search is performed.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
 	 * @return true if the point is a waypoint in this hierarchical box, false
 	 *         otherwise
 	 * 
-	 * @see RegularGrid#isWaypoint(Vec4, int)
+	 * @see HierarchicalBox#isWaypoint(Vec4, int)
 	 */
 	public boolean isWaypoint(Vec4 point) {
 		return this.isWaypoint(point, -1);
@@ -299,8 +316,7 @@ public class HierarchicalBox extends Box {
 	/**
 	 * Indicates whether or not a point is a waypoint in this hierarchical box
 	 * taking a specified hierarchical depth into account. A zero depth does not
-	 * consider any children. A negative depth performs a full recursive search and
-	 * considers non-parent cells only.
+	 * consider any children. A negative depth performs a full recursive search.
 	 * 
 	 * @param point the point in world model coordinates
 	 * @param depth the hierarchical depth
@@ -318,14 +334,14 @@ public class HierarchicalBox extends Box {
 
 	/**
 	 * Gets the adjacent waypoints of a point in this hierarchical box. A full
-	 * recursive search is performed considering only non-parent cells.
+	 * recursive search is performed.
 	 * 
 	 * @param point the point in world model coordinates
 	 * 
 	 * @return the adjacent waypoints of the point in this hierarchical box, or the
 	 *         waypoint itself
 	 * 
-	 * @see RegularGrid#getAdjacentWaypoints(Vec4, int)
+	 * @see HierarchicalBox#getAdjacentWaypoints(Vec4, int)
 	 */
 	public Set<Vec4> getAdjacentWaypoints(Vec4 point) {
 		return this.getAdjacentWaypoints(point, -1);
@@ -334,8 +350,7 @@ public class HierarchicalBox extends Box {
 	/**
 	 * Gets the adjacent waypoints of a point in this hierarchical box taking a
 	 * specified hierarchical depth into account. A zero depth does not consider any
-	 * children. A negative depth performs a full recursive search and considers
-	 * non-parent cells only.
+	 * children. A negative depth performs a full recursive search.
 	 * 
 	 * @param point the point in world model coordinates
 	 * @param depth the hierarchical depth
@@ -369,8 +384,8 @@ public class HierarchicalBox extends Box {
 	}
 
 	/**
-	 * Indicates whether or not a point is adjacent to a waypoint in this regular
-	 * grid.
+	 * Indicates whether or not a point is adjacent to a waypoint in this
+	 * hierarchical box.
 	 * 
 	 * @param point the point in world model coordinates
 	 * @param waypoint the waypoint in world model coordinates
@@ -383,13 +398,14 @@ public class HierarchicalBox extends Box {
 				.contains(new PrecisionVec4(waypoint));
 	}
 
+	//TODO: review comments
 	/**
 	 * Gets the neighbors of this hierarchical box. A full recursive search is
 	 * performed considering only non-parent neighbors.
 	 * 
 	 * @return the non-parent neighbors of this hierarchical box
 	 * 
-	 * @see RegularGrid#getNeighbors(int)
+	 * @see HierarchicalBox#getNeighbors(int)
 	 */
 	public Set<? extends HierarchicalBox> getNeighbors() {
 		return this.getNeighbors(-1);
@@ -434,14 +450,14 @@ public class HierarchicalBox extends Box {
 
 	/**
 	 * Indicates whether or not this hierarchical box is a neighbor of another
-	 * regular grid.
+	 * hierachical box.
 	 * 
 	 * @param neighbor the potential neighbor
 	 * 
 	 * @return true if this hierarchical box is a neighbor of the other hierarchical
 	 *         box, false otherwise
 	 * 
-	 * @see RegularGrid#getNeighbors()
+	 * @see HierarchicalBox#getNeighbors()
 	 */
 	public boolean areNeighbors(HierarchicalBox neighbor) {
 		return this.getNeighbors().contains(neighbor);
@@ -449,7 +465,7 @@ public class HierarchicalBox extends Box {
 
 	/**
 	 * Indicates whether or not this hierarchical box is a neighbor of another
-	 * regular grid taking a specified hierarchical depth into account.
+	 * hierachical box taking a specified hierarchical depth into account.
 	 * 
 	 * @param neighbor the potential neighbor
 	 * @param depth the hierarchical depth
@@ -457,7 +473,7 @@ public class HierarchicalBox extends Box {
 	 * @return true if this hierarchical box is a neighbor of the other hierarchical
 	 *         box taking the hierarchical depth into account, false otherwise
 	 * 
-	 * @see RegularGrid#getNeighbors(int)
+	 * @see HierarchicalBox#getNeighbors(int)
 	 */
 	public boolean areNeighbors(HierarchicalBox neighbor, int depth) {
 		return this.getNeighbors(depth).contains(neighbor);
@@ -471,7 +487,7 @@ public class HierarchicalBox extends Box {
 	 * 
 	 * @return the neighbors of the point in this hierarchical box
 	 * 
-	 * @see RegularGrid#getNeighbors(Vec4, int)
+	 * @see HierarchicalBox#getNeighbors(Vec4, int)
 	 */
 	public Set<Vec4> getNeighbors(Vec4 point) {
 		return this.getNeighbors(point, -1);
@@ -490,15 +506,17 @@ public class HierarchicalBox extends Box {
 	 */
 	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
 		Set<Vec4> neighbors = new HashSet<Vec4>();
+		Set<HierarchicalBox> neighborCells = new HashSet<>();
+		
 		Set<? extends HierarchicalBox> cells = this.lookupCells(point, depth);
 		cells.removeIf(c -> !c.hasParent());
-		Set<HierarchicalBox> cells2 = new HashSet<>();
+		
 		for (HierarchicalBox cell : cells) {
-			cells2.addAll(cell.getNeighbors());
+			neighborCells.addAll(cell.getNeighbors());
 		}
-		cells2.removeIf(c -> !c.hasParent());
+		neighborCells.removeIf(c -> !c.hasParent());
 
-		for (HierarchicalBox cell : cells2) {
+		for (HierarchicalBox cell : neighborCells) {
 			if (cell.isOrigin(point))
 				neighbors.add(cell.get3DOpposite());
 			else if (cell.is3DOpposite(point))
@@ -516,7 +534,7 @@ public class HierarchicalBox extends Box {
 	 * 
 	 * @return true if the two points are neighbors, false otherwise
 	 * 
-	 * @see RegularGrid#getNeighbors(Vec4)
+	 * @see HierarchicalBox#getNeighbors(Vec4)
 	 */
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
 		return this.getNeighbors(point).stream().map(Vec4::toHomogeneousPoint3).map(PrecisionVec4::new)
@@ -534,16 +552,12 @@ public class HierarchicalBox extends Box {
 	 * @return true if the two points are neighbors taking the hierarchical depth
 	 *         into account, false otherwise
 	 * 
-	 * @see RegularGrid#getNeighbors(Vec4, int)
+	 * @see HierarchicalBox#getNeighbors(Vec4, int)
 	 */
 	public boolean areNeighbors(Vec4 point, Vec4 neighbor, int depth) {
 		return this.getNeighbors(point, depth).stream().map(Vec4::toHomogeneousPoint3).map(PrecisionVec4::new)
 				.collect(Collectors.toSet()).contains(new PrecisionVec4(neighbor.toHomogeneousPoint3()));
 	}
-
-	// ------------------ DRAWING METHODS ----------------
-
-	// TODO: include construction from axes, origin and lengths
 
 	/**
 	 * Draws this hierarchical box.
@@ -591,6 +605,11 @@ public class HierarchicalBox extends Box {
 		this.color[3] = alpha;
 	}
 
+	/**
+	 * Creates a material from the colors values of this hierarchical box.
+	 * 
+	 * @return the material
+	 */
 	public Material getMaterial() {
 		return new Material(new Color(this.color[0], this.color[1], this.color[2], this.color[3]));
 	}
@@ -604,6 +623,18 @@ public class HierarchicalBox extends Box {
 		this.visible = visible;
 	}
 
+	/**
+	 * Computes a bounding box for a specified list of points and a set of axes.
+	 * 
+	 * @param points the points for which to compute a bounding box
+	 * @param axes the axes of the computed bounding box
+	 * 
+	 * @return the bounding box, with the specified axes
+	 * 
+	 * @throws IllegalArgumentException if the point list is null or empty.
+	 *      
+	 * @see gov.nasa.worldwind.geom.Box.computeBoundingBox(Iterable<? extends Vec4>)
+	 */
 	public static Box computeBoundingBox(Iterable<? extends Vec4> points, Vec4[] axes) {
 		if (points == null) {
 			String msg = Logging.getMessage("nullValue.PointListIsNull");
@@ -661,5 +692,4 @@ public class HierarchicalBox extends Box {
 
 		return new Box(axes, minDotR, maxDotR, minDotS, maxDotS, minDotT, maxDotT);
 	}
-
 }
