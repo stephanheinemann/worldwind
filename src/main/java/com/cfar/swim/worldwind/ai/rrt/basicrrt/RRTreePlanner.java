@@ -701,6 +701,12 @@ public class RRTreePlanner extends AbstractPlanner {
 				if ((!plan.isEmpty()) && (!part.isEmpty())) {
 					plan.pollLast();
 				}
+				else {
+					// if no plan could be found, return an empty trajectory
+					Trajectory trajectory = new Trajectory();
+					this.revisePlan(trajectory);
+					return trajectory;
+				}
 
 				for (Waypoint waypoint : part.getWaypoints()) {
 					plan.add(waypoint);
