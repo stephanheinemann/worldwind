@@ -100,7 +100,11 @@ public class Trajectory extends Path implements Depictable {
 	 * @return the length of this trajectory in number of waypoints
 	 */
 	public int getLength() {
-		return Iterables.size(this.getWaypoints());
+		// Needed to prevent propagation of null iterator
+		if(this.getWaypoints()==null)
+			return 0;
+		else
+			return Iterables.size(this.getWaypoints());
 	}
 	
 	/**
@@ -198,6 +202,7 @@ public class Trajectory extends Path implements Depictable {
 	 */
 	@SuppressWarnings("unchecked")
 	public Iterable<? extends Waypoint> getWaypoints() {
+		// BUG This iterable (from NASA) may return null
 		return (Iterable<Waypoint>) super.getPositions();
 	}
 	
