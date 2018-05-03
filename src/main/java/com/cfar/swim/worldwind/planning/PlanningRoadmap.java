@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
@@ -79,7 +80,6 @@ public class PlanningRoadmap extends SamplingEnvironment {
 			int maxNeighbors, double maxDist) {
 		super(box);
 		this.setGlobe(globe);
-		this.update();
 		this.maxIter = maxIter;
 		this.maxNeighbors = maxNeighbors;
 		this.maxDist = maxDist;
@@ -188,7 +188,53 @@ public class PlanningRoadmap extends SamplingEnvironment {
 			lazyPRM.construct();
 		}
 	}
+	
+	/**
+	 * Corrects a trajectory, checking if any of its positions or edges is in
+	 * conflict with terrain obstacles.
+	 * 
+	 * @param trajectory the planned trajectory
+	 * 
+	 * @return true if this trajectory is feasible, false otherwise
+	 */
+	public boolean correctTrajectory(Trajectory trajectory) {
+		// TODO: only position checks are done. Edge conflicts are still not done
+		if (trajectory == null)
+			return false;
 
+		HashSet<Waypoint> conflictWaypoints = new HashSet<Waypoint>();
+
+		for (Waypoint waypoint : trajectory.getWaypoints()) {
+			if (this.checkConflict(waypoint)) {
+				conflictWaypoints.add(waypoint);
+			}
+		}
+		if (!conflictWaypoints.isEmpty()) {
+			this.correctLists(conflictWaypoints);
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Corrects the waypoint and edge list by removing the waypoints that are in
+	 * conflict with terrain obstacles.
+	 * 
+	 * @param conflictWaypoints the set of waypoints that are in conflict with
+	 *            terrain obstacles
+	 */
+	@SuppressWarnings("unchecked")
+	protected void correctLists(HashSet<Waypoint> conflictWaypoints) {
+		Set<PlanningRoadmap> conflictCells = new HashSet<PlanningRoadmap>();
+		for (Waypoint waypoint : conflictWaypoints) {
+			conflictCells.addAll((Set <PlanningRoadmap>) this.lookupCells(waypoint));
+		}
+		conflictCells.removeIf(c -> !c.hasParent());
+		for(PlanningRoadmap roadmap : conflictCells) {
+			this.removeChild(roadmap);							
+		}
+	}
+	
 	/**
 	 * Adds a child to this planning roadmap, constructing a new planning roadmap based on two positions.
 	 * 
@@ -240,11 +286,13 @@ public class PlanningRoadmap extends SamplingEnvironment {
 	public void refine(int density) {
 		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
 			BasicPRM basicPRM = new BasicPRM(this, density, this.maxNeighbors, this.maxDist);
-			basicPRM.construct();
+			if(basicPRM.supports(this))
+				basicPRM.construct();
 		}
 		if (this.roadmapConstructor == RoadmapConstructor.LAZYPRM) {
 			LazyPRM lazyPRM = new LazyPRM(this, density, this.maxNeighbors, this.maxDist);
-			lazyPRM.construct();
+			if(lazyPRM.supports(this))
+				lazyPRM.construct();
 		}
 	}
 
