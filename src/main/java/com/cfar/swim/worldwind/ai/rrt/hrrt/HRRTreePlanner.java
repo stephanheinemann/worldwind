@@ -280,6 +280,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		while (status == Status.ADVANCED && !this.checkGoal(this.getWaypointNew())) {
 			status = this.extendRRT(waypoint);
+			this.setWaypointNear(getWaypointNew());
 		}
 
 		return status;
