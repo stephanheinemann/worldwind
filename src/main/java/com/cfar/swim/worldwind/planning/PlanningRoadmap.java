@@ -32,8 +32,8 @@ package com.cfar.swim.worldwind.planning;
 import java.util.HashSet;
 import java.util.Set;
 
-import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
-import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
+import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRMConstructor;
+import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRMConstructor;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.HierarchicalBox;
 import com.cfar.swim.worldwind.render.Obstacle;
@@ -180,11 +180,11 @@ public class PlanningRoadmap extends SamplingEnvironment {
 	 */
 	protected void constructRoadmap() {
 		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
-			BasicPRM basicPRM = new BasicPRM(this, maxIter, maxNeighbors, maxDist);
+			BasicPRMConstructor basicPRM = new BasicPRMConstructor(this, maxIter, maxNeighbors, maxDist);
 			basicPRM.construct();
 		}
 		if (this.roadmapConstructor == RoadmapConstructor.LAZYPRM) {
-			LazyPRM lazyPRM = new LazyPRM(this, maxIter, maxNeighbors, maxDist);
+			LazyPRMConstructor lazyPRM = new LazyPRMConstructor(this, maxIter, maxNeighbors, maxDist);
 			lazyPRM.construct();
 		}
 	}
@@ -285,12 +285,12 @@ public class PlanningRoadmap extends SamplingEnvironment {
 	@Override
 	public void refine(int density) {
 		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
-			BasicPRM basicPRM = new BasicPRM(this, density, this.maxNeighbors, this.maxDist);
+			BasicPRMConstructor basicPRM = new BasicPRMConstructor(this, density, this.maxNeighbors, this.maxDist);
 			if(basicPRM.supports(this))
 				basicPRM.construct();
 		}
 		if (this.roadmapConstructor == RoadmapConstructor.LAZYPRM) {
-			LazyPRM lazyPRM = new LazyPRM(this, density, this.maxNeighbors, this.maxDist);
+			LazyPRMConstructor lazyPRM = new LazyPRMConstructor(this, density, this.maxNeighbors, this.maxDist);
 			if(lazyPRM.supports(this))
 				lazyPRM.construct();
 		}

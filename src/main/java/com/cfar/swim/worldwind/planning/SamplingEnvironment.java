@@ -697,6 +697,20 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	public Set<? extends SamplingEnvironment> getAll() {
 		return (Set<SamplingEnvironment>) super.getAll();
 	}
+	
+	/**
+	 * Gets all sampling environments associated with this sampling environment.
+	 * 
+	 * @return all sampling environments associated with this sampling environment
+	 */
+	public Set<? extends Position> getAllPositions() {
+		if (null != this.globe) {
+			Set<Vec4> waypoints = super.getAllPoints();
+			return waypoints.stream().map(this.globe::computePositionFromPoint).collect(Collectors.toSet());
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
 
 	/**
 	 * Indicates whether or not this sampling environment is refined, that is, has

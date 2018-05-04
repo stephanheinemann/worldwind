@@ -45,7 +45,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Henrique Ferreira
  *
  */
-public class BasicPRM {
+public class BasicPRMConstructor {
 
 	/** the maximum number of sampling iterations */
 	protected int maxIter;
@@ -72,7 +72,7 @@ public class BasicPRM {
 	 * @param maxNeighbors the maximum number of neighbors
 	 * @param maxDist the maximum distance between two connected neighbors
 	 */
-	public BasicPRM(Environment environment, int maxIter, int maxNeighbors, double maxDist) {
+	public BasicPRMConstructor(Environment environment, int maxIter, int maxNeighbors, double maxDist) {
 		this.environment = environment;
 		this.maxIter = maxIter;
 		this.maxNeighbors = maxNeighbors;

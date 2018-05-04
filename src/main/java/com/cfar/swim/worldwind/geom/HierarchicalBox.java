@@ -217,6 +217,22 @@ public class HierarchicalBox extends Box {
 
 		return all;
 	}
+	
+	/**
+	 * 
+	 * @return
+	 */
+	public Set<Vec4> getAllPoints() {
+		Set<? extends HierarchicalBox> allCells = this.getAll();
+		allCells.removeIf(c -> !c.hasParent());
+		
+		Set<Vec4> allPoints = new HashSet<Vec4>();
+		for(HierarchicalBox cell : allCells) {
+			allPoints.add(cell.getOrigin());
+			allPoints.add(cell.get3DOpposite());
+		}
+		return allPoints;
+	}
 
 	/**
 	 * Looks up the hierarchical box cells containing a specified point in world
@@ -243,7 +259,7 @@ public class HierarchicalBox extends Box {
 	 * @return the hierarchical box cells containing the specified point
 	 */
 	public Set<? extends HierarchicalBox> lookupCells(Vec4 modelPoint, int depth) {
-		Set<HierarchicalBox> lookedUpCells = new HashSet<HierarchicalBox>(8);
+		Set<HierarchicalBox> lookedUpCells = new HashSet<HierarchicalBox>();
 
 		// TODO: review if conversion to boxOrigin is needed
 		// transform point to cell (body) coordinates
@@ -379,7 +395,9 @@ public class HierarchicalBox extends Box {
 				adjacentWaypoints.add(cell.get3DOpposite());
 			}
 		}
-
+		adjacentWaypoints = adjacentWaypoints.stream()
+				.sorted((o1, o2) -> ((Double) o1.distanceTo3(point)).compareTo((Double) o2.distanceTo3(point)))
+				.limit(5).collect(Collectors.toSet());
 		return adjacentWaypoints;
 	}
 
@@ -506,17 +524,11 @@ public class HierarchicalBox extends Box {
 	 */
 	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
 		Set<Vec4> neighbors = new HashSet<Vec4>();
-		Set<HierarchicalBox> neighborCells = new HashSet<>();
 		
 		Set<? extends HierarchicalBox> cells = this.lookupCells(point, depth);
 		cells.removeIf(c -> !c.hasParent());
-		
-		for (HierarchicalBox cell : cells) {
-			neighborCells.addAll(cell.getNeighbors());
-		}
-		neighborCells.removeIf(c -> !c.hasParent());
 
-		for (HierarchicalBox cell : neighborCells) {
+		for (HierarchicalBox cell : cells) {
 			if (cell.isOrigin(point))
 				neighbors.add(cell.get3DOpposite());
 			else if (cell.is3DOpposite(point))
