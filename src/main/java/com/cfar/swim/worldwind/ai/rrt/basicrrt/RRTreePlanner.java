@@ -288,7 +288,6 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected void clearExpendables() {
 		this.getWaypointList().clear();
 		this.getEdgeList().clear();
-		this.plan.clear();
 	}
 
 	/**
@@ -400,6 +399,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		boolean success = true;
 
 		// Extend nearest waypoint in the direction of waypoint
+		//TODO: Investigate other steering/growing strategies
 		Position positionNew = this.growPosition(waypoint, waypointNear);
 		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
 
@@ -407,12 +407,11 @@ public class RRTreePlanner extends AbstractPlanner {
 		ZonedDateTime eto = null;
 		try {
 			eto = this.computeTime(waypointNear, waypointNew);
-		}
-		catch (IllegalArgumentException e) {
+		} catch (IllegalArgumentException e) {
 			System.err.println("Caught IllegalArgumentException: " + e.getMessage());
 			return false;
 		}
-		
+
 		waypointNew.setEto(eto);
 		this.setWaypointNew(waypointNew);
 
@@ -463,6 +462,59 @@ public class RRTreePlanner extends AbstractPlanner {
 			Vec4 pointNew = new Vec4(x, y, z);
 			positionNew = super.getEnvironment().getGlobe().computePositionFromPoint(pointNew);
 		}
+
+		return positionNew;
+	}
+
+	protected Position growPositionTime(Position position, Position positionNear) {
+		// TODO: RRT connect doesn't work with this...
+		Position positionNew;
+		
+		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
+		point1 = this.getEnvironment().transformModelToBoxOrigin(point1);
+		Vec4 point2 = super.getEnvironment().getGlobe().computePointFromPosition(position);
+		point2 = this.getEnvironment().transformModelToBoxOrigin(point2);
+		
+		double dT = 15d; // seconds
+		double minAngle = Math.toRadians(3d);
+		double x, y, z, dy, dz, dist3D, dist2D, angle3D, angle2D;
+		dy = point2.y - point1.y;
+		dz = point2.z - point1.z;
+		
+		dist3D = point1.distanceTo3(point2);
+		dist2D = point1.distanceTo2(point2);
+		
+		angle3D = Math.asin(dz/dist3D);
+		angle2D = Math.asin(dy/dist2D);
+		
+		double speed;
+		if (angle3D > minAngle) {
+			// CLimb
+			speed = this.getAircraft().getCapabilities().getCruiseClimbSpeed();
+			z = point1.z + speed * dT * Math.sin(angle3D);
+			x = point1.x + speed * dT * Math.cos(angle3D) * Math.cos(angle2D);
+			y = point1.y + speed * dT * Math.cos(angle3D) * Math.sin(angle2D);
+		} else if (angle3D < -minAngle) {
+			// Descend
+			speed = this.getAircraft().getCapabilities().getCruiseDescentSpeed();
+			z = point1.z + speed * dT * Math.sin(angle3D);
+			x = point1.x + speed * dT * Math.cos(angle3D) * Math.cos(angle2D);
+			y = point1.y + speed * dT * Math.cos(angle3D) * Math.sin(angle2D);
+		} else {
+			// Level
+			speed = this.getAircraft().getCapabilities().getCruiseSpeed();
+			x = point1.x + speed * dT * Math.cos(angle2D);
+			y = point1.y + speed * dT * Math.sin(angle2D);
+			z = point1.z;
+		}
+		Vec4 pointNew = new Vec4(x, y, z);
+		
+		if(point1.distanceTo3(pointNew)>=dist3D) {
+			return position;
+		}
+		
+		pointNew = this.getEnvironment().transformBoxOriginToModel(pointNew);
+		positionNew = super.getEnvironment().getGlobe().computePositionFromPoint(pointNew);
 
 		return positionNew;
 	}
@@ -700,8 +752,7 @@ public class RRTreePlanner extends AbstractPlanner {
 				// append partial trajectory to plan
 				if ((!plan.isEmpty()) && (!part.isEmpty())) {
 					plan.pollLast();
-				}
-				else {
+				} else {
 					// if no plan could be found, return an empty trajectory
 					Trajectory trajectory = new Trajectory();
 					this.revisePlan(trajectory);
