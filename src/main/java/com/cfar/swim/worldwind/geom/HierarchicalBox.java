@@ -217,17 +217,19 @@ public class HierarchicalBox extends Box {
 
 		return all;
 	}
-	
+
 	/**
+	 * Gets the points (origin and the 3D opposite corner) of all hierarchical
+	 * boxes associated with this one.
 	 * 
-	 * @return
+	 * @return the origin and the 3D opposite corner of all hierarchical boxes
 	 */
 	public Set<Vec4> getAllPoints() {
 		Set<? extends HierarchicalBox> allCells = this.getAll();
 		allCells.removeIf(c -> !c.hasParent());
-		
+
 		Set<Vec4> allPoints = new HashSet<Vec4>();
-		for(HierarchicalBox cell : allCells) {
+		for (HierarchicalBox cell : allCells) {
 			allPoints.add(cell.getOrigin());
 			allPoints.add(cell.get3DOpposite());
 		}
@@ -396,8 +398,8 @@ public class HierarchicalBox extends Box {
 			}
 		}
 		adjacentWaypoints = adjacentWaypoints.stream()
-				.sorted((o1, o2) -> ((Double) o1.distanceTo3(point)).compareTo((Double) o2.distanceTo3(point)))
-				.limit(5).collect(Collectors.toSet());
+				.sorted((o1, o2) -> ((Double) o1.distanceTo3(point)).compareTo((Double) o2.distanceTo3(point))).limit(5)
+				.collect(Collectors.toSet());
 		return adjacentWaypoints;
 	}
 
@@ -416,7 +418,6 @@ public class HierarchicalBox extends Box {
 				.contains(new PrecisionVec4(waypoint));
 	}
 
-	//TODO: review comments
 	/**
 	 * Gets the neighbors of this hierarchical box. A full recursive search is
 	 * performed considering only non-parent neighbors.
@@ -440,7 +441,6 @@ public class HierarchicalBox extends Box {
 	 * @return the neighbors of this hierarchical box
 	 */
 	public Set<? extends HierarchicalBox> getNeighbors(int depth) {
-		// TODO: review implementation
 		Set<HierarchicalBox> neighbors = new HashSet<HierarchicalBox>();
 
 		if (this.hasParent()) {
@@ -524,7 +524,7 @@ public class HierarchicalBox extends Box {
 	 */
 	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
 		Set<Vec4> neighbors = new HashSet<Vec4>();
-		
+
 		Set<? extends HierarchicalBox> cells = this.lookupCells(point, depth);
 		cells.removeIf(c -> !c.hasParent());
 
@@ -644,7 +644,7 @@ public class HierarchicalBox extends Box {
 	 * @return the bounding box, with the specified axes
 	 * 
 	 * @throws IllegalArgumentException if the point list is null or empty.
-	 *      
+	 * 
 	 * @see gov.nasa.worldwind.geom.Box.computeBoundingBox(Iterable<? extends Vec4>)
 	 */
 	public static Box computeBoundingBox(Iterable<? extends Vec4> points, Vec4[] axes) {

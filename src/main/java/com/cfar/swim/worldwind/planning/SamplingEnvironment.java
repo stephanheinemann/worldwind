@@ -697,11 +697,12 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	public Set<? extends SamplingEnvironment> getAll() {
 		return (Set<SamplingEnvironment>) super.getAll();
 	}
-	
+
 	/**
-	 * Gets all sampling environments associated with this sampling environment.
+	 * Gets the positions (origin and the 3D opposite corner) of all sampling
+	 * environment associated with this one.
 	 * 
-	 * @return all sampling environments associated with this sampling environment
+	 * @return the origin and the 3D opposite corner of all sampling environments
 	 */
 	public Set<? extends Position> getAllPositions() {
 		if (null != this.globe) {
@@ -1090,6 +1091,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 
 	/**
 	 * TODO: NOT IMPLEMENTED YET
+	 * 
 	 * @param origin
 	 * @param destination
 	 * @param start
@@ -1112,6 +1114,7 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 
 	/**
 	 * TODO: NOT IMPLEMENTED YET
+	 * 
 	 * @param destination
 	 * @param start
 	 * @param end
@@ -1140,23 +1143,24 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	@Override
 	public void render(DrawContext dc) {
 		if (this.visible) {
-			if (this.hasParent()) {
-				Path diagonal = this.createRenderableDiagonal();
-				diagonal.render(dc);
-			} else {
-				super.render(dc);
-			}
-			if (this.hasChildren()) {
-				for (SamplingEnvironment child : this.getChildren()) {
-					child.render(dc);
-
-				}
-			}
+			// if (this.hasParent()) {
+			// Path diagonal = this.createRenderableDiagonal();
+			// diagonal.render(dc);
+			// } else {
+			super.render(dc);
+			// }
+			// if (this.hasChildren()) {
+			// for (SamplingEnvironment child : this.getChildren()) {
+			// child.render(dc);
+			//
+			// }
+			// }
 		}
 	}
 
 	/**
-	 * Creates a path between the two implicit waypoints of this sampling environment.
+	 * Creates a path between the two implicit waypoints of this sampling
+	 * environment.
 	 * 
 	 * @return the diagonal between the two waypoints of this sampling environment
 	 */
@@ -1170,7 +1174,8 @@ public class SamplingEnvironment extends HierarchicalBox implements Environment 
 	}
 
 	/**
-	 * Samples a position from a continuous space defined in the sampling environment
+	 * Samples a position from a continuous space defined in the sampling
+	 * environment
 	 * 
 	 * @return position in global coordinates inside this sampling environment
 	 */
