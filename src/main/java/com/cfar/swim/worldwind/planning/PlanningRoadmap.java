@@ -42,6 +42,8 @@ import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.render.Path;
 
 /**
  * Realizes a planning roadmap that extends a sampling environment,
@@ -188,7 +190,7 @@ public class PlanningRoadmap extends SamplingEnvironment {
 			lazyPRM.construct();
 		}
 	}
-	
+
 	/**
 	 * Corrects a trajectory, checking if any of its positions or edges is in
 	 * conflict with terrain obstacles.
@@ -227,16 +229,17 @@ public class PlanningRoadmap extends SamplingEnvironment {
 	protected void correctLists(HashSet<Waypoint> conflictWaypoints) {
 		Set<PlanningRoadmap> conflictCells = new HashSet<PlanningRoadmap>();
 		for (Waypoint waypoint : conflictWaypoints) {
-			conflictCells.addAll((Set <PlanningRoadmap>) this.lookupCells(waypoint));
+			conflictCells.addAll((Set<PlanningRoadmap>) this.lookupCells(waypoint));
 		}
 		conflictCells.removeIf(c -> !c.hasParent());
-		for(PlanningRoadmap roadmap : conflictCells) {
-			this.removeChild(roadmap);							
+		for (PlanningRoadmap roadmap : conflictCells) {
+			this.removeChild(roadmap);
 		}
 	}
-	
+
 	/**
-	 * Adds a child to this planning roadmap, constructing a new planning roadmap based on two positions.
+	 * Adds a child to this planning roadmap, constructing a new planning roadmap
+	 * based on two positions.
 	 * 
 	 * @param origin the origin position in globe coordinates
 	 * @param other the other position in globe coordinates
@@ -286,12 +289,12 @@ public class PlanningRoadmap extends SamplingEnvironment {
 	public void refine(int density) {
 		if (this.roadmapConstructor == RoadmapConstructor.BASICPRM) {
 			BasicPRMConstructor basicPRM = new BasicPRMConstructor(this, density, this.maxNeighbors, this.maxDist);
-			if(basicPRM.supports(this))
+			if (basicPRM.supports(this))
 				basicPRM.construct();
 		}
 		if (this.roadmapConstructor == RoadmapConstructor.LAZYPRM) {
 			LazyPRMConstructor lazyPRM = new LazyPRMConstructor(this, density, this.maxNeighbors, this.maxDist);
-			if(lazyPRM.supports(this))
+			if (lazyPRM.supports(this))
 				lazyPRM.construct();
 		}
 	}
@@ -317,5 +320,29 @@ public class PlanningRoadmap extends SamplingEnvironment {
 	@Override
 	public Set<? extends PlanningRoadmap> getAll() {
 		return (Set<PlanningRoadmap>) super.getAll();
+	}
+
+	/**
+	 * Renders this planning roadmap. If it has children, then the children are also
+	 * rendered.
+	 * 
+	 * @param dc the drawing context
+	 */
+	@Override
+	public void render(DrawContext dc) {
+		if (this.visible) {
+			if (this.hasParent()) {
+				Path diagonal = this.createRenderableDiagonal();
+				diagonal.render(dc);
+			} else {
+				super.render(dc);
+			}
+			if (this.hasChildren()) {
+				for (SamplingEnvironment child : this.getChildren()) {
+					child.render(dc);
+
+				}
+			}
+		}
 	}
 }

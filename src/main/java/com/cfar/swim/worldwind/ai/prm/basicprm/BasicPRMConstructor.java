@@ -178,7 +178,6 @@ public class BasicPRMConstructor {
 	 * list.
 	 */
 	protected void getAllPositions() {
-		// TODO: review if code below is working correctly
 		for (PlanningRoadmap env : this.getEnvironment().getAll()) {
 			if (env.hasParent()) {
 				this.positionList.add(env.getGlobe().computePositionFromPoint(env.getOrigin()));
