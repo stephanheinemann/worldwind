@@ -69,6 +69,22 @@ public class FADPRMWaypoint extends Waypoint {
 
 	private double g;
 	
+	private FADPRMWaypoint parent = null;
+	
+	/**
+	 * @return the parent
+	 */
+	public FADPRMWaypoint getParent() {
+		return parent;
+	}
+
+	/**
+	 * @param parent the parent to set
+	 */
+	public void setParent(FADPRMWaypoint parent) {
+		this.parent = parent;
+	}
+
 	/**
 	 * Constructs a FADPRM waypoint at a specified position.
 	 * 
@@ -76,11 +92,11 @@ public class FADPRMWaypoint extends Waypoint {
 	 */
 	public FADPRMWaypoint(Position position) {
 		super(position);
+		this.setCost(0d);
 		this.setG(0d);
 		this.setH(0d);
-		lambda=1;
+		lambda=0.5;
 	}
-
 
 	/**
 	 * Gets the estimated current cost (g-value) of this FADPRM waypoint.
@@ -279,7 +295,7 @@ public class FADPRMWaypoint extends Waypoint {
 			FADPRMWaypoint fadprmw = (FADPRMWaypoint) waypoint;
 			compareTo = new Double(this.getKey()).compareTo(fadprmw.getKey());
 			if (0 == compareTo) {
-				// break ties in favor of higher G-values
+				// break ties in favor of higher H-values
 				compareTo = new Double(fadprmw.getH()).compareTo(this.getH());
 			}
 		} else {
@@ -287,5 +303,19 @@ public class FADPRMWaypoint extends Waypoint {
 		}
 
 		return -compareTo;
+	}
+	
+	/**
+	 * Clones this A* waypoint without its parent and depiction.
+	 * 
+	 * @return the clone of this A* waypoint without its parent and depiction
+	 * 
+	 * @see Object#clone()
+	 */
+	@Override
+	public FADPRMWaypoint clone() {
+		FADPRMWaypoint waypoint = (FADPRMWaypoint) super.clone();
+		waypoint.setParent(null);
+		return waypoint;
 	}
 }

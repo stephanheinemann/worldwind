@@ -48,6 +48,7 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
+import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -368,10 +369,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 	    Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
 
-	    //TODO: code below is not applicable to PlanningRoadmap. suggestion
-		// (if this.getDiscreteEnvironment() instanceof PlanningGrid).....
-	    
-
 	    // if a start has no neighbors, then it is not a waypoint in the
 	    // environment and its adjacent waypoints have to be determined for
 	    // initial expansion
@@ -492,8 +489,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
 		// TODO: catch IllegalArgumentException (incapable) and exit
+//		ZonedDateTime end = null;
+//		try {
+//			end = capabilities.getEstimatedTime(leg, globe, source.getEto());
+//		}
+//		catch (IllegalArgumentException e) {
+//			System.err.println("Caught IllegalArgumentException: " + e.getMessage());
+//			target
+//			return;
+//		}
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
-
 		double cost = this.getEnvironment().getStepCost(
 				source, target,
 				source.getEto(), end,
@@ -527,7 +532,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0);
 		
-		// TODO: code below is not applicable to PlanningRoadmap. suggestion
 		// the adjacent waypoints to the origin
 		this.setStartRegion(this.getEnvironment().getAdjacentWaypoints(origin)
 				.stream()
@@ -588,7 +592,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initialize(origin, destination, etd);
 		this.compute();
-		Trajectory trajectory = this.createTrajectory();
+		Trajectory trajectory = this.createTrajectory();	
 		this.revisePlan(trajectory);
 		return trajectory;
 	}
@@ -671,7 +675,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 		if (supports) {
 			supports = (environment instanceof PlanningGrid) ||
-					(environment instanceof PlanningRoadmap);
+					(environment instanceof SamplingEnvironment);
 		}
 		
 		return supports;
