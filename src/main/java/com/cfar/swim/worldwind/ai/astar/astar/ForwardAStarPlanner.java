@@ -46,9 +46,9 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
-import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -675,7 +675,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		
 		if (supports) {
 			supports = (environment instanceof PlanningGrid) ||
-					(environment instanceof SamplingEnvironment);
+					(environment instanceof PlanningContinuum);
 		}
 		
 		return supports;

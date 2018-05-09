@@ -37,7 +37,6 @@ import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
-import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -130,17 +129,6 @@ public class EnvironmentFactory implements Factory<Environment> {
 			environment = new PlanningGrid(envCube, properties.getDivsion(), sCells, tCells);
 			environment.setThreshold(0d);
 			environment.setGlobe(this.scenario.getGlobe());
-			
-		} else if (specification.getId().equals(Specification.PLANNING_ROADMAP_ID)) {
-			PlanningRoadmapProperties properties = (PlanningRoadmapProperties) specification.getProperties();
-			gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d,
-					this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
-			Box envBox = new Box(bb);
-
-			environment = new PlanningRoadmap(envBox, properties.getResolution(), properties.getRoadmapConstructor(),
-					this.scenario.getGlobe(), properties.getMaxIter(), properties.getMaxNeighbors(),
-					properties.getMaxDistance());
-			environment.setThreshold(0d);
 			
 		} else if (specification.getId().equals(Specification.PLANNING_CONTINUUM_ID)) {
 			// TODO: Review if implementation is done correctly

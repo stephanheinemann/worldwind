@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2018, Henrique Ferreira (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -27,15 +27,30 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.environments;
+package com.cfar.swim.worldwind.ai.prm.basicprm;
 
 /**
- * Realizes the properties bean of a planning roadmap environment.
+ * Enumerates the possible planners that can be used to find a path in a
+ * previously populated roadmap.
  * 
- * @author Stephan Heinemann
+ * @author Henrique Ferreira
  *
  */
-public class PlanningRoadmapProperties {
+public enum QueryPlanner {
 	
+	/**
+	 * a Forward A* planner
+	 */
+	FAS,
+	
+	/**
+	 * Anytime Replanning A* planner
+	 */
+	ARA,
+	
+	/**
+	 * Anytime Dynamic A*
+	 */
+	AD
 
 }

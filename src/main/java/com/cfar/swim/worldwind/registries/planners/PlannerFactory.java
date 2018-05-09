@@ -36,7 +36,9 @@ import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
+import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
@@ -144,17 +146,17 @@ public class PlannerFactory implements Factory<Planner> {
 			((RRTreePlanner) planner).setStrategy(properties.getStrategy());
 		} else if (specification.getId().equals(Specification.PLANNER_HRRT_ID)) {
 			HRRTreeProperties properties = (HRRTreeProperties) specification.getProperties();
-			planner = new HRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
-					properties.getEpsilon(), properties.getBias(), properties.getMaxIter(),
-					properties.getProbFloor(), properties.getNeighbors());
+			planner = new HRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter(), properties.getProbFloor(),
+					properties.getNeighbors());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((HRRTreePlanner) planner).setStrategy(properties.getStrategy());
 			((HRRTreePlanner) planner).setHeuristic(properties.getHeuristic());
 		} else if (specification.getId().equals(Specification.PLANNER_ARRT_ID)) {
 			ARRTreeProperties properties = (ARRTreeProperties) specification.getProperties();
-			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
-					properties.getEpsilon(), properties.getBias(), properties.getMaxIter());
+			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((ARRTreePlanner) planner).setStrategy(properties.getStrategy());
@@ -169,8 +171,23 @@ public class PlannerFactory implements Factory<Planner> {
 			((FADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((FADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((FADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+		} else if (specification.getId().equals(Specification.PLANNER_BASICPRM_ID)) {
+			BasicPRMProperties properties = (BasicPRMProperties) specification.getProperties();
+			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
+					properties.getMaxNeighbors(), properties.getMaxDistance());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((BasicPRM) planner).setPlanner(properties.getQueryPlanner());
+			((BasicPRM) planner).setMode(properties.getMode());
+		} else if (specification.getId().equals(Specification.PLANNER_LAZYPRM_ID)) {
+			LazyPRMProperties properties = (LazyPRMProperties) specification.getProperties();
+			planner = new LazyPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
+					properties.getMaxNeighbors(), properties.getMaxDistance());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((LazyPRM) planner).setPlanner(properties.getQueryPlanner());
+			((LazyPRM) planner).setMode(properties.getMode());
 		}
-		
 		// TODO: implement more planners
 
 		return planner;
