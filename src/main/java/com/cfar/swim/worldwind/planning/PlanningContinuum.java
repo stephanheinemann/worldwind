@@ -723,6 +723,32 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	}
 
 	/**
+	 * Embeds an obstacle into the affected edges.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 */
+	public void embedEdges(Obstacle obstacle) {
+		for (Edge edge : this.getEdgeList()) {
+			if (obstacle.getExtent(this.globe).intersects(edge.getLine())) {
+				edge.addCostInterval(obstacle.getCostInterval());
+			}
+		}
+	}
+
+	/**
+	 * Embeds an obstacle into the affected edges.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 */
+	public void embedEdges(ObstacleCylinder obstacle) {
+		for (Edge edge : this.getEdgeList()) {
+			if (obstacle.getExtent(this.globe).intersects(edge.getLine())) {
+				edge.addCostInterval(obstacle.getCostInterval());
+			}
+		}
+	}
+
+	/**
 	 * Embeds an obstacle into this planning continuum.
 	 * 
 	 * @param obstacle the obstacle to be embedded
@@ -738,6 +764,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
+				this.embedEdges(obstacle);
 
 				embedded = true;
 			}
@@ -765,6 +792,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
+				this.embedEdges(obstacle);
 
 				embedded = true;
 			}

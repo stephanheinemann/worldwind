@@ -37,6 +37,7 @@ import java.util.Set;
 
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
+import com.cfar.swim.worldwind.render.Obstacle;
 
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
@@ -225,7 +226,7 @@ public class Edge {
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
 		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
 	}
-
+	
 	/**
 	 * TODO: Comment Calculates the cost of this position at a given time by
 	 * searching the costInterval tree.
