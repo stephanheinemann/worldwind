@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.planning;
 
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -125,7 +126,7 @@ public class Edge {
 	public void setPosition2(Position position2) {
 		this.position2 = position2;
 	}
-	
+
 	/**
 	 * Receives one position and gets the other position of this edge
 	 * 
@@ -134,13 +135,11 @@ public class Edge {
 	 * @return the other position of this edge
 	 */
 	public Position getOtherPosition(Position position) {
-		if(position.equals(position1)) {
+		if (position.equals(position1)) {
 			return position2;
-		}
-		else if(position.equals(position2)) {
+		} else if (position.equals(position2)) {
 			return position1;
-		}
-		else {
+		} else {
 			return null;
 		}
 	}
@@ -225,7 +224,7 @@ public class Edge {
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
 		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
 	}
-	
+
 	/**
 	 * TODO: Comment Calculates the cost of this position at a given time by
 	 * searching the costInterval tree.
@@ -234,8 +233,9 @@ public class Edge {
 	 * @param end
 	 * @return the cost of this position at the given time
 	 */
-	public double calculateCost(ZonedDateTime start, ZonedDateTime end) {
+	public double calculateCost(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy) {
 		double cost = 1d; // simple cost of normalized distance
+		List<Double> costList = new ArrayList<Double>();
 
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
@@ -249,11 +249,26 @@ public class Edge {
 					costIntervalIds.add(costInterval.getId());
 
 					if ((interval instanceof WeightedCostInterval)) {
-						cost += ((WeightedCostInterval) interval).getWeightedCost();
+						costList.add(((WeightedCostInterval) interval).getWeightedCost());
 					} else {
-						cost += costInterval.getCost();
+						costList.add(costInterval.getCost());
 					}
 				}
+			}
+		}
+		if (!costList.isEmpty()) {
+			// cost is computed based on the minimum/average/maximum cost of all obstacles times
+			// the number of obstacles that affect this edge
+			switch (costPolicy) {
+			case MINIMUM:
+				cost = costList.stream().mapToDouble(Double::doubleValue).min().getAsDouble() * costList.size();
+				break;
+			case MAXIMUM:
+				cost = costList.stream().mapToDouble(Double::doubleValue).max().getAsDouble() * costList.size();
+				break;
+			case AVERAGE:
+				cost = costList.stream().mapToDouble(Double::doubleValue).average().getAsDouble() * costList.size();
+				break;
 			}
 		}
 
@@ -267,21 +282,21 @@ public class Edge {
 	 * @return true if the position is part of this edge, false otherwise
 	 */
 	public boolean contains(Position position) {
-		if(position.equals(position1) || position.equals(position2))
+		if (position.equals(position1) || position.equals(position2))
 			return true;
 		else
 			return false;
 	}
 
-	
-//	/**
-//	 * Updates the active cost of this sampled position using its ato to search the
-//	 * costInterval tree.
-//	 */
-//	public void updateCost() {
-//		this.setCost(this.calculateCost(this.getAto()));
-//	}
-	
+	// /**
+	// * Updates the active cost of this sampled position using its ato to search
+	// the
+	// * costInterval tree.
+	// */
+	// public void updateCost() {
+	// this.setCost(this.calculateCost(this.getAto()));
+	// }
+
 	/**
 	 * Gets the hash code of this edge based on the hash code of the two positions
 	 * 

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2018, Manuel Rosa (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -694,7 +694,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 		distance = this.getNormalizedDistance(origin, destination);
 
-		cost = edge.calculateCost(start, end);
+		cost = edge.calculateCost(start, end, costPolicy);
 
 		if (riskPolicy.satisfies(cost - 1)) {
 			cost = distance * cost;
@@ -702,7 +702,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 			cost = Double.POSITIVE_INFINITY;
 		}
 
-		// TODO: Review how to apply cost Policy
 		stepCost = cost;
 
 		return stepCost;
