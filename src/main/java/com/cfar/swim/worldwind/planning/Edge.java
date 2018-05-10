@@ -37,7 +37,6 @@ import java.util.Set;
 
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
-import com.cfar.swim.worldwind.render.Obstacle;
 
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;

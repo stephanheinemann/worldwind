@@ -40,7 +40,7 @@ import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.PlanningContinuum;
+import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -116,8 +116,8 @@ public class BasicPRM extends AbstractPlanner {
 	 * 
 	 * @return the continuum environment
 	 */
-	public PlanningContinuum getEnvironment() {
-		return (PlanningContinuum) super.getEnvironment();
+	public SamplingEnvironment getEnvironment() {
+		return (SamplingEnvironment) super.getEnvironment();
 	}
 
 	/**
@@ -202,7 +202,7 @@ public class BasicPRM extends AbstractPlanner {
 	 * 
 	 * @param roadmap the Planning roadmap of this basic PRM planner
 	 */
-	protected void updateRoadmap(PlanningContinuum roadmap) {
+	protected void updateRoadmap(SamplingEnvironment roadmap) {
 		roadmap.setWaypointList(this.getWaypointList());
 		roadmap.setEdgeList(this.getEdgeList());
 		return;
@@ -497,14 +497,14 @@ public class BasicPRM extends AbstractPlanner {
 	 * 
 	 * @return true if the environment is a planning continuum, false otherwise
 	 * 
-	 * @see PlanningContinuum
+	 * @see SamplingEnvironment
 	 */
 	@Override
 	public boolean supports(Environment environment) {
 		boolean supports = super.supports(environment);
 
 		if (supports) {
-			supports = (environment instanceof PlanningContinuum);
+			supports = (environment instanceof SamplingEnvironment);
 		}
 
 		return supports;

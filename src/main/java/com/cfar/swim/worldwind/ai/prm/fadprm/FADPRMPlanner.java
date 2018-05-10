@@ -45,7 +45,7 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.PlanningContinuum;
+import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
@@ -322,8 +322,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 */
 	protected Set<FADPRMWaypoint> getAllWaypoints() {
 		Set<FADPRMWaypoint> waypoints = new HashSet<FADPRMWaypoint>();
-		waypoints = this.getEnvironment().getAllPositions().stream().map(this::createWaypoint)
-				.collect(Collectors.toSet());
+//		waypoints = this.getEnvironment().getAllPositions().stream().map(this::createWaypoint)
+//				.collect(Collectors.toSet());
 		return waypoints;
 	}
 
@@ -464,7 +464,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		corners.add(point.add3(-halfDistance, -halfDistance, +halfDistance));
 		corners.add(point.add3(-halfDistance, +halfDistance, +halfDistance));
 
-		PlanningContinuum env = new PlanningContinuum(new Box(gov.nasa.worldwind.geom.Box.computeBoundingBox(corners)));
+		SamplingEnvironment env = new SamplingEnvironment(new Box(gov.nasa.worldwind.geom.Box.computeBoundingBox(corners)));
 		env.setGlobe(this.getEnvironment().getGlobe());
 		Position pos = env.sampleRandomPosition();
 		while (this.getEnvironment().checkConflict(pos)) {
@@ -486,7 +486,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			newPosition = this.samplePosition(waypoint);
 
 		FADPRMWaypoint newWaypoint = this.createWaypoint(newPosition);
-		this.getEnvironment().addChild(waypoint, newWaypoint);
+//		this.getEnvironment().addChild(waypoint, newWaypoint);
 		return newWaypoint;
 	}
 
@@ -668,7 +668,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 
 	public boolean connectToGoal(FADPRMWaypoint source) {
 		if (this.getEnvironment().getNormalizedDistance(source, this.getGoal()) < 0.1) {
-			this.getEnvironment().addChild(source, this.getGoal());
+//			this.getEnvironment().addChild(source, this.getGoal());
 			return true;
 		}
 		return false;
@@ -840,7 +840,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 * 
 	 * @return true if the environment is a planning continuum, false otherwise
 	 * 
-	 * @see PlanningContinuum
+	 * @see SamplingEnvironment
 	 */
 	@Override
 	public boolean supports(Environment environment) {

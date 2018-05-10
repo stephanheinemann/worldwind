@@ -71,7 +71,7 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  * @author Henrique Ferreira
  *
  */
-public class PlanningContinuum extends ContinuumBox implements Environment {
+public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 	/** the globe of this planning continuum */
 	private Globe globe = null;
@@ -112,7 +112,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	 * 
 	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
-	public PlanningContinuum(Box box) {
+	public SamplingEnvironment(Box box) {
 		super(box);
 		this.update();
 	}
@@ -125,7 +125,7 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	 * 
 	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
-	public PlanningContinuum(Box box, double resolution) {
+	public SamplingEnvironment(Box box, double resolution) {
 		super(box);
 		this.resolution = resolution;
 		this.update();
@@ -475,9 +475,9 @@ public class PlanningContinuum extends ContinuumBox implements Environment {
 	 * @return the refinements of this planning grid
 	 *
 	 */
-	public Set<PlanningContinuum> getRefinements() {
+	public Set<SamplingEnvironment> getRefinements() {
 		// TODO: Review
-		return new HashSet<PlanningContinuum>();
+		return new HashSet<SamplingEnvironment>();
 	}
 
 	/**

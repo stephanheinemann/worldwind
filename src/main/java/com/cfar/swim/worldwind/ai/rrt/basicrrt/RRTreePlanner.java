@@ -43,7 +43,7 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.PlanningContinuum;
+import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -136,8 +136,8 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the continuum environment
 	 */
-	public PlanningContinuum getEnvironment() {
-		return (PlanningContinuum) super.getEnvironment();
+	public SamplingEnvironment getEnvironment() {
+		return (SamplingEnvironment) super.getEnvironment();
 	}
 
 	/**
@@ -791,14 +791,14 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return true if the environment is a planning continuum, false otherwise
 	 * 
-	 * @see PlanningContinuum
+	 * @see SamplingEnvironment
 	 */
 	@Override
 	public boolean supports(Environment environment) {
 		boolean supports = super.supports(environment);
 
 		if (supports) {
-			supports = (environment instanceof PlanningContinuum);
+			supports = (environment instanceof SamplingEnvironment);
 		}
 
 		return supports;
