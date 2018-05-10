@@ -50,7 +50,7 @@ import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
 import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
 import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
-import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
+import com.cfar.swim.worldwind.registries.environments.SamplingEnvironmentProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
 import com.cfar.swim.worldwind.registries.environments.SamplingEnvironmentProperties;
 import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
@@ -172,7 +172,6 @@ public class Session implements Identifiable {
 		
 		this.environmentRegistry.clearSpecifications();
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_GRID_ID, new PlanningGridProperties()));
-		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_SAMPLING_ID, new SamplingEnvironmentProperties()));
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		
@@ -197,7 +196,7 @@ public class Session implements Identifiable {
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
-		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_CONTINUUM_ID));
+		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_SAMPLING_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_BASICPRM_ID));
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
 	}

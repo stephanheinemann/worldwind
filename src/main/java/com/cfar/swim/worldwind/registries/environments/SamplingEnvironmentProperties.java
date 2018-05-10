@@ -37,7 +37,7 @@ package com.cfar.swim.worldwind.registries.environments;
  * @author Henrique Ferreira
  *
  */
-public class PlanningContinuumProperties extends EnvironmentProperties {
+public class SamplingEnvironmentProperties extends EnvironmentProperties {
 
 	/** the resolution of this planning continuum */
 	private double resolution = 100d;
@@ -46,7 +46,7 @@ public class PlanningContinuumProperties extends EnvironmentProperties {
 	 * Calls EnvironmentProperties constructor to construct a new environment
 	 * properties bean using default floor and ceiling property values.
 	 */
-	public PlanningContinuumProperties() {
+	public SamplingEnvironmentProperties() {
 		super();
 	}
 	
