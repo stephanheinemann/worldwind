@@ -46,7 +46,6 @@ import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
-import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 

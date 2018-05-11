@@ -35,12 +35,14 @@ import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.ai.Planner;
-import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
+import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
+import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -101,8 +103,7 @@ public class LazyPRM extends BasicPRM {
 		this.getEnvironment().sortNearest(waypoint);
 
 		for (Waypoint neighbor : this.getWaypointList()) {
-			if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
-					&& numConnectedNeighbor < MAX_NEIGHBORS) {
+			if (this.areConnectable(waypoint, neighbor, numConnectedNeighbor)) {
 				numConnectedNeighbor++;
 				super.createEdge(waypoint, neighbor);
 			}
@@ -185,12 +186,11 @@ public class LazyPRM extends BasicPRM {
 	 * @return true if this trajectory is feasible, false otherwise
 	 */
 	protected boolean correctTrajectory(Trajectory trajectory) {
-		// TODO: only waypoint conflict checks are done. Edge conflicts are still not
-		// done
 		if (trajectory == null)
 			return false;
 
 		HashSet<Waypoint> conflictWaypoints = new HashSet<Waypoint>();
+		HashSet<Edge> conflictEdges = new HashSet<Edge>();
 
 		for (Waypoint waypoint : trajectory.getWaypoints()) {
 			if (this.getEnvironment().checkConflict(waypoint))
@@ -198,7 +198,20 @@ public class LazyPRM extends BasicPRM {
 		}
 
 		if (!conflictWaypoints.isEmpty()) {
-			this.correctLists(conflictWaypoints);
+			this.correctListsW(conflictWaypoints);
+			return false;
+		}
+		Waypoint wpt1 = Iterables.get(trajectory.getWaypoints(), 0);
+		Waypoint wpt2;
+		for (int i=0; i < trajectory.getLength()-1; i++) {
+			wpt2 = Iterables.get(trajectory.getWaypoints(), i+1);
+			if(this.getEnvironment().checkConflict(wpt1, wpt2)) {
+				conflictEdges.add(new Edge(wpt1, wpt2));
+			}
+			wpt1 = wpt2;
+		}
+		if (!conflictEdges.isEmpty()) {
+			this.correctListsE(conflictEdges);
 			return false;
 		}
 		return true;
@@ -211,12 +224,24 @@ public class LazyPRM extends BasicPRM {
 	 * @param conflictWaypoints the set of waypoints that are in conflict with
 	 *            terrain obstacles
 	 */
-	protected void correctLists(HashSet<Waypoint> conflictWaypoints) {
+	protected void correctListsW(HashSet<Waypoint> conflictWaypoints) {
 		for (Waypoint waypoint : conflictWaypoints) {
 			this.getWaypointList().remove(waypoint);
 			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
 		}
-		return;
+	}
+	
+	/**
+	 * Corrects the waypoint and edge list by removing the edges that are in
+	 * conflict with terrain obstacles.
+	 * 
+	 * @param conflictEdges the set of edges that are in conflict with
+	 *            terrain obstacles
+	 */
+	protected void correctListsE(HashSet<Edge> conflictEdges) {
+		for (Edge edge : conflictEdges) {
+			this.getEdgeList().remove(edge);
+		}
 	}
 
 	/**
@@ -236,41 +261,26 @@ public class LazyPRM extends BasicPRM {
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		Trajectory trajectory = null;
-
-		this.initialize();
-		this.construct();
-		this.extendsConstruction(origin, destination);
-
-		while (!this.correctTrajectory(trajectory)) {
-			this.updateRoadmap(this.getEnvironment());
-			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());
-			aStar.setCostPolicy(this.getCostPolicy());
-			aStar.setRiskPolicy(this.getRiskPolicy());
-			trajectory = aStar.plan(origin, destination, etd);
+		if(this.getEnvironment().getEdgeList().isEmpty()) {
+			this.setMode(QueryMode.SINGLE);
 		}
-
+		
+		if(this.getMode()==QueryMode.SINGLE) {
+			this.initialize();
+			this.construct();
+			this.extendsConstruction(origin, destination);
+			while(!this.correctTrajectory(trajectory)) {
+				trajectory = this.findPath(origin, destination, etd, this.planner);
+			}
+		} else if(this.getMode()==QueryMode.MULTIPLE) {
+			this.extendsConstruction(origin, destination);
+			while(!this.correctTrajectory(trajectory)) {
+				trajectory = this.findPath(origin, destination, etd, this.planner);
+			}
+		}
+		
 		this.revisePlan(trajectory);
-
 		return trajectory;
-		// } else {
-		// this.extendsConstruction(origin, destination);
-		//
-		// this.updateRoadmap(this.getRoadmap());
-		//
-		// while (!this.correctTrajectory(trajectory)) {
-		// this.updateRoadmap(this.getRoadmap());
-		// ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(),
-		// this.getRoadmap());
-		// aStar.setCostPolicy(this.getCostPolicy());
-		// aStar.setRiskPolicy(this.getRiskPolicy());
-		//
-		// trajectory = aStar.plan(origin, destination, etd);
-		// }
-		//
-		// this.revisePlan(trajectory);
-		//
-		// return trajectory;
-		// }
 	}
 
 	/**
@@ -290,41 +300,25 @@ public class LazyPRM extends BasicPRM {
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		Trajectory trajectory = null;
-
-		this.initialize();
-		this.construct();
-		this.extendsConstruction(origin, destination, waypoints);
-
-		while (!this.correctTrajectory(trajectory)) {
-			this.updateRoadmap(this.getEnvironment());
-			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());
-			aStar.setCostPolicy(this.getCostPolicy());
-			aStar.setRiskPolicy(this.getRiskPolicy());
-
-			trajectory = aStar.plan(origin, destination, waypoints, etd);
+		if(this.getEnvironment().getEdgeList().isEmpty()) {
+			this.setMode(QueryMode.SINGLE);
 		}
-
+		
+		if(this.getMode()==QueryMode.SINGLE) {
+			this.initialize();
+			this.construct();
+			this.extendsConstruction(origin, destination);
+			while(!this.correctTrajectory(trajectory)) {
+				trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
+			}
+		} else if(this.getMode()==QueryMode.MULTIPLE) {
+			this.extendsConstruction(origin, destination);
+			while(!this.correctTrajectory(trajectory)) {
+				trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
+			}
+		}
+		
 		this.revisePlan(trajectory);
-
 		return trajectory;
-		// } else {
-		// this.extendsConstruction(origin, destination, waypoints);
-		//
-		// this.updateRoadmap(this.getRoadmap());
-		//
-		// while (!this.correctTrajectory(trajectory)) {
-		// this.updateRoadmap(this.getRoadmap());
-		// ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(),
-		// this.getRoadmap());
-		// aStar.setCostPolicy(this.getCostPolicy());
-		// aStar.setRiskPolicy(this.getRiskPolicy());
-		//
-		// trajectory = aStar.plan(origin, destination, waypoints, etd);
-		// }
-		//
-		// this.revisePlan(trajectory);
-		//
-		// return trajectory;
-		// }
 	}
 }

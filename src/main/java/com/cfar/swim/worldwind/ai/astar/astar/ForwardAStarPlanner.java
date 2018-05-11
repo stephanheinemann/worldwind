@@ -489,16 +489,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
 		// TODO: catch IllegalArgumentException (incapable) and exit
-//		ZonedDateTime end = null;
-//		try {
-//			end = capabilities.getEstimatedTime(leg, globe, source.getEto());
-//		}
-//		catch (IllegalArgumentException e) {
-//			System.err.println("Caught IllegalArgumentException: " + e.getMessage());
-//			target
-//			return;
-//		}
-		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
+		ZonedDateTime end = null;
+		try {
+			end = capabilities.getEstimatedTime(leg, globe, source.getEto());
+		}
+		catch (IllegalArgumentException e) {
+			System.err.println("Caught IllegalArgumentException: " + e.getMessage());
+			return;
+		}
+		
+//		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		double cost = this.getEnvironment().getStepCost(
 				source, target,
 				source.getEto(), end,

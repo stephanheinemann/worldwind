@@ -50,61 +50,63 @@ import gov.nasa.worldwind.render.Path;
 public class Capabilities {
 
 	// all capabilities are stored in SI units
-	
+
 	/** the maximum angle of climb speed of this capabilities bean in m/s */
 	private double maximumAngleOfClimbSpeed = 0d; // m/s
-	
+
 	/** the maximum rate of climb speed of this capabilities bean in m/s */
 	private double maximumRateOfClimbSpeed = 0d; // m/s
-	
+
 	/** the cruise climb speed of this capabilities bean in m/s */
 	private double cruiseClimbSpeed = 0d; // m/s
-	
+
 	/** the cruise speed of this capabilities bean in m/s */
 	private double cruiseSpeed = 0d; // m/s
-	
+
 	/** the cruise descent speed of this capabilities bean in m/s */
 	private double cruiseDescentSpeed = 0d; // m/s
-	
+
 	/** the approach speed of this capabilities bean in m/s */
 	private double approachSpeed = 0d; // m/s
-	
+
 	/** the maximum glide speed of this capabilities bean in m/s */
 	private double maximumGlideSpeed = 0d; // m/s
-	
+
 	/** the maximum rate of descent speed of this capabilities bean in m/s */
 	private double maximumRateOfDescentSpeed = 0d; // m/s
-	
+
 	/** the maximum speed of this capabilities bean in m/s */
 	private double maximumSpeed = 0d; // m/s
-	
+
 	/** maximum rate of climb of this capabilities bean in m/s */
 	private double maximumRateOfClimb = 0d; // m/s
-	
+
 	/** the cruise rate of climb of this capabilities bean in m/s */
 	private double cruiseRateOfClimb = 0d; // m/s
-	
+
 	/** the cruise rate of descent of this capabilities bean in m/s */
 	private double cruiseRateOfDescent = 0d; // m/s
-	
+
 	/** the approach rate of descent of this capabilities bean in m/s */
 	private double approachRateOfDescent = 0d; // m/s
-	
+
 	/** the maximum rate of descent of this capabilities bean in m/s */
 	private double maximumRateOfDescent = 0d; // m/s
-	
+
 	/** the maximum angle of climb of this capabilities bean in degrees */
 	private Angle maximumAngleOfClimb = Angle.fromDegrees(0); // deg
-	
+
 	// TODO: climb-speed-distance performance
-	// TODO: possibly feature parameterization for air movement (horizontal / vertical)
-	// TODO: possibly feature parameterization for air density (temperature / pressure / humidity)
+	// TODO: possibly feature parameterization for air movement (horizontal /
+	// vertical)
+	// TODO: possibly feature parameterization for air density (temperature /
+	// pressure / humidity)
 	// TODO: create a new AirDataInterval class which aggregates AirData class
 	// TODO: AirData, Surface/GroundData extends EnvironmentData
 	// TODO: environment would have to store air property intervals
 	// TODO: average fuel consumption, endurance, range, radius of action...
 	// TODO: equipment (de-icing, gear, floats...)
-	
+
 	/**
 	 * Gets the maximum angle of climb speed of this capabilities bean.
 	 * 
@@ -113,7 +115,7 @@ public class Capabilities {
 	public double getMaximumAngleOfClimbSpeed() {
 		return maximumAngleOfClimbSpeed;
 	}
-	
+
 	/**
 	 * Sets the maximum angle of climb speed of this capabilities bean.
 	 * 
@@ -122,7 +124,7 @@ public class Capabilities {
 	public void setMaximumAngleOfClimbSpeed(double maximumAngleOfClimbSpeed) {
 		this.maximumAngleOfClimbSpeed = maximumAngleOfClimbSpeed;
 	}
-	
+
 	/**
 	 * Gets the maximum rate of climb speed of this capabilities bean.
 	 * 
@@ -131,7 +133,7 @@ public class Capabilities {
 	public double getMaximumRateOfClimbSpeed() {
 		return maximumRateOfClimbSpeed;
 	}
-	
+
 	/**
 	 * Sets the maximum rate of climb speed of this capabilities bean.
 	 * 
@@ -140,7 +142,7 @@ public class Capabilities {
 	public void setMaximumRateOfClimbSpeed(double maximumRateOfClimbSpeed) {
 		this.maximumRateOfClimbSpeed = maximumRateOfClimbSpeed;
 	}
-	
+
 	/**
 	 * Gets the cruise climb speed of this capabilities bean.
 	 * 
@@ -149,7 +151,7 @@ public class Capabilities {
 	public double getCruiseClimbSpeed() {
 		return cruiseClimbSpeed;
 	}
-	
+
 	/**
 	 * Sets the cruise climb speed of this capabilities bean.
 	 * 
@@ -158,7 +160,7 @@ public class Capabilities {
 	public void setCruiseClimbSpeed(double cruiseClimbSpeed) {
 		this.cruiseClimbSpeed = cruiseClimbSpeed;
 	}
-	
+
 	/**
 	 * Gets the cruise speed of this capabilities bean.
 	 * 
@@ -167,7 +169,7 @@ public class Capabilities {
 	public double getCruiseSpeed() {
 		return this.cruiseSpeed;
 	}
-	
+
 	/**
 	 * Sets the cruise speed of this capabilities bean.
 	 * 
@@ -176,7 +178,7 @@ public class Capabilities {
 	public void setCruiseSpeed(double cruiseSpeed) {
 		this.cruiseSpeed = cruiseSpeed;
 	}
-	
+
 	/**
 	 * Gets the cruise descent speed of this capabilities bean.
 	 * 
@@ -185,7 +187,7 @@ public class Capabilities {
 	public double getCruiseDescentSpeed() {
 		return cruiseDescentSpeed;
 	}
-	
+
 	/**
 	 * Sets the cruise descent speed of this capabilities bean.
 	 * 
@@ -194,7 +196,7 @@ public class Capabilities {
 	public void setCruiseDescentSpeed(double cruiseDescentSpeed) {
 		this.cruiseDescentSpeed = cruiseDescentSpeed;
 	}
-	
+
 	/**
 	 * Gets the approach speed of this capabilities bean.
 	 * 
@@ -203,7 +205,7 @@ public class Capabilities {
 	public double getApproachSpeed() {
 		return approachSpeed;
 	}
-	
+
 	/**
 	 * Sets the approach speed of this capabilities bean.
 	 * 
@@ -212,7 +214,7 @@ public class Capabilities {
 	public void setApproachSpeed(double approachSpeed) {
 		this.approachSpeed = approachSpeed;
 	}
-	
+
 	/**
 	 * Gets the maximum glide speed of this capabilities bean.
 	 * 
@@ -221,7 +223,7 @@ public class Capabilities {
 	public double getMaximumGlideSpeed() {
 		return maximumGlideSpeed;
 	}
-	
+
 	/**
 	 * Sets the maximum glide speed of this capabilities bean.
 	 * 
@@ -230,7 +232,7 @@ public class Capabilities {
 	public void setMaximumGlideSpeed(double maximumGlideSpeed) {
 		this.maximumGlideSpeed = maximumGlideSpeed;
 	}
-	
+
 	/**
 	 * Gets the maximum rate of descent speed of this capabilities bean.
 	 * 
@@ -239,7 +241,7 @@ public class Capabilities {
 	public double getMaximumRateOfDescentSpeed() {
 		return maximumRateOfDescentSpeed;
 	}
-	
+
 	/**
 	 * Sets the maximum rate of descent speed of this capabilities bean.
 	 * 
@@ -248,7 +250,7 @@ public class Capabilities {
 	public void setMaximumRateOfDescentSpeed(double maximumRateOfDescentSpeed) {
 		this.maximumRateOfDescentSpeed = maximumRateOfDescentSpeed;
 	}
-	
+
 	/**
 	 * Gets the maximum speed of this capabilities bean.
 	 * 
@@ -257,7 +259,7 @@ public class Capabilities {
 	public double getMaximumSpeed() {
 		return maximumSpeed;
 	}
-	
+
 	/**
 	 * Sets the maximum speed of this capabilities bean.
 	 * 
@@ -266,7 +268,7 @@ public class Capabilities {
 	public void setMaximumSpeed(double maximumSpeed) {
 		this.maximumSpeed = maximumSpeed;
 	}
-	
+
 	/**
 	 * Gets the maximum rate of climb of this capabilities bean.
 	 * 
@@ -275,7 +277,7 @@ public class Capabilities {
 	public double getMaximumRateOfClimb() {
 		return maximumRateOfClimb;
 	}
-	
+
 	/**
 	 * Sets the maximum rate of climb of this capabilities bean.
 	 * 
@@ -284,7 +286,7 @@ public class Capabilities {
 	public void setMaximumRateOfClimb(double maximumRateOfClimb) {
 		this.maximumRateOfClimb = maximumRateOfClimb;
 	}
-	
+
 	/**
 	 * Gets the cruise rate of climb of this capabilities bean.
 	 * 
@@ -293,7 +295,7 @@ public class Capabilities {
 	public double getCruiseRateOfClimb() {
 		return cruiseRateOfClimb;
 	}
-	
+
 	/**
 	 * Sets the cruise rate of climb of this capabilities bean.
 	 * 
@@ -302,7 +304,7 @@ public class Capabilities {
 	public void setCruiseRateOfClimb(double cruiseRateOfClimb) {
 		this.cruiseRateOfClimb = cruiseRateOfClimb;
 	}
-	
+
 	/**
 	 * Gets the cruise rate of descent of this capabilities bean.
 	 * 
@@ -311,7 +313,7 @@ public class Capabilities {
 	public double getCruiseRateOfDescent() {
 		return cruiseRateOfDescent;
 	}
-	
+
 	/**
 	 * Sets the cruise rate of descent of this capabilities bean.
 	 * 
@@ -320,7 +322,7 @@ public class Capabilities {
 	public void setCruiseRateOfDescent(double cruiseRateOfDescent) {
 		this.cruiseRateOfDescent = cruiseRateOfDescent;
 	}
-	
+
 	/**
 	 * Gets the approach rate of descent of this capabilities bean.
 	 * 
@@ -329,7 +331,7 @@ public class Capabilities {
 	public double getApproachRateOfDescent() {
 		return approachRateOfDescent;
 	}
-	
+
 	/**
 	 * Sets the approach rate of descent of this capabilities bean.
 	 * 
@@ -338,7 +340,7 @@ public class Capabilities {
 	public void setApproachRateOfDescent(double approachRateOfDescent) {
 		this.approachRateOfDescent = approachRateOfDescent;
 	}
-	
+
 	/**
 	 * Gets the maximum rate of descent of this capabilities bean.
 	 * 
@@ -347,7 +349,7 @@ public class Capabilities {
 	public double getMaximumRateOfDescent() {
 		return maximumRateOfDescent;
 	}
-	
+
 	/**
 	 * Sets the maximum rate of descent of this capabilities bean.
 	 * 
@@ -356,7 +358,7 @@ public class Capabilities {
 	public void setMaximumRateOfDescent(double maximumRateOfDescent) {
 		this.maximumRateOfDescent = maximumRateOfDescent;
 	}
-	
+
 	/**
 	 * Gets the maximum angle of climb of this capabilities bean.
 	 * 
@@ -365,7 +367,7 @@ public class Capabilities {
 	public Angle getMaximumAngleOfClimb() {
 		return maximumAngleOfClimb;
 	}
-	
+
 	/**
 	 * Sets the maximum angle of climb of this capabilities bean.
 	 * 
@@ -374,20 +376,20 @@ public class Capabilities {
 	public void setMaximumAngleOfClimb(Angle maximumAngleOfClimb) {
 		this.maximumAngleOfClimb = maximumAngleOfClimb;
 	}
-	
+
 	/**
-	 * Gets the estimated duration to travel a specified horizontal distance
-	 * at cruise speed in still air.
+	 * Gets the estimated duration to travel a specified horizontal distance at
+	 * cruise speed in still air.
 	 * 
 	 * @param distance the horizontal distance in meters
 	 * 
-	 * @return the estimated duration to travel the specified level distance
-	 *         at cruise speed
+	 * @return the estimated duration to travel the specified level distance at
+	 *         cruise speed
 	 */
 	public Duration getEstimatedDuration(double distance) {
 		return Duration.ofSeconds((long) (distance / this.cruiseSpeed));
 	}
-	
+
 	/**
 	 * Gets the estimated duration to travel directly from a start to a goal
 	 * position at cruise speed including climbs and descents in still air.
@@ -396,45 +398,47 @@ public class Capabilities {
 	 * @param goal the goal position
 	 * @param globe the globe associated with the positions
 	 * 
-	 * @return the estimated duration to travel directly from the start to the
-	 *         goal position at cruise speed including climbs and descents in
-	 *         still air
-	 *         
-	 * @throws IllegalArgumentException if aircraft is incapable of traveling from start to goal
+	 * @return the estimated duration to travel directly from the start to the goal
+	 *         position at cruise speed including climbs and descents in still air
+	 * 
+	 * @throws IllegalArgumentException if aircraft is incapable of traveling from
+	 *             start to goal
 	 */
 	public Duration getEstimatedDuration(Position start, Position goal, Globe globe) throws IllegalArgumentException {
 		// Henrique changed from seconds to milliseconds
 		Duration estimatedDuration = Duration.ZERO;
 		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
 		double height = goal.getElevation() - start.getElevation();
-		
+
 		if (new PrecisionDouble(height).equals(new PrecisionDouble(0d))) {
 			// horizontal movement
 			estimatedDuration = this.getEstimatedDuration(distance);
 		} else if (0 < height) {
 			// climb
 			// compute cruise climb duration
-//			Duration climbDuration = Duration.ofSeconds((long) (height / this.cruiseRateOfClimb));
-			Duration climbDuration = Duration.ofMillis((long) (height *1000 / this.cruiseRateOfClimb));
+			// Duration climbDuration = Duration.ofSeconds((long) (height /
+			// this.cruiseRateOfClimb));
+			Duration climbDuration = Duration.ofMillis((long) (height * 1000 / this.cruiseRateOfClimb));
 			// compute cruise slant distance in still air
-//			double slantDistance = this.cruiseClimbSpeed * climbDuration.getSeconds();
-			double slantDistance = this.cruiseClimbSpeed * climbDuration.toMillis()/1000;
-			
+			// double slantDistance = this.cruiseClimbSpeed * climbDuration.getSeconds();
+			double slantDistance = this.cruiseClimbSpeed * climbDuration.toMillis() / 1000;
+
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 				// compute minimum climb duration
-//				climbDuration = Duration.ofSeconds((long) (height / this.maximumRateOfClimb));
-				climbDuration = Duration.ofMillis((long) (height *1000 / this.maximumRateOfClimb));
+				// climbDuration = Duration.ofSeconds((long) (height /
+				// this.maximumRateOfClimb));
+				climbDuration = Duration.ofMillis((long) (height * 1000 / this.maximumRateOfClimb));
 				// compute minimum slant distance in still air
-//				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.getSeconds();
-				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.toMillis()/1000;
-				
+				// slantDistance = this.maximumRateOfClimbSpeed * climbDuration.getSeconds();
+				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.toMillis() / 1000;
+
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 					throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
 				}
 			}
-			
+
 			// compute climb angle in still air
 			double climbAngle = Math.asin(height / slantDistance);
 			// compute ground distance during climb in still air
@@ -447,27 +451,31 @@ public class Capabilities {
 			// descent
 			height = Math.abs(height);
 			// compute cruise descent duration
-//			Duration descentDuration = Duration.ofSeconds((long) (height / this.cruiseRateOfDescent));
-			Duration descentDuration = Duration.ofMillis((long) (height *1000 / this.cruiseRateOfDescent));
+			// Duration descentDuration = Duration.ofSeconds((long) (height /
+			// this.cruiseRateOfDescent));
+			Duration descentDuration = Duration.ofMillis((long) (height * 1000 / this.cruiseRateOfDescent));
 			// compute cruise slant distance in still air
-//			double slantDistance = this.cruiseDescentSpeed * descentDuration.getSeconds();
-			double slantDistance = this.cruiseDescentSpeed * descentDuration.toMillis()/1000;
-			
+			// double slantDistance = this.cruiseDescentSpeed *
+			// descentDuration.getSeconds();
+			double slantDistance = this.cruiseDescentSpeed * descentDuration.toMillis() / 1000;
+
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 				// compute minimum descent duration
-//				descentDuration = Duration.ofSeconds((long) (height / this.maximumRateOfDescent));
-				descentDuration = Duration.ofMillis((long) (height *1000 / this.maximumRateOfDescent));
+				// descentDuration = Duration.ofSeconds((long) (height /
+				// this.maximumRateOfDescent));
+				descentDuration = Duration.ofMillis((long) (height * 1000 / this.maximumRateOfDescent));
 				// compute minimum slant distance in still air
-//				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.getSeconds();
-				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.toMillis()/1000;
-				
+				// slantDistance = this.maximumRateOfDescentSpeed *
+				// descentDuration.getSeconds();
+				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.toMillis() / 1000;
+
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 					throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
 				}
 			}
-			
+
 			// compute descent angle in still air
 			double descentAngle = Math.asin(height / slantDistance);
 			// compute ground distance during descent in still air
@@ -477,13 +485,13 @@ public class Capabilities {
 			// compute complete estimated duration
 			estimatedDuration = descentDuration.plus(this.getEstimatedDuration(levelDistance));
 		}
-		
+
 		return estimatedDuration;
 	}
-	
+
 	/**
-	 * Gets the estimated duration to travel along a path of positions at
-	 * cruise speed including climbs and descents in still air.
+	 * Gets the estimated duration to travel along a path of positions at cruise
+	 * speed including climbs and descents in still air.
 	 * 
 	 * @param path the path of positions
 	 * @param globe the globe associated with the positions
@@ -496,23 +504,23 @@ public class Capabilities {
 		@SuppressWarnings("unchecked")
 		Iterator<Position> positions = (Iterator<Position>) path.getPositions().iterator();
 		Position current = null;
-		
+
 		if (positions.hasNext()) {
 			current = positions.next();
 		}
-		
+
 		while (positions.hasNext()) {
 			estimatedDuration = estimatedDuration.plus(this.getEstimatedDuration(current, positions.next(), globe));
 		}
-		
+
 		return estimatedDuration;
 	}
-	
+
 	/**
-	 * Gets the estimated time of arrival after traveling a specified
-	 * horizontal distance.
+	 * Gets the estimated time of arrival after traveling a specified horizontal
+	 * distance.
 	 * 
-	 * @param distance the horizontal distance in meters 
+	 * @param distance the horizontal distance in meters
 	 * @param start the start time
 	 * 
 	 * @return the estimated time of arrival after traveling the specified
@@ -521,20 +529,66 @@ public class Capabilities {
 	public ZonedDateTime getEstimatedTime(double distance, ZonedDateTime start) {
 		return start.plus(this.getEstimatedDuration(distance));
 	}
-	
+
 	/**
-	 * Gets the estimated time of arrival after traveling along a specified
-	 * path of positions.
+	 * Gets the estimated time of arrival after traveling along a specified path of
+	 * positions.
 	 * 
 	 * @param path the path of positions
 	 * @param globe the globe associated with the positions
 	 * @param start the start time
 	 * 
-	 * @return the estimated time of arrival after traveling along the
-	 *         specified path of positions
+	 * @return the estimated time of arrival after traveling along the specified
+	 *         path of positions
 	 */
 	public ZonedDateTime getEstimatedTime(Path path, Globe globe, ZonedDateTime start) {
 		return start.plus(this.getEstimatedDuration(path, globe));
 	}
-	
+
+	/**
+	 * Indicates whether or not an aircraft can travel directly from a start to a
+	 * goal position, considering maximum cruise, climb and descents speeds and
+	 * rates.
+	 * 
+	 * @param start the start position
+	 * @param goal the goal position
+	 * @param globe the globe associated with the positions
+	 * 
+	 * @return true if the leg is flyable, false otherwise
+	 */
+	public boolean isFlyable(Position start, Position goal, Globe globe) {
+		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
+		double height = goal.getElevation() - start.getElevation();
+
+		if (0 < height) {
+			// climb
+			// compute minimum climb duration
+			Duration climbDuration = Duration.ofMillis((long) (height * 1000 / this.maximumRateOfClimb));
+			// compute minimum slant distance in still air
+			double slantDistance = this.maximumRateOfClimbSpeed * climbDuration.toMillis() / 1000;
+			// perform feasibility check
+			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
+				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+					System.out.println("cannot connect not flyable");
+					return false;
+				}
+		} else if (0 > height) {
+			// descent
+			height = Math.abs(height);
+			// compute minimum descent duration
+			Duration descentDuration = Duration.ofMillis((long) (height * 1000 / this.maximumRateOfDescent));
+			// compute minimum slant distance in still air
+			double slantDistance = this.maximumRateOfDescentSpeed * descentDuration.toMillis() / 1000;
+
+			// perform feasibility check
+			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
+			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+				System.out.println("cannot connect not flyable");
+				return false;
+			}
+
+		}
+		return true;
+	}
+
 }

@@ -38,6 +38,7 @@ import com.cfar.swim.worldwind.ai.astar.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
@@ -197,18 +198,6 @@ public class BasicPRM extends AbstractPlanner {
 	}
 
 	/**
-	 * Updates the roadmap of this basic PRM planner by updating the waypoint list
-	 * and edge list
-	 * 
-	 * @param roadmap the Planning roadmap of this basic PRM planner
-	 */
-	protected void updateRoadmap(SamplingEnvironment roadmap) {
-		roadmap.setWaypointList(this.getWaypointList());
-		roadmap.setEdgeList(this.getEdgeList());
-		return;
-	}
-
-	/**
 	 * Creates a Waypoint at a specified position.
 	 * 
 	 * @param position the position
@@ -234,14 +223,38 @@ public class BasicPRM extends AbstractPlanner {
 		this.getEnvironment().sortNearest(waypoint);
 
 		for (Waypoint neighbor : this.getWaypointList()) {
-			if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
-					&& numConnectedNeighbor < MAX_NEIGHBORS) {
+			if(this.areConnectable(waypoint, neighbor, numConnectedNeighbor)) {
 				if (!this.getEnvironment().checkConflict(neighbor, waypoint)) {
 					numConnectedNeighbor++;
 					this.createEdge(waypoint, neighbor);
 				}
 			}
 		}
+	}
+	
+	/**
+	 * Indicates whether or not two waypoints are connectable.
+	 * 
+	 * @param target the target A* waypoint in globe coordinates
+	 * @param waypoint the  waypoint in globe coordinates
+	 * @param neighbor the neighbor in globe coordinates
+	 * @param num the number of connected neighbors to the waypoint
+	 * 
+	 * @return true if the two waypoints are connectable, false otherwise
+	 */
+	protected boolean areConnectable(Waypoint waypoint, Waypoint neighbor, int num) {
+		boolean connectable = false;
+		
+		Capabilities capabilities = this.getAircraft().getCapabilities();
+		
+		if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
+				&& num < MAX_NEIGHBORS) {
+			if( capabilities.isFlyable(waypoint, neighbor, this.getEnvironment().getGlobe()) || capabilities.isFlyable(neighbor, waypoint, this.getEnvironment().getGlobe())) {
+				connectable = true;
+			}
+		}
+		
+		return connectable;
 	}
 
 	/**
@@ -434,24 +447,21 @@ public class BasicPRM extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		if(this.getEnvironment().getEdgeList().isEmpty()) {
+			this.setMode(QueryMode.SINGLE);
+		}
+		
 		if(this.getMode()==QueryMode.SINGLE) {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination);
-			Trajectory trajectory = this.findPath(origin, destination, etd, this.planner);
-			this.revisePlan(trajectory);
-			
-			return trajectory;
-		}
-		else if(this.getMode()==QueryMode.MULTIPLE) {
+		} else if(this.getMode()==QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
-//			this.updateRoadmap(this.getRoadmap());
-			Trajectory trajectory = this.findPath(origin, destination, etd, this.planner);
-			this.revisePlan(trajectory);
-			
-			return trajectory;
 		}
-		return null;
+		
+		Trajectory trajectory = this.findPath(origin, destination, etd, this.planner);
+		this.revisePlan(trajectory);
+		return trajectory;
 	}
 
 	/**
@@ -470,23 +480,21 @@ public class BasicPRM extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+		if(this.getEnvironment().getEdgeList().isEmpty()) {
+			this.setMode(QueryMode.SINGLE);
+		}
+		
 		if(this.getMode()==QueryMode.SINGLE) {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination, waypoints);
-			Trajectory trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
-			this.revisePlan(trajectory);
-			return trajectory;
+		} else if(this.getMode()==QueryMode.MULTIPLE) {
+			this.extendsConstruction(origin, destination, waypoints);
 		}
-		else if(this.getMode()==QueryMode.MULTIPLE) {
-			this.extendsConstruction(origin, destination);
-//			this.updateRoadmap(this.getRoadmap());
-			Trajectory trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
-			this.revisePlan(trajectory);
-			
-			return trajectory;
-		}
-		return null;
+		
+		Trajectory trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
+		this.revisePlan(trajectory);
+		return trajectory;
 	}
 
 	/**
