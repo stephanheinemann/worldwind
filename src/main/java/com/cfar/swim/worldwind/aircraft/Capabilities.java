@@ -556,7 +556,7 @@ public class Capabilities {
 	 * 
 	 * @return true if the leg is flyable, false otherwise
 	 */
-	public boolean isFlyable(Position start, Position goal, Globe globe) {
+	public boolean isFeasible(Position start, Position goal, Globe globe) {
 		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
 		double height = goal.getElevation() - start.getElevation();
 
@@ -569,7 +569,6 @@ public class Capabilities {
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
-					System.out.println("cannot connect not flyable");
 					return false;
 				}
 		} else if (0 > height) {
@@ -583,7 +582,6 @@ public class Capabilities {
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
-				System.out.println("cannot connect not flyable");
 				return false;
 			}
 

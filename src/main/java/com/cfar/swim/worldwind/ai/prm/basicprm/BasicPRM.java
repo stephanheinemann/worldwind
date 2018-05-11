@@ -249,7 +249,7 @@ public class BasicPRM extends AbstractPlanner {
 		
 		if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
 				&& num < MAX_NEIGHBORS) {
-			if( capabilities.isFlyable(waypoint, neighbor, this.getEnvironment().getGlobe()) || capabilities.isFlyable(neighbor, waypoint, this.getEnvironment().getGlobe())) {
+			if( capabilities.isFeasible(waypoint, neighbor, this.getEnvironment().getGlobe()) || capabilities.isFeasible(neighbor, waypoint, this.getEnvironment().getGlobe())) {
 				connectable = true;
 			}
 		}
