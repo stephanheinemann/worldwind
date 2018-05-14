@@ -119,6 +119,13 @@ public interface Planner {
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd);
 	
 	/**
+	 * Gets the list of plan revision listeners of this planner.
+	 * 
+	 * @return the planRevisionListeners the list of plan revision listeners of this planner
+	 */
+	public List<PlanRevisionListener> getPlanRevisionListeners();
+	
+	/**
 	 * Adds a plan revision listener to this planner that will be notified
 	 * whenever a plan has been revised.
 	 * 

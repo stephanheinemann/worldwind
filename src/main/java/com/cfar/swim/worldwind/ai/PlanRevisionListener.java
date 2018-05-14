@@ -49,4 +49,8 @@ public interface PlanRevisionListener extends EventListener {
 	 */
 	public void revisePlan(Trajectory trajectory);
 	
+	/**
+	 * Notifies this plan revision listener about new obstacles.
+	 */
+	public void reviseObstacle();
 }

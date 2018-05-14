@@ -128,7 +128,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * 
 	 * @return the risk policy of this abstract planner
 	 * 
-	 * @see Planner#getRisPolicy()
+	 * @see Planner#getRiskPolicy()
 	 */
 	@Override
 	public RiskPolicy getRiskPolicy() {
@@ -147,6 +147,18 @@ public abstract class AbstractPlanner implements Planner {
 		this.riskPolicy = riskPolicy;
 	}
 	
+	/**
+	 * Gets the list of plan revision listeners of this abstract planner.
+	 * 
+	 * @return the planRevisionListeners the list of plan revision listeners
+	 * 
+	 * @see Planner#getPlanRevisionListeners()
+	 */
+	@Override
+	public List<PlanRevisionListener> getPlanRevisionListeners() {
+		return planRevisionListeners;
+	}
+
 	/**
 	 * Adds a plan revision listener to this abstract planner that will be
 	 * notified whenever a plan has been revised.
@@ -183,6 +195,16 @@ public abstract class AbstractPlanner implements Planner {
 	protected void revisePlan(Trajectory trajectory) {
 		for (PlanRevisionListener listener : this.planRevisionListeners) {
 			listener.revisePlan(trajectory);
+		}
+	}
+	
+	/**
+	 * Revises a plan notifying the plan revision listeners of this abstract
+	 * planner.
+	 */
+	protected void reviseObstacle() {
+		for (PlanRevisionListener listener : this.planRevisionListeners) {
+			listener.reviseObstacle();
 		}
 	}
 	
