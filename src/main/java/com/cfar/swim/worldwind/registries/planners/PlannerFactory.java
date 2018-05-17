@@ -41,6 +41,7 @@ import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
+import com.cfar.swim.worldwind.ai.rrt.drrt.DRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -137,7 +138,9 @@ public class PlannerFactory implements Factory<Planner> {
 			((ARAStarPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ARAStarPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ARAStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
-		} else if (specification.getId().equals(Specification.PLANNER_RRT_ID)) {
+		}
+		// RRT Family
+		else if (specification.getId().equals(Specification.PLANNER_RRT_ID)) {
 			RRTreeProperties properties = (RRTreeProperties) specification.getProperties();
 			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
 					properties.getBias(), properties.getMaxIter());
@@ -163,7 +166,16 @@ public class PlannerFactory implements Factory<Planner> {
 			((ARRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ARRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ARRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
-		} else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
+		} else if (specification.getId().equals(Specification.PLANNER_DRRT_ID)) {
+			DRRTreeProperties properties = (DRRTreeProperties) specification.getProperties();
+			planner = new DRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((DRRTreePlanner) planner).setStrategy(properties.getStrategy());
+		}
+		// PRM Family
+		else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
 			FADPRMProperties properties = (FADPRMProperties) specification.getProperties();
 			planner = new FADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());
 			planner.setCostPolicy(properties.getCostPolicy());
