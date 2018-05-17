@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.ai.rrt.drrt;
 
+import java.util.ArrayList;
+
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -54,18 +56,7 @@ public class DRRTreeWaypoint extends RRTreeWaypoint {
 	 */
 	public DRRTreeWaypoint(Position position) {
 		super(position);
-	}
-	
-	/**
-	 * Constructs an DRRT waypoint at a specified position.
-	 * 
-	 * @param position the position in globe coordinates
-	 * @param parent the parent waypoint of this waypoint
-	 * 
-	 * @see RRTreeWaypoint#RRTreeWaypoint(Position, RRTreeWaypoint)
-	 */
-	public DRRTreeWaypoint(Position position, DRRTreeWaypoint parent) {
-		super(position, parent);
+		validity = true;
 	}
 	
 	/**
@@ -75,7 +66,7 @@ public class DRRTreeWaypoint extends RRTreeWaypoint {
 	 */
 	@Override
 	public DRRTreeWaypoint getParent() {
-		return (DRRTreeWaypoint) this.getParent();
+		return (DRRTreeWaypoint) super.getParent();
 	}
 
 	/**
@@ -95,6 +86,33 @@ public class DRRTreeWaypoint extends RRTreeWaypoint {
 	public void setValidity(boolean validity) {
 		this.validity = validity;
 	}
+	
+	/**
+	 * Gets the predecessors of this DRRT waypoint.
+	 * 
+	 * @return the list of predecessors of this DRRT waypoint
+	 */
+	public ArrayList<DRRTreeWaypoint> getPredecessors(){
+		ArrayList<DRRTreeWaypoint> predecessors = new ArrayList<DRRTreeWaypoint>();
+		
+		if(this.getParent()!=null) {
+			predecessors.add(this.getParent());
+			predecessors.addAll(this.getParent().getPredecessors());
+		}
+		
+		return predecessors; 
+			
+	}
 
+	/**
+	 * Creates a string with the content of all relevant variables of this DRRT
+	 * waypoint
+	 * 
+	 * @return the string with the content of this RRT waypoint
+	 */
+	public String getInfo() {
+		return String.format("( %.6f*, %.6f*, %3.1fm ) g=%.2f h=%.2f f=%.2f hasParent?%b isValid?%b", this.latitude.degrees,
+				this.longitude.degrees, this.elevation, this.getG(), this.getH(), this.getF(), this.getParent(), this.isValid());
+	}
 
 }

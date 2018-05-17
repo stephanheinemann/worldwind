@@ -57,17 +57,6 @@ public class RRTreeWaypoint extends Waypoint {
 	}
 
 	/**
-	 * Constructs an RRT waypoint at a specified position.
-	 * 
-	 * @param position the position in globe coordinates
-	 * @param parent the parent waypoint of this waypoint
-	 */
-	public RRTreeWaypoint(Position position, RRTreeWaypoint parent) {
-		super(position);
-		this.parent = parent;
-	}
-
-	/**
 	 * Gets the parent RRT waypoint of this RRT waypoint.
 	 * 
 	 * @return the parent RRT waypoint of this RRT waypoint
@@ -143,8 +132,8 @@ public class RRTreeWaypoint extends Waypoint {
 	 * @return the string with the content of this RRT waypoint
 	 */
 	public String getInfo() {
-		return String.format("( %.6f*, %.6f*, %3.1fm ) g=%.2f h=%.2f f=%.2f", this.latitude.degrees,
-				this.longitude.degrees, this.elevation, this.getG(), this.getH(), this.getF());
+		return String.format("( %.6f*, %.6f*, %3.1fm ) g=%.2f h=%.2f f=%.2f hasParent?%b", this.latitude.degrees,
+				this.longitude.degrees, this.elevation, this.getG(), this.getH(), this.getF(), this.getParent());
 	}
 
 }

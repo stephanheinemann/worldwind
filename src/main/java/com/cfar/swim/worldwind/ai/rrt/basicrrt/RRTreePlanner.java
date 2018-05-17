@@ -298,6 +298,17 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.getWaypointList().clear();
 		this.getEdgeList().clear();
 	}
+	
+	/**
+	 * Creates an RRT waypoint at a specified position.
+	 * 
+	 * @param position the position
+	 * 
+	 * @return the RRT waypoint at the specified position
+	 */
+	protected RRTreeWaypoint createWaypoint(Position position) {
+		return new RRTreeWaypoint(position);
+	}
 
 	/**
 	 * Creates a trajectory of the computed plan.
@@ -316,7 +327,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return waypoint the RRTreeWaypoint sampled
 	 */
 	protected RRTreeWaypoint sampleRandom() {
-		return new RRTreeWaypoint(this.getEnvironment().sampleRandomPosition());
+		return this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 	}
 
 	/**
@@ -410,7 +421,8 @@ public class RRTreePlanner extends AbstractPlanner {
 		// Extend nearest waypoint in the direction of waypoint
 		// TODO: Investigate other steering/growing strategies
 		Position positionNew = this.growPosition(waypoint, waypointNear);
-		RRTreeWaypoint waypointNew = new RRTreeWaypoint(positionNew, waypointNear);
+		RRTreeWaypoint waypointNew = this.createWaypoint(positionNew);
+		waypointNew.setParent(waypointNear);
 
 		// Check if path is feasible for the aircraft
 		ZonedDateTime eto = null;
@@ -662,13 +674,13 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		this.clearExpendables();
 
-		this.setStart(new RRTreeWaypoint(origin));
+		this.setStart(this.createWaypoint(origin));
 		this.getStart().setEto(etd);
 		this.getStart().setG(0d);
-		this.addVertex(start);
-		this.setWaypointNew(start);
+		this.addVertex(getStart());
+		this.setWaypointNew(getStart());
 
-		this.setGoal(new RRTreeWaypoint(destination));
+		this.setGoal(this.createWaypoint(destination));
 
 	}
 
