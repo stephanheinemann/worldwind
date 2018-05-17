@@ -47,9 +47,11 @@ import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
@@ -57,6 +59,7 @@ import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
+import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -69,6 +72,8 @@ import gov.nasa.worldwind.awt.WorldWindowGLCanvas;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
+import gov.nasa.worldwind.globes.Earth;
+import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.LayerList;
 import gov.nasa.worldwind.layers.RenderableLayer;
@@ -86,6 +91,7 @@ public class RegularGridTest {
 	
 	static Model model;
 	static PlanningGrid uvicGrid;
+	static SamplingEnvironment uvicSamp;
 	static PlanningGrid largeGrid;
 	static PlanningGrid tsGrid;
 	static PlanningGrid tcGrid;
@@ -120,6 +126,20 @@ public class RegularGridTest {
             
             
             // TODO: separate test procedures
+            Globe globe = new Earth();
+            Sector cadboroBay = new Sector(
+                	Angle.fromDegrees(48.44),
+                	Angle.fromDegrees(48.46),
+                	Angle.fromDegrees(-123.29),
+            		Angle.fromDegrees(-123.27)
+                	);
+            gov.nasa.worldwind.geom.Box boxNASA = Sector.computeBoundingBox(globe, 1.0, cadboroBay, 0.0, 150.0);
+            
+    		// Create environment from box
+            uvicSamp = new SamplingEnvironment(new Box(boxNASA));
+            uvicSamp.setGlobe(globe);
+            uvicSamp.setThreshold(0);
+            renderableLayer.addRenderable(uvicSamp);
             
             Sector uvic = new Sector(
             	Angle.fromDegrees(48.462836),
@@ -421,6 +441,23 @@ public class RegularGridTest {
 		Sphere ps = new Sphere(pv, 5000);
 		((RenderableLayer) layer).addRenderable(ps);
 		*/
+		
+		Position orig = Position.fromDegrees(48.445, -123.285, 10);
+		Position dest = Position.fromDegrees(48.455, -123.275, 100);
+		Iris irisS = new Iris(orig, 5000, CombatIdentification.FRIEND);
+		RRTreePlanner plannerRRT = new RRTreePlanner(irisS, uvicSamp);
+		Trajectory traj = plannerRRT.plan(orig, dest, ZonedDateTime.now());
+//		Waypoint waypointA = new Waypoint(orig);
+//		Waypoint waypointB = new Waypoint(dest);
+//		Trajectory traj = new Trajectory(waypointA, waypointB);
+		traj.setVisible(true);
+		traj.setShowPositions(true);
+		traj.setDrawVerticals(true);
+		traj.setAttributes(new BasicShapeAttributes());
+		traj.getAttributes().setOutlineMaterial(Material.MAGENTA);
+		traj.getAttributes().setOutlineWidth(5d);
+		traj.getAttributes().setOutlineOpacity(0.5d);
+		((RenderableLayer) layer).addRenderable(traj);
 		
 		ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, tsGrid);
 		Trajectory trajectory = planner.plan(origin, destination, ZonedDateTime.now());
