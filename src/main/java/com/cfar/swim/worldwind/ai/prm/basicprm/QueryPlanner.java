@@ -51,6 +51,6 @@ public enum QueryPlanner {
 	/**
 	 * Anytime Dynamic A*
 	 */
-	AD
+	//AD
 
 }

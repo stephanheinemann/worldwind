@@ -33,8 +33,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
+import com.cfar.swim.worldwind.ai.PlanRevisionListener;
 import com.cfar.swim.worldwind.ai.Planner;
-import com.cfar.swim.worldwind.ai.astar.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -70,8 +70,8 @@ public class BasicPRM extends AbstractPlanner {
 
 	/** the planner used to find a path in a previously populated roadmap */
 	public QueryPlanner planner;
-	
-	/** the query mode of this PRM planner*/
+
+	/** the query mode of this PRM planner */
 	public QueryMode mode;
 
 	/**
@@ -223,7 +223,7 @@ public class BasicPRM extends AbstractPlanner {
 		this.getEnvironment().sortNearest(waypoint);
 
 		for (Waypoint neighbor : this.getWaypointList()) {
-			if(this.areConnectable(waypoint, neighbor, numConnectedNeighbor)) {
+			if (this.areConnectable(waypoint, neighbor, numConnectedNeighbor)) {
 				if (!this.getEnvironment().checkConflict(neighbor, waypoint)) {
 					numConnectedNeighbor++;
 					this.createEdge(waypoint, neighbor);
@@ -231,12 +231,12 @@ public class BasicPRM extends AbstractPlanner {
 			}
 		}
 	}
-	
+
 	/**
 	 * Indicates whether or not two waypoints are connectable.
 	 * 
 	 * @param target the target A* waypoint in globe coordinates
-	 * @param waypoint the  waypoint in globe coordinates
+	 * @param waypoint the waypoint in globe coordinates
 	 * @param neighbor the neighbor in globe coordinates
 	 * @param num the number of connected neighbors to the waypoint
 	 * 
@@ -244,16 +244,16 @@ public class BasicPRM extends AbstractPlanner {
 	 */
 	protected boolean areConnectable(Waypoint waypoint, Waypoint neighbor, int num) {
 		boolean connectable = false;
-		
+
 		Capabilities capabilities = this.getAircraft().getCapabilities();
-		
-		if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST
-				&& num < MAX_NEIGHBORS) {
-			if( capabilities.isFeasible(waypoint, neighbor, this.getEnvironment().getGlobe()) || capabilities.isFeasible(neighbor, waypoint, this.getEnvironment().getGlobe())) {
+
+		if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST && num < MAX_NEIGHBORS) {
+			if (capabilities.isFeasible(waypoint, neighbor, this.getEnvironment().getGlobe())
+					|| capabilities.isFeasible(neighbor, waypoint, this.getEnvironment().getGlobe())) {
 				connectable = true;
 			}
 		}
-		
+
 		return connectable;
 	}
 
@@ -265,7 +265,7 @@ public class BasicPRM extends AbstractPlanner {
 	 * @param target the target Basic PRM waypoint
 	 */
 	protected void createEdge(Waypoint source, Waypoint target) {
-		
+
 		Vec4 sourcePoint = this.getEnvironment().getGlobe().computePointFromPosition(source);
 		Vec4 targetPoint = this.getEnvironment().getGlobe().computePointFromPosition(target);
 
@@ -370,25 +370,71 @@ public class BasicPRM extends AbstractPlanner {
 	 */
 	public Trajectory findPath(Position origin, Position destination, ZonedDateTime etd, QueryPlanner planner) {
 		Trajectory trajectory = null;
+		List<PlanRevisionListener> planRevisionListeners = this.getPlanRevisionListeners();
+
 		switch (planner) {
 		case FAS:
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());
 			aStar.setCostPolicy(this.getCostPolicy());
 			aStar.setRiskPolicy(this.getRiskPolicy());
+			aStar.addPlanRevisionListener(new PlanRevisionListener() {
+				@Override
+				public void revisePlan(Trajectory trajectory) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.revisePlan(trajectory);
+					}
+				}
+				@Override
+				public void reviseObstacle() {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseObstacle();
+					}
+				}
+			});
 			trajectory = aStar.plan(origin, destination, etd);
 			break;
 		case ARA:
 			ARAStarPlanner araStar = new ARAStarPlanner(this.getAircraft(), this.getEnvironment());
 			araStar.setCostPolicy(this.getCostPolicy());
 			araStar.setRiskPolicy(this.getRiskPolicy());
+			araStar.setMinimumQuality(50d);
+			araStar.setMaximumQuality(1d);
+			araStar.setQualityImprovement(1d);
+			araStar.addPlanRevisionListener(new PlanRevisionListener() {
+				@Override
+				public void revisePlan(Trajectory trajectory) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.revisePlan(trajectory);
+					}
+				}
+				@Override
+				public void reviseObstacle() {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseObstacle();
+					}
+				}
+			});
 			trajectory = araStar.plan(origin, destination, etd);
 			break;
-		case AD:
+		/*case AD:
 			ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(), this.getEnvironment());
 			adStar.setCostPolicy(this.getCostPolicy());
 			adStar.setRiskPolicy(this.getRiskPolicy());
+			adStar.addPlanRevisionListener(new PlanRevisionListener() {
+				@Override
+				public void revisePlan(Trajectory trajectory) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.revisePlan(trajectory);
+					}
+				}
+				public void reviseObstacle() {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseObstacle();
+					}
+				}
+			});
 			trajectory = adStar.plan(origin, destination, etd);
-			break;
+			break;*/
 		}
 		return trajectory;
 	}
@@ -409,25 +455,72 @@ public class BasicPRM extends AbstractPlanner {
 	public Trajectory findPath(Position origin, Position destination, ZonedDateTime etd, List<Position> waypoints,
 			QueryPlanner planner) {
 		Trajectory trajectory = null;
+		List<PlanRevisionListener> planRevisionListeners = this.getPlanRevisionListeners();
+
 		switch (planner) {
 		case FAS:
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());
 			aStar.setCostPolicy(this.getCostPolicy());
 			aStar.setRiskPolicy(this.getRiskPolicy());
+			aStar.addPlanRevisionListener(new PlanRevisionListener() {
+				@Override
+				public void revisePlan(Trajectory trajectory) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.revisePlan(trajectory);
+					}
+				}
+				@Override
+				public void reviseObstacle() {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseObstacle();
+					}
+				}
+			});
 			trajectory = aStar.plan(origin, destination, waypoints, etd);
 			break;
 		case ARA:
 			ARAStarPlanner araStar = new ARAStarPlanner(this.getAircraft(), this.getEnvironment());
 			araStar.setCostPolicy(this.getCostPolicy());
 			araStar.setRiskPolicy(this.getRiskPolicy());
+			araStar.setMinimumQuality(50d);
+			araStar.setMaximumQuality(1d);
+			araStar.setQualityImprovement(1d);
+			araStar.addPlanRevisionListener(new PlanRevisionListener() {
+				@Override
+				public void revisePlan(Trajectory trajectory) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.revisePlan(trajectory);
+					}
+				}
+				@Override
+				public void reviseObstacle() {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseObstacle();
+					}
+				}
+			});
 			trajectory = araStar.plan(origin, destination, waypoints, etd);
 			break;
-		case AD:
+		/*case AD:
 			ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(), this.getEnvironment());
 			adStar.setCostPolicy(this.getCostPolicy());
 			adStar.setRiskPolicy(this.getRiskPolicy());
+			adStar.addPlanRevisionListener(new PlanRevisionListener() {
+				@Override
+				public void revisePlan(Trajectory trajectory) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.revisePlan(trajectory);
+					}
+				}
+				@Override
+				public void reviseObstacle() {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseObstacle();
+					}
+				}
+			});
 			trajectory = adStar.plan(origin, destination, waypoints, etd);
-			break;
+			break;*/
 		}
 		return trajectory;
 	}
@@ -447,20 +540,19 @@ public class BasicPRM extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-		if(this.getEnvironment().getEdgeList().isEmpty()) {
+		if (this.getEnvironment().getEdgeList().isEmpty()) {
 			this.setMode(QueryMode.SINGLE);
 		}
-		
-		if(this.getMode()==QueryMode.SINGLE) {
+
+		if (this.getMode() == QueryMode.SINGLE) {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination);
-		} else if(this.getMode()==QueryMode.MULTIPLE) {
+		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
 		}
 		
 		Trajectory trajectory = this.findPath(origin, destination, etd, this.planner);
-		this.revisePlan(trajectory);
 		return trajectory;
 	}
 
@@ -480,20 +572,19 @@ public class BasicPRM extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		if(this.getEnvironment().getEdgeList().isEmpty()) {
+		if (this.getEnvironment().getEdgeList().isEmpty()) {
 			this.setMode(QueryMode.SINGLE);
 		}
-		
-		if(this.getMode()==QueryMode.SINGLE) {
+
+		if (this.getMode() == QueryMode.SINGLE) {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination, waypoints);
-		} else if(this.getMode()==QueryMode.MULTIPLE) {
+		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination, waypoints);
 		}
-		
+
 		Trajectory trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
-		this.revisePlan(trajectory);
 		return trajectory;
 	}
 
