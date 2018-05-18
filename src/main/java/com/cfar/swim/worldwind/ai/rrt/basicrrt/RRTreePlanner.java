@@ -105,7 +105,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	public RRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		EPSILON = 250d;
+		EPSILON = this.getEnvironment().getDiameter()/20;
 		BIAS = 5;
 		MAX_ITER = 3_000;
 	}
@@ -633,7 +633,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return true if the new waypoint is within the goal region
 	 */
 	protected boolean checkGoal() {
-		return this.checkGoal(waypointNew);
+		return this.checkGoal(getWaypointNew());
 	}
 
 	protected boolean checkGoal(RRTreeWaypoint waypoint) {
@@ -647,7 +647,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 *            (default=this.waypointNew)
 	 */
 	protected void computePath() {
-		this.computePath(waypointNew);
+		this.computePath(getWaypointNew());
 	}
 
 	protected void computePath(RRTreeWaypoint waypoint) {

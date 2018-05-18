@@ -58,7 +58,7 @@ import gov.nasa.worldwind.geom.Position;
  *
  */
 public class DRRTreePlanner extends RRTreePlanner {
-	
+
 	private boolean obstacleFlag = false;
 
 	/**
@@ -153,23 +153,28 @@ public class DRRTreePlanner extends RRTreePlanner {
 
 		return waypoint2.getParent().equals(waypoint1) ? waypoint2 : waypoint1;
 	}
-	
+
+	/**
+	 * Updates the list of edges to be in accordance to the list of waypoints, i.e.
+	 * removes edges that contain waypoints (at least 1) which are no longer in the
+	 * waypoint list.
+	 */
 	// TODO: move to environment
 	protected void updateEdgeList() {
 		List<Edge> validEdges = new ArrayList<Edge>();
-		
+
 		for (Edge edge : this.getEdgeList()) {
 			DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
-			if(!this.getWaypointList().contains(waypoint1))
+			if (!this.getWaypointList().contains(waypoint1))
 				continue;
-			
+
 			DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
-			if(!this.getWaypointList().contains(waypoint2))
+			if (!this.getWaypointList().contains(waypoint2))
 				continue;
-			
+
 			validEdges.add(edge);
 		}
-		
+
 		this.setEdgeList(validEdges);
 	}
 
@@ -177,11 +182,7 @@ public class DRRTreePlanner extends RRTreePlanner {
 	 * Regrows a RRTree by trimming the invalidated nodes and computing a new one.
 	 */
 	protected void regrowRRT() {
-		System.out.println(
-				"Sizes: WptL=" + this.getWaypointList().size() + " EdgL=" + this.getEdgeList().size() + " TrimmingRRT");
 		this.trimRRT();
-		System.out.println("Sizes: WptL=" + this.getWaypointList().size() + " EdgL=" + this.getEdgeList().size()
-				+ " Computing RRT");
 		this.compute();
 	}
 
@@ -197,10 +198,9 @@ public class DRRTreePlanner extends RRTreePlanner {
 			DRRTreeWaypoint parent = waypoint.getParent();
 			// Special case for start (no parent)
 			if (parent != null) {
-				if(!parent.isValid())
+				if (!parent.isValid())
 					waypoint.setValidity(false);
-			}
-			else {
+			} else {
 				waypoint.setValidity(true);
 			}
 			if (waypoint.isValid())
@@ -246,16 +246,15 @@ public class DRRTreePlanner extends RRTreePlanner {
 		int index;
 		for (Waypoint waypoint : this.getPlan()) {
 			index = this.getWaypointList().indexOf(waypoint);
-			if(index>=0) {
+			if (index >= 0) {
 				dynamicWaypoint = (DRRTreeWaypoint) this.getWaypointList().get(index);
-				if(!dynamicWaypoint.isValid()) {
+				if (!dynamicWaypoint.isValid()) {
 					return false;
 				}
 			}
 		}
 		return true;
 	}
-	
 
 	/**
 	 * Plans a trajectory from an origin to a destination at a specified estimated
@@ -279,34 +278,33 @@ public class DRRTreePlanner extends RRTreePlanner {
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
-		
+
 		// Check for new obstacles until the goal is reached
 		while (!this.checkGoal(getStart())) {
 			// Move to next waypoint and check for new obstacles
 			this.moveToNext();
-			System.out.println("New start position... "+this.getStart().getInfo()+"\n\tWptL=" + this.getWaypointList().size() + " EdgL=" + this.getEdgeList().size());
-			
+			System.out.println("\nNew start position... " + this.getStart().getInfo() + "\nWptL="
+					+ this.getWaypointList().size() + " EdgL=" + this.getEdgeList().size());
+
 			diffObstacles = this.getNewObstacles();
 			if (!diffObstacles.isEmpty()) {
 				// Invalidate Waypoints affected by new obstacles
 				for (Obstacle obstacle : diffObstacles)
 					this.invalidateWaypoints(obstacle);
-				
-				// Print Waypoints
-				System.out.println("[AFTER Invalidation] Sizes: WptL=" + this.getWaypointList().size() + " EdgL=" + this.getEdgeList().size());
 
 				// Check if the current path is still valid
 				if (!this.isPathValid()) {
-					System.out.println("Invalid Path, regrowing...");
 					this.regrowRRT();
+					System.out.println("[Path Regorwn] Sizes: WptL=" + this.getWaypointList().size() + " EdgL="
+							+ this.getEdgeList().size());
 				}
 			}
-			
+
 			// Print Plan
-			System.out.println("Current Path");
+			System.out.println("Current Path #" + this.getPlan().size());
 			for (Waypoint wpt : this.getPlan())
-				System.out.println(wpt+" Cost="+wpt.getCost());
-			
+				System.out.println(wpt + " Cost=" + wpt.getCost());
+
 			// Update trajectory reflecting the modified plan
 			trajectory = this.createTrajectory();
 			this.revisePlan(trajectory);
@@ -336,39 +334,40 @@ public class DRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
-	 *  Simulates the movement of the aircraft to the next waypoint in the plan.
+	 * Simulates the movement of the aircraft to the next waypoint in the plan.
 	 */
 	protected void moveToNext() {
-		DRRTreeWaypoint next = (DRRTreeWaypoint) this.getNext(getStart());
-		if(next==null)
+		DRRTreeWaypoint next = (DRRTreeWaypoint) this.getWaypointList()
+				.get(getWaypointList().indexOf(getNext(getStart())));
+		if (next == null)
 			return;
-		
-		this.setStart(this.createWaypoint(next));
-		this.getStart().setEto(next.getEto());
-		this.getStart().setG(next.getG());
+
+		next.setParent(null);
+		next.setValidity(true);
+		this.setStart(next);
 		this.setWaypointNew(getStart());
-		
+
 		// Remove waypoints not deriving from new start
 		List<DRRTreeWaypoint> soundWaypoints = new ArrayList<DRRTreeWaypoint>();
 		soundWaypoints.add(getStart());
-		for(RRTreeWaypoint wpt : this.getWaypointList()) {
+		for (RRTreeWaypoint wpt : this.getWaypointList()) {
 			DRRTreeWaypoint waypoint = (DRRTreeWaypoint) wpt;
 			ArrayList<DRRTreeWaypoint> predecessors = waypoint.getPredecessors();
-			if(predecessors.contains(next)) {
+			if (predecessors.contains(next)) {
 				soundWaypoints.add(waypoint);
 			}
 		}
-		
+
 		this.setWaypointList(soundWaypoints);
 		this.updateEdgeList();
 		this.getPlan().remove(0);
 	}
-	
+
 	/**
 	 * Gets the waypoint in the plan after the current waypoint.
 	 * 
-	 * @param current
-	 * @return
+	 * @param current the current waypoint
+	 * @return the next waypoint in the plan, null if last waypoint
 	 */
 	protected Waypoint getNext(Waypoint current) {
 		ListIterator<Waypoint> listIterator = this.getPlan().listIterator();
@@ -383,38 +382,45 @@ public class DRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
+	 * Gets the new obstacles present in the environment and compares to the
+	 * previous.
 	 * 
-	 * @return
+	 * @return the hashset containing the difference between the previous set of
+	 *         obstacles and the new
 	 */
-	public HashSet<Obstacle> getNewObstacles() {
-		HashSet<Obstacle> beforeObstacles = this.getEnvironment().getObstacles();
-		
+	@SuppressWarnings("unchecked")
+	protected HashSet<Obstacle> getNewObstacles() {
+		HashSet<Obstacle> beforeObstacles = (HashSet<Obstacle>) this.getEnvironment().getObstacles().clone();
+
+		// Adds one obstacle with certain probability
 		int rand = new Random().nextInt(100 - 1) + 1;
-		if(rand<=20 && !obstacleFlag) {
+		if (rand <= 30 && !obstacleFlag) {
 			System.out.println("\t!!!!!!\t ADDING OBSTACLE\t!!!!!!");
 			this.reviseObstacle();
 			obstacleFlag = true;
 		}
-		
-		HashSet<Obstacle> afterObstacles = this.getEnvironment().getObstacles();
+
+		HashSet<Obstacle> afterObstacles = (HashSet<Obstacle>) this.getEnvironment().getObstacles().clone();
 
 		HashSet<Obstacle> removedObstacles = new HashSet<Obstacle>(beforeObstacles);
 		removedObstacles.removeAll(afterObstacles);
-		
+
 		HashSet<Obstacle> addedObstacles = new HashSet<Obstacle>(afterObstacles);
 		addedObstacles.removeAll(beforeObstacles);
-		
+
 		HashSet<Obstacle> diffObstacles = new HashSet<Obstacle>();
 		diffObstacles.addAll(removedObstacles);
 		diffObstacles.addAll(addedObstacles);
-		
+		System.out.println("--- DiffObstacles size: " + diffObstacles.size());
+
+		// Sleep block to allow visualization
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(1000);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		return diffObstacles;
 	}
 }
