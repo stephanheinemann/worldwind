@@ -51,6 +51,22 @@ public class FADPRMWaypoint extends Waypoint {
 
 	/** the estimated remaining cost (h-value) of this FADPRM waypoint */
 	private double h;
+	
+	private double dtGoal;
+
+	/**
+	 * @return the dtGoal
+	 */
+	public double getDtGoal() {
+		return dtGoal;
+	}
+
+	/**
+	 * @param dtGoal the dtGoal to set
+	 */
+	public void setDtGoal(double dtGoal) {
+		this.dtGoal = dtGoal;
+	}
 
 	/** the estimated remaining cost (h-value) of this FADPRM waypoint */
 	private double pathDD;
@@ -95,7 +111,7 @@ public class FADPRMWaypoint extends Waypoint {
 		this.setCost(0d);
 		this.setG(0d);
 		this.setH(0d);
-		lambda=0.5;
+		lambda=0.1;
 	}
 
 	/**
