@@ -60,7 +60,7 @@ import gov.nasa.worldwind.geom.Position;
 public class DRRTreePlanner extends RRTreePlanner {
 
 	
-	private boolean obstacleFlag = false;
+	protected boolean obstacleFlag = false;
 
 	/**
 	 * Constructs a dynamic RRT planner for a specified aircraft and environment using

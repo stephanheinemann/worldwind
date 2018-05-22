@@ -52,6 +52,7 @@ import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkPropertie
 import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.SamplingEnvironmentProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
+import com.cfar.swim.worldwind.registries.planners.ADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.ARRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.BasicPRMProperties;
@@ -183,6 +184,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_HRRT_ID, new HRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARRT_ID, new ARRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DRRT_ID, new DRRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, new ADRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_BASICPRM_ID, new BasicPRMProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_LAZYPRM_ID, new LazyPRMProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FADPRM_ID, new FADPRMProperties()));
