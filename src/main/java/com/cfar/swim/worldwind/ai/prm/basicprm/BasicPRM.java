@@ -235,7 +235,6 @@ public class BasicPRM extends AbstractPlanner {
 	/**
 	 * Indicates whether or not two waypoints are connectable.
 	 * 
-	 * @param target the target A* waypoint in globe coordinates
 	 * @param waypoint the waypoint in globe coordinates
 	 * @param neighbor the neighbor in globe coordinates
 	 * @param num the number of connected neighbors to the waypoint

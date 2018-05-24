@@ -1078,7 +1078,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	/**
 	 * Samples a position from a continuous space defined in the current environment
 	 * 
-	 * @return position in global coordinates inside the environment
+	 * @return position in globe coordinates inside the environment
 	 */
 	public Position sampleRandomPosition() {
 		Vec4[] corners = this.getCorners();
