@@ -79,8 +79,11 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of an ARRT planner */
 	public static final String PLANNER_ARRT_ID = "Anytime RRT";
 	
-	/** the identifier of an ARRT planner */
+	/** the identifier of an DRRT planner */
 	public static final String PLANNER_DRRT_ID = "Dynamic RRT";
+	
+	/** the identifier of an ADRRT planner */
+	public static final String PLANNER_ADRRT_ID = "Anytime Dynamic RRT";
 	
 	/** the identifier of a FADPRM planner */
 	public static final String PLANNER_FADPRM_ID = "FADPRM";

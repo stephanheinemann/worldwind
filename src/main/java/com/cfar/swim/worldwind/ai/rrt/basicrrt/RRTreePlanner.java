@@ -290,6 +290,16 @@ public class RRTreePlanner extends AbstractPlanner {
 	public LinkedList<Waypoint> getPlan() {
 		return plan;
 	}
+	
+	/**
+	 * Sets the plan produced by this planner
+	 *
+	 * @param the plan to be set
+	 */
+	public void setPlan(LinkedList<Waypoint> plan) {
+		this.plan.clear();
+		this.plan.addAll(plan);
+	}
 
 	/**
 	 * Clears the waypoint list, the edge list and the plan

@@ -39,6 +39,7 @@ import com.cfar.swim.worldwind.ai.astar.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
+import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.drrt.DRRTreePlanner;
@@ -173,6 +174,16 @@ public class PlannerFactory implements Factory<Planner> {
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((DRRTreePlanner) planner).setStrategy(properties.getStrategy());
+		} else if (specification.getId().equals(Specification.PLANNER_ADRRT_ID)) {
+			ADRRTreeProperties properties = (ADRRTreeProperties) specification.getProperties();
+			planner = new ADRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((ADRRTreePlanner) planner).setStrategy(properties.getStrategy());
+			((ADRRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((ADRRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((ADRRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		}
 		// PRM Family
 		else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {

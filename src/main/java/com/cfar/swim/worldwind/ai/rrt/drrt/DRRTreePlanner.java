@@ -59,10 +59,11 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class DRRTreePlanner extends RRTreePlanner {
 
-	private boolean obstacleFlag = false;
+	
+	protected boolean obstacleFlag = false;
 
 	/**
-	 * Constructs a basic RRT planner for a specified aircraft and environment using
+	 * Constructs a dynamic RRT planner for a specified aircraft and environment using
 	 * default local cost and risk policies.
 	 * 
 	 * @param aircraft the aircraft
@@ -75,7 +76,7 @@ public class DRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
-	 * Constructs a basic RRT planner for a specified aircraft and environment using
+	 * Constructs a dynamic RRT planner for a specified aircraft and environment using
 	 * default local cost and risk policies.
 	 * 
 	 * @param aircraft the aircraft
