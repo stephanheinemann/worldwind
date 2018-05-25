@@ -52,6 +52,9 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class HRRTreePlanner extends RRTreePlanner {
 
+	/** defines which formula to use for quality calculation*/
+	public boolean myQuality = true;
+
 	/** floor value to ensure the search is not overly biased against exploration */
 	private final double PROB_FLOOR; // Value in [0,1] 0=basic RRT
 
@@ -150,12 +153,32 @@ public class HRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
-	 * Gets number of neighbors to consider to test a sampled waypoint
+	 * Gets number of neighbors to consider to test a sampled waypoint.
 	 * 
 	 * @return the number of neighbors
 	 */
 	public int getNEIGHBORS() {
 		return NEIGHBORS;
+	}
+
+	/**
+	 * Computes the quality of a certain waypoint given its cost.
+	 * 
+	 * @param cost the cost (f-value) of the waypoint
+	 * 
+	 * @return the quality of the waypoint [0,1]
+	 */
+	protected double computeQuality(double cost) {
+		double relativeCost = 0d;
+
+		if (!myQuality)
+			relativeCost = (cost - costOpt) / (costMax - costOpt);
+		else {
+			if (cost > costOpt)
+				relativeCost = Math.exp(-1d / (cost - costOpt));
+		}
+
+		return 1 - relativeCost;
 	}
 
 	/**
@@ -174,7 +197,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 			waypointRand = super.sampleBiased(super.getBIAS());
 			waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypointRand, 1).get(0);
 
-			quality = 1 - (waypointNear.getF() - costOpt) / (costMax - costOpt);
+			quality = computeQuality(waypointNear.getF());
 			quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR;
 
 			rand = r.nextDouble();
@@ -207,7 +230,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 			neighborsList = this.sortByQuality(neighborsList);
 
 			for (RRTreeWaypoint neighbor : neighborsList) {
-				quality = 1 - (neighbor.getF() - costOpt) / (costMax - costOpt);
+				quality = computeQuality(neighbor.getF());
 				quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR;
 				rand = r.nextDouble();
 				if (rand < quality) {
@@ -242,7 +265,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 			neighborsList = this.sortByQuality(neighborsList);
 			waypointNear = neighborsList.get(0);
 
-			quality = 1 - (waypointNear.getF() - costOpt) / (costMax - costOpt);
+			quality = computeQuality(waypointNear.getF());
 			quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR;
 
 			rand = r.nextDouble();
@@ -308,11 +331,11 @@ public class HRRTreePlanner extends RRTreePlanner {
 			waypointNew = this.getWaypointNew();
 			this.addVertex(waypointNew);
 			this.addEdge(waypointNew);
-			
+
 			waypointNew.setG(this.computeCost(waypointNew));
 			waypointNew.setH(this.computeHeuristic(waypointNew, super.getGoal()));
 			this.setWaypointNew(waypointNew);
-			
+
 			costMax = (costMax > waypointNew.getF()) ? costMax : waypointNew.getF();
 
 			if (waypointNew.getPrecisionPosition().equals(waypoint.getPrecisionPosition())) {
