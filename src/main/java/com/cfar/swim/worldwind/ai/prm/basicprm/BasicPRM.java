@@ -60,19 +60,19 @@ import gov.nasa.worldwind.geom.Vec4;
 public class BasicPRM extends AbstractPlanner {
 
 	/** the maximum number of sampling iterations */
-	public final int MAX_ITER;
+	private final int MAX_ITER;
 
 	/** the maximum number of neighbors a waypoint can be connected to */
-	public final int MAX_NEIGHBORS;
+	private final int MAX_NEIGHBORS;
 
 	/** the maximum distance between two neighboring waypoints */
-	public final double MAX_DIST;
+	private final double MAX_DIST;
 
 	/** the planner used to find a path in a previously populated roadmap */
-	public QueryPlanner planner;
+	private QueryPlanner planner;
 
 	/** the query mode of this PRM planner */
-	public QueryMode mode;
+	private QueryMode mode;
 
 	/**
 	 * Constructs a basic PRM planner for a specified aircraft and environment using

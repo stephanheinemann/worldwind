@@ -186,15 +186,7 @@ public class PlannerFactory implements Factory<Planner> {
 			((ADRRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		}
 		// PRM Family
-		else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
-			FADPRMProperties properties = (FADPRMProperties) specification.getProperties();
-			planner = new FADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());
-			planner.setCostPolicy(properties.getCostPolicy());
-			planner.setRiskPolicy(properties.getRiskPolicy());
-			((FADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
-			((FADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
-			((FADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
-		} else if (specification.getId().equals(Specification.PLANNER_BASICPRM_ID)) {
+		else if (specification.getId().equals(Specification.PLANNER_BASICPRM_ID)) {
 			BasicPRMProperties properties = (BasicPRMProperties) specification.getProperties();
 			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
 					properties.getMaxNeighbors(), properties.getMaxDistance());
@@ -210,6 +202,15 @@ public class PlannerFactory implements Factory<Planner> {
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((LazyPRM) planner).setPlanner(properties.getQueryPlanner());
 			((LazyPRM) planner).setMode(properties.getMode());
+		} else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
+			FADPRMProperties properties = (FADPRMProperties) specification.getProperties();
+			planner = new FADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment(), 
+					properties.getMaxNeighbors(), properties.getMaxDistance(), properties.getBias());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((FADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((FADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((FADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		}
 		// TODO: implement more planners
 
