@@ -33,21 +33,19 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Date;
+import java.util.ArrayList;
 import java.util.Set;
 
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
-import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
+import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
+import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
+import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
@@ -57,6 +55,7 @@ import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.iwxxm.IwxxmLoader;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
+import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.google.common.collect.Iterables;
 
@@ -71,45 +70,24 @@ import gov.nasa.worldwind.render.Path;
  * @author Manuel Rosa
  *
  */
-public class RRTreePlannerTest {
+public class SamplingBasedTest {
 
-	static final int REPETITIONS = 50;
+	static final int REPETITIONS = 200;
 	Iris iris;
 	SamplingEnvironment samplingEnv;
 	Position origin, destination;
+	ArrayList<Position> originList = new ArrayList<Position>(), destinationList = new ArrayList<Position>();
 	ZonedDateTime etd;
-
+	
 	@Test
-	public void RRTreeTester() {
+	public void SBTester() {
 
 		// Set inputs for planner
 		this.setScenario();
-		
-//		this.embedObstacle();
-		
-		System.out.println("Repetitions #" + REPETITIONS);
-		
-		/*
-		// Basic RRTreePlanner
-		// Bias 5%
-		this.basicRRTreeTester(250, 5, Strategy.EXTEND);
-		this.basicRRTreeTester(250, 5, Strategy.CONNECT);
-		// Bias 1%
-		this.basicRRTreeTester(250, 1, Strategy.EXTEND);
-		this.basicRRTreeTester(250, 1, Strategy.CONNECT);
 
-		System.out.println();
-		// Heuristic RRTreePlanner
-		this.heuristicRRTreeTester(250, 5, .9, 5, Heuristic.hRRT);
-		this.heuristicRRTreeTester(250, 5, .9, 5, Heuristic.IkRRT);
-		 */
+		this.basicPRMTester(300, 20, 250, QueryPlanner.FAS);
 		this.heuristicRRTreeTester(250, 5, .9,  5, Heuristic.BkRRT);
-		
-		/*
-		// Anytime Dynamic
-		this.anydynRRTreeTester(250, 5, 0d, 1d, 0.05);
-		 */
-		System.out.println();
+		this.embedObstacle();
 	}
 
 	public void setScenario() {
@@ -129,34 +107,24 @@ public class RRTreePlannerTest {
 		// Set planner inputs
 		origin = Position.fromDegrees(48.445, -123.285, 10);
 		destination = Position.fromDegrees(48.455, -123.275, 100);
+		Position position;
+		for(int i=0; i<REPETITIONS; i++) {
+			position = samplingEnv.sampleRandomPosition();
+			while(samplingEnv.checkConflict(position)) {
+				position = samplingEnv.sampleRandomPosition();
+			}
+			originList.add(position);
+			
+			position = samplingEnv.sampleRandomPosition();
+			while(samplingEnv.checkConflict(position)) {
+				position = samplingEnv.sampleRandomPosition();
+			}
+			destinationList.add(position);
+		}
 		etd = ZonedDateTime.of(LocalDate.of(2018, 5, 1), LocalTime.of(22, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
 	}
-
-	public void basicRRTreeTester(double epsilon, int bias, Strategy strategy) {
-		System.out.println(String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
-
-		RRTreePlanner plannerRRT = new RRTreePlanner(iris, samplingEnv, epsilon, bias, 1500);
-		plannerRRT.setStrategy(strategy);
-
-		Path path;
-		double size = 0, waypoints = 0, cost = 0d, time = 0d;
-		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
-		long t0 = 0;
-		// Compute plans
-		for (int i = 0; i < REPETITIONS; i++) {
-			t0 = System.currentTimeMillis();
-			path = plannerRRT.plan(origin, destination, etd);
-			size = Iterables.size(path.getPositions());
-			waypoints = plannerRRT.getWaypointList().size();
-			cost = plannerRRT.getGoal().getCost();
-			time = System.currentTimeMillis() - t0;
-			this.log(size, waypoints, cost, time);
-			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
-		}
-		this.processData(sizeT, waypointsT, costT, timeT);
-	}
-
+	
 	public void heuristicRRTreeTester(double epsilon, int bias, double prob, int nbr, Heuristic heuristic) {
 		System.out.println(String.format("\tHeuristic RRTreeTester - %s - e=%.1f b=%d p=%.2f n=%d",
 				heuristic, epsilon,	bias, prob, nbr));
@@ -171,17 +139,64 @@ public class RRTreePlannerTest {
 		// Compute plans
 		for (int i = 0; i < REPETITIONS; i++) {
 			t0 = System.currentTimeMillis();
-			path = plannerHRRT.plan(origin, destination, etd);
+			path = plannerHRRT.plan(originList.get(i), destinationList.get(i), etd);
 			size = Iterables.size(path.getPositions());
 			waypoints = plannerHRRT.getWaypointList().size();
 			cost = plannerHRRT.getGoal().getCost();
 			time = System.currentTimeMillis() - t0;
-			this.log(size, waypoints, cost, time);
 			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
 		}
 		this.processData(sizeT, waypointsT, costT, timeT);
 	}
+	
+	public void basicRRTreeTester(double epsilon, int bias, Strategy strategy) {
+		System.out.println(String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
 
+		RRTreePlanner plannerRRT = new RRTreePlanner(iris, samplingEnv, epsilon, bias, 1500);
+		plannerRRT.setStrategy(strategy);
+
+		Path path;
+		double size = 0, waypoints = 0, cost = 0d, time = 0d;
+		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
+		long t0 = 0;
+		// Compute plans
+		for (int i = 0; i < REPETITIONS; i++) {
+			t0 = System.currentTimeMillis();
+			path = plannerRRT.plan(originList.get(i), destinationList.get(i), etd);
+			size = Iterables.size(path.getPositions());
+			waypoints = plannerRRT.getWaypointList().size();
+			cost = plannerRRT.getGoal().getCost();
+			time = System.currentTimeMillis() - t0;
+			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
+		}
+		this.processData(sizeT, waypointsT, costT, timeT);
+	}
+	
+	public void basicPRMTester(int maxIter, int maxNeighbors, double maxDist, QueryPlanner planner) {
+		System.out.println(String.format("\tbasic PRMTester - %s - I=%d k=%d d=%.2f",
+				planner, maxIter, maxNeighbors, maxDist));
+
+		BasicPRM plannerPRM = new BasicPRM(iris, samplingEnv, maxIter, maxNeighbors, maxDist);
+		plannerPRM.setPlanner(planner);
+
+		Trajectory traj;
+		double size = 0, waypoints = 0, cost = 0d, time = 0d;
+		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
+		long t0 = 0;
+		// Compute plans
+		for (int i = 0; i < REPETITIONS; i++) {
+			t0 = System.currentTimeMillis();
+			plannerPRM.setMode(QueryMode.MULTIPLE);
+			traj = plannerPRM.plan(originList.get(i), destinationList.get(i), etd);
+			size = Iterables.size(traj.getPositions());
+			waypoints = plannerPRM.getWaypointList().size();
+			cost = traj.getCost();
+			time = System.currentTimeMillis() - t0;
+			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
+		}
+		this.processData(sizeT, waypointsT, costT, timeT);
+	}
+	
 	public void processData(double size, double waypoints, double cost, double time) {
 		size = size / REPETITIONS;
 		waypoints = waypoints / REPETITIONS;
@@ -191,30 +206,6 @@ public class RRTreePlannerTest {
 		System.out.println(String.format("Waypoints created: %.1f Path size: %.1f Cost: %.4f Time: %.1f(ms)",
 				waypoints, size, cost, time));
 		assertTrue("RRTree should find a path", size > 0);
-	}
-	
-	public void log(double size, double waypoints, double cost, double time) {
-		System.out.println(String.format("%.1f, %.1f, %.4f, %.1f", waypoints, size, cost, time));
-	}
-	
-	public void anydynRRTreeTester(double epsilon, int bias, double init, double fina, double imp) {
-		System.out.println(String.format("\tAnytimeDynamic RRTreeTester - () - e=%.1f b=%d cb_i=%.2f cb_f=%.2f imp=%.2f",
-				 epsilon, bias, init, fina, imp));
-
-		ADRRTreePlanner plannerADRRT = new ADRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500);
-		plannerADRRT.setMinimumQuality(init);
-		plannerADRRT.setMaximumQuality(fina);
-		plannerADRRT.setQualityImprovement(imp);
-
-		Path path;
-		double size = 0, waypoints = 0, cost = 0d;
-		// Compute plans
-		for (int i = 0; i < REPETITIONS; i++) {
-			path = plannerADRRT.plan(origin, destination, etd);
-			size += Iterables.size(path.getPositions());
-			waypoints += plannerADRRT.getWaypointList().size();
-			cost += plannerADRRT.getGoal().getCost();
-		}
 	}
 	
 	public void embedObstacle() {
@@ -232,4 +223,8 @@ public class RRTreePlannerTest {
 		samplingEnv.setTime(etd);
 	}
 
+	public void randomize() {
+		origin = samplingEnv.sampleRandomPosition();
+		destination = samplingEnv.sampleRandomPosition();
+	}
 }

@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.tests;
 import static org.junit.Assert.assertTrue;
 
 import java.awt.BorderLayout;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.lang.reflect.InvocationTargetException;
@@ -297,6 +298,7 @@ public class RegularGridTest {
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-CNL.xml")));
+		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-victoria-ts.xml")));
 		
 		tcGrid.setGlobe(model.getGlobe());
 		/*
