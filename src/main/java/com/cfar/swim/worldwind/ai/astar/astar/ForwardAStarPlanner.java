@@ -426,6 +426,8 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	protected void connectPlan(AStarWaypoint waypoint) {
 		this.clearWaypoints();
 		
+		waypoint.setTtg(Duration.ZERO);
+		waypoint.setDtg(0d);
 		while ((null != waypoint)) {
 			this.addFirstWaypoint(waypoint.clone());
 			waypoint = waypoint.getParent();
