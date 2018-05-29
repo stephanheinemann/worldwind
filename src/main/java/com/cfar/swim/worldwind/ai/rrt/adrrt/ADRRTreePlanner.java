@@ -33,7 +33,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -292,11 +291,9 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 	 * @return a new array list with its elements sorted by selected cost
 	 */
 	protected ArrayList<DRRTreeWaypoint> sortSelectedCost(ArrayList<DRRTreeWaypoint> list, DRRTreeWaypoint waypoint) {
-
 		return list.stream()
 				.sorted((w1, w2) -> Double.compare(this.selectCost(waypoint, w1), this.selectCost(waypoint, w2)))
 				.collect(Collectors.toCollection(ArrayList::new));
-
 	}
 
 	/**
@@ -306,8 +303,8 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 	 * @return true if improvements reached a maximum, false otherwise
 	 */
 	protected boolean isImproved(double costOld) {
-//		double costDiff = (costOld - this.getGoal().getCost()) / costOld;
-//		return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
+		// double costDiff = (costOld - this.getGoal().getCost()) / costOld;
+		// return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
 		return false;
 	}
 
@@ -346,45 +343,33 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 	}
 
 	/**
-	 * Saves the current tree to the given objects.
+	 * Saves the current data in the planner and environment to an anytime dynamic
+	 * tree.
 	 * 
-	 * @param waypointList
-	 * @param edgeList
-	 * @param plan
-	 * @param values
+	 * @param tree the tree where to save the current data
 	 */
-	protected Object[] saveTree(List<RRTreeWaypoint> waypointList, List<Edge> edgeList,
-			LinkedList<Waypoint> plan, double[] values) {
-
-		waypointList = this.getWaypointList();
-		edgeList = this.getEdgeList();
-		plan = (LinkedList<Waypoint>) this.getPlan().clone();
-		values[0] = this.getDistBias();
-		values[1] = this.getCostBias();
-		values[2] = this.getCostBound();
-		
-		return new Object[]{waypointList, edgeList, plan, values[0], values[1], values[2]};
-
+	@SuppressWarnings("unchecked")
+	protected void saveToTree(ADTree tree) {
+		tree.setWaypointList((ArrayList<RRTreeWaypoint>) ((ArrayList<RRTreeWaypoint>) this.getWaypointList()).clone());
+		tree.setEdgeList((ArrayList<Edge>) ((ArrayList<Edge>) this.getEdgeList()).clone());
+		tree.setPlan((LinkedList<Waypoint>) this.getPlan().clone());
+		tree.setDistBias(this.getDistBias());
+		tree.setCostBias(this.getCostBias());
+		tree.setCostBound(this.getCostBound());
 	}
-	
+
 	/**
-	 * Loads to the current tree the given objects.
+	 * Loads the data from an anytime dynamic tree to the current planner.
 	 * 
-	 * @param waypointList
-	 * @param edgeList
-	 * @param plan
-	 * @param values
+	 * @param tree the tree from where to load the data
 	 */
-	protected void loadTree(List<RRTreeWaypoint> waypointList, List<Edge> edgeList,
-			LinkedList<Waypoint> plan, double[] values) {
-
-		this.setWaypointList(waypointList);
-		this.setEdgeList(edgeList);
-		this.setPlan(plan);
-		this.setDistBias(values[0]);
-		this.setCostBias(values[1]);
-		this.setCostBound(values[2]);
-
+	protected void loadFromTree(ADTree tree) {
+		this.setWaypointList(tree.getWaypointList());
+		this.setEdgeList(tree.getEdgeList());
+		this.setPlan(tree.getPlan());
+		this.setDistBias(tree.getDistBias());
+		this.setCostBias(tree.getCostBias());
+		this.setCostBound(tree.getCostBound());
 	}
 
 	/**
@@ -515,9 +500,6 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-//		//No obstacles added
-//		obstacleFlag = true;
-		
 		this.initialize(origin, destination, etd);
 
 		this.setCostBias(this.getMinimumQuality());
@@ -531,64 +513,60 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 		double costOld = Double.POSITIVE_INFINITY;
 		HashSet<Obstacle> diffObstacles = new HashSet<>();
 
-		// Second Tree
-		Object[] temp;
-		List<RRTreeWaypoint> waypointListR = new ArrayList<RRTreeWaypoint>();
-		List<Edge> edgeListR = new ArrayList<Edge>();
-		LinkedList<Waypoint> planR = new LinkedList<Waypoint>();
-		double[] valuesR = new double[3]; // distBiasR, costBiasR, costBoundR;
-		double[] valuesT = {this.getDistBias(), this.getCostBias(), this.getCostBound()};
-
+		// Auxiliary Trees
+		ADTree treeR = new ADTree(), treeT = new ADTree();
+		
+		treeT.setCostBias(this.getMinimumQuality());
+		treeT.setDistBias(1 - this.getCostBias());
+		treeT.setCostBound(Double.POSITIVE_INFINITY);
+		
 		while (!this.checkGoal(getStart())) {
 			// Anytime behavior
 			if (!this.isImproved(costOld)) {
-				System.out.println("Improving...");
+				System.out.println("\n\nImproving...");
+
+				this.loadFromTree(treeT);
 				
 				this.clearExpendables();
 				this.addVertex(getStart());
 				this.setWaypointNew(getStart());
 				
-				this.setCostBias(valuesT[1]); this.setDistBias(valuesT[0]); this.setCostBound(valuesT[2]);
-				System.out.println("Set Costs to tree T: db="+this.getDistBias()+ " cb="+this.getCostBias()+ "Cs="+this.getCostBound());
+				System.out.println("Set Costs to tree T: db=" + this.getDistBias() + " cb=" + this.getCostBias() + "Cs="
+						+ this.getCostBound());
 
 				costOld = this.getGoal().getCost();
 				newPlan = this.compute();
+				
+				this.saveToTree(treeT);
 
 				if (newPlan) {
 					System.out.println("NEW PLAN found!!");
 					trajectory = this.createTrajectory();
 					this.revisePlan(trajectory);
-					
-					temp = this.saveTree(waypointListR, edgeListR, planR, valuesR); // R=T
-					waypointListR = (ArrayList<RRTreeWaypoint>) temp[0];
-					edgeListR = (ArrayList<Edge>) temp[1];
-					planR = (LinkedList<Waypoint>) temp[2];
-					valuesR[0] = (double) temp[3]; valuesR[1] = (double) temp[4]; valuesR[2] = (double) temp[5];
-					System.out.println("[SAVED TREE R] Wpt #"+waypointListR.size()+" Edg #"+edgeListR.size()+" plan #"+planR.size()+" db="+valuesR[0]+" cb="+valuesR[1]+" Cs="+valuesR[2]);
-					
+
+					treeR.clone(treeT);
+
 					this.updateWeights();
 					this.updateCostBound();
-					valuesT[0] = this.getDistBias(); valuesT[1] =  this.getCostBias(); valuesT[2] = this.getCostBound();
-					System.out.println("[Saved Values T] db="+valuesT[0]+ " cb="+valuesT[1]+" Cs="+valuesT[2]);
+					treeT.setBiases(this.getDistBias(), this.getCostBias());
+					treeT.setCostBound(this.getCostBound());
+					
 				} else {
 					System.out.println("No new plan...");
 					this.updateWeights();
-					valuesT[0] = this.getDistBias(); valuesT[1] =  this.getCostBias();
-					System.out.println("Saved new weigts for T: db="+valuesT[0]+ " cb="+valuesT[1]+" Cs="+valuesT[2]);
+					treeT.setBiases(this.getDistBias(), this.getCostBias());
 				}
-				
+
 			} else {
 				System.out.println("Improved");
 			}
-			
-			this.loadTree(waypointListR, edgeListR, planR, valuesR);
-			System.out.println("[LOADED TREE R] Wpt #"+this.getWaypointList().size()+" Edg #"+this.getEdgeList().size()+" plan #"+this.getPlan().size()+
-					" db="+this.getDistBias()+" cb="+this.getCostBias()+" Cs="+this.getCostBound());
-			
+
+			this.loadFromTree(treeR);
+
 			// Dynamic behavior
 			diffObstacles = this.getNewObstacles();
 			if (!diffObstacles.isEmpty()) {
-				
+
 				// Invalidate Waypoints affected by new obstacles
 				System.out.println("Invalidating obstacles");
 				for (Obstacle obstacle : diffObstacles) {
@@ -601,9 +579,10 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 					System.out.println("Significant changes ocurred");
 					// TODO: Define how much should weights be changed
 					this.updateWeights(-this.getStep());
+					treeT.setBiases(this.getDistBias(), this.getCostBias());
+					
 					// TODO: Define how to increase cost bound to find solution
-					this.setCostBound(10*getCostBound());
-					valuesT[0] = this.getDistBias(); valuesT[1] =  this.getCostBias();
+					this.setCostBound(10 * getCostBound());
 				}
 
 				// Check if the current path is still valid
@@ -611,7 +590,7 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 					System.out.println("Non-valid path, regrowing...");
 					this.regrowRRT();
 					this.updateCostBound();
-					valuesT[2] = this.getCostBound();
+					treeT.setCostBound(this.getCostBound());
 				}
 			}
 
@@ -619,14 +598,15 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 			System.out.println("Current Path #" + this.getPlan().size());
 			for (Waypoint wpt : this.getPlan())
 				System.out.println(wpt + " Cost=" + wpt.getCost());
+			
 			// Update trajectory reflecting the modified plan
 			trajectory = this.createTrajectory();
 			this.revisePlan(trajectory);
-			
+
+			//Move to next and save main tree
 			System.out.println("Moving to next");
 			this.moveToNext();
-			planR.remove(0);
-			System.out.println("\n\n\n");
+			this.saveToTree(treeR);
 		}
 
 		return trajectory;
