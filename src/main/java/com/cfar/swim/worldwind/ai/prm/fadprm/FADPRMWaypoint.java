@@ -49,26 +49,16 @@ public class FADPRMWaypoint extends Waypoint {
 	/** the successors of this FADPRM waypoint in an environment */
 	private Set<FADPRMWaypoint> successors = new HashSet<>();
 
+	/** the estimated cost (g-value) of this FADPRM waypoint */
+	private double g;
+
 	/** the estimated remaining cost (h-value) of this FADPRM waypoint */
 	private double h;
-	
+
+	/** the distance between this FADPRM waypoint and the goal waypoint */
 	private double dtGoal;
 
-	/**
-	 * @return the dtGoal
-	 */
-	public double getDtGoal() {
-		return dtGoal;
-	}
-
-	/**
-	 * @param dtGoal the dtGoal to set
-	 */
-	public void setDtGoal(double dtGoal) {
-		this.dtGoal = dtGoal;
-	}
-
-	/** the estimated remaining cost (h-value) of this FADPRM waypoint */
+	/** the path desirability of this FADPRM waypoint */
 	private double pathDD;
 
 	/** the number of waypoints within a small distance of this waypoint */
@@ -79,27 +69,12 @@ public class FADPRMWaypoint extends Waypoint {
 
 	/** the parameter beta that weights the importance of density and f-value */
 	private double beta;
-	
-	/** the parameter beta that weights the importance of density and f-value */
+
+	/** the parameter lambda that weights path desirability and cost */
 	private double lambda;
 
-	private double g;
-	
+	/** the parent FADPRM waypoint of this FADPRM waypoint in a trajectory */
 	private FADPRMWaypoint parent = null;
-	
-	/**
-	 * @return the parent
-	 */
-	public FADPRMWaypoint getParent() {
-		return parent;
-	}
-
-	/**
-	 * @param parent the parent to set
-	 */
-	public void setParent(FADPRMWaypoint parent) {
-		this.parent = parent;
-	}
 
 	/**
 	 * Constructs a FADPRM waypoint at a specified position.
@@ -111,7 +86,44 @@ public class FADPRMWaypoint extends Waypoint {
 		this.setCost(0d);
 		this.setG(0d);
 		this.setH(0d);
-		lambda=0.1;
+		this.setPathDD(0.5);
+		lambda = 0.7;
+	}
+
+	/**
+	 * Gets the path desirability of this FADPRM waypoint.
+	 * 
+	 * @return the pathDD the path desirability of this FADPRM waypoint.
+	 */
+	public double getPathDD() {
+		return pathDD;
+	}
+
+	/**
+	 * Sets the path desirability of this FADPRM waypoint.
+	 * 
+	 * @param pathDD the path desirability to set
+	 */
+	public void setPathDD(double pathDD) {
+		this.pathDD = pathDD;
+	}
+
+	/**
+	 * Gets the parameter lambda of this FADPRM waypoint.
+	 * 
+	 * @return the lambda the parameter lambda of this FADPRM waypoint
+	 */
+	public double getLambda() {
+		return lambda;
+	}
+
+	/**
+	 * Sets the parameter lambda of this FADPRM waypoint.
+	 * 
+	 * @param lambda the parameter lambda to set
+	 */
+	public void setLambda(double lambda) {
+		this.lambda = lambda;
 	}
 
 	/**
@@ -121,34 +133,6 @@ public class FADPRMWaypoint extends Waypoint {
 	 */
 	public double getG() {
 		return g;
-	}
-
-	/**
-	 * @return the pathDD
-	 */
-	public double getPathDD() {
-		return pathDD;
-	}
-
-	/**
-	 * @param pathDD the pathDD to set
-	 */
-	public void setPathDD(double pathDD) {
-		this.pathDD = pathDD;
-	}
-
-	/**
-	 * @return the lambda
-	 */
-	public double getLambda() {
-		return lambda;
-	}
-
-	/**
-	 * @param lambda the lambda to set
-	 */
-	public void setLambda(double lambda) {
-		this.lambda = lambda;
 	}
 
 	/**
@@ -182,6 +166,24 @@ public class FADPRMWaypoint extends Waypoint {
 			throw new IllegalArgumentException("h is less than 0");
 		}
 		this.h = h;
+	}
+
+	/**
+	 * Gets the distance to the goal waypoint.
+	 * 
+	 * @return the dtGoal the distance to the goal waypoint
+	 */
+	public double getDtGoal() {
+		return dtGoal;
+	}
+
+	/**
+	 * Sets the distance to the goal waypoint.
+	 * 
+	 * @param dtGoal the dtGoal to set
+	 */
+	public void setDtGoal(double dtGoal) {
+		this.dtGoal = dtGoal;
 	}
 
 	/**
@@ -228,11 +230,13 @@ public class FADPRMWaypoint extends Waypoint {
 	public void setDensity(int density) {
 		this.density = density;
 	}
-	
+
+	/**
+	 * Increments the density of this FADPRM waypoint.
+	 */
 	public void incrementDensity() {
-		this.setDensity(this.getDensity()+1);
+		this.setDensity(this.getDensity() + 1);
 	}
-	
 
 	/**
 	 * Gets the number of the last search that generated this FADPRM waypoint.
@@ -268,6 +272,24 @@ public class FADPRMWaypoint extends Waypoint {
 	 */
 	public void setBeta(double beta) {
 		this.beta = beta;
+	}
+
+	/**
+	 * Gets the parent FADPRM Waypoint of this FADPRM waypoint.
+	 * 
+	 * @return the parent FADPRM waypoint of this FADPRM waypoint
+	 */
+	public FADPRMWaypoint getParent() {
+		return parent;
+	}
+
+	/**
+	 * Sets the parent FADPRM waypoint of this FADPRM waypoint.
+	 * 
+	 * @param parent the parent FADPRM waypoint of this FADPRM waypoint
+	 */
+	public void setParent(FADPRMWaypoint parent) {
+		this.parent = parent;
 	}
 
 	/**
@@ -320,11 +342,11 @@ public class FADPRMWaypoint extends Waypoint {
 
 		return -compareTo;
 	}
-	
+
 	/**
-	 * Clones this A* waypoint without its parent and depiction.
+	 * Clones this FADPRM waypoint without its parent and depiction.
 	 * 
-	 * @return the clone of this A* waypoint without its parent and depiction
+	 * @return the clone of this FADPRM waypoint without its parent and depiction
 	 * 
 	 * @see Object#clone()
 	 */

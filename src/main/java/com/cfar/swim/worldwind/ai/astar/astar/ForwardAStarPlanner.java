@@ -574,7 +574,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				}
 			}
 		}
-		System.out.println("Open list is empty");
 	}
 	
 	/**
