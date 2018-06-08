@@ -91,6 +91,9 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of a Basic PRM planner */
 	public static final String PLANNER_BASICPRM_ID = "Basic PRM";
 	
+	/** the identifier of a Basic PRM planner */
+	public static final String PLANNER_MABPRM_ID = "Multi-Acft Basic PRM";
+	
 	/** the identifier of a Lazy PRM planner */
 	public static final String PLANNER_LAZYPRM_ID = "Lazy PRM";
 	

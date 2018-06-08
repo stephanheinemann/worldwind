@@ -66,9 +66,9 @@ public class AircraftFactory implements Factory<Aircraft> {
 		AircraftProperties properties = (AircraftProperties) specification.getProperties();
 		
 		if (specification.getId().equals(Specification.AIRCRAFT_IRIS_ID)) {
-			aircraft = new Iris(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
+			aircraft = new Iris(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification(), properties.getRanking());
 		} else if (specification.getId().equals(Specification.AIRCRAFT_A320_ID)) {
-			aircraft = new A320(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
+			aircraft = new A320(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification(), properties.getRanking());
 		}
 		
 		aircraft.getCapabilities().setApproachRateOfDescent(properties.getApproachRateOfDescent());

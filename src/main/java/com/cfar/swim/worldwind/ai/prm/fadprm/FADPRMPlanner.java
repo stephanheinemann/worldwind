@@ -932,10 +932,23 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			// TODO: make clones
 			for(FADPRMWaypoint waypoint : this.getWaypointList()) {
 				FADPRMWaypoint newWaypoint = waypoint.clone();
-				newWaypoint.setParent(waypoint.getParent());
+//				newWaypoint.setParent(waypoint.getParent());
 				this.backups.get(this.backupIndex).add(newWaypoint);
 			}
-//			this.backups.get(this.backupIndex).addAll(this.getWaypointList());
+
+			for (FADPRMWaypoint wpt : this.backups.get(this.backupIndex)) {
+				FADPRMWaypoint wptMirror = this.getWaypointList().stream().filter(s -> s.equals(wpt)).findFirst().get();
+				FADPRMWaypoint parentMirror = wptMirror.getParent();
+				FADPRMWaypoint parent;
+				if(parentMirror ==null) {
+					parent = null;
+				}
+				else {
+					parent = this.backups.get(this.backupIndex).stream().filter(s -> s.equals(parentMirror)).findFirst().get();
+				}
+				wpt.setParent(parent);
+			}
+
 			this.pathCosts.get(this.backupIndex).addAll(this.pathCost);
 			this.counters.set(this.backupIndex, this.counter);
 			backedup = true;
@@ -1170,7 +1183,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			trajectory = this.createTrajectory();
 			this.incrementCounter();
 			this.addPathCost();
-			System.out.println("trajectory cost " + trajectory.getCost() + " " + trajectory.getDistance());
+//			System.out.println("trajectory cost " + trajectory.getCost() + " " + trajectory.getDistance());
 		}
 		// for (FADPRMWaypoint waypoint : (Iterable<FADPRMWaypoint>)
 		// trajectory.getWaypoints()) {
@@ -1393,6 +1406,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		}
 		Trajectory trajectory = new Trajectory(plan);
 		this.revisePlan(trajectory);
+		System.out.println("trajectory cost " + trajectory.getCost() + " " + trajectory.getDistance());
 		return trajectory;
 	}
 

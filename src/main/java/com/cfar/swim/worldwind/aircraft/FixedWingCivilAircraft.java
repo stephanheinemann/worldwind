@@ -62,8 +62,8 @@ public abstract class FixedWingCivilAircraft extends CivilAircraft {
 	 * @param radius the separation radius
 	 * @param cid the combat identification
 	 */
-	public FixedWingCivilAircraft(Position position, double radius, CombatIdentification cid) {
-		super(position, radius, cid);
+	public FixedWingCivilAircraft(Position position, double radius, CombatIdentification cid, CommunicationProtocol ranking) {
+		super(position, radius, cid, ranking);
 		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
 		
 		// TODO: use actual live data for symbol annotations...

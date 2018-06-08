@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2018, Henrique Ferreira (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -27,42 +27,35 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.aircraft;
+package com.cfar.swim.worldwind.ai.prm.mabprm;
 
-import com.cfar.swim.worldwind.aircraft.CombatIdentification;
-import com.cfar.swim.worldwind.aircraft.CommunicationProtocol;
-import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
+import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.planning.Environment;
 
 /**
- * Realizes the properties bean of an Iris aircraft.
- * 
- * @author Stephan Heinemann
+ * @author Henrique Ferreira
  *
  */
-public class IrisProperties extends AircraftProperties {
+public class MABPRM extends BasicPRM{
 
 	/**
-	 * Constructs a new Iris aircraft properties bean.
+	 * @param aircraft
+	 * @param environment
 	 */
-	public IrisProperties() {
-		this.setApproachRateOfDescent(Iris.APPROACH_RATE_OF_DESCENT);
-		this.setApproachSpeed(Iris.APPROACH_SPEED);
-		this.setRanking(CommunicationProtocol.MASTER);
-		this.setCombatIdentification(CombatIdentification.FRIEND);
-		this.setCruiseClimbSpeed(Iris.CRUISE_CLIMB_SPEED);
-		this.setCruiseDescentSpeed(Iris.CRUISE_DESCENT_SPEED);
-		this.setCruiseRateOfClimb(Iris.CRUISE_RATE_OF_CLIMB);
-		this.setCruiseRateOfDescent(Iris.CRUISE_RATE_OF_DESCENT);
-		this.setCruiseSpeed(Iris.CRUISE_SPEED);
-		this.setMaximumAngleOfClimb(Iris.MAX_ANGLE_OF_CLIMB.degrees);
-		this.setMaximumAngleOfClimbSpeed(Iris.MAX_ANGLE_OF_CLIMB_SPEED);
-		this.setMaximumGlideSpeed(Iris.MAX_GLIDE_SPEED);
-		this.setMaximumRateOfClimb(Iris.MAX_RATE_OF_CLIMB);
-		this.setMaximumRateOfClimbSpeed(Iris.MAX_RATE_OF_CLIMB_SPEED);
-		this.setMaximumRateOfDescent(Iris.MAX_RATE_OF_DESCENT);
-		this.setMaximumRateOfDescentSpeed(Iris.MAX_RATE_OF_DESCENT_SPEED);
-		this.setMaximumSpeed(Iris.MAX_SPEED);
-		this.setSeparationRadius(Iris.SEPARATION_RADIUS);
+	public MABPRM(Aircraft aircraft, Environment environment) {
+		super(aircraft, environment);
 	}
 
+	/**
+	 * 
+	 * @param aircraft
+	 * @param environment
+	 * @param maxIter
+	 * @param maxNeighbors
+	 * @param maxDist
+	 */
+	public MABPRM(Aircraft aircraft, Environment environment, int maxIter, int maxNeighbors, double maxDist) {
+		super(aircraft, environment, maxIter, maxNeighbors, maxDist);
+	}
 }

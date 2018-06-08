@@ -103,8 +103,8 @@ public class Iris extends Quadcopter {
 	 * @param radius the separation radius
 	 * @param cid the combat identification
 	 */
-	public Iris(Position position, double radius, CombatIdentification cid) {
-		super(position, radius, cid);
+	public Iris(Position position, double radius, CombatIdentification cid, CommunicationProtocol ranking) {
+		super(position, radius, cid, ranking);
 		
 		this.capabilities = new Capabilities();
 		this.capabilities.setMaximumAngleOfClimbSpeed(Iris.MAX_ANGLE_OF_CLIMB_SPEED);

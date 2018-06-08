@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.registries.aircraft;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
+import com.cfar.swim.worldwind.aircraft.CommunicationProtocol;
 import com.cfar.swim.worldwind.registries.Properties;
 
 /**
@@ -43,6 +44,9 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 
 	/** the combat identification of this aircraft properties bean */
 	private CombatIdentification combatIdentification;
+	
+	/** the combat identification of this aircraft properties bean */
+	private CommunicationProtocol ranking;
 	
 	/** the separation radius of this aircraft properties bean */
 	private double separationRadius;
@@ -97,6 +101,7 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	 */
 	public AircraftProperties() {
 		this.combatIdentification = CombatIdentification.FRIEND;
+		this.ranking = CommunicationProtocol.MASTER;
 		
 		this.maximumAngleOfClimbSpeed = 0d;
 		this.maximumRateOfClimbSpeed = 0d;
@@ -133,6 +138,20 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	 */
 	public void setCombatIdentification(CombatIdentification combatIdentification) {
 		this.combatIdentification = combatIdentification;
+	}
+	
+	/**
+	 * @return the ranking
+	 */
+	public CommunicationProtocol getRanking() {
+		return ranking;
+	}
+
+	/**
+	 * @param ranking the ranking to set
+	 */
+	public void setRanking(CommunicationProtocol ranking) {
+		this.ranking = ranking;
 	}
 
 	/**

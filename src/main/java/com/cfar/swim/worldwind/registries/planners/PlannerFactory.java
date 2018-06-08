@@ -39,6 +39,7 @@ import com.cfar.swim.worldwind.ai.astar.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
+import com.cfar.swim.worldwind.ai.prm.mabprm.MABPRM;
 import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
@@ -194,6 +195,14 @@ public class PlannerFactory implements Factory<Planner> {
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((BasicPRM) planner).setPlanner(properties.getQueryPlanner());
 			((BasicPRM) planner).setMode(properties.getMode());
+		} else if (specification.getId().equals(Specification.PLANNER_MABPRM_ID)) {
+			MABPRMProperties properties = (MABPRMProperties) specification.getProperties();
+			planner = new MABPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
+					properties.getMaxNeighbors(), properties.getMaxDistance());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((MABPRM) planner).setPlanner(properties.getQueryPlanner());
+			((MABPRM) planner).setMode(properties.getMode());
 		} else if (specification.getId().equals(Specification.PLANNER_LAZYPRM_ID)) {
 			LazyPRMProperties properties = (LazyPRMProperties) specification.getProperties();
 			planner = new LazyPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),

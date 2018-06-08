@@ -55,6 +55,18 @@ public abstract class Quadcopter extends Aircraft {
 	/** the symbol identification code of a hostile rotary UAV */
 	public static final String SIDC_UAV_ROTARY_HOSTILE = "SHGPUCVUR------";
 	
+	/** the symbol identification code of an unknown slave rotary UAV */
+	public static final String SIDC_UAV_ROTARY_SLAVE_UNKOWN = "SUGPUCVU-------";
+	
+	/** the symbol identification code of a friendly slave rotary UAV */
+	public static final String SIDC_UAV_ROTARY_SLAVE_FRIEND = "SFGPUCVU-------";
+	
+	/** the symbol identification code of a neutral slave rotary UAV */
+	public static final String SIDC_UAV_ROTARY_SLAVE_NEUTRAL = "SNGPUCVU-------";
+	
+	/** the symbol identification code of a hostile slave rotary UAV */
+	public static final String SIDC_UAV_ROTARY_SLAVE_HOSTILE = "SHGPUCVU-------";
+	
 	/**
 	 * Constructs a new quadcopter at a specified position with a specified
 	 * separation radius and combat identification.
@@ -63,9 +75,15 @@ public abstract class Quadcopter extends Aircraft {
 	 * @param radius the separation radius
 	 * @param cid the combat identification
 	 */
-	public Quadcopter(Position position, double radius, CombatIdentification cid) {
-		super(position, radius);
-		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
+	public Quadcopter(Position position, double radius, CombatIdentification cid, CommunicationProtocol ranking) {
+		super(position, radius, ranking);
+		String str = this.getSymbolIdentifier(cid);
+		if(ranking==CommunicationProtocol.SLAVE) {
+			String newStr = str.substring(0,8)+'-'+str.substring(9);
+			this.depiction = new Depiction(new MilStd2525TacticalSymbol(newStr, position));
+		}
+		else 
+			this.depiction = new Depiction(new MilStd2525TacticalSymbol(str, position));
 		this.getAttributes().setMaterial(this.getMaterial(cid));
 		
 		// TODO: use actual live data for symbol annotations...

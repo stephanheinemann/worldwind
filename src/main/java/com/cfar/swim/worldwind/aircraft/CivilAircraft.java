@@ -63,8 +63,8 @@ public abstract class CivilAircraft extends Aircraft {
 	 * @param radius the separation radius
 	 * @param cid the combat identification
 	 */
-	public CivilAircraft(Position position, double radius, CombatIdentification cid) {
-		super(position, radius);
+	public CivilAircraft(Position position, double radius, CombatIdentification cid, CommunicationProtocol ranking) {
+		super(position, radius, ranking);
 		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
 		this.getAttributes().setMaterial(this.getMaterial(cid));
 		
