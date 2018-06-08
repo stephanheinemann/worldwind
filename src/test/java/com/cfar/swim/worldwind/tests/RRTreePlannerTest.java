@@ -52,6 +52,7 @@ import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.Heuristic;
+import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Box;
@@ -61,6 +62,7 @@ import com.cfar.swim.worldwind.render.Obstacle;
 import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Earth;
@@ -73,8 +75,10 @@ import gov.nasa.worldwind.render.Path;
  */
 public class RRTreePlannerTest {
 
-	static final int REPETITIONS = 50;
+	static final int REPETITIONS = 0;
 	Iris iris;
+	A320 a320;
+	Globe globe;
 	SamplingEnvironment samplingEnv;
 	Position origin, destination;
 	ZonedDateTime etd;
@@ -89,6 +93,32 @@ public class RRTreePlannerTest {
 		
 		System.out.println("Repetitions #" + REPETITIONS);
 		
+		Position positionNew, positionNewT, positionRand;
+		RRTreePlanner plannerRRT = new RRTreePlanner(a320, samplingEnv, 250, 5, 1500);
+
+		System.out.println("BoxOrig:\t"+globe.computePositionFromPoint(samplingEnv.getOrigin())+"\t"+samplingEnv.transformModelToBoxOrigin(samplingEnv.getOrigin()));
+		System.out.println("Start:  \t"+origin+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(origin)));
+		positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.1),
+									Angle.fromDegrees(origin.longitude.degrees+0.1), origin.elevation+500);
+		System.out.println(".1|.1|500:\t"+positionRand+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionRand)));
+		positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.2),
+				Angle.fromDegrees(origin.longitude.degrees+0.2), origin.elevation+500);
+		System.out.println(".2|.2|500:\t"+positionRand+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionRand)));
+		
+		for (int i = 0; i < REPETITIONS; i++) {
+			positionRand = samplingEnv.sampleRandomPosition();
+			positionNew = plannerRRT.growPosition(positionRand, origin);
+			positionNewT = plannerRRT.growPositionTime(positionRand, origin);
+			System.out.println("\nRand: "+positionRand+"\n\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionRand))+
+					"\nNear: "+origin+"\n\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(origin))+
+					"\nNew:  "+positionNew +"\t"+samplingEnv.getDistance(origin, positionNew)+
+							"\t"+a320.getCapabilities().isFeasible(origin, positionNew, globe)+
+							"\n\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionNew))+
+					"\nNewT: "+positionNewT+"\t"+samplingEnv.getDistance(origin, positionNewT)+
+							"\t"+a320.getCapabilities().isFeasible(origin, positionNewT, globe)+
+							"\n\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionNewT)));
+		}
+		
 		/*
 		// Basic RRTreePlanner
 		// Bias 5%
@@ -102,8 +132,8 @@ public class RRTreePlannerTest {
 		// Heuristic RRTreePlanner
 		this.heuristicRRTreeTester(250, 5, .9, 5, Heuristic.hRRT);
 		this.heuristicRRTreeTester(250, 5, .9, 5, Heuristic.IkRRT);
-		 */
 		this.heuristicRRTreeTester(250, 5, .9,  5, Heuristic.BkRRT);
+		 */
 		
 		/*
 		// Anytime Dynamic
@@ -114,13 +144,13 @@ public class RRTreePlannerTest {
 
 	public void setScenario() {
 		// Create box area in globe
-		Globe globe = new Earth();
+		globe = new Earth();
 		Sector cadboroBay = new Sector(
 				Angle.fromDegrees(48.44),
 				Angle.fromDegrees(48.46),
 				Angle.fromDegrees(-123.29),
 				Angle.fromDegrees(-123.27));
-		gov.nasa.worldwind.geom.Box boxNASA = Sector.computeBoundingBox(globe, 1.0, cadboroBay, 0.0, 150.0);
+		gov.nasa.worldwind.geom.Box boxNASA = Sector.computeBoundingBox(globe, 1.0, cadboroBay, 0.0, 1500.0);
 
 		// Create environment from box
 		samplingEnv = new SamplingEnvironment(new Box(boxNASA));
@@ -130,7 +160,8 @@ public class RRTreePlannerTest {
 		origin = Position.fromDegrees(48.445, -123.285, 10);
 		destination = Position.fromDegrees(48.455, -123.275, 100);
 		etd = ZonedDateTime.of(LocalDate.of(2018, 5, 1), LocalTime.of(22, 0), ZoneId.of("UTC"));
-		iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
+		iris = new Iris(origin, 500, CombatIdentification.FRIEND);
+		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
 	}
 
 	public void basicRRTreeTester(double epsilon, int bias, Strategy strategy) {
