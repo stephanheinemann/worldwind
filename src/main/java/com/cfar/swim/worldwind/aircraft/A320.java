@@ -107,7 +107,7 @@ public class A320 extends FixedWingCivilAircraft {
 		super(position, radius, cid);
 		this.capabilities = new Capabilities();
 		this.capabilities.setMaximumAngleOfClimbSpeed(A320.MAX_ANGLE_OF_CLIMB_SPEED);
-		this.capabilities.setMaximumRateOfClimb(A320.MAX_RATE_OF_CLIMB);
+		this.capabilities.setMaximumRateOfClimbSpeed(A320.MAX_RATE_OF_CLIMB_SPEED);
 		this.capabilities.setCruiseClimbSpeed(A320.CRUISE_CLIMB_SPEED);
 		this.capabilities.setCruiseSpeed(A320.CRUISE_SPEED);
 		this.capabilities.setCruiseDescentSpeed(A320.CRUISE_DESCENT_SPEED);

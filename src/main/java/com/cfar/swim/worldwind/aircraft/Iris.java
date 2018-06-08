@@ -108,7 +108,7 @@ public class Iris extends Quadcopter {
 		
 		this.capabilities = new Capabilities();
 		this.capabilities.setMaximumAngleOfClimbSpeed(Iris.MAX_ANGLE_OF_CLIMB_SPEED);
-		this.capabilities.setMaximumRateOfClimb(Iris.MAX_RATE_OF_CLIMB);
+		this.capabilities.setMaximumRateOfClimbSpeed(Iris.MAX_RATE_OF_CLIMB_SPEED);
 		this.capabilities.setCruiseClimbSpeed(Iris.CRUISE_CLIMB_SPEED);
 		this.capabilities.setCruiseSpeed(Iris.CRUISE_SPEED);
 		this.capabilities.setCruiseDescentSpeed(Iris.CRUISE_DESCENT_SPEED);
