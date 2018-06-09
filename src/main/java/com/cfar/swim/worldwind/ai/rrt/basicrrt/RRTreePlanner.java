@@ -508,12 +508,12 @@ public class RRTreePlanner extends AbstractPlanner {
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
 		
-		double angleMax = capabilities.getMaximumAngleOfClimb().radians;
-		double distance = LatLon.linearDistance(positionNear, position).getRadians() * globe.getRadius();
-		double height = position.getElevation() - positionNear.getElevation();
-		double slant = Math.sqrt(Math.pow(height, 2) + Math.pow(distance, 2));
+		double angleMax = capabilities.getMaximumAngleOfClimb().radians; // radians
+		double distance = LatLon.linearDistance(positionNear, position).getRadians() * globe.getRadius(); // meters
+		double height = position.getElevation() - positionNear.getElevation(); // meters
+		double slant = Math.sqrt(Math.pow(height, 2) + Math.pow(distance, 2)); // meters
 		double angle = distance != 0 ? Math.atan2(height, distance)
-				: height >= 0d ? Math.toRadians(90d) : Math.toRadians(-90d);
+				: height >= 0d ? Math.toRadians(90d) : Math.toRadians(-90d); // radians
 				
 		double lat=position.latitude.degrees, lon=position.longitude.degrees, ele=position.elevation;
 		double lat0=positionNear.latitude.degrees, lon0=positionNear.longitude.degrees, ele0=positionNear.elevation;
@@ -522,14 +522,14 @@ public class RRTreePlanner extends AbstractPlanner {
 		// Non-feasible region
 		if (angle > angleMax) {
 			System.out.println("Steep Climb: "+angle);
-			lat = lat0 + slant * Math.cos(angleMax) * Math.sin(heading);
-			lon = lon0 + slant * Math.cos(angleMax) * Math.cos(heading);
+			lat = lat0 + (slant * Math.cos(angleMax) * Math.sin(heading)) / globe.getRadius();
+			lon = lon0 + (slant * Math.cos(angleMax) * Math.cos(heading)) / globe.getRadius();
 			ele = ele0 + slant * Math.sin(angleMax);
 		}
 		else if(angle < -angleMax) {
 			System.out.println("Steep Descent: "+angle);
-			lat = lat0 + slant * Math.cos(-angleMax) * Math.sin(heading);
-			lon = lon0 + slant * Math.cos(-angleMax) * Math.cos(heading);
+			lat = lat0 + (slant * Math.cos(-angleMax) * Math.sin(heading)) / globe.getRadius();
+			lon = lon0 + (slant * Math.cos(-angleMax) * Math.cos(heading)) / globe.getRadius();
 			ele = ele0 + slant * Math.sin(-angleMax);
 			System.out.println("Lat="+lat+" Lon="+lon+" Ele="+ele);
 		}
