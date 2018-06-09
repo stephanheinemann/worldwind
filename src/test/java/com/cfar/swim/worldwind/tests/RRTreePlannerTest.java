@@ -75,7 +75,7 @@ import gov.nasa.worldwind.render.Path;
  */
 public class RRTreePlannerTest {
 
-	static final int REPETITIONS = 0;
+	static final int REPETITIONS = 1;
 	Iris iris;
 	A320 a320;
 	Globe globe;
@@ -96,17 +96,19 @@ public class RRTreePlannerTest {
 		Position positionNew, positionNewT, positionRand;
 		RRTreePlanner plannerRRT = new RRTreePlanner(a320, samplingEnv, 250, 5, 1500);
 
-		System.out.println("BoxOrig:\t"+globe.computePositionFromPoint(samplingEnv.getOrigin())+"\t"+samplingEnv.transformModelToBoxOrigin(samplingEnv.getOrigin()));
-		System.out.println("Start:  \t"+origin+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(origin)));
-		positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.1),
-									Angle.fromDegrees(origin.longitude.degrees+0.1), origin.elevation+500);
-		System.out.println(".1|.1|500:\t"+positionRand+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionRand)));
-		positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.2),
-				Angle.fromDegrees(origin.longitude.degrees+0.2), origin.elevation+500);
-		System.out.println(".2|.2|500:\t"+positionRand+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionRand)));
+//		System.out.println("BoxOrig:\t"+globe.computePositionFromPoint(samplingEnv.getOrigin())+"\t"+samplingEnv.transformModelToBoxOrigin(samplingEnv.getOrigin()));
+//		System.out.println("Start:  \t"+origin+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(origin)));
+//		positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.1),
+//									Angle.fromDegrees(origin.longitude.degrees+0.1), origin.elevation+500);
+//		System.out.println(".1|.1|500:\t"+positionRand+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionRand)));
+//		positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.2),
+//				Angle.fromDegrees(origin.longitude.degrees+0.2), origin.elevation+500);
+//		System.out.println(".2|.2|500:\t"+positionRand+"\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionRand)));
 		
 		for (int i = 0; i < REPETITIONS; i++) {
-			positionRand = samplingEnv.sampleRandomPosition();
+//			positionRand = samplingEnv.sampleRandomPosition();
+			positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.01),
+					Angle.fromDegrees(origin.longitude.degrees+0.01), origin.elevation+500);
 			positionNew = plannerRRT.growPosition(positionRand, origin);
 			positionNewT = plannerRRT.growPositionTime(positionRand, origin);
 			System.out.println("\nRand: "+positionRand+"\n\t"+samplingEnv.transformModelToBoxOrigin(globe.computePointFromPosition(positionRand))+

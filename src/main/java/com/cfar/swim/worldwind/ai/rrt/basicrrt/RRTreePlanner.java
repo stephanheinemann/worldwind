@@ -47,6 +47,7 @@ import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
+import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -466,7 +467,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the new position resulting from the controlled growth of the tree
 	 */
-	protected Position growPosition(Position position, Position positionNear) {
+	public Position growPosition(Position position, Position positionNear) {
 		Position positionNew;
 
 		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
@@ -497,55 +498,44 @@ public class RRTreePlanner extends AbstractPlanner {
 		return positionNew;
 	}
 
-	protected Position growPositionTime(Position position, Position positionNear) {
-		// TODO: RRT connect doesn't work with this...
+	public Position growPositionTime(Position position, Position positionNear) {
+		// TODO: Receive time interval as user input instead of Epsilon
+		double dT = 15d; // seconds
+		double angleThreshold = Math.toRadians(3d);
+		
 		Position positionNew;
 
-		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
-		point1 = this.getEnvironment().transformModelToBoxOrigin(point1);
-		Vec4 point2 = super.getEnvironment().getGlobe().computePointFromPosition(position);
-		point2 = this.getEnvironment().transformModelToBoxOrigin(point2);
-
-		double dT = 15d; // seconds
-		double minAngle = Math.toRadians(3d);
-		double x, y, z, dy, dz, dist3D, dist2D, angle3D, angle2D;
-		dy = point2.y - point1.y;
-		dz = point2.z - point1.z;
-
-		dist3D = point1.distanceTo3(point2);
-		dist2D = point1.distanceTo2(point2);
-
-		angle3D = Math.asin(dz / dist3D);
-		angle2D = Math.asin(dy / dist2D);
-
-		double speed;
-		if (angle3D > minAngle) {
-			// CLimb
-			speed = this.getAircraft().getCapabilities().getCruiseClimbSpeed();
-			z = point1.z + speed * dT * Math.sin(angle3D);
-			x = point1.x + speed * dT * Math.cos(angle3D) * Math.cos(angle2D);
-			y = point1.y + speed * dT * Math.cos(angle3D) * Math.sin(angle2D);
-		} else if (angle3D < -minAngle) {
-			// Descend
-			speed = this.getAircraft().getCapabilities().getCruiseDescentSpeed();
-			z = point1.z + speed * dT * Math.sin(angle3D);
-			x = point1.x + speed * dT * Math.cos(angle3D) * Math.cos(angle2D);
-			y = point1.y + speed * dT * Math.cos(angle3D) * Math.sin(angle2D);
-		} else {
-			// Level
-			speed = this.getAircraft().getCapabilities().getCruiseSpeed();
-			x = point1.x + speed * dT * Math.cos(angle2D);
-			y = point1.y + speed * dT * Math.sin(angle2D);
-			z = point1.z;
+		Capabilities capabilities = this.getAircraft().getCapabilities();
+		Globe globe = this.getEnvironment().getGlobe();
+		
+		double angleMax = capabilities.getMaximumAngleOfClimb().radians;
+		double distance = LatLon.linearDistance(positionNear, position).getRadians() * globe.getRadius();
+		double height = position.getElevation() - positionNear.getElevation();
+		double slant = Math.sqrt(Math.pow(height, 2) + Math.pow(distance, 2));
+		double angle = distance != 0 ? Math.atan2(height, distance)
+				: height >= 0d ? Math.toRadians(90d) : Math.toRadians(-90d);
+				
+		double lat=position.latitude.degrees, lon=position.longitude.degrees, ele=position.elevation;
+		double lat0=positionNear.latitude.degrees, lon0=positionNear.longitude.degrees, ele0=positionNear.elevation;
+		double heading = Math.atan2((lat-lat0), (lon-lon0));
+		
+		// Non-feasible region
+		if (angle > angleMax) {
+			System.out.println("Steep Climb: "+angle);
+			lat = lat0 + slant * Math.cos(angleMax) * Math.sin(heading);
+			lon = lon0 + slant * Math.cos(angleMax) * Math.cos(heading);
+			ele = ele0 + slant * Math.sin(angleMax);
 		}
-		Vec4 pointNew = new Vec4(x, y, z);
-
-		if (point1.distanceTo3(pointNew) >= dist3D) {
-			return position;
+		else if(angle < -angleMax) {
+			System.out.println("Steep Descent: "+angle);
+			lat = lat0 + slant * Math.cos(-angleMax) * Math.sin(heading);
+			lon = lon0 + slant * Math.cos(-angleMax) * Math.cos(heading);
+			ele = ele0 + slant * Math.sin(-angleMax);
+			System.out.println("Lat="+lat+" Lon="+lon+" Ele="+ele);
 		}
-
-		pointNew = this.getEnvironment().transformBoxOriginToModel(pointNew);
-		positionNew = super.getEnvironment().getGlobe().computePositionFromPoint(pointNew);
+		
+		positionNew = new Position(LatLon.fromDegrees(lat, lon), ele);
+		
 
 		return positionNew;
 	}
