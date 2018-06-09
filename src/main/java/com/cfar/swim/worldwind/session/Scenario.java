@@ -117,15 +117,15 @@ public class Scenario implements Identifiable, Enableable {
 
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
-	
+
 	/** the waypoints to be visited in the trajectory of this scenario */
-	private ArrayList<ArrayList<Waypoint>> slaveWaypoints;
+	private ArrayList<ArrayList<Waypoint>> slaveWaypoints  = new ArrayList<ArrayList<Waypoint>>();
 
 	/** the planned trajectory of this scenario */
 	private Trajectory trajectory;
-	
+
 	/** the planned trajectory of this scenario */
-	private ArrayList<Trajectory> slaveTrajectories;
+	private ArrayList<Trajectory> slaveTrajectories = new ArrayList<Trajectory>();
 
 	/** the obstacles of this scenario */
 	private Set<Obstacle> obstacles;
@@ -168,6 +168,8 @@ public class Scenario implements Identifiable, Enableable {
 		this.environment.setGlobe(this.globe);
 		this.waypoints = new ArrayList<Waypoint>();
 		this.slaveWaypoints = new ArrayList<ArrayList<Waypoint>>();
+		this.slaveAircrafts = new ArrayList<Aircraft>();
+		this.slaveTrajectories = new ArrayList<Trajectory>();
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
 		this.setDatalink(new SimulatedDatalink());
 		this.setTrajectory(new Trajectory());
@@ -282,7 +284,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void addAircraftChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("aircraft", listener);
 	}
-	
+
 	/**
 	 * Adds an aircraft change listener to this scenario.
 	 * 
@@ -309,7 +311,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void addWaypointsChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("waypoints", listener);
 	}
-	
+
 	/**
 	 * Adds a waypoints change listener to this scenario.
 	 * 
@@ -319,7 +321,6 @@ public class Scenario implements Identifiable, Enableable {
 		this.pcs.addPropertyChangeListener("slaveWaypoints", listener);
 	}
 
-
 	/**
 	 * Adds a trajectory change listener to this scenario.
 	 * 
@@ -328,7 +329,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void addTrajectoryChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("trajectory", listener);
 	}
-	
+
 	/**
 	 * Adds a trajectory change listener to this scenario.
 	 * 
@@ -374,10 +375,10 @@ public class Scenario implements Identifiable, Enableable {
 				this.aircraft.setTime(time);
 				this.moveAircraftOnTrajectory();
 			}
-			if(!this.slaveAircrafts.isEmpty()) {
-				for(Aircraft aircraft : this.slaveAircrafts) {
-					aircraft.setTime(time);
-					this.moveSlaveAircraftOnTrajectory(aircraft);
+			if (this.hasSlaveAircrafts()) {
+				for (int i = 0; i < this.slaveAircrafts.size(); i++) {
+					this.slaveAircrafts.get(i).setTime(time);
+					this.moveSlaveAircraftOnTrajectory(i);
 				}
 			}
 
@@ -511,7 +512,7 @@ public class Scenario implements Identifiable, Enableable {
 			this.aircraft.setThreshold(threshold);
 		}
 		if (!this.slaveAircrafts.isEmpty()) {
-			for(Aircraft aircraft : this.slaveAircrafts) {
+			for (Aircraft aircraft : this.slaveAircrafts) {
 				aircraft.setThreshold(threshold);
 			}
 		}
@@ -684,7 +685,7 @@ public class Scenario implements Identifiable, Enableable {
 	public ArrayList<Aircraft> getSlaveAircrafts() {
 		return this.slaveAircrafts;
 	}
-	
+
 	/**
 	 * Gets the aircraft of this scenario.
 	 * 
@@ -703,11 +704,11 @@ public class Scenario implements Identifiable, Enableable {
 	public void setSlaveAircrafts(ArrayList<Aircraft> slaveAircrafts) {
 		this.slaveAircrafts = slaveAircrafts;
 
-		for (Aircraft aircraft : this.slaveAircrafts) {
-			if (null != aircraft) {
-				aircraft.setTime(this.time);
-				this.moveSlaveAircraftOnTrajectory(aircraft);
-				aircraft.setThreshold(threshold);
+		for (int i = 0; i < this.slaveAircrafts.size(); i++) {
+			if (null != this.slaveAircrafts.get(i)) {
+				this.slaveAircrafts.get(i).setTime(this.time);
+				this.moveSlaveAircraftOnTrajectory(i);
+				this.slaveAircrafts.get(i).setThreshold(threshold);
 			}
 		}
 		this.pcs.firePropertyChange("slaveAircrafts", null, this.slaveAircrafts);
@@ -737,7 +738,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * @param position the position the aircraft is moved to
 	 */
 	public void moveSlaveAircraft(Aircraft aircraft, Position position) {
-		if (aircraft!=null) {
+		if (aircraft != null) {
 			aircraft.moveTo(position);
 			this.pcs.firePropertyChange("slaveAircrafts", null, this.slaveAircrafts);
 		}
@@ -750,12 +751,12 @@ public class Scenario implements Identifiable, Enableable {
 	 * respectively.
 	 */
 	public void moveSlaveAircraftOnTrajectory(int index) {
-		if (slaveAircrafts.get(index)!=null && this.slaveTrajectories.get(index).isEmpty()) {
-
+		if (slaveAircrafts.get(index) != null && this.slaveTrajectories.get(index).isEmpty()) {
 			// find trajectory leg for the time of this scenario
 			Waypoint previous = null;
 			Waypoint next = null;
-			Iterator<? extends Waypoint> trajectoryIterator = this.slaveTrajectories.get(index).getWaypoints().iterator();
+			Iterator<? extends Waypoint> trajectoryIterator = this.slaveTrajectories.get(index).getWaypoints()
+					.iterator();
 			while (trajectoryIterator.hasNext() && (null == next)) {
 				next = trajectoryIterator.next();
 				if (next.getEto().isBefore(this.time)) {
@@ -763,19 +764,20 @@ public class Scenario implements Identifiable, Enableable {
 					next = null;
 				}
 			}
-
-			if ((null == previous) && this.hasWaypoints()) {
+			if ((null == previous) && !this.slaveWaypoints.get(index).isEmpty()) {
 				// time of this scenario is before the first waypoint
-				this.moveSlaveAircraft(this.getSlaveAircrafts().get(index), this.getSlaveWaypoints().get(index).getthis.waypoints.get(0));
-			} else if ((null == next) && this.hasWaypoints()) {
+				this.moveSlaveAircraft(this.getSlaveAircrafts().get(index), this.getSlaveWaypoints().get(index).get(0));
+			} else if ((null == next) && !this.slaveWaypoints.get(index).isEmpty()) {
 				// time of this scenario is after the last waypoint
-				this.moveSlaveAircraft(aircraft, this.waypoints.get(this.waypoints.size() - 1));
+				this.moveSlaveAircraft(this.getSlaveAircrafts().get(index),
+						this.getSlaveWaypoints().get(index).get(this.getSlaveWaypoints().get(index).size() - 1));
 			} else {
 				// interpolate between waypoints
 				Duration d1 = Duration.between(previous.getEto(), this.time);
 				Duration d2 = Duration.between(previous.getEto(), next.getEto());
 				double ratio = ((double) d1.getSeconds()) / ((double) d2.getSeconds());
-				this.moveSlaveAircraft(aircraft, Position.interpolate(ratio, previous, next));
+				this.moveSlaveAircraft(this.getSlaveAircrafts().get(index),
+						Position.interpolate(ratio, previous, next));
 			}
 		}
 	}
@@ -971,8 +973,8 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the waypoints of this scenario
 	 */
-	public List<Waypoint> getSlaveWaypoints() {
-		return Collections.unmodifiableList(this.slaveWaypoints);
+	public ArrayList<ArrayList<Waypoint>> getSlaveWaypoints() {
+		return this.slaveWaypoints;
 	}
 
 	/**
@@ -989,8 +991,27 @@ public class Scenario implements Identifiable, Enableable {
 			if (waypoint.hasDepiction() && waypoint.getDepiction().hasAnnotation()) {
 				waypoint.getDepiction().getAnnotation().setText(designator);
 			}
-			this.slaveWaypoints.add(waypoint);
-			this.pcs.firePropertyChange("slaveWaypoints", null, Collections.unmodifiableList(this.slaveWaypoints));
+			for (ArrayList<Waypoint> waypoints : this.slaveWaypoints) {
+				waypoints.add(waypoint);
+			}
+			this.pcs.firePropertyChange("slaveWaypoints", null,this.slaveWaypoints);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	public void addSlaveWaypoint(int index, Waypoint waypoint) {
+		if (null != waypoint) {
+			System.out.println("waypoint not null");
+			String designator = Integer.toString(this.slaveWaypoints.size());
+			waypoint.setDesignator(designator);
+			if (waypoint.hasDepiction() && waypoint.getDepiction().hasAnnotation()) {
+				waypoint.getDepiction().getAnnotation().setText(designator);
+			}
+			this.slaveWaypoints.add(index, new ArrayList<Waypoint>());
+			this.slaveWaypoints.get(index).add(0, waypoint);
+			System.out.println("added slave wpys");
+			this.pcs.firePropertyChange("slaveWaypoints", null,this.slaveWaypoints);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -1001,7 +1022,7 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void clearSlaveWaypoints() {
 		this.slaveWaypoints.clear();
-		this.pcs.firePropertyChange("slaveWaypoints", null, Collections.unmodifiableList(this.slaveWaypoints));
+		this.pcs.firePropertyChange("slaveWaypoints", null, this.slaveWaypoints);
 	}
 
 	/**
@@ -1175,10 +1196,8 @@ public class Scenario implements Identifiable, Enableable {
 		return leg;
 	}
 
-	
-	
 	// TODO: function for slave trajectories
-	
+
 	/**
 	 * Gets the planned trajectory of this scenario.
 	 * 
@@ -1197,11 +1216,22 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void setSlaveTrajectories(ArrayList<Trajectory> trajectories) {
 		if (!trajectories.isEmpty()) {
-			this.slaveTrajectories=trajectories;
-			for(int i=0 ; i<trajectories.size(); i++) {
-				this.sequenceSlaveTrajectory();
+			this.slaveTrajectories = trajectories;
+			for (int i = 0; i < trajectories.size(); i++) {
+				this.sequenceSlaveTrajectory(i);
 				this.moveSlaveAircraftOnTrajectory(i);
 			}
+			this.pcs.firePropertyChange("slaveTrajectories", null, this.slaveTrajectories);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	public void addSlaveTrajectory(Trajectory trajectory, int index) {
+		if (null != trajectory) {
+			this.slaveTrajectories.add(trajectory);
+			this.sequenceSlaveTrajectory(index);
+			this.moveSlaveAircraftOnTrajectory(index);
 			this.pcs.firePropertyChange("slaveTrajectories", null, this.slaveTrajectories);
 		} else {
 			throw new IllegalArgumentException();
@@ -1228,10 +1258,11 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Sequences the trajectory of this scenario.
 	 */
-	private void sequenceSlaveTrajectory() {
-		if (this.hasTrajectory()) {
-			Iterator<Waypoint> waypointsIterator = this.waypoints.iterator();
-			Iterator<? extends Waypoint> trajectoryIterator = this.trajectory.getWaypoints().iterator();
+	private void sequenceSlaveTrajectory(int index) {
+		if (!this.slaveTrajectories.get(index).isEmpty()) {
+			Iterator<Waypoint> waypointsIterator = this.getSlaveWaypoints().get(index).iterator();
+			Iterator<? extends Waypoint> trajectoryIterator = this.getSlaveTrajectories().get(index).getWaypoints()
+					.iterator();
 			int number = 0;
 
 			if (waypointsIterator.hasNext()) {
@@ -1267,7 +1298,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if any waypoint is null
 	 */
-	public List<Waypoint> getTrajectoryLeg(Waypoint from, Waypoint to) {
+	public List<Waypoint> getSlaveTrajectoryLeg(Waypoint from, Waypoint to) {
 		List<Waypoint> leg = new ArrayList<Waypoint>();
 
 		if ((null != from) && (null != to)) {
@@ -1294,6 +1325,7 @@ public class Scenario implements Identifiable, Enableable {
 
 		return leg;
 	}
+
 	/**
 	 * Gets the obstacles of this scenario.
 	 * 

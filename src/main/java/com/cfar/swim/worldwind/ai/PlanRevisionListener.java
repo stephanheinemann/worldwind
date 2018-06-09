@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai;
 
+import java.util.ArrayList;
 import java.util.EventListener;
 
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -53,4 +54,6 @@ public interface PlanRevisionListener extends EventListener {
 	 * Notifies this plan revision listener about new obstacles.
 	 */
 	public void reviseObstacle();
+	
+	public void reviseSlavePlans(ArrayList<Trajectory> trajectories);
 }

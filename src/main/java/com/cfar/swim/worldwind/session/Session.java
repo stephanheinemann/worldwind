@@ -61,6 +61,7 @@ import com.cfar.swim.worldwind.registries.planners.FADPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.ForwardAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.LazyPRMProperties;
+import com.cfar.swim.worldwind.registries.planners.MABPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.RRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.ThetaStarProperties;
@@ -186,6 +187,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DRRT_ID, new DRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, new ADRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_BASICPRM_ID, new BasicPRMProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_MABPRM_ID, new MABPRMProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_LAZYPRM_ID, new LazyPRMProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FADPRM_ID, new FADPRMProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
@@ -200,7 +202,7 @@ public class Session implements Identifiable {
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_SAMPLING_ID));
-		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FADPRM_ID));
+		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_MABPRM_ID));
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
 	}
 	

@@ -29,9 +29,17 @@
  */
 package com.cfar.swim.worldwind.ai.prm.mabprm;
 
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+
+import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
+
+import gov.nasa.worldwind.geom.Position;
 
 /**
  * @author Henrique Ferreira
@@ -39,6 +47,43 @@ import com.cfar.swim.worldwind.planning.Environment;
  */
 public class MABPRM extends BasicPRM{
 
+	public ArrayList<Aircraft> slaveAircrafts = new ArrayList<Aircraft>();
+	
+	/**
+	 * @return the slaveAircrafts
+	 */
+	public ArrayList<Aircraft> getSlaveAircrafts() {
+		return slaveAircrafts;
+	}
+	/**
+	 * @return the slaveWaypoints
+	 */
+	public ArrayList<ArrayList<Waypoint>> getSlaveWaypoints() {
+		return slaveWaypoints;
+	}
+	/**
+	 * @return the slaveTrajectories
+	 */
+	public ArrayList<Trajectory> getSlaveTrajectories() {
+		return slaveTrajectories;
+	}
+	public void setSlaveAircrafts(ArrayList<Aircraft> slaveAircrafts) {
+		this.slaveAircrafts = slaveAircrafts;
+	}
+	
+	/** the waypoints to be visited in the trajectory of this scenario */
+	public ArrayList<ArrayList<Waypoint>> slaveWaypoints = new ArrayList<ArrayList<Waypoint>>();
+	
+	public void setSlaveWaypoints(ArrayList<ArrayList<Waypoint>> slaveWaypoints) {
+		this.slaveWaypoints = slaveWaypoints;
+	}
+	
+	/** the planned trajectory of this scenario */
+	public ArrayList<Trajectory> slaveTrajectories = new ArrayList<Trajectory>();
+	
+	public void setSlaveTrajectories(ArrayList<Trajectory> slaveTrajectories) {
+		this.slaveTrajectories = slaveTrajectories;
+	}
 	/**
 	 * @param aircraft
 	 * @param environment
@@ -57,5 +102,21 @@ public class MABPRM extends BasicPRM{
 	 */
 	public MABPRM(Aircraft aircraft, Environment environment, int maxIter, int maxNeighbors, double maxDist) {
 		super(aircraft, environment, maxIter, maxNeighbors, maxDist);
+	}
+	
+	public void multiFindPath(ArrayList<ArrayList<Waypoint>> slaveWaypoints, Position destination, ZonedDateTime etd) {
+		for(int i=0; i< this.getSlaveAircrafts().size(); i++) {
+			System.out.println("creating a star");
+			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getSlaveAircrafts().get(i), this.getEnvironment());
+			aStar.setCostPolicy(this.getCostPolicy());
+			aStar.setRiskPolicy(this.getRiskPolicy());
+			System.out.println("planning");
+			this.extendsConstruction(this.getSlaveWaypoints().get(i).get(0), destination);
+			System.out.println("starting wpt "+ this.getSlaveWaypoints().get(i).get(0));
+			Trajectory trajectory = aStar.plan(this.getSlaveWaypoints().get(i).get(0), destination, etd);
+			this.slaveTrajectories.add(trajectory);
+		}
+		System.out.println("revising slave plans");
+		this.reviseSlavePlans(this.slaveTrajectories);
 	}
 }

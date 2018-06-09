@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -205,6 +206,15 @@ public abstract class AbstractPlanner implements Planner {
 	protected void reviseObstacle() {
 		for (PlanRevisionListener listener : this.planRevisionListeners) {
 			listener.reviseObstacle();
+		}
+	}
+	/**
+	 * Revises a plan notifying the plan revision listeners of this abstract
+	 * planner.
+	 */
+	protected void reviseSlavePlans(ArrayList<Trajectory> trajectories) {
+		for (PlanRevisionListener listener : this.planRevisionListeners) {
+			listener.reviseSlavePlans(trajectories);
 		}
 	}
 	

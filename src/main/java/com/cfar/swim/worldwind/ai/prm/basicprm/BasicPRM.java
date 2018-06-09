@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.ai.prm.basicprm;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
@@ -389,6 +390,12 @@ public class BasicPRM extends AbstractPlanner {
 						listener.reviseObstacle();
 					}
 				}
+				@Override
+				public void reviseSlavePlans(ArrayList<Trajectory> trajectories) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseSlavePlans(trajectories);
+					}
+				}
 			});
 			trajectory = aStar.plan(origin, destination, etd);
 			break;
@@ -410,6 +417,12 @@ public class BasicPRM extends AbstractPlanner {
 				public void reviseObstacle() {
 					for (PlanRevisionListener listener : planRevisionListeners) {
 						listener.reviseObstacle();
+					}
+				}
+				@Override
+				public void reviseSlavePlans(ArrayList<Trajectory> trajectories) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseSlavePlans(trajectories);
 					}
 				}
 			});
@@ -474,6 +487,12 @@ public class BasicPRM extends AbstractPlanner {
 						listener.reviseObstacle();
 					}
 				}
+				@Override
+				public void reviseSlavePlans(ArrayList<Trajectory> trajectories) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseSlavePlans(trajectories);
+					}
+				}
 			});
 			trajectory = aStar.plan(origin, destination, waypoints, etd);
 			break;
@@ -495,6 +514,12 @@ public class BasicPRM extends AbstractPlanner {
 				public void reviseObstacle() {
 					for (PlanRevisionListener listener : planRevisionListeners) {
 						listener.reviseObstacle();
+					}
+				}
+				@Override
+				public void reviseSlavePlans(ArrayList<Trajectory> trajectories) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseSlavePlans(trajectories);
 					}
 				}
 			});

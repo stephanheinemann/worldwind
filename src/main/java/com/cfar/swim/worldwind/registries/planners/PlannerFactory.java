@@ -203,6 +203,8 @@ public class PlannerFactory implements Factory<Planner> {
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((MABPRM) planner).setPlanner(properties.getQueryPlanner());
 			((MABPRM) planner).setMode(properties.getMode());
+			((MABPRM) planner).setSlaveAircrafts(scenario.getSlaveAircrafts());
+			((MABPRM) planner).setSlaveWaypoints(scenario.getSlaveWaypoints());
 		} else if (specification.getId().equals(Specification.PLANNER_LAZYPRM_ID)) {
 			LazyPRMProperties properties = (LazyPRMProperties) specification.getProperties();
 			planner = new LazyPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
