@@ -70,6 +70,22 @@ import gov.nasa.worldwind.render.Path;
  */
 public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 
+	private ArrayList<Environment> desirabilityEnvironments = new ArrayList<Environment>();
+
+	/**
+	 * @return the desirabilityEnvironments
+	 */
+	public ArrayList<Environment> getDesirabilityEnvironments() {
+		return desirabilityEnvironments;
+	}
+
+	/**
+	 * @param desirabilityEnvironments the desirabilityEnvironments to set
+	 */
+	public void setDesirabilityEnvironments(ArrayList<Environment> desirabilityEnvironments) {
+		this.desirabilityEnvironments = desirabilityEnvironments;
+	}
+
 	/** the maximum number of neighbors a waypoint can be connected to */
 	private final int MAX_NEIGHBORS;
 
@@ -737,8 +753,10 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 
 		double distance = this.getEnvironment().getNormalizedDistance(source, target);
+		//TODO
 		double pathDD = 1 / (2 * this.getEnvironment().getStepCost(source, target, source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy()) / distance);
+		
 		pathDD = pathDD <= source.getPathDD() ? pathDD : source.getPathDD();
 
 		if (pathDD / (1 + target.getLambda() * (source.getCost() + distance)) > target.getG()) {
@@ -1305,6 +1323,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		System.out.println("desirability env "+this.getDesirabilityEnvironments().size());
 		this.initialize(origin, destination, etd);
 
 		Trajectory trajectory = this.compute(origin, destination, etd);

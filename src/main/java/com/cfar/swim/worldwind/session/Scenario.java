@@ -101,7 +101,13 @@ public class Scenario implements Identifiable, Enableable {
 	private Sector sector;
 
 	/** the planning environment of this scenario */
+	private ArrayList<Sector> desirabilitySectors = new ArrayList<Sector>();
+	
+	/** the planning environment of this scenario */
 	private Environment environment;
+	
+	/** the planning environment of this scenario */
+	private ArrayList<Environment> desirabilityEnvironments = new ArrayList<Environment>();
 
 	/** the aircraft of this scenario */
 	private Aircraft aircraft;
@@ -166,6 +172,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
 		this.environment.setThreshold(0d);
 		this.environment.setGlobe(this.globe);
+		this.desirabilityEnvironments = new ArrayList<Environment>();
 		this.waypoints = new ArrayList<Waypoint>();
 		this.slaveWaypoints = new ArrayList<ArrayList<Waypoint>>();
 		this.slaveAircrafts = new ArrayList<Aircraft>();
@@ -301,6 +308,15 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void addEnvironmentChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("environment", listener);
+	}
+	
+	/**
+	 * Adds an environment change listener to this scenario.
+	 * 
+	 * @param listener the environment change listener to be added
+	 */
+	public void addDesirabilityEnvironmentsChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("desirabilityEnvironments", listener);
 	}
 
 	/**
@@ -573,6 +589,15 @@ public class Scenario implements Identifiable, Enableable {
 			throw new IllegalArgumentException();
 		}
 	}
+	
+	/** TODO: comment */
+	public void addDesirabilitySector(Sector sector) {
+		if (null != sector) {
+			this.desirabilitySectors.add(sector);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
 
 	/**
 	 * Gets the aircraft of this scenario.
@@ -751,7 +776,8 @@ public class Scenario implements Identifiable, Enableable {
 	 * respectively.
 	 */
 	public void moveSlaveAircraftOnTrajectory(int index) {
-		if (slaveAircrafts.get(index) != null && this.slaveTrajectories.get(index).isEmpty()) {
+		if(slaveAircrafts.size()>index && slaveTrajectories.size()>index) {
+//		if (slaveAircrafts.get(index)!=null && !this.slaveTrajectories.get(index).isEmpty()) {
 			// find trajectory leg for the time of this scenario
 			Waypoint previous = null;
 			Waypoint next = null;
@@ -769,8 +795,8 @@ public class Scenario implements Identifiable, Enableable {
 				this.moveSlaveAircraft(this.getSlaveAircrafts().get(index), this.getSlaveWaypoints().get(index).get(0));
 			} else if ((null == next) && !this.slaveWaypoints.get(index).isEmpty()) {
 				// time of this scenario is after the last waypoint
-				this.moveSlaveAircraft(this.getSlaveAircrafts().get(index),
-						this.getSlaveWaypoints().get(index).get(this.getSlaveWaypoints().get(index).size() - 1));
+				int lastWaypointIndex = this.getSlaveWaypoints().get(index).size()-1;
+				this.moveSlaveAircraft(this.getSlaveAircrafts().get(index), this.getSlaveWaypoints().get(index).get(lastWaypointIndex));
 			} else {
 				// interpolate between waypoints
 				Duration d1 = Duration.between(previous.getEto(), this.time);
@@ -830,6 +856,24 @@ public class Scenario implements Identifiable, Enableable {
 	public void notifyEnvironmentChange() {
 		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
+	
+	public void addDesirabilityEnvironment(Environment environment) {
+		if (null != environment) {
+			environment.setGlobe(this.globe);
+			environment.setTime(this.time);
+			environment.setThreshold(this.threshold);
+			this.desirabilityEnvironments.add(environment);
+			this.pcs.firePropertyChange("desirabilityEnvironments", null, this.desirabilityEnvironments);
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+
+	public ArrayList<Environment> getDesirabilityEnvironments() {
+		return this.desirabilityEnvironments;
+	}
+
 
 	/**
 	 * Gets the waypoints of this scenario.
@@ -855,6 +899,11 @@ public class Scenario implements Identifiable, Enableable {
 				waypoint.getDepiction().getAnnotation().setText(designator);
 			}
 			this.waypoints.add(waypoint);
+			//TODO: adding the same waypoint for all slave aircraft waypoints. To be changed later
+			for (int i =0 ; i<this.slaveAircrafts.size(); i++) {
+				this.slaveWaypoints.get(i).add(waypoint);
+			}
+			this.pcs.firePropertyChange("slaveAircrafts", null, this.slaveAircrafts);
 			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
 		} else {
 			throw new IllegalArgumentException();
