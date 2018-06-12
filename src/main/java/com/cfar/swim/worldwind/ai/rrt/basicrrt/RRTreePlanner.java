@@ -41,13 +41,14 @@ import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
+import com.cfar.swim.worldwind.geom.CoordinateTransformations;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
-import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -431,7 +432,7 @@ public class RRTreePlanner extends AbstractPlanner {
 
 		// Extend nearest waypoint in the direction of waypoint
 		// TODO: Investigate other steering/growing strategies
-		Position positionNew = this.growPosition(waypoint, waypointNear);
+		Position positionNew = this.growPositionFeasible(waypoint, waypointNear);
 		RRTreeWaypoint waypointNew = this.createWaypoint(positionNew);
 		waypointNew.setParent(waypointNear);
 
@@ -498,44 +499,46 @@ public class RRTreePlanner extends AbstractPlanner {
 		return positionNew;
 	}
 
-	public Position growPositionTime(Position position, Position positionNear) {
-		// TODO: Receive time interval as user input instead of Epsilon
-		double dT = 15d; // seconds
-		double angleThreshold = Math.toRadians(3d);
-		
+	public Position growPositionFeasible(Position position, Position positionNear) {
 		Position positionNew;
-
-		Capabilities capabilities = this.getAircraft().getCapabilities();
+		Aircraft acft = this.getAircraft();
 		Globe globe = this.getEnvironment().getGlobe();
-		
-		double angleMax = capabilities.getMaximumAngleOfClimb().radians; // radians
-		double distance = LatLon.linearDistance(positionNear, position).getRadians() * globe.getRadius(); // meters
-		double height = position.getElevation() - positionNear.getElevation(); // meters
-		double slant = Math.sqrt(Math.pow(height, 2) + Math.pow(distance, 2)); // meters
-		double angle = distance != 0 ? Math.atan2(height, distance)
-				: height >= 0d ? Math.toRadians(90d) : Math.toRadians(-90d); // radians
-				
-		double lat=position.latitude.degrees, lon=position.longitude.degrees, ele=position.elevation;
-		double lat0=positionNear.latitude.degrees, lon0=positionNear.longitude.degrees, ele0=positionNear.elevation;
-		double heading = Math.atan2((lat-lat0), (lon-lon0));
-		
+
+		// Transform position to ENU coordinates 
+		Vec4 pointENU = CoordinateTransformations.ecef2enu(positionNear, position, globe);
+
+		// Calculate azimuth and elevation
+		double e = pointENU.x, n = pointENU.y, u = pointENU.z;
+		Angle azi = Angle.fromRadians(Math.atan2(e, n));
+		Angle ele = Angle.fromRadians(Math.atan2(u, Math.sqrt(n*n + e*e)));
+
+		// Get angles defining feasibility region
+		Angle maxEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfClimb()/
+				acft.getCapabilities().getMaximumRateOfClimbSpeed())).multiply(1);
+		Angle minEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfDescent()/
+				acft.getCapabilities().getMaximumRateOfDescentSpeed())).multiply(-1);
+
+		double distance = this.getEnvironment().getDistance(positionNear, position);
+
 		// Non-feasible region
-		if (angle > angleMax) {
-			System.out.println("Steep Climb: "+angle);
-			lat = lat0 + (slant * Math.cos(angleMax) * Math.sin(heading)) / globe.getRadius();
-			lon = lon0 + (slant * Math.cos(angleMax) * Math.cos(heading)) / globe.getRadius();
-			ele = ele0 + slant * Math.sin(angleMax);
+		if (ele.compareTo(maxEle) == 1 || ele.compareTo(minEle) == -1) {
+			// Saturate elevation and distance to maximum values
+			ele = ele.compareTo(maxEle) == 1 ? maxEle : minEle;
+			distance = distance > EPSILON ? EPSILON : distance;
+
+			// Calculate maximum feasible point in ENU
+			u = distance * Math.sin(ele.radians);
+			e = distance * Math.cos(ele.radians) * Math.sin(azi.radians);
+			n = distance * Math.cos(ele.radians) * Math.cos(azi.radians);
+			pointENU = new Vec4(e, n, u);
+
+			// Transform from ENU to standard ECEF
+			positionNew = CoordinateTransformations.enu2ecef(positionNear, pointENU, globe);
 		}
-		else if(angle < -angleMax) {
-			System.out.println("Steep Descent: "+angle);
-			lat = lat0 + (slant * Math.cos(-angleMax) * Math.sin(heading)) / globe.getRadius();
-			lon = lon0 + (slant * Math.cos(-angleMax) * Math.cos(heading)) / globe.getRadius();
-			ele = ele0 + slant * Math.sin(-angleMax);
-			System.out.println("Lat="+lat+" Lon="+lon+" Ele="+ele);
+		// Feasible Region
+		else {
+			positionNew = this.growPosition(position, positionNear);
 		}
-		
-		positionNew = new Position(LatLon.fromDegrees(lat, lon), ele);
-		
 
 		return positionNew;
 	}
