@@ -589,7 +589,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-		System.out.println("1");
 		this.initialize(origin, destination, etd);
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();	

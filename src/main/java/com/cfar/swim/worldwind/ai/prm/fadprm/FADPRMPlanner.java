@@ -753,9 +753,9 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 
 		double distance = this.getEnvironment().getNormalizedDistance(source, target);
-		//TODO
 		double pathDD = 1 / (2 * this.getEnvironment().getStepCost(source, target, source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy()) / distance);
+		
 		
 		pathDD = pathDD <= source.getPathDD() ? pathDD : source.getPathDD();
 

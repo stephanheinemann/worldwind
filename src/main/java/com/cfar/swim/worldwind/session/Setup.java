@@ -55,8 +55,25 @@ public class Setup {
 	
 	/** the datalink specification of this setup */
 	Specification<Datalink> datalinkSpecification;
+	
+	/** TODO remake */
+	double desirabilitySpecification;
 	// ...
 	
+	/**
+	 * @return the desirabilitySpecification
+	 */
+	public double getDesirabilitySpecification() {
+		return desirabilitySpecification;
+	}
+
+	/**
+	 * @param desirabilitySpecification the desirabilitySpecification to set
+	 */
+	public void setDesirabilitySpecification(double desirabilitySpecification) {
+		this.desirabilitySpecification = desirabilitySpecification;
+	}
+
 	/**
 	 * Gets the aircraft specification of this setup.
 	 * 

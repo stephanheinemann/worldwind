@@ -51,6 +51,7 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.SimulatedDatalink;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
+import com.cfar.swim.worldwind.planning.DesirabilityZone;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -857,16 +858,17 @@ public class Scenario implements Identifiable, Enableable {
 		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
 	
-	public void addDesirabilityEnvironment(Environment environment) {
-		if (null != environment) {
-			environment.setGlobe(this.globe);
-			environment.setTime(this.time);
-			environment.setThreshold(this.threshold);
-			this.desirabilityEnvironments.add(environment);
+	public void addDesirabilityEnvironment(Sector sector, double desirability) {
+			gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.getGlobe(), 1d,
+					sector, 0d, 100d);
+			Box envBox = new Box(bb);
+			
+			DesirabilityZone desirabilityZone = new DesirabilityZone(envBox, desirability);
+			desirabilityZone.setGlobe(this.globe);
+			desirabilityZone.setTime(this.time);
+			desirabilityZone.setThreshold(this.threshold);
+			this.desirabilityEnvironments.add(desirabilityZone);
 			this.pcs.firePropertyChange("desirabilityEnvironments", null, this.desirabilityEnvironments);
-		} else {
-			throw new IllegalArgumentException();
-		}
 	}
 	
 

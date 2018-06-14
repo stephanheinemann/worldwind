@@ -29,7 +29,6 @@
  */
 package com.cfar.swim.worldwind.planning;
 
-import java.awt.Color;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
@@ -40,7 +39,6 @@ import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.ContinuumBox;
 import com.cfar.swim.worldwind.render.Obstacle;
-import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
@@ -76,8 +74,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * 
 	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
-	public DesirabilityZone(Box box) {
+	public DesirabilityZone(Box box, double desirability) {
 		super(box);
+		this.desirability = desirability;
 		this.update();
 	}
 
@@ -205,7 +204,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * Updates the accumulated active cost of this planning continuum.
 	 */
 	protected void updateActiveCost() {
-		this.activeCost = this.getDesirability();
+		this.activeCost = 1d;
 	}
 
 	/**
@@ -220,26 +219,22 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 */
 	protected void updateAppearance() {
 		
-		int r=0,g=0,b=0;
+		float r=0,g=0,b=0;
+		float des = (float) desirability;
 		if(this.desirability<= 0.5) {
 			r = 255;
-			Double greenDouble = 510*desirability;
-			g = greenDouble.intValue();
-			Double blueDouble = 510*desirability;
-			b = blueDouble.intValue();
+			g = 510*des;
+			b = 510*des;
 		}
 		if(this.desirability> 0.5) {
-			Double redDouble = -510*desirability+510;
-			r = redDouble.intValue();
+			r = -510*des+510;
 			g = 255;
-			Double blueDouble = -510*desirability+510;
-			b = blueDouble.intValue();
+			b = -510*des+510;
 		}
-		Color activeColor = ObstacleColor.getColor(activeCost);
 		float red = r / 255.0f;
 		float green = g/ 255.0f;
 		float blue = b / 255.0f;
-		float alpha = activeColor.getAlpha() / 255.0f;
+		float alpha = 0.5f;
 		this.setColor(red, green, blue, alpha);
 	}
 
@@ -543,6 +538,13 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+	
+	public double getDesirabilityCost(Edge edge) {
+		if(this.intersects(edge.getLine())) {
+			return this.desirability;
+		}
+		return 0.5;
 	}
 
 	/**
