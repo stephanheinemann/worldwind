@@ -29,9 +29,9 @@
  */
 package com.cfar.swim.worldwind.ai.prm.fadprm;
 
-import java.util.HashSet;
 import java.util.Set;
 
+import com.cfar.swim.worldwind.ai.astar.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -44,19 +44,10 @@ import gov.nasa.worldwind.geom.Position;
  * @author Henrique Ferreira
  *
  */
-public class FADPRMWaypoint extends Waypoint {
+public class FADPRMWaypoint extends AStarWaypoint {
 
-	/** the successors of this FADPRM waypoint in an environment */
-	private Set<FADPRMWaypoint> successors = new HashSet<>();
-
-	/** the estimated cost (g-value) of this FADPRM waypoint */
-	private double g;
-
-	/** the estimated remaining cost (h-value) of this FADPRM waypoint */
-	private double h;
-
-	/** the distance between this FADPRM waypoint and the goal waypoint */
-	private double dtGoal;
+	/** the distance/cost between this FADPRM waypoint and the goal waypoint */
+	private double cTGoal;
 
 	/** the path desirability of this FADPRM waypoint */
 	private double pathDD;
@@ -72,10 +63,27 @@ public class FADPRMWaypoint extends Waypoint {
 
 	/** the parameter lambda that weights path desirability and cost */
 	private double lambda;
-
+	
 	/** the parent FADPRM waypoint of this FADPRM waypoint in a trajectory */
-	private FADPRMWaypoint parent = null;
+	private FADPRMWaypoint pai = null;
+	
+	/**
+	 * Gets the parent FADPRM Waypoint of this FADPRM waypoint.
+	 * 
+	 * @return the parent FADPRM waypoint of this FADPRM waypoint
+	 */
+	public FADPRMWaypoint getPai() {
+		return pai;
+	}
 
+	/**
+	 * Sets the parent FADPRM waypoint of this FADPRM waypoint.
+	 * 
+	 * @param parent the parent FADPRM waypoint of this FADPRM waypoint
+	 */
+	public void setPai(FADPRMWaypoint pai) {
+		this.pai = pai;
+}
 	/**
 	 * Constructs a FADPRM waypoint at a specified position.
 	 * 
@@ -84,7 +92,6 @@ public class FADPRMWaypoint extends Waypoint {
 	public FADPRMWaypoint(Position position) {
 		super(position);
 		this.setCost(0d);
-		this.setG(0d);
 		this.setH(0d);
 		this.setPathDD(0.5);
 		lambda = 0.1;
@@ -132,19 +139,9 @@ public class FADPRMWaypoint extends Waypoint {
 	 * @return the estimated current cost (g-value) of this FADPRM waypoint
 	 */
 	public double getG() {
-		return g;
-	}
-
-	/**
-	 * Sets the estimated current cost (g-value) of this FADPRM waypoint.
-	 * 
-	 * @param g the estimated current cost (g-value) of this FADPRM waypoint
-	 */
-	public void setG(double g) {
-		if (0d > g) {
-			throw new IllegalArgumentException("g is less than 0");
-		}
-		this.g = g;
+		if(super.getCost()==0)
+			return 0;
+		return pathDD/(1+lambda*super.getCost());
 	}
 
 	/**
@@ -153,19 +150,7 @@ public class FADPRMWaypoint extends Waypoint {
 	 * @return the estimated remaining cost (h-value) of this FADPRM waypoint
 	 */
 	public double getH() {
-		return this.h;
-	}
-
-	/**
-	 * Sets the estimated remaining cost (h-value) of this FADPRM waypoint.
-	 * 
-	 * @param h the estimated remaining cost (h-value) of this FADPRM waypoint
-	 */
-	public void setH(double h) {
-		if (0d > h) {
-			throw new IllegalArgumentException("h is less than 0");
-		}
-		this.h = h;
+		return 0.5/(1+lambda*cTGoal);
 	}
 
 	/**
@@ -173,8 +158,8 @@ public class FADPRMWaypoint extends Waypoint {
 	 * 
 	 * @return the dtGoal the distance to the goal waypoint
 	 */
-	public double getDtGoal() {
-		return dtGoal;
+	public double getCTGoal() {
+		return cTGoal;
 	}
 
 	/**
@@ -182,26 +167,19 @@ public class FADPRMWaypoint extends Waypoint {
 	 * 
 	 * @param dtGoal the dtGoal to set
 	 */
-	public void setDtGoal(double dtGoal) {
-		this.dtGoal = dtGoal;
+	public void setCTGoal(double cTGoal) {
+		this.cTGoal = cTGoal;
 	}
 
 	/**
-	 * Gets the set of successors of this FADPRM waypoint.
+	 * Gets the set of neighbors of this FADPRM waypoint.
 	 * 
-	 * @return the sucessors the set of successors of this waypoint
+	 * @return the neighbors the set of neighbors of this waypoint
 	 */
-	public Set<FADPRMWaypoint> getSuccessors() {
-		return successors;
-	}
-
-	/**
-	 * Sets the set of successors of this FADPRM waypoint.
-	 * 
-	 * @param sucessors the sucessors to set
-	 */
-	public void setSuccessors(Set<FADPRMWaypoint> sucessors) {
-		this.successors = sucessors;
+	@SuppressWarnings("unchecked")
+	@Override
+	public Set<FADPRMWaypoint> getNeighbors() {
+		return (Set<FADPRMWaypoint>) super.getNeighbors();
 	}
 
 	/**
@@ -210,7 +188,7 @@ public class FADPRMWaypoint extends Waypoint {
 	 * @param waypoint the waypoint to add to the set of successors
 	 */
 	public void addSuccessor(FADPRMWaypoint waypoint) {
-		this.successors.add(waypoint);
+		this.getNeighbors().add(waypoint);
 	}
 
 	/**
@@ -279,18 +257,11 @@ public class FADPRMWaypoint extends Waypoint {
 	 * 
 	 * @return the parent FADPRM waypoint of this FADPRM waypoint
 	 */
+	@Override
 	public FADPRMWaypoint getParent() {
-		return parent;
+		return (FADPRMWaypoint) super.getParent();
 	}
-
-	/**
-	 * Sets the parent FADPRM waypoint of this FADPRM waypoint.
-	 * 
-	 * @param parent the parent FADPRM waypoint of this FADPRM waypoint
-	 */
-	public void setParent(FADPRMWaypoint parent) {
-		this.parent = parent;
-	}
+	
 
 	/**
 	 * Gets the estimated total cost (f-value) of this FADPRM waypoint.

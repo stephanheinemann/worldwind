@@ -108,7 +108,7 @@ public class Scenario implements Identifiable, Enableable {
 	private Environment environment;
 	
 	/** the planning environment of this scenario */
-	private ArrayList<Environment> desirabilityEnvironments = new ArrayList<Environment>();
+	private ArrayList<DesirabilityZone> desirabilityEnvironments = new ArrayList<DesirabilityZone>();
 
 	/** the aircraft of this scenario */
 	private Aircraft aircraft;
@@ -173,7 +173,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
 		this.environment.setThreshold(0d);
 		this.environment.setGlobe(this.globe);
-		this.desirabilityEnvironments = new ArrayList<Environment>();
+		this.desirabilityEnvironments = new ArrayList<DesirabilityZone>();
 		this.waypoints = new ArrayList<Waypoint>();
 		this.slaveWaypoints = new ArrayList<ArrayList<Waypoint>>();
 		this.slaveAircrafts = new ArrayList<Aircraft>();
@@ -872,7 +872,7 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 
-	public ArrayList<Environment> getDesirabilityEnvironments() {
+	public ArrayList<DesirabilityZone> getDesirabilityEnvironments() {
 		return this.desirabilityEnvironments;
 	}
 

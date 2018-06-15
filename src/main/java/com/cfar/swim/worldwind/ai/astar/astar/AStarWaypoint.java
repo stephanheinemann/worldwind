@@ -49,7 +49,7 @@ public class AStarWaypoint extends Waypoint {
 	private AStarWaypoint parent = null;
 	
 	/** the visited neighbors of this A* waypoint in an environment */
-	private final Set<AStarWaypoint> neighbors = new HashSet<>();
+	private Set<AStarWaypoint> neighbors = new HashSet<>();
 	
 	/** the estimated remaining cost (h-value) of this A* waypoint */
 	private double h;
@@ -86,7 +86,7 @@ public class AStarWaypoint extends Waypoint {
 	}
 	
 	// TODO: visibility and cloning issues
-	public Set<AStarWaypoint> getNeighbors() {
+	public Set<? extends AStarWaypoint> getNeighbors() {
 		return this.neighbors;
 	}
 	
