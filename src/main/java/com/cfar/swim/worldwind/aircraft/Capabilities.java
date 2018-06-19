@@ -559,32 +559,29 @@ public class Capabilities {
 	public boolean isFeasible(Position start, Position goal, Globe globe) {
 		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
 		double height = goal.getElevation() - start.getElevation();
+		double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 
 		if (0 < height) {
 			// climb
-			// compute minimum climb duration
-			Duration climbDuration = Duration.ofMillis((long) (height * 1000 / this.maximumRateOfClimb));
+			double maxRatio = this.getMaximumRateOfClimbSpeed() / this.getMaximumRateOfClimb();
 			// compute minimum slant distance in still air
-			double slantDistance = this.maximumRateOfClimbSpeed * climbDuration.toMillis() / 1000;
-			// perform feasibility check
-			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
-				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
-					return false;
-				}
-		} else if (0 > height) {
-			// descent
-			height = Math.abs(height);
-			// compute minimum descent duration
-			Duration descentDuration = Duration.ofMillis((long) (height * 1000 / this.maximumRateOfDescent));
-			// compute minimum slant distance in still air
-			double slantDistance = this.maximumRateOfDescentSpeed * descentDuration.toMillis() / 1000;
+			double slantDistance = maxRatio * height;
 
 			// perform feasibility check
-			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 				return false;
 			}
+		} else if (0 > height) {
+			// descent
+			height = Math.abs(height);
+			double maxRatio = this.getMaximumRateOfDescentSpeed() / this.getMaximumRateOfDescent();
+			// compute minimum slant distance in still air
+			double slantDistance = maxRatio * height;
 
+			// perform feasibility check
+			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+				return false;
+			}
 		}
 		return true;
 	}
