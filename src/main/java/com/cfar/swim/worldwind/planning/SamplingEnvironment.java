@@ -1103,6 +1103,30 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 		return position;
 	}
+	
+	public Position samplePositionEllipsoide(Position focusA, Position focusB, double distance) {
+		//TODO: Still in work...
+		// Transform positions to NASA ECEF points
+		Vec4 pointA = this.getGlobe().computePointFromPosition(focusA);
+		Vec4 pointB = this.getGlobe().computePointFromPosition(focusB);
+
+		// Calculate middle point
+		Vec4 pointM = pointA.add3( pointB.subtract3(pointA).divide3(2d) );
+		
+		// Sample random angle and distance
+		double r = 0d + new Random().nextDouble() * 1d;
+		double theta = 0d + new Random().nextDouble() * Math.PI;
+		double phi = 0d + new Random().nextDouble() * 2*Math.PI;
+		
+		// Ellipsoid parameters
+		double a = distance/2d;
+		double c = pointA.distanceTo3(pointB);
+		double b = Math.sqrt(a*a - c*c);
+
+		Position position = null;
+		
+		return position;
+	}
 
 	/**
 	 * Checks whether the given position is inside the given globe

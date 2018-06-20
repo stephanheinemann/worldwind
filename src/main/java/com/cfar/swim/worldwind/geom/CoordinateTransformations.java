@@ -48,9 +48,10 @@ public class CoordinateTransformations {
 	 * @param reference
 	 * @param other
 	 * @param globe
+	 * 
 	 * @return
 	 */
-	public static Vec4 ecef2enu(Position reference, Position other, Globe globe) {
+	public static Vec4 llh2enu(Position reference, Position other, Globe globe) {
 		// TODO: Correct computational errors with small values instead of zero
 		// TODO: Investigate use of NASA.Matrix
 
@@ -93,9 +94,10 @@ public class CoordinateTransformations {
 	 * @param reference
 	 * @param pointENU
 	 * @param globe
+	 * 
 	 * @return
 	 */
-	public static Position enu2ecef(Position reference, Vec4 pointENU, Globe globe) {
+	public static Position enu2llh(Position reference, Vec4 pointENU, Globe globe) {
 		// TODO: Correct computational errors with small values instead of zero
 		// TODO: Investigate use of NASA.Matrix
 
@@ -133,5 +135,73 @@ public class CoordinateTransformations {
 		Position position = globe.computePositionFromPoint(point);
 
 		return position;
+	}
+
+	/**
+	 * Computes the Azimuth, Elevation and Range of a given point expressed in ENU
+	 * coordinates to the same reference.
+	 * 
+	 * @param pointENU the ENU coordinates
+	 * 
+	 * @return AER coordinates
+	 */
+	public static Vec4 enu2aer(Vec4 pointENU) {
+		double e = pointENU.x, n = pointENU.y, u = pointENU.z;
+
+		double azimuth = Math.atan2(e, n);
+		double elevation = Math.atan2(u, Math.sqrt(n * n + e * e));
+		double range = Math.sqrt(e * e + n * n + u * u);
+
+		return new Vec4(azimuth, elevation, range);
+	}
+
+	/**
+	 * Computes the Azimuth, Elevation and Range of a given position in LLH
+	 * coordinates relative to another reference position.
+	 * 
+	 * @param reference
+	 * @param other
+	 * @param globe
+	 * 
+	 * @return
+	 */
+	public static Vec4 llh2aer(Position reference, Position other, Globe globe) {
+		Vec4 pointENU = CoordinateTransformations.llh2enu(reference, other, globe);
+
+		return CoordinateTransformations.enu2aer(pointENU);
+	}
+	
+	/**
+	 * 
+	 * @param point
+	 * @param angle
+	 * @return
+	 */
+	public static Vec4 rotationZ(Vec4 point, double angle) {
+		double c = Math.cos(angle);
+		double s = Math.sin(angle);
+		
+		double x =  point.x * c + point.y * s;
+		double y = -point.x * s + point.y * c;
+		double z =  point.z;
+		
+		return new Vec4(x, y, z);
+	}
+	
+	/**
+	 * 
+	 * @param point
+	 * @param angle
+	 * @return
+	 */
+	public static Vec4 rotationX(Vec4 point, double angle) {
+		double c = Math.cos(angle);
+		double s = Math.sin(angle);
+		
+		double x =  point.x;
+		double y =  point.y * c + point.z * s;
+		double z = -point.y * s + point.z * c;
+		
+		return new Vec4(x, y, z);
 	}
 }

@@ -80,7 +80,7 @@ import gov.nasa.worldwind.render.Path;
  */
 public class RRTreePlannerTest {
 
-	static final int REPETITIONS = 10;
+	static final int REPETITIONS = 30;
 	Iris iris;
 	A320 a320;
 	Globe globe;
@@ -98,13 +98,13 @@ public class RRTreePlannerTest {
 		
 		System.out.println("Repetitions #" + REPETITIONS);
 		
+		/*
 		Position positionNew, positionNewT, positionRand;
 		RRTreePlanner plannerRRT = new RRTreePlanner(a320, samplingEnv, 250, 5, 1500);
-		
 		for (int i = 0; i < REPETITIONS; i++) {
-//			origin = new Position(Angle.fromDegrees(30), Angle.fromDegrees(20), 0);
-//			positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.000),
-//					Angle.fromDegrees(origin.longitude.degrees+0.000), origin.elevation+1000);
+			origin = new Position(Angle.fromDegrees(30), Angle.fromDegrees(20), 0);
+			positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.000),
+					Angle.fromDegrees(origin.longitude.degrees+0.000), origin.elevation+1000);
 			positionRand = samplingEnv.sampleRandomPosition();
 			positionNew = plannerRRT.growPosition(positionRand, origin);
 			positionNewT = this.growPositionENU(positionRand, origin, plannerRRT.getAircraft(), plannerRRT.getEPSILON());
@@ -114,15 +114,14 @@ public class RRTreePlannerTest {
 					"\nNewT: "+positionNewT+"\t"+samplingEnv.getDistance(origin, positionNewT)+
 							"\t"+a320.getCapabilities().isFeasible(origin, positionNewT, globe)+"\n");
 		}
+		*/
 		
-		/*
 		// Basic RRTreePlanner
 		// Bias 5%
 		this.basicRRTreeTester(250, 5, Strategy.EXTEND);
-		this.basicRRTreeTester(250, 5, Strategy.CONNECT);
+		/*
 		// Bias 1%
 		this.basicRRTreeTester(250, 1, Strategy.EXTEND);
-		this.basicRRTreeTester(250, 1, Strategy.CONNECT);
 
 		System.out.println();
 		// Heuristic RRTreePlanner
@@ -154,7 +153,7 @@ public class RRTreePlannerTest {
 
 		// Set planner inputs
 		origin = Position.fromDegrees(48.445, -123.285, 10);
-		destination = Position.fromDegrees(48.455, -123.275, 100);
+		destination = Position.fromDegrees(48.455, -123.275, 1000);
 		etd = ZonedDateTime.of(LocalDate.of(2018, 5, 1), LocalTime.of(22, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 500, CombatIdentification.FRIEND);
 		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
@@ -399,7 +398,7 @@ public class RRTreePlannerTest {
 		Position positionNew;
 
 		// Transform position to ENU coordinates 
-		Vec4 pointENU = CoordinateTransformations.ecef2enu(positionNear, positionRand, globe);
+		Vec4 pointENU = CoordinateTransformations.llh2enu(positionNear, positionRand, globe);
 		
 		// Calculate azimuth and elevation
 		double e = pointENU.x, n = pointENU.y, u = pointENU.z;
@@ -429,7 +428,7 @@ public class RRTreePlannerTest {
 			pointENU = new Vec4(e, n, u);
 
 			// Transform from ENU to standard ECEF
-			positionNew = CoordinateTransformations.enu2ecef(positionNear, pointENU, globe);
+			positionNew = CoordinateTransformations.enu2llh(positionNear, pointENU, globe);
 		}
 		// Feasible Region
 		else {

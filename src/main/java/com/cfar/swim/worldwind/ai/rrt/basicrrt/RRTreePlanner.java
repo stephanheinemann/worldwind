@@ -66,7 +66,7 @@ import gov.nasa.worldwind.render.Path;
 public class RRTreePlanner extends AbstractPlanner {
 
 	/** the radius of the sphere defining the goal region */
-	private static final double GOAL_THRESHOLD = 5d; // meters?
+	private static final double GOAL_THRESHOLD = 1d; // meters?
 
 	/** the maximum number of sampling iterations */
 	private final int MAX_ITER;
@@ -393,6 +393,7 @@ public class RRTreePlanner extends AbstractPlanner {
 
 		// Finds the node in the tree closest to the sampled position
 		waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypoint, 1).get(0);
+//		waypointNear = (RRTreeWaypoint) this.findNearestMetric(waypoint, 1).get(0);
 		// Create a new node by extension from near to sampled
 		success = this.newWaypoint(waypoint, waypointNear);
 
@@ -505,7 +506,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		Globe globe = this.getEnvironment().getGlobe();
 
 		// Transform position to ENU coordinates 
-		Vec4 pointENU = CoordinateTransformations.ecef2enu(positionNear, position, globe);
+		Vec4 pointENU = CoordinateTransformations.llh2enu(positionNear, position, globe);
 
 		// Calculate azimuth and elevation
 		double e = pointENU.x, n = pointENU.y, u = pointENU.z;
@@ -533,7 +534,7 @@ public class RRTreePlanner extends AbstractPlanner {
 			pointENU = new Vec4(e, n, u);
 
 			// Transform from ENU to standard ECEF
-			positionNew = CoordinateTransformations.enu2ecef(positionNear, pointENU, globe);
+			positionNew = CoordinateTransformations.enu2llh(positionNear, pointENU, globe);
 		}
 		// Feasible Region
 		else {
@@ -817,6 +818,47 @@ public class RRTreePlanner extends AbstractPlanner {
 		}
 
 		return supports;
+	}
+	
+	/**
+	 * Finds the k-nearest waypoints to the given position
+	 * 
+	 * @param position the position in global coordinates
+	 * @param kNear number of waypoints to return
+	 * 
+	 * @return list of k-nearest waypoints sorted by increasing distance
+	 */
+	public List<? extends Position> findNearestMetric(Position position, int kNear) {
+		
+		return this.getWaypointList().stream().sorted((p1, p2) -> Double
+				.compare(this.getDistanceMetric(p1, position), this.getDistanceMetric(p2, position)))
+				.limit(kNear).collect(Collectors.toList());
+	}
+	
+	/**
+	 * 
+	 * @param reference
+	 * @param position
+	 * @return
+	 */
+	public double getDistanceMetric(Position reference, Position position) {
+		Aircraft acft = this.getAircraft();
+		
+		Vec4 pointENU = CoordinateTransformations.llh2enu(reference, position, this.getEnvironment().getGlobe());
+		double x = pointENU.x, y = pointENU.y, z = pointENU.z;
+		
+		// Get angles defining feasibility region
+		Angle angle;
+		if (z > 0)
+			angle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfClimb() /
+					acft.getCapabilities().getMaximumRateOfClimbSpeed())).multiply(1);
+		else
+			angle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfDescent() /
+					acft.getCapabilities().getMaximumRateOfDescentSpeed())).multiply(-1);
+		
+		double a = angle.sin(), b = a, c=1;
+		
+		return Math.sqrt(a*x*x + b*y*y + c*z*z);
 	}
 
 }
