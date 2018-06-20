@@ -39,7 +39,7 @@ package com.cfar.swim.worldwind.registries.connections;
 public class DronekitDatalinkProperties extends DatalinkProperties {
 	
 	/** the standard localhost of a dronekit datalink properties bean */
-	public static final String DATALINK_LOCALHOST = "localhost";
+	public static final String DATALINK_LOCALHOST = "192.168.43.69";
 	
 	/** the standard gRPC port of a dronekit datalink properties bean */
 	public static final int DATALINK_GRPCPORT = 50051;
