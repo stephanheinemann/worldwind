@@ -29,9 +29,9 @@
  */
 package com.cfar.swim.worldwind.ai.prm.fadprm;
 
+import java.util.HashSet;
 import java.util.Set;
 
-import com.cfar.swim.worldwind.ai.astar.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -44,7 +44,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Henrique Ferreira
  *
  */
-public class FADPRMWaypoint extends AStarWaypoint {
+public class FADPRMWaypoint extends Waypoint{
 
 	/** the distance/cost between this FADPRM waypoint and the goal waypoint */
 	private double cTGoal;
@@ -66,6 +66,15 @@ public class FADPRMWaypoint extends AStarWaypoint {
 	
 	/** the parent FADPRM waypoint of this FADPRM waypoint in a trajectory */
 	private FADPRMWaypoint pai = null;
+	
+	/** the estimated remaining cost (h-value) of this A* waypoint */
+	private double h;
+	
+	/** the estimated remaining cost (h-value) of this A* waypoint */
+	private double g;
+	
+	/** the visited neighbors of this A* waypoint in an environment */
+	private Set<FADPRMWaypoint> neighbors = new HashSet<>();
 	
 	/**
 	 * Gets the parent FADPRM Waypoint of this FADPRM waypoint.
@@ -91,10 +100,10 @@ public class FADPRMWaypoint extends AStarWaypoint {
 	 */
 	public FADPRMWaypoint(Position position) {
 		super(position);
-		this.setCost(0d);
-		this.setH(0d);
+		this.setCost(Double.POSITIVE_INFINITY);
+		this.setCTGoal(Double.POSITIVE_INFINITY);
 		this.setPathDD(0.5);
-		lambda = 0.1;
+		lambda = 0.5;
 	}
 
 	/**
@@ -139,20 +148,42 @@ public class FADPRMWaypoint extends AStarWaypoint {
 	 * @return the estimated current cost (g-value) of this FADPRM waypoint
 	 */
 	public double getG() {
-		if(super.getCost()==0)
-			return 0;
 		return pathDD/(1+lambda*super.getCost());
 	}
 
+	/**
+	 * Sets the estimated remaining cost (h-value) of this A* waypoint.
+	 * 
+	 * @param h the estimated remaining cost (h-value) of this A* waypoint
+	 */
+	public void setG(double g) {
+		if (0d > g) {
+			throw new IllegalArgumentException("h is less than 0");
+		}
+		this.g = g;
+	}
+	
 	/**
 	 * Gets the estimated remaining cost (h-value) of this FADPRM waypoint.
 	 * 
 	 * @return the estimated remaining cost (h-value) of this FADPRM waypoint
 	 */
 	public double getH() {
-		return 0.5/(1+lambda*cTGoal);
+		return pathDD/(1+lambda*cTGoal);
 	}
 
+	/**
+	 * Sets the estimated remaining cost (h-value) of this A* waypoint.
+	 * 
+	 * @param h the estimated remaining cost (h-value) of this A* waypoint
+	 */
+	public void setH(double h) {
+		if (0d > h) {
+			throw new IllegalArgumentException("h is less than 0");
+		}
+		this.h = h;
+	}
+	
 	/**
 	 * Gets the distance to the goal waypoint.
 	 * 
@@ -176,19 +207,21 @@ public class FADPRMWaypoint extends AStarWaypoint {
 	 * 
 	 * @return the neighbors the set of neighbors of this waypoint
 	 */
-	@SuppressWarnings("unchecked")
-	@Override
 	public Set<FADPRMWaypoint> getNeighbors() {
-		return (Set<FADPRMWaypoint>) super.getNeighbors();
+		return this.neighbors;
 	}
 
+	
+	public void setNeighbors(Set<FADPRMWaypoint> neighbors) {
+		this.neighbors.addAll(neighbors);
+	}
 	/**
 	 * Adds one waypoint to the set of successors of this FADPRM waypoint
 	 * 
 	 * @param waypoint the waypoint to add to the set of successors
 	 */
 	public void addSuccessor(FADPRMWaypoint waypoint) {
-		this.getNeighbors().add(waypoint);
+		this.neighbors.add(waypoint);
 	}
 
 	/**
@@ -252,16 +285,6 @@ public class FADPRMWaypoint extends AStarWaypoint {
 		this.beta = beta;
 	}
 
-	/**
-	 * Gets the parent FADPRM Waypoint of this FADPRM waypoint.
-	 * 
-	 * @return the parent FADPRM waypoint of this FADPRM waypoint
-	 */
-	@Override
-	public FADPRMWaypoint getParent() {
-		return (FADPRMWaypoint) super.getParent();
-	}
-	
 
 	/**
 	 * Gets the estimated total cost (f-value) of this FADPRM waypoint.
@@ -269,7 +292,7 @@ public class FADPRMWaypoint extends AStarWaypoint {
 	 * @return the estimated total cost (f-value) of this FADPRM waypoint
 	 */
 	public double getF() {
-		return (this.getG() + this.getH()) / 2;
+		return pathDD/(1+lambda*(this.getCost()+this.getCTGoal()));
 	}
 
 	/**
@@ -324,7 +347,7 @@ public class FADPRMWaypoint extends AStarWaypoint {
 	@Override
 	public FADPRMWaypoint clone() {
 		FADPRMWaypoint waypoint = (FADPRMWaypoint) super.clone();
-		waypoint.setParent(null);
+		waypoint.setPai(null);
 		return waypoint;
 	}
 }

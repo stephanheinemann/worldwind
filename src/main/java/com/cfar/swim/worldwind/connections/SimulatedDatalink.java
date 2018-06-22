@@ -32,7 +32,7 @@ package com.cfar.swim.worldwind.connections;
 import java.util.Iterator;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
-import com.cfar.swim.worldwind.aircraft.CommunicationProtocol;
+import com.cfar.swim.worldwind.aircraft.Ranking;
 import com.cfar.swim.worldwind.aircraft.Iris;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -62,7 +62,7 @@ public class SimulatedDatalink extends Datalink {
 	private Position nextPosition = this.homePosition;
 	
 	/** the Iris quadcopter being the source of this simulated datalink */
-	private Iris iris = new Iris(homePosition, 10d, CombatIdentification.FRIEND, CommunicationProtocol.MASTER);
+	private Iris iris = new Iris(homePosition, 10d, CombatIdentification.FRIEND, Ranking.MASTER);
 	
 	/** the planned flight path of this simulated datalink source */
 	private Path flightPath = null;

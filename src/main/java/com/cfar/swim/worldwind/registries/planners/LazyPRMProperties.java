@@ -29,9 +29,6 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-
 /**
  * Realizes the properties bean of a lazy PRM planner.
  * 
@@ -46,34 +43,4 @@ public class LazyPRMProperties extends BasicPRMProperties {
 	public LazyPRMProperties() {
 		super();
 	}
-
-	/**
-	 * Constructs a new lazy PRM planner properties bean with
-	 * specified cost and risk policy property values.
-	 * 
-	 * @param costPolicy the cost policy of this basic PRM planner properties bean
-	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
-	 */
-	public LazyPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		super(costPolicy, riskPolicy);
-	}
-	
-	/**
-	 * Constructs a new lazy PRM planner properties bean with specified cost and
-	 * risk policy property values as well as specified maximum number of
-	 * iterations, maximum number of neighbors and maximum distance.
-	 * 
-	 * @param costPolicy the cost policy of this basic PRM planner properties
-	 *            bean
-	 * @param riskPolicy the risk policy of this basic PRM planner properties
-	 *            bean
-	 * @param maxIter the maximum number of sampling iterations
-	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
-	 * @param maxDistance the maximum distance between two connected waypoints
-	 */
-	public LazyPRMProperties( CostPolicy costPolicy, RiskPolicy riskPolicy,
-			int maxIter, int maxNeighbors, double maxDistance) {
-		super(costPolicy, riskPolicy, maxIter, maxNeighbors, maxDistance);
-	}
-
 }

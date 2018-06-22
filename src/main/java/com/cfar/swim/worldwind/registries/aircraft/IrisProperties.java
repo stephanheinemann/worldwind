@@ -30,7 +30,7 @@
 package com.cfar.swim.worldwind.registries.aircraft;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
-import com.cfar.swim.worldwind.aircraft.CommunicationProtocol;
+import com.cfar.swim.worldwind.aircraft.Ranking;
 import com.cfar.swim.worldwind.aircraft.Iris;
 
 /**
@@ -47,7 +47,7 @@ public class IrisProperties extends AircraftProperties {
 	public IrisProperties() {
 		this.setApproachRateOfDescent(Iris.APPROACH_RATE_OF_DESCENT);
 		this.setApproachSpeed(Iris.APPROACH_SPEED);
-		this.setRanking(CommunicationProtocol.MASTER);
+		this.setRanking(Ranking.MASTER);
 		this.setCombatIdentification(CombatIdentification.FRIEND);
 		this.setCruiseClimbSpeed(Iris.CRUISE_CLIMB_SPEED);
 		this.setCruiseDescentSpeed(Iris.CRUISE_DESCENT_SPEED);

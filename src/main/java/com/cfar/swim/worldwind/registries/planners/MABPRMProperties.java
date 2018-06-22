@@ -29,9 +29,6 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-
 /**
  * @author Henrique Ferreira
  *
@@ -40,14 +37,5 @@ public class MABPRMProperties extends BasicPRMProperties {
 
 	public MABPRMProperties() {
 		super();
-	}
-
-	public MABPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		super(costPolicy, riskPolicy);
-	}
-	
-	public MABPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy,
-			int maxIter, int maxNeighbors, double maxDistance) {
-		super(costPolicy, riskPolicy, maxIter, maxNeighbors, maxDistance);
 	}
 }

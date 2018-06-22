@@ -46,7 +46,8 @@ public abstract class Aircraft extends ObstacleSphere {
 	/** the capabilities of this aircraft */
 	protected Capabilities capabilities = null;
 	
-	protected CommunicationProtocol ranking = null;
+	/** the ranking of this aicraft */
+	protected Ranking ranking = null;
 
 	/**
 	 * Constructs a new aircraft at a specified position with a specified
@@ -54,8 +55,9 @@ public abstract class Aircraft extends ObstacleSphere {
 	 * 
 	 * @param position the position
 	 * @param radius the separation radius
+	 * @param ranking the ranking
 	 */
-	public Aircraft(Position position, double radius, CommunicationProtocol ranking) {
+	public Aircraft(Position position, double radius, Ranking ranking) {
 		super(position, radius);
 		this.ranking = ranking;
 	}
@@ -103,16 +105,20 @@ public abstract class Aircraft extends ObstacleSphere {
 	}
 	
 	/**
-	 * @return the ranking
+	 * Gets the ranking of this aircraft.
+	 * 
+	 * @return the ranking of this aircraft
 	 */
-	public CommunicationProtocol getRanking() {
+	public Ranking getRanking() {
 		return ranking;
 	}
 
 	/**
+	 * Sets the ranking of this aircraft.
+	 * 
 	 * @param ranking the ranking to set
 	 */
-	public void setRanking(CommunicationProtocol ranking) {
+	protected void setRanking(Ranking ranking) {
 		this.ranking = ranking;
 	}
 	

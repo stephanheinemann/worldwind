@@ -30,9 +30,21 @@
 package com.cfar.swim.worldwind.aircraft;
 
 /**
+ * Enumerates the possible rankings of an aircraft when there are multiple
+ * aircrafts involved.
+ * 
  * @author Henrique Ferreira
- *
+ * 
  */
-public enum CommunicationProtocol {
-	MASTER, SLAVE;
+public enum Ranking {
+	
+	/**
+	 * the master aircraft (there is only one at a time) that commands the slave aircrafts
+	 */
+	MASTER, 
+	
+	/**
+	 * a slave aircraft commanded by a master aicraft.
+	 */
+	SLAVE;
 }

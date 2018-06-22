@@ -102,8 +102,9 @@ public class Iris extends Quadcopter {
 	 * @param position the position
 	 * @param radius the separation radius
 	 * @param cid the combat identification
+	 * @param ranking the ranking
 	 */
-	public Iris(Position position, double radius, CombatIdentification cid, CommunicationProtocol ranking) {
+	public Iris(Position position, double radius, CombatIdentification cid, Ranking ranking) {
 		super(position, radius, cid, ranking);
 		
 		this.capabilities = new Capabilities();

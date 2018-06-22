@@ -44,7 +44,7 @@ public enum QueryPlanner {
 	FAS,
 	
 	/**
-	 * Anytime Replanning A* planner
+	 * Anytime Repairing A* planner
 	 */
 	ARA,
 	

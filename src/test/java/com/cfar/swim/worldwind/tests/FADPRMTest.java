@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Manuel Rosa (UVic Center for Aerospace Research)
+ * Copyright (c) 2018, Henrique Ferreira (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -38,35 +38,32 @@ import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
-import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
+import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Ranking;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
-import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.globes.Globe;
-import gov.nasa.worldwind.render.Path;
 
 /**
- * @author Manuel Rosa
+ * @author Henrique Ferreira
  *
  */
-public class RRTreePlannerTest {
-	
+public class FADPRMTest {
 	@Test
-	public void RRTreeTester() {
+	public void FADPRMTester() {
 		Globe globe = new Earth();
 		Sector cadboroBay = new Sector(
             	Angle.fromDegrees(48.44),
             	Angle.fromDegrees(48.46),
             	Angle.fromDegrees(-123.29),
-        		Angle.fromDegrees(-123.27)
+        		Angle.fromDegrees(-123.22)
             	);
         gov.nasa.worldwind.geom.Box boxNASA = Sector.computeBoundingBox(globe, 1.0, cadboroBay, 0.0, 150.0);
         
@@ -75,43 +72,19 @@ public class RRTreePlannerTest {
 		samplingEnv.setGlobe(globe);
 		
 		// Set planner inputs
-		Position origin = Position.fromDegrees(48.445, -123.285, 10);
-		Position destination = Position.fromDegrees(48.455, -123.275, 100);
+		Position origin = Position.fromDegrees(48.441, -123.285, 10);
+		Position destination = Position.fromDegrees(48.458, -123.225, 100);
         ZonedDateTime etd = ZonedDateTime.of(LocalDate.of(2018, 5, 1), LocalTime.of(15, 0), ZoneId.of("America/Los_Angeles"));
         Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND, Ranking.MASTER);
         
         // CreatePlanner
-        RRTreePlanner plannerRRT;
+        FADPRMPlanner plannerFADPRM;
         // Bias 5%
-        plannerRRT = new RRTreePlanner(iris, samplingEnv, 250, 5, 1500);
+        System.out.println("MaxDist: "+samplingEnv.getDiameter());
+        plannerFADPRM = new FADPRMPlanner(iris, samplingEnv, 20, 250, 5);
         
         // Compute plans
-        Path path0 = plannerRRT.plan(origin, destination, etd);
-        int size = Iterables.size(path0.getPositions());
-        int waypoints = plannerRRT.getWaypointList().size();
-        System.out.println(String.format("Waypoints created: %d Path size: %d", waypoints, size));
-        assertTrue("RRTree should find a path", size>0);
-        
-        Path path1 = plannerRRT.plan(origin, destination, etd);
-        size = Iterables.size(path1.getPositions());
-        waypoints = plannerRRT.getWaypointList().size();
-        System.out.println(String.format("Waypoints created: %d Path size: %d", waypoints, size));
-        assertTrue("RRTree should find a path", size>0);
-        
-        // Bias 1%
-        plannerRRT = new RRTreePlanner(iris, samplingEnv, 250, 1, 1500);
-        
-        Path path2 = plannerRRT.plan(origin, destination, etd);
-        size = Iterables.size(path2.getPositions());
-        waypoints = plannerRRT.getWaypointList().size();
-        System.out.println(String.format("Waypoints created: %d Path size: %d", waypoints, size));
-        assertTrue("RRTree should find a path", size>0);
-        
-        Path path3 = plannerRRT.plan(origin, destination, etd);
-        size = Iterables.size(path3.getPositions());
-        waypoints = plannerRRT.getWaypointList().size();
-        System.out.println(String.format("Waypoints created: %d Path size: %d", waypoints, size));
-        assertTrue("RRTree should find a path", size>0);
+        plannerFADPRM.plan(origin, destination, etd);
         
         System.out.println();
 	}

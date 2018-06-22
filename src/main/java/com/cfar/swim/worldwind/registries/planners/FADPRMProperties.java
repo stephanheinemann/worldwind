@@ -29,9 +29,6 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-
 /**
  * Realizes the properties bean of a FAD PRM planner.
  * 
@@ -57,7 +54,7 @@ public class FADPRMProperties extends AbstractPlannerProperties implements Anyti
 
 	/** the bias of the sampling algorithm towards goal */
 	private int bias = 5;
-	
+
 	/**
 	 * Constructs a new FAD PRM planner properties bean.
 	 */
@@ -66,91 +63,6 @@ public class FADPRMProperties extends AbstractPlannerProperties implements Anyti
 		this.setMinimumQuality(0d);
 		this.setMaximumQuality(1d);
 		this.setQualityImprovement(0.1);
-	}
-
-	/**
-	 * Constructs a new FAD PRM planner properties bean with specified cost and risk
-	 * policy property values.
-	 * 
-	 * @param costPolicy the cost policy of this FAD PRM planner properties bean
-	 * @param riskPolicy the risk policy of this FAD PRM planner properties bean
-	 */
-	public FADPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		super(costPolicy, riskPolicy);
-		this.setMinimumQuality(0d);
-		this.setMaximumQuality(1d);
-		this.setQualityImprovement(0.1);
-	}
-
-	/**
-	 * Constructs a new FAD PRM planner properties bean with specified cost and risk
-	 * policy property values as well as specified maximum number of neighbors and
-	 * maximum distance.
-	 * 
-	 * @param costPolicy the cost policy of this basic PRM planner properties bean
-	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
-	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
-	 * @param maxDistance the maximum distance between two connected waypoints
-	 */
-	public FADPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy,
-			int maxNeighbors, double maxDistance) {
-		super(costPolicy, riskPolicy);
-		this.setMaxNeighbors(maxNeighbors);
-		this.setMaxDistance(maxDistance);
-		this.setMinimumQuality(0d);
-		this.setMaximumQuality(1d);
-		this.setQualityImprovement(0.1);
-	}
-	
-	/**
-	 * Constructs a new FAD PRM planner properties bean with specified cost and risk
-	 * policy property values as well as specified initial, final and increase of
-	 * beta property values.
-	 * 
-	 * @param costPolicy the cost policy of this FAD PRM planner properties bean
-	 * @param riskPolicy the risk policy of this FAD PRM planner properties bean
-	 * @param initialInflation the initial inflation factor (initial beta value)
-	 * @param finalInflation the final inflation factor (final beta value)
-	 * @param inflationAmount the inflation amount of the beta value
-	 */
-	public FADPRMProperties(
-			CostPolicy costPolicy, RiskPolicy riskPolicy,
-			double initialInflation,
-			double finalInflation,
-			double inflationAmount) {
-		super(costPolicy, riskPolicy);
-		this.setMinimumQuality(initialInflation);
-		this.setMaximumQuality(finalInflation);
-		this.setQualityImprovement(inflationAmount);
-	}
-
-	/**
-	 * Constructs a new FAD PRM planner properties bean with specified cost and risk
-	 * policy property values as well as specified maximum number of neighbors and
-	 * maximum distance. The initial, final and increase of beta are also specified.
-	 * 
-	 * @param costPolicy the cost policy of this basic PRM planner properties bean
-	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
-	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
-	 * @param maxDistance the maximum distance between two connected waypoints
-	 * @param initialInflation the initial inflation factor (initial beta value)
-	 * @param finalInflation the final inflation factor (final beta value)
-	 * @param inflationAmount the inflation amount of the beta value
-	 * @param bias the bias of the sampling algorithm towards goal
-	 */
-	public FADPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy,
-			int maxNeighbors, double maxDistance,
-			double initialInflation,
-			double finalInflation,
-			double inflationAmount,
-			int bias) {
-		super(costPolicy, riskPolicy);
-		this.setMaxNeighbors(maxNeighbors);
-		this.setMaxDistance(maxDistance);
-		this.setMinimumQuality(initialInflation);
-		this.setMaximumQuality(finalInflation);
-		this.setQualityImprovement(inflationAmount);
-		this.setBias(bias);
 	}
 
 	/**
@@ -283,26 +195,25 @@ public class FADPRMProperties extends AbstractPlannerProperties implements Anyti
 		if (0d < inflationAmount) {
 			this.inflationAmount = inflationAmount;
 		} else {
-			throw new IllegalArgumentException("deflation amount is invalid");
+			throw new IllegalArgumentException("inflation amount is invalid");
 		}
 	}
-	
+
 	/**
-	 * Gets the bias of the sampling algorithm towards goal
+	 * Gets the bias of sampling towards the goal of this FAD PRM properties bean.
 	 * 
-	 * @return the bias of the sampling algorithm
+	 * @return the bias of sampling towards the goal
 	 */
 	public int getBias() {
 		return bias;
 	}
 
 	/**
-	 * Sets the bias of the sampling algorithm towards goal
+	 * Sets the bias of sampling towards the goal of this FAD PRM properties bean.
 	 * 
-	 * @param bias the bias of the sampling algorithm
+	 * @param the bias of sampling towards the goal
 	 */
 	public void setBias(int bias) {
 		this.bias = bias;
 	}
-	
 }

@@ -102,8 +102,9 @@ public class A320 extends FixedWingCivilAircraft {
 	 * @param position the position
 	 * @param radius the separation radius
 	 * @param cid the combat identification
+	 * @param ranking the ranking
 	 */
-	public A320(Position position, double radius, CombatIdentification cid, CommunicationProtocol ranking) {
+	public A320(Position position, double radius, CombatIdentification cid, Ranking ranking) {
 		super(position, radius, cid, ranking);
 		this.capabilities = new Capabilities();
 		this.capabilities.setMaximumAngleOfClimbSpeed(A320.MAX_ANGLE_OF_CLIMB_SPEED);

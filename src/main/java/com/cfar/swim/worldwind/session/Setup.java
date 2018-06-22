@@ -56,24 +56,10 @@ public class Setup {
 	/** the datalink specification of this setup */
 	Specification<Datalink> datalinkSpecification;
 	
-	/** TODO remake */
+	/** the desirability value of the desirability zone of this setup */
 	double desirabilitySpecification;
 	// ...
 	
-	/**
-	 * @return the desirabilitySpecification
-	 */
-	public double getDesirabilitySpecification() {
-		return desirabilitySpecification;
-	}
-
-	/**
-	 * @param desirabilitySpecification the desirabilitySpecification to set
-	 */
-	public void setDesirabilitySpecification(double desirabilitySpecification) {
-		this.desirabilitySpecification = desirabilitySpecification;
-	}
-
 	/**
 	 * Gets the aircraft specification of this setup.
 	 * 
@@ -144,6 +130,24 @@ public class Setup {
 	 */
 	public void setDatalinkSpecification(Specification<Datalink> datalinkSpecification) {
 		this.datalinkSpecification = datalinkSpecification;
+	}
+	
+	/**
+	 * Gets the desirability value of the desirability zone of this setup.
+	 * 
+	 * @return the desirability value of the desirability zone
+	 */
+	public double getDesirabilitySpecification() {
+		return desirabilitySpecification;
+	}
+
+	/**
+	 * Sets the desirability value of the desirability zone of this setup.
+	 * 
+	 * @param desirabilitySpecification the desirability value to set
+	 */
+	public void setDesirabilitySpecification(double desirabilitySpecification) {
+		this.desirabilitySpecification = desirabilitySpecification;
 	}
 	
 }

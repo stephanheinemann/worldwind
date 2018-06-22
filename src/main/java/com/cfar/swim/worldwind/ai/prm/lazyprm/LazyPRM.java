@@ -47,10 +47,11 @@ import com.google.common.collect.Iterables;
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes a Lazy PRM planner that constructs a Planning Roadmap by sampling
- * points in a continuous environment, without taking terrain obstacles into
- * account and plans a trajectory of an aircraft in an environment considering a
- * local cost and risk policy.
+ * Realizes a Lazy PRM planner that constructs a roadmap by sampling points in a
+ * continuous environment, without taking terrain obstacles into account and
+ * plans a trajectory of an aircraft in an environment considering a local cost
+ * and risk policy. The terrain obstacles (untraversable) are only considered
+ * after the path is found.
  * 
  * @author Henrique Ferreira
  *
@@ -58,7 +59,7 @@ import gov.nasa.worldwind.geom.Position;
 public class LazyPRM extends BasicPRM {
 
 	/**
-	 * Constructs a basic PRM planner for a specified aircraft and environment using
+	 * Constructs a lazy PRM planner for a specified aircraft and environment using
 	 * default local cost and risk policies.
 	 * 
 	 * @param aircraft the aircraft
@@ -90,11 +91,13 @@ public class LazyPRM extends BasicPRM {
 	}
 
 	/**
-	 * Connects this waypoint to another waypoints already sampled, which are closer
-	 * than a MAX_DIST. The maximum number of neighbors a waypoint can be connected
-	 * to is defined by MAX_NEIGHBORS.
+	 * Connects a given waypoint to another waypoints already sampled, which are
+	 * closer than a maximum distance (MAX_DIST). The maximum number of neighbors a
+	 * waypoint can be connected to is defined by MAX_NEIGHBORS. Checks if the two
+	 * waypoints are connectable, but does not check if there is a conflict with
+	 * terrain obstacles.
 	 * 
-	 * @param waypoint the BasicPRM waypoint to be connected
+	 * @param waypoint the waypoint to be connected
 	 */
 	@Override
 	protected void connectWaypoint(Waypoint waypoint) {
@@ -112,9 +115,9 @@ public class LazyPRM extends BasicPRM {
 
 	/**
 	 * Creates the roadmap by sampling positions from a continuous environment. It
-	 * doesn't check if the waypoint position has conflicts with terrain. The
-	 * IntervalTree is embedded and the waypoint is added to the waypoint list.
-	 * After that, tries to connect this waypoint to others already sampled.
+	 * doesn't check if the waypoint position has conflicts with terrain. Then the
+	 * waypoint is added to the waypoint list. After that, tries to connect this
+	 * waypoint to others already sampled.
 	 */
 	@Override
 	protected void construct() {
@@ -203,9 +206,9 @@ public class LazyPRM extends BasicPRM {
 		}
 		Waypoint wpt1 = Iterables.get(trajectory.getWaypoints(), 0);
 		Waypoint wpt2;
-		for (int i=0; i < trajectory.getLength()-1; i++) {
-			wpt2 = Iterables.get(trajectory.getWaypoints(), i+1);
-			if(this.getEnvironment().checkConflict(wpt1, wpt2)) {
+		for (int i = 0; i < trajectory.getLength() - 1; i++) {
+			wpt2 = Iterables.get(trajectory.getWaypoints(), i + 1);
+			if (this.getEnvironment().checkConflict(wpt1, wpt2)) {
 				conflictEdges.add(new Edge(wpt1, wpt2));
 			}
 			wpt1 = wpt2;
@@ -230,13 +233,13 @@ public class LazyPRM extends BasicPRM {
 			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
 		}
 	}
-	
+
 	/**
-	 * Corrects the waypoint and edge list by removing the edges that are in
-	 * conflict with terrain obstacles.
+	 * Corrects the edge list by removing the edges that are in conflict with
+	 * terrain obstacles.
 	 * 
-	 * @param conflictEdges the set of edges that are in conflict with
-	 *            terrain obstacles
+	 * @param conflictEdges the set of edges that are in conflict with terrain
+	 *            obstacles
 	 */
 	protected void correctListsE(HashSet<Edge> conflictEdges) {
 		for (Edge edge : conflictEdges) {
@@ -261,24 +264,24 @@ public class LazyPRM extends BasicPRM {
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		Trajectory trajectory = null;
-		if(this.getEnvironment().getEdgeList().isEmpty()) {
+		if (this.getEnvironment().getEdgeList().isEmpty()) {
 			this.setMode(QueryMode.SINGLE);
 		}
-		
-		if(this.getMode()==QueryMode.SINGLE) {
+
+		if (this.getMode() == QueryMode.SINGLE) {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination);
-			while(!this.correctTrajectory(trajectory)) {
-				trajectory = this.findPath(origin, destination, etd, this.planner);
+			while (!this.correctTrajectory(trajectory)) {
+				trajectory = this.findPath(origin, destination, etd, this.getPlanner());
 			}
-		} else if(this.getMode()==QueryMode.MULTIPLE) {
+		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
-			while(!this.correctTrajectory(trajectory)) {
-				trajectory = this.findPath(origin, destination, etd, this.planner);
+			while (!this.correctTrajectory(trajectory)) {
+				trajectory = this.findPath(origin, destination, etd, this.getPlanner());
 			}
 		}
-		
+
 		this.revisePlan(trajectory);
 		return trajectory;
 	}
@@ -300,24 +303,24 @@ public class LazyPRM extends BasicPRM {
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		Trajectory trajectory = null;
-		if(this.getEnvironment().getEdgeList().isEmpty()) {
+		if (this.getEnvironment().getEdgeList().isEmpty()) {
 			this.setMode(QueryMode.SINGLE);
 		}
-		
-		if(this.getMode()==QueryMode.SINGLE) {
+
+		if (this.getMode() == QueryMode.SINGLE) {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination);
-			while(!this.correctTrajectory(trajectory)) {
-				trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
+			while (!this.correctTrajectory(trajectory)) {
+				trajectory = this.findPath(origin, destination, etd, waypoints, this.getPlanner());
 			}
-		} else if(this.getMode()==QueryMode.MULTIPLE) {
+		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
-			while(!this.correctTrajectory(trajectory)) {
-				trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
+			while (!this.correctTrajectory(trajectory)) {
+				trajectory = this.findPath(origin, destination, etd, waypoints, this.getPlanner());
 			}
 		}
-		
+
 		this.revisePlan(trajectory);
 		return trajectory;
 	}

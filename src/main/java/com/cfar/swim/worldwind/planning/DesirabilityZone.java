@@ -47,30 +47,35 @@ import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 
 /**
+ * Realizes desirability zone.
+ * 
  * @author Henrique Ferreira
  *
  */
 public class DesirabilityZone extends ContinuumBox implements Environment {
 
-	/** the globe of this planning continuum */
+	/** the globe of this desirability zone */
 	private Globe globe = null;
 
-	/** the current time of this planning continuum */
+	/** the current time of this desirability zone */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 
-	/** the current accumulated active cost of this planning continuum */
+	/** the current accumulated active cost of this desirability zone */
 	// TODO Review usage of active cost
 	private double activeCost = 1d;
 
-	/** the threshold cost of this planning continuum */
+	/** the threshold cost of this desirability zone */
 	private double thresholdCost = 0d;
 
+	/** the desirability of this desirability zone */
 	private double desirability = 0.5d;
 
 	/**
-	 * Constructs a planning continuum based on a geometric box.
+	 * Constructs a desirability zone based on a geometric box and a specified
+	 * desirability value.
 	 * 
 	 * @param box the geometric box
+	 * @param desirability the desirability
 	 * 
 	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
@@ -81,9 +86,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the threshold cost of this planning continuum.
+	 * Gets the threshold cost of this desirability zone.
 	 * 
-	 * @return the threshold cost of this planning continuum
+	 * @return the threshold cost of this desirability zone
 	 * 
 	 * @see ThresholdRenderable#setThreshold(double)
 	 */
@@ -93,9 +98,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the threshold cost of this planning continuum.
+	 * Sets the threshold cost of this desirability zone.
 	 * 
-	 * @param thresholdCost the threshold cost of this planning continuum
+	 * @param thresholdCost the threshold cost of this desirability zone
 	 * 
 	 * @see ThresholdRenderable#setThreshold(double)
 	 */
@@ -106,9 +111,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the globe of this planning continuum.
+	 * Sets the globe of this desirability zone.
 	 * 
-	 * @param globe the globe of this planning continuum
+	 * @param globe the globe of this desirability zone
 	 * 
 	 * @see Environment#setGlobe(Globe)
 	 */
@@ -118,9 +123,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the globe of this planning continuum.
+	 * Gets the globe of this desirability zone.
 	 * 
-	 * @return the globe of this planning continuum
+	 * @return the globe of this desirability zone
 	 * 
 	 * @see Environment#getGlobe()
 	 */
@@ -130,9 +135,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the current time of this planning continuum.
+	 * Gets the current time of this desirability zone.
 	 * 
-	 * @return the current time of this planning continuum
+	 * @return the current time of this desirability zone
 	 * 
 	 * @see TimedRenderable#getTime()
 	 */
@@ -142,9 +147,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the current time of this planning continuum.
+	 * Sets the current time of this desirability zone.
 	 * 
-	 * @param time the current time of this planning continuum
+	 * @param time the current time of this desirability zone
 	 * 
 	 * @see TimedRenderable#setTime(ZonedDateTime)
 	 */
@@ -170,11 +175,11 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not this planning continuum contains a position.
+	 * Indicates whether or not this desirability zone contains a position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if this planning continuum contains the position, false
+	 * @return true if this desirability zone contains the position, false
 	 *         otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
@@ -190,9 +195,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-	
+
 	/**
-	 * Updates this planning continuum.
+	 * Updates this desirability zone.
 	 */
 	protected void update() {
 		this.updateActiveCost();
@@ -201,38 +206,38 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Updates the accumulated active cost of this planning continuum.
+	 * Updates the accumulated active cost of this desirability zone.
 	 */
 	protected void updateActiveCost() {
 		this.activeCost = 1d;
 	}
 
 	/**
-	 * Updates the visibility of this planning continuum.
+	 * Updates the visibility of this desirability zone.
 	 */
 	protected void updateVisibility() {
 		this.setVisible(this.activeCost > this.thresholdCost);
 	}
 
 	/**
-	 * Updates the appearance of this planning continuum.
+	 * Updates the appearance of this desirability zone.
 	 */
 	protected void updateAppearance() {
-		
-		float r=0,g=0,b=0;
+
+		float r = 0, g = 0, b = 0;
 		float des = (float) desirability;
-		if(this.desirability<= 0.5) {
+		if (this.desirability <= 0.5) {
 			r = 255;
-			g = 510*des;
-			b = 510*des;
+			g = 510 * des;
+			b = 510 * des;
 		}
-		if(this.desirability> 0.5) {
-			r = -510*des+510;
+		if (this.desirability > 0.5) {
+			r = -510 * des + 510;
 			g = 255;
-			b = -510*des+510;
+			b = -510 * des + 510;
 		}
 		float red = r / 255.0f;
-		float green = g/ 255.0f;
+		float green = g / 255.0f;
 		float blue = b / 255.0f;
 		float alpha = 0.5f;
 		this.setColor(red, green, blue, alpha);
@@ -241,7 +246,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	/**
 	 * @param position
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#isWaypoint(gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
@@ -253,7 +258,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	/**
 	 * @param position
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#getAdjacentWaypoints(gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
@@ -266,8 +271,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * @param position
 	 * @param waypoint
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#isAdjacentWaypoint(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#isAdjacentWaypoint(gov.nasa.worldwind.geom.Position,
+	 *      gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
 	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
@@ -277,7 +283,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 
 	/**
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#getCenterPosition()
 	 */
 	@Override
@@ -288,7 +294,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 
 	/**
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#getNeighbors()
 	 */
 	@Override
@@ -300,7 +306,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	/**
 	 * @param neighbor
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#areNeighbors(com.cfar.swim.worldwind.planning.Environment)
 	 */
 	@Override
@@ -312,7 +318,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	/**
 	 * @param position
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#getNeighbors(gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
@@ -325,8 +331,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * @param position
 	 * @param neighbor
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#areNeighbors(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#areNeighbors(gov.nasa.worldwind.geom.Position,
+	 *      gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
 	public boolean areNeighbors(Position position, Position neighbor) {
@@ -336,7 +343,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 
 	/**
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#isRefined()
 	 */
 	@Override
@@ -347,7 +354,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 
 	/**
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#getRefinements()
 	 */
 	@Override
@@ -358,30 +365,30 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 
 	/**
 	 * @param density
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#refine(int)
 	 */
 	@Override
 	public void refine(int density) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
 	 * 
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#coarsen()
 	 */
 	@Override
 	public void coarsen() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
 	 * @param obstacle
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#embed(com.cfar.swim.worldwind.render.Obstacle)
 	 */
 	@Override
@@ -393,7 +400,7 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	/**
 	 * @param obstacle
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#unembed(com.cfar.swim.worldwind.render.Obstacle)
 	 */
 	@Override
@@ -404,19 +411,19 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 
 	/**
 	 * 
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#unembedAll()
 	 */
 	@Override
 	public void unembedAll() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
 	 * @param obstacle
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#isEmbedded(com.cfar.swim.worldwind.render.Obstacle)
 	 */
 	@Override
@@ -427,21 +434,22 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 
 	/**
 	 * @param obstacle
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#refresh(com.cfar.swim.worldwind.render.Obstacle)
 	 */
 	@Override
 	public void refresh(Obstacle obstacle) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
 	 * @param position1
 	 * @param position2
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getDistance(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getDistance(gov.nasa.worldwind.geom.Position,
+	 *      gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
 	public double getDistance(Position position1, Position position2) {
@@ -453,8 +461,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * @param position1
 	 * @param position2
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getNormalizedDistance(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getNormalizedDistance(gov.nasa.worldwind.geom.Position,
+	 *      gov.nasa.worldwind.geom.Position)
 	 */
 	@Override
 	public double getNormalizedDistance(Position position1, Position position2) {
@@ -464,30 +473,30 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 
 	/**
 	 * @param costInterval
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#addCostInterval(com.cfar.swim.worldwind.planning.CostInterval)
 	 */
 	@Override
 	public void addCostInterval(CostInterval costInterval) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
 	 * @param costInterval
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#removeCostInterval(com.cfar.swim.worldwind.planning.CostInterval)
 	 */
 	@Override
 	public void removeCostInterval(CostInterval costInterval) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	/**
 	 * @param time
 	 * @return
-	
+	 * 
 	 * @see com.cfar.swim.worldwind.planning.Environment#getCostIntervals(java.time.ZonedDateTime)
 	 */
 	@Override
@@ -500,8 +509,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * @param start
 	 * @param end
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getCostIntervals(java.time.ZonedDateTime, java.time.ZonedDateTime)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getCostIntervals(java.time.ZonedDateTime,
+	 *      java.time.ZonedDateTime)
 	 */
 	@Override
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
@@ -513,8 +523,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * @param start
 	 * @param end
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getCost(java.time.ZonedDateTime, java.time.ZonedDateTime)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getCost(java.time.ZonedDateTime,
+	 *      java.time.ZonedDateTime)
 	 */
 	@Override
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
@@ -530,8 +541,11 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * @param costPolicy
 	 * @param riskPolicy
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getStepCost(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getStepCost(gov.nasa.worldwind.geom.Position,
+	 *      gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime,
+	 *      java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy,
+	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
 	 */
 	@Override
 	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
@@ -539,9 +553,9 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 		// TODO Auto-generated method stub
 		return 0;
 	}
-	
+
 	public double getDesirabilityCost(Edge edge) {
-		if(this.intersects(edge.getLine())) {
+		if (this.intersects(edge.getLine())) {
 			return this.desirability;
 		}
 		return 0.5;
@@ -555,8 +569,11 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * @param costPolicy
 	 * @param riskPolicy
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(gov.nasa.worldwind.geom.Position, gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(gov.nasa.worldwind.geom.Position,
+	 *      gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime,
+	 *      java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy,
+	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
 	 */
 	@Override
 	public double getLegCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
@@ -572,8 +589,11 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * @param costPolicy
 	 * @param riskPolicy
 	 * @return
-	
-	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(com.cfar.swim.worldwind.planning.Environment, java.time.ZonedDateTime, java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy, com.cfar.swim.worldwind.planning.RiskPolicy)
+	 * 
+	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(com.cfar.swim.worldwind.planning.Environment,
+	 *      java.time.ZonedDateTime, java.time.ZonedDateTime,
+	 *      com.cfar.swim.worldwind.planning.CostPolicy,
+	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
 	 */
 	@Override
 	public double getLegCost(Environment destination, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,

@@ -102,19 +102,16 @@ public class Scenario implements Identifiable, Enableable {
 	private Sector sector;
 
 	/** the planning environment of this scenario */
-	private ArrayList<Sector> desirabilitySectors = new ArrayList<Sector>();
-	
-	/** the planning environment of this scenario */
 	private Environment environment;
 	
-	/** the planning environment of this scenario */
-	private ArrayList<DesirabilityZone> desirabilityEnvironments = new ArrayList<DesirabilityZone>();
+	/** the desirability zones of this scenario */
+	private ArrayList<DesirabilityZone> desirabilityZones;
 
 	/** the aircraft of this scenario */
 	private Aircraft aircraft;
 
-	/** the aircrafts of this scenario */
-	private ArrayList<Aircraft> slaveAircrafts = new ArrayList<Aircraft>();
+	/** the slave aircrafts of this scenario */
+	private ArrayList<Aircraft> slaveAircrafts;
 
 	/** the planner of this scenario */
 	private Planner planner;
@@ -125,14 +122,14 @@ public class Scenario implements Identifiable, Enableable {
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
 
-	/** the waypoints to be visited in the trajectory of this scenario */
-	private ArrayList<ArrayList<Waypoint>> slaveWaypoints  = new ArrayList<ArrayList<Waypoint>>();
+	/** the waypoints to be visited by the slave aircrafts of this scenario */
+	private ArrayList<ArrayList<Waypoint>> slaveWaypoints;
 
 	/** the planned trajectory of this scenario */
 	private Trajectory trajectory;
 
-	/** the planned trajectory of this scenario */
-	private ArrayList<Trajectory> slaveTrajectories = new ArrayList<Trajectory>();
+	/** the planned trajectories of the slave aircrafts of this scenario */
+	private ArrayList<Trajectory> slaveTrajectories;
 
 	/** the obstacles of this scenario */
 	private Set<Obstacle> obstacles;
@@ -173,7 +170,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
 		this.environment.setThreshold(0d);
 		this.environment.setGlobe(this.globe);
-		this.desirabilityEnvironments = new ArrayList<DesirabilityZone>();
+		this.desirabilityZones = new ArrayList<DesirabilityZone>();
 		this.waypoints = new ArrayList<Waypoint>();
 		this.slaveWaypoints = new ArrayList<ArrayList<Waypoint>>();
 		this.slaveAircrafts = new ArrayList<Aircraft>();
@@ -294,9 +291,9 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Adds an aircraft change listener to this scenario.
+	 * Adds a slave aircrafts change listener to this scenario.
 	 * 
-	 * @param listener the aircraft change listener to be added
+	 * @param listener the slave aircrafts change listener to be added
 	 */
 	public void addSlaveAircraftsChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("slaveAircrafts", listener);
@@ -312,12 +309,12 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
-	 * Adds an environment change listener to this scenario.
+	 * Adds a desirability zone change listener to this scenario.
 	 * 
-	 * @param listener the environment change listener to be added
+	 * @param listener the desirability zone change listener to be added
 	 */
-	public void addDesirabilityEnvironmentsChangeListener(PropertyChangeListener listener) {
-		this.pcs.addPropertyChangeListener("desirabilityEnvironments", listener);
+	public void addDesirabilityZonesChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("desirabilityZones", listener);
 	}
 
 	/**
@@ -330,9 +327,9 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Adds a waypoints change listener to this scenario.
+	 * Adds a slave waypoints change listener to this scenario.
 	 * 
-	 * @param listener the waypoints change listener to be added
+	 * @param listener the slave waypoints change listener to be added
 	 */
 	public void addSlaveWaypointsChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("slaveWaypoints", listener);
@@ -348,9 +345,9 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Adds a trajectory change listener to this scenario.
+	 * Adds a slave trajectories change listener to this scenario.
 	 * 
-	 * @param listener the trajectory change listener to be added
+	 * @param listener the slave trajectories change listener to be added
 	 */
 	public void addSlaveTrajectoriesChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("slaveTrajectories", listener);
@@ -528,7 +525,7 @@ public class Scenario implements Identifiable, Enableable {
 		if (this.hasAircraft()) {
 			this.aircraft.setThreshold(threshold);
 		}
-		if (!this.slaveAircrafts.isEmpty()) {
+		if (this.hasSlaveAircrafts()) {
 			for (Aircraft aircraft : this.slaveAircrafts) {
 				aircraft.setThreshold(threshold);
 			}
@@ -586,15 +583,6 @@ public class Scenario implements Identifiable, Enableable {
 	public void setSector(Sector sector) {
 		if (null != sector) {
 			this.sector = sector;
-		} else {
-			throw new IllegalArgumentException();
-		}
-	}
-	
-	/** TODO: comment */
-	public void addDesirabilitySector(Sector sector) {
-		if (null != sector) {
-			this.desirabilitySectors.add(sector);
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -701,21 +689,19 @@ public class Scenario implements Identifiable, Enableable {
 		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
 	}
 
-	// TODO: build aircraft functions for slaveAircrafts variable
-
 	/**
-	 * Gets the aircraft of this scenario.
+	 * Gets the slave aircrafts of this scenario.
 	 * 
-	 * @return the aircraft of this scenario
+	 * @return the slave aircrafts of this scenario
 	 */
 	public ArrayList<Aircraft> getSlaveAircrafts() {
 		return this.slaveAircrafts;
 	}
 
 	/**
-	 * Gets the aircraft of this scenario.
+	 * Adds a slave aircraft to the slave aircrafts of this scenario.
 	 * 
-	 * @return the aircraft of this scenario
+	 * @param aircraft the slave aircraft to add
 	 */
 	public void addSlaveAircraft(Aircraft aircraft) {
 		this.slaveAircrafts.add(aircraft);
@@ -723,9 +709,9 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Sets the aircraft of this scenario.
+	 * Sets the slave aircrafts of this scenario.
 	 * 
-	 * @param aircraft the aircraft to be set
+	 * @param slaveAircrafts the slave aircrafts to set
 	 */
 	public void setSlaveAircrafts(ArrayList<Aircraft> slaveAircrafts) {
 		this.slaveAircrafts = slaveAircrafts;
@@ -742,7 +728,7 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Removes the aircraft from this scenario.
+	 * Removes the slave aircrafts from this scenario.
 	 */
 	public void removeSlaveAircrafts() {
 		this.slaveAircrafts.clear();
@@ -750,18 +736,18 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Indicates whether or not this scenario has an aircraft.
+	 * Indicates whether or not this scenario has at least one slave aircraft.
 	 * 
-	 * @return true if this scenario has an aircraft, false otherwise
+	 * @return true if this scenario has at least one slave aircraft, false otherwise
 	 */
 	public boolean hasSlaveAircrafts() {
 		return !this.slaveAircrafts.isEmpty();
 	}
 
 	/**
-	 * Moves the aircraft of this scenario to a specified position.
+	 * Moves a slave aircraft of this scenario to a specified position.
 	 * 
-	 * @param position the position the aircraft is moved to
+	 * @param position the position the slave aircraft is moved to
 	 */
 	public void moveSlaveAircraft(Aircraft aircraft, Position position) {
 		if (aircraft != null) {
@@ -771,9 +757,9 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Moves the aircraft on the trajectory according to the time of this scenario.
+	 * Moves a slave aircraft on the trajectory according to the time of this scenario.
 	 * If the time of this scenario is before the first or after the last waypoint
-	 * of the trajectory, the aircraft is moved to the first or last waypoint,
+	 * of the trajectory, the slave aircraft is moved to the first or last waypoint,
 	 * respectively.
 	 */
 	public void moveSlaveAircraftOnTrajectory(int index) {
@@ -810,7 +796,7 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Notifies this scenario about a changed aircraft.
+	 * Notifies this scenario about changed slave aircrafts.
 	 */
 	public void notifySlaveAircraftsChange() {
 		this.pcs.firePropertyChange("slaveAircrafts", null, this.slaveAircrafts);
@@ -858,7 +844,13 @@ public class Scenario implements Identifiable, Enableable {
 		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
 	
-	public void addDesirabilityEnvironment(Sector sector, double desirability) {
+	/**
+	 * Adds a desirability zone to the desirability zones of this scenario.
+	 * 
+	 * @param sector the sector of this desirability zone
+	 * @param desirability the desirability value of this desirability zone
+	 */
+	public void addDesirabilityZone(Sector sector, double desirability) {
 			gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.getGlobe(), 1d,
 					sector, 0d, 100d);
 			Box envBox = new Box(bb);
@@ -867,15 +859,18 @@ public class Scenario implements Identifiable, Enableable {
 			desirabilityZone.setGlobe(this.globe);
 			desirabilityZone.setTime(this.time);
 			desirabilityZone.setThreshold(this.threshold);
-			this.desirabilityEnvironments.add(desirabilityZone);
-			this.pcs.firePropertyChange("desirabilityEnvironments", null, this.desirabilityEnvironments);
+			this.desirabilityZones.add(desirabilityZone);
+			this.pcs.firePropertyChange("desirabilityZones", null, this.desirabilityZones);
 	}
 	
-
-	public ArrayList<DesirabilityZone> getDesirabilityEnvironments() {
-		return this.desirabilityEnvironments;
+	/**
+	 * Gets the desirability zones of this scenario.
+	 * 
+	 * @return the desirability zones of this scenario
+	 */
+	public ArrayList<DesirabilityZone> getDesirabilityZones() {
+		return this.desirabilityZones;
 	}
-
 
 	/**
 	 * Gets the waypoints of this scenario.
@@ -1020,37 +1015,22 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Gets the waypoints of this scenario.
+	 * Gets the slave waypoints of this scenario.
 	 * 
-	 * @return the waypoints of this scenario
+	 * @return the slave waypoints of this scenario
 	 */
 	public ArrayList<ArrayList<Waypoint>> getSlaveWaypoints() {
 		return this.slaveWaypoints;
 	}
 
 	/**
-	 * Adds a waypoint to this scenario and sequences its identifier.
+	 * Adds a slave waypoint to this scenario and sequences its identifier.
 	 * 
-	 * @param waypoint the waypoint to be added
+	 * @param index the index of the slave aircraft
+	 * @param waypoint the slave waypoint to be added
 	 * 
 	 * @throws IllegalArgumentException if waypoint is null
 	 */
-	public void addSlaveWaypoint(Waypoint waypoint) {
-		if (null != waypoint) {
-			String designator = Integer.toString(this.slaveWaypoints.size());
-			waypoint.setDesignator(designator);
-			if (waypoint.hasDepiction() && waypoint.getDepiction().hasAnnotation()) {
-				waypoint.getDepiction().getAnnotation().setText(designator);
-			}
-			for (ArrayList<Waypoint> waypoints : this.slaveWaypoints) {
-				waypoints.add(waypoint);
-			}
-			this.pcs.firePropertyChange("slaveWaypoints", null,this.slaveWaypoints);
-		} else {
-			throw new IllegalArgumentException();
-		}
-	}
-
 	public void addSlaveWaypoint(int index, Waypoint waypoint) {
 		if (null != waypoint) {
 			System.out.println("waypoint not null");
@@ -1069,7 +1049,7 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Removes all waypoints of this scenario.
+	 * Removes all slave waypoints of this scenario.
 	 */
 	public void clearSlaveWaypoints() {
 		this.slaveWaypoints.clear();
@@ -1077,9 +1057,9 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Indicates whether or not this scenario has waypoints.
+	 * Indicates whether or not this scenario has slave waypoints.
 	 * 
-	 * @return true if this scenario has waypoints, false otherwise
+	 * @return true if this scenario has slave waypoints, false otherwise
 	 */
 	public boolean hasSlaveWaypoints() {
 		return !this.slaveWaypoints.isEmpty();
@@ -1247,23 +1227,21 @@ public class Scenario implements Identifiable, Enableable {
 		return leg;
 	}
 
-	// TODO: function for slave trajectories
-
 	/**
-	 * Gets the planned trajectory of this scenario.
+	 * Gets the planned slave trajectories of this scenario.
 	 * 
-	 * @return the planned trajectory of this scenario
+	 * @return the planned slave trajectories of this scenario
 	 */
 	public ArrayList<Trajectory> getSlaveTrajectories() {
 		return this.slaveTrajectories;
 	}
 
 	/**
-	 * Sets the planned trajectory of this scenario.
+	 * Sets the planned slave trajectories of this scenario.
 	 * 
-	 * @param trajectory the planned trajectory of this scenario
+	 * @param trajectories the planned slave trajectories of this scenario
 	 * 
-	 * @throws IllegalArgumentException if trajectory is null
+	 * @throws IllegalArgumentException if trajectories is empty
 	 */
 	public void setSlaveTrajectories(ArrayList<Trajectory> trajectories) {
 		if (!trajectories.isEmpty()) {
@@ -1278,6 +1256,14 @@ public class Scenario implements Identifiable, Enableable {
 		}
 	}
 
+	/**
+	 * Adds a planned slave trajectory to the slave trajectories of this scenario.
+	 * 
+	 * @param trajectory a slave trajectory to add
+	 * @param index the index of the slave trajectory
+	 * 
+	 * @throws IllegalArgumentException if trajectory is null
+	 */
 	public void addSlaveTrajectory(Trajectory trajectory, int index) {
 		if (null != trajectory) {
 			this.slaveTrajectories.add(trajectory);
@@ -1290,7 +1276,7 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Clears the planned trajectory of this scenario.
+	 * Clears the planned slave trajectories of this scenario.
 	 */
 	public void clearSlaveTrajectories() {
 		this.slaveTrajectories.clear();
@@ -1298,16 +1284,16 @@ public class Scenario implements Identifiable, Enableable {
 	}
 
 	/**
-	 * Indicates whether or not this scenario has a computed trajectory.
+	 * Indicates whether or not this scenario has slave trajectories.
 	 * 
-	 * @return true if this scenario has a computed trajectory, false otherwise
+	 * @return true if this scenario has slave trajectories, false otherwise
 	 */
 	public boolean hasSlaveTrajectories() {
 		return (!this.slaveAircrafts.isEmpty());
 	}
 
 	/**
-	 * Sequences the trajectory of this scenario.
+	 * Sequences the slave trajectories of this scenario.
 	 */
 	private void sequenceSlaveTrajectory(int index) {
 		if (!this.slaveTrajectories.get(index).isEmpty()) {
@@ -1336,45 +1322,6 @@ public class Scenario implements Identifiable, Enableable {
 				}
 			}
 		}
-	}
-
-	/**
-	 * Gets a trajectory leg of the computed trajectory (sub-trajectory) of this
-	 * scenario.
-	 * 
-	 * @param from the first waypoint of the trajectory leg
-	 * @param to the last waypoint of the trajectory leg
-	 * 
-	 * @return the trajectory leg between the first and the last waypoint
-	 * 
-	 * @throws IllegalArgumentException if any waypoint is null
-	 */
-	public List<Waypoint> getSlaveTrajectoryLeg(Waypoint from, Waypoint to) {
-		List<Waypoint> leg = new ArrayList<Waypoint>();
-
-		if ((null != from) && (null != to)) {
-			if (this.hasTrajectory()) {
-				Iterator<? extends Waypoint> trajectoryIterator = this.trajectory.getWaypoints().iterator();
-				boolean passedFrom = false;
-				boolean passedTo = false;
-				while (trajectoryIterator.hasNext() && !passedTo) {
-					Waypoint waypoint = trajectoryIterator.next();
-					if (waypoint.equals(to)) {
-						passedTo = true;
-						leg.add(waypoint);
-					} else if (waypoint.equals(from)) {
-						passedFrom = true;
-						leg.add(waypoint);
-					} else if (passedFrom) {
-						leg.add(waypoint);
-					}
-				}
-			}
-		} else {
-			throw new IllegalArgumentException();
-		}
-
-		return leg;
 	}
 
 	/**

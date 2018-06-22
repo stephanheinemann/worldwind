@@ -74,11 +74,12 @@ public abstract class Quadcopter extends Aircraft {
 	 * @param position the position
 	 * @param radius the separation radius
 	 * @param cid the combat identification
+	 * @param ranking the ranking
 	 */
-	public Quadcopter(Position position, double radius, CombatIdentification cid, CommunicationProtocol ranking) {
+	public Quadcopter(Position position, double radius, CombatIdentification cid, Ranking ranking) {
 		super(position, radius, ranking);
 		String str = this.getSymbolIdentifier(cid);
-		if(ranking==CommunicationProtocol.SLAVE) {
+		if(ranking==Ranking.SLAVE) {
 			String newStr = str.substring(0,8)+'-'+str.substring(9);
 			this.depiction = new Depiction(new MilStd2525TacticalSymbol(newStr, position));
 		}
