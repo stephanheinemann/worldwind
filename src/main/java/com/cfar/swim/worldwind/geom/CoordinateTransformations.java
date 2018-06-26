@@ -204,4 +204,23 @@ public class CoordinateTransformations {
 		
 		return new Vec4(x, y, z);
 	}
+	
+	/**
+	 * 
+	 * @param start
+	 * @param goal
+	 * @param globe
+	 * @return
+	 */
+	public static Position middlePosition(Position start, Position goal, Globe globe) {
+		// Transform positions to NASA ECEF points
+		Vec4 pointA = globe.computePointFromPosition(start);
+		Vec4 pointB = globe.computePointFromPosition(goal);
+		
+		// Calculate middle point
+		Vec4 pointM = pointA.add3( pointB.subtract3(pointA).divide3(2d) );
+		Position positionM = globe.computePositionFromPoint(pointM);
+		
+		return positionM;
+	}
 }

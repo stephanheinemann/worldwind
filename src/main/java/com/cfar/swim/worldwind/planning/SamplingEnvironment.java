@@ -46,6 +46,7 @@ import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.ContinuumBox;
+import com.cfar.swim.worldwind.geom.CoordinateTransformations;
 import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.render.Obstacle;
@@ -1112,6 +1113,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 		// Calculate middle point
 		Vec4 pointM = pointA.add3( pointB.subtract3(pointA).divide3(2d) );
+		Position positionM = this.getGlobe().computePositionFromPoint(pointM);
 		
 		// Sample random angle and distance
 		double r = 0d + new Random().nextDouble() * 1d;
@@ -1122,6 +1124,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		double a = distance/2d;
 		double c = pointA.distanceTo3(pointB);
 		double b = Math.sqrt(a*a - c*c);
+		
+		// Translation and rotation to local frame
+		Vec4 localA = CoordinateTransformations.llh2aer(positionM, focusA, getGlobe());
 
 		Position position = null;
 		

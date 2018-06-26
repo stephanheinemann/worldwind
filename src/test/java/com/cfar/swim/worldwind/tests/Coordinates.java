@@ -35,42 +35,14 @@ public class Coordinates {
 		System.out.println("\n");
 		this.setScenario();
 		
-		Position positionNear = new Position(Angle.fromDegrees(20), Angle.fromDegrees(80), 40);
-		System.out.println("Reference Position:\t"+positionNear);
+		Position positionStart = new Position(Angle.fromDegrees(20), Angle.fromDegrees(80), 40);
+		System.out.println("Start Position: \t"+positionStart);
 		
-		Position positionRand = new Position(Angle.fromDegrees(20), Angle.fromDegrees(80), 60);
-		System.out.println("Other Position:    \t"+positionRand);
+		Position positionGoal = new Position(Angle.fromDegrees(20.01), Angle.fromDegrees(80.01), 40);
+		System.out.println("Goal Position:  \t"+positionGoal);
 		
-		// Transform positions to NASA ECEF points
-		Vec4 pointA = globe.computePointFromPosition(positionNear);
-		Vec4 pointB = globe.computePointFromPosition(positionRand);
-		// Calculate middle point
-		Vec4 pointM = pointA.add3( pointB.subtract3(pointA).divide3(2d) );
-		
-		Position positionMid = globe.computePositionFromPoint(pointM);
-		System.out.println("Middle Position:   \t"+positionMid);
-		
-		Vec4 pointAenu = CoordinateTransformations.llh2enu(positionMid, positionNear, globe);
-		System.out.println("pointNear(ENU): "+pointAenu);
-		
-		Vec4 pointBenu = CoordinateTransformations.llh2enu(positionMid, positionRand, globe);
-		System.out.println("pointRand(ENU): "+pointBenu);
-		
-		Vec4 pointAaer = CoordinateTransformations.enu2aer(pointAenu);
-		System.out.println("pointNear(AER): "+pointAaer);
-		
-		Vec4 pointBaer = CoordinateTransformations.enu2aer(pointBenu);
-		System.out.println("pointRand(AER): "+pointBaer);
-		
-		Vec4 pointAlocal = pointA.subtract3(pointM);
-		pointAlocal = CoordinateTransformations.rotationZ(pointAlocal, Math.PI/2 - pointBaer.x);
-		pointAlocal = CoordinateTransformations.rotationX(pointAlocal, pointBaer.y);
-		System.out.println("pointNear(loc): "+pointAlocal);
-		
-		Vec4 pointBlocal = pointB.subtract3(pointM);
-		pointBlocal = CoordinateTransformations.rotationZ(pointBlocal, Math.PI/2 - pointBaer.x);
-		pointBlocal = CoordinateTransformations.rotationX(pointBlocal, pointBaer.y);
-		System.out.println("pointRand(loc): "+pointBlocal);
+		Position positionM = CoordinateTransformations.middlePosition(positionStart, positionGoal, globe);
+		System.out.println("Middle Position:\t"+positionM);
 		
 		System.out.println("\n");
 	}
