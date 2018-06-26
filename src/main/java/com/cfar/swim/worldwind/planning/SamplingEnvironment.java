@@ -1104,33 +1104,56 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 		return position;
 	}
-	
+
+	/**
+	 * Samples a pseudo-random position from the intersection of the continuous
+	 * space defined in the current environment and an ellipsoid defined by its two
+	 * foci points and the maximum distance.
+	 * 
+	 * @param focusA the focus pointA in world coordinates
+	 * @param focusB the focus pointA in world coordinates
+	 * @param distance double the length for the major axis of the ellipsoid
+	 * 
+	 * @return the pseudo-random sampled position
+	 */
 	public Position samplePositionEllipsoide(Position focusA, Position focusB, double distance) {
-		//TODO: Still in work...
-		// Transform positions to NASA ECEF points
-		Vec4 pointA = this.getGlobe().computePointFromPosition(focusA);
-		Vec4 pointB = this.getGlobe().computePointFromPosition(focusB);
+		// Test if the box is more restrictive than the ellipsoid "diameter"
+		if (distance > this.getDiameter())
+			return sampleRandomPosition();
 
-		// Calculate middle point
-		Vec4 pointM = pointA.add3( pointB.subtract3(pointA).divide3(2d) );
-		Position positionM = this.getGlobe().computePositionFromPoint(pointM);
-		
-		// Sample random angle and distance
-		double r = 0d + new Random().nextDouble() * 1d;
-		double theta = 0d + new Random().nextDouble() * Math.PI;
-		double phi = 0d + new Random().nextDouble() * 2*Math.PI;
-		
+		Position positionRand;
+
+		// Middle Position from focusA and focusB
+		Position positionM = CoordinateTransformations.middlePosition(focusA, focusB, getGlobe());
+
 		// Ellipsoid parameters
-		double a = distance/2d;
-		double c = pointA.distanceTo3(pointB);
-		double b = Math.sqrt(a*a - c*c);
-		
-		// Translation and rotation to local frame
-		Vec4 localA = CoordinateTransformations.llh2aer(positionM, focusA, getGlobe());
+		double a = distance / 2d;
+		double c = this.getDistance(focusA, focusB) / 2d;
+		double b = Math.sqrt(a * a - c * c);
 
-		Position position = null;
-		
-		return position;
+		do {
+			// Sample random point inside a unit sphere
+			double r = 0d + new Random().nextDouble() * 1d;
+			r = Math.sqrt(r); // to ensure uniform distribution in an ellipsis since area is proportional to
+							  // r^2
+			double theta = 0d + new Random().nextDouble() * Math.PI;
+			double phi = 0d + new Random().nextDouble() * 2 * Math.PI;
+			Vec4 pointRand = CoordinateTransformations.polar2cartesian(phi, theta, r);
+
+			// Transform from sphere to ellipsoid
+			pointRand = new Vec4(pointRand.x * b, pointRand.y * a, pointRand.z * b);
+
+			// Translation and rotation from local frame to global
+			Vec4 aerB = CoordinateTransformations.llh2aer(positionM, focusB, getGlobe()), enuRand;
+			double angleZ = Math.PI / 2 - aerB.x, angleX = aerB.y;
+			enuRand = CoordinateTransformations.rotationZ(pointRand, -angleZ);
+			enuRand = CoordinateTransformations.rotationX(enuRand, -angleX);
+			positionRand = CoordinateTransformations.enu2llh(positionM, enuRand, getGlobe());
+
+			// Check if point is inside box
+		} while (!this.contains(positionRand));
+
+		return positionRand;
 	}
 
 	/**
@@ -1141,9 +1164,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * @return true if the position is inside the globe and false otherwise
 	 */
 	public boolean isInsideGlobe(Globe globe, Position position) {
-		Vec4 point;
-
-		point = this.getGlobe().computePointFromPosition(position);
+		Vec4 point = this.getGlobe().computePointFromPosition(position);
 		return !globe.isPointAboveElevation(point, globe.getElevation(position.latitude, position.longitude));
 	}
 

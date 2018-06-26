@@ -170,7 +170,7 @@ public class CoordinateTransformations {
 
 		return CoordinateTransformations.enu2aer(pointENU);
 	}
-	
+
 	/**
 	 * 
 	 * @param point
@@ -180,14 +180,14 @@ public class CoordinateTransformations {
 	public static Vec4 rotationZ(Vec4 point, double angle) {
 		double c = Math.cos(angle);
 		double s = Math.sin(angle);
-		
-		double x =  point.x * c + point.y * s;
+
+		double x = point.x * c + point.y * s;
 		double y = -point.x * s + point.y * c;
-		double z =  point.z;
-		
+		double z = point.z;
+
 		return new Vec4(x, y, z);
 	}
-	
+
 	/**
 	 * 
 	 * @param point
@@ -197,14 +197,14 @@ public class CoordinateTransformations {
 	public static Vec4 rotationX(Vec4 point, double angle) {
 		double c = Math.cos(angle);
 		double s = Math.sin(angle);
-		
-		double x =  point.x;
-		double y =  point.y * c + point.z * s;
+
+		double x = point.x;
+		double y = point.y * c + point.z * s;
 		double z = -point.y * s + point.z * c;
-		
+
 		return new Vec4(x, y, z);
 	}
-	
+
 	/**
 	 * 
 	 * @param start
@@ -216,11 +216,32 @@ public class CoordinateTransformations {
 		// Transform positions to NASA ECEF points
 		Vec4 pointA = globe.computePointFromPosition(start);
 		Vec4 pointB = globe.computePointFromPosition(goal);
-		
+
 		// Calculate middle point
-		Vec4 pointM = pointA.add3( pointB.subtract3(pointA).divide3(2d) );
+		Vec4 pointM = pointA.add3(pointB.subtract3(pointA).divide3(2d));
 		Position positionM = globe.computePositionFromPoint(pointM);
-		
+
 		return positionM;
+	}
+
+	/**
+	 * Converts a polar point with (phi, theta, radius) to Cartesian coordinates.
+	 * Phi is measured in the xy plane from the x axis([0, 2*PI[) and theta measured
+	 * from the z axis([0, 2*PI[).
+	 * 
+	 * @param polarPoint
+	 * 
+	 * @return
+	 */
+	public static Vec4 polar2cartesian(double phi, double theta, double radius) {
+		double x = radius * Math.sin(theta) * Math.cos(phi);
+		double y = radius * Math.sin(theta) * Math.sin(phi);
+		double z = radius * Math.cos(theta);
+
+		return new Vec4(x, y, z);
+
+	}
+	public static Vec4 polar2cartesian(Vec4 polarPoint) {
+		return CoordinateTransformations.polar2cartesian(polarPoint.x,  polarPoint.y, polarPoint.z);
 	}
 }
