@@ -64,6 +64,23 @@ public class FADPRMWaypoint extends Waypoint{
 	/** the parameter lambda that weights path desirability and cost */
 	private double lambda;
 	
+	/** the parameter lambda that weights path desirability and cost */
+	private double desirability;
+	
+	/**
+	 * @return the desirability
+	 */
+	public double getDesirability() {
+		return desirability;
+	}
+
+	/**
+	 * @param desirability the desirability to set
+	 */
+	public void setDesirability(double desirability) {
+		this.desirability = desirability;
+	}
+
 	/** the parent FADPRM waypoint of this FADPRM waypoint in a trajectory */
 	private FADPRMWaypoint pai = null;
 	
@@ -102,7 +119,7 @@ public class FADPRMWaypoint extends Waypoint{
 		super(position);
 		this.setCost(Double.POSITIVE_INFINITY);
 		this.setCTGoal(Double.POSITIVE_INFINITY);
-		this.setPathDD(0.5);
+		this.setPathDD(0);
 		lambda = 0.5;
 	}
 

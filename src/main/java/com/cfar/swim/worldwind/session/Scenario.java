@@ -857,8 +857,6 @@ public class Scenario implements Identifiable, Enableable {
 			
 			DesirabilityZone desirabilityZone = new DesirabilityZone(envBox, desirability);
 			desirabilityZone.setGlobe(this.globe);
-			desirabilityZone.setTime(this.time);
-			desirabilityZone.setThreshold(this.threshold);
 			this.desirabilityZones.add(desirabilityZone);
 			this.pcs.firePropertyChange("desirabilityZones", null, this.desirabilityZones);
 	}

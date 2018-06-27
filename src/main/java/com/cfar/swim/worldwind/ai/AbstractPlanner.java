@@ -208,6 +208,7 @@ public abstract class AbstractPlanner implements Planner {
 			listener.reviseObstacle();
 		}
 	}
+	
 	/**
 	 * Revises a plan notifying the plan revision listeners of this abstract
 	 * planner.
@@ -215,6 +216,16 @@ public abstract class AbstractPlanner implements Planner {
 	protected void reviseSlavePlans(ArrayList<Trajectory> trajectories) {
 		for (PlanRevisionListener listener : this.planRevisionListeners) {
 			listener.reviseSlavePlans(trajectories);
+		}
+	}
+	
+	/**
+	 * Revises a plan notifying the plan revision listeners of this abstract
+	 * planner.
+	 */
+	protected void reviseParameters(ArrayList<Double> parameters) {
+		for (PlanRevisionListener listener : this.planRevisionListeners) {
+			listener.reviseParameters(parameters);
 		}
 	}
 	

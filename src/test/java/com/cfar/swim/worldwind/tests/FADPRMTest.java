@@ -29,12 +29,11 @@
  */
 package com.cfar.swim.worldwind.tests;
 
-import static org.junit.Assert.assertTrue;
-
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 
 import org.junit.Test;
 
@@ -43,6 +42,7 @@ import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Ranking;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Box;
+import com.cfar.swim.worldwind.planning.DesirabilityZone;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -65,7 +65,20 @@ public class FADPRMTest {
             	Angle.fromDegrees(-123.29),
         		Angle.fromDegrees(-123.22)
             	);
+		
+		Sector desirabilitySector = new Sector(
+            	Angle.fromDegrees(48.45),
+            	Angle.fromDegrees(48.459),
+            	Angle.fromDegrees(-123.26),
+        		Angle.fromDegrees(-123.24)
+            	);
         gov.nasa.worldwind.geom.Box boxNASA = Sector.computeBoundingBox(globe, 1.0, cadboroBay, 0.0, 150.0);
+        gov.nasa.worldwind.geom.Box desirabilityBoxNASA = Sector.computeBoundingBox(globe, 1.0, desirabilitySector, 0.0, 150.0);
+        
+        // Create desirability zone from box
+        DesirabilityZone desirabilityZone = new DesirabilityZone(new Box(desirabilityBoxNASA), 0.9);
+        ArrayList<DesirabilityZone> desirabilityZones = new ArrayList<DesirabilityZone>();
+        desirabilityZones.add(desirabilityZone);
         
 		// Create environment from box
 		SamplingEnvironment samplingEnv = new SamplingEnvironment(new Box(boxNASA));
@@ -81,10 +94,17 @@ public class FADPRMTest {
         FADPRMPlanner plannerFADPRM;
         // Bias 5%
         System.out.println("MaxDist: "+samplingEnv.getDiameter());
-        plannerFADPRM = new FADPRMPlanner(iris, samplingEnv, 20, 250, 5);
+        System.out.println("Dist: "+samplingEnv.getDistance(origin, destination));
+        for (int i=0 ; i<5 ; i++) {
+        	System.out.println("ITERATION #"+ i);
+        	samplingEnv = new SamplingEnvironment(new Box(boxNASA));
+    		samplingEnv.setGlobe(globe);
+        	plannerFADPRM = new FADPRMPlanner(iris, samplingEnv, 20, 250, 5);
+        	plannerFADPRM.setDesirabilityZones(desirabilityZones);
+        	plannerFADPRM.plan(origin, destination, etd);
+        }
         
         // Compute plans
-        plannerFADPRM.plan(origin, destination, etd);
         
         System.out.println();
 	}

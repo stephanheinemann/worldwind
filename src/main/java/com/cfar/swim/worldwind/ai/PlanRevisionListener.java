@@ -55,5 +55,15 @@ public interface PlanRevisionListener extends EventListener {
 	 */
 	public void reviseObstacle();
 	
+	/**
+	 * Notifies this plan revision listener about revised plans for slave aircrafts.
+	 * 
+	 * @param trajectories the revised slave trajectories
+	 */
 	public void reviseSlavePlans(ArrayList<Trajectory> trajectories);
+	
+	/**
+	 * Notifies this plan revision listener about revised algorithm parameters.
+	 */
+	public void reviseParameters(ArrayList<Double> parameters);
 }

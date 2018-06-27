@@ -57,7 +57,7 @@ public class Setup {
 	Specification<Datalink> datalinkSpecification;
 	
 	/** the desirability value of the desirability zone of this setup */
-	double desirabilitySpecification;
+	double desirabilitySpecification = 0.5;
 	// ...
 	
 	/**

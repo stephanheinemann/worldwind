@@ -29,43 +29,25 @@
  */
 package com.cfar.swim.worldwind.planning;
 
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.chrono.ChronoZonedDateTime;
-import java.util.List;
-import java.util.Set;
-
-import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.ContinuumBox;
-import com.cfar.swim.worldwind.render.Obstacle;
-import com.cfar.swim.worldwind.render.ThresholdRenderable;
-import com.cfar.swim.worldwind.render.TimedRenderable;
 
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Renderable;
 
 /**
- * Realizes desirability zone.
+ * Realizes a desirability zone.
  * 
  * @author Henrique Ferreira
  *
  */
-public class DesirabilityZone extends ContinuumBox implements Environment {
+public class DesirabilityZone extends ContinuumBox implements Renderable {
 
 	/** the globe of this desirability zone */
 	private Globe globe = null;
-
-	/** the current time of this desirability zone */
-	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
-
-	/** the current accumulated active cost of this desirability zone */
-	// TODO Review usage of active cost
-	private double activeCost = 1d;
-
-	/** the threshold cost of this desirability zone */
-	private double thresholdCost = 0d;
 
 	/** the desirability of this desirability zone */
 	private double desirability = 0.5d;
@@ -86,38 +68,12 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the threshold cost of this desirability zone.
-	 * 
-	 * @return the threshold cost of this desirability zone
-	 * 
-	 * @see ThresholdRenderable#setThreshold(double)
-	 */
-	@Override
-	public double getThreshold() {
-		return this.thresholdCost;
-	}
-
-	/**
-	 * Sets the threshold cost of this desirability zone.
-	 * 
-	 * @param thresholdCost the threshold cost of this desirability zone
-	 * 
-	 * @see ThresholdRenderable#setThreshold(double)
-	 */
-	@Override
-	public void setThreshold(double thresholdCost) {
-		this.thresholdCost = thresholdCost;
-		this.updateVisibility();
-	}
-
-	/**
 	 * Sets the globe of this desirability zone.
 	 * 
 	 * @param globe the globe of this desirability zone
 	 * 
 	 * @see Environment#setGlobe(Globe)
 	 */
-	@Override
 	public void setGlobe(Globe globe) {
 		this.globe = globe;
 	}
@@ -129,45 +85,22 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	 * 
 	 * @see Environment#getGlobe()
 	 */
-	@Override
 	public Globe getGlobe() {
 		return this.globe;
 	}
 
 	/**
-	 * Gets the current time of this desirability zone.
+	 * Gets the desirability value of this desirability zone.
 	 * 
-	 * @return the current time of this desirability zone
-	 * 
-	 * @see TimedRenderable#getTime()
-	 */
-	@Override
-	public ZonedDateTime getTime() {
-		return this.time;
-	}
-
-	/**
-	 * Sets the current time of this desirability zone.
-	 * 
-	 * @param time the current time of this desirability zone
-	 * 
-	 * @see TimedRenderable#setTime(ZonedDateTime)
-	 */
-	// TODO: Review meaning, not clear
-	@Override
-	public void setTime(ZonedDateTime time) {
-		this.time = time;
-		this.update();
-	}
-
-	/**
-	 * @return the desirability
+	 * @return the desirability value of this desirability zone
 	 */
 	public double getDesirability() {
 		return desirability;
 	}
 
 	/**
+	 * Sets the desirability value of this desirability zone.
+	 * 
 	 * @param desirability the desirability to set
 	 */
 	public void setDesirability(double desirability) {
@@ -175,48 +108,10 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not this desirability zone contains a position.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return true if this desirability zone contains the position, false
-	 *         otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see Environment#contains(Position)
-	 * @see Box#contains(Vec4)
-	 */
-	@Override
-	public boolean contains(Position position) {
-		if (null != this.globe) {
-			return super.contains(this.globe.computePointFromPosition(position));
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
 	 * Updates this desirability zone.
 	 */
 	protected void update() {
-		this.updateActiveCost();
 		this.updateAppearance();
-		this.updateVisibility();
-	}
-
-	/**
-	 * Updates the accumulated active cost of this desirability zone.
-	 */
-	protected void updateActiveCost() {
-		this.activeCost = 1d;
-	}
-
-	/**
-	 * Updates the visibility of this desirability zone.
-	 */
-	protected void updateVisibility() {
-		this.setVisible(this.activeCost > this.thresholdCost);
 	}
 
 	/**
@@ -244,361 +139,23 @@ public class DesirabilityZone extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * @param position
-	 * @return
+	 * Gets the desirability cost of a line formed by two given positions, checking
+	 * if it intersects this desirability zone.
 	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#isWaypoint(gov.nasa.worldwind.geom.Position)
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * 
+	 * @return the desirability value of this desirability zone, if the line
+	 *         intersects the zone, 0d otherwise
 	 */
-	@Override
-	public boolean isWaypoint(Position position) {
-		// TODO Auto-generated method stub
-		return false;
-	}
+	/*
+	public double getDesirabilityCost(Position position1, Position position2) {
+		Vec4 point1 = this.getGlobe().computePointFromPosition(position1);
+		Vec4 point2 = this.getGlobe().computePointFromPosition(position2);
 
-	/**
-	 * @param position
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getAdjacentWaypoints(gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public Set<Position> getAdjacentWaypoints(Position position) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param position
-	 * @param waypoint
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#isAdjacentWaypoint(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getCenterPosition()
-	 */
-	@Override
-	public Position getCenterPosition() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getNeighbors()
-	 */
-	@Override
-	public Set<? extends Environment> getNeighbors() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param neighbor
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#areNeighbors(com.cfar.swim.worldwind.planning.Environment)
-	 */
-	@Override
-	public boolean areNeighbors(Environment neighbor) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * @param position
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getNeighbors(gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public Set<Position> getNeighbors(Position position) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param position
-	 * @param neighbor
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#areNeighbors(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public boolean areNeighbors(Position position, Position neighbor) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#isRefined()
-	 */
-	@Override
-	public boolean isRefined() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getRefinements()
-	 */
-	@Override
-	public Set<? extends Environment> getRefinements() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param density
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#refine(int)
-	 */
-	@Override
-	public void refine(int density) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * 
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#coarsen()
-	 */
-	@Override
-	public void coarsen() {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * @param obstacle
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#embed(com.cfar.swim.worldwind.render.Obstacle)
-	 */
-	@Override
-	public boolean embed(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * @param obstacle
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#unembed(com.cfar.swim.worldwind.render.Obstacle)
-	 */
-	@Override
-	public boolean unembed(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * 
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#unembedAll()
-	 */
-	@Override
-	public void unembedAll() {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * @param obstacle
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#isEmbedded(com.cfar.swim.worldwind.render.Obstacle)
-	 */
-	@Override
-	public boolean isEmbedded(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	/**
-	 * @param obstacle
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#refresh(com.cfar.swim.worldwind.render.Obstacle)
-	 */
-	@Override
-	public void refresh(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * @param position1
-	 * @param position2
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getDistance(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public double getDistance(Position position1, Position position2) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/**
-	 * @param position1
-	 * @param position2
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getNormalizedDistance(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position)
-	 */
-	@Override
-	public double getNormalizedDistance(Position position1, Position position2) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/**
-	 * @param costInterval
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#addCostInterval(com.cfar.swim.worldwind.planning.CostInterval)
-	 */
-	@Override
-	public void addCostInterval(CostInterval costInterval) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * @param costInterval
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#removeCostInterval(com.cfar.swim.worldwind.planning.CostInterval)
-	 */
-	@Override
-	public void removeCostInterval(CostInterval costInterval) {
-		// TODO Auto-generated method stub
-
-	}
-
-	/**
-	 * @param time
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getCostIntervals(java.time.ZonedDateTime)
-	 */
-	@Override
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param start
-	 * @param end
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getCostIntervals(java.time.ZonedDateTime,
-	 *      java.time.ZonedDateTime)
-	 */
-	@Override
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	/**
-	 * @param start
-	 * @param end
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getCost(java.time.ZonedDateTime,
-	 *      java.time.ZonedDateTime)
-	 */
-	@Override
-	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/**
-	 * @param origin
-	 * @param destination
-	 * @param start
-	 * @param end
-	 * @param costPolicy
-	 * @param riskPolicy
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getStepCost(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime,
-	 *      java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy,
-	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
-	 */
-	@Override
-	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	public double getDesirabilityCost(Edge edge) {
-		if (this.intersects(edge.getLine())) {
+		if (this.intersects(new Line(point1, point2))) {
 			return this.desirability;
 		}
-		return 0.5;
-	}
-
-	/**
-	 * @param origin
-	 * @param destination
-	 * @param start
-	 * @param end
-	 * @param costPolicy
-	 * @param riskPolicy
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(gov.nasa.worldwind.geom.Position,
-	 *      gov.nasa.worldwind.geom.Position, java.time.ZonedDateTime,
-	 *      java.time.ZonedDateTime, com.cfar.swim.worldwind.planning.CostPolicy,
-	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
-	 */
-	@Override
-	public double getLegCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/**
-	 * @param destination
-	 * @param start
-	 * @param end
-	 * @param costPolicy
-	 * @param riskPolicy
-	 * @return
-	 * 
-	 * @see com.cfar.swim.worldwind.planning.Environment#getLegCost(com.cfar.swim.worldwind.planning.Environment,
-	 *      java.time.ZonedDateTime, java.time.ZonedDateTime,
-	 *      com.cfar.swim.worldwind.planning.CostPolicy,
-	 *      com.cfar.swim.worldwind.planning.RiskPolicy)
-	 */
-	@Override
-	public double getLegCost(Environment destination, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
-			RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
+		return 0d;
+	}*/
 }

@@ -399,6 +399,13 @@ public class BasicPRM extends AbstractPlanner {
 						listener.reviseSlavePlans(trajectories);
 					}
 				}
+
+				@Override
+				public void reviseParameters(ArrayList<Double> parameters) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseParameters(parameters);
+					}
+				}
 			});
 			trajectory = aStar.plan(origin, destination, etd);
 			break;
@@ -432,11 +439,31 @@ public class BasicPRM extends AbstractPlanner {
 						listener.reviseSlavePlans(trajectories);
 					}
 				}
+
+				@Override
+				public void reviseParameters(ArrayList<Double> parameters) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseParameters(parameters);
+					}
+				}
 			});
+			ArrayList<Double> parameters = new ArrayList<Double>();
+			this.reviseParameters(parameters);
+			while (parameters.isEmpty()) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+			araStar.setMinimumQuality(parameters.get(0));
+			araStar.setMaximumQuality(parameters.get(1));
+			araStar.setQualityImprovement(parameters.get(2));
 			trajectory = araStar.plan(origin, destination, etd);
 			break;
-		// TODO: AD* isn't implemented yet
 
+		// TODO: AD* isn't implemented yet
 		// case AD:
 		// ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(),
 		// this.getEnvironment());
@@ -516,6 +543,13 @@ public class BasicPRM extends AbstractPlanner {
 						listener.reviseSlavePlans(trajectories);
 					}
 				}
+
+				@Override
+				public void reviseParameters(ArrayList<Double> parameters) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseParameters(parameters);
+					}
+				}
 			});
 			trajectory = aStar.plan(origin, destination, waypoints, etd);
 			break;
@@ -545,6 +579,13 @@ public class BasicPRM extends AbstractPlanner {
 				public void reviseSlavePlans(ArrayList<Trajectory> trajectories) {
 					for (PlanRevisionListener listener : planRevisionListeners) {
 						listener.reviseSlavePlans(trajectories);
+					}
+				}
+
+				@Override
+				public void reviseParameters(ArrayList<Double> parameters) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseParameters(parameters);
 					}
 				}
 			});
@@ -612,8 +653,8 @@ public class BasicPRM extends AbstractPlanner {
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
 		}
-
 		Trajectory trajectory = this.findPath(origin, destination, etd, this.planner);
+
 		return trajectory;
 	}
 
