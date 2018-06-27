@@ -1114,12 +1114,19 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * @param focusB the focus pointA in world coordinates
 	 * @param distance double the length for the major axis of the ellipsoid
 	 * 
+	 * @throws IllegalStateException if distance between foci is larger than bound
+	 * 
 	 * @return the pseudo-random sampled position
 	 */
 	public Position samplePositionEllipsoide(Position focusA, Position focusB, double distance) {
 		// Test if the box is more restrictive than the ellipsoid "diameter"
 		if (distance > this.getDiameter())
 			return sampleRandomPosition();
+
+		if (distance < this.getDistance(focusA, focusB)) {
+			System.out.println("Distance between foci larger than bound!!!");
+			throw new IllegalStateException("Distance between foci larger than bound");
+		}
 
 		Position positionRand;
 
@@ -1134,8 +1141,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		do {
 			// Sample random point inside a unit sphere
 			double r = 0d + new Random().nextDouble() * 1d;
-			r = Math.sqrt(r); // to ensure uniform distribution in an ellipsis since area is proportional to
-							  // r^2
+			r = Math.sqrt(r); // to ensure uniform distribution in ellipsis since area is proportional to r^2
 			double theta = 0d + new Random().nextDouble() * Math.PI;
 			double phi = 0d + new Random().nextDouble() * 2 * Math.PI;
 			Vec4 pointRand = CoordinateTransformations.polar2cartesian(phi, theta, r);
