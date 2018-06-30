@@ -71,22 +71,6 @@ import gov.nasa.worldwind.render.Path;
  */
 public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 
-	private ArrayList<DesirabilityZone> desirabilityZones = new ArrayList<DesirabilityZone>();
-
-	/**
-	 * @return the desirabilityEnvironments
-	 */
-	public ArrayList<DesirabilityZone> getDesirabilityZones() {
-		return desirabilityZones;
-	}
-
-	/**
-	 * @param desirabilityEnvironments the desirabilityEnvironments to set
-	 */
-	public void setDesirabilityZones(ArrayList<DesirabilityZone> desirabilityZones) {
-		this.desirabilityZones = desirabilityZones;
-	}
-
 	/** the maximum number of neighbors a waypoint can be connected to */
 	private final int MAX_NEIGHBORS;
 
@@ -134,6 +118,12 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 
 	/** the cost of the best path for each iteration of the algorithm */
 	private ArrayList<Double> pathCost = new ArrayList<>();
+
+	/** the desirability zones built by the user */
+	private ArrayList<DesirabilityZone> desirabilityZones = new ArrayList<DesirabilityZone>();
+
+	/** the parameter lambda that weights the desirability influence on the cost */
+	private double lambda;
 
 	/**
 	 * Constructs a FADPRM planner for a specified aircraft and environment using
@@ -536,6 +526,44 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	}
 
 	/**
+	 * Gets the desirability zones built by the user that affect the environment of
+	 * this FADPRM planner.
+	 * 
+	 * @return the desirabilityZones of this planner
+	 */
+	public ArrayList<DesirabilityZone> getDesirabilityZones() {
+		return desirabilityZones;
+	}
+
+	/**
+	 * Sets the desirability zones built by the user that affect the environment of
+	 * this FADPRM planner.
+	 * 
+	 * @param desirabilityZones the desirabilityZones to set
+	 */
+	public void setDesirabilityZones(ArrayList<DesirabilityZone> desirabilityZones) {
+		this.desirabilityZones = desirabilityZones;
+	}
+
+	/**
+	 * Gets the parameter lambda of this FADPRM planner.
+	 * 
+	 * @return the lambda the parameter lambda of this FADPRM planner
+	 */
+	public double getLambda() {
+		return lambda;
+	}
+
+	/**
+	 * Sets the parameter lambda of this FADPRM planner.
+	 * 
+	 * @param lambda the parameter lambda to set
+	 */
+	public void setLambda(double lambda) {
+		this.lambda = lambda;
+	}
+
+	/**
 	 * Connects a plan of specified FADPRM waypoints.
 	 * 
 	 * @param waypoint the last FADPRM waypoint of a computed plan
@@ -548,11 +576,11 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 
 		while (!this.getStart().equals(waypoint)) {
 			this.addFirstWaypoint(waypoint.clone());
-			if (waypoint.getPai() == null) {
+			if (waypoint.getParent() == null) {
 				System.out.println("NULL");
 			}
-			waypoint = waypoint.getPai();
-			System.out.println(waypoint);
+			waypoint = waypoint.getParent();
+			// System.out.println(waypoint);
 			// System.out.println(waypoint + " " + waypoint.getDesirability() + " " +
 			// waypoint.getPathDD());
 			if (null != waypoint) {
@@ -686,17 +714,14 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	protected FADPRMWaypoint expand(FADPRMWaypoint waypoint) {
 		Position newPosition = this.sampleBiased(BIAS, waypoint);
 		FADPRMWaypoint newWaypoint = this.createWaypoint(newPosition);
+		this.updateWaypoint(newWaypoint);
+
+		newWaypoint.setDistanceToGoal(this.getEnvironment().getNormalizedDistance(newWaypoint, this.getGoal()));
 
 		this.createEdge(waypoint, newWaypoint);
+		waypoint.addNeighbor(newWaypoint);
+		newWaypoint.addNeighbor(waypoint);
 
-		waypoint.addSuccessor(newWaypoint);
-		newWaypoint.addSuccessor(waypoint);
-		this.setWaypointDesirability(newWaypoint);
-		this.updateWaypoint(newWaypoint);
-		
-		this.computeCost(waypoint, newWaypoint);
-
-		newWaypoint.setCTGoal(this.getEnvironment().getNormalizedDistance(newWaypoint, this.getGoal()));
 		int numConnectedNeighbor = 1;
 		this.getEnvironment().sortNearest(newWaypoint);
 
@@ -706,11 +731,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			if (this.areConnectable(neighbor, newWaypoint, numConnectedNeighbor)) {
 				numConnectedNeighbor++;
 				this.createEdge(neighbor, newWaypoint);
-//				if(!this.isExpanded(neighbor)) {
-//					this.computeCost(neighbor, newWaypoint);
-//				}
-				neighbor.addSuccessor(newWaypoint);
-				newWaypoint.addSuccessor(neighbor);
+				neighbor.addNeighbor(newWaypoint);
+				newWaypoint.addNeighbor(neighbor);
 			}
 		}
 		return newWaypoint;
@@ -746,6 +768,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		newWaypoint.setSearch(0);
 		newWaypoint.setBeta(this.getInflation());
 		newWaypoint.setDensity(0);
+		newWaypoint.setLambda(this.getLambda());
+		this.setWaypointDesirability(newWaypoint);
 		this.getWaypointList().add(newWaypoint);
 		return newWaypoint;
 	}
@@ -783,20 +807,15 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		double cost = this.getEnvironment().getStepCost(source, target, source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy());
 
-		double pathDD = (source.getDesirability() + target.getDesirability()) / 2;
-		double realCost = cost * (-2*pathDD+2);
-//		if (pathDD / (1 + target.getLambda() * (source.getCost() + cost)) > target.getG()) {
-//			target.setPathDD(pathDD);
-//			target.setCost(source.getCost() + cost);
-//			target.setEto(end);
-//			target.setPai(source);
-//		}
-		if (0.5 / (1 + target.getLambda() * (source.getCost() + realCost)) > target.getG()) {
-		target.setPathDD(0.5);
-		target.setCost(source.getCost() + realCost);
-		target.setEto(end);
-		target.setPai(source);
-	}
+		double desirabilityAverage = (source.getDesirability() + target.getDesirability()) / 2;
+		double costMultiplier = 1.5 * target.getLambda() - (target.getLambda() / desirabilityAverage)
+				+ (1 / desirabilityAverage) - 1;
+		double realCost = cost * costMultiplier;
+		if (1 / (1 + (source.getCost() + realCost)) > target.getG()) {
+			target.setCost(source.getCost() + realCost);
+			target.setEto(end);
+			target.setParent(source);
+		}
 		return;
 
 	}
@@ -895,7 +914,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			this.correctListsW(affectedWaypoints);
 			for (FADPRMWaypoint waypoint : this.getWaypointList()) {
 				waypoint.getNeighbors().removeAll(affectedWaypoints);
-				if (affectedWaypoints.contains(waypoint.getPai())) {
+				if (affectedWaypoints.contains(waypoint.getParent())) {
 					waypoint.setCost(0d);
 				}
 			}
@@ -980,13 +999,13 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			// TODO: make clones
 			for (FADPRMWaypoint waypoint : this.getWaypointList()) {
 				FADPRMWaypoint newWaypoint = waypoint.clone();
-				// newWaypoint.setPai(waypoint.getPai());
+				// newWaypoint.setPai(waypoint.getParent());
 				this.backups.get(this.backupIndex).add(newWaypoint);
 			}
 
 			for (FADPRMWaypoint wpt : this.backups.get(this.backupIndex)) {
 				FADPRMWaypoint wptMirror = this.getWaypointList().stream().filter(s -> s.equals(wpt)).findFirst().get();
-				FADPRMWaypoint parentMirror = wptMirror.getPai();
+				FADPRMWaypoint parentMirror = wptMirror.getParent();
 				FADPRMWaypoint parent;
 				if (parentMirror == null) {
 					parent = null;
@@ -994,7 +1013,7 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 					parent = this.backups.get(this.backupIndex).stream().filter(s -> s.equals(parentMirror)).findFirst()
 							.get();
 				}
-				wpt.setPai(parent);
+				wpt.setParent(parent);
 			}
 
 			this.pathCosts.get(this.backupIndex).addAll(this.pathCost);
@@ -1032,13 +1051,11 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 */
 	protected void updateWaypoint(FADPRMWaypoint waypoint) {
 		if (waypoint.getSearch() != 0 && waypoint.getSearch() != this.getCounter()) {
-			if (waypoint.getCost() + waypoint.getCTGoal() < pathCost.get(waypoint.getSearch())) {
-				waypoint.setCTGoal(pathCost.get(waypoint.getSearch()) - waypoint.getCost());
+			if (waypoint.getCost() + waypoint.getDistanceToGoal() < pathCost.get(waypoint.getSearch())) {
+				waypoint.setDistanceToGoal(pathCost.get(waypoint.getSearch()) - waypoint.getCost());
 			}
 		} else if (waypoint.getSearch() == 0) {
-			// waypoint.setG(0d);
 			waypoint.setCost(Double.POSITIVE_INFINITY);
-			// waypoint.setCost(0d);
 		}
 		waypoint.setSearch(counter);
 	}
@@ -1054,21 +1071,15 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			return;
 		}
 		for (FADPRMWaypoint waypoint : source.getNeighbors()) {
-			if(this.isExpanded(waypoint)) {
-				continue;
-			}
 			if (waypoint.equals(this.getStart()))
 				continue;
 			if (!waypoint.equals(this.getGoal()))
 				this.updateWaypoint(waypoint);
-			
-			FADPRMWaypoint oldParent = waypoint.getPai();
+
+			FADPRMWaypoint oldParent = waypoint.getParent();
 			double g = waypoint.getG();
-			
+
 			for (FADPRMWaypoint wptaux : waypoint.getNeighbors()) {
-				if(this.isExpanded(wptaux)) {
-					continue;
-				}
 				this.computeCost(wptaux, waypoint);
 			}
 			if (!this.isExpanded(waypoint)) {
@@ -1085,13 +1096,13 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 
 	public boolean parentChanged(FADPRMWaypoint oldParent, FADPRMWaypoint waypoint) {
 		if (oldParent == null) {
-			if (waypoint.getPai() != null)
+			if (waypoint.getParent() != null)
 				return true;
 			else {
 				return false;
 			}
 		} else {
-			if (oldParent.equals(waypoint.getPai())) {
+			if (oldParent.equals(waypoint.getParent())) {
 				return false;
 			} else {
 				return true;
@@ -1149,8 +1160,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 */
 	protected void computeOrImprovePath() {
 		while (this.canExpand()) {
+			// System.out.print("a");
 			FADPRMWaypoint source = this.pollExpandable();
-			// System.out.print("a ");
 			if (source.equals(this.getGoal())) {
 				System.out.print("is goal ");
 				this.connectPlan(source);
@@ -1161,8 +1172,8 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			FADPRMWaypoint newSuccessor;
 			if (this.connectToGoal(source)) {
 				newSuccessor = this.getGoal();
-				this.getGoal().addSuccessor(source);
-				source.addSuccessor(this.getGoal());
+				this.getGoal().addNeighbor(source);
+				source.addNeighbor(this.getGoal());
 			} else {
 				newSuccessor = this.expand(source);
 			}
@@ -1252,7 +1263,6 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 * @return the planned trajectory from the origin to the destination with the
 	 *         estimated time of departure
 	 */
-	@SuppressWarnings("unchecked")
 	protected Trajectory compute(Position origin, Position destination, ZonedDateTime etd) {
 		Trajectory trajectory = null;
 
@@ -1262,53 +1272,11 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			this.incrementCounter();
 			this.addPathCost();
 			FADPRMWaypoint lastWpt = (FADPRMWaypoint) Iterables.getLast(trajectory.getWaypoints());
-			// if(trajectory.getDistance()/this.getEnvironment().getDiameter()<
-			// this.getGoal().getCost()) {
-			// this.getGoal().setCost(trajectory.getDistance()/this.getEnvironment().getDiameter());
-			// }
-			// System.out.println("GOAL DENSITY " + this.getGoal().getDensity() + " GOAL
-			// SUcc "
-			// + this.getGoal().getNeighbors().size());
-
 			System.out.println(
 					"LAST WPT: G " + lastWpt.getG() + " Cost " + lastWpt.getCost() + " Distance "
 							+ trajectory.getDistance());
-			System.out.println("Distance " + trajectory.getDistance());
-			// System.out.println(
-			// "GOAL : G " + this.getGoal().getG() + " Cost "
-			// + this.getGoal().getCost() * this.getEnvironment().getDiameter());
-			// if (this.getGoal().getCost() * this.getEnvironment().getDiameter() !=
-			// trajectory.getDistance()) {
-			// double distance = 0;
-			// FADPRMWaypoint waypointAux = null;
-			// FADPRMWaypoint waypointMain;
-			// for (FADPRMWaypoint waypoint : (Iterable<FADPRMWaypoint>)
-			// trajectory.getWaypoints()) {
-			// waypointMain = waypoint;
-			// distance = distance + waypoint.getDtg();
-			// System.out.println("DTG: " + waypoint.getDtg() + " DISTANCE: " + distance + "
-			// COST "
-			// + waypoint.getCost());
-			// if(waypointAux!=null) {
-			// System.out.println("STEp cost "+
-			// this.getEnvironment().getStepCost(waypointAux, waypointMain,
-			// waypointAux.getEto(), waypointMain.getEto(), this.getCostPolicy(),
-			// this.getRiskPolicy()));
-			// }
-			// waypointAux = waypointMain;
-			// }
-			// }
-			// if (this.getGoal().getCost() * this.getEnvironment().getDiameter() >
-			// trajectory.getDistance()) {
-			// this.getGoal().setCost(trajectory.getDistance() /
-			// this.getEnvironment().getDiameter());
-			// }
 			System.out.println();
 		}
-		// for (FADPRMWaypoint waypoint : (Iterable<FADPRMWaypoint>)
-		// trajectory.getWaypoints()) {
-		// System.out.print(waypoint.getPathDD() + " ");
-		// }
 		return trajectory;
 	}
 
@@ -1334,18 +1302,19 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		this.clearWaypoints();
 
 		this.setStart(this.createWaypoint(origin));
-		this.getStart().setEto(etd);
 		this.setWaypointDesirability(this.getStart());
 
 		this.setGoal(this.createWaypoint(destination));
 		this.setWaypointDesirability(this.getGoal());
 
-		this.updateWaypoint(this.getStart());
 		this.updateWaypoint(this.getGoal());
+		this.updateWaypoint(this.getStart());
+
 		this.getStart().setCost(0d);
-		double distance = this.getEnvironment().getNormalizedDistance(this.getStart(), this.getGoal());
-		this.getStart().setCTGoal(distance);
-		this.getGoal().setCTGoal(0d);
+		this.getStart().setDistanceToGoal(this.getEnvironment().getNormalizedDistance(this.getStart(), this.getGoal()));
+		this.getStart().setEto(etd);
+
+		this.getGoal().setDistanceToGoal(0d);
 
 		this.addExpandable(this.getStart());
 	}
@@ -1358,47 +1327,19 @@ public class FADPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	public boolean updateStart() {
 		this.clearExpandables();
 		FADPRMWaypoint oldStart = this.getStart();
-		HashSet<FADPRMWaypoint> conflictWaypoints = new HashSet<FADPRMWaypoint>();
-		conflictWaypoints.add(oldStart);
-		this.correctListsW(conflictWaypoints);
-
-		Set<FADPRMWaypoint> oldSuccessors = oldStart.getNeighbors();
-		Set<FADPRMWaypoint> oldParents = new HashSet<FADPRMWaypoint>();
 
 		for (FADPRMWaypoint waypoint : this.getWaypointList()) {
-			if (waypoint.getPai() != null) {
-				if (waypoint.getPai().equals(oldStart)) {
-					oldParents.add(waypoint);
-				}
-			}
-			waypoint.getNeighbors().remove(oldStart);
-		}
-		for (FADPRMWaypoint waypoint : this.getWaypointList()) {
-			waypoint.setCost(0d);
-			waypoint.setPai(null);
+			waypoint.setCost(Double.POSITIVE_INFINITY);
+			waypoint.setParent(null);
 			if (waypoint.equals(this.plan.get(1))) {
 				waypoint.setCost(0d);
-				waypoint.setCost(waypoint.getPathDD());
+				waypoint.setParent(null);
 				this.setStart(waypoint);
 			}
 		}
-		for (FADPRMWaypoint succ : oldSuccessors) {
-			if (!succ.equals(this.getStart()))
-				this.getStart().addSuccessor(succ);
-		}
-		for (FADPRMWaypoint par : oldParents) {
-			if (!par.equals(this.getStart())) {
-				par.setCost(0d);
-				this.createEdge(this.getStart(), par);
-				this.computeCost(this.getStart(), par);
-			}
-		}
-		for (FADPRMWaypoint wpt : this.getStart().getNeighbors()) {
-			this.createEdge(this.getStart(), wpt);
-			this.computeCost(this.getStart(), wpt);
-		}
-		this.getGoal().setCost(0d);
-		this.getGoal().setPai(null);
+		this.getGoal().setCost(Double.POSITIVE_INFINITY);
+		this.getGoal().setParent(null);
+
 		return this.getStart().equals(oldStart);
 
 	}

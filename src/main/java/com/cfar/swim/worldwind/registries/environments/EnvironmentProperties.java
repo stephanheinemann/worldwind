@@ -53,6 +53,7 @@ public abstract class EnvironmentProperties implements Properties<Environment> {
 	protected EnvironmentProperties() {
 		this.floor = 0d;
 		this.ceiling = 100d;
+		
 	}
 	
 	/**

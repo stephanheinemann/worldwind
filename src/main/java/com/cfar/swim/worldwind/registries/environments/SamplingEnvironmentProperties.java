@@ -67,5 +67,5 @@ public class SamplingEnvironmentProperties extends EnvironmentProperties {
 	public void setResolution(double resolution) {
 		this.resolution = resolution;
 	}
-
+	
 }

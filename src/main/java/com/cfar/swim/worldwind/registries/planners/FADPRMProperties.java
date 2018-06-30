@@ -54,6 +54,9 @@ public class FADPRMProperties extends AbstractPlannerProperties implements Anyti
 
 	/** the bias of the sampling algorithm towards goal */
 	private int bias = 5;
+	
+	/** the parameter lambda that weights the desirability influence on the cost */
+	private double lambda = 0.5;
 
 	/**
 	 * Constructs a new FAD PRM planner properties bean.
@@ -215,5 +218,24 @@ public class FADPRMProperties extends AbstractPlannerProperties implements Anyti
 	 */
 	public void setBias(int bias) {
 		this.bias = bias;
+	}
+	
+
+	/**
+	 * Gets the parameter lambda of this FAD PRM properties bean.
+	 * 
+	 * @return the lambda the parameter lambda of this FAD PRM properties
+	 */
+	public double getLambda() {
+		return lambda;
+	}
+
+	/**
+	 * Sets the parameter lambda of this FAD PRM properties bean.
+	 * 
+	 * @param lambda the parameter lambda to set
+	 */
+	public void setLambda(double lambda) {
+		this.lambda = lambda;
 	}
 }

@@ -222,6 +222,7 @@ public class PlannerFactory implements Factory<Planner> {
 			((FADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((FADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((FADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			((FADPRMPlanner) planner).setLambda(properties.getLambda());
 			((FADPRMPlanner) planner).setDesirabilityZones(scenario.getDesirabilityZones());
 		}
 		// TODO: implement more planners

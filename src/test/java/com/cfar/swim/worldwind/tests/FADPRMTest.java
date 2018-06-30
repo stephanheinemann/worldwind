@@ -100,7 +100,7 @@ public class FADPRMTest {
         	samplingEnv = new SamplingEnvironment(new Box(boxNASA));
     		samplingEnv.setGlobe(globe);
         	plannerFADPRM = new FADPRMPlanner(iris, samplingEnv, 20, 250, 5);
-        	plannerFADPRM.setDesirabilityZones(desirabilityZones);
+//        	plannerFADPRM.setDesirabilityZones(desirabilityZones);
         	plannerFADPRM.plan(origin, destination, etd);
         }
         
