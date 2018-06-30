@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.registries;
 
+import com.cfar.swim.worldwind.ai.PlannerFamily;
 import com.cfar.swim.worldwind.util.Customizable;
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -108,6 +109,9 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the properties bean of this specification */
 	private Properties<Registree> properties;
 	
+	/** TODO */
+	private PlannerFamily plannerFamily;
+	
 	/**
 	 * Constructs a new specification with an identifier.
 	 * 
@@ -126,6 +130,19 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	public Specification(String id, Properties<Registree> properties) {
 		this.id = id;
 		this.properties = properties;
+	}
+	
+	/**
+	 * TODO
+	 * Constructs a new Specification with an identifier and properties bean. 
+	 * 
+	 * @param id the identifier of this specification
+	 * @param properties the properties bean of this specification
+	 */
+	public Specification(String id, Properties<Registree> properties, PlannerFamily family) {
+		this.id = id;
+		this.properties = properties;
+		this.plannerFamily = family;
 	}
 	
 	/**
@@ -162,6 +179,20 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	@Override
 	public void setProperties(Properties<Registree> properties) {
 		this.properties = properties;
+	}
+
+	/**
+	 * @return the plannerFamily
+	 */
+	public PlannerFamily getPlannerFamily() {
+		return plannerFamily;
+	}
+
+	/**
+	 * @param plannerFamily the plannerFamily to set
+	 */
+	public void setPlannerFamily(PlannerFamily plannerFamily) {
+		this.plannerFamily = plannerFamily;
 	}
 
 	/**

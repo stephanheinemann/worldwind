@@ -47,6 +47,9 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 	/** the risk policy of this planner properties bean */
 	RiskPolicy riskPolicy;
 	
+	/**	the description of this planner properties bean */
+	String description = "Description not yet available.";
+	
 	/**
 	 * Constructs a new planner properties bean using default cost and risk
 	 * policy property values.
@@ -116,6 +119,26 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 		this.riskPolicy = riskPolicy;
 	}
 	
+	/**
+	 * Gets the description of this planner properties bean.
+	 * 
+	 * @return the description of this planner properties bean
+	 */
+	@Override
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * Sets the description of this planner properties bean.
+	 * 
+	 * @param description the description of this planner properties bean
+	 */
+	@Override
+	public void setDescription(String description) {
+		this.description = description;
+	}
+
 	/**
 	 * Clones this planner properties bean.
 	 * 

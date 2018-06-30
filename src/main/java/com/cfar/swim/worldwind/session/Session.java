@@ -35,8 +35,10 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.Planner;
+import com.cfar.swim.worldwind.ai.PlannerFamily;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -177,17 +179,17 @@ public class Session implements Identifiable {
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		
 		this.plannerRegistry.clearSpecifications();
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAS_ID, new ForwardAStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, new ARAStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRT_ID, new RRTreeProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_HRRT_ID, new HRRTreeProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARRT_ID, new ARRTreeProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DRRT_ID, new DRRTreeProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, new ADRRTreeProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_BASICPRM_ID, new BasicPRMProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_LAZYPRM_ID, new LazyPRMProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FADPRM_ID, new FADPRMProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAS_ID, new ForwardAStarProperties(), PlannerFamily.AStar));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties(), PlannerFamily.AStar));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, new ARAStarProperties(), PlannerFamily.AStar));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRT_ID, new RRTreeProperties(), PlannerFamily.RRT));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_HRRT_ID, new HRRTreeProperties(), PlannerFamily.RRT));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARRT_ID, new ARRTreeProperties(), PlannerFamily.RRT));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DRRT_ID, new DRRTreeProperties(), PlannerFamily.RRT));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, new ADRRTreeProperties(), PlannerFamily.RRT));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_BASICPRM_ID, new BasicPRMProperties(), PlannerFamily.PRM));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_LAZYPRM_ID, new LazyPRMProperties(), PlannerFamily.PRM));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FADPRM_ID, new FADPRMProperties(), PlannerFamily.PRM));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		this.datalinkRegistry.clearSpecifications();
@@ -200,7 +202,8 @@ public class Session implements Identifiable {
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_SAMPLING_ID));
-		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_RRT_ID));
+		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_DRRT_ID));
+		this.setup.setPlannerFamily(this.setup.getPlannerSpecification().getPlannerFamily());
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_DRONEKIT));
 	}
 	
@@ -485,6 +488,14 @@ public class Session implements Identifiable {
 		}
 		
 		return plannerSpec;
+	}
+	
+	public Set<Specification<Planner>> getPlannerSpecifications(PlannerFamily family) {
+		
+		return this.plannerRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getPlannerFamily().equals(family))
+				.collect(Collectors.toSet());
 	}
 	
 	/**

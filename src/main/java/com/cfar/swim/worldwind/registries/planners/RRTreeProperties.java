@@ -40,7 +40,10 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  *
  */
 public class RRTreeProperties extends AbstractPlannerProperties {
-	
+
+	/** the description of this planner properties bean */
+	private final static String DESCRIPTION_RRT = "Rapidly-exploring Random Tree: Basic version of an RRT which grows a tree from a start to a goal positions by continuously sampling random points from the environment. It does not take the cost of each position into account.";
+
 	/** the maximum number of sampling iterations */
 	private int maxIter = 3_000;
 
@@ -58,8 +61,9 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 */
 	public RRTreeProperties() {
 		super();
+		this.setDescription(DESCRIPTION_RRT);
 	}
-	
+
 	/**
 	 * Constructs a new basic RRTree planner properties bean with specified cost and
 	 * risk policy property values.
@@ -72,19 +76,22 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	public RRTreeProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
 	}
-	
+
 	/**
 	 * Constructs a new basic RRTree planner properties bean with specified cost and
-	 * risk policy property values as well as specified maximum number of iterations and expansion strategy
+	 * risk policy property values as well as specified maximum number of iterations
+	 * and expansion strategy
 	 * 
-	 * @param costPolicy the cost policy of this basic RRTree planner properties bean
-	 * @param riskPolicy the risk policy of this basic RRTree planner properties bean
+	 * @param costPolicy the cost policy of this basic RRTree planner properties
+	 *            bean
+	 * @param riskPolicy the risk policy of this basic RRTree planner properties
+	 *            bean
 	 * @param strategy the expansion strategy for this planner
 	 * @param epsilon the maximum distance to extend a waypoint in the tree
 	 * @param bias the bias of the sampling algorithm towards goal
 	 * @param maxIter the maximum number of sampling iterations
 	 */
-	public RRTreeProperties( CostPolicy costPolicy, RiskPolicy riskPolicy,
+	public RRTreeProperties(CostPolicy costPolicy, RiskPolicy riskPolicy,
 			Strategy strategy, int maxIter, double epsilon, int bias) {
 		super(costPolicy, riskPolicy);
 		this.setStrategy(strategy);
@@ -166,7 +173,5 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	public void setBias(int bias) {
 		this.bias = bias;
 	}
-	
-	
 
 }

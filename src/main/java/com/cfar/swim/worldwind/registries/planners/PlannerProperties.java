@@ -80,4 +80,18 @@ public interface PlannerProperties extends Properties<Planner> {
 	@Override
 	public PlannerProperties clone();
 	
+	/**
+	 * Gets the description of this planner properties bean.
+	 * 
+	 * @return the description of this planner properties bean
+	 */
+	public String getDescription();
+	
+	/**
+	 * Sets the description of this planner properties bean.
+	 * 
+	 * @param description the description of this planner properties bean
+	 */
+	public void setDescription(String description);
+	
 }

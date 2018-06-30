@@ -27,54 +27,32 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
-
-import java.beans.BeanDescriptor;
-import java.beans.IntrospectionException;
-import java.beans.PropertyDescriptor;
+package com.cfar.swim.worldwind.ai;
 
 /**
  * @author Manuel Rosa
  *
  */
-public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo {
+public enum PlannerFamily {
 
-	private final static Class<RRTreeProperties> beanClass = RRTreeProperties.class;
+	AStar ("A*"), PRM ("PRM"), RRT ("RRT");
 	
-	protected final static String CATEGORY_SAMPLING = "Sampling Parameters";
-
-	@Override
-	public PropertyDescriptor[] getPropertyDescriptors() {
-		
-		try {
-			PropertyDescriptor maxIter = this.createProperty(beanClass, "maxIter",
-					"Max Iterations",
-					"the maximum number of sampling iterations",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor strategy = this.createProperty(beanClass, "strategy",
-					"Strategy",
-					"the expansion strategy for the planner",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor epsilon = this.createProperty(beanClass, "epsilon",
-					"Epsilon (m)",
-					"the maximum distance to extend a waypoint in the tree",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor bias = this.createProperty(beanClass, "bias",
-					"Goal Bias (%)",
-					"the bias of the sampling algorithm towards goal",
-					CATEGORY_SAMPLING);
-			
-			PropertyDescriptor rvNew[] = {maxIter, strategy, epsilon, bias};
-			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
-			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
-
-			return rv;
-		} catch (IntrospectionException e) {
-			throw new Error(e.toString());
-		}
+	private final String name;
+	
+	private PlannerFamily(String name) {
+		this.name = name;
 	}
-
-	public BeanDescriptor getBeanDescriptor() {
-		return new BeanDescriptor(beanClass, null);
+	
+	public String toString() {
+		return this.name;
+	}
+	
+	public static PlannerFamily fromString(String name) {
+		for(PlannerFamily family : PlannerFamily.values()) {
+			if(family.toString().equals(name)) {
+				return family;
+			}
+		}
+		return null;
 	}
 }

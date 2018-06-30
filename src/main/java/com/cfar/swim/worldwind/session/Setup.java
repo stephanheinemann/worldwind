@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.session;
 
 import com.cfar.swim.worldwind.ai.Planner;
+import com.cfar.swim.worldwind.ai.PlannerFamily;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -50,6 +51,23 @@ public class Setup {
 	/** the environment specification of this setup */
 	Specification<Environment> environmentSpecification;
 	
+	/** the planner specification of this setup */
+	PlannerFamily plannerFamily;
+	
+	/**
+	 * @return the plannerFamily
+	 */
+	public PlannerFamily getPlannerFamily() {
+		return plannerFamily;
+	}
+
+	/**
+	 * @param plannerFamily the plannerFamily to set
+	 */
+	public void setPlannerFamily(PlannerFamily plannerFamily) {
+		this.plannerFamily = plannerFamily;
+	}
+
 	/** the planner specification of this setup */
 	Specification<Planner> plannerSpecification;
 	

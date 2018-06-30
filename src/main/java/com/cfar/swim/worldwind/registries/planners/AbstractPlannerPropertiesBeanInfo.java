@@ -33,6 +33,10 @@ import java.beans.BeanDescriptor;
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.beans.SimpleBeanInfo;
+import java.util.Arrays;
+import java.util.stream.Stream;
+
+import org.controlsfx.property.BeanProperty;
 
 /**
  * @author Manuel Rosa
@@ -41,18 +45,19 @@ import java.beans.SimpleBeanInfo;
 public class AbstractPlannerPropertiesBeanInfo extends SimpleBeanInfo {
 
 	private final static Class<RRTreeProperties> beanClass = RRTreeProperties.class;
+	protected final static String CATEGORY_POLICIES = "Mission Policies";
 
 	public PropertyDescriptor[] getPropertyDescriptors() {
 		try {
-			PropertyDescriptor costPolicy = new PropertyDescriptor("costPolicy", beanClass);
-			costPolicy.setShortDescription("the cost policy of this planner");
-			costPolicy.setDisplayName("Cost Policy");
-			costPolicy.setExpert(false);
-
-			PropertyDescriptor riskPolicy = new PropertyDescriptor("riskPolicy", beanClass);
-			riskPolicy.setShortDescription("the risk policy of this planner");
-			riskPolicy.setDisplayName("Risk Policy");
-			riskPolicy.setExpert(false);
+			PropertyDescriptor costPolicy = this.createProperty(beanClass, "costPolicy",
+					"Cost Policy",
+					"the cost policy of this planner",
+					CATEGORY_POLICIES);
+			
+			PropertyDescriptor riskPolicy = this.createProperty(beanClass, "riskPolicy",
+					"Risk Policy",
+					"the risk policy of this planner",
+					CATEGORY_POLICIES);
 
 			PropertyDescriptor rv[] = { costPolicy, riskPolicy };
 
@@ -60,6 +65,22 @@ public class AbstractPlannerPropertiesBeanInfo extends SimpleBeanInfo {
 		} catch (IntrospectionException e) {
 			throw new Error(e.toString());
 		}
+	}
+
+	public PropertyDescriptor createProperty(Class<?> beanClass, String propertyName, String displayName,
+			String description, String category) throws IntrospectionException {
+
+		PropertyDescriptor property = new PropertyDescriptor(propertyName, beanClass);
+		property.setDisplayName(displayName);
+		property.setShortDescription(description);
+		property.setValue(BeanProperty.CATEGORY_LABEL_KEY, category);
+
+		return property;
+	}
+	
+	public PropertyDescriptor[] addPropertyDescriptors(PropertyDescriptor[] rvOld, PropertyDescriptor[] rvNew) {
+		return Stream.concat(Arrays.stream(rvOld), Arrays.stream(rvNew))
+				.toArray(PropertyDescriptor[]::new);
 	}
 
 	public BeanDescriptor getBeanDescriptor() {
