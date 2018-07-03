@@ -37,44 +37,33 @@ import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.registries.Specification;
 
 /**
- * Realizes a setup for a session. A setup aggregates customized
- * specifications to be passed to factories.
+ * Realizes a setup for a session. A setup aggregates customized specifications
+ * to be passed to factories.
  * 
  * @author Stephan Heinemann
  *
  */
 public class Setup {
-	
+
 	/** the aircraft specification of this setup */
 	Specification<Aircraft> aircraftSpecification;
-	
+
 	/** the environment specification of this setup */
 	Specification<Environment> environmentSpecification;
-	
-	/** the planner specification of this setup */
-	PlannerFamily plannerFamily;
-	
-	/**
-	 * @return the plannerFamily
-	 */
-	public PlannerFamily getPlannerFamily() {
-		return plannerFamily;
-	}
 
-	/**
-	 * @param plannerFamily the plannerFamily to set
-	 */
-	public void setPlannerFamily(PlannerFamily plannerFamily) {
-		this.plannerFamily = plannerFamily;
-	}
+	/** the planner family of this setup */
+	PlannerFamily plannerFamily;
 
 	/** the planner specification of this setup */
 	Specification<Planner> plannerSpecification;
-	
+
 	/** the datalink specification of this setup */
 	Specification<Datalink> datalinkSpecification;
+
+	/** the desirability value of the desirability zone of this setup */
+	double desirabilitySpecification = 0.5;
 	// ...
-	
+
 	/**
 	 * Gets the aircraft specification of this setup.
 	 * 
@@ -83,7 +72,7 @@ public class Setup {
 	public Specification<Aircraft> getAircraftSpecification() {
 		return this.aircraftSpecification;
 	}
-	
+
 	/**
 	 * Sets the aircraft specification of this setup.
 	 * 
@@ -92,7 +81,7 @@ public class Setup {
 	public void setAircraftSpecification(Specification<Aircraft> aircraftSpecification) {
 		this.aircraftSpecification = aircraftSpecification;
 	}
-	
+
 	/**
 	 * Gets the environment specification of this setup.
 	 * 
@@ -101,7 +90,7 @@ public class Setup {
 	public Specification<Environment> getEnvironmentSpecification() {
 		return this.environmentSpecification;
 	}
-	
+
 	/**
 	 * Sets the environment specification of this setup
 	 * 
@@ -110,7 +99,25 @@ public class Setup {
 	public void setEnvironmentSpecification(Specification<Environment> environmentSpecification) {
 		this.environmentSpecification = environmentSpecification;
 	}
-	
+
+	/**
+	 * Gets the planner family of this setup.
+	 * 
+	 * @return the planner family of this setup
+	 */
+	public PlannerFamily getPlannerFamily() {
+		return plannerFamily;
+	}
+
+	/**
+	 * Sets the planner family of this setup.
+	 * 
+	 * @param plannerFamily the plannerFamily to set
+	 */
+	public void setPlannerFamily(PlannerFamily plannerFamily) {
+		this.plannerFamily = plannerFamily;
+	}
+
 	/**
 	 * Gets the planner specification of this setup.
 	 * 
@@ -119,7 +126,7 @@ public class Setup {
 	public Specification<Planner> getPlannerSpecification() {
 		return this.plannerSpecification;
 	}
-	
+
 	/**
 	 * Sets the planner specification of this setup
 	 * 
@@ -128,7 +135,7 @@ public class Setup {
 	public void setPlannerSpecification(Specification<Planner> plannerSpecification) {
 		this.plannerSpecification = plannerSpecification;
 	}
-	
+
 	/**
 	 * Gets the datalink specification of this setup.
 	 * 
@@ -137,7 +144,7 @@ public class Setup {
 	public Specification<Datalink> getDatalinkSpecification() {
 		return this.datalinkSpecification;
 	}
-	
+
 	/**
 	 * Sets the datalink specification of this setup
 	 * 
@@ -146,5 +153,22 @@ public class Setup {
 	public void setDatalinkSpecification(Specification<Datalink> datalinkSpecification) {
 		this.datalinkSpecification = datalinkSpecification;
 	}
-	
+
+	/**
+	 * Gets the desirability value of the desirability zone of this setup.
+	 * 
+	 * @return the desirability value of the desirability zone
+	 */
+	public double getDesirabilitySpecification() {
+		return desirabilitySpecification;
+	}
+
+	/**
+	 * Sets the desirability value of the desirability zone of this setup.
+	 * 
+	 * @param desirabilitySpecification the desirability value to set
+	 */
+	public void setDesirabilitySpecification(double desirabilitySpecification) {
+		this.desirabilitySpecification = desirabilitySpecification;
+	}
 }

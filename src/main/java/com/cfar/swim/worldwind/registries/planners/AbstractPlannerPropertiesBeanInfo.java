@@ -44,7 +44,7 @@ import org.controlsfx.property.BeanProperty;
  */
 public class AbstractPlannerPropertiesBeanInfo extends SimpleBeanInfo {
 
-	private final static Class<RRTreeProperties> beanClass = RRTreeProperties.class;
+	private final static Class<AbstractPlannerProperties> beanClass = AbstractPlannerProperties.class;
 	protected final static String CATEGORY_POLICIES = "Mission Policies";
 
 	public PropertyDescriptor[] getPropertyDescriptors() {
@@ -74,7 +74,7 @@ public class AbstractPlannerPropertiesBeanInfo extends SimpleBeanInfo {
 		property.setDisplayName(displayName);
 		property.setShortDescription(description);
 		property.setValue(BeanProperty.CATEGORY_LABEL_KEY, category);
-
+		
 		return property;
 	}
 	

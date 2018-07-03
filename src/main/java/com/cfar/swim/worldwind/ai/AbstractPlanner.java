@@ -209,6 +209,30 @@ public abstract class AbstractPlanner implements Planner {
 	}
 	
 	/**
+	 * Revises a plan notifying the plan revision listeners of this abstract
+	 * planner.
+	 */
+	protected Position reviseAircraftPosition() {
+		Position position = null;
+		for (PlanRevisionListener listener : this.planRevisionListeners) {
+			position = listener.reviseAircraftPosition();
+		}
+		return position;
+	}
+	
+	/**
+	 * Revises a plan notifying the plan revision listeners of this abstract
+	 * planner.
+	 */
+	protected boolean reviseDatalinkPlan() {
+		boolean datalinkConnected = false;
+		for (PlanRevisionListener listener : this.planRevisionListeners) {
+			datalinkConnected = listener.reviseDatalinkPlan();
+		}
+		return datalinkConnected;
+	}
+	
+	/**
 	 * Indicates whether or not this abstract planner supports a specified
 	 * aircraft.
 	 * 

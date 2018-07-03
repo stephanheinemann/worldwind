@@ -33,6 +33,8 @@ import java.util.EventListener;
 
 import com.cfar.swim.worldwind.planning.Trajectory;
 
+import gov.nasa.worldwind.geom.Position;
+
 /**
  * Describes a plan revision listener that will be invoked by its planner
  * whenever a plan has been revised.
@@ -48,9 +50,22 @@ public interface PlanRevisionListener extends EventListener {
 	 * @param trajectory the revised trajectory
 	 */
 	public void revisePlan(Trajectory trajectory);
-	
+
 	/**
 	 * Notifies this plan revision listener about new obstacles.
 	 */
 	public void reviseObstacle();
+
+	/**
+	 * Notifies this plan revision listener about the current aircraft position.
+	 * 
+	 * @return the current position of the aircraft
+	 */
+	public Position reviseAircraftPosition();
+
+	/**
+	 * Notifies this plan revision listenet about a new plan ready to be uploaded to
+	 * an aircraft through a datalink connection.
+	 */
+	public boolean reviseDatalinkPlan();
 }

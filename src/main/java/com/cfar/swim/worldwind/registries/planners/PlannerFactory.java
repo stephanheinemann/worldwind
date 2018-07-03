@@ -37,6 +37,7 @@ import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
+import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
 import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
@@ -192,6 +193,9 @@ public class PlannerFactory implements Factory<Planner> {
 					properties.getMaxNeighbors(), properties.getMaxDistance());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
+			((BasicPRM) planner).setMinimumQuality(properties.getMinimumQuality());
+			((BasicPRM) planner).setMaximumQuality(properties.getMaximumQuality());
+			((BasicPRM) planner).setQualityImprovement(properties.getQualityImprovement());
 			((BasicPRM) planner).setPlanner(properties.getQueryPlanner());
 			((BasicPRM) planner).setMode(properties.getMode());
 		} else if (specification.getId().equals(Specification.PLANNER_LAZYPRM_ID)) {
@@ -211,6 +215,8 @@ public class PlannerFactory implements Factory<Planner> {
 			((FADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((FADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((FADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			((FADPRMPlanner) planner).setLambda(properties.getLambda());
+			((FADPRMPlanner) planner).setDesirabilityZones(scenario.getDesirabilityZones());
 		}
 		// TODO: implement more planners
 

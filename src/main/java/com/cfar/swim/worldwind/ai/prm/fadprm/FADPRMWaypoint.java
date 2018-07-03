@@ -38,28 +38,19 @@ import gov.nasa.worldwind.geom.Position;
 
 /**
  * Realizes a FADPRM waypoint of a trajectory featuring estimates for costs, a
- * list of successors, the density of the waypoint and the parameter beta.
- * FADPRM waypoints are used by FADPRM planners.
+ * list of neighbors, the density and desirability values of the waypoint, the
+ * parameters beta and lambda. FADPRM waypoints are used by FADPRM planners.
  * 
  * @author Henrique Ferreira
  *
  */
 public class FADPRMWaypoint extends Waypoint {
 
-	/** the successors of this FADPRM waypoint in an environment */
-	private Set<FADPRMWaypoint> successors = new HashSet<>();
-
-	/** the estimated cost (g-value) of this FADPRM waypoint */
-	private double g;
-
-	/** the estimated remaining cost (h-value) of this FADPRM waypoint */
-	private double h;
-
 	/** the distance between this FADPRM waypoint and the goal waypoint */
-	private double dtGoal;
+	private double distanceToGoal;
 
-	/** the path desirability of this FADPRM waypoint */
-	private double pathDD;
+	/** the neighbors of this FADPRM waypoint (connectable waypoints) */
+	private Set<FADPRMWaypoint> neighbors = new HashSet<>();
 
 	/** the number of waypoints within a small distance of this waypoint */
 	private int density;
@@ -70,8 +61,11 @@ public class FADPRMWaypoint extends Waypoint {
 	/** the parameter beta that weights the importance of density and f-value */
 	private double beta;
 
-	/** the parameter lambda that weights path desirability and cost */
+	/** the parameter lambda that weights the desirability influence on the cost */
 	private double lambda;
+
+	/** the desirability value of this waypoint */
+	private double desirability;
 
 	/** the parent FADPRM waypoint of this FADPRM waypoint in a trajectory */
 	private FADPRMWaypoint parent = null;
@@ -83,31 +77,117 @@ public class FADPRMWaypoint extends Waypoint {
 	 */
 	public FADPRMWaypoint(Position position) {
 		super(position);
-		this.setCost(0d);
-		this.setG(0d);
-		this.setH(0d);
-		this.setPathDD(0.5);
-		lambda = 0.7;
+		this.setCost(Double.POSITIVE_INFINITY);
+		this.setDistanceToGoal(Double.POSITIVE_INFINITY);
+		lambda = 0;
 	}
 
 	/**
-	 * Gets the path desirability of this FADPRM waypoint.
+	 * Gets the normalized distance to the goal waypoint.
 	 * 
-	 * @return the pathDD the path desirability of this FADPRM waypoint.
+	 * @return the distanceToGoal the distance to the goal waypoint
 	 */
-	public double getPathDD() {
-		return pathDD;
+	public double getDistanceToGoal() {
+		return distanceToGoal;
 	}
 
 	/**
-	 * Sets the path desirability of this FADPRM waypoint.
+	 * Sets the normalized distance to the goal waypoint.
 	 * 
-	 * @param pathDD the path desirability to set
+	 * @param distanceToGoal the distanceToGoal to set
 	 */
-	public void setPathDD(double pathDD) {
-		this.pathDD = pathDD;
+	public void setDistanceToGoal(double distanceToGoal) {
+		this.distanceToGoal = distanceToGoal;
+	}
+	
+	/**
+	 * Gets the Set of neighbors of this FADPRM waypoint.
+	 * 
+	 * @return the neighbors the Set of neighbors of this waypoint
+	 */
+	public Set<FADPRMWaypoint> getNeighbors() {
+		return this.neighbors;
 	}
 
+	/**
+	 * Sets the Set of neighbors of this FADPRM waypoint.
+	 * 
+	 * @param neighbors the Set of neighbors to set
+	 */
+	public void setNeighbors(Set<FADPRMWaypoint> neighbors) {
+		this.neighbors.addAll(neighbors);
+	}
+	
+	/**
+	 * Adds one waypoint to the Set of neighbors of this FADPRM waypoint
+	 * 
+	 * @param waypoint the waypoint to add to the Set of neighbors
+	 */
+	public void addNeighbor(FADPRMWaypoint waypoint) {
+		this.neighbors.add(waypoint);
+	}
+	
+	/**
+	 * Gets the density of this FADPRM waypoint.
+	 * 
+	 * @return the density of this FADPRM waypoint.
+	 */
+	public int getDensity() {
+		return density;
+	}
+
+	/**
+	 * Sets the density of this FADPRM waypoint.
+	 * 
+	 * @param density the density to set
+	 */
+	public void setDensity(int density) {
+		this.density = density;
+	}
+	
+	/**
+	 * Increments the density of this FADPRM waypoint.
+	 */
+	public void incrementDensity() {
+		this.setDensity(this.getDensity() + 1);
+	}
+	
+	/**
+	 * Gets the number of the last search that generated this FADPRM waypoint.
+	 * 
+	 * @return the search the number of the last search
+	 */
+	public int getSearch() {
+		return search;
+	}
+
+	/**
+	 * Sets the number of the last search that generated this FADPRM waypoint.
+	 * 
+	 * @param search the search to set
+	 */
+	public void setSearch(int search) {
+		this.search = search;
+	}
+	
+	/**
+	 * Gets the parameter beta of this FADPRM waypoint.
+	 * 
+	 * @return the beta the parameter beta
+	 */
+	public double getBeta() {
+		return beta;
+	}
+
+	/**
+	 * Sets the parameter beta of this FADPRM waypoint.
+	 * 
+	 * @param beta the parameter beta to set
+	 */
+	public void setBeta(double beta) {
+		this.beta = beta;
+	}
+	
 	/**
 	 * Gets the parameter lambda of this FADPRM waypoint.
 	 * 
@@ -127,151 +207,21 @@ public class FADPRMWaypoint extends Waypoint {
 	}
 
 	/**
-	 * Gets the estimated current cost (g-value) of this FADPRM waypoint.
+	 * Gets the desirability value of this FADPRM waypoint.
 	 * 
-	 * @return the estimated current cost (g-value) of this FADPRM waypoint
+	 * @return the desirability value of this FADPRM waypoint.
 	 */
-	public double getG() {
-		return g;
+	public double getDesirability() {
+		return desirability;
 	}
 
 	/**
-	 * Sets the estimated current cost (g-value) of this FADPRM waypoint.
+	 * Sets the desirability value of this FADPRM waypoint.
 	 * 
-	 * @param g the estimated current cost (g-value) of this FADPRM waypoint
+	 * @param desirability the desirability value to set
 	 */
-	public void setG(double g) {
-		if (0d > g) {
-			throw new IllegalArgumentException("g is less than 0");
-		}
-		this.g = g;
-	}
-
-	/**
-	 * Gets the estimated remaining cost (h-value) of this FADPRM waypoint.
-	 * 
-	 * @return the estimated remaining cost (h-value) of this FADPRM waypoint
-	 */
-	public double getH() {
-		return this.h;
-	}
-
-	/**
-	 * Sets the estimated remaining cost (h-value) of this FADPRM waypoint.
-	 * 
-	 * @param h the estimated remaining cost (h-value) of this FADPRM waypoint
-	 */
-	public void setH(double h) {
-		if (0d > h) {
-			throw new IllegalArgumentException("h is less than 0");
-		}
-		this.h = h;
-	}
-
-	/**
-	 * Gets the distance to the goal waypoint.
-	 * 
-	 * @return the dtGoal the distance to the goal waypoint
-	 */
-	public double getDtGoal() {
-		return dtGoal;
-	}
-
-	/**
-	 * Sets the distance to the goal waypoint.
-	 * 
-	 * @param dtGoal the dtGoal to set
-	 */
-	public void setDtGoal(double dtGoal) {
-		this.dtGoal = dtGoal;
-	}
-
-	/**
-	 * Gets the set of successors of this FADPRM waypoint.
-	 * 
-	 * @return the sucessors the set of successors of this waypoint
-	 */
-	public Set<FADPRMWaypoint> getSuccessors() {
-		return successors;
-	}
-
-	/**
-	 * Sets the set of successors of this FADPRM waypoint.
-	 * 
-	 * @param sucessors the sucessors to set
-	 */
-	public void setSuccessors(Set<FADPRMWaypoint> sucessors) {
-		this.successors = sucessors;
-	}
-
-	/**
-	 * Adds one waypoint to the set of successors of this FADPRM waypoint
-	 * 
-	 * @param waypoint the waypoint to add to the set of successors
-	 */
-	public void addSuccessor(FADPRMWaypoint waypoint) {
-		this.successors.add(waypoint);
-	}
-
-	/**
-	 * Gets the density of this FADPRM waypoint.
-	 * 
-	 * @return the density of this FADPRM waypoint.
-	 */
-	public int getDensity() {
-		return density;
-	}
-
-	/**
-	 * Sets the density of this FADPRM waypoint.
-	 * 
-	 * @param density the density to set
-	 */
-	public void setDensity(int density) {
-		this.density = density;
-	}
-
-	/**
-	 * Increments the density of this FADPRM waypoint.
-	 */
-	public void incrementDensity() {
-		this.setDensity(this.getDensity() + 1);
-	}
-
-	/**
-	 * Gets the number of the last search that generated this FADPRM waypoint.
-	 * 
-	 * @return the search the number of the last search
-	 */
-	public int getSearch() {
-		return search;
-	}
-
-	/**
-	 * Sets the number of the last search that generated this FADPRM waypoint.
-	 * 
-	 * @param search the search to set
-	 */
-	public void setSearch(int search) {
-		this.search = search;
-	}
-
-	/**
-	 * Gets the parameter beta of this FADPRM waypoint.
-	 * 
-	 * @return the beta the parameter beta
-	 */
-	public double getBeta() {
-		return beta;
-	}
-
-	/**
-	 * Sets the parameter beta of this FADPRM waypoint.
-	 * 
-	 * @param beta the parameter beta to set
-	 */
-	public void setBeta(double beta) {
-		this.beta = beta;
+	public void setDesirability(double desirability) {
+		this.desirability = desirability;
 	}
 
 	/**
@@ -293,12 +243,21 @@ public class FADPRMWaypoint extends Waypoint {
 	}
 
 	/**
+	 * Gets the estimated current cost (g-value) of this FADPRM waypoint.
+	 * 
+	 * @return the estimated current cost (g-value) of this FADPRM waypoint
+	 */
+	public double getG() {
+		return 1 / (1 + super.getCost());
+	}
+
+	/**
 	 * Gets the estimated total cost (f-value) of this FADPRM waypoint.
 	 * 
 	 * @return the estimated total cost (f-value) of this FADPRM waypoint
 	 */
 	public double getF() {
-		return (this.getG() + this.getH()) / 2;
+		return 1 / (1 + (this.getCost() + this.getDistanceToGoal()));
 	}
 
 	/**
@@ -313,8 +272,8 @@ public class FADPRMWaypoint extends Waypoint {
 
 	/**
 	 * Compares this FADPRM waypoint to another waypoint based on their keys. If the
-	 * first component is equal, then ties are broken in favor of higher estimated
-	 * costs to goal (h-values). If the other waypoint is not an FADPRM waypoint,
+	 * first component is equal, then ties are broken in favor of higher current
+	 * costs (g-values). If the other waypoint is not an FADPRM waypoint,
 	 * then the natural order of general waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
@@ -327,14 +286,15 @@ public class FADPRMWaypoint extends Waypoint {
 	@SuppressWarnings("deprecation")
 	@Override
 	public int compareTo(Waypoint waypoint) {
+		// TODO: changed 2nd component of the key to G
 		int compareTo = 0;
 
 		if (waypoint instanceof FADPRMWaypoint) {
 			FADPRMWaypoint fadprmw = (FADPRMWaypoint) waypoint;
 			compareTo = new Double(this.getKey()).compareTo(fadprmw.getKey());
 			if (0 == compareTo) {
-				// break ties in favor of higher H-values
-				compareTo = new Double(fadprmw.getH()).compareTo(this.getH());
+				// break ties in favor of higher G-values
+				compareTo = new Double(fadprmw.getG()).compareTo(this.getG());
 			}
 		} else {
 			compareTo = super.compareTo(waypoint);

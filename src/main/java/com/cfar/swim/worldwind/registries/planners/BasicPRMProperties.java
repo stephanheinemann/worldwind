@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
+import java.beans.PropertyDescriptor;
+
 import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
 import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
 import com.cfar.swim.worldwind.planning.CostPolicy;
@@ -40,33 +42,46 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  * @author Henrique Ferreira
  *
  */
-public class BasicPRMProperties extends AbstractPlannerProperties {
+public class BasicPRMProperties extends AbstractPlannerProperties implements AnytimePlannerProperties {
+
+	/** the description of this planner properties bean */
+	private final static String DESCRIPTION_BASICPRM = "Probabilistic Roadmap: Basic version of a PRM that constructs a roadmap by sampling points in a continuous environment. Then, a deterministic planner is used to compute the desired trajectory.";
 
 	/** the maximum number of sampling iterations */
 	private int maxIter = 300;
-	
+
 	/** the maximum number of neighbors a waypoint can be connected to */
 	private int maxNeighbors = 20;
-	
+
 	/** the maximum distance between two neighboring waypoints */
 	private double maxDistance = 200;
 
 	/** the query planner of this basic PRM planner properties bean */
 	private QueryPlanner queryPlanner = QueryPlanner.FAS;
-	
+
 	/** the query mode of this basic PRM planner properties bean */
 	private QueryMode mode = QueryMode.SINGLE;
-	
+
+	/** the initial inflation factor applied to the heuristic function */
+	private double minimumQuality = 50d;
+
+	/** the final inflation factor applied to the heuristic function */
+	private double maximumQuality = 1d;
+
+	/** the inflation amount to be applied to the current inflation */
+	private double qualityImprovement = 1d;
+
 	/**
 	 * Constructs a new basic PRM planner properties bean.
 	 */
 	public BasicPRMProperties() {
 		super();
+		this.setDescription(DESCRIPTION_BASICPRM);
 	}
 
 	/**
-	 * Constructs a new basic PRM planner properties bean with
-	 * specified cost and risk policy property values.
+	 * Constructs a new basic PRM planner properties bean with specified cost and
+	 * risk policy property values.
 	 * 
 	 * @param costPolicy the cost policy of this basic PRM planner properties bean
 	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
@@ -74,21 +89,19 @@ public class BasicPRMProperties extends AbstractPlannerProperties {
 	public BasicPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
 	}
-	
+
 	/**
 	 * Constructs a new basic PRM planner properties bean with specified cost and
 	 * risk policy property values as well as specified maximum number of
 	 * iterations, maximum number of neighbors and maximum distance.
 	 * 
-	 * @param costPolicy the cost policy of this basic PRM planner properties
-	 *            bean
-	 * @param riskPolicy the risk policy of this basic PRM planner properties
-	 *            bean
+	 * @param costPolicy the cost policy of this basic PRM planner properties bean
+	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
 	 * @param maxIter the maximum number of sampling iterations
 	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
 	 * @param maxDistance the maximum distance between two connected waypoints
 	 */
-	public BasicPRMProperties( CostPolicy costPolicy, RiskPolicy riskPolicy,
+	public BasicPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy,
 			int maxIter, int maxNeighbors, double maxDistance) {
 		super(costPolicy, riskPolicy);
 		this.setMaxIter(maxIter);
@@ -184,5 +197,107 @@ public class BasicPRMProperties extends AbstractPlannerProperties {
 	 */
 	public void setMode(QueryMode mode) {
 		this.mode = mode;
+	}
+
+	/**
+	 * Gets the minimum quality (initial inflation) of this Basic PRM properties
+	 * bean.
+	 * 
+	 * @return the minimum quality (initial inflation) of this Basic PRM properties
+	 *         bean
+	 * 
+	 * @see AnytimePlannerProperties#getMinimumQuality()
+	 */
+	@Override
+	public double getMinimumQuality() {
+		return this.minimumQuality;
+	}
+
+	/**
+	 * Sets the minimum quality (initial inflation) of this Basic PRM properties
+	 * bean.
+	 * 
+	 * @param minimumQuality the minimum quality (initial inflation) of this Basic
+	 *            PRM properties bean
+	 * 
+	 * @throws IllegalArgumentException if the initial inflation is invalid
+	 * 
+	 * @see AnytimePlannerProperties#setMinimumQuality(double)
+	 */
+	@Override
+	public void setMinimumQuality(double minimumQuality) {
+		if ((1d <= minimumQuality) &&
+				(minimumQuality >= this.maximumQuality)) {
+			this.minimumQuality = minimumQuality;
+		} else {
+			throw new IllegalArgumentException("initial inflation is invalid");
+		}
+	}
+	
+	/**
+	 * Gets the maximum quality (final inflation) of this Basic PRM properties bean.
+	 * 
+	 * @return the maximum quality (final inflation) of this Basic PRM properties
+	 *         bean
+	 * 
+	 * @see AnytimePlannerProperties#getMaximumQuality()
+	 */
+	@Override
+	public double getMaximumQuality() {
+		return this.maximumQuality;
+	}
+
+	/**
+	 * Sets the maximum quality (initial inflation) of this Basic PRM properties
+	 * bean.
+	 * 
+	 * @param maximumQuality the maximum quality (final inflation) of this Basic PRM
+	 *            properties bean
+	 * 
+	 * @throws IllegalArgumentException if the final inflation is invalid
+	 * 
+	 * @see AnytimePlannerProperties#setMaximumQuality(double)
+	 */
+	@Override
+	public void setMaximumQuality(double maximumQuality) {
+		if ((1d <= maximumQuality) && (this.minimumQuality >= maximumQuality)) {
+			this.maximumQuality = maximumQuality;
+		} else {
+			throw new IllegalArgumentException("final deflation is invalid");
+		}
+	}
+
+	/**
+	 * Gets the quality improvement (deflation amount) of this Basic PRM properties
+	 * bean.
+	 * 
+	 * @return the quality improvement (deflation amount) of this Basic PRM
+	 *         properties bean
+	 * 
+	 * @see AnytimePlannerProperties#getQualityImprovement()
+	 */
+	@Override
+	public double getQualityImprovement() {
+		return this.qualityImprovement;
+	}
+
+	/**
+	 * Sets the quality improvement (deflation amount) of this Basic PRM properties
+	 * bean.
+	 * 
+	 * @param qualityImprovement the quality improvement (deflation amount) of this
+	 *            Basic PRM properties bean
+	 * 
+	 * @throws IllegalArgumentException if the deflation amount is invalid
+	 * 
+	 * @see AnytimePlannerProperties#setQualityImprovement(double)
+	 */
+	@Override
+	public void setQualityImprovement(double qualityImprovement) {
+		if (0d < qualityImprovement) {
+			this.qualityImprovement = qualityImprovement;
+		} else {
+			throw new IllegalArgumentException("deflation amount is invalid");
+		}
 	}
 }

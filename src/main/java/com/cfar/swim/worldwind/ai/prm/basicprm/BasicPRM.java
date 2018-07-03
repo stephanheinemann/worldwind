@@ -33,6 +33,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
+import com.cfar.swim.worldwind.ai.AnytimePlanner;
 import com.cfar.swim.worldwind.ai.PlanRevisionListener;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
@@ -57,7 +58,7 @@ import gov.nasa.worldwind.geom.Vec4;
  * @author Henrique Ferreira
  *
  */
-public class BasicPRM extends AbstractPlanner {
+public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 
 	/** the maximum number of sampling iterations */
 	protected final int MAX_ITER;
@@ -74,6 +75,15 @@ public class BasicPRM extends AbstractPlanner {
 	/** the query mode of this PRM planner */
 	protected QueryMode mode;
 
+	/** the initial inflation factor applied to the heuristic function */
+	private double initialInflation;
+	
+	/** the final inflation factor applied the heuristic function */
+	private double finalInflation;
+	
+	/** the deflation amount to be applied to the current inflation */
+	private double deflationAmount;
+	
 	/**
 	 * Constructs a basic PRM planner for a specified aircraft and environment using
 	 * default local cost and risk policies.
@@ -112,6 +122,100 @@ public class BasicPRM extends AbstractPlanner {
 		MAX_DIST = maxDist;
 	}
 
+	/**
+	 * Gets the minimum quality (initial inflation) of this ARA* planner.
+	 * 
+	 * @return the minimum quality (initial inflation) of this ARA* planner
+	 * 
+	 * @see AnytimePlanner#getMinimumQuality()
+	 */
+	@Override
+	public double getMinimumQuality() {
+		return this.initialInflation;
+	}
+	
+	/**
+	 * Sets the minimum quality (initial inflation) of this ARA* planner.
+	 * 
+	 * @param initialInflation the minimum quality (initial inflation) of this
+	 *                         ARA* planner
+	 * 
+	 * @throws IllegalArgumentException if the initial inflation is invalid
+	 * 
+	 * @see AnytimePlanner#setMinimumQuality(double)
+	 */
+	@Override
+	public void setMinimumQuality(double initialInflation) {
+		if ((1d <= initialInflation) &&
+				(initialInflation >= this.finalInflation)) {
+			this.initialInflation = initialInflation;
+		} else {
+			throw new IllegalArgumentException("initial inflation is invalid");
+		}
+	}
+	
+	/**
+	 * Gets the maximum quality (final inflation) of this ARA* planner.
+	 * 
+	 * @return the maximum quality (final inflation) of this ARA* planner
+	 * 
+	 * @see AnytimePlanner#getMaximumQuality()
+	 */
+	@Override
+	public double getMaximumQuality() {
+		return this.finalInflation;
+	}
+	
+	/**
+	 * Sets the maximum quality (initial inflation) of this ARA* planner.
+	 * 
+	 * @param finalInflation the maximum quality (final inflation) of this
+	 *                       ARA* planner
+	 * 
+	 * @throws IllegalArgumentException if the final inflation is invalid
+	 * 
+	 * @see AnytimePlanner#setMaximumQuality(double)
+	 */
+	@Override
+	public void setMaximumQuality(double finalInflation) {
+		if ((1d <= finalInflation) && (this.initialInflation >= finalInflation)) {
+			this.finalInflation = finalInflation;
+		} else {
+			throw new IllegalArgumentException("final deflation is invalid");
+		}
+	}
+	
+	/**
+	 * Gets the quality improvement (deflation amount) of this ARA* planner.
+	 * 
+	 * @return the quality improvement (deflation amount) of this ARA* planner
+	 * 
+	 * @see AnytimePlanner#getQualityImprovement()
+	 */
+	@Override
+	public double getQualityImprovement() {
+		return this.deflationAmount;
+	}
+	
+	/**
+	 * Sets the quality improvement (deflation amount) of this ARA* planner.
+	 * 
+	 * @param deflationAmount the quality improvement (deflation amount) of
+	 *                        this ARA* planner
+	 * 
+	 * @throws IllegalArgumentException if the deflation amount is invalid
+	 * 
+	 * @see AnytimePlanner#setQualityImprovement(double)
+	 */
+	@Override
+	public void setQualityImprovement(double deflationAmount) {
+		if (0d < deflationAmount) {
+			this.deflationAmount = deflationAmount;
+		} else {
+			throw new IllegalArgumentException("deflation amount is invalid");
+		}
+	}
+	
 	/**
 	 * Gets the continuum environment of this planner
 	 * 
@@ -356,6 +460,43 @@ public class BasicPRM extends AbstractPlanner {
 	}
 
 	/**
+	 * 
+	 * @param planner
+	 */
+	public void setRevisionListeners (Planner planner) {
+		List<PlanRevisionListener> planRevisionListeners = this.getPlanRevisionListeners();
+		planner.addPlanRevisionListener(new PlanRevisionListener() {
+				@Override
+				public void revisePlan(Trajectory trajectory) {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.revisePlan(trajectory);
+					}
+				}
+				@Override
+				public void reviseObstacle() {
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						listener.reviseObstacle();
+					}
+				}
+				@Override
+				public Position reviseAircraftPosition() {
+					Position position = null;
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						position = listener.reviseAircraftPosition();
+					}
+					return position;
+				}
+				@Override
+				public boolean reviseDatalinkPlan() {
+					boolean datalinkConnected = false;
+					for (PlanRevisionListener listener : planRevisionListeners) {
+						datalinkConnected = listener.reviseDatalinkPlan();
+					}
+					return datalinkConnected;
+				}
+			});
+	}
+	/**
 	 * Invokes a query planner to find a trajectory from an origin to a destination
 	 * at a specified estimated time of departure.
 	 * 
@@ -369,50 +510,22 @@ public class BasicPRM extends AbstractPlanner {
 	 */
 	public Trajectory findPath(Position origin, Position destination, ZonedDateTime etd, QueryPlanner planner) {
 		Trajectory trajectory = null;
-		List<PlanRevisionListener> planRevisionListeners = this.getPlanRevisionListeners();
-
 		switch (planner) {
 		case FAS:
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());
 			aStar.setCostPolicy(this.getCostPolicy());
 			aStar.setRiskPolicy(this.getRiskPolicy());
-			aStar.addPlanRevisionListener(new PlanRevisionListener() {
-				@Override
-				public void revisePlan(Trajectory trajectory) {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.revisePlan(trajectory);
-					}
-				}
-				@Override
-				public void reviseObstacle() {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.reviseObstacle();
-					}
-				}
-			});
+			this.setRevisionListeners(aStar);
 			trajectory = aStar.plan(origin, destination, etd);
 			break;
 		case ARA:
 			ARAStarPlanner araStar = new ARAStarPlanner(this.getAircraft(), this.getEnvironment());
 			araStar.setCostPolicy(this.getCostPolicy());
 			araStar.setRiskPolicy(this.getRiskPolicy());
-			araStar.setMinimumQuality(50d);
-			araStar.setMaximumQuality(1d);
-			araStar.setQualityImprovement(1d);
-			araStar.addPlanRevisionListener(new PlanRevisionListener() {
-				@Override
-				public void revisePlan(Trajectory trajectory) {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.revisePlan(trajectory);
-					}
-				}
-				@Override
-				public void reviseObstacle() {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.reviseObstacle();
-					}
-				}
-			});
+			araStar.setMinimumQuality(this.getMinimumQuality());
+			araStar.setMaximumQuality(this.getMaximumQuality());
+			araStar.setQualityImprovement(this.getQualityImprovement());
+			this.setRevisionListeners(araStar);
 			trajectory = araStar.plan(origin, destination, etd);
 			break;
 		/*case AD:
@@ -454,50 +567,23 @@ public class BasicPRM extends AbstractPlanner {
 	public Trajectory findPath(Position origin, Position destination, ZonedDateTime etd, List<Position> waypoints,
 			QueryPlanner planner) {
 		Trajectory trajectory = null;
-		List<PlanRevisionListener> planRevisionListeners = this.getPlanRevisionListeners();
 
 		switch (planner) {
 		case FAS:
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());
 			aStar.setCostPolicy(this.getCostPolicy());
 			aStar.setRiskPolicy(this.getRiskPolicy());
-			aStar.addPlanRevisionListener(new PlanRevisionListener() {
-				@Override
-				public void revisePlan(Trajectory trajectory) {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.revisePlan(trajectory);
-					}
-				}
-				@Override
-				public void reviseObstacle() {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.reviseObstacle();
-					}
-				}
-			});
+			this.setRevisionListeners(aStar);
 			trajectory = aStar.plan(origin, destination, waypoints, etd);
 			break;
 		case ARA:
 			ARAStarPlanner araStar = new ARAStarPlanner(this.getAircraft(), this.getEnvironment());
 			araStar.setCostPolicy(this.getCostPolicy());
 			araStar.setRiskPolicy(this.getRiskPolicy());
-			araStar.setMinimumQuality(50d);
-			araStar.setMaximumQuality(1d);
-			araStar.setQualityImprovement(1d);
-			araStar.addPlanRevisionListener(new PlanRevisionListener() {
-				@Override
-				public void revisePlan(Trajectory trajectory) {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.revisePlan(trajectory);
-					}
-				}
-				@Override
-				public void reviseObstacle() {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.reviseObstacle();
-					}
-				}
-			});
+			araStar.setMinimumQuality(this.getMinimumQuality());
+			araStar.setMaximumQuality(this.getMaximumQuality());
+			araStar.setQualityImprovement(this.getQualityImprovement());
+			this.setRevisionListeners(araStar);
 			trajectory = araStar.plan(origin, destination, waypoints, etd);
 			break;
 		/*case AD:

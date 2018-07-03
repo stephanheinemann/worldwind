@@ -202,9 +202,9 @@ public class Session implements Identifiable {
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_SAMPLING_ID));
-		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_DRRT_ID));
+		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FADPRM_ID));
 		this.setup.setPlannerFamily(this.setup.getPlannerSpecification().getPlannerFamily());
-		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_DRONEKIT));
+		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
 	}
 	
 	/**

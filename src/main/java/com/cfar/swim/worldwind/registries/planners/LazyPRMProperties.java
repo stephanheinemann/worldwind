@@ -40,16 +40,20 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  */
 public class LazyPRMProperties extends BasicPRMProperties {
 
+	/** the description of this planner properties bean */
+	private final static String DESCRIPTION_LAZYPRM = "Probabilistic Roadmap: Lazy version of a PRM that only checks for collision with untraversable obstacles after the trajectory is computed.";
+
 	/**
 	 * Constructs a new lazy PRM planner properties bean.
 	 */
 	public LazyPRMProperties() {
 		super();
+		this.setDescription(DESCRIPTION_LAZYPRM);
 	}
 
 	/**
-	 * Constructs a new lazy PRM planner properties bean with
-	 * specified cost and risk policy property values.
+	 * Constructs a new lazy PRM planner properties bean with specified cost and
+	 * risk policy property values.
 	 * 
 	 * @param costPolicy the cost policy of this basic PRM planner properties bean
 	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
@@ -57,21 +61,19 @@ public class LazyPRMProperties extends BasicPRMProperties {
 	public LazyPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
 	}
-	
+
 	/**
 	 * Constructs a new lazy PRM planner properties bean with specified cost and
 	 * risk policy property values as well as specified maximum number of
 	 * iterations, maximum number of neighbors and maximum distance.
 	 * 
-	 * @param costPolicy the cost policy of this basic PRM planner properties
-	 *            bean
-	 * @param riskPolicy the risk policy of this basic PRM planner properties
-	 *            bean
+	 * @param costPolicy the cost policy of this basic PRM planner properties bean
+	 * @param riskPolicy the risk policy of this basic PRM planner properties bean
 	 * @param maxIter the maximum number of sampling iterations
 	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
 	 * @param maxDistance the maximum distance between two connected waypoints
 	 */
-	public LazyPRMProperties( CostPolicy costPolicy, RiskPolicy riskPolicy,
+	public LazyPRMProperties(CostPolicy costPolicy, RiskPolicy riskPolicy,
 			int maxIter, int maxNeighbors, double maxDistance) {
 		super(costPolicy, riskPolicy, maxIter, maxNeighbors, maxDistance);
 	}
