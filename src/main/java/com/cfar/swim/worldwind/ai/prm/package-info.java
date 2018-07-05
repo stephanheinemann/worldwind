@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Manuel Rosa (UVic Center for Aerospace Research)
+ * Copyright (c) 2018, Henrique Ferreira (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -26,9 +26,5 @@
  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
-/**
- * @author Manuel Rosa
- *
  */
 package com.cfar.swim.worldwind.ai.prm;

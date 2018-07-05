@@ -54,6 +54,13 @@ public class BasicPRMPropertiesBeanInfo extends AbstractPlannerPropertiesBeanInf
 	/** the category of parameters that are query related */
 	protected final static String CATEGORY_QUERY = "Query Parameters";
 
+	/**
+	 * Customizes the property descriptors for each parameter of a Basic PRM planner.
+	 * 
+	 * @return the array of property descriptors
+	
+	 * @see com.cfar.swim.worldwind.registries.planners.AbstractPlannerPropertiesBeanInfo#getPropertyDescriptors()
+	 */
 	@Override
 	public PropertyDescriptor[] getPropertyDescriptors() {
 		try {

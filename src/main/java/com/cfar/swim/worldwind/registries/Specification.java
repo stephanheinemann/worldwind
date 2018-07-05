@@ -86,14 +86,17 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of an ADRRT planner */
 	public static final String PLANNER_ADRRT_ID = "Anytime Dynamic RRT";
 	
-	/** the identifier of a FADPRM planner */
-	public static final String PLANNER_FADPRM_ID = "FADPRM";
-	
 	/** the identifier of a Basic PRM planner */
 	public static final String PLANNER_BASICPRM_ID = "Basic PRM";
 	
 	/** the identifier of a Lazy PRM planner */
 	public static final String PLANNER_LAZYPRM_ID = "Lazy PRM";
+	
+	/** the identifier of a Lazy PRM planner */
+	public static final String PLANNER_FAPRM_ID = "FAPRM";
+	
+	/** the identifier of a FADPRM planner */
+	public static final String PLANNER_FADPRM_ID = "FADPRM";
 	
 	/** the identifier of a simulated datalink */
 	public static final String DATALINK_SIMULATED = "Simulated Datalink";

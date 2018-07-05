@@ -27,60 +27,80 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai.prm.fadprm;
+package com.cfar.swim.worldwind.planning;
 
-import com.cfar.swim.worldwind.ai.prm.faprm.FAPRMWaypoint;
-
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes a FADPRM waypoint of a trajectory featuring estimates for costs, a
- * list of neighbors, the parameter beta and density. Also it stores the number
- * of the last search that affected this waypoint.
+ * Realizes a FA PRM edge that extends a basic edge by incorporating a
+ * desirability value and a lambda factor.
  * 
  * @author Henrique Ferreira
  *
  */
-public class FADPRMWaypoint extends FAPRMWaypoint {
+public class FAPRMEdge extends Edge {
 
-	/** the number of the last search that generated this waypoint */
-	private int search;
+	/** the parameter lambda that weights the desirability influence on the cost */
+	private double lambda;
+
+	/** the desirability value of this waypoint */
+	private double desirability;
 
 	/**
-	 * Constructs a FADPRM waypoint at a specified position.
+	 * Constructs an Edge based on two positions.
 	 * 
-	 * @param position the position in globe coordinates
+	 * @param position1 the first position
+	 * @param position2 the second position
 	 */
-	public FADPRMWaypoint(Position position) {
-		super(position);
-		this.setCost(Double.POSITIVE_INFINITY);
-		this.setDistanceToGoal(Double.POSITIVE_INFINITY);
+	public FAPRMEdge(Position position1, Position position2) {
+		super(position1, position2);
 	}
 
 	/**
-	 * Gets the number of the last search that generated this FAPRM waypoint.
+	 * Constructs an Edge based on two positions and a line.
 	 * 
-	 * @return the search the number of the last search
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * @param line the line formed by the two positions
 	 */
-	public int getSearch() {
-		return search;
+	public FAPRMEdge(Position position1, Position position2, Line line) {
+		super(position1, position2, line);
 	}
 
 	/**
-	 * Sets the number of the last search that generated this FAPRM waypoint.
+	 * Gets the parameter lambda of this FAPRM edge.
 	 * 
-	 * @param search the search to set
+	 * @return the lambda the parameter lambda of this FAPRM edge
 	 */
-	public void setSearch(int search) {
-		this.search = search;
+	public double getLambda() {
+		return lambda;
 	}
 
 	/**
-	 * Gets the parent FAPRM waypoint of this FAPRM waypoint.
+	 * Sets the parameter lambda of this FAPRM edge.
 	 * 
-	 * @return the parent FAPRM waypoint of this FAPRM waypoint
+	 * @param lambda the parameter lambda to set
 	 */
-	public FADPRMWaypoint getParent() {
-		return (FADPRMWaypoint) super.getParent();
+	public void setLambda(double lambda) {
+		this.lambda = lambda;
+	}
+
+	/**
+	 * Gets the desirability value of this FAPRM edge.
+	 * 
+	 * @return the desirability value of this FAPRM edge.
+	 */
+	public double getDesirability() {
+		return desirability;
+	}
+
+	/**
+	 * Sets the desirability value of this FAPRM edge.
+	 * 
+	 * @param desirability the desirability value to set
+	 */
+	public void setDesirability(double desirability) {
+		this.desirability = desirability;
 	}
 }

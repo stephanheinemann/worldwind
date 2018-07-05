@@ -37,8 +37,8 @@ import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
 import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
+import com.cfar.swim.worldwind.ai.prm.faprm.FAPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
 import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
@@ -189,10 +189,12 @@ public class PlannerFactory implements Factory<Planner> {
 		// PRM Family
 		else if (specification.getId().equals(Specification.PLANNER_BASICPRM_ID)) {
 			BasicPRMProperties properties = (BasicPRMProperties) specification.getProperties();
-			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
-					properties.getMaxNeighbors(), properties.getMaxDistance());
+			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
+			((BasicPRM) planner).setMaxIter(properties.getMaxIter());
+			((BasicPRM) planner).setMaxNeighbors(properties.getMaxNeighbors());
+			((BasicPRM) planner).setMaxDistance(properties.getMaxDistance());
 			((BasicPRM) planner).setMinimumQuality(properties.getMinimumQuality());
 			((BasicPRM) planner).setMaximumQuality(properties.getMaximumQuality());
 			((BasicPRM) planner).setQualityImprovement(properties.getQualityImprovement());
@@ -200,18 +202,38 @@ public class PlannerFactory implements Factory<Planner> {
 			((BasicPRM) planner).setMode(properties.getMode());
 		} else if (specification.getId().equals(Specification.PLANNER_LAZYPRM_ID)) {
 			LazyPRMProperties properties = (LazyPRMProperties) specification.getProperties();
-			planner = new LazyPRM(scenario.getAircraft(), scenario.getEnvironment(), properties.getMaxIter(),
-					properties.getMaxNeighbors(), properties.getMaxDistance());
+			planner = new LazyPRM(scenario.getAircraft(), scenario.getEnvironment());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
+			((LazyPRM) planner).setMaxIter(properties.getMaxIter());
+			((LazyPRM) planner).setMaxNeighbors(properties.getMaxNeighbors());
+			((LazyPRM) planner).setMaxDistance(properties.getMaxDistance());
+			((LazyPRM) planner).setMinimumQuality(properties.getMinimumQuality());
+			((LazyPRM) planner).setMaximumQuality(properties.getMaximumQuality());
+			((LazyPRM) planner).setQualityImprovement(properties.getQualityImprovement());
 			((LazyPRM) planner).setPlanner(properties.getQueryPlanner());
 			((LazyPRM) planner).setMode(properties.getMode());
-		} else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
-			FADPRMProperties properties = (FADPRMProperties) specification.getProperties();
-			planner = new FADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment(), 
-					properties.getMaxNeighbors(), properties.getMaxDistance(), properties.getBias());
+		} else if (specification.getId().equals(Specification.PLANNER_FAPRM_ID)) {
+			FAPRMProperties properties = (FAPRMProperties) specification.getProperties();
+			planner = new FAPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
+			((FAPRMPlanner) planner).setMaxNeighbors(properties.getMaxNeighbors());
+			((FAPRMPlanner) planner).setMaxDistance(properties.getMaxDistance());
+			((FAPRMPlanner) planner).setBias(properties.getBias());
+			((FAPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((FAPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((FAPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			((FAPRMPlanner) planner).setLambda(properties.getLambda());
+			((FAPRMPlanner) planner).setDesirabilityZones(scenario.getDesirabilityZones());
+		} else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
+			FADPRMProperties properties = (FADPRMProperties) specification.getProperties();
+			planner = new FADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((FADPRMPlanner) planner).setMaxNeighbors(properties.getMaxNeighbors());
+			((FADPRMPlanner) planner).setMaxDistance(properties.getMaxDistance());
+			((FADPRMPlanner) planner).setBias(properties.getBias());
 			((FADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((FADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((FADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());

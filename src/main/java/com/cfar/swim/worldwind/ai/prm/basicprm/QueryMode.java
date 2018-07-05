@@ -38,12 +38,12 @@ package com.cfar.swim.worldwind.ai.prm.basicprm;
 public enum QueryMode {
 
 	/**
-	 * multi query mode
+	 * multiple query mode, uses the current roadmap to find a path
 	 */
 	MULTIPLE,
 
 	/**
-	 * single query mode
+	 * single query mode, builds a new roadmap and finds a path
 	 */
 	SINGLE
 

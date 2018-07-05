@@ -39,21 +39,36 @@ import java.util.stream.Stream;
 import org.controlsfx.property.BeanProperty;
 
 /**
+ * Realizes an Abstract Planner properties bean info with the property
+ * descriptors for each parameter.
+ * 
  * @author Manuel Rosa
+ * @author Henrique Ferreira
  *
  */
 public class AbstractPlannerPropertiesBeanInfo extends SimpleBeanInfo {
 
+	/** the class which this bean info refers to */
 	private final static Class<AbstractPlannerProperties> beanClass = AbstractPlannerProperties.class;
+
+	/** the category of parameters that are considered to be mission policies */
 	protected final static String CATEGORY_POLICIES = "Mission Policies";
 
+	/**
+	 * Customizes the property descriptors for each parameter of an Abstract
+	 * planner.
+	 * 
+	 * @return the array of property descriptors
+	 * 
+	 * @see java.beans.SimpleBeanInfo#getPropertyDescriptors()
+	 */
 	public PropertyDescriptor[] getPropertyDescriptors() {
 		try {
 			PropertyDescriptor costPolicy = this.createProperty(beanClass, "costPolicy",
 					"Cost Policy",
 					"the cost policy of this planner",
 					CATEGORY_POLICIES);
-			
+
 			PropertyDescriptor riskPolicy = this.createProperty(beanClass, "riskPolicy",
 					"Risk Policy",
 					"the risk policy of this planner",
@@ -67,6 +82,19 @@ public class AbstractPlannerPropertiesBeanInfo extends SimpleBeanInfo {
 		}
 	}
 
+	/**
+	 * Creates a property descriptor for a given parameter.
+	 * 
+	 * @param beanClass the class this parameters belongs to
+	 * @param propertyName the parameter name
+	 * @param displayName the name to be displayed in the user interface
+	 * @param description the description of this parameter
+	 * @param category the category of this parameter
+	 * 
+	 * @return the property descriptor created accordingly to the given inputs
+	 * 
+	 * @throws IntrospectionException
+	 */
 	public PropertyDescriptor createProperty(Class<?> beanClass, String propertyName, String displayName,
 			String description, String category) throws IntrospectionException {
 
@@ -74,15 +102,31 @@ public class AbstractPlannerPropertiesBeanInfo extends SimpleBeanInfo {
 		property.setDisplayName(displayName);
 		property.setShortDescription(description);
 		property.setValue(BeanProperty.CATEGORY_LABEL_KEY, category);
-		
+
 		return property;
 	}
-	
+
+	/**
+	 * Adds two arrays of property descriptors into a new one containing all the
+	 * property descriptors from the two initial arrays.
+	 * 
+	 * @param rvOld the old array of property descriptors
+	 * @param rvNew the new array of property descriptors
+	 * 
+	 * @return the sum of the two arrays of property descriptors
+	 */
 	public PropertyDescriptor[] addPropertyDescriptors(PropertyDescriptor[] rvOld, PropertyDescriptor[] rvNew) {
 		return Stream.concat(Arrays.stream(rvOld), Arrays.stream(rvNew))
 				.toArray(PropertyDescriptor[]::new);
 	}
 
+	/**
+	 * Gets the bean descriptor of this Abstract planner properties bean info.
+	 * 
+	 * @return the bean descriptor of this class
+	 * 
+	 * @see java.beans.SimpleBeanInfo#getBeanDescriptor()
+	 */
 	public BeanDescriptor getBeanDescriptor() {
 		return new BeanDescriptor(beanClass, null);
 	}

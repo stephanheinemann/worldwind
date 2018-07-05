@@ -34,26 +34,33 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 
 /**
- * Realizes a FAD PRM properties bean info with the property descriptors for
+ * Realizes a FA PRM properties bean info with the property descriptors for
  * each parameter.
  * 
  * @author Henrique Ferreira
  *
  */
-public class FADPRMPropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo {
+public class FAPRMPropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo {
 
 	/** the class which this bean info refers to */
-	private final static Class<FADPRMProperties> beanClass = FADPRMProperties.class;
+	private final static Class<FAPRMProperties> beanClass = FAPRMProperties.class;
 
-	/** the category of parameters that are sampling related */ 
+	/** the category of parameters that are sampling related */
 	protected final static String CATEGORY_SAMPLING = "Sampling Parameters";
 
 	/** the category of parameters that are anytime related */
 	protected final static String CATEGORY_ANYTIME = "Anytime Parameters";
 
-	/** the category of parameters that are waypoint related */
-	protected final static String CATEGORY_WAYPOINT = "Waypoint Parameters";
+	/** the category of parameters that are desirability related */
+	protected final static String CATEGORY_DESIRABILITY = "Desirability Parameters";
 
+	/**
+	 * Customizes the property descriptors for each parameter of a FA PRM planner.
+	 * 
+	 * @return the array of property descriptors
+	 * 
+	 * @see com.cfar.swim.worldwind.registries.planners.AbstractPlannerPropertiesBeanInfo#getPropertyDescriptors()
+	 */
 	@Override
 	public PropertyDescriptor[] getPropertyDescriptors() {
 
@@ -84,8 +91,8 @@ public class FADPRMPropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 					CATEGORY_ANYTIME);
 			PropertyDescriptor lambda = this.createProperty(beanClass, "lambda",
 					"Lambda",
-					"the parameters that weights the desirability zones influence on the path cost",
-					CATEGORY_WAYPOINT);
+					"the parameter that weights the desirability zones influence on the path cost",
+					CATEGORY_DESIRABILITY);
 
 			PropertyDescriptor rvNew[] = { maxNeighbors, maxDistance, minimumQuality, maximumQuality,
 					qualityImprovement, bias, lambda };
@@ -99,7 +106,7 @@ public class FADPRMPropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 	}
 
 	/**
-	 * Gets the bean descriptor of this FAD PRM properties bean info.
+	 * Gets the bean descriptor of this FA PRM properties bean info.
 	 * 
 	 * @return the bean descriptor of this class
 	 * 

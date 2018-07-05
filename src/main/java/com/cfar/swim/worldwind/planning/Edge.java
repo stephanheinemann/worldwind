@@ -70,8 +70,8 @@ public class Edge {
 	/**
 	 * Constructs an Edge based on two positions.
 	 * 
-	 * @param position1
-	 * @param position2
+	 * @param position1 the first position
+	 * @param position2 the second position
 	 */
 	public Edge(Position position1, Position position2) {
 		this.position1 = position1;
@@ -79,11 +79,11 @@ public class Edge {
 	}
 
 	/**
-	 * Constructs an Edge based on two positions.
+	 * Constructs an Edge based on two positions and a line.
 	 * 
-	 * @param position1
-	 * @param position2
-	 * @param line
+	 * @param position1 the first position
+	 * @param position2 the second position
+	 * @param line the line formed by the two positions
 	 */
 	public Edge(Position position1, Position position2, Line line) {
 		this.position1 = position1;
@@ -181,28 +181,25 @@ public class Edge {
 	}
 
 	/**
-	 * TODO: Comment Adds a cost interval to this sampled position.
+	 * Adds a cost interval to the cost interval tree of this edge.
 	 * 
 	 * @param costInterval the cost interval to be added
 	 */
 	public void addCostInterval(CostInterval costInterval) {
 		this.costIntervals.add(costInterval);
-		// this.updateCost();
 	}
 
 	/**
-	 * TODO: Comment Removes a cost interval from this sampled position.
+	 * Removes a cost interval from the cost interval tree of this edge.
 	 * 
 	 * @param costInterval the cost interval to be removed
 	 */
 	public void removeCostInterval(CostInterval costInterval) {
 		this.costIntervals.remove(costInterval);
-		// this.updateCost();
 	}
 
 	/**
-	 * TODO: Comment Gets all cost intervals that are active at a specified time
-	 * instant.
+	 * Gets all cost intervals that are active at a specified time instant.
 	 * 
 	 * @param time the time instant
 	 * 
@@ -213,8 +210,7 @@ public class Edge {
 	}
 
 	/**
-	 * TODO: Comment Gets all cost intervals that are active during a specified time
-	 * interval.
+	 * Gets all cost intervals that are active during a specified time interval.
 	 * 
 	 * @param start the start time of the time interval
 	 * @param end the end time of the time interval
@@ -226,12 +222,14 @@ public class Edge {
 	}
 
 	/**
-	 * TODO: Comment Calculates the cost of this position at a given time by
-	 * searching the costInterval tree.
+	 * Calculates the cost of this edge within a specified time span by searching the
+	 * cost interval tree.
 	 * 
-	 * @param start the time at this position
-	 * @param end
-	 * @return the cost of this position at the given time
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the accumulated cost of this edge within the specified time
+	 *         span
 	 */
 	public double calculateCost(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy) {
 		double cost = 1d; // simple cost of normalized distance
@@ -257,7 +255,8 @@ public class Edge {
 			}
 		}
 		if (!costList.isEmpty()) {
-			// cost is computed based on the minimum/average/maximum cost of all obstacles times
+			// cost is computed based on the minimum/average/maximum cost of all obstacles
+			// times
 			// the number of obstacles that affect this edge
 			switch (costPolicy) {
 			case MINIMUM:
@@ -279,6 +278,7 @@ public class Edge {
 	 * Checks whether or not the given position is part of this edge
 	 * 
 	 * @param position the position to be checked
+	 * 
 	 * @return true if the position is part of this edge, false otherwise
 	 */
 	public boolean contains(Position position) {
@@ -288,6 +288,7 @@ public class Edge {
 			return false;
 	}
 
+	// TODO: review updatecost usefulness
 	// /**
 	// * Updates the active cost of this sampled position using its ato to search
 	// the
@@ -318,7 +319,7 @@ public class Edge {
 	 * 
 	 * @param obj the other edge
 	 * 
-	 * @return true, if the positions in this edge equals the positions of the other
+	 * @return true, if the positions are the same as the positions of the other
 	 *         edge (regardless of order), false otherwise
 	 * 
 	 * @see Object#equals(Object)
@@ -334,5 +335,4 @@ public class Edge {
 
 		return equals;
 	}
-
 }

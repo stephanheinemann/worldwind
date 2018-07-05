@@ -65,8 +65,8 @@ import gov.nasa.worldwind.render.Polyline;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
- * Realizes a planning continuum that implements an environment, can be used for
- * sampled based motion planning.
+ * Realizes a sampling environment that implements an environment and can be
+ * used for sampled based motion planning.
  * 
  * @author Manuel Rosa
  * @author Henrique Ferreira
@@ -74,20 +74,20 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  */
 public class SamplingEnvironment extends ContinuumBox implements Environment {
 
-	/** the globe of this planning continuum */
+	/** the globe of this sampling environment */
 	private Globe globe = null;
 
 	/** the cost interval tree encoding temporal costs */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
 			CostInterval.comparator);
 
-	/** the current time of this planning continuum */
+	/** the current time of this sampling environment */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 
-	/** the obstacles embedded into this planning continuum */
+	/** the obstacles embedded into this sampling environment */
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
 
-	/** the terrain obstacles embedded into this planning continuum */
+	/** the terrain obstacles embedded into this sampling environment */
 	private HashSet<TerrainObstacle> terrainObstacles = new HashSet<TerrainObstacle>();
 
 	/** the list of already sampled waypoints */
@@ -96,18 +96,17 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	/** the list of edges in this environment */
 	private List<Edge> edgeList = new ArrayList<Edge>();
 
-	/** the current accumulated active cost of this planning continuum */
-	// TODO Review usage of active cost
+	/** the current accumulated active cost of this sampling environment */
 	private double activeCost = 1d;
 
-	/** the threshold cost of this planning continuum */
+	/** the threshold cost of this sampling environment */
 	private double thresholdCost = 0d;
 
-	/** the resolution of this planning continuum */
+	/** the resolution of this sampling environment */
 	private double resolution = 1d;
 
 	/**
-	 * Constructs a planning continuum based on a geometric box.
+	 * Constructs a sampling environment based on a geometric box.
 	 * 
 	 * @param box the geometric box
 	 * 
@@ -119,10 +118,11 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Constructs a planning continuum based on a geometric box.
+	 * Constructs a sampling environment based on a geometric box and a given
+	 * resolution.
 	 * 
 	 * @param box the geometric box
-	 * @param resolution the resolution of this planning continuum
+	 * @param resolution the resolution of this sampling environment
 	 * 
 	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
@@ -133,9 +133,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the threshold cost of this planning continuum.
+	 * Gets the threshold cost of this sampling environment.
 	 * 
-	 * @return the threshold cost of this planning continuum
+	 * @return the threshold cost of this sampling environment
 	 * 
 	 * @see ThresholdRenderable#setThreshold(double)
 	 */
@@ -145,9 +145,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the threshold cost of this planning continuum.
+	 * Sets the threshold cost of this sampling environment.
 	 * 
-	 * @param thresholdCost the threshold cost of this planning continuum
+	 * @param thresholdCost the threshold cost of this sampling environment
 	 * 
 	 * @see ThresholdRenderable#setThreshold(double)
 	 */
@@ -158,9 +158,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the globe of this planning continuum.
+	 * Sets the globe of this sampling environment.
 	 * 
-	 * @param globe the globe of this planning continuum
+	 * @param globe the globe of this sampling environment
 	 * 
 	 * @see Environment#setGlobe(Globe)
 	 */
@@ -170,9 +170,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the globe of this planning continuum.
+	 * Gets the globe of this sampling environment.
 	 * 
-	 * @return the globe of this planning continuum
+	 * @return the globe of this sampling environment
 	 * 
 	 * @see Environment#getGlobe()
 	 */
@@ -182,21 +182,17 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Adds a cost interval to this planning grid.
+	 * Adds a cost interval to this sampling environment.
 	 * 
 	 * @param costInterval the cost interval to be added
 	 */
 	public void addCostInterval(CostInterval costInterval) {
 		this.costIntervals.add(costInterval);
 		this.update();
-		// TODO: Should costs be automatically propagated to the affected child cells?
-		// TODO: Should added children costs be propagated to parents?
-		// TODO: What happens if children are added and removed?
-		// TODO: Shall parents aggregate all costs?!
 	}
 
 	/**
-	 * Removes a cost interval from this planning grid.
+	 * Removes a cost interval from this sampling environment.
 	 * 
 	 * @param costInterval the cost interval to be removed
 	 * 
@@ -234,25 +230,27 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the accumulated cost of this planning grid at specified time instant.
+	 * Gets the accumulated cost of this sampling environment at specified time
+	 * instant.
 	 * 
 	 * @param time the time instant
 	 * 
-	 * @return the accumulated cost of this planning grid at the specified time
-	 *         instant
+	 * @return the accumulated cost of this sampling environment at the specified
+	 *         time instant
 	 */
 	public double getCost(ZonedDateTime time) {
 		return this.getCost(time, time);
 	}
 
 	/**
-	 * Gets the accumulated cost of this planning grid within a specified time span.
+	 * Gets the accumulated cost of this sampling environment within a specified
+	 * time span.
 	 * 
 	 * @param start the start time of the time span
 	 * @param end the end time of the time span
 	 * 
-	 * @return the accumulated cost of this planning grid within the specified time
-	 *         span
+	 * @return the accumulated cost of this sampling environment within the
+	 *         specified time span
 	 */
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
 		double cost = 1d; // simple cost of normalized distance
@@ -285,9 +283,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the current time of this planning continuum.
+	 * Gets the current time of this sampling environment.
 	 * 
-	 * @return the current time of this planning continuum
+	 * @return the current time of this sampling environment
 	 * 
 	 * @see TimedRenderable#getTime()
 	 */
@@ -297,13 +295,12 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the current time of this planning continuum.
+	 * Sets the current time of this sampling environment.
 	 * 
-	 * @param time the current time of this planning continuum
+	 * @param time the current time of this sampling environment
 	 * 
 	 * @see TimedRenderable#setTime(ZonedDateTime)
 	 */
-	// TODO: Review meaning, not clear
 	@Override
 	public void setTime(ZonedDateTime time) {
 		this.time = time;
@@ -311,7 +308,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the obstacles of this planning continuum.
+	 * Gets the obstacles of this sampling environment.
 	 * 
 	 * @return the obstacles
 	 */
@@ -320,7 +317,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the obstacles of this planning continuum.
+	 * Sets the obstacles of this sampling environment.
 	 * 
 	 * @param obstacles the obstacles to set
 	 */
@@ -329,16 +326,16 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the resolution of this planning continuum
+	 * Gets the resolution of this sampling environment
 	 * 
-	 * @return the resolution of this planning continuum
+	 * @return the resolution of this sampling environment
 	 */
 	public double getResolution() {
 		return resolution;
 	}
 
 	/**
-	 * Sets the resolution of this planning continuum
+	 * Sets the resolution of this sampling environment
 	 * 
 	 * @param resolution the resolution to set
 	 */
@@ -347,7 +344,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the terrain obstacles of this planning continuum.
+	 * Gets the terrain obstacles of this sampling environment.
 	 * 
 	 * @return the terrain obstacles
 	 */
@@ -356,7 +353,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sets the terrain obstacles of this planning continuum.
+	 * Sets the terrain obstacles of this sampling environment.
 	 * 
 	 * @param terrainObstacles the terrain obstacles to set
 	 */
@@ -387,7 +384,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * 
 	 * @return the edgeList the list of edges
 	 */
-	public List<Edge> getEdgeList() {
+	public List<? extends Edge> getEdgeList() {
 		return edgeList;
 	}
 
@@ -415,11 +412,11 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not this planning continuum contains a position.
+	 * Indicates whether or not this sampling environment contains a position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if this planning continuum contains the position, false
+	 * @return true if this sampling environment contains the position, false
 	 *         otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
@@ -437,9 +434,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the center position in globe coordinates of this planning continuum.
+	 * Gets the center position in globe coordinates of this sampling environment.
 	 * 
-	 * @return the center position in globe coordinates of this planning continuum
+	 * @return the center position in globe coordinates of this sampling environment
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -459,10 +456,10 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not this planning grid is refined, that is, has
+	 * Indicates whether or not this sampling environment is refined, that is, has
 	 * children.
 	 * 
-	 * @return true if this planning grid is refined, false otherwise
+	 * @return true if this sampling environment is refined, false otherwise
 	 * 
 	 */
 	public boolean isRefined() {
@@ -471,9 +468,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the refinements, that is, children of this planning grid.
+	 * Gets the refinements, that is, children of this sampling environment.
 	 *
-	 * @return the refinements of this planning grid
+	 * @return the refinements of this sampling environment
 	 *
 	 */
 	public Set<SamplingEnvironment> getRefinements() {
@@ -494,7 +491,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Coarsens, that is, removes the children of this planning grid.
+	 * Coarsens, that is, removes the children of this sampling environment.
 	 *
 	 */
 	public void coarsen() {
@@ -503,12 +500,13 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not a position is a waypoint in this planning grid.
+	 * Indicates whether or not a position is a waypoint in this sampling
+	 * environment.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if the position is a waypoint in this planning grid, false
-	 *         otherwise
+	 * @return true if the position is a waypoint in this sampling environment,
+	 *         false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -523,12 +521,12 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the adjacent waypoints of a position in this planning grid.
+	 * Gets the adjacent waypoints of a position in this sampling environment.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return the adjacent waypoints of the position in this planning grid, or the
-	 *         waypoint position itself
+	 * @return the adjacent waypoints of the position in this sampling environment,
+	 *         or the waypoint position itself
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -546,7 +544,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 	/**
 	 * Indicates whether or not a position is adjacent to a waypoint in this
-	 * planning grid.
+	 * sampling environment.
 	 * 
 	 * @param position the position in globe coordinates
 	 * @param waypoint the waypoint in globe coordinates
@@ -578,12 +576,12 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the neighbors of a position in this planning grid. A full recursive
-	 * search is performed considering non-parent cells only.
+	 * Gets the neighbors of a position in this sampling environment. A full
+	 * recursive search is performed considering non-parent cells only.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return the neighbors of the position in this planning grid
+	 * @return the neighbors of the position in this sampling environment
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -603,7 +601,8 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not two positions are neighbors in this planning grid.
+	 * Indicates whether or not two positions are neighbors in this sampling
+	 * environment.
 	 * 
 	 * @param position the position
 	 * @param neighbor the potential neighbor of the position
@@ -623,12 +622,12 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the distance between two positions in this planning continuum.
+	 * Gets the distance between two positions in this sampling environment.
 	 * 
 	 * @param position1 the first position
 	 * @param position2 the second position
 	 * 
-	 * @return the distance between the two positions in this planning continuum
+	 * @return the distance between the two positions in this sampling environment
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
@@ -666,7 +665,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 	/**
 	 * Gets the step cost from an origin to a destination position within this
-	 * planning continuum between a start and an end time given a cost policy and
+	 * sampling environment between a start and an end time given a cost policy and
 	 * risk policy.
 	 * 
 	 * @param origin the origin position in globe coordinates
@@ -704,6 +703,54 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		}
 
 		stepCost = cost;
+
+		return stepCost;
+	}
+
+	/**
+	 * Gets the desirability step cost from an origin to a destination position
+	 * within this sampling environment between a start and an end time given a cost
+	 * policy and risk policy. This function is meant to be used for FADPRM Edges
+	 * which include desirability and lambda values.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
+	 * 
+	 * @return the step cost from the origin to the destination position
+	 * 
+	 * @throws IllegalStateException if there is no edge connecting both positions
+	 */
+	public double getDesirabilityStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+
+		FAPRMEdge edge = null;
+		Optional<Edge> optEdge = this.getEdge(origin, destination);
+
+		if (!optEdge.isPresent())
+			throw new IllegalStateException("no edge containing both positions");
+		else
+			edge = (FAPRMEdge) optEdge.get();
+
+		double stepCost = 0d, distance, cost;
+
+		distance = this.getNormalizedDistance(origin, destination);
+
+		cost = edge.calculateCost(start, end, costPolicy);
+
+		if (riskPolicy.satisfies(cost - 1)) {
+			cost = distance * cost;
+		} else {
+			cost = Double.POSITIVE_INFINITY;
+		}
+
+		double desirability = edge.getDesirability();
+		double lambda = edge.getLambda();
+		double costMultiplier = 1.5 * lambda - (lambda / desirability) + (1 / desirability) - 1;
+		stepCost = cost * costMultiplier;
 
 		return stepCost;
 	}
@@ -749,7 +796,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Embeds an obstacle into this planning continuum.
+	 * Embeds an obstacle into this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be embedded
 	 * 
@@ -776,7 +823,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Embeds an obstacle into this planning continuum.
+	 * Embeds an obstacle into this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be embedded
 	 * 
@@ -804,7 +851,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Unembeds an obstacle from this planning continuum.
+	 * Unembeds an obstacle from this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
 	 * 
@@ -827,7 +874,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Updates this planning continuum for an embedded obstacle.
+	 * Updates this sampling environment for an embedded obstacle.
 	 * 
 	 * @param obstacle the embedded obstacle
 	 * 
@@ -841,7 +888,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Unembeds all obstacles from this planning continuum.
+	 * Unembeds all obstacles from this sampling environment.
 	 * 
 	 * @see Environment#unembedAll()
 	 */
@@ -856,11 +903,12 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not an obstacle is embedded in this planning continuum.
+	 * Indicates whether or not an obstacle is embedded in this sampling
+	 * environment.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
-	 * @return true if the obstacle is embedded in this planning continuum, false
+	 * @return true if the obstacle is embedded in this sampling environment, false
 	 *         otherwise
 	 * 
 	 * @see Environment#isEmbedded(Obstacle)
@@ -871,7 +919,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Embeds an obstacle into this planning continuum.
+	 * Embeds an obstacle into this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be embedded
 	 * 
@@ -896,7 +944,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Embeds an obstacle into this planning continuum.
+	 * Embeds an obstacle into this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be embedded
 	 * 
@@ -921,7 +969,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Unembeds an obstacle from this planning continuum.
+	 * Unembeds an obstacle from this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
 	 * 
@@ -943,7 +991,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Updates this planning continuum for an embedded obstacle.
+	 * Updates this sampling environment for an embedded obstacle.
 	 * 
 	 * @param obstacle the embedded obstacle
 	 * 
@@ -956,7 +1004,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Unembeds all obstacles from this planning continuum.
+	 * Unembeds all obstacles from this sampling environment.
 	 * 
 	 * @see Environment#unembedAll()
 	 */
@@ -965,11 +1013,12 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Indicates whether or not an obstacle is embedded in this planning continuum.
+	 * Indicates whether or not an obstacle is embedded in this sampling
+	 * environment.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
-	 * @return true if the obstacle is embedded in this planning continuum, false
+	 * @return true if the obstacle is embedded in this sampling environment, false
 	 *         otherwise
 	 * 
 	 * @see Environment#isEmbedded(Obstacle)
@@ -979,7 +1028,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Updates this planning continuum.
+	 * Updates this sampling environment.
 	 */
 	protected void update() {
 		this.updateActiveCost();
@@ -988,21 +1037,21 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Updates the accumulated active cost of this planning continuum.
+	 * Updates the accumulated active cost of this sampling environment.
 	 */
 	protected void updateActiveCost() {
 		this.activeCost = this.getCost(this.time);
 	}
 
 	/**
-	 * Updates the visibility of this planning continuum.
+	 * Updates the visibility of this sampling environment.
 	 */
 	protected void updateVisibility() {
 		this.setVisible(this.activeCost > this.thresholdCost);
 	}
 
 	/**
-	 * Updates the appearance of this planning continuum.
+	 * Updates the appearance of this sampling environment.
 	 */
 	protected void updateAppearance() {
 		Color activeColor = ObstacleColor.getColor(activeCost);

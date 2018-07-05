@@ -270,8 +270,9 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the list of edges
 	 */
+	@SuppressWarnings("unchecked")
 	public List<Edge> getEdgeList() {
-		return this.getEnvironment().getEdgeList();
+		return (List<Edge>) this.getEnvironment().getEdgeList();
 	}
 
 	/**

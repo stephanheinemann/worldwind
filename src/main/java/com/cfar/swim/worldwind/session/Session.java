@@ -60,6 +60,7 @@ import com.cfar.swim.worldwind.registries.planners.ARRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.BasicPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.DRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.FADPRMProperties;
+import com.cfar.swim.worldwind.registries.planners.FAPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.ForwardAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.LazyPRMProperties;
@@ -189,6 +190,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, new ADRRTreeProperties(), PlannerFamily.RRT));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_BASICPRM_ID, new BasicPRMProperties(), PlannerFamily.PRM));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_LAZYPRM_ID, new LazyPRMProperties(), PlannerFamily.PRM));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAPRM_ID, new FAPRMProperties(), PlannerFamily.PRM));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FADPRM_ID, new FADPRMProperties(), PlannerFamily.PRM));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
@@ -490,6 +492,13 @@ public class Session implements Identifiable {
 		return plannerSpec;
 	}
 	
+	/**
+	 * Gets the planner specifications of this session that are a part of a given planner family.
+	 * 
+	 * @param family the planner family
+	 * 
+	 * @return the set of planner specifications that are a part of a given planner family
+	 */
 	public Set<Specification<Planner>> getPlannerSpecifications(PlannerFamily family) {
 		
 		return this.plannerRegistry.getSpecifications()

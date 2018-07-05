@@ -35,41 +35,53 @@ import com.cfar.swim.worldwind.util.Depiction;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.render.RigidShape;
 
 /**
+ * Realizes a terrain obstacle cylinder for motion planning.
+ * 
  * @author Henrique Ferreira
  *
  */
 public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle {
 
-	/** the depiction of this obstacle cylinder */
+	/** the depiction of this terrain obstacle cylinder */
 	protected Depiction depiction = null;
-	
-	/** the threshold cost of this obstacle cylinder */
+
+	/** the threshold cost of this terrain obstacle cylinder */
 	private double thresholdCost = 0d;
 
-	/** the active cost of this obstacle cylinder */
+	/** the active cost of this terrain obstacle cylinder */
 	private double activeCost = 0d;
-	
+
 	/**
-	 * @param centerPosition
-	 * @param height
-	 * @param radius
+	 * Constructs a terrain obstacle cylinder with a specified center position,
+	 * height and radius.
+	 * 
+	 * @param centerPosition the center position of this terrain obstacle cylinder
+	 * @param height the height in meters of this terrain obstacle cylinder
+	 * @param radius the radius in meters of this terrain obstacle cylinder
+	 * 
+	 * @see VerticalCylinder#VerticalCylinder(Position, double, double)
 	 */
 	public TerrainCylinder(Position centerPosition, double height, double radius) {
 		super(centerPosition, height, radius);
-		// TODO Auto-generated constructor stub
+		this.setAttributes(new BasicShapeAttributes());
+		this.getAttributes().setInteriorOpacity(0.25);
+		this.getAttributes().setEnableLighting(true);
+		this.getAttributes().setDrawInterior(true);
+		this.getAttributes().setDrawOutline(false);
 	}
 
 	/**
-	 * Sets the threshold cost of this obstacle cylinder and updates its
+	 * Sets the threshold cost of this terrain obstacle cylinder and updates its
 	 * representation accordingly.
 	 * 
-	 * @param threshold the threshold cost of this obstacle cylinder
+	 * @param threshold the threshold cost of this terrain obstacle cylinder
 	 *
 	 * @see ThresholdRenderable#setThreshold(double)
 	 */
@@ -79,9 +91,9 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Gets the threshold cost of this obstacle cylinder.
+	 * Gets the threshold cost of this terrain obstacle cylinder.
 	 * 
-	 * @return the threshold cost of this obstacle cylinder
+	 * @return the threshold cost of this terrain obstacle cylinder
 	 * 
 	 * @see ThresholdRenderable#getThreshold()
 	 */
@@ -91,9 +103,9 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Gets the depiction of this obstacle cylinder.
+	 * Gets the depiction of this terrain obstacle cylinder.
 	 * 
-	 * @return the depictin of this obstacle cylinder
+	 * @return the depictin of this terrain obstacle cylinder
 	 * 
 	 * @see Depictable#getDepiction()
 	 */
@@ -103,9 +115,9 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Sets the depiction of this obstacle cylinder.
+	 * Sets the depiction of this terrain obstacle cylinder.
 	 * 
-	 * @param depiction the depiction of this obstacle cylinder
+	 * @param depiction the depiction of this terrain obstacle cylinder
 	 * 
 	 * @see Depictable#setDepiction(Depiction)
 	 */
@@ -113,11 +125,11 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	public void setDepiction(Depiction depiction) {
 		this.depiction = depiction;
 	}
-	
+
 	/**
-	 * Indicates whether or not this obstacle cylinder has a depiction.
+	 * Indicates whether or not this terrain obstacle cylinder has a depiction.
 	 * 
-	 * @return true if this obstacle cylinder has a depiction, false otherwise
+	 * @return true if this terrain obstacle cylinder has a depiction, false otherwise
 	 * 
 	 * @see Depictable#hasDepiction()
 	 */
@@ -127,15 +139,15 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Updates this obstacle cylinder.
+	 * Updates this terrain obstacle cylinder.
 	 */
 	protected void update() {
 		this.updateVisibility();
 		this.updateAppearance();
 	}
-	
+
 	/**
-	 * Updates the visibility of this obstacle cylinder.
+	 * Updates the visibility of this terrain obstacle cylinder.
 	 */
 	protected void updateVisibility() {
 		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
@@ -143,9 +155,9 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 			this.depiction.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		}
 	}
-	
+
 	/**
-	 * Updates the appearance of this obstacle cylinder.
+	 * Updates the appearance of this terrain obstacle cylinder.
 	 */
 	protected void updateAppearance() {
 		this.getAttributes().setInteriorMaterial(new Material(ObstacleColor.getColor(activeCost)));
@@ -154,11 +166,12 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 		} else {
 			this.getAttributes().setInteriorOpacity(0.5);
 		}
-		// TODO: elements could change color, transparency or even an associated image/icon 
+		// TODO: elements could change color, transparency or even an associated
+		// image/icon
 	}
-	
+
 	/**
-	 * Renders this obstacle cylinder.
+	 * Renders this terrain obstacle cylinder.
 	 * 
 	 * @see Renderable#render(DrawContext)
 	 */
@@ -171,11 +184,11 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Gets the geometric extent of this obstacle cylinder for a specified globe.
+	 * Gets the geometric extent of this terrain obstacle cylinder for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
 	 * 
-	 * @return the geometric extent (a bounding box) of this obstacle cylinder
+	 * @return the geometric extent (a bounding box) of this terrain obstacle cylinder
 	 * 
 	 * @see RigidShape#getExtent(Globe, double)
 	 */

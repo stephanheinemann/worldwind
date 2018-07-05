@@ -51,23 +51,24 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
- * Realizes a basic PRM planner that constructs a Planning Roadmap by sampling
- * points in a continuous environment and plans a trajectory of an aircraft in
- * an environment considering a local cost and risk policy.
+ * Realizes a basic PRM planner that constructs a roadmap by sampling points in
+ * a continuous environment and plans a trajectory of an aircraft in an
+ * environment considering a local cost and risk policy. The path is found using
+ * a specified A* based algorithm.
  * 
  * @author Henrique Ferreira
  *
  */
-public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
+public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 
 	/** the maximum number of sampling iterations */
-	protected final int MAX_ITER;
+	protected int maxIter;
 
 	/** the maximum number of neighbors a waypoint can be connected to */
-	protected final int MAX_NEIGHBORS;
+	protected int maxNeighbors;
 
 	/** the maximum distance between two neighboring waypoints */
-	protected final double MAX_DIST;
+	protected double maxDistance;
 
 	/** the planner used to find a path in a previously populated roadmap */
 	protected QueryPlanner planner;
@@ -77,13 +78,13 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 
 	/** the initial inflation factor applied to the heuristic function */
 	private double initialInflation;
-	
+
 	/** the final inflation factor applied the heuristic function */
 	private double finalInflation;
-	
+
 	/** the deflation amount to be applied to the current inflation */
 	private double deflationAmount;
-	
+
 	/**
 	 * Constructs a basic PRM planner for a specified aircraft and environment using
 	 * default local cost and risk policies.
@@ -95,37 +96,70 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	 */
 	public BasicPRM(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		MAX_ITER = 1000;
-		MAX_NEIGHBORS = 30;
-		MAX_DIST = 200d;
+		maxIter = 1000;
+		maxNeighbors = 30;
+		maxDistance = 200d;
 	}
 
 	/**
-	 * Constructs a basic PRM planner for a specified aircraft and environment,
-	 * using default local cost and risk policies. Also, this planner is constructed
-	 * with a specified maximum number of iterations (Waypoints), a maximum number
-	 * of neighbors (of a single Waypoint) and a maximum distance between two
-	 * connected neighbors.
+	 * Gets the maximum number of sampling iterations.
 	 * 
-	 * @param aircraft the aircraft
-	 * @param environment the environment
-	 * @param maxIter the maximum number of iterations
-	 * @param maxNeighbors the maximum number of neighbors
-	 * @param maxDist the maximum distance between two connected neighbors
-	 * 
-	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
+	 * @return the maxIter the maximum number of sampling iterations
 	 */
-	public BasicPRM(Aircraft aircraft, Environment environment, int maxIter, int maxNeighbors, double maxDist) {
-		super(aircraft, environment);
-		MAX_ITER = maxIter;
-		MAX_NEIGHBORS = maxNeighbors;
-		MAX_DIST = maxDist;
+	public int getMaxIter() {
+		return maxIter;
 	}
 
 	/**
-	 * Gets the minimum quality (initial inflation) of this ARA* planner.
+	 * Sets the maximum number of sampling iterations.
 	 * 
-	 * @return the minimum quality (initial inflation) of this ARA* planner
+	 * @param maxIter the maximum number of sampling iterations to set
+	 */
+	public void setMaxIter(int maxIter) {
+		this.maxIter = maxIter;
+	}
+
+	/**
+	 * Gets the maximum number of neighbors a waypoint can have.
+	 * 
+	 * @return the maxNeighbors the maximum number of neighbors a waypoint can have
+	 */
+	public int getMaxNeighbors() {
+		return maxNeighbors;
+	}
+
+	/**
+	 * Sets the maximum number of neighbors a waypoint can have.
+	 * 
+	 * @param maxNeighbors the maximum number of neighbors a waypoint can have
+	 */
+	public void setMaxNeighbors(int maxNeighbors) {
+		this.maxNeighbors = maxNeighbors;
+	}
+
+	/**
+	 * Gets the maximum distance between two connected waypoints.
+	 * 
+	 * @return the maxDistance the maximum distance between two connected waypoints
+	 */
+	public double getMaxDistance() {
+		return maxDistance;
+	}
+
+	/**
+	 * Sets the maximum distance between two connected waypoints.
+	 * 
+	 * @param maxDistance the maximum distance between two connected waypoints to
+	 *            set
+	 */
+	public void setMaxDistance(double maxDistance) {
+		this.maxDistance = maxDistance;
+	}
+
+	/**
+	 * Gets the minimum quality (initial inflation) of the query ARA* planner.
+	 * 
+	 * @return the minimum quality (initial inflation) of the query ARA* planner.
 	 * 
 	 * @see AnytimePlanner#getMinimumQuality()
 	 */
@@ -133,12 +167,13 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	public double getMinimumQuality() {
 		return this.initialInflation;
 	}
-	
+
 	/**
-	 * Sets the minimum quality (initial inflation) of this ARA* planner.
+	 * Sets the minimum quality (initial inflation) of the query ARA* planner.
 	 * 
-	 * @param initialInflation the minimum quality (initial inflation) of this
-	 *                         ARA* planner
+	 * @param initialInflation the minimum quality (initial inflation) of the query
+	 *            ARA* planner
+	 * 
 	 * 
 	 * @throws IllegalArgumentException if the initial inflation is invalid
 	 * 
@@ -153,11 +188,11 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 			throw new IllegalArgumentException("initial inflation is invalid");
 		}
 	}
-	
+
 	/**
-	 * Gets the maximum quality (final inflation) of this ARA* planner.
+	 * Gets the maximum quality (final inflation) of the query ARA* planner.
 	 * 
-	 * @return the maximum quality (final inflation) of this ARA* planner
+	 * @return the maximum quality (final inflation) of the query ARA* planner.
 	 * 
 	 * @see AnytimePlanner#getMaximumQuality()
 	 */
@@ -165,12 +200,12 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	public double getMaximumQuality() {
 		return this.finalInflation;
 	}
-	
+
 	/**
-	 * Sets the maximum quality (initial inflation) of this ARA* planner.
+	 * Sets the maximum quality (initial inflation) of the query ARA* planner.
 	 * 
-	 * @param finalInflation the maximum quality (final inflation) of this
-	 *                       ARA* planner
+	 * @param finalInflation the maximum quality (final inflation) of the query ARA*
+	 *            planner
 	 * 
 	 * @throws IllegalArgumentException if the final inflation is invalid
 	 * 
@@ -184,11 +219,11 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 			throw new IllegalArgumentException("final deflation is invalid");
 		}
 	}
-	
+
 	/**
-	 * Gets the quality improvement (deflation amount) of this ARA* planner.
+	 * Gets the quality improvement (deflation amount) of the query ARA* planner.
 	 * 
-	 * @return the quality improvement (deflation amount) of this ARA* planner
+	 * @return the quality improvement (deflation amount) of the query ARA* planner
 	 * 
 	 * @see AnytimePlanner#getQualityImprovement()
 	 */
@@ -196,12 +231,12 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	public double getQualityImprovement() {
 		return this.deflationAmount;
 	}
-	
+
 	/**
-	 * Sets the quality improvement (deflation amount) of this ARA* planner.
+	 * Sets the quality improvement (deflation amount) of the query ARA* planner.
 	 * 
-	 * @param deflationAmount the quality improvement (deflation amount) of
-	 *                        this ARA* planner
+	 * @param deflationAmount the quality improvement (deflation amount) of the
+	 *            query ARA* planner
 	 * 
 	 * @throws IllegalArgumentException if the deflation amount is invalid
 	 * 
@@ -215,11 +250,11 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 			throw new IllegalArgumentException("deflation amount is invalid");
 		}
 	}
-	
+
 	/**
-	 * Gets the continuum environment of this planner
+	 * Gets the sampling environment of this planner.
 	 * 
-	 * @return the continuum environment
+	 * @return the sampling environment
 	 */
 	public SamplingEnvironment getEnvironment() {
 		return (SamplingEnvironment) super.getEnvironment();
@@ -247,18 +282,19 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
-	 * Gets the list of already sampled edges
+	 * Gets the list of already created edges
 	 * 
 	 * @return the list of edges
 	 */
+	@SuppressWarnings("unchecked")
 	public List<Edge> getEdgeList() {
-		return this.getEnvironment().getEdgeList();
+		return (List<Edge>) this.getEnvironment().getEdgeList();
 	}
 
 	/**
-	 * Sets the list of edges previously sampled
+	 * Sets the list of edges.
 	 * 
-	 * @param edgetList the list of edges to set
+	 * @param edgeList the list of edges to set
 	 * 
 	 */
 	public void setEdgeList(List<Edge> edgeList) {
@@ -266,7 +302,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
-	 * Gets the query planner of this basic PRM planner.
+	 * Gets the query planner of this planner.
 	 * 
 	 * @return the planner used to find a path in this environment.
 	 */
@@ -275,7 +311,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
-	 * Sets the query planner of this basic PRM planner.
+	 * Sets the query planner of this planner.
 	 * 
 	 * @param planner the planner to set
 	 */
@@ -284,7 +320,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
-	 * Gets the query mode of this basic PRM planner.
+	 * Gets the query mode of this planner.
 	 * 
 	 * @return the mode the query mode
 	 */
@@ -293,7 +329,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
-	 * Sets the query mode of this basic PRM planner.
+	 * Sets the query mode of this planner.
 	 * 
 	 * @param mode the mode to set
 	 */
@@ -315,11 +351,12 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
-	 * Connects this waypoint to another waypoints already sampled, which are closer
-	 * than a MAX_DIST. The maximum number of neighbors a waypoint can be connected
-	 * to is defined by MAX_NEIGHBORS.
+	 * Connects a given waypoint to another waypoints already sampled, which are
+	 * closer than a maximum distance. The maximum number of neighbors a waypoint
+	 * can be connected to is another connection constraint. Checks if the two
+	 * waypoints are connectable and if there is a conflict with terrain obstacles.
 	 * 
-	 * @param waypoint the BasicPRM waypoint to be connected
+	 * @param waypoint the waypoint to be connected
 	 */
 	protected void connectWaypoint(Waypoint waypoint) {
 		int numConnectedNeighbor = 0;
@@ -350,7 +387,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 
-		if (super.getEnvironment().getDistance(neighbor, waypoint) < MAX_DIST && num < MAX_NEIGHBORS) {
+		if (super.getEnvironment().getDistance(neighbor, waypoint) < maxDistance && num < maxNeighbors) {
 			if (capabilities.isFeasible(waypoint, neighbor, this.getEnvironment().getGlobe())
 					|| capabilities.isFeasible(neighbor, waypoint, this.getEnvironment().getGlobe())) {
 				connectable = true;
@@ -361,11 +398,11 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
-	 * Creates an edge between a source waypoint and a target waypoing, and adds it
+	 * Creates an edge between a source waypoint and a target waypoint, and adds it
 	 * to the edge list
 	 * 
-	 * @param source the source Basic PRM waypoint
-	 * @param target the target Basic PRM waypoint
+	 * @param source the source waypoint
+	 * @param target the target waypoint
 	 */
 	protected void createEdge(Waypoint source, Waypoint target) {
 
@@ -378,7 +415,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
-	 * Initializes the planner clearing the waypoint, edge and plan lists.
+	 * Initializes the planner clearing the waypoint and edge lists.
 	 */
 	protected void initialize() {
 		this.getWaypointList().clear();
@@ -388,13 +425,13 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	/**
 	 * Creates the roadmap by sampling positions from a continuous environment.
 	 * First, checks if the waypoint position has conflicts with terrain. Then the
-	 * IntervalTree is embedded and the waypoint is added to the waypoint list.
-	 * After that, tries to connect this waypoint to others already sampled.
+	 * waypoint is added to the waypoint list. After that, tries to connect this
+	 * waypoint to others already sampled.
 	 */
 	protected void construct() {
 		int num = 0;
 
-		while (num < MAX_ITER) {
+		while (num < maxIter) {
 			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 
 			if (!this.getEnvironment().checkConflict(waypoint)) {
@@ -409,8 +446,8 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	/**
 	 * Extends the roadmap to incorporate the origin and destination positions.
 	 * 
-	 * @param origin the origin position in global coordinates
-	 * @param destination the destination position in global coordinates
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
 	 */
 	protected void extendsConstruction(Position origin, Position destination) {
 		Waypoint start = this.createWaypoint(origin);
@@ -431,9 +468,9 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	 * Extends the roadmap to incorporate the origin, intermediate and destination
 	 * positions.
 	 * 
-	 * @param origin the origin position in global coordinates
-	 * @param destination the destination position in global coordinates
-	 * @param waypoints the list of intermediate positions in global coordinates
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param waypoints the list of intermediate positions in globe coordinates
 	 */
 	protected void extendsConstruction(Position origin, Position destination, List<Position> waypoints) {
 		Waypoint start = this.createWaypoint(origin);
@@ -460,42 +497,48 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	}
 
 	/**
+	 * Sets the plan revision listeners for a query planner. The query planner
+	 * listener invokes the listeners of this Basic PRM planner.
 	 * 
-	 * @param planner
+	 * @param planner the query planner of this planner
 	 */
-	public void setRevisionListeners (Planner planner) {
+	public void setRevisionListeners(Planner planner) {
 		List<PlanRevisionListener> planRevisionListeners = this.getPlanRevisionListeners();
 		planner.addPlanRevisionListener(new PlanRevisionListener() {
-				@Override
-				public void revisePlan(Trajectory trajectory) {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.revisePlan(trajectory);
-					}
+			@Override
+			public void revisePlan(Trajectory trajectory) {
+				for (PlanRevisionListener listener : planRevisionListeners) {
+					listener.revisePlan(trajectory);
 				}
-				@Override
-				public void reviseObstacle() {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.reviseObstacle();
-					}
+			}
+
+			@Override
+			public void reviseObstacle() {
+				for (PlanRevisionListener listener : planRevisionListeners) {
+					listener.reviseObstacle();
 				}
-				@Override
-				public Position reviseAircraftPosition() {
-					Position position = null;
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						position = listener.reviseAircraftPosition();
-					}
-					return position;
+			}
+
+			@Override
+			public Position reviseAircraftPosition() {
+				Position position = null;
+				for (PlanRevisionListener listener : planRevisionListeners) {
+					position = listener.reviseAircraftPosition();
 				}
-				@Override
-				public boolean reviseDatalinkPlan() {
-					boolean datalinkConnected = false;
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						datalinkConnected = listener.reviseDatalinkPlan();
-					}
-					return datalinkConnected;
+				return position;
+			}
+
+			@Override
+			public boolean reviseDatalinkPlan() {
+				boolean datalinkConnected = false;
+				for (PlanRevisionListener listener : planRevisionListeners) {
+					datalinkConnected = listener.reviseDatalinkPlan();
 				}
-			});
+				return datalinkConnected;
+			}
+		});
 	}
+
 	/**
 	 * Invokes a query planner to find a trajectory from an origin to a destination
 	 * at a specified estimated time of departure.
@@ -528,25 +571,19 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 			this.setRevisionListeners(araStar);
 			trajectory = araStar.plan(origin, destination, etd);
 			break;
-		/*case AD:
-			ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(), this.getEnvironment());
-			adStar.setCostPolicy(this.getCostPolicy());
-			adStar.setRiskPolicy(this.getRiskPolicy());
-			adStar.addPlanRevisionListener(new PlanRevisionListener() {
-				@Override
-				public void revisePlan(Trajectory trajectory) {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.revisePlan(trajectory);
-					}
-				}
-				public void reviseObstacle() {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.reviseObstacle();
-					}
-				}
-			});
-			trajectory = adStar.plan(origin, destination, etd);
-			break;*/
+		/*
+		 * case AD: ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(),
+		 * this.getEnvironment()); adStar.setCostPolicy(this.getCostPolicy());
+		 * adStar.setRiskPolicy(this.getRiskPolicy());
+		 * adStar.addPlanRevisionListener(new PlanRevisionListener() {
+		 * 
+		 * @Override public void revisePlan(Trajectory trajectory) { for
+		 * (PlanRevisionListener listener : planRevisionListeners) {
+		 * listener.revisePlan(trajectory); } } public void reviseObstacle() { for
+		 * (PlanRevisionListener listener : planRevisionListeners) {
+		 * listener.reviseObstacle(); } } }); trajectory = adStar.plan(origin,
+		 * destination, etd); break;
+		 */
 		}
 		return trajectory;
 	}
@@ -586,26 +623,20 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 			this.setRevisionListeners(araStar);
 			trajectory = araStar.plan(origin, destination, waypoints, etd);
 			break;
-		/*case AD:
-			ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(), this.getEnvironment());
-			adStar.setCostPolicy(this.getCostPolicy());
-			adStar.setRiskPolicy(this.getRiskPolicy());
-			adStar.addPlanRevisionListener(new PlanRevisionListener() {
-				@Override
-				public void revisePlan(Trajectory trajectory) {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.revisePlan(trajectory);
-					}
-				}
-				@Override
-				public void reviseObstacle() {
-					for (PlanRevisionListener listener : planRevisionListeners) {
-						listener.reviseObstacle();
-					}
-				}
-			});
-			trajectory = adStar.plan(origin, destination, waypoints, etd);
-			break;*/
+		/*
+		 * case AD: ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(),
+		 * this.getEnvironment()); adStar.setCostPolicy(this.getCostPolicy());
+		 * adStar.setRiskPolicy(this.getRiskPolicy());
+		 * adStar.addPlanRevisionListener(new PlanRevisionListener() {
+		 * 
+		 * @Override public void revisePlan(Trajectory trajectory) { for
+		 * (PlanRevisionListener listener : planRevisionListeners) {
+		 * listener.revisePlan(trajectory); } }
+		 * 
+		 * @Override public void reviseObstacle() { for (PlanRevisionListener listener :
+		 * planRevisionListeners) { listener.reviseObstacle(); } } }); trajectory =
+		 * adStar.plan(origin, destination, waypoints, etd); break;
+		 */
 		}
 		return trajectory;
 	}
@@ -636,7 +667,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
 		}
-		
+
 		Trajectory trajectory = this.findPath(origin, destination, etd, this.planner);
 		return trajectory;
 	}
@@ -679,7 +710,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner{
 	 * 
 	 * @param environment the environment
 	 * 
-	 * @return true if the environment is a planning continuum, false otherwise
+	 * @return true if the environment is a sampling environment, false otherwise
 	 * 
 	 * @see SamplingEnvironment
 	 */

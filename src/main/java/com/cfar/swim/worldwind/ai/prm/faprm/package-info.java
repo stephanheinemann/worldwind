@@ -27,27 +27,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.render;
-
-import com.cfar.swim.worldwind.util.Depictable;
-
-import gov.nasa.worldwind.geom.Extent;
-import gov.nasa.worldwind.globes.Globe;
-
 /**
- * Describes a terrain obstacle as renderable and depictable.
- * 
  * @author Henrique Ferreira
  *
  */
-public interface TerrainObstacle extends ThresholdRenderable, Depictable {
-
-	/**
-	 * Gets the geometric extent of this terrain obstacle for a specified globe.
-	 * 
-	 * @param globe the globe to be used for the conversion
-	 * 
-	 * @return the geometric extent of this terrain obstacle
-	 */
-	public Extent getExtent(Globe globe);
-}
+package com.cfar.swim.worldwind.ai.prm.faprm;

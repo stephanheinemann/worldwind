@@ -36,25 +36,25 @@ import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
- * TODO describe
+ * Realizes a non-hierarchical continuous box.
  * 
  * @author Manuel Rosa
- *
+ * @author Henrique Ferreira
  */
 public class ContinuumBox extends Box {
 
 	/**
-	 * the drawing color of this regular grid
+	 * the drawing color of this continuum box
 	 */
 	private float[] color = { 1.0f, 1.0f, 1.0f, 1.0f };
 
 	/**
-	 * the visibility state of this regular grid
+	 * the visibility state of this continuum box
 	 */
 	protected boolean visible = true;
 
 	/**
-	 * Constructs a new continuum box a geometric box without any children.
+	 * Constructs a new continuum box based on a geometric box without any children.
 	 * 
 	 * @param box the geometric box
 	 * 
@@ -65,7 +65,7 @@ public class ContinuumBox extends Box {
 	}
 
 	/**
-	 * Constructs a new regular grid from three plane normals and six distances for
+	 * Constructs a new continuum box from three plane normals and six distances for
 	 * each of the six faces of a geometric box without any children.
 	 * 
 	 * @param axes the three plane normals
@@ -83,11 +83,8 @@ public class ContinuumBox extends Box {
 		super(axes, rMin, rMax, sMin, sMax, tMin, tMax);
 	}
 
-	// TODO: include construction from axes, origin and lengths
-
 	/**
-	 * Renders this regular grid. If a grid cell has children, then only the
-	 * children are rendered.
+	 * Renders this continuum box.
 	 * 
 	 * @param dc the drawing context
 	 */
@@ -98,7 +95,7 @@ public class ContinuumBox extends Box {
 	}
 
 	/**
-	 * Draws this regular grid.
+	 * Draws this continuum box.
 	 * 
 	 * @see gov.nasa.worldwind.geom.Box
 	 */
@@ -129,7 +126,7 @@ public class ContinuumBox extends Box {
 	}
 
 	/**
-	 * Sets the drawing color of this regular grid.
+	 * Sets the drawing color of this continuum box.
 	 * 
 	 * @param red the red color component between 0.0 and 1.0
 	 * @param green the green color component between 0.0 and 1.0
@@ -144,23 +141,12 @@ public class ContinuumBox extends Box {
 	}
 
 	/**
-	 * Sets the visibility state of this regular grid.
+	 * Sets the visibility state of this continuum box.
 	 * 
-	 * @param visible true if this regular grid is visible, false otherwise
+	 * @param visible true if this continuum box is visible, false otherwise
 	 */
 	public void setVisible(boolean visible) {
 		this.visible = visible;
-	}
-
-	// TODO: remove if not needed
-	protected void drawQuad(DrawContext dc, Vec4 a, Vec4 b, Vec4 c, Vec4 d) {
-		GL2 gl = dc.getGL().getGL2();
-		gl.glBegin(GL2.GL_QUADS);
-		gl.glVertex3d(a.x, a.y, a.z);
-		gl.glVertex3d(b.x, b.y, b.z);
-		gl.glVertex3d(c.x, c.y, c.z);
-		gl.glVertex3d(d.x, d.y, d.z);
-		gl.glEnd();
 	}
 
 }

@@ -176,7 +176,10 @@ public class SamplingBasedTest {
 		System.out.println(String.format("\tbasic PRMTester - %s - I=%d k=%d d=%.2f",
 				planner, maxIter, maxNeighbors, maxDist));
 
-		BasicPRM plannerPRM = new BasicPRM(iris, samplingEnv, maxIter, maxNeighbors, maxDist);
+		BasicPRM plannerPRM = new BasicPRM(iris, samplingEnv);
+		plannerPRM.setMaxIter(maxIter);
+		plannerPRM.setMaxNeighbors(maxNeighbors);
+		plannerPRM.setMaxDistance(maxDist);
 		plannerPRM.setPlanner(planner);
 
 		Trajectory traj;

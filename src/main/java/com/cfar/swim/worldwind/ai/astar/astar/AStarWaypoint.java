@@ -85,11 +85,6 @@ public class AStarWaypoint extends Waypoint {
 		this.parent = parent;
 	}
 	
-	// TODO: visibility and cloning issues
-	public Set<AStarWaypoint> getNeighbors() {
-		return this.neighbors;
-	}
-	
 	public void setNeighbors(Set<AStarWaypoint> neighbors) {
 		this.neighbors.addAll(neighbors);
 	}

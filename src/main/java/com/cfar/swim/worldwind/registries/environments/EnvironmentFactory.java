@@ -130,8 +130,6 @@ public class EnvironmentFactory implements Factory<Environment> {
 			environment.setGlobe(this.scenario.getGlobe());
 			
 		} else if (specification.getId().equals(Specification.PLANNING_SAMPLING_ID)) {
-			// TODO: Review if implementation is done correctly
-
 			SamplingEnvironmentProperties properties = (SamplingEnvironmentProperties) specification.getProperties();
 			gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d,
 					this.scenario.getSector(), properties.getFloor(), properties.getCeiling());

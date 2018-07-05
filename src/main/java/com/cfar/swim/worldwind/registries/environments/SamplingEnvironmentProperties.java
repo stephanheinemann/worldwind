@@ -30,7 +30,7 @@
 package com.cfar.swim.worldwind.registries.environments;
 
 /**
- * Realizes the properties bean of a planning continuum environment.
+ * Realizes the properties bean of a sampling environment.
  * 
  * @author Stephan Heinemann
  * @author Manuel Rosa
@@ -39,28 +39,28 @@ package com.cfar.swim.worldwind.registries.environments;
  */
 public class SamplingEnvironmentProperties extends EnvironmentProperties {
 
-	/** the resolution of this planning continuum */
+	/** the resolution of this sampling environment */
 	private double resolution = 100d;
 
 	/**
-	 * Calls EnvironmentProperties constructor to construct a new environment
-	 * properties bean using default floor and ceiling property values.
+	 * Constructs a new sampling environment properties bean using default floor and
+	 * ceiling property values.
 	 */
 	public SamplingEnvironmentProperties() {
 		super();
 	}
-	
+
 	/**
-	 * Gets the resolution of this planning continuum
+	 * Gets the resolution of this sampling environment
 	 * 
-	 * @return the resolution of this planning continuum
+	 * @return the resolution of this sampling environment
 	 */
 	public double getResolution() {
 		return resolution;
 	}
-	
+
 	/**
-	 * Sets the resolution of this planning continuum
+	 * Sets the resolution of this sampling environment
 	 * 
 	 * @param resolution the resolution to set
 	 */
