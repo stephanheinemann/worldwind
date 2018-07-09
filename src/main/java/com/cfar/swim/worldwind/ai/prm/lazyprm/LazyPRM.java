@@ -114,6 +114,73 @@ public class LazyPRM extends BasicPRM {
 	}
 
 	/**
+	 * Corrects a trajectory, checking if any of its waypoints or edges is in
+	 * conflict with terrain obstacles.
+	 * 
+	 * @param trajectory the planned trajectory
+	 * 
+	 * @return true if this trajectory is feasible, false otherwise
+	 */
+	public boolean correctTrajectory(Trajectory trajectory) {
+		if (trajectory == null)
+			return false;
+
+		HashSet<Waypoint> conflictWaypoints = new HashSet<Waypoint>();
+		HashSet<Edge> conflictEdges = new HashSet<Edge>();
+
+		for (Waypoint waypoint : trajectory.getWaypoints()) {
+			if (this.getEnvironment().checkConflict(waypoint))
+				conflictWaypoints.add(waypoint);
+		}
+
+		if (!conflictWaypoints.isEmpty()) {
+			this.correctWaypoints(conflictWaypoints);
+			return false;
+		}
+		Waypoint wpt1 = Iterables.get(trajectory.getWaypoints(), 0);
+		Waypoint wpt2;
+		for (int i = 0; i < trajectory.getLength() - 1; i++) {
+			wpt2 = Iterables.get(trajectory.getWaypoints(), i + 1);
+			if (this.getEnvironment().checkConflict(wpt1, wpt2)) {
+				conflictEdges.add(new Edge(wpt1, wpt2));
+			}
+			wpt1 = wpt2;
+		}
+		if (!conflictEdges.isEmpty()) {
+			this.correctEdges(conflictEdges);
+			return false;
+		}
+		return true;
+	}
+	
+	/**
+	 * Corrects the waypoint and edge list by removing the waypoints that are in
+	 * conflict with terrain obstacles.
+	 * 
+	 * @param conflictWaypoints the set of waypoints that are in conflict with
+	 *            terrain obstacles
+	 */
+	public void correctWaypoints(HashSet<Waypoint> conflictWaypoints) {
+		for (Waypoint waypoint : conflictWaypoints) {
+			this.getWaypointList().remove(waypoint);
+			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
+		}
+	}
+
+	/**
+	 * Corrects the edge list by removing the edges that are in conflict with
+	 * terrain obstacles.
+	 * 
+	 * @param conflictEdges the set of edges that are in conflict with terrain
+	 *            obstacles
+	 */
+	public void correctEdges(HashSet<Edge> conflictEdges) {
+		for (Edge edge : conflictEdges) {
+			this.getEdgeList().remove(edge);
+		}
+	}
+	
+	/**
 	 * Extends the roadmap to incorporate the origin and destination positions.
 	 * 
 	 * @param origin the origin position in globe coordinates
@@ -158,73 +225,6 @@ public class LazyPRM extends BasicPRM {
 			Waypoint waypoint = this.createWaypoint(pos);
 			this.getWaypointList().add(waypoint);
 			this.connectWaypoint(waypoint);
-		}
-	}
-
-	/**
-	 * Corrects a trajectory, checking if any of its waypoints or edges is in
-	 * conflict with terrain obstacles.
-	 * 
-	 * @param trajectory the planned trajectory
-	 * 
-	 * @return true if this trajectory is feasible, false otherwise
-	 */
-	protected boolean correctTrajectory(Trajectory trajectory) {
-		if (trajectory == null)
-			return false;
-
-		HashSet<Waypoint> conflictWaypoints = new HashSet<Waypoint>();
-		HashSet<Edge> conflictEdges = new HashSet<Edge>();
-
-		for (Waypoint waypoint : trajectory.getWaypoints()) {
-			if (this.getEnvironment().checkConflict(waypoint))
-				conflictWaypoints.add(waypoint);
-		}
-
-		if (!conflictWaypoints.isEmpty()) {
-			this.correctListsW(conflictWaypoints);
-			return false;
-		}
-		Waypoint wpt1 = Iterables.get(trajectory.getWaypoints(), 0);
-		Waypoint wpt2;
-		for (int i = 0; i < trajectory.getLength() - 1; i++) {
-			wpt2 = Iterables.get(trajectory.getWaypoints(), i + 1);
-			if (this.getEnvironment().checkConflict(wpt1, wpt2)) {
-				conflictEdges.add(new Edge(wpt1, wpt2));
-			}
-			wpt1 = wpt2;
-		}
-		if (!conflictEdges.isEmpty()) {
-			this.correctListsE(conflictEdges);
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Corrects the waypoint and edge list by removing the waypoints that are in
-	 * conflict with terrain obstacles.
-	 * 
-	 * @param conflictWaypoints the set of waypoints that are in conflict with
-	 *            terrain obstacles
-	 */
-	protected void correctListsW(HashSet<Waypoint> conflictWaypoints) {
-		for (Waypoint waypoint : conflictWaypoints) {
-			this.getWaypointList().remove(waypoint);
-			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
-		}
-	}
-
-	/**
-	 * Corrects the edge list by removing the edges that are in conflict with
-	 * terrain obstacles.
-	 * 
-	 * @param conflictEdges the set of edges that are in conflict with terrain
-	 *            obstacles
-	 */
-	protected void correctListsE(HashSet<Edge> conflictEdges) {
-		for (Edge edge : conflictEdges) {
-			this.getEdgeList().remove(edge);
 		}
 	}
 

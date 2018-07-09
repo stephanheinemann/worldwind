@@ -36,6 +36,7 @@ import java.util.Set;
 
 import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
@@ -222,6 +223,46 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @param obstacle the embedded obstacle
 	 */
 	public void refresh(Obstacle obstacle);
+	
+	/**
+	 * Embeds a terrain obstacle into this environment.
+	 * 
+	 * @param obstacle the terrain obstacle to be embedded
+	 * 
+	 * @return true if the terrain obstacle has been embedded, false otherwise
+	 */
+	public boolean embed(TerrainObstacle obstacle);
+	
+	/**
+	 * Umembeds a terrain obstacle from this environment.
+	 * 
+	 * @param obstacle the terrain obstacle to be unembedded
+	 * 
+	 * @return true if the terrain obstacle has been unembedded, false otherwise
+	 */
+	public boolean unembed(TerrainObstacle obstacle);
+	
+	/**
+	 * Unembeds all terrain obstacles from this environment.
+	 */
+	public void unembedTerrainAll();
+	
+	/**
+	 * Indicates whether or not a terrain obstacle is embedded in this environment.
+	 * 
+	 * @param obstacle the terrain obstacle
+	 * 
+	 * @return true if the terrain obstacle is embedded in this environment,
+	 *         false otherwise
+	 */
+	public boolean isEmbedded(TerrainObstacle obstacle);
+	
+	/**
+	 * Updates this environment for an embedded terrain obstacle.
+	 * 
+	 * @param obstacle the embedded terrain obstacle
+	 */
+	public void refresh(TerrainObstacle obstacle);
 	
 	/**
 	 * Gets the distance between two positions in this environment.

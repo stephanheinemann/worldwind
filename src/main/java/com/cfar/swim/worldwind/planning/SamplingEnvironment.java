@@ -51,11 +51,11 @@ import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
-import com.cfar.swim.worldwind.render.TerrainCylinder;
 import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
+import com.cfar.swim.worldwind.render.airspaces.TerrainCylinder;
 
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
@@ -78,8 +78,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	private Globe globe = null;
 
 	/** the cost interval tree encoding temporal costs */
-	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
-			CostInterval.comparator);
+	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
 
 	/** the current time of this sampling environment */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -1243,7 +1242,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
 		for (TerrainObstacle terrain : terrainSet) {
 			// Check if obstacle contains the waypoint
-			System.out.println("Terrain");
 			if (terrain.getExtent(this.getGlobe()).intersects(box.getFrustum())) {
 				return true;
 			}

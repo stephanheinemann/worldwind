@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.ai.prm.basicprm;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
@@ -40,6 +41,7 @@ import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
+import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
@@ -497,6 +499,63 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 	}
 
 	/**
+	 * Realizes the post construction step of a basic PRM planner. The main goal is
+	 * to improve the roadmap connectivity and to uniformize the distribution of
+	 * waypoints. It selects the waypoints with fewer neighbors and creates a new
+	 * waypoint around each of them.
+	 */
+	public void postConstruction() {
+		int maxPostIter = maxIter / 3;
+		int num = 0;
+		while (num < maxPostIter) {
+			double edgeCount = Double.POSITIVE_INFINITY;
+			Waypoint toExpand = null;
+			for (Waypoint waypoint : this.getWaypointList()) {
+				if (this.getEdgeList().stream().filter(s -> s.contains(waypoint)).count() < edgeCount) {
+					toExpand = waypoint;
+				}
+			}
+			double halfDistance = this.maxDistance / (Math.sqrt(3));
+			Waypoint newWaypoint = this.createWaypoint(this.samplePosition(toExpand, halfDistance));
+			while (this.getEnvironment().checkConflict(newWaypoint)) {
+				halfDistance = halfDistance / 2;
+				newWaypoint = this.createWaypoint(this.samplePosition(toExpand, halfDistance));
+			}
+			this.getWaypointList().add(newWaypoint);
+			this.connectWaypoint(newWaypoint);
+			num++;
+		}
+	}
+
+	/**
+	 * Samples a position from a continuous space (box) defined around a given
+	 * position with specified edge length.
+	 * 
+	 * @param position the position around which the new position is going to be
+	 *            sampled
+	 * @param halfEdgeLength the half edge length of this box
+	 * 
+	 * @return the sampled position in globe coordinates
+	 */
+	public Position samplePosition(Position position, double halfEdgeLength) {
+		Vec4 point = this.getEnvironment().getGlobe().computePointFromPosition(position);
+		List<Vec4> corners = new ArrayList<Vec4>();
+
+		corners.add(point.add3(-halfEdgeLength, +halfEdgeLength, -halfEdgeLength));
+		corners.add(point.add3(+halfEdgeLength, +halfEdgeLength, -halfEdgeLength));
+		corners.add(point.add3(+halfEdgeLength, -halfEdgeLength, -halfEdgeLength));
+		corners.add(point.add3(+halfEdgeLength, -halfEdgeLength, +halfEdgeLength));
+		corners.add(point.add3(-halfEdgeLength, -halfEdgeLength, +halfEdgeLength));
+		corners.add(point.add3(-halfEdgeLength, +halfEdgeLength, +halfEdgeLength));
+
+		SamplingEnvironment env = new SamplingEnvironment(
+				new Box(gov.nasa.worldwind.geom.Box.computeBoundingBox(corners)));
+		env.setGlobe(this.getEnvironment().getGlobe());
+		Position pos = env.sampleRandomPosition();
+		return pos;
+	}
+
+	/**
 	 * Sets the plan revision listeners for a query planner. The query planner
 	 * listener invokes the listeners of this Basic PRM planner.
 	 * 
@@ -664,8 +723,10 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination);
+			this.postConstruction();
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
+			this.postConstruction();
 		}
 
 		Trajectory trajectory = this.findPath(origin, destination, etd, this.planner);
@@ -696,8 +757,10 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination, waypoints);
+			this.postConstruction();
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination, waypoints);
+			this.postConstruction();
 		}
 
 		Trajectory trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);

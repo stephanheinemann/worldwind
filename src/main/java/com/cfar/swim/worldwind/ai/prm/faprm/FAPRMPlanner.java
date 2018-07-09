@@ -587,14 +587,17 @@ public class FAPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	 */
 	protected void connectPlan(FAPRMWaypoint waypoint) {
 		this.clearWaypoints();
-		
+
 		// setting goal dtg and ttg
 		waypoint.setDtg(0d);
 		waypoint.setTtg(Duration.ZERO);
-		
+
 		// in accordance with moving start capability
 		while (!this.getStart().equals(waypoint)) {
 			this.addFirstWaypoint(waypoint.clone());
+			if (waypoint.getParent() == null) {
+				System.out.println("NULLLLl");
+			}
 			waypoint = waypoint.getParent();
 			if (null != waypoint) {
 				waypoint.setTtg(Duration.between(waypoint.getEto(), this.getFirstWaypoint().getEto()));
@@ -933,6 +936,106 @@ public class FAPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 	}
 
 	/**
+	 * Corrects a trajectory, checking if any of its edges is in conflict with
+	 * terrain obstacles.
+	 * 
+	 * @param trajectory the planned trajectory
+	 * 
+	 * @return true if this trajectory is feasible, false otherwise
+	 */
+	public boolean correctTrajectory(Trajectory trajectory) {
+		if (trajectory == null)
+			return false;
+
+		HashSet<Edge> conflictEdges = new HashSet<Edge>();
+		// waypoints conflict is checked when a new position is sampled
+
+		Waypoint wpt1 = Iterables.get(trajectory.getWaypoints(), 0);
+		Waypoint wpt2;
+		for (int i = 0; i < trajectory.getLength() - 1; i++) {
+			wpt2 = Iterables.get(trajectory.getWaypoints(), i + 1);
+			if (this.getEnvironment().checkConflict(wpt1, wpt2)) {
+				Edge edge = new Edge(wpt1, wpt2);
+				Edge edgeInList = this.getEdgeList().stream().filter(s -> s.equals(edge)).findFirst().get();
+				conflictEdges.add(edgeInList);
+			}
+			wpt1 = wpt2;
+		}
+		if (!conflictEdges.isEmpty()) {
+			this.correctEdges(conflictEdges);
+			return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Corrects the edge list by removing the edges that are in conflict with
+	 * terrain obstacles. Also, it corrects the affected waypoints and propagates
+	 * the updates.
+	 * 
+	 * @param conflictEdges the set of edges that are in conflict with terrain
+	 *            obstacles
+	 */
+	public void correctEdges(HashSet<Edge> conflictEdges) {
+		Set<FAPRMWaypoint> waypoints = new HashSet<FAPRMWaypoint>();
+		for (Edge edge : conflictEdges) {
+			FAPRMWaypoint waypoint1 = (FAPRMWaypoint) this.getWaypointList().stream()
+					.filter(s -> s.equals(edge.getPosition1())).findFirst()
+					.get();
+			FAPRMWaypoint waypoint2 = (FAPRMWaypoint) this.getWaypointList().stream()
+					.filter(s -> s.equals(edge.getPosition2())).findFirst()
+					.get();
+			if (waypoint1.equals(waypoint2.getParent())) {
+				waypoint2.setParent(null);
+				waypoint2.setCost(Double.POSITIVE_INFINITY);
+				waypoint2.getNeighbors().remove(waypoint1);
+				waypoint1.getNeighbors().remove(waypoint2);
+				waypoints.add(waypoint2);
+			}
+			if (waypoint2.equals(waypoint1.getParent())) {
+				waypoint1.setParent(null);
+				waypoint1.setCost(Double.POSITIVE_INFINITY);
+				waypoint2.getNeighbors().remove(waypoint1);
+				waypoint1.getNeighbors().remove(waypoint2);
+				waypoints.add(waypoint1);
+			}
+			this.getEdgeList().remove(edge);
+		}
+		this.propagateCorrections(waypoints);
+	}
+
+	/**
+	 * Propagates the corrections. If a predecessor of a certain waypoint had its
+	 * parent changed to null, then that waypoint and its successors need to be
+	 * corrected.
+	 * 
+	 * @param waypoints the set of waypoints to correct
+	 */
+	@SuppressWarnings("unchecked")
+	protected void propagateCorrections(Set<FAPRMWaypoint> waypoints) {
+		Set<FAPRMWaypoint> newWaypoints = new HashSet<FAPRMWaypoint>();
+
+		for (FAPRMWaypoint waypoint : waypoints) {
+			List<FAPRMWaypoint> list = (List<FAPRMWaypoint>) this.getWaypointList();
+			for (FAPRMWaypoint aux : list) {
+				if (aux.getParent() == null)
+					continue;
+				if (aux.getParent().equals(waypoint)) {
+					newWaypoints.add(aux);
+				}
+			}
+		}
+		if (newWaypoints.isEmpty()) {
+			return;
+		} else {
+			for (FAPRMWaypoint waypoint : newWaypoints) {
+				waypoint.setParent(null);
+				waypoint.setCost(Double.POSITIVE_INFINITY);
+			}
+		}
+		this.propagateCorrections(newWaypoints);
+	}
+	/**
 	 * Updates all successors of a given waypoint.
 	 * 
 	 * @param source the predecessor of all waypoints to be updated
@@ -1054,78 +1157,12 @@ public class FAPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 			}
 			this.updateDensity(newSuccessor);
 			this.updateNeighbors(source);
+			if(this.isExpandable(source)) {
+				this.removeExpandable(source);
+			}
 			this.addExpanded(source);
 		}
 		return;
-	}
-
-	/**
-	 * Corrects a trajectory, checking if any of its waypoints or edges is in
-	 * conflict with terrain obstacles.
-	 * 
-	 * @param trajectory the planned trajectory
-	 * 
-	 * @return true if this trajectory is feasible, false otherwise
-	 */
-	protected boolean correctTrajectory(Trajectory trajectory) {
-		if (trajectory == null)
-			return false;
-
-		HashSet<FAPRMWaypoint> conflictWaypoints = new HashSet<FAPRMWaypoint>();
-		HashSet<Edge> conflictEdges = new HashSet<Edge>();
-
-		for (Waypoint wpt : trajectory.getWaypoints()) {
-			FAPRMWaypoint waypoint = (FAPRMWaypoint) wpt;
-			if (this.getEnvironment().checkConflict(waypoint))
-				conflictWaypoints.add(waypoint);
-		}
-
-		if (!conflictWaypoints.isEmpty()) {
-			this.correctListsW(conflictWaypoints);
-			return false;
-		}
-		Waypoint wpt1 = Iterables.get(trajectory.getWaypoints(), 0);
-		Waypoint wpt2;
-		for (int i = 0; i < trajectory.getLength() - 1; i++) {
-			wpt2 = Iterables.get(trajectory.getWaypoints(), i + 1);
-			if (this.getEnvironment().checkConflict(wpt1, wpt2)) {
-				conflictEdges.add(new Edge(wpt1, wpt2));
-			}
-			wpt1 = wpt2;
-		}
-		if (!conflictEdges.isEmpty()) {
-			this.correctListsE(conflictEdges);
-			return false;
-		}
-		return true;
-	}
-
-	/**
-	 * Corrects the waypoint and edge list by removing the waypoints that are in
-	 * conflict with terrain obstacles.
-	 * 
-	 * @param conflictWaypoints the set of waypoints that are in conflict with
-	 *            terrain obstacles
-	 */
-	protected void correctListsW(Set<? extends FAPRMWaypoint> conflictWaypoints) {
-		for (FAPRMWaypoint waypoint : conflictWaypoints) {
-			this.getWaypointList().remove(waypoint);
-			this.getEdgeList()
-					.removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
-		}
-	}
-
-	/**
-	 * Corrects the waypoint and edge list by removing the edges that are in
-	 * conflict with terrain obstacles.
-	 * 
-	 * @param conflictEdges the set of edges that are in conflict with terrain
-	 *            obstacles
-	 */
-	protected void correctListsE(HashSet<Edge> conflictEdges) {
-		for (Edge edge : conflictEdges) {
-			this.getEnvironment().getEdgeList().remove(edge);
-		}
 	}
 
 	/**
@@ -1142,6 +1179,9 @@ public class FAPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		Trajectory trajectory = null;
 
 		while (!this.correctTrajectory(trajectory)) {
+			this.clearExpandables();
+			this.clearExpanded();
+			this.addExpandable(this.getStart());
 			this.computeOrImprovePath();
 			trajectory = this.createTrajectory();
 		}

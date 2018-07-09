@@ -30,17 +30,18 @@
 package com.cfar.swim.worldwind.render;
 
 import com.cfar.swim.worldwind.util.Depictable;
+import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.globes.Globe;
 
 /**
- * Describes a terrain obstacle as renderable and depictable.
+ * Describes a terrain obstacle as renderable, depictable and enableable.
  * 
  * @author Henrique Ferreira
  *
  */
-public interface TerrainObstacle extends ThresholdRenderable, Depictable {
+public interface TerrainObstacle extends ThresholdRenderable, Depictable, Enableable {
 
 	/**
 	 * Gets the geometric extent of this terrain obstacle for a specified globe.

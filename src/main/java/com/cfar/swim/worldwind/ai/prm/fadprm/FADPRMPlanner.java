@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -290,6 +291,37 @@ public class FADPRMPlanner extends FAPRMPlanner {
 	}
 
 	/**
+	 * Corrects the edge list by removing the edges that are in conflict with
+	 * terrain obstacles. Also, it corrects the affected waypoints and propagates
+	 * the updates.
+	 * 
+	 * @param conflictEdges the set of edges that are in conflict with terrain
+	 *            obstacles
+	 */
+	public void correctEdges(HashSet<Edge> conflictEdges) {
+		Set<FAPRMWaypoint> waypoints = new HashSet<FAPRMWaypoint>();
+		for (Edge edge : conflictEdges) {
+			FAPRMWaypoint waypoint1 = (FAPRMWaypoint) this.getWaypointList().stream()
+					.filter(s -> s.equals(edge.getPosition1())).findFirst()
+					.get();
+			FAPRMWaypoint waypoint2 = (FAPRMWaypoint) this.getWaypointList().stream()
+					.filter(s -> s.equals(edge.getPosition2())).findFirst()
+					.get();
+			if (waypoint1.equals(waypoint2.getParent())) {
+				waypoint2.setParent(null);
+				waypoint2.setCost(Double.POSITIVE_INFINITY);
+				waypoints.add(waypoint2);
+			}
+			if (waypoint2.equals(waypoint1.getParent())) {
+				waypoint1.setParent(null);
+				waypoint1.setCost(Double.POSITIVE_INFINITY);
+				waypoints.add(waypoint1);
+			}
+		}
+		this.propagateCorrections(waypoints);
+	}
+
+	/**
 	 * Updates all successors of a given waypoint.
 	 * 
 	 * @param source the predecessor of all waypoints to be updated
@@ -323,7 +355,7 @@ public class FADPRMPlanner extends FAPRMPlanner {
 			}
 		}
 	}
-	
+
 	/**
 	 * Computes a plan.
 	 * 
@@ -339,6 +371,9 @@ public class FADPRMPlanner extends FAPRMPlanner {
 		Trajectory trajectory = null;
 
 		while (!this.correctTrajectory(trajectory)) {
+			this.clearExpandables();
+			this.clearExpanded();
+			this.addExpandable(this.getStart());
 			this.computeOrImprovePath();
 			trajectory = this.createTrajectory();
 			this.incrementCounter();
@@ -402,44 +437,68 @@ public class FADPRMPlanner extends FAPRMPlanner {
 		// if planner is invoked again with the same environment, lists are cleared
 		this.getWaypointList().clear();
 		this.getEdgeList().clear();
-		
-		// boolean obstaclesAdded = false;
+
+		boolean obstacleFlag = false;
 		this.initialize(origin, destination, etd);
 		Trajectory trajectory = this.compute();
 		// TODO: DO A REVISE TO CONNECT DATALINK AND UPLOAD FIRST FLIGHT PLAN.
 		this.revisePlan(trajectory);
 		while (!this.isInflated()) {
-			this.improve();
-		}
-		// IF Datalink is connected, realize a dynamic planner, updating start and
-		// replanning as long as start waypoint is far from goal
-		if (this.reviseDatalinkPlan()) {
-			while (!this.connectToGoal(this.getStart())) {
-				try {
-					Thread.sleep(30000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				// if(!obstaclesAdded) {
-				// HashSet<Obstacle> diffObstacles = this.getNewObstacles();
-				// this.updateEdges(diffObstacles);
-				// obstaclesAdded = true;
-				// }
-				if (!this.updateStart()) {
-					this.addExpandable(this.getStart());
-					trajectory = this.compute();
-					this.revisePlan(trajectory);
-					try {
-						Thread.sleep(2000);
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					}
-					this.reviseDatalinkPlan();
+			if (!obstacleFlag) {
+				// Adds one obstacle with certain probability MANUEL CODEE
+				int rand = new Random().nextInt(100 - 1) + 1;
+				if (rand <= 35) {
+					System.out.println("\t!!!!!!\t ADDING OBSTACLE\t!!!!!!");
+					HashSet<Obstacle> diffObstacles = this.getNewObstacles();
+					HashSet<Edge> affectedEdges = this.getAffectedEdges(diffObstacles);
+					this.correctEdges(affectedEdges);
+					// decrease beta
+					this.setInflation(0d);
+					obstacleFlag = true;
+				} else {
+					System.out.println("Obstacle not added");
 				}
 			}
-		} else {
-			return trajectory;
+			this.improve();
 		}
+//		// IF Datalink is connected, realize a dynamic planner, updating start and
+//		// replanning as long as start waypoint is far from goal
+//		if (this.reviseDatalinkPlan()) {
+//			while (!this.connectToGoal(this.getStart())) {
+//				try {
+//					Thread.sleep(30000);
+//				} catch (InterruptedException e) {
+//					e.printStackTrace();
+//				}
+//				if (!obstacleFlag) {
+//					// Adds one obstacle with certain probability MANUEL CODEE
+//					int rand = new Random().nextInt(100 - 1) + 1;
+//					if (rand <= 40) {
+//						System.out.println("\t!!!!!!\t ADDING OBSTACLE\t!!!!!!");
+//						HashSet<Obstacle> diffObstacles = this.getNewObstacles();
+//						System.out.println("new obstacles size " + diffObstacles.size());
+//						HashSet<Edge> affectedEdges = this.getAffectedEdges(diffObstacles);
+//						this.correctEdges(affectedEdges);
+//						obstacleFlag = true;
+//					} else {
+//						System.out.println("Obstacle not added");
+//					}
+//				}
+//				if (!this.updateStart()) {
+//					this.addExpandable(this.getStart());
+//					trajectory = this.compute();
+//					this.revisePlan(trajectory);
+//					try {
+//						Thread.sleep(2000);
+//					} catch (InterruptedException e) {
+//						e.printStackTrace();
+//					}
+//					this.reviseDatalinkPlan();
+//				}
+//			}
+//		} else {
+//			return trajectory;
+//		}
 		return trajectory;
 		// TODO : implement the algorithm's capability to deal with dynamic obstacles
 		// added during the path computation, and while the aircraft is moving
@@ -468,7 +527,7 @@ public class FADPRMPlanner extends FAPRMPlanner {
 		// if planner is invoked again with the same environment, lists are cleared
 		this.getWaypointList().clear();
 		this.getEdgeList().clear();
-		
+
 		this.initBackups(waypoints.size() + 1);
 		Trajectory trajectory = this.oneTimePlan(origin, destination, waypoints, etd);
 		this.improving = true;
@@ -536,30 +595,71 @@ public class FADPRMPlanner extends FAPRMPlanner {
 		return trajectory;
 	}
 
+	public void planDynamic() {
+		System.out.println("entered playdynamic");
+		boolean obstacleFlag = !this.getEnvironment().getObstacles().isEmpty();
+		// IF Datalink is connected, realize a dynamic planner, updating start and
+		// replanning as long as start waypoint is far from goal
+		Trajectory trajectory = this.compute();
+		if (this.reviseDatalinkPlan()) {
+			while (!this.connectToGoal(this.getStart())) {
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+				this.updateStart();
+				if (!obstacleFlag) {
+					// Adds one obstacle with certain probability MANUEL CODEE
+					int rand = new Random().nextInt(100 - 1) + 1;
+					if (rand <= 40) {
+						System.out.println("\t!!!!!!\t ADDING OBSTACLE\t!!!!!!");
+						HashSet<Obstacle> diffObstacles = this.getNewObstacles();
+						System.out.println("new obstacles size " + diffObstacles.size());
+						HashSet<Edge> affectedEdges = this.getAffectedEdges(diffObstacles);
+						this.correctEdges(affectedEdges);
+						obstacleFlag = true;
+						this.setInflation(0d);
+					} else {
+						System.out.println("Obstacle not added");
+					}
+				}
+//				if (!this.updateStart()) {
+//					System.out.println("start has been updated");
+					this.addExpandable(this.getStart());
+					System.out.println("computing");
+					trajectory = this.compute();
+					System.out.println("computed");
+					this.revisePlan(trajectory);
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+					this.reviseDatalinkPlan();
+//				}
+//				else {
+//					System.out.println("start hasnt been updated");
+//				}
+			}
+		}
+	}
+
 	/**
 	 * Updates the start position.
 	 * 
 	 * @return true if the start position has changed, false otherwise
 	 */
-	public boolean updateStart() {
+	public void updateStart() {
 		Position newStart = this.reviseAircraftPosition();
-		if (newStart == null) {
-			System.out.println("NULL");
-			return true;
-		}
 		this.clearExpandables();
 		FAPRMWaypoint oldStart = this.getStart();
 
 		for (FAPRMWaypoint waypoint : this.getWaypointList()) {
 			waypoint.setCost(Double.POSITIVE_INFINITY);
 			waypoint.setParent(null);
-			// if (waypoint.equals(this.plan.get(1))) {
-			// waypoint.setCost(0d);
-			// waypoint.setParent(null);
-			// this.setStart(waypoint);
-			// }
 		}
-		System.out.println(newStart);
+		System.out.println("oldstart " +oldStart + " newstart " + newStart);
 		this.setStart(this.createWaypoint(newStart));
 
 		this.updateWaypoint(this.getStart());
@@ -585,10 +685,10 @@ public class FADPRMPlanner extends FAPRMPlanner {
 		this.getGoal().setCost(Double.POSITIVE_INFINITY);
 		this.getGoal().setParent(null);
 
-		return this.getStart().equals(oldStart);
+		return;
 
 	}
-	
+
 	/**
 	 * Expands a FAPRM waypoint towards its neighbors in the environment.
 	 * 
@@ -657,8 +757,8 @@ public class FADPRMPlanner extends FAPRMPlanner {
 	 * 
 	 * @return the set of affected edges
 	 */
-	public Set<Edge> getAffectedEdges(HashSet<Obstacle> diffObstacles) {
-		Set<Edge> affectedEdges = new HashSet<Edge>();
+	public HashSet<Edge> getAffectedEdges(HashSet<Obstacle> diffObstacles) {
+		HashSet<Edge> affectedEdges = new HashSet<Edge>();
 		for (Obstacle obstacle : diffObstacles) {
 			for (Edge edge : this.getEnvironment().getEdgeList()) {
 				if (obstacle.getExtent(this.getEnvironment().getGlobe()).intersects(edge.getLine())) {
@@ -669,50 +769,5 @@ public class FADPRMPlanner extends FAPRMPlanner {
 			}
 		}
 		return affectedEdges;
-	}
-
-	/**
-	 * Gets the affected waypoints contained on a set of affected edges.
-	 * 
-	 * @param affectedEdges the set of affected edges by a set of obstacles
-	 * 
-	 * @return the set of affected waypoints
-	 */
-	public Set<FAPRMWaypoint> getAffectedWaypoints(Set<Edge> affectedEdges) {
-		Set<FAPRMWaypoint> conflictWaypoints = new HashSet<FAPRMWaypoint>();
-		for (Edge edge : affectedEdges) {
-			for (FAPRMWaypoint auxWaypoint : this.getWaypointList()) {
-				if (auxWaypoint.equals(edge.getPosition1())) {
-					conflictWaypoints.add(auxWaypoint);
-				}
-				if (auxWaypoint.equals(edge.getPosition2())) {
-					conflictWaypoints.add(auxWaypoint);
-				}
-			}
-		}
-		return conflictWaypoints;
-	}
-
-	/**
-	 * Updates the costs of all affected edges by the obstacles' changes.
-	 * 
-	 * @param diffObstacles the set of different obstacles
-	 */
-	public void updateEdges(HashSet<Obstacle> diffObstacles) {
-		Set<Edge> affectedEdges = this.getAffectedEdges(diffObstacles);
-
-		if (!affectedEdges.isEmpty()) {
-			this.setInflation(0d);
-			this.getGoal().setCost(0d);
-			Set<FAPRMWaypoint> affectedWaypoints = this.getAffectedWaypoints(affectedEdges);
-			this.correctListsW(affectedWaypoints);
-			for (FAPRMWaypoint waypoint : this.getWaypointList()) {
-				waypoint.getNeighbors().removeAll(affectedWaypoints);
-				if (affectedWaypoints.contains(waypoint.getParent())) {
-					waypoint.setCost(0d);
-				}
-			}
-		}
-		return;
 	}
 }

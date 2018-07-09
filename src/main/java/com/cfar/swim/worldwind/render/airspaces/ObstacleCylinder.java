@@ -409,7 +409,6 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		Vec4 bottomCenter = globe.computePointFromPosition(bcp);
 		Vec4 topCenter = globe.computePointFromPosition(tcp);
 		double radius = this.getRadii()[1];
-		
 		return new Cylinder(bottomCenter, topCenter, radius);
 		// TODO: check available method
 		//return super.getExtent(globe, 1d);

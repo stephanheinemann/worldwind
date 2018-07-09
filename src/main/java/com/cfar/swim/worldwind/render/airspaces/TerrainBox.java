@@ -27,73 +27,85 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.render;
+package com.cfar.swim.worldwind.render.airspaces;
 
+import java.awt.Color;
+
+import com.cfar.swim.worldwind.render.TerrainObstacle;
+import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 
 import gov.nasa.worldwind.geom.Extent;
-import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.globes.Globe;
-import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
-import gov.nasa.worldwind.render.RigidShape;
+import gov.nasa.worldwind.render.airspaces.AbstractAirspace;
+import gov.nasa.worldwind.render.airspaces.Box;
 
 /**
- * Realizes a terrain obstacle cylinder for motion planning.
+ * Realizes a terrain obstacle box for motion planning.
  * 
  * @author Henrique Ferreira
  *
  */
-public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle {
+public class TerrainBox extends Box implements TerrainObstacle {
 
-	/** the depiction of this terrain obstacle cylinder */
+	/** the depiction of this terrain obstacle box */
 	protected Depiction depiction = null;
 
-	/** the threshold cost of this terrain obstacle cylinder */
+	/** the threshold cost of this terrain obstacle box */
 	private double thresholdCost = 0d;
 
-	/** the active cost of this terrain obstacle cylinder */
-	private double activeCost = 0d;
+	/** the active cost of this terrain obstacle box */
+	private double activeCost = 99d;
+
+	/** the status of this terrain terrain obstacle box */
+	private boolean isEnabled = true;
 
 	/**
-	 * Constructs a terrain obstacle cylinder with a specified center position,
-	 * height and radius.
+	 * TODO: comment Constructs a terrain obstacle box considering two LatLon
+	 * positions.
 	 * 
-	 * @param centerPosition the center position of this terrain obstacle cylinder
-	 * @param height the height in meters of this terrain obstacle cylinder
-	 * @param radius the radius in meters of this terrain obstacle cylinder
-	 * 
-	 * @see VerticalCylinder#VerticalCylinder(Position, double, double)
+	 * @param location1 the first position
+	 * @param location2 the second position
+	 * @param leftWidth the
+	 * @param rightWidth
+	 * @param bottom
+	 * @param top
 	 */
-	public TerrainCylinder(Position centerPosition, double height, double radius) {
-		super(centerPosition, height, radius);
-		this.setAttributes(new BasicShapeAttributes());
-		this.getAttributes().setInteriorOpacity(0.25);
-		this.getAttributes().setEnableLighting(true);
+	public TerrainBox(
+			LatLon location1, LatLon location2,
+			double leftWidth, double rightWidth,
+			double bottom, double top) {
+		super(location1, location2, leftWidth, rightWidth);
+		this.setAltitudes(bottom, top);
+		this.getAttributes().setOpacity(0.6);
 		this.getAttributes().setDrawInterior(true);
-		this.getAttributes().setDrawOutline(false);
+		this.getAttributes().setDrawOutline(true);
+		this.update();
 	}
 
 	/**
-	 * Sets the threshold cost of this terrain obstacle cylinder and updates its
+	 * Sets the threshold cost of this terrain obstacle box and updates its
 	 * representation accordingly.
 	 * 
-	 * @param threshold the threshold cost of this terrain obstacle cylinder
+	 * @param threshold the threshold cost of this terrain obstacle box
 	 *
 	 * @see ThresholdRenderable#setThreshold(double)
 	 */
 	@Override
 	public void setThreshold(double threshold) {
 		this.thresholdCost = threshold;
+		this.updateVisibility();
 	}
 
 	/**
-	 * Gets the threshold cost of this terrain obstacle cylinder.
+	 * Gets the threshold cost of this terrain obstacle box.
 	 * 
-	 * @return the threshold cost of this terrain obstacle cylinder
+	 * @return the threshold cost of this terrain obstacle box
 	 * 
 	 * @see ThresholdRenderable#getThreshold()
 	 */
@@ -103,9 +115,9 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Gets the depiction of this terrain obstacle cylinder.
+	 * Gets the depiction of this terrain obstacle box.
 	 * 
-	 * @return the depictin of this terrain obstacle cylinder
+	 * @return the depictin of this terrain obstacle box
 	 * 
 	 * @see Depictable#getDepiction()
 	 */
@@ -115,9 +127,9 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Sets the depiction of this terrain obstacle cylinder.
+	 * Sets the depiction of this terrain obstacle box.
 	 * 
-	 * @param depiction the depiction of this terrain obstacle cylinder
+	 * @param depiction the depiction of this terrain obstacle box
 	 * 
 	 * @see Depictable#setDepiction(Depiction)
 	 */
@@ -127,9 +139,9 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Indicates whether or not this terrain obstacle cylinder has a depiction.
+	 * Indicates whether or not this terrain obstacle box has a depiction.
 	 * 
-	 * @return true if this terrain obstacle cylinder has a depiction, false otherwise
+	 * @return true if this terrain obstacle box has a depiction, false otherwise
 	 * 
 	 * @see Depictable#hasDepiction()
 	 */
@@ -139,7 +151,7 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Updates this terrain obstacle cylinder.
+	 * Updates this terrain obstacle box.
 	 */
 	protected void update() {
 		this.updateVisibility();
@@ -147,7 +159,7 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Updates the visibility of this terrain obstacle cylinder.
+	 * Updates the visibility of this terrain obstacle box.
 	 */
 	protected void updateVisibility() {
 		this.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
@@ -157,21 +169,17 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Updates the appearance of this terrain obstacle cylinder.
+	 * Updates the appearance of this terrain obstacle box.
 	 */
 	protected void updateAppearance() {
-		this.getAttributes().setInteriorMaterial(new Material(ObstacleColor.getColor(activeCost)));
-		if (0 > this.activeCost) {
-			this.getAttributes().setInteriorOpacity(1.0);
-		} else {
-			this.getAttributes().setInteriorOpacity(0.5);
-		}
+		this.getAttributes().setMaterial(new Material(Color.BLACK));
+		this.getAttributes().setOutlineMaterial(new Material(Color.WHITE));
 		// TODO: elements could change color, transparency or even an associated
 		// image/icon
 	}
 
 	/**
-	 * Renders this terrain obstacle cylinder.
+	 * Renders this terrain obstacle box.
 	 * 
 	 * @see Renderable#render(DrawContext)
 	 */
@@ -184,13 +192,47 @@ public class TerrainCylinder extends VerticalCylinder implements TerrainObstacle
 	}
 
 	/**
-	 * Gets the geometric extent of this terrain obstacle cylinder for a specified globe.
+	 * Enables this terrain obstacle box.
+	 * 
+	 * @see com.cfar.swim.worldwind.util.Enableable#enable()
+	 */
+	@Override
+	public void enable() {
+		this.isEnabled = true;
+		this.update();
+	}
+
+	/**
+	 * Disables this terrain obstacle box.
+	 * 
+	 * @see com.cfar.swim.worldwind.util.Enableable#disable()
+	 */
+	@Override
+	public void disable() {
+		this.isEnabled = false;
+		this.update();
+	}
+
+	/**
+	 * Determines whether or not this terrain obstacle box is enabled
+	 * 
+	 * @return
+	 * 
+	 * @see com.cfar.swim.worldwind.util.Enableable#isEnabled()
+	 */
+	@Override
+	public boolean isEnabled() {
+		return this.isEnabled;
+	}
+
+	/**
+	 * Gets the geometric extent of this terrain obstacle box for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
 	 * 
-	 * @return the geometric extent (a bounding box) of this terrain obstacle cylinder
+	 * @return the geometric extent of this obstacle box
 	 * 
-	 * @see RigidShape#getExtent(Globe, double)
+	 * @see AbstractAirspace#getExtent(Globe, double)
 	 */
 	@Override
 	public Extent getExtent(Globe globe) {

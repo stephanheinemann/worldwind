@@ -57,6 +57,7 @@ import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.util.Enableable;
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -124,6 +125,9 @@ public class Scenario implements Identifiable, Enableable {
 
 	/** the obstacles of this scenario */
 	private Set<Obstacle> obstacles;
+	
+	/** the terrain obstacles of this scenario */
+	private Set<TerrainObstacle> terrainObstacles;
 
 	/** the timer executor of this scenario */
 	private ScheduledExecutorService executor;
@@ -168,6 +172,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.setDatalink(new SimulatedDatalink());
 		this.setTrajectory(new Trajectory());
 		this.obstacles = new HashSet<Obstacle>();
+		this.terrainObstacles = new HashSet<TerrainObstacle>();
 	}
 
 	/**
@@ -322,6 +327,15 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void addObstaclesChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("obstacles", listener);
+	}
+	
+	/**
+	 * Adds a terrain obstacles change listener to this scenario.
+	 * 
+	 * @param listener the terrain obstacles change listener to be added
+	 */
+	public void addTerrainObstaclesChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("terrainObstacles", listener);
 	}
 
 	// TODO: be more conservative with firing property change listeners
@@ -484,6 +498,7 @@ public class Scenario implements Identifiable, Enableable {
 
 		this.environment.setThreshold(threshold);
 		this.obstacles.forEach(o -> o.setThreshold(threshold));
+		this.terrainObstacles.forEach(o -> o.setThreshold(threshold));
 
 		// TODO: consider threshold property change reaction versus firing individual
 		// changes
@@ -664,6 +679,11 @@ public class Scenario implements Identifiable, Enableable {
 			this.environment.setThreshold(this.threshold);
 			this.environment.unembedAll();
 			for (Obstacle obstacle : this.obstacles) {
+				if (obstacle.isEnabled()) {
+					this.environment.embed(obstacle);
+				}
+			}
+			for (TerrainObstacle obstacle : this.terrainObstacles) {
 				if (obstacle.isEnabled()) {
 					this.environment.embed(obstacle);
 				}
@@ -1200,6 +1220,113 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void notifyObstaclesChange() {
 		this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+	}
+	
+	/**
+	 * Gets the terrain obstacles of this scenario.
+	 * 
+	 * @return the terrain obstacles of this scenario
+	 */
+	public Set<TerrainObstacle> getTerrainObstacles() {
+		return Collections.unmodifiableSet(this.terrainObstacles);
+	}
+
+	/**
+	 * Adds a terrain obstacle to this scenario.
+	 * 
+	 * @param terrainObstacle the terrain obstacle to be added
+	 * 
+	 * @throws IllegalArgumentException if terrain obstacle is null
+	 */
+	public void addTerrainObstacle(TerrainObstacle terrainObstacle) {
+		if (null != terrainObstacle) {
+			if (this.terrainObstacles.add(terrainObstacle)) {
+				terrainObstacle.setThreshold(this.threshold);
+				this.pcs.firePropertyChange("terrainObstacles", null, Collections.unmodifiableSet(this.terrainObstacles));
+
+				if (terrainObstacle.isEnabled() && this.environment.embed(terrainObstacle)) {
+					this.pcs.firePropertyChange("environment", null, this.environment);
+				}
+			}
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	/**
+	 * Removes a terrain obstacle from this scenario.
+	 * 
+	 * @param terrainObstacle the terrain obstacle to be added
+	 * 
+	 * @throws IllegalArgumentException if terrain obstacle is null
+	 */
+	public void removeTerrainObstacle(TerrainObstacle terrainObstacle) {
+		if (null != terrainObstacle) {
+			if (this.terrainObstacles.remove(terrainObstacle)) {
+				this.pcs.firePropertyChange("terrainObstacles", null, Collections.unmodifiableSet(this.terrainObstacles));
+
+				if (this.environment.unembed(terrainObstacle)) {
+					this.pcs.firePropertyChange("environment", null, this.environment);
+				}
+			}
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	/**
+	 * Removes all terrain obstacles from this scenario.
+	 */
+	public void clearTerrainObstacles() {
+		this.terrainObstacles.clear();
+		this.pcs.firePropertyChange("terrainObstacles", null, Collections.unmodifiableSet(this.terrainObstacles));
+		this.environment.unembedTerrainAll();
+		this.pcs.firePropertyChange("environment", null, this.environment);
+	}
+
+	/**
+	 * Embeds a terrain obstacle into the environment of this scenario.
+	 * 
+	 * @param terrainObstacle the terrain obstacle to be embedded
+	 * 
+	 * @throws IllegalArgumentException if terrain obstacle is null
+	 */
+	public void embedTerrainObstacle(TerrainObstacle terrainObstacle) {
+		if (null != terrainObstacle) {
+			if (this.terrainObstacles.add(terrainObstacle)) {
+				terrainObstacle.setThreshold(this.threshold);
+				this.pcs.firePropertyChange("terrainObstacles", null, Collections.unmodifiableSet(this.terrainObstacles));
+			}
+			if (this.environment.embed(terrainObstacle)) {
+				this.pcs.firePropertyChange("environment", null, this.environment);
+			}
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	/**
+	 * Unembeds a terrain obstacle from the environment of this scenario.
+	 * 
+	 * @param terrainObstacle the terrain obstacle to be unembedded
+	 * 
+	 * @throws IllegalArgumentException if terrain obstacle is null
+	 */
+	public void unembedTerrainObstacle(TerrainObstacle terrainObstacle) {
+		if (null != terrainObstacle) {
+			if (this.environment.unembed(terrainObstacle)) {
+				this.pcs.firePropertyChange("environment", null, this.environment);
+			}
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+
+	/**
+	 * Notifies this scenario about a changed obstacles.
+	 */
+	public void notifyTerrainObstaclesChange() {
+		this.pcs.firePropertyChange("terrainObstacles", null, Collections.unmodifiableSet(this.terrainObstacles));
 	}
 
 	/**

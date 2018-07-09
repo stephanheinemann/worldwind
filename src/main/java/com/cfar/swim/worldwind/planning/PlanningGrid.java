@@ -52,9 +52,11 @@ import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
+import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
+import com.cfar.swim.worldwind.render.airspaces.TerrainCylinder;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -89,6 +91,9 @@ public class PlanningGrid extends CubicGrid implements Environment {
 
 	/** the obstacles embedded into this planning grid */
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
+
+	/** the terrain obstacles embedded into this planning grid */
+	private HashSet<TerrainObstacle> terrainObstacles = new HashSet<TerrainObstacle>();
 
 	/** the affected children of obstacle embeddings */
 	private HashMap<Obstacle, List<PlanningGrid>> affectedChildren = new HashMap<Obstacle, List<PlanningGrid>>();
@@ -675,6 +680,118 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	@Override
 	public boolean isEmbedded(Obstacle obstacle) {
 		return this.obstacles.contains(obstacle);
+	}
+
+	// TODO: TERRAIN OBSTACLES functions are not correctly implemented for planning
+	// grid. The code below was copied from sampling environment.
+	/**
+	 * Embeds a terrain obstacle cylinder into this planning grid.
+	 * 
+	 * @param obstacle the terrain obstacle cylinder to be embedded
+	 * 
+	 * @return true if the terrain obstacle cylinder has been embedded, false
+	 *         otherwise
+	 * 
+	 * @see Environment#embed(Obstacle)
+	 */
+	public boolean embed(TerrainCylinder obstacle) {
+		boolean embedded = false;
+
+		if (null != this.globe) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
+				this.terrainObstacles.add(obstacle);
+
+				embedded = true;
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+
+		return embedded;
+	}
+
+	/**
+	 * Embeds a terrain obstacle into this planning grid.
+	 * 
+	 * @param obstacle the terrain obstacle to be embedded
+	 * 
+	 * @return true if the terrain obstacle has been embedded, false otherwise
+	 * 
+	 * @see Environment#embed(Obstacle)
+	 */
+	public boolean embed(TerrainObstacle obstacle) {
+		boolean embedded = false;
+
+		if (null != this.globe) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
+				this.terrainObstacles.add(obstacle);
+
+				embedded = true;
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+
+		return embedded;
+	}
+
+	/**
+	 * Unembeds a terrain obstacle from this planning grid.
+	 * 
+	 * @param obstacle the terrain obstacle to be unembedded
+	 * 
+	 * @return true if the terrain obstacle has been unembedded, false otherwise
+	 * 
+	 * @see Environment#unembed(Obstacle)
+	 */
+	public boolean unembed(TerrainObstacle obstacle) {
+		boolean unembedded = false;
+
+		if (this.isEmbedded(obstacle)) {
+
+			this.terrainObstacles.remove(obstacle);
+
+			unembedded = true;
+		}
+
+		return unembedded;
+	}
+
+	/**
+	 * Updates this planning grid for an embedded terrain obstacle.
+	 * 
+	 * @param obstacle the embedded terrain obstacle
+	 * 
+	 * @see Environment#refresh(Obstacle)
+	 */
+	public void refresh(TerrainObstacle obstacle) {
+		if (this.terrainObstacles.contains(obstacle)) {
+			this.update();
+		}
+	}
+
+	/**
+	 * Unembeds all terrain obstacles from this planning grid.
+	 * 
+	 * @see Environment#unembedAll()
+	 */
+	public void unembedTerrainAll() {
+		this.terrainObstacles.clear();
+	}
+
+	/**
+	 * Indicates whether or not a terrain obstacle is embedded in this planning
+	 * grid.
+	 * 
+	 * @param obstacle the terrain obstacle
+	 * 
+	 * @return true if the terrain obstacle is embedded in this planning grid, false
+	 *         otherwise
+	 * 
+	 * @see Environment#isEmbedded(Obstacle)
+	 */
+	public boolean isEmbedded(TerrainObstacle obstacle) {
+		return this.terrainObstacles.contains(obstacle);
 	}
 
 	/**

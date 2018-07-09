@@ -222,14 +222,13 @@ public class Edge {
 	}
 
 	/**
-	 * Calculates the cost of this edge within a specified time span by searching the
-	 * cost interval tree.
+	 * Calculates the cost of this edge within a specified time span by searching
+	 * the cost interval tree.
 	 * 
 	 * @param start the start time of the time span
 	 * @param end the end time of the time span
 	 * 
-	 * @return the accumulated cost of this edge within the specified time
-	 *         span
+	 * @return the accumulated cost of this edge within the specified time span
 	 */
 	public double calculateCost(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy) {
 		double cost = 1d; // simple cost of normalized distance
@@ -256,8 +255,7 @@ public class Edge {
 		}
 		if (!costList.isEmpty()) {
 			// cost is computed based on the minimum/average/maximum cost of all obstacles
-			// times
-			// the number of obstacles that affect this edge
+			// times the number of obstacles that affect this edge
 			switch (costPolicy) {
 			case MINIMUM:
 				cost = costList.stream().mapToDouble(Double::doubleValue).min().getAsDouble() * costList.size();
