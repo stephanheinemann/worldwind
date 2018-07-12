@@ -34,7 +34,6 @@ import java.awt.Color;
 import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.VerticalCylinder;
-import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 
 import gov.nasa.worldwind.geom.Cylinder;
@@ -111,42 +110,6 @@ public class TerrainCylinder extends CappedCylinder implements TerrainObstacle {
 	@Override
 	public double getThreshold() {
 		return this.thresholdCost;
-	}
-
-	/**
-	 * Gets the depiction of this terrain obstacle cylinder.
-	 * 
-	 * @return the depictin of this terrain obstacle cylinder
-	 * 
-	 * @see Depictable#getDepiction()
-	 */
-	@Override
-	public Depiction getDepiction() {
-		return this.depiction;
-	}
-
-	/**
-	 * Sets the depiction of this terrain obstacle cylinder.
-	 * 
-	 * @param depiction the depiction of this terrain obstacle cylinder
-	 * 
-	 * @see Depictable#setDepiction(Depiction)
-	 */
-	@Override
-	public void setDepiction(Depiction depiction) {
-		this.depiction = depiction;
-	}
-
-	/**
-	 * Indicates whether or not this terrain obstacle cylinder has a depiction.
-	 * 
-	 * @return true if this terrain obstacle cylinder has a depiction, false otherwise
-	 * 
-	 * @see Depictable#hasDepiction()
-	 */
-	@Override
-	public boolean hasDepiction() {
-		return (null != this.depiction);
 	}
 
 	/**

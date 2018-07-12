@@ -29,7 +29,6 @@
  */
 package com.cfar.swim.worldwind.render;
 
-import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.geom.Extent;
@@ -41,7 +40,7 @@ import gov.nasa.worldwind.globes.Globe;
  * @author Henrique Ferreira
  *
  */
-public interface TerrainObstacle extends ThresholdRenderable, Depictable, Enableable {
+public interface TerrainObstacle extends ThresholdRenderable, Enableable {
 
 	/**
 	 * Gets the geometric extent of this terrain obstacle for a specified globe.

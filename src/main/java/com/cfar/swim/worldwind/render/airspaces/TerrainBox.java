@@ -33,7 +33,6 @@ import java.awt.Color;
 
 import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
-import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
 
 import gov.nasa.worldwind.geom.Extent;
@@ -112,42 +111,6 @@ public class TerrainBox extends Box implements TerrainObstacle {
 	@Override
 	public double getThreshold() {
 		return this.thresholdCost;
-	}
-
-	/**
-	 * Gets the depiction of this terrain obstacle box.
-	 * 
-	 * @return the depictin of this terrain obstacle box
-	 * 
-	 * @see Depictable#getDepiction()
-	 */
-	@Override
-	public Depiction getDepiction() {
-		return this.depiction;
-	}
-
-	/**
-	 * Sets the depiction of this terrain obstacle box.
-	 * 
-	 * @param depiction the depiction of this terrain obstacle box
-	 * 
-	 * @see Depictable#setDepiction(Depiction)
-	 */
-	@Override
-	public void setDepiction(Depiction depiction) {
-		this.depiction = depiction;
-	}
-
-	/**
-	 * Indicates whether or not this terrain obstacle box has a depiction.
-	 * 
-	 * @return true if this terrain obstacle box has a depiction, false otherwise
-	 * 
-	 * @see Depictable#hasDepiction()
-	 */
-	@Override
-	public boolean hasDepiction() {
-		return (null != this.depiction);
 	}
 
 	/**

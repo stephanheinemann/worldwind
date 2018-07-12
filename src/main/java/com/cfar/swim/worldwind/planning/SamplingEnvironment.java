@@ -861,7 +861,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	@Override
 	public boolean unembed(Obstacle obstacle) {
 		boolean unembedded = false;
-
+		
 		if (this.isEmbedded(obstacle)) {
 			this.removeCostInterval(obstacle.getCostInterval());
 			this.obstacles.remove(obstacle);
