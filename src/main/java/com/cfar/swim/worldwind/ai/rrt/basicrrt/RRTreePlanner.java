@@ -332,6 +332,18 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected Trajectory createTrajectory() {
 		return new Trajectory((List<Waypoint>) this.plan.clone());
 	}
+	
+	/**
+	 * Creates a trajectory from a particular plan.
+	 * 
+	 * @param the plan from which a trajectory should be computed
+	 * 
+	 * @return the trajectory of the computed plan
+	 */
+	@SuppressWarnings("unchecked")
+	protected Trajectory createTrajectory(LinkedList<Waypoint> plan) {
+		return new Trajectory((List<Waypoint>) plan.clone());
+	}
 
 	/**
 	 * Creates a new waypoint from a random position sampled from a uniformed
@@ -796,7 +808,7 @@ public class RRTreePlanner extends AbstractPlanner {
 				}
 			}
 		}
-		Trajectory trajectory = new Trajectory(plan);
+		Trajectory trajectory = this.createTrajectory(plan);
 		this.revisePlan(trajectory);
 		return trajectory;
 	}

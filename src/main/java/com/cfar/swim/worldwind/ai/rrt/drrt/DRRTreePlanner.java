@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.ai.rrt.drrt;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
@@ -283,6 +284,7 @@ public class DRRTreePlanner extends RRTreePlanner {
 		// Check for new obstacles until the goal is reached
 		while (!this.checkGoal(getStart())) {
 			// Move to next waypoint and check for new obstacles
+			// TODO: Movement should come from real aircraft
 			this.moveToNext();
 			System.out.println("\nNew start position... " + this.getStart().getInfo() + "\nWptL="
 					+ this.getWaypointList().size() + " EdgL=" + this.getEdgeList().size());
@@ -330,8 +332,81 @@ public class DRRTreePlanner extends RRTreePlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		// TODO: Implement
-		return super.plan(origin, destination, waypoints, etd);
+		// TODO: implement
+		
+		// create current variables
+		LinkedList<Waypoint> plan = new LinkedList<>();
+		Waypoint currentOrigin = new Waypoint(origin);
+		ZonedDateTime currentEtd = etd;
+		Trajectory trajectory;
+
+		// collect intermediate destinations
+		ArrayList<Waypoint> destinations = waypoints.stream().map(Waypoint::new)
+				.collect(Collectors.toCollection(ArrayList::new));
+		destinations.add(new Waypoint(destination));
+		
+		// plan and concatenate partial trajectories
+		for (Waypoint currentDestination : destinations) {
+			if (!(currentOrigin.equals(currentDestination))) {
+				// plan partial trajectory
+				this.initialize(currentOrigin, currentDestination, currentEtd);
+				this.compute();
+				Trajectory part = this.createTrajectory();
+				
+				// append partial trajectory to plan
+				if ((!plan.isEmpty()) && (!part.isEmpty())) {
+					plan.pollLast();
+				}
+				
+				for (Waypoint waypoint : part.getWaypoints()) {
+					plan.add(waypoint);
+				}
+				if (plan.peekLast().equals(currentOrigin)) {
+					// if no plan could be found, return an empty trajectory
+					trajectory = new Trajectory();
+					this.revisePlan(trajectory);
+					return trajectory;
+				} else {
+					currentOrigin = plan.peekLast();
+					currentEtd = currentOrigin.getEto();
+				}
+			}
+		}
+		
+		trajectory = this.createTrajectory(plan);
+		this.revisePlan(trajectory);
+		
+		// define auxiliary variables
+		HashSet<Obstacle> diffObstacles = new HashSet<>();
+
+		// Check for new obstacles until the goal is reached
+		while(!this.checkGoal(getStart())) {
+			
+			// Move to next waypoint and check for new obstacles
+			this.moveToNext();
+			diffObstacles = this.getNewObstacles();
+			
+			// TODO: Remove intermediate destinations if they were already reached 
+			
+			// If there are new obstacles in the environment
+			if (!diffObstacles.isEmpty()) {
+				// Invalidate Waypoints affected by new obstacles
+				for (Obstacle obstacle : diffObstacles)
+					this.invalidateWaypoints(obstacle);
+				
+				// Check if the current path is still valid
+				if (!this.isPathValid()) {
+					for (Waypoint currentDestination : destinations) {
+						this.regrowRRT();
+					}
+				}
+			}
+
+		};
+		
+		trajectory = this.createTrajectory(plan);
+		this.revisePlan(trajectory);
+		return trajectory;
 	}
 
 	/**

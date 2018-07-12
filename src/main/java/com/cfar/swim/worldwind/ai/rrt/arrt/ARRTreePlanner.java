@@ -295,7 +295,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		return this.getDistBias() * this.getEnvironment().getDistance(waypoint, waypointNear)
 				+ this.getCostBias() * waypoint.getCost();
 	}
-	
 
 	/**
 	 * Sorts a list of elements by increasing selected cost to a given waypoint
@@ -313,7 +312,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 				.collect(Collectors.toCollection(ArrayList::new));
 
 	}
-	
+
 	/**
 	 * Checks whether or not the current solution can be considered as having the
 	 * maximum improvement possible.
@@ -377,6 +376,16 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	}
 
 	/**
+	 * Creates a new waypoint from a random position sampled from inside an
+	 * ellipsoid defined in the environment space.
+	 *
+	 * @return waypoint the RRTreeWaypoint sampled
+	 */
+	protected RRTreeWaypoint sampleEllipsoid(Position focusA, Position focusB, double distance) {
+		return this.createWaypoint(this.getEnvironment().samplePositionEllipsoide(focusA, focusB, distance));
+	}
+
+	/**
 	 * Extends the tree in the direction of the target waypoint, choosing to expand
 	 * the waypoint from the neighbors in the tree sorted by increasing selected
 	 * cost
@@ -416,7 +425,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 
 		return false;
 	}
-
 
 	/**
 	 * Initializes the planner to plan from an origin to a destination at a
@@ -595,8 +603,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 				if ((!plan.isEmpty()) && (!part.isEmpty())) {
 					plan.pollLast();
 				}
-				for (Waypoint waypoint : part.getWaypoints()) // TODO: NoSuchElement exception?
+				for (Waypoint waypoint : part.getWaypoints()) {
 					plan.add(waypoint);
+				}
 
 				// set current origin from last waypoint in plan to be used in next iteration
 				currentOrigin = plan.peekLast();
@@ -605,21 +614,21 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 
 			// update weights to be used in next iteration
 			this.updateWeights();
-			System.out.println(distBias + " Updated weights " + costBias);
+			// System.out.println(distBias + " Updated weights " + costBias);
 
 			// if the plan was modified
 			if (newPlan) {
-				System.out.println("New plan\n\n");
+				// System.out.println("New plan\n\n");
 				// create trajectory from plan
-				trajectory = new Trajectory(plan);
-				// this.revisePlan(trajectory);
+				trajectory = this.createTrajectory(plan);
+				this.revisePlan(trajectory);
 			} else {
-				System.out.println("No new plan\n\n");
+				// System.out.println("No new plan\n\n");
 			}
 		}
 
-		System.out.println("Exiting...");
-		trajectory = new Trajectory(plan);
+		System.out.println("Improved...");
+		trajectory = this.createTrajectory(plan);
 		this.revisePlan(trajectory);
 		return trajectory;
 
