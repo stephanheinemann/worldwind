@@ -752,6 +752,18 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
+		Position positionActual = this.reviseAircraftPosition();
+		while(this.getEnvironment().getDistance(positionActual, destination)>5) {
+			positionActual = this.reviseAircraftPosition();
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			System.out.println("Position Actual: "+positionActual);
+		}
+		
 		return trajectory;
 	}
 
@@ -810,6 +822,19 @@ public class RRTreePlanner extends AbstractPlanner {
 		}
 		Trajectory trajectory = this.createTrajectory(plan);
 		this.revisePlan(trajectory);
+		
+//		Position positionActual = this.reviseAircraftPosition();
+//		while(this.getEnvironment().getDistance(positionActual, destination)>5) {
+//			positionActual = this.reviseAircraftPosition();
+//			try {
+//				Thread.sleep(1000);
+//			} catch (InterruptedException e) {
+//				// TODO Auto-generated catch block
+//				e.printStackTrace();
+//			}
+//			System.out.println("Position Actual: "+positionActual);
+//		}
+		
 		return trajectory;
 	}
 
