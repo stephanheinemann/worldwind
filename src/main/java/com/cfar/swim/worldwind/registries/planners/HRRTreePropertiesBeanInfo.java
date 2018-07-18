@@ -34,22 +34,22 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 
 /**
- * Realizes the properties bean of a basic RRTree planner with the property
+ * Realizes the properties bean of an heuristic RRTree planner with the property
  * descriptors for each parameter.
  * 
  * @author Manuel Rosa
  *
  */
-public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo {
+public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 
 	/** the class which this bean info refers to */
-	private final static Class<RRTreeProperties> beanClass = RRTreeProperties.class;
+	private final static Class<HRRTreeProperties> beanClass = HRRTreeProperties.class;
 	
 	/** the category of parameters that are sampling related */
-	protected final static String CATEGORY_SAMPLING = "Sampling Parameters";
-
+	protected final static String CATEGORY_HEURISTIC = "Heuristic Parameters";
+	
 	/**
-	 * Customizes the property descriptors for each parameter of a RRTree planner.
+	 * Customizes the property descriptors for each parameter of an heuristic RRTree planner.
 	 * 
 	 * @return the array of property descriptors
 	 * 
@@ -59,24 +59,20 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 	public PropertyDescriptor[] getPropertyDescriptors() {
 		
 		try {
-			PropertyDescriptor maxIter = this.createProperty(beanClass, "maxIter",
-					"Max Iterations",
-					"the maximum number of sampling iterations",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor strategy = this.createProperty(beanClass, "strategy",
-					"Strategy",
-					"the expansion strategy for the planner",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor epsilon = this.createProperty(beanClass, "epsilon",
-					"Epsilon (m)",
-					"the maximum distance to extend a waypoint in the tree",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor bias = this.createProperty(beanClass, "bias",
-					"Goal Bias (%)",
-					"the bias of the sampling algorithm towards goal",
-					CATEGORY_SAMPLING);
+			PropertyDescriptor probFloor = this.createProperty(beanClass, "probFloor",
+					"Probability Floor",
+					"a value to ensure the search is not overly biased against exploration",
+					CATEGORY_HEURISTIC);
+			PropertyDescriptor neighbors = this.createProperty(beanClass, "neighbors",
+					"Number Neighbors",
+					"the number of neighbors to consider as parent for the sampled waypoint",
+					CATEGORY_HEURISTIC);
+			PropertyDescriptor heuristic = this.createProperty(beanClass, "heuristic",
+					"Heuristic",
+					"the heuristic algorithm for the planner",
+					CATEGORY_HEURISTIC);
 			
-			PropertyDescriptor rvNew[] = {maxIter, strategy, epsilon, bias};
+			PropertyDescriptor rvNew[] = {probFloor, neighbors, heuristic};
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 
@@ -87,11 +83,12 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 	}
 
 	/**
-	 * Gets the bean descriptor of this RRTree properties bean info.
+	 * Gets the bean descriptor of this heuristic RRTree properties bean info.
 	 * 
 	 * @return the bean descriptor of this class
 	 */
 	public BeanDescriptor getBeanDescriptor() {
 		return new BeanDescriptor(beanClass, null);
 	}
+	
 }

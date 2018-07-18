@@ -42,7 +42,7 @@ public class HRRTreeProperties extends RRTreeProperties {
 	/** floor value to ensure the search is not overly biased against exploration */
 	private double probFloor = 0.9;
 	
-	/** number of neighbors to consider to test a sampled waypoint  */
+	/** the number of neighbors to consider as parent for the sampled waypoint  */
 	private int neighbors = 5;
 	
 	/** the heuristic algorithm for the planner */

@@ -34,22 +34,23 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 
 /**
- * Realizes the properties bean of a basic RRTree planner with the property
+ * Realizes the properties bean of an anytime RRTree planner with the property
  * descriptors for each parameter.
  * 
  * @author Manuel Rosa
  *
  */
-public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo {
+public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 
 	/** the class which this bean info refers to */
-	private final static Class<RRTreeProperties> beanClass = RRTreeProperties.class;
-	
-	/** the category of parameters that are sampling related */
-	protected final static String CATEGORY_SAMPLING = "Sampling Parameters";
+	private final static Class<ARRTreeProperties> beanClass = ARRTreeProperties.class;
+
+	/** the category of parameters that are anytime related */
+	protected final static String CATEGORY_ANYTIME = "Anytime Parameters";
 
 	/**
-	 * Customizes the property descriptors for each parameter of a RRTree planner.
+	 * Customizes the property descriptors for each parameter of an anytime RRTree
+	 * planner.
 	 * 
 	 * @return the array of property descriptors
 	 * 
@@ -57,26 +58,22 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 	 */
 	@Override
 	public PropertyDescriptor[] getPropertyDescriptors() {
-		
+
 		try {
-			PropertyDescriptor maxIter = this.createProperty(beanClass, "maxIter",
-					"Max Iterations",
-					"the maximum number of sampling iterations",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor strategy = this.createProperty(beanClass, "strategy",
-					"Strategy",
-					"the expansion strategy for the planner",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor epsilon = this.createProperty(beanClass, "epsilon",
-					"Epsilon (m)",
-					"the maximum distance to extend a waypoint in the tree",
-					CATEGORY_SAMPLING);
-			PropertyDescriptor bias = this.createProperty(beanClass, "bias",
-					"Goal Bias (%)",
-					"the bias of the sampling algorithm towards goal",
-					CATEGORY_SAMPLING);
-			
-			PropertyDescriptor rvNew[] = {maxIter, strategy, epsilon, bias};
+			PropertyDescriptor minimumQuality = this.createProperty(beanClass, "minimumQuality",
+					"Initial Cost Bias",
+					"the initial relative weight of costs (low values prioritize coverage of the configuration space)",
+					CATEGORY_ANYTIME);
+			PropertyDescriptor maximumQuality = this.createProperty(beanClass, "maximumQuality",
+					"Final Cost Bias",
+					"the final relative weight of costs (high values prioritize selection of waypoints with optimal costs)",
+					CATEGORY_ANYTIME);
+			PropertyDescriptor qualityImprovement = this.createProperty(beanClass, "qualityImprovement",
+					"Improvement Factor",
+					"the quality improvement value",
+					CATEGORY_ANYTIME);
+
+			PropertyDescriptor rvNew[] = {minimumQuality, maximumQuality, qualityImprovement};
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 
@@ -87,11 +84,12 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 	}
 
 	/**
-	 * Gets the bean descriptor of this RRTree properties bean info.
+	 * Gets the bean descriptor of this anytime RRTree properties bean info.
 	 * 
 	 * @return the bean descriptor of this class
 	 */
 	public BeanDescriptor getBeanDescriptor() {
 		return new BeanDescriptor(beanClass, null);
 	}
+
 }
