@@ -621,7 +621,7 @@ public class FAPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		position = (rand <= bias) ? this.sampleGoal(waypoint) : this.samplePosition(waypoint);
 
 		while (this.getEnvironment().isInsideGlobe(this.getEnvironment().getGlobe(), position)
-				|| this.getEnvironment().checkConflict(position)
+				|| this.getEnvironment().checkConflict(position, getAircraft())
 				|| !this.getAircraft().getCapabilities().isFeasible(waypoint, position,
 						this.getEnvironment().getGlobe())
 				|| !this.getEnvironment().contains(position)) {
@@ -954,7 +954,7 @@ public class FAPRMPlanner extends AbstractPlanner implements AnytimePlanner {
 		Waypoint wpt2;
 		for (int i = 0; i < trajectory.getLength() - 1; i++) {
 			wpt2 = Iterables.get(trajectory.getWaypoints(), i + 1);
-			if (this.getEnvironment().checkConflict(wpt1, wpt2)) {
+			if (this.getEnvironment().checkConflict(wpt1, wpt2, getAircraft())) {
 				Edge edge = new Edge(wpt1, wpt2);
 				Edge edgeInList = this.getEdgeList().stream().filter(s -> s.equals(edge)).findFirst().get();
 				conflictEdges.add(edgeInList);

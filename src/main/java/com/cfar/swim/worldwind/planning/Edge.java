@@ -51,8 +51,9 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class Edge {
 
-	// TODO: Should we store an edge cost? It would be beneficial to not call
-	// calculate cost every time and if drawing edges is desired
+	// TODO: Should we store an edge cost?
+	// It would be beneficial to not call calculate cost every time and useful if
+	// drawing edges is desired
 
 	/** the first position of this edge */
 	private Position position1;
@@ -92,7 +93,7 @@ public class Edge {
 	}
 
 	/**
-	 * Gets the first position of this edge
+	 * Gets the first position of this edge.
 	 * 
 	 * @return the first position of this edge
 	 */
@@ -101,7 +102,7 @@ public class Edge {
 	}
 
 	/**
-	 * Sets the first position of this edge
+	 * Sets the first position of this edge.
 	 * 
 	 * @param position1 the first position of this edge
 	 */
@@ -110,7 +111,7 @@ public class Edge {
 	}
 
 	/**
-	 * Gets the second position of this edge
+	 * Gets the second position of this edge.
 	 * 
 	 * @return the second position of this edge
 	 */
@@ -119,7 +120,7 @@ public class Edge {
 	}
 
 	/**
-	 * Sets the second position of this edge
+	 * Sets the second position of this edge.
 	 * 
 	 * @param position1 the second position of this edge
 	 */
@@ -128,7 +129,7 @@ public class Edge {
 	}
 
 	/**
-	 * Receives one position and gets the other position of this edge
+	 * Receives one position and gets the other position of this edge.
 	 * 
 	 * @param position the position to be checked
 	 * 
@@ -145,7 +146,7 @@ public class Edge {
 	}
 
 	/**
-	 * Sets the line between the two positions in this edge
+	 * Sets the line between the two positions in this edge.
 	 * 
 	 * @return the line between positions
 	 */
@@ -154,7 +155,7 @@ public class Edge {
 	}
 
 	/**
-	 * Gets the line between the two positions in this edge
+	 * Gets the line between the two positions in this edge.
 	 * 
 	 * @param line the line between positions to set
 	 */
@@ -273,7 +274,7 @@ public class Edge {
 	}
 
 	/**
-	 * Checks whether or not the given position is part of this edge
+	 * Checks whether or not the given position is part of this edge.
 	 * 
 	 * @param position the position to be checked
 	 * 
@@ -286,18 +287,8 @@ public class Edge {
 			return false;
 	}
 
-	// TODO: review updatecost usefulness
-	// /**
-	// * Updates the active cost of this sampled position using its ato to search
-	// the
-	// * costInterval tree.
-	// */
-	// public void updateCost() {
-	// this.setCost(this.calculateCost(this.getAto()));
-	// }
-
 	/**
-	 * Gets the hash code of this edge based on the hash code of the two positions
+	 * Gets the hash code of this edge based on the hash code of the two positions.
 	 * 
 	 * @return the multiplication of the hash code of the two positions
 	 * 

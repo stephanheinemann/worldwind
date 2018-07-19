@@ -93,7 +93,7 @@ public class Iris extends Quadcopter {
 	// compute horizontal separation from separation times and cruise speed
 	
 	/** the separation radius of this Iris */
-	public static final double SEPARATION_RADIUS = 500d;
+	public static final double SEPARATION_RADIUS = 1d;
 	
 	/**
 	 * Constructs a new Iris at a specified position with a specified

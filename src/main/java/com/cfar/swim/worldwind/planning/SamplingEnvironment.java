@@ -44,17 +44,15 @@ import java.util.stream.Collectors;
 
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
+import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.ContinuumBox;
 import com.cfar.swim.worldwind.geom.CoordinateTransformations;
-import com.cfar.swim.worldwind.geom.CubicGrid;
-import com.cfar.swim.worldwind.geom.RegularGrid;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
-import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 import com.cfar.swim.worldwind.render.airspaces.TerrainCylinder;
 
 import gov.nasa.worldwind.geom.Line;
@@ -78,7 +76,8 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	private Globe globe = null;
 
 	/** the cost interval tree encoding temporal costs */
-	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
+	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
+			CostInterval.comparator);
 
 	/** the current time of this sampling environment */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -397,6 +396,29 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
+	 * Updates the list of edges in this environment to be in accordance to the list
+	 * of waypoints, i.e. removes edges that contain waypoints (at least 1) which
+	 * are no longer in the waypoint list.
+	 */
+	protected void refreshEdgeList() {
+		List<Edge> validEdges = new ArrayList<Edge>();
+
+		for (Edge edge : this.getEdgeList()) {
+			Waypoint waypoint1 = (Waypoint) edge.getPosition1();
+			if (!this.getWaypointList().contains(waypoint1))
+				continue;
+
+			Waypoint waypoint2 = (Waypoint) edge.getPosition2();
+			if (!this.getWaypointList().contains(waypoint2))
+				continue;
+
+			validEdges.add(edge);
+		}
+
+		this.setEdgeList(validEdges);
+	}
+
+	/**
 	 * Gets the edge from the list of edges in this environment which has both given
 	 * positions.
 	 * 
@@ -508,8 +530,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 *         false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see RegularGrid#isWayoint(Vec4)
 	 */
 	public boolean isWaypoint(Position position) {
 		if (null != this.globe) {
@@ -528,8 +548,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 *         or the waypoint position itself
 	 * 
 	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see RegularGrid#getAdjacentWaypoints(Vec4)
 	 */
 	public Set<Position> getAdjacentWaypoints(Position position) {
 		// TODO: How to define limit to classify an waypoint as adjacent?
@@ -552,8 +570,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 *         grid, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see RegularGrid#isAdjacentWaypoint(Vec4, Vec4)
 	 */
 	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
 		if (null != this.globe) {
@@ -563,14 +579,21 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		}
 	}
 
-	// TODO What are neighboring environments?
+	/**
+	 * @see Environment#getNeighbors()
+	 */
 	@Override
 	public Set<? extends Environment> getNeighbors() {
+		// TODO: Review how to define neighborhood of sampling continuum environments
 		return new HashSet<Environment>();
 	}
 
+	/**
+	 * @see Environment#areNeighbors(Environment)
+	 */
 	@Override
 	public boolean areNeighbors(Environment neighbor) {
+		// TODO: Define based on getNeibors()
 		return false;
 	}
 
@@ -583,8 +606,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * @return the neighbors of the position in this sampling environment
 	 * 
 	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see CubicGrid#getNeighbors(Vec4)
 	 */
 	public Set<Position> getNeighbors(Position position) {
 		Set<Position> neighbors = new HashSet<Position>();
@@ -609,8 +630,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * @return true if the two positions are neighbors, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see RegularGrid#areNeighbors(Vec4, Vec4)
 	 */
 	public boolean areNeighbors(Position position, Position neighbor) {
 		if (null != this.globe) {
@@ -648,14 +667,14 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Gets the normalized distance between two positions in this planning
-	 * continuum.
+	 * Gets the normalized distance between two positions in this sampling
+	 * environment.
 	 * 
 	 * @param position1 the first position
 	 * @param position2 the second position
 	 * 
-	 * @return the normalized distance between the two positions in this planning
-	 *         continuum
+	 * @return the normalized distance between the two positions in this sampling
+	 *         environment
 	 */
 	@Override
 	public double getNormalizedDistance(Position position1, Position position2) {
@@ -684,10 +703,11 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		Edge edge = null;
 		Optional<Edge> optEdge = this.getEdge(origin, destination);
 
-		if (!optEdge.isPresent())
+		if (!optEdge.isPresent()) {
 			throw new IllegalStateException("no edge containing both positions");
-		else
+		} else {
 			edge = optEdge.get();
+		}
 
 		double stepCost = 0d, distance, cost;
 
@@ -754,6 +774,10 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		return stepCost;
 	}
 
+	/**
+	 * @see Environment#getLegCost(Position, Position, ZonedDateTime, ZonedDateTime,
+	 *      CostPolicy, RiskPolicy)
+	 */
 	@Override
 	public double getLegCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
@@ -761,11 +785,58 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		return 0;
 	}
 
+	/**
+	 * @see Environment#getLegCost(Environment, ZonedDateTime, ZonedDateTime,
+	 *      CostPolicy, RiskPolicy)
+	 */
 	@Override
 	public double getLegCost(Environment destination, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
 			RiskPolicy riskPolicy) {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	/**
+	 * Gets the set of different obstacles containing the difference between the
+	 * current obstacle set and a previous obstacle set received as input.
+	 * 
+	 * @param oldObstacles the set of old obstacles
+	 * 
+	 * @return the set of different obstacles
+	 */
+	@SuppressWarnings("unchecked")
+	public Set<Obstacle> getDiffObstacles(Set<Obstacle> oldObstacles) {
+		// Get obstacles currently present in this environment
+		HashSet<Obstacle> newObstacles = (HashSet<Obstacle>) this.getObstacles().clone();
+
+		// Compute which obstacles were removed
+		HashSet<Obstacle> removedObstacles = new HashSet<Obstacle>(oldObstacles);
+		removedObstacles.removeAll(newObstacles);
+
+		// Compute which obstacles were added
+		HashSet<Obstacle> addedObstacles = new HashSet<Obstacle>(newObstacles);
+		addedObstacles.removeAll(oldObstacles);
+
+		// Compute which obstacles are different than before
+		HashSet<Obstacle> diffObstacles = new HashSet<Obstacle>();
+		diffObstacles.addAll(removedObstacles);
+		diffObstacles.addAll(addedObstacles);
+
+		return diffObstacles;
+	}
+
+	/**
+	 * Finds all the edges in the edge list which are affected by the given
+	 * obstacle.
+	 * 
+	 * @param obstacle the obstacle to be considered for intersection
+	 * 
+	 * @return the set of affected edges
+	 */
+	public Set<Edge> findAffectedEdges(Obstacle obstacle) {
+		return this.getEdgeList().stream()
+				.filter(e -> obstacle.getExtent(this.getGlobe()).intersects(e.getLine()))
+				.collect(Collectors.toSet());
 	}
 
 	/**
@@ -779,46 +850,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 				edge.addCostInterval(obstacle.getCostInterval());
 			}
 		}
-	}
-
-	/**
-	 * Embeds an obstacle into the affected edges.
-	 * 
-	 * @param obstacle the obstacle to be embedded
-	 */
-	public void embedEdges(ObstacleCylinder obstacle) {
-		for (Edge edge : this.getEdgeList()) {
-			if (obstacle.getExtent(this.globe).intersects(edge.getLine())) {
-				edge.addCostInterval(obstacle.getCostInterval());
-			}
-		}
-	}
-
-	/**
-	 * Embeds an obstacle into this sampling environment.
-	 * 
-	 * @param obstacle the obstacle to be embedded
-	 * 
-	 * @return true if the obstacle has been embedded, false otherwise
-	 * 
-	 * @see Environment#embed(Obstacle)
-	 */
-	public boolean embed(ObstacleCylinder obstacle) {
-		boolean embedded = false;
-
-		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
-				this.addCostInterval(obstacle.getCostInterval());
-				this.obstacles.add(obstacle);
-				this.embedEdges(obstacle);
-
-				embedded = true;
-			}
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return embedded;
 	}
 
 	/**
@@ -861,7 +892,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	@Override
 	public boolean unembed(Obstacle obstacle) {
 		boolean unembedded = false;
-		
+
 		if (this.isEmbedded(obstacle)) {
 			this.removeCostInterval(obstacle.getCostInterval());
 			this.obstacles.remove(obstacle);
@@ -918,13 +949,11 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Embeds an obstacle into this sampling environment.
+	 * Embeds a terrain obstacle into this sampling environment.
 	 * 
-	 * @param obstacle the obstacle to be embedded
+	 * @param obstacle the terrain obstacle to be embedded
 	 * 
 	 * @return true if the obstacle has been embedded, false otherwise
-	 * 
-	 * @see Environment#embed(Obstacle)
 	 */
 	public boolean embed(TerrainCylinder obstacle) {
 		boolean embedded = false;
@@ -943,13 +972,11 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Embeds an obstacle into this sampling environment.
+	 * Embeds a terrain obstacle into this sampling environment.
 	 * 
-	 * @param obstacle the obstacle to be embedded
+	 * @param obstacle the terrain obstacle to be embedded
 	 * 
 	 * @return true if the obstacle has been embedded, false otherwise
-	 * 
-	 * @see Environment#embed(Obstacle)
 	 */
 	public boolean embed(TerrainObstacle obstacle) {
 		boolean embedded = false;
@@ -968,13 +995,11 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Unembeds an obstacle from this sampling environment.
+	 * Unembeds a terrain obstacle from this sampling environment.
 	 * 
 	 * @param obstacle the obstacle to be unembedded
 	 * 
 	 * @return true if the obstacle has been unembedded, false otherwise
-	 * 
-	 * @see Environment#unembed(Obstacle)
 	 */
 	public boolean unembed(TerrainObstacle obstacle) {
 		boolean unembedded = false;
@@ -990,11 +1015,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Updates this sampling environment for an embedded obstacle.
+	 * Updates this sampling environment for an embedded terrain obstacle.
 	 * 
 	 * @param obstacle the embedded obstacle
-	 * 
-	 * @see Environment#refresh(Obstacle)
 	 */
 	public void refresh(TerrainObstacle obstacle) {
 		if (this.terrainObstacles.contains(obstacle)) {
@@ -1003,24 +1026,20 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Unembeds all obstacles from this sampling environment.
-	 * 
-	 * @see Environment#unembedAll()
+	 * Unembeds all terrain obstacles from this sampling environment.
 	 */
 	public void unembedTerrainAll() {
 		this.terrainObstacles.clear();
 	}
 
 	/**
-	 * Indicates whether or not an obstacle is embedded in this sampling
+	 * Indicates whether or not a terrain obstacle is embedded in this sampling
 	 * environment.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
 	 * @return true if the obstacle is embedded in this sampling environment, false
 	 *         otherwise
-	 * 
-	 * @see Environment#isEmbedded(Obstacle)
 	 */
 	public boolean isEmbedded(TerrainObstacle obstacle) {
 		return this.terrainObstacles.contains(obstacle);
@@ -1084,10 +1103,11 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * TODO
+	 * Gets the interval tree that is defined for a specified line.
 	 * 
-	 * @param line
-	 * @return
+	 * @param line the line to be checked
+	 * 
+	 * @return the interval tree with all cost intervals
 	 */
 	public IntervalTree<ChronoZonedDateTime<?>> embedIntervalTree(Line line) {
 		IntervalTree<ChronoZonedDateTime<?>> intervalTree = new IntervalTree<ChronoZonedDateTime<?>>(
@@ -1102,30 +1122,30 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * TODO
+	 * Creates a bounding box with a defined radius surrounding a given position.
 	 * 
-	 * @param position
-	 * @return
+	 * @param position the position to be considered
+	 * @param radius the radius for the bounding box
+	 * 
+	 * @return the bounding box surrounding the position
 	 */
-	public Box createBoundingBox(Position position) {
+	public Box createBoundingBox(Position position, double radius) {
 		Vec4 point = this.getGlobe().computePointFromPosition(position);
 		List<Vec4> corners = new ArrayList<Vec4>();
 
-		// TODO: create box according to aircraft dimensions
-		double halfDistance = 0.1d;
-
-		corners.add(point.add3(-halfDistance, +halfDistance, -halfDistance));
-		corners.add(point.add3(+halfDistance, +halfDistance, -halfDistance));
-		corners.add(point.add3(+halfDistance, -halfDistance, -halfDistance));
-		corners.add(point.add3(+halfDistance, -halfDistance, +halfDistance));
-		corners.add(point.add3(-halfDistance, -halfDistance, +halfDistance));
-		corners.add(point.add3(-halfDistance, +halfDistance, +halfDistance));
+		corners.add(point.add3(-radius, +radius, -radius));
+		corners.add(point.add3(+radius, +radius, -radius));
+		corners.add(point.add3(+radius, -radius, -radius));
+		corners.add(point.add3(+radius, -radius, +radius));
+		corners.add(point.add3(-radius, -radius, +radius));
+		corners.add(point.add3(-radius, +radius, +radius));
 
 		return new Box(gov.nasa.worldwind.geom.Box.computeBoundingBox(corners));
 	}
 
 	/**
-	 * Samples a position from a continuous space defined in the current environment
+	 * Samples a position from a continuous space defined in the current
+	 * environment.
 	 * 
 	 * @return position in globe coordinates inside the environment
 	 */
@@ -1172,7 +1192,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 			return sampleRandomPosition();
 
 		if (distance < this.getDistance(focusA, focusB)) {
-			System.out.println("Distance between foci larger than bound!!!");
 			throw new IllegalStateException("Distance between foci larger than bound");
 		}
 
@@ -1211,10 +1230,11 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Checks whether the given position is inside the given globe
+	 * Checks whether the given position is inside the given globe.
 	 * 
 	 * @param globe the globe
 	 * @param position the position in global coordinates
+	 * 
 	 * @return true if the position is inside the globe and false otherwise
 	 */
 	public boolean isInsideGlobe(Globe globe, Position position) {
@@ -1224,21 +1244,22 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 	/**
 	 * Checks if a given position is in conflict with untraversable obstacles in the
-	 * environment
+	 * environment.
 	 * 
 	 * @param waypoint the waypoint in global coordinates
 	 * 
 	 * @return boolean value true if there is a conflict
 	 */
-	public boolean checkConflict(Position position) {
+	public boolean checkConflict(Position position, Aircraft aircraft) {
 
+		// Check if position is inside the globe
 		if (this.isInsideGlobe(this.getGlobe(), position))
 			return true;
 
-		// TODO : Implement a checker for conflict between a position and the
-		// static, time independent and untraversable obstacles in the environment
+		// Create box around the position with the sphere of action of the aircraft
+		Box box = this.createBoundingBox(position, aircraft.getRadius());
 
-		Box box = this.createBoundingBox(position);
+		// Check conflict between terrain obstacles and aircraft sphere of action
 		HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
 		for (TerrainObstacle terrain : terrainSet) {
 			// Check if obstacle contains the waypoint
@@ -1251,14 +1272,14 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 	/**
 	 * Checks if a straight leg between the waypoints is in conflict with
-	 * untraversable obstacles in the environment
+	 * untraversable obstacles in the environment.
 	 * 
 	 * @param waypoint1 the first waypoint in global coordinates
 	 * @param waypoint2 the second waypoint in global coordinates
 	 * 
 	 * @return boolean value true if there is a conflict
 	 */
-	public boolean checkConflict(Position position1, Position position2) {
+	public boolean checkConflict(Position position1, Position position2, Aircraft aircraft) {
 		Vec4 point1 = this.getGlobe().computePointFromPosition(position1);
 		Vec4 point2 = this.getGlobe().computePointFromPosition(position2);
 		Vec4 aux;
@@ -1281,7 +1302,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 				y = point1.y + (1 / 2 + k) * dist * Math.cos(theta) * Math.sin(phi);
 				z = point1.z + (1 / 2 + k) * dist * Math.sin(theta);
 				aux = new Vec4(x, y, z);
-				if (this.checkConflict(this.getGlobe().computePositionFromPoint(aux)))
+				if (this.checkConflict(this.getGlobe().computePositionFromPoint(aux), aircraft))
 					return true;
 			}
 			dist = dist / 2;
@@ -1291,7 +1312,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Finds the k-nearest waypoints to the given position
+	 * Finds the k-nearest waypoints to the given position.
 	 * 
 	 * @param position the position in global coordinates
 	 * @param kNear number of waypoints to return
@@ -1307,7 +1328,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Sorts a list of elements by increasing distance to a given position
+	 * Sorts a list of elements by increasing distance to a given position.
 	 * 
 	 * @param position the position in global coordinates
 	 */

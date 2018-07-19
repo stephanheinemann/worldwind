@@ -367,7 +367,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 
 		for (Waypoint neighbor : this.getWaypointList()) {
 			if (this.areConnectable(waypoint, neighbor, numConnectedNeighbor)) {
-				if (!this.getEnvironment().checkConflict(neighbor, waypoint)) {
+				if (!this.getEnvironment().checkConflict(neighbor, waypoint, getAircraft())) {
 					numConnectedNeighbor++;
 					this.createEdge(waypoint, neighbor);
 				}
@@ -436,7 +436,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 		while (num < maxIter) {
 			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 
-			if (!this.getEnvironment().checkConflict(waypoint)) {
+			if (!this.getEnvironment().checkConflict(waypoint, getAircraft())) {
 				this.getWaypointList().add(waypoint);
 				this.connectWaypoint(waypoint);
 				num++;
@@ -455,12 +455,12 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 		Waypoint start = this.createWaypoint(origin);
 		Waypoint goal = this.createWaypoint(destination);
 
-		if (!this.getEnvironment().checkConflict(start)) {
+		if (!this.getEnvironment().checkConflict(start, getAircraft())) {
 			this.getWaypointList().add(start);
 			this.connectWaypoint(start);
 		}
 
-		if (!this.getEnvironment().checkConflict(goal)) {
+		if (!this.getEnvironment().checkConflict(goal, getAircraft())) {
 			this.getWaypointList().add(goal);
 			this.connectWaypoint(goal);
 		}
@@ -478,12 +478,12 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 		Waypoint start = this.createWaypoint(origin);
 		Waypoint goal = this.createWaypoint(destination);
 
-		if (!this.getEnvironment().checkConflict(start)) {
+		if (!this.getEnvironment().checkConflict(start, getAircraft())) {
 			this.getWaypointList().add(start);
 			this.connectWaypoint(start);
 		}
 
-		if (!this.getEnvironment().checkConflict(goal)) {
+		if (!this.getEnvironment().checkConflict(goal, getAircraft())) {
 			this.getWaypointList().add(goal);
 			this.connectWaypoint(goal);
 		}
@@ -491,7 +491,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 		for (Position pos : waypoints) {
 			Waypoint waypoint = this.createWaypoint(pos);
 
-			if (!this.getEnvironment().checkConflict(waypoint)) {
+			if (!this.getEnvironment().checkConflict(waypoint, getAircraft())) {
 				this.getWaypointList().add(waypoint);
 				this.connectWaypoint(waypoint);
 			}
@@ -517,7 +517,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 			}
 			double halfDistance = this.maxDistance / (Math.sqrt(3));
 			Waypoint newWaypoint = this.createWaypoint(this.samplePosition(toExpand, halfDistance));
-			while (this.getEnvironment().checkConflict(newWaypoint)) {
+			while (this.getEnvironment().checkConflict(newWaypoint, getAircraft())) {
 				halfDistance = halfDistance / 2;
 				newWaypoint = this.createWaypoint(this.samplePosition(toExpand, halfDistance));
 			}

@@ -110,13 +110,13 @@ public class SamplingBasedTest {
 		Position position;
 		for(int i=0; i<REPETITIONS; i++) {
 			position = samplingEnv.sampleRandomPosition();
-			while(samplingEnv.checkConflict(position)) {
+			while(samplingEnv.checkConflict(position, iris)) {
 				position = samplingEnv.sampleRandomPosition();
 			}
 			originList.add(position);
 			
 			position = samplingEnv.sampleRandomPosition();
-			while(samplingEnv.checkConflict(position)) {
+			while(samplingEnv.checkConflict(position, iris)) {
 				position = samplingEnv.sampleRandomPosition();
 			}
 			destinationList.add(position);

@@ -463,11 +463,11 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.setWaypointNew(waypointNew);
 
 		// Check if the new waypoint is in conflict with the environment
-		if (this.getEnvironment().checkConflict(waypointNew)) {
+		if (this.getEnvironment().checkConflict(waypointNew, getAircraft())) {
 			success = false;
 		}
 		// Check if the edge between waypoints is in conflict
-		else if (this.getEnvironment().checkConflict(waypointNear, waypointNew)) {
+		else if (this.getEnvironment().checkConflict(waypointNear, waypointNew, getAircraft())) {
 			success = false;
 		}
 

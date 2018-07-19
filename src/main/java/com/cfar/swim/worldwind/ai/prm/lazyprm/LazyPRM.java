@@ -129,7 +129,7 @@ public class LazyPRM extends BasicPRM {
 		HashSet<Edge> conflictEdges = new HashSet<Edge>();
 
 		for (Waypoint waypoint : trajectory.getWaypoints()) {
-			if (this.getEnvironment().checkConflict(waypoint))
+			if (this.getEnvironment().checkConflict(waypoint, getAircraft()))
 				conflictWaypoints.add(waypoint);
 		}
 
@@ -141,7 +141,7 @@ public class LazyPRM extends BasicPRM {
 		Waypoint wpt2;
 		for (int i = 0; i < trajectory.getLength() - 1; i++) {
 			wpt2 = Iterables.get(trajectory.getWaypoints(), i + 1);
-			if (this.getEnvironment().checkConflict(wpt1, wpt2)) {
+			if (this.getEnvironment().checkConflict(wpt1, wpt2, getAircraft())) {
 				conflictEdges.add(new Edge(wpt1, wpt2));
 			}
 			wpt1 = wpt2;
