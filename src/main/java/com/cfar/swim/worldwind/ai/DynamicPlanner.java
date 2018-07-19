@@ -31,7 +31,6 @@ package com.cfar.swim.worldwind.ai;
 
 import java.util.Set;
 
-import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.render.Obstacle;
 
 /**
@@ -43,7 +42,7 @@ import com.cfar.swim.worldwind.render.Obstacle;
  * @author Henrique Ferreira
  * @author Manuel Rosa
  */
-public interface DynamicPlanner {
+public interface DynamicPlanner extends Planner {
 
 	/**
 	 * Gets the set of different obstacles containing the difference between the
@@ -69,22 +68,6 @@ public interface DynamicPlanner {
 	 * and computing the difference between the two.
 	 */
 	public void updateObstacles();
-
-	/**
-	 * Updates the current position of the aircraft in the planner by reading its
-	 * actual position from an external source.
-	 */
-	public void updateAircraftPosition();
-
-	/**
-	 * Finds the edges in the list of edges which are affected by the set of
-	 * obstacles to be considered.
-	 * 
-	 * @param diffObstacles the set of obstacles to consider
-	 * 
-	 * @return the set of edges affected by the obstacles
-	 */
-	public Set<Edge> findAffectedEdges(Set<Obstacle> diffObstacles);
 
 	/**
 	 * Checks whether or not the changes made to the environment are significant to
