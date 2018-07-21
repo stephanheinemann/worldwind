@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.render;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.geom.Frustum;
 import gov.nasa.worldwind.globes.Globe;
 
 /**
@@ -50,4 +51,13 @@ public interface TerrainObstacle extends ThresholdRenderable, Enableable {
 	 * @return the geometric extent of this terrain obstacle
 	 */
 	public Extent getExtent(Globe globe);
+	
+	/**
+	 * Gets the geometric frustum of this terrain obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the geometric frustum of this terrain obstacle
+	 */
+	public Frustum getFrustum(Globe globe);
 }

@@ -53,10 +53,10 @@ import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
-import com.cfar.swim.worldwind.render.airspaces.TerrainCylinder;
 
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Polyline;
@@ -955,29 +955,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * 
 	 * @return true if the obstacle has been embedded, false otherwise
 	 */
-	public boolean embed(TerrainCylinder obstacle) {
-		boolean embedded = false;
-
-		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
-				this.terrainObstacles.add(obstacle);
-
-				embedded = true;
-			}
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return embedded;
-	}
-
-	/**
-	 * Embeds a terrain obstacle into this sampling environment.
-	 * 
-	 * @param obstacle the terrain obstacle to be embedded
-	 * 
-	 * @return true if the obstacle has been embedded, false otherwise
-	 */
 	public boolean embed(TerrainObstacle obstacle) {
 		boolean embedded = false;
 
@@ -1246,7 +1223,8 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * Checks if a given position is in conflict with untraversable obstacles in the
 	 * environment.
 	 * 
-	 * @param waypoint the waypoint in global coordinates
+	 * @param position the position in global coordinates
+	 * @param aircraft the aircraft to be considered
 	 * 
 	 * @return boolean value true if there is a conflict
 	 */
@@ -1255,27 +1233,28 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		// Check if position is inside the globe
 		if (this.isInsideGlobe(this.getGlobe(), position))
 			return true;
-
-		// Create box around the position with the sphere of action of the aircraft
-		Box box = this.createBoundingBox(position, aircraft.getRadius());
+		
+		// Create sphere around the position of the aircraft with its radius of action
+		Sphere sphere = new Sphere(getGlobe().computePointFromPosition(position), aircraft.getRadius());
 
 		// Check conflict between terrain obstacles and aircraft sphere of action
 		HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
 		for (TerrainObstacle terrain : terrainSet) {
 			// Check if obstacle contains the waypoint
-			if (terrain.getExtent(this.getGlobe()).intersects(box.getFrustum())) {
+			if(sphere.intersects(terrain.getFrustum(getGlobe()))) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	/**
-	 * Checks if a straight leg between the waypoints is in conflict with
+	/**@param aircraft the aircraft to be considered
+	 * Checks if a straight leg between the positions is in conflict with
 	 * untraversable obstacles in the environment.
 	 * 
-	 * @param waypoint1 the first waypoint in global coordinates
-	 * @param waypoint2 the second waypoint in global coordinates
+	 * @param position1 the first position in global coordinates
+	 * @param position2 the second waypoint in global coordinates
+	 * @param aircraft the aircraft to be considered
 	 * 
 	 * @return boolean value true if there is a conflict
 	 */

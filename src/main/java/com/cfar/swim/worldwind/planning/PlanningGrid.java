@@ -56,7 +56,6 @@ import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
-import com.cfar.swim.worldwind.render.airspaces.TerrainCylinder;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -684,32 +683,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 
 	// TODO: TERRAIN OBSTACLES functions are not correctly implemented for planning
 	// grid. The code below was copied from sampling environment.
-	/**
-	 * Embeds a terrain obstacle cylinder into this planning grid.
-	 * 
-	 * @param obstacle the terrain obstacle cylinder to be embedded
-	 * 
-	 * @return true if the terrain obstacle cylinder has been embedded, false
-	 *         otherwise
-	 * 
-	 * @see Environment#embed(Obstacle)
-	 */
-	public boolean embed(TerrainCylinder obstacle) {
-		boolean embedded = false;
-
-		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
-				this.terrainObstacles.add(obstacle);
-
-				embedded = true;
-			}
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return embedded;
-	}
-
 	/**
 	 * Embeds a terrain obstacle into this planning grid.
 	 * 

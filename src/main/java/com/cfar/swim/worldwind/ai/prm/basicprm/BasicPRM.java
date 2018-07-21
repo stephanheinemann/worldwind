@@ -495,6 +495,9 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 				this.getWaypointList().add(waypoint);
 				this.connectWaypoint(waypoint);
 			}
+			else {
+				System.out.println("wp invalid");
+			}
 		}
 	}
 
@@ -757,7 +760,7 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination, waypoints);
-			this.postConstruction();
+//			this.postConstruction();
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination, waypoints);
 			this.postConstruction();

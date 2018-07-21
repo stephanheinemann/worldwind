@@ -30,19 +30,23 @@
 package com.cfar.swim.worldwind.render.airspaces;
 
 import java.awt.Color;
+import java.util.Arrays;
 
 import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.util.Depiction;
 
 import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.geom.Frustum;
 import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.render.airspaces.AbstractAirspace;
 import gov.nasa.worldwind.render.airspaces.Box;
+import gov.nasa.worldwind.util.WWMath;
 
 /**
  * Realizes a terrain obstacle box for motion planning.
@@ -199,6 +203,87 @@ public class TerrainBox extends Box implements TerrainObstacle {
 	 */
 	@Override
 	public Extent getExtent(Globe globe) {
-		return super.getExtent(globe, 1d);
+		
+		return this.getBox(globe);
+		// use of super.getExten doesn't rotate boxes
+		// return super.getExtent(globe, 1d);
+	}
+	
+	/**
+	 * Gets the geometric frustum of this terrain obstacle box for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the geometric frustum of this obstacle box
+	 * 
+	 * @see com.cfar.swim.worldwind.geom.Box#getFrustum()
+	 */
+	@Override
+	public Frustum getFrustum(Globe globe) {
+		return (new com.cfar.swim.worldwind.geom.Box(this.getBox(globe))).getFrustum();
+	}
+
+	/**
+	 * Gets the geometric box of this terrain obstacle box for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the geometric box of this obstacle box
+	 */
+	public gov.nasa.worldwind.geom.Box getBox(Globe globe) {
+
+		Vec4[] vertices = Box.computeStandardVertices(globe, 1d, this);
+
+		Iterable<Vec4> verticesIterable = Arrays.asList(vertices);
+		Vec4[] axes = WWMath.computePrincipalAxes(verticesIterable);
+		
+		// Compute r, s, t and min, max
+		Vec4 r = axes[0];
+		Vec4 s = axes[1];
+		Vec4 t = axes[2];
+
+		// Find the extremes along each axis.
+		double minDotR = Double.MAX_VALUE;
+		double maxDotR = -minDotR;
+		double minDotS = Double.MAX_VALUE;
+		double maxDotS = -minDotS;
+		double minDotT = Double.MAX_VALUE;
+		double maxDotT = -minDotT;
+
+		verticesIterable = Arrays.asList(vertices);
+		for (Vec4 p : verticesIterable) {
+			if (p == null)
+				continue;
+
+			double pdr = p.dot3(r);
+			if (pdr < minDotR)
+				minDotR = pdr;
+			if (pdr > maxDotR)
+				maxDotR = pdr;
+
+			double pds = p.dot3(s);
+			if (pds < minDotS)
+				minDotS = pds;
+			if (pds > maxDotS)
+				maxDotS = pds;
+
+			double pdt = p.dot3(t);
+			if (pdt < minDotT)
+				minDotT = pdt;
+			if (pdt > maxDotT)
+				maxDotT = pdt;
+		}
+
+		if (maxDotR == minDotR)
+			maxDotR = minDotR + 1;
+		if (maxDotS == minDotS)
+			maxDotS = minDotS + 1;
+		if (maxDotT == minDotT)
+			maxDotT = minDotT + 1;
+
+		gov.nasa.worldwind.geom.Box geomBox = new gov.nasa.worldwind.geom.Box(axes, minDotR, maxDotR, minDotS, maxDotS,
+				minDotT, maxDotT);
+
+		return geomBox;
 	}
 }
