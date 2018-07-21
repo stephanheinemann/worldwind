@@ -107,7 +107,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	public RRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		EPSILON = this.getEnvironment().getDiameter()/20;
+		EPSILON = this.getEnvironment().getDiameter() / 20;
 		BIAS = 5;
 		MAX_ITER = 3_000;
 	}
@@ -293,7 +293,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	public LinkedList<Waypoint> getPlan() {
 		return plan;
 	}
-	
+
 	/**
 	 * Sets the plan produced by this planner
 	 *
@@ -311,7 +311,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.getWaypointList().clear();
 		this.getEdgeList().clear();
 	}
-	
+
 	/**
 	 * Creates an RRT waypoint at a specified position.
 	 * 
@@ -332,7 +332,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected Trajectory createTrajectory() {
 		return new Trajectory((List<Waypoint>) this.plan.clone());
 	}
-	
+
 	/**
 	 * Creates a trajectory from a particular plan.
 	 * 
@@ -406,7 +406,7 @@ public class RRTreePlanner extends AbstractPlanner {
 
 		// Finds the node in the tree closest to the sampled position
 		waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypoint, 1).get(0);
-//		waypointNear = (RRTreeWaypoint) this.findNearestMetric(waypoint, 1).get(0);
+		// waypointNear = (RRTreeWaypoint) this.findNearestMetric(waypoint, 1).get(0);
 		// Create a new node by extension from near to sampled
 		success = this.newWaypoint(waypoint, waypointNear);
 
@@ -518,18 +518,18 @@ public class RRTreePlanner extends AbstractPlanner {
 		Aircraft acft = this.getAircraft();
 		Globe globe = this.getEnvironment().getGlobe();
 
-		// Transform position to ENU coordinates 
+		// Transform position to ENU coordinates
 		Vec4 pointENU = CoordinateTransformations.llh2enu(positionNear, position, globe);
 
 		// Calculate azimuth and elevation
 		double e = pointENU.x, n = pointENU.y, u = pointENU.z;
 		Angle azi = Angle.fromRadians(Math.atan2(e, n));
-		Angle ele = Angle.fromRadians(Math.atan2(u, Math.sqrt(n*n + e*e)));
+		Angle ele = Angle.fromRadians(Math.atan2(u, Math.sqrt(n * n + e * e)));
 
 		// Get angles defining feasibility region
-		Angle maxEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfClimb()/
+		Angle maxEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfClimb() /
 				acft.getCapabilities().getMaximumRateOfClimbSpeed())).multiply(1);
-		Angle minEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfDescent()/
+		Angle minEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfDescent() /
 				acft.getCapabilities().getMaximumRateOfDescentSpeed())).multiply(-1);
 
 		double distance = this.getEnvironment().getDistance(positionNear, position);
@@ -653,8 +653,8 @@ public class RRTreePlanner extends AbstractPlanner {
 		return this.checkGoal(getWaypointNew());
 	}
 
-	protected boolean checkGoal(RRTreeWaypoint waypoint) {
-		return this.getEnvironment().getDistance(waypoint, this.getGoal()) < GOAL_THRESHOLD;
+	protected boolean checkGoal(Position position) {
+		return this.getEnvironment().getDistance(position, this.getGoal()) < GOAL_THRESHOLD;
 	}
 
 	/**
@@ -752,18 +752,18 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
-		Position positionActual = this.reviseAircraftPosition();
-		while(this.getEnvironment().getDistance(positionActual, destination)>5) {
-			positionActual = this.reviseAircraftPosition();
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			System.out.println("Position Actual: "+positionActual);
-		}
-		
+		// Position positionActual = this.reviseAircraftPosition();
+		// while (this.getEnvironment().getDistance(positionActual, destination) > 5) {
+		// positionActual = this.reviseAircraftPosition();
+		// try {
+		// Thread.sleep(1000);
+		// } catch (InterruptedException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+		// System.out.println("Position Actual: " + positionActual);
+		// }
+
 		return trajectory;
 	}
 
@@ -822,19 +822,19 @@ public class RRTreePlanner extends AbstractPlanner {
 		}
 		Trajectory trajectory = this.createTrajectory(plan);
 		this.revisePlan(trajectory);
-		
-//		Position positionActual = this.reviseAircraftPosition();
-//		while(this.getEnvironment().getDistance(positionActual, destination)>5) {
-//			positionActual = this.reviseAircraftPosition();
-//			try {
-//				Thread.sleep(1000);
-//			} catch (InterruptedException e) {
-//				// TODO Auto-generated catch block
-//				e.printStackTrace();
-//			}
-//			System.out.println("Position Actual: "+positionActual);
-//		}
-		
+
+		// Position positionActual = this.reviseAircraftPosition();
+		// while(this.getEnvironment().getDistance(positionActual, destination)>5) {
+		// positionActual = this.reviseAircraftPosition();
+		// try {
+		// Thread.sleep(1000);
+		// } catch (InterruptedException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+		// System.out.println("Position Actual: "+positionActual);
+		// }
+
 		return trajectory;
 	}
 
@@ -857,9 +857,10 @@ public class RRTreePlanner extends AbstractPlanner {
 
 		return supports;
 	}
-	
+
 	/**
-	 * Finds the k-nearest waypoints to the given position
+	 * Finds the k-nearest waypoints to the given position considering a particular
+	 * metric.
 	 * 
 	 * @param position the position in global coordinates
 	 * @param kNear number of waypoints to return
@@ -867,24 +868,28 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
 	public List<? extends Position> findNearestMetric(Position position, int kNear) {
-		
+
 		return this.getWaypointList().stream().sorted((p1, p2) -> Double
 				.compare(this.getDistanceMetric(p1, position), this.getDistanceMetric(p2, position)))
 				.limit(kNear).collect(Collectors.toList());
 	}
-	
+
 	/**
+	 * Gets the distance between two positions with a particular metric. It
+	 * considers the aircraft define for this planner and its capabilities to
+	 * evaluate the possibility/cost of movement in each direction.
 	 * 
-	 * @param reference
-	 * @param position
-	 * @return
+	 * @param reference the reference position where the aircraft is
+	 * @param position the position to be considered as next for the aircraft
+	 * 
+	 * @return the weighted distance between the two positions
 	 */
 	public double getDistanceMetric(Position reference, Position position) {
 		Aircraft acft = this.getAircraft();
-		
+
 		Vec4 pointENU = CoordinateTransformations.llh2enu(reference, position, this.getEnvironment().getGlobe());
 		double x = pointENU.x, y = pointENU.y, z = pointENU.z;
-		
+
 		// Get angles defining feasibility region
 		Angle angle;
 		if (z > 0)
@@ -893,10 +898,10 @@ public class RRTreePlanner extends AbstractPlanner {
 		else
 			angle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfDescent() /
 					acft.getCapabilities().getMaximumRateOfDescentSpeed())).multiply(-1);
-		
-		double a = angle.sin(), b = a, c=1;
-		
-		return Math.sqrt(a*x*x + b*y*y + c*z*z);
+
+		double a = angle.sin(), b = a, c = 1;
+
+		return Math.sqrt(a * x * x + b * y * y + c * z * z);
 	}
 
 }

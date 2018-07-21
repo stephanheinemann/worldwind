@@ -37,6 +37,7 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AnytimePlanner;
+import com.cfar.swim.worldwind.ai.OnlinePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -55,7 +56,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Manuel Rosa
  *
  */
-public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
+public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, OnlinePlanner {
 
 	// TODO: How to define this values?
 	private static final int MAX_SAMPLE_ATTEMPTS = 50;
@@ -494,21 +495,34 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		Trajectory trajectory = new Trajectory();
 		boolean newPlan;
 		double costOld = Double.POSITIVE_INFINITY;
-		while (!this.isImproved(costOld)) {
-			this.clearExpendables();
-			this.addVertex(getStart());
-			this.setWaypointNew(getStart());
+		do {
+			while (!this.isImproved(costOld)) {
+				this.clearExpendables();
+				this.addVertex(getStart());
+				this.setWaypointNew(getStart());
 
-			costOld = this.getGoal().getCost();
-			newPlan = this.compute();
+				costOld = this.getGoal().getCost();
+				newPlan = this.compute();
 
-			this.updateWeights();
-			if (newPlan) {
-				this.updateCostBound();
-				trajectory = this.createTrajectory();
-				this.revisePlan(trajectory);
+				this.updateWeights();
+				if (newPlan) {
+					this.updateCostBound();
+					trajectory = this.createTrajectory();
+					this.revisePlan(trajectory);
+				}
 			}
-		}
+			if(isOnline()) {
+				this.setCostBias(this.getMinimumQuality());
+				this.setDistBias(1 - this.getCostBias());
+				this.setCostBound(Double.POSITIVE_INFINITY);
+				
+				this.setStart(this.createWaypoint(origin));
+//				this.getStart().setEto(this.getCu);
+				this.getStart().setG(0d);
+				this.getStart().setH(this.computeHeuristic(getStart(), getGoal()));
+			}
+			
+		} while (isOnline() && !isInsideGoalRegion());
 		System.out.println("Improved");
 
 		return trajectory;
@@ -633,5 +647,74 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		return trajectory;
 
 	}
+	
+	// Online Planner
+	
+	/** the state of the online capabilities of the planner mode (active or not) */
+	private final boolean online = false;
+	
+	/** the current position of the aircraft */
+	private Position aircraftPosition;
+
+	/**
+	 * Checks if the online capabilities of the planner mode are active or not.
+	 * 
+	 * @return true if the planner mode is set to online, false otherwise
+	 */
+	public boolean isOnline() {
+		return online;
+	}
+	
+	/**
+	 * Gets the current position of the aircraft.
+	 * 
+	 * @return the current position of the aircraft
+	 */
+	public Position getAircraftPosition() {
+		return aircraftPosition;
+	}
+	
+	/**
+	 * Sets the current position of the aircraft.
+	 * 
+	 * @param aircraftPosition the current position of the aircraft
+	 */
+	public void setAircraftPosition(Position aircraftPosition) {
+		this.aircraftPosition = aircraftPosition;
+	}
+
+	/**
+	 * Check if the distance between the two positions is significant to consider
+	 * the current position as a different one.
+	 * 
+	 * @param previous the previous position to consider
+	 * @param current the current position to consider
+	 * 
+	 * @return true if the movement between the two positions is significant, false
+	 *         otherwise
+	 */
+	public boolean isSignificantMovement(Position previous, Position current) {
+		// TODO: Define region threshold value
+		return this.getEnvironment().getDistance(previous, current) > 2d;
+	}
+	
+	/**
+	 * Checks if the current position of the aircraft is inside the goal region.
+	 * 
+	 * @return true if aircraft is inside the goal region, false otherwise
+	 */
+	public boolean isInsideGoalRegion() {
+		return this.checkGoal(getAircraftPosition());
+	}
+	
+	/**
+	 * Updates the current position of the aircraft in the planner by reading its
+	 * actual position from an external source.
+	 */
+	public void updateAircraftPosition() {
+		this.setAircraftPosition(reviseAircraftPosition());
+	}
+	
+	
 
 }

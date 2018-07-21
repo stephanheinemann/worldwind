@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.ai;
 
+import gov.nasa.worldwind.geom.Position;
+
 /**
  * Describes a planner with online capabilities, meaning it can interleave the
  * planning and execution steps. The online planner continuously revises the
@@ -54,6 +56,20 @@ public interface OnlinePlanner extends Planner {
 	 * @return true if aircraft is inside the goal region, false otherwise
 	 */
 	public boolean isInsideGoalRegion();
+	
+	/**
+	 * Gets the current position of the aircraft.
+	 * 
+	 * @return the current position of the aircraft
+	 */
+	public Position getAircraftPosition();
+	
+	/**
+	 * Sets the current position of the aircraft.
+	 * 
+	 * @param aircraftPosition the current position of the aircraft
+	 */
+	public void setAircraftPosition(Position aircraftPosition);
 	
 	/**
 	 * Updates the current position of the aircraft in the planner by reading its

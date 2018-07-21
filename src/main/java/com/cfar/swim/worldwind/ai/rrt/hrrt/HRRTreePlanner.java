@@ -52,7 +52,7 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class HRRTreePlanner extends RRTreePlanner {
 
-	/** defines which formula to use for quality calculation*/
+	/** defines which formula to use for quality calculation */
 	public boolean myQuality = true;
 
 	/** floor value to ensure the search is not overly biased against exploration */
