@@ -47,6 +47,9 @@ public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 
 	/** the category of parameters that are anytime related */
 	protected final static String CATEGORY_ANYTIME = "Anytime Parameters";
+	
+	/** the category of parameters that are online related */
+	protected final static String CATEGORY_ONLINE = "Online Parameters";
 
 	/**
 	 * Customizes the property descriptors for each parameter of an anytime RRTree
@@ -72,8 +75,20 @@ public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 					"Improvement Factor",
 					"the quality improvement value",
 					CATEGORY_ANYTIME);
+			PropertyDescriptor online = this.createProperty(beanClass, "online",
+					"Online Planning",
+					"the starting position of the plan is updated as the aircraft moves until it reaches the goal",
+					CATEGORY_ONLINE);
+			PropertyDescriptor updateStep = this.createProperty(beanClass, "updateStep",
+					"Time Step (s)",
+					"the time step to update the current position of the aircraft",
+					CATEGORY_ONLINE);
+			PropertyDescriptor positionThreshold = this.createProperty(beanClass, "positionThreshold",
+					"Position Threshold (m)",
+					"the distance threshold to consider a position displacement as worthy of a new plan",
+					CATEGORY_ONLINE);
 
-			PropertyDescriptor rvNew[] = {minimumQuality, maximumQuality, qualityImprovement};
+			PropertyDescriptor rvNew[] = {minimumQuality, maximumQuality, qualityImprovement, online, updateStep, positionThreshold};
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 

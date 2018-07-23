@@ -95,6 +95,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 */
 	public ARRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+		this.online = false;
+		this.positionThreshold = 2d;
+		this.updateStep = 5d;
 	}
 
 	/**
@@ -109,8 +112,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 * 
 	 * @see RRTreePlanner#RRTreePlanner(Aircraft, Environment, double, int, int)
 	 */
-	public ARRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter) {
+	public ARRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
+			boolean online, double positionThreshold, double updateStep) {
 		super(aircraft, environment, epsilon, bias, maxIter);
+		this.online = online;
+		this.positionThreshold = positionThreshold;
+		this.updateStep = updateStep;
 	}
 
 	/**
@@ -639,6 +646,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 			} else {
 				// System.out.println("No new plan\n\n");
 			}
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 
 		System.out.println("Improved...");
@@ -651,7 +664,13 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	// Online Planner
 	
 	/** the state of the online capabilities of the planner mode (active or not) */
-	private final boolean online = false;
+	private final boolean online;
+	
+	/** the time step to update the current position of the aircraft */
+	private final double updateStep;
+	
+	/** the distance threshold to consider a position displacement as worthy of a new plan */
+	private final double positionThreshold; 
 	
 	/** the current position of the aircraft */
 	private Position aircraftPosition;
@@ -665,6 +684,24 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 		return online;
 	}
 	
+	/**
+	 * Gets the  time step to update the current position of the aircraft.
+	 * 
+	 * @return the time step to update the current position
+	 */
+	public double getUpdateStep() {
+		return updateStep;
+	}
+
+	/**
+	 * Gets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * 
+	 * @return the distance threshold for each position
+	 */
+	public double getPositionThreshold() {
+		return positionThreshold;
+	}
+
 	/**
 	 * Gets the current position of the aircraft.
 	 * 

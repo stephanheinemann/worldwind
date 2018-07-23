@@ -42,7 +42,7 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 public class RRTreeProperties extends AbstractPlannerProperties {
 
 	/** the description of this planner properties bean */
-	private final static String DESCRIPTION_RRT = "Rapidly-exploring Random Tree: Basic version of an RRT which grows a tree from a start to a goal positions by continuously sampling random points from the environment. It does not take the cost of each position into account.";
+	private final static String DESCRIPTION_RRT = "Rapidly-exploring Random Tree: Basic version of a RRT which grows a tree from a start to a goal positions by continuously sampling random points from the environment. It does not take the cost of each position into account and ignores traversable obstacles.";
 
 	/** the maximum number of sampling iterations */
 	private int maxIter = 3_000;
@@ -51,7 +51,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	private Strategy strategy = Strategy.EXTEND;
 
 	/** the maximum distance to extend a waypoint in the tree */
-	private double epsilon = 250d;
+	private double epsilon = 25d;
 
 	/** the bias of the sampling algorithm towards goal */
 	private int bias = 5;
@@ -75,6 +75,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 */
 	public RRTreeProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
+		this.setDescription(DESCRIPTION_RRT);
 	}
 
 	/**
@@ -98,6 +99,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 		this.setMaxIter(maxIter);
 		this.setEpsilon(epsilon);
 		this.setBias(bias);
+		this.setDescription(DESCRIPTION_RRT);
 	}
 
 	/**

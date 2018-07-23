@@ -36,5 +36,15 @@ package com.cfar.swim.worldwind.registries.planners;
  *
  */
 public class ADRRTreeProperties extends ARRTreeProperties {
+	
+	/** the description of this planner properties bean */
+	private final static String DESCRIPTION_ADRRT = "Anytime Dynamic RRT: Anytime Dynamic version of a RRT which combines both characteristics of anytime and dynamic versions.";
 
+	/**
+	 * Constructs a new anytime dynamic RRTree planner properties bean.
+	 */
+	public ADRRTreeProperties() {
+		super();
+		this.setDescription(DESCRIPTION_ADRRT);
+	}
 }

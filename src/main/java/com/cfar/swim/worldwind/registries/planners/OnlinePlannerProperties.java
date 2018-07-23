@@ -49,6 +49,34 @@ public interface OnlinePlannerProperties extends PlannerProperties {
 	 * 
 	 * @param online the state of the online capabilities
 	 */
-	public void isOnline(boolean online);
+	public void setOnline(boolean online);
+	
+	/**
+	 * Gets the  time step to update the current position of the aircraft.
+	 * 
+	 * @return the time step to update the current position
+	 */
+	public double getUpdateStep();
+
+	/**
+	 * Sets the time step to update the current position of the aircraft.
+	 * 
+	 * @param updateStep the time step to update the current position
+	 */
+	public void setUpdateStep(double updateStep);
+
+	/**
+	 * Gets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * 
+	 * @return the distance threshold for each position
+	 */
+	public double getPositionThreshold();
+
+	/**
+	 * Sets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * 
+	 * @param positionThreshold the distance threshold for each position
+	 */
+	public void setPositionThreshold(double positionThreshold);
 
 }

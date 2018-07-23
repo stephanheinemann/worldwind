@@ -42,13 +42,13 @@ import com.cfar.swim.worldwind.registries.Properties;
 public abstract class AbstractPlannerProperties implements PlannerProperties {
 
 	/** the cost policy of this planner properties bean */
-	CostPolicy costPolicy;
+	private CostPolicy costPolicy = CostPolicy.AVERAGE;
 	
 	/** the risk policy of this planner properties bean */
-	RiskPolicy riskPolicy;
+	private RiskPolicy riskPolicy = RiskPolicy.SAFETY;
 	
 	/**	the description of this planner properties bean */
-	String description = "Description not yet available.";
+	private String description = "Description not yet available.";
 	
 	/**
 	 * Constructs a new planner properties bean using default cost and risk

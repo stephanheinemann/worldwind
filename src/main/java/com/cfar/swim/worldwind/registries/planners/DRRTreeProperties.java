@@ -36,5 +36,15 @@ package com.cfar.swim.worldwind.registries.planners;
  *
  */
 public class DRRTreeProperties extends RRTreeProperties {
+	
+	/** the description of this planner properties bean */
+	private final static String DESCRIPTION_DRRT = "Dynamic RRT: Dynamic version of a RRT which takes into account changes occured in the environment after the first plan was computed and recommputed new plans.";
 
+	/**
+	 * Constructs a new dynamic RRTree planner properties bean.
+	 */
+	public DRRTreeProperties() {
+		super();
+		this.setDescription(DESCRIPTION_DRRT);
+	}
 }

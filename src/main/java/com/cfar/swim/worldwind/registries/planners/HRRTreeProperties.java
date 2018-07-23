@@ -39,6 +39,9 @@ import com.cfar.swim.worldwind.ai.rrt.hrrt.Heuristic;
  */
 public class HRRTreeProperties extends RRTreeProperties {
 	
+	/** the description of this planner properties bean */
+	private final static String DESCRIPTION_HRRT = "Heuristic RRT: Heuristic version of a RRT which takes into account the cost of a given position when selecting the next position to expand. It considers the costs associated with traversable obstacles.";
+	
 	/** floor value to ensure the search is not overly biased against exploration */
 	private double probFloor = 0.9;
 	
@@ -53,6 +56,7 @@ public class HRRTreeProperties extends RRTreeProperties {
 	 */
 	public HRRTreeProperties() {
 		super();
+		this.setDescription(DESCRIPTION_HRRT);
 	}
 
 	/**

@@ -160,8 +160,9 @@ public class PlannerFactory implements Factory<Planner> {
 			((HRRTreePlanner) planner).setHeuristic(properties.getHeuristic());
 		} else if (specification.getId().equals(Specification.PLANNER_ARRT_ID)) {
 			ARRTreeProperties properties = (ARRTreeProperties) specification.getProperties();
-			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter());
+			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
+					properties.getEpsilon(), properties.getBias(), properties.getMaxIter(),
+					properties.isOnline(), properties.getPositionThreshold(), properties.getUpdateStep());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((ARRTreePlanner) planner).setStrategy(properties.getStrategy());

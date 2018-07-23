@@ -49,6 +49,20 @@ public interface OnlinePlanner extends Planner {
 	 * @return true if the planner mode is set to online, false otherwise
 	 */
 	public boolean isOnline();
+	
+	/**
+	 * Gets the  time step to update the current position of the aircraft.
+	 * 
+	 * @return the time step to update the current position
+	 */
+	public double getUpdateStep();
+
+	/**
+	 * Gets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * 
+	 * @return the distance threshold for each position
+	 */
+	public double getPositionThreshold();
 
 	/**
 	 * Checks if the current position of the aircraft is inside the goal region.

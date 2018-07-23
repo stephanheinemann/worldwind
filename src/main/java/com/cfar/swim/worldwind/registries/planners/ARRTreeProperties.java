@@ -34,10 +34,15 @@ import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 
 /**
+ * Realizes the properties bean of an anytime RRTree planner.
+ * 
  * @author Manuel Rosa
  *
  */
-public class ARRTreeProperties extends RRTreeProperties implements AnytimePlannerProperties {
+public class ARRTreeProperties extends RRTreeProperties implements AnytimePlannerProperties, OnlinePlannerProperties {
+	
+	/** the description of this planner properties bean */
+	private final static String DESCRIPTION_ARRT = "Anytime RRT: Anytime version of a RRT which computes plans with increasing quality as time allows until a ceratin improvement is reached.";
 	
 	/** the initial relative weight of costs to calculate the cost of a waypoint */
 	private double initialCostBias = 0d;
@@ -47,12 +52,13 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 
 	/** the improvement factor for the cost of each new generated solution */
 	private double improvementFactor = 0.05;
-	
+
 	/**
 	 * Constructs a new anytime RRTree planner properties bean.
 	 */
 	public ARRTreeProperties() {
 		super();
+		this.setDescription(DESCRIPTION_ARRT);
 	}
 	
 	/**
@@ -69,6 +75,7 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 	public ARRTreeProperties( CostPolicy costPolicy, RiskPolicy riskPolicy,
 			Strategy strategy, int maxIter, double epsilon, int bias) {
 		super(costPolicy, riskPolicy, strategy, maxIter, epsilon, bias);
+		this.setDescription(DESCRIPTION_ARRT);
 	}
 
 	/**
@@ -145,5 +152,69 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 	@Override
 	public void setQualityImprovement(double improvementFactor) {
 		this.improvementFactor = improvementFactor;
+	}
+	
+	
+	/** the state of the online capabilities of the planner */
+	private boolean online = false;
+	
+	/** the time step to update the current position of the aircraft */
+	private double updateStep = 5d;
+	
+	/** the distance threshold to consider a position displacement as worthy of a new plan */
+	private double positionThreshold = 2d; 
+	
+	/**
+	 * Checks if the online capabilities of the planner mode are active or not.
+	 * 
+	 * @return true if the planner mode is set to online, false otherwise
+	 */
+	public boolean isOnline() {
+		return online;
+	}
+	
+	/**
+	 * Sets the online capabilities of the planner as are active or not.
+	 * 
+	 * @param online the state of the online capabilities
+	 */
+	public void setOnline(boolean online) {
+		this.online = online;
+	}
+	
+	/**
+	 * Gets the  time step to update the current position of the aircraft.
+	 * 
+	 * @return the time step to update the current position
+	 */
+	public double getUpdateStep() {
+		return updateStep;
+	}
+
+	/**
+	 * Sets the time step to update the current position of the aircraft.
+	 * 
+	 * @param updateStep the time step to update the current position
+	 */
+	public void setUpdateStep(double updateStep) {
+		this.updateStep = updateStep;
+	}
+
+	/**
+	 * Gets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * 
+	 * @return the distance threshold for each position
+	 */
+	public double getPositionThreshold() {
+		return positionThreshold;
+	}
+
+	/**
+	 * Sets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * 
+	 * @param positionThreshold the distance threshold for each position
+	 */
+	public void setPositionThreshold(double positionThreshold) {
+		this.positionThreshold = positionThreshold;
 	}
 }
