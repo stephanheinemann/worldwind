@@ -156,7 +156,7 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 	
 	
 	/** the state of the online capabilities of the planner */
-	private boolean online = false;
+	private boolean online = true;
 	
 	/** the time step to update the current position of the aircraft */
 	private double updateStep = 5d;

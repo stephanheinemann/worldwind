@@ -503,33 +503,62 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 		boolean newPlan;
 		double costOld = Double.POSITIVE_INFINITY;
 		do {
-			while (!this.isImproved(costOld)) {
-				this.clearExpendables();
-				this.addVertex(getStart());
-				this.setWaypointNew(getStart());
+				// Anytime
+				if(!this.isImproved(costOld)) {
+					System.out.println("Anytime planning!!!");
+					this.clearExpendables();
+					this.addVertex(getStart());
+					this.setWaypointNew(getStart());
 
-				costOld = this.getGoal().getCost();
-				newPlan = this.compute();
+					costOld = this.getGoal().getCost();
+					newPlan = this.compute();
 
-				this.updateWeights();
-				if (newPlan) {
-					this.updateCostBound();
-					trajectory = this.createTrajectory();
-					this.revisePlan(trajectory);
+					this.updateWeights();
+					if (newPlan) {
+						this.updateCostBound();
+						trajectory = this.createTrajectory();
+						this.revisePlan(trajectory);
+					}
 				}
-			}
-			if(isOnline()) {
-				this.setCostBias(this.getMinimumQuality());
-				this.setDistBias(1 - this.getCostBias());
-				this.setCostBound(Double.POSITIVE_INFINITY);
-				
-				this.setStart(this.createWaypoint(origin));
-//				this.getStart().setEto(this.getCu);
-				this.getStart().setG(0d);
-				this.getStart().setH(this.computeHeuristic(getStart(), getGoal()));
-			}
+				// Online
+				if (isOnline()) {
+					System.out.println("Online planning!!!");
+					this.updateAircraftTimedPosition();
+					System.out.println("Position updated!!");
+					
+					// Check if the aircraft moved significantly
+					if (isSignificantMovement(getStart(), getAircraftTimedPosition())) {
+						System.out.println("The aircraft moved significantly from previous start!!!");
+						RRTreeWaypoint waypoint = this.findClosestWaypoint(getAircraftTimedPosition(), this.getPlan());
+						System.out.println("Real:  "+getAircraftTimedPosition()+"\t"+getAircraftTimedPosition().getAto());
+						System.out.println("Close: "+waypoint+"\t"+waypoint.getEto());
+						
+						// Check if the displacement is worthy of a new plan or just an improvement
+						// TODO use interpolated position from edge instead of extreme waypoint
+						if(isSignificantMovement(waypoint, getAircraftTimedPosition())) {
+							System.out.println("The aircraft is too far from the closest waypoint for small adjust!!!");
+							this.initialize(getAircraftTimedPosition(), destination, getAircraftTimedPosition().getAto());
+							
+							this.setCostBias(this.getMinimumQuality());
+							this.setDistBias(1 - this.getCostBias());
+							this.setCostBound(Double.POSITIVE_INFINITY);
+							costOld = Double.POSITIVE_INFINITY;
+						}
+						else {
+							System.out.println("The plan is still good, I got this!");
+							waypoint.setG(0d);
+//							waypoint.setParent(null);
+							this.setStart(waypoint);
+							this.getStart().setH(this.computeHeuristic(getStart(), getGoal()));
+						}
+						
+					}
+					else {
+						System.out.println("I think the aircraft is stopped... Am I right?");
+					}
+				}
 			
-		} while (isOnline() && !isInsideGoalRegion());
+		} while (!this.isImproved(costOld) || (isOnline() && !isInsideGoalRegion()));
 		System.out.println("Improved");
 
 		return trajectory;
@@ -635,22 +664,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 
 			// update weights to be used in next iteration
 			this.updateWeights();
-			// System.out.println(distBias + " Updated weights " + costBias);
 
 			// if the plan was modified
 			if (newPlan) {
-				// System.out.println("New plan\n\n");
 				// create trajectory from plan
 				trajectory = this.createTrajectory(plan);
 				this.revisePlan(trajectory);
-			} else {
-				// System.out.println("No new plan\n\n");
-			}
-			try {
-				Thread.sleep(3000);
-			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 
@@ -673,7 +692,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	private final double positionThreshold; 
 	
 	/** the current position of the aircraft */
-	private Position aircraftPosition;
+	private Waypoint aircraftTimedPosition;
 
 	/**
 	 * Checks if the online capabilities of the planner mode are active or not.
@@ -707,8 +726,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 * 
 	 * @return the current position of the aircraft
 	 */
-	public Position getAircraftPosition() {
-		return aircraftPosition;
+	public Waypoint getAircraftTimedPosition() {
+		return aircraftTimedPosition;
 	}
 	
 	/**
@@ -716,8 +735,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 * 
 	 * @param aircraftPosition the current position of the aircraft
 	 */
-	public void setAircraftPosition(Position aircraftPosition) {
-		this.aircraftPosition = aircraftPosition;
+	public void setAircraftTimedPosition(Waypoint aircraftTimedPosition) {
+		this.aircraftTimedPosition = aircraftTimedPosition;
 	}
 
 	/**
@@ -731,8 +750,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 *         otherwise
 	 */
 	public boolean isSignificantMovement(Position previous, Position current) {
-		// TODO: Define region threshold value
-		return this.getEnvironment().getDistance(previous, current) > 2d;
+		return this.getEnvironment().getDistance(previous, current) > this.getPositionThreshold();
 	}
 	
 	/**
@@ -741,17 +759,33 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 * @return true if aircraft is inside the goal region, false otherwise
 	 */
 	public boolean isInsideGoalRegion() {
-		return this.checkGoal(getAircraftPosition());
+		return this.checkGoal(getAircraftTimedPosition());
 	}
 	
 	/**
 	 * Updates the current position of the aircraft in the planner by reading its
 	 * actual position from an external source.
 	 */
-	public void updateAircraftPosition() {
-		this.setAircraftPosition(reviseAircraftPosition());
+	public void updateAircraftTimedPosition() {
+		this.setAircraftTimedPosition(reviseAircraftTimedPosition());
 	}
 	
-	
+	/**
+	 * Finds the closest waypoint to a reference position from a list of waypoints.
+	 * 
+	 * @param position the reference position
+	 * @param waypointList the waypoint list to be checked
+	 * 
+	 * @return the waypoint from the list closest to the position 
+	 */
+	public RRTreeWaypoint findClosestWaypoint(Waypoint waypoint, List<Waypoint> waypointList) {
+		RRTreeWaypoint closest = null;
+		for (Waypoint wpt: waypointList) {
+			closest = (RRTreeWaypoint) wpt;
+			if(wpt.getEto().compareTo(waypoint.getAto())==1)
+				break;
+		}
+		return closest;
+	}
 
 }

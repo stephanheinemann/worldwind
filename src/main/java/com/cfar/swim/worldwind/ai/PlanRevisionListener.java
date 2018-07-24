@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.ai;
 import java.util.EventListener;
 
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -62,6 +63,13 @@ public interface PlanRevisionListener extends EventListener {
 	 * @return the current position of the aircraft
 	 */
 	public Position reviseAircraftPosition();
+	
+	/**
+	 * Notifies this plan revision listener about the current aircraft position and the actual time over.
+	 * 
+	 * @return the waypoint with the position of the aircraft and the current time
+	 */
+	public Waypoint reviseAircraftTimedPosition();
 
 	/**
 	 * Notifies this plan revision listenet about a new plan ready to be uploaded to

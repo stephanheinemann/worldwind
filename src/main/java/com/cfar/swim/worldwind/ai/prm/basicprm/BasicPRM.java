@@ -589,6 +589,15 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 				}
 				return position;
 			}
+			
+			@Override
+			public Waypoint reviseAircraftTimedPosition() {
+				Waypoint waypoint = null;
+				for (PlanRevisionListener listener : planRevisionListeners) {
+					waypoint = listener.reviseAircraftTimedPosition();
+				}
+				return waypoint;
+			}
 
 			@Override
 			public boolean reviseDatalinkPlan() {

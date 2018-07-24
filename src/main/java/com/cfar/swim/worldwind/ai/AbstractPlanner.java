@@ -37,6 +37,7 @@ import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -218,6 +219,18 @@ public abstract class AbstractPlanner implements Planner {
 			position = listener.reviseAircraftPosition();
 		}
 		return position;
+	}
+	
+	/**
+	 * Revises a plan notifying the plan revision listeners of this abstract
+	 * planner.
+	 */
+	protected Waypoint reviseAircraftTimedPosition() {
+		Waypoint waypoint = null;
+		for (PlanRevisionListener listener : this.planRevisionListeners) {
+			waypoint = listener.reviseAircraftTimedPosition();
+		}
+		return waypoint;
 	}
 	
 	/**

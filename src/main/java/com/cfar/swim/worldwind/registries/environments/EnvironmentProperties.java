@@ -51,8 +51,8 @@ public abstract class EnvironmentProperties implements Properties<Environment> {
 	 * ceiling property values.
 	 */
 	protected EnvironmentProperties() {
-		this.floor = 90d;
-		this.ceiling = 120d;
+		this.floor = 95d;
+		this.ceiling = 109d;
 	}
 	
 	/**

@@ -29,7 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai;
 
-import gov.nasa.worldwind.geom.Position;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 /**
  * Describes a planner with online capabilities, meaning it can interleave the
@@ -76,19 +76,19 @@ public interface OnlinePlanner extends Planner {
 	 * 
 	 * @return the current position of the aircraft
 	 */
-	public Position getAircraftPosition();
+	public Waypoint getAircraftTimedPosition();
 	
 	/**
 	 * Sets the current position of the aircraft.
 	 * 
 	 * @param aircraftPosition the current position of the aircraft
 	 */
-	public void setAircraftPosition(Position aircraftPosition);
+	public void setAircraftTimedPosition(Waypoint aircraftPosition);
 	
 	/**
 	 * Updates the current position of the aircraft in the planner by reading its
 	 * actual position from an external source.
 	 */
-	public void updateAircraftPosition();
+	public void updateAircraftTimedPosition();
 
 }
