@@ -46,6 +46,7 @@ import org.xml.sax.InputSource;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
 import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
@@ -129,7 +130,7 @@ public class SamplingBasedTest {
 		System.out.println(String.format("\tHeuristic RRTreeTester - %s - e=%.1f b=%d p=%.2f n=%d",
 				heuristic, epsilon,	bias, prob, nbr));
 
-		HRRTreePlanner plannerHRRT = new HRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, prob, nbr);
+		HRRTreePlanner plannerHRRT = new HRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, Strategy.EXTEND, Extension.LINEAR, prob, nbr);
 		plannerHRRT.setHeuristic(heuristic);
 
 		Path path;
@@ -152,8 +153,7 @@ public class SamplingBasedTest {
 	public void basicRRTreeTester(double epsilon, int bias, Strategy strategy) {
 		System.out.println(String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
 
-		RRTreePlanner plannerRRT = new RRTreePlanner(iris, samplingEnv, epsilon, bias, 1500);
-		plannerRRT.setStrategy(strategy);
+		RRTreePlanner plannerRRT = new RRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, strategy, Extension.LINEAR);
 
 		Path path;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;

@@ -48,6 +48,7 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
@@ -162,8 +163,7 @@ public class RRTreePlannerTest {
 	public void basicRRTreeTester(double epsilon, int bias, Strategy strategy) {
 		System.out.println(String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
 
-		RRTreePlanner plannerRRT = new RRTreePlanner(iris, samplingEnv, epsilon, bias, 1500);
-		plannerRRT.setStrategy(strategy);
+		RRTreePlanner plannerRRT = new RRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, strategy, Extension.LINEAR);
 
 		Path path;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;
@@ -187,7 +187,7 @@ public class RRTreePlannerTest {
 		System.out.println(String.format("\tHeuristic RRTreeTester - %s - e=%.1f b=%d p=%.2f n=%d",
 				heuristic, epsilon,	bias, prob, nbr));
 
-		HRRTreePlanner plannerHRRT = new HRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, prob, nbr);
+		HRRTreePlanner plannerHRRT = new HRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, Strategy.EXTEND, Extension.LINEAR, prob, nbr);
 		plannerHRRT.setHeuristic(heuristic);
 
 		Path path;
@@ -227,7 +227,7 @@ public class RRTreePlannerTest {
 		System.out.println(String.format("\tAnytimeDynamic RRTreeTester - () - e=%.1f b=%d cb_i=%.2f cb_f=%.2f imp=%.2f",
 				 epsilon, bias, init, fina, imp));
 
-		ADRRTreePlanner plannerADRRT = new ADRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500);
+		ADRRTreePlanner plannerADRRT = new ADRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, Strategy.EXTEND, Extension.LINEAR);
 		plannerADRRT.setMinimumQuality(init);
 		plannerADRRT.setMaximumQuality(fina);
 		plannerADRRT.setQualityImprovement(imp);
