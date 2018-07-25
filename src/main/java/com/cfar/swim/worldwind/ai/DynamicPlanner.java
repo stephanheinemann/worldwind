@@ -29,7 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai;
 
-import java.util.Set;
+import java.util.HashSet;
 
 import com.cfar.swim.worldwind.render.Obstacle;
 
@@ -51,7 +51,7 @@ public interface DynamicPlanner extends Planner {
 	 * @return the set of different obstacles containing the difference between the
 	 *         previous obstacle set and the current one
 	 */
-	public Set<Obstacle> getDiffObstacles();
+	public HashSet<Obstacle> getDiffObstacles();
 
 	/**
 	 * Sets the set of different obstacles containing the difference between the
@@ -60,7 +60,7 @@ public interface DynamicPlanner extends Planner {
 	 * @param diffObstacles the set of different obstacles containing the difference
 	 *            between the previous obstacle set and the current one
 	 */
-	public void setDiffObstacles(Set<Obstacle> diffObstacles);
+	public void setDiffObstacles(HashSet<Obstacle> diffObstacles);
 
 	/**
 	 * Updates the set of different obstacles in the planner by saving the old
@@ -80,9 +80,7 @@ public interface DynamicPlanner extends Planner {
 	/**
 	 * Repairs the plan and its environment in order to reflect the changes made to
 	 * the set of obstacles.
-	 * 
-	 * @param diffObstacles the set of obstacles to consider
 	 */
-	public void repair(Set<Obstacle> diffObstacles);
+	public void repair();
 
 }

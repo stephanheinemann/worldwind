@@ -37,8 +37,10 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AnytimePlanner;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.drrt.DRRTreeWaypoint;
 import com.cfar.swim.worldwind.ai.rrt.drrt.DRRTreePlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -112,11 +114,14 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 	 * @param epsilon the maximum distance to extend a waypoint in the tree
 	 * @param bias the bias of the sampling algorithm towards goal
 	 * @param maxIter the maximum number of sampling iterations
+	 * @param strategy the expanding strategy for the planner
+	 * @param extension the extension technique for the planner
 	 * 
-	 * @see DRRTreePlanner#DRRTreePlanner(Aircraft, Environment, double, int, int)
+	 * @see DRRTreePlanner#DRRTreePlanner(Aircraft, Environment, double, int, int, Strategy, Extension)
 	 */
-	public ADRRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter) {
-		super(aircraft, environment, epsilon, bias, maxIter);
+	public ADRRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
+			Strategy strategy, Extension extension) {
+		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension);
 	}
 
 	/**
@@ -564,8 +569,8 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 			this.loadFromTree(treeR);
 
 			// Dynamic behavior
-			diffObstacles = this.getNewObstacles();
-			if (!diffObstacles.isEmpty()) {
+			this.updateObstacles();
+			if (!this.getDiffObstacles().isEmpty()) {
 
 				// Invalidate Waypoints affected by new obstacles
 				System.out.println("Invalidating obstacles");
@@ -588,7 +593,7 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 				// Check if the current path is still valid
 				if (!this.isPathValid()) {
 					System.out.println("Non-valid path, regrowing...");
-					this.regrowRRT();
+					this.repair();
 					this.updateCostBound();
 					treeT.setCostBound(this.getCostBound());
 				}

@@ -47,7 +47,7 @@ public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 
 	/** the category of parameters that are anytime related */
 	protected final static String CATEGORY_ANYTIME = "Anytime Parameters";
-	
+
 	/** the category of parameters that are online related */
 	protected final static String CATEGORY_ONLINE = "Online Parameters";
 
@@ -63,6 +63,10 @@ public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 	public PropertyDescriptor[] getPropertyDescriptors() {
 
 		try {
+			PropertyDescriptor sampling = this.createProperty(beanClass, "sampling",
+					"Sampling Technique",
+					"the sampling technique for the planner",
+					CATEGORY_SAMPLING);
 			PropertyDescriptor minimumQuality = this.createProperty(beanClass, "minimumQuality",
 					"Initial Cost Bias",
 					"the initial relative weight of costs (low values prioritize coverage of the configuration space)",
@@ -88,7 +92,8 @@ public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 					"the distance threshold to consider a position displacement as worthy of a new plan",
 					CATEGORY_ONLINE);
 
-			PropertyDescriptor rvNew[] = {minimumQuality, maximumQuality, qualityImprovement, online, updateStep, positionThreshold};
+			PropertyDescriptor rvNew[] = { sampling, minimumQuality, maximumQuality, qualityImprovement, online,
+					updateStep, positionThreshold };
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 

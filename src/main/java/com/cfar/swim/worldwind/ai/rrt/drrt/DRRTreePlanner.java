@@ -32,14 +32,16 @@ package com.cfar.swim.worldwind.ai.rrt.drrt;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Random;
 import java.util.stream.Collectors;
 
+import com.cfar.swim.worldwind.ai.DynamicPlanner;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -58,14 +60,13 @@ import gov.nasa.worldwind.geom.Position;
  * @author Manuel Rosa
  *
  */
-public class DRRTreePlanner extends RRTreePlanner {
+public class DRRTreePlanner extends RRTreePlanner implements DynamicPlanner {
 
-	
 	protected boolean obstacleFlag = false;
 
 	/**
-	 * Constructs a dynamic RRT planner for a specified aircraft and environment using
-	 * default local cost and risk policies.
+	 * Constructs a dynamic RRT planner for a specified aircraft and environment
+	 * using default local cost and risk policies.
 	 * 
 	 * @param aircraft the aircraft
 	 * @param environment the environment
@@ -77,19 +78,22 @@ public class DRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
-	 * Constructs a dynamic RRT planner for a specified aircraft and environment using
-	 * default local cost and risk policies.
+	 * Constructs a dynamic RRT planner for a specified aircraft and environment
+	 * using default local cost and risk policies.
 	 * 
 	 * @param aircraft the aircraft
 	 * @param environment the environment
 	 * @param epsilon the maximum distance to extend a waypoint in the tree
 	 * @param bias the bias of the sampling algorithm towards goal
 	 * @param maxIter the maximum number of sampling iterations
+	 * @param strategy the expanding strategy for the planner
+	 * @param extension the extension technique for the planner
 	 * 
-	 * @see RRTreePlanner#RRTreePlanner(Aircraft, Environment, double, int, int)
+	 * @see RRTreePlanner#RRTreePlanner(Aircraft, Environment, double, int, int, Strategy, Extension)
 	 */
-	public DRRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter) {
-		super(aircraft, environment, epsilon, bias, maxIter);
+	public DRRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
+			Strategy strategy, Extension extension) {
+		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension);
 	}
 
 	/**
@@ -181,14 +185,6 @@ public class DRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
-	 * Regrows a RRTree by trimming the invalidated nodes and computing a new one.
-	 */
-	protected void regrowRRT() {
-		this.trimRRT();
-		this.compute();
-	}
-
-	/**
 	 * Searches the tree and recursively invalidates all nodes whose parent is
 	 * invalidated.
 	 */
@@ -274,39 +270,29 @@ public class DRRTreePlanner extends RRTreePlanner {
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 
-		HashSet<Obstacle> diffObstacles = new HashSet<>();
-
 		this.initialize(origin, destination, etd);
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
 
 		// Check for new obstacles until the goal is reached
-		while (!this.checkGoal(getStart())) {
-			// Move to next waypoint and check for new obstacles
-			// TODO: Movement should come from real aircraft
-			this.moveToNext();
-			System.out.println("\nNew start position... " + this.getStart().getInfo() + "\nWptL="
-					+ this.getWaypointList().size() + " EdgL=" + this.getEdgeList().size());
+		// while (!this.checkGoal(getStart())) {
+		for (int i = 0; i < 50; i++) {
+			// TODO: Move to next waypoint and check for new obstacles
 
-			diffObstacles = this.getNewObstacles();
-			if (!diffObstacles.isEmpty()) {
+			this.updateObstacles();
+			if (!this.getDiffObstacles().isEmpty()) {
 				// Invalidate Waypoints affected by new obstacles
 				for (Obstacle obstacle : diffObstacles)
 					this.invalidateWaypoints(obstacle);
 
 				// Check if the current path is still valid
 				if (!this.isPathValid()) {
-					this.regrowRRT();
+					this.repair();
 					System.out.println("[Path Regorwn] Sizes: WptL=" + this.getWaypointList().size() + " EdgL="
 							+ this.getEdgeList().size());
 				}
 			}
-
-			// Print Plan
-			System.out.println("Current Path #" + this.getPlan().size());
-			for (Waypoint wpt : this.getPlan())
-				System.out.println(wpt + " Cost=" + wpt.getCost());
 
 			// Update trajectory reflecting the modified plan
 			trajectory = this.createTrajectory();
@@ -333,80 +319,7 @@ public class DRRTreePlanner extends RRTreePlanner {
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		// TODO: implement
-		
-		// create current variables
-		LinkedList<Waypoint> plan = new LinkedList<>();
-		Waypoint currentOrigin = new Waypoint(origin);
-		ZonedDateTime currentEtd = etd;
-		Trajectory trajectory;
-
-		// collect intermediate destinations
-		ArrayList<Waypoint> destinations = waypoints.stream().map(Waypoint::new)
-				.collect(Collectors.toCollection(ArrayList::new));
-		destinations.add(new Waypoint(destination));
-		
-		// plan and concatenate partial trajectories
-		for (Waypoint currentDestination : destinations) {
-			if (!(currentOrigin.equals(currentDestination))) {
-				// plan partial trajectory
-				this.initialize(currentOrigin, currentDestination, currentEtd);
-				this.compute();
-				Trajectory part = this.createTrajectory();
-				
-				// append partial trajectory to plan
-				if ((!plan.isEmpty()) && (!part.isEmpty())) {
-					plan.pollLast();
-				}
-				
-				for (Waypoint waypoint : part.getWaypoints()) {
-					plan.add(waypoint);
-				}
-				if (plan.peekLast().equals(currentOrigin)) {
-					// if no plan could be found, return an empty trajectory
-					trajectory = new Trajectory();
-					this.revisePlan(trajectory);
-					return trajectory;
-				} else {
-					currentOrigin = plan.peekLast();
-					currentEtd = currentOrigin.getEto();
-				}
-			}
-		}
-		
-		trajectory = this.createTrajectory(plan);
-		this.revisePlan(trajectory);
-		
-		// define auxiliary variables
-		HashSet<Obstacle> diffObstacles = new HashSet<>();
-
-		// Check for new obstacles until the goal is reached
-		while(!this.checkGoal(getStart())) {
-			
-			// Move to next waypoint and check for new obstacles
-			this.moveToNext();
-			diffObstacles = this.getNewObstacles();
-			
-			// TODO: Remove intermediate destinations if they were already reached 
-			
-			// If there are new obstacles in the environment
-			if (!diffObstacles.isEmpty()) {
-				// Invalidate Waypoints affected by new obstacles
-				for (Obstacle obstacle : diffObstacles)
-					this.invalidateWaypoints(obstacle);
-				
-				// Check if the current path is still valid
-				if (!this.isPathValid()) {
-					for (Waypoint currentDestination : destinations) {
-						this.regrowRRT();
-					}
-				}
-			}
-
-		};
-		
-		trajectory = this.createTrajectory(plan);
-		this.revisePlan(trajectory);
-		return trajectory;
+		return super.plan(origin, destination, waypoints, etd);
 	}
 
 	/**
@@ -457,17 +370,41 @@ public class DRRTreePlanner extends RRTreePlanner {
 			return null;
 	}
 
+	// Dynamic PLanner
+	private HashSet<Obstacle> diffObstacles;
+
 	/**
-	 * Gets the new obstacles present in the environment and compares to the
-	 * previous.
+	 * Gets the set of different obstacles containing the difference between the
+	 * previous obstacle set and the current one.
 	 * 
-	 * @return the hashset containing the difference between the previous set of
-	 *         obstacles and the new
+	 * @return the set of different obstacles containing the difference between the
+	 *         previous obstacle set and the current one
+	 */
+	public HashSet<Obstacle> getDiffObstacles() {
+		return diffObstacles;
+	}
+
+	/**
+	 * Sets the set of different obstacles containing the difference between the
+	 * previous obstacle set and the current one.
+	 * 
+	 * @param diffObstacles the set of different obstacles containing the difference
+	 *            between the previous obstacle set and the current one
+	 */
+	public void setDiffObstacles(HashSet<Obstacle> diffObstacles) {
+		this.diffObstacles = diffObstacles;
+	}
+
+	/**
+	 * Updates the set of different obstacles in the planner by saving the old
+	 * obstacles set, calling a function to allow the introduction of new obstacles
+	 * and computing the difference between the two.
 	 */
 	@SuppressWarnings("unchecked")
-	protected HashSet<Obstacle> getNewObstacles() {
-		HashSet<Obstacle> beforeObstacles = (HashSet<Obstacle>) this.getEnvironment().getObstacles().clone();
+	public void updateObstacles() {
+		HashSet<Obstacle> oldObstacles = (HashSet<Obstacle>) this.getEnvironment().getObstacles().clone();
 
+		// TODO: Temporary solution
 		// Adds one obstacle with certain probability
 		int rand = new Random().nextInt(100 - 1) + 1;
 		if (rand <= 30 && !obstacleFlag) {
@@ -476,27 +413,36 @@ public class DRRTreePlanner extends RRTreePlanner {
 			obstacleFlag = true;
 		}
 
-		HashSet<Obstacle> afterObstacles = (HashSet<Obstacle>) this.getEnvironment().getObstacles().clone();
+		// this.reviseObstacle();
+		this.setDiffObstacles(getEnvironment().getDiffObstacles(oldObstacles));
+	}
 
-		HashSet<Obstacle> removedObstacles = new HashSet<Obstacle>(beforeObstacles);
-		removedObstacles.removeAll(afterObstacles);
+	/**
+	 * Checks whether or not the changes made to the environment are significant to
+	 * take further actions.
+	 * 
+	 * @return true if the changes are significant, false otherwise
+	 */
+	public boolean isSignificantChange() {
+		int invalid = 0, total = this.getWaypointList().size();
 
-		HashSet<Obstacle> addedObstacles = new HashSet<Obstacle>(afterObstacles);
-		addedObstacles.removeAll(beforeObstacles);
-
-		HashSet<Obstacle> diffObstacles = new HashSet<Obstacle>();
-		diffObstacles.addAll(removedObstacles);
-		diffObstacles.addAll(addedObstacles);
-		System.out.println("--- DiffObstacles size: " + diffObstacles.size());
-
-		// Sleep block to allow visualization
-		try {
-			Thread.sleep(1000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		for (RRTreeWaypoint wpt : this.getWaypointList()) {
+			DRRTreeWaypoint waypoint = (DRRTreeWaypoint) wpt;
+			if (!waypoint.isValid()) {
+				invalid++;
+			}
 		}
 
-		return diffObstacles;
+		// If more than 50% of the waypoints became invalid it is significant change
+		return ((double) invalid) / total >= 0.5;
+	}
+
+	/**
+	 * Repairs/regrows a RRTree by trimming the invalidated nodes and computing a
+	 * new one.
+	 */
+	public void repair() {
+		this.trimRRT();
+		this.compute();
 	}
 }

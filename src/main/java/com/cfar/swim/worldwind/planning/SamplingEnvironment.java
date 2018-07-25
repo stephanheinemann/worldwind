@@ -805,7 +805,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * @return the set of different obstacles
 	 */
 	@SuppressWarnings("unchecked")
-	public Set<Obstacle> getDiffObstacles(Set<Obstacle> oldObstacles) {
+	public HashSet<Obstacle> getDiffObstacles(HashSet<Obstacle> oldObstacles) {
 		// Get obstacles currently present in this environment
 		HashSet<Obstacle> newObstacles = (HashSet<Obstacle>) this.getObstacles().clone();
 

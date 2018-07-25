@@ -77,6 +77,13 @@ public class RRTreePlanner extends AbstractPlanner {
 	/** the bias of the sampling algorithm towards goal */
 	private final int BIAS;
 
+	/** the expanding strategy for the planner */
+	private final Strategy STRATEGY;
+
+	/** the extension technique for the planner */
+	private final Extension EXTENSION;
+
+
 	// ---------- VARIABLES ----------
 
 	/** the start RRT waypoint */
@@ -90,9 +97,6 @@ public class RRTreePlanner extends AbstractPlanner {
 
 	/** the last computed plan */
 	private final LinkedList<Waypoint> plan = new LinkedList<>();
-
-	/** the expanding strategy for the planner */
-	private Strategy strategy = Strategy.EXTEND;
 
 	// ---------- CONSTRUCTORS ----------
 
@@ -110,6 +114,8 @@ public class RRTreePlanner extends AbstractPlanner {
 		EPSILON = this.getEnvironment().getDiameter() / 20;
 		BIAS = 5;
 		MAX_ITER = 3_000;
+		STRATEGY = Strategy.EXTEND;
+		EXTENSION = Extension.LINEAR;
 	}
 
 	/**
@@ -121,20 +127,25 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @param epsilon the maximum distance to extend a waypoint in the tree
 	 * @param bias the bias of the sampling algorithm towards goal
 	 * @param maxIter the maximum number of sampling iterations
+	 * @param strategy the expanding strategy for the planner
+	 * @param extension the extension technique for the planner
 	 * 
 	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
 	 */
-	public RRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter) {
+	public RRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
+			Strategy strategy, Extension extension) {
 		super(aircraft, environment);
 		EPSILON = epsilon;
 		BIAS = bias;
 		MAX_ITER = maxIter;
+		STRATEGY = strategy;
+		EXTENSION = extension;
 	}
 
 	// ---------- Setters and Getters ----------
 
 	/**
-	 * Gets the continuum environment of this planner
+	 * Gets the continuum environment of this planner.
 	 * 
 	 * @return the continuum environment
 	 */
@@ -197,26 +208,8 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Gets the strategy for expansion of this planner
-	 * 
-	 * @return the strategy for expansion step
-	 */
-	public Strategy getStrategy() {
-		return strategy;
-	}
-
-	/**
-	 * Sets the strategy for expansion of this planner
-	 * 
-	 * @param strategy the strategy for expansion step
-	 */
-	public void setStrategy(Strategy strategy) {
-		this.strategy = strategy;
-	}
-
-	/**
 	 * Gets the maximum number of iterations for the planner to attempt to connect
-	 * to goal
+	 * to goal.
 	 * 
 	 * @return the maximum number of sampling iterations
 	 */
@@ -225,7 +218,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Gets the maximum distance to extend a waypoint in the tree
+	 * Gets the maximum distance to extend a waypoint in the tree.
 	 * 
 	 * @return the maximum distance to extend
 	 */
@@ -234,12 +227,30 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Gets the bias of the sampling algorithm towards goal
+	 * Gets the bias of the sampling algorithm towards goal.
 	 * 
 	 * @return the bias of the sampling algorithm
 	 */
 	public int getBIAS() {
 		return BIAS;
+	}
+
+	/**
+	 * Gets the strategy for expansion of this planner.
+	 * 
+	 * @return the strategy for expansion step
+	 */
+	public Strategy getSTRATEGY() {
+		return STRATEGY;
+	}
+
+	/**
+	 * Gets the extension technique for the planner.
+	 * 
+	 * @return the extension technique for the planner
+	 */
+	public Extension getEXTENSION() {
+		return EXTENSION;
 	}
 
 	// ---------- PROTECTED METHODS ----------
@@ -445,8 +456,14 @@ public class RRTreePlanner extends AbstractPlanner {
 		boolean success = true;
 
 		// Extend nearest waypoint in the direction of waypoint
-		// TODO: Investigate other steering/growing strategies
-		Position positionNew = this.growPositionFeasible(waypoint, waypointNear);
+		Position positionNew;
+		switch (this.getEXTENSION()) {
+		case FEASIBLE:
+			positionNew = this.growPositionFeasible(waypoint, waypointNear);
+		case LINEAR:
+		default:
+			positionNew = this.growPosition(waypoint, waypointNear);
+		}
 		RRTreeWaypoint waypointNew = this.createWaypoint(positionNew);
 		waypointNew.setParent(waypointNear);
 
@@ -482,7 +499,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the new position resulting from the controlled growth of the tree
 	 */
-	public Position growPosition(Position position, Position positionNear) {
+	protected Position growPosition(Position position, Position positionNear) {
 		Position positionNew;
 
 		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
@@ -513,7 +530,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		return positionNew;
 	}
 
-	public Position growPositionFeasible(Position position, Position positionNear) {
+	protected Position growPositionFeasible(Position position, Position positionNear) {
 		Position positionNew;
 		Aircraft acft = this.getAircraft();
 		Globe globe = this.getEnvironment().getGlobe();
@@ -710,7 +727,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		boolean status = false;
 		for (int i = 0; i < MAX_ITER; i++) {
 			RRTreeWaypoint waypointRand = this.sampleBiased(BIAS);
-			switch (this.getStrategy()) {
+			switch (this.getSTRATEGY()) {
 			case CONNECT:
 				status = this.connectRRT(waypointRand) != Status.TRAPPED;
 				break;
@@ -752,17 +769,6 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
-		// Position positionActual = this.reviseAircraftPosition();
-		// while (this.getEnvironment().getDistance(positionActual, destination) > 5) {
-		// positionActual = this.reviseAircraftPosition();
-		// try {
-		// Thread.sleep(1000);
-		// } catch (InterruptedException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// System.out.println("Position Actual: " + positionActual);
-		// }
 
 		return trajectory;
 	}
@@ -822,18 +828,6 @@ public class RRTreePlanner extends AbstractPlanner {
 		}
 		Trajectory trajectory = this.createTrajectory(plan);
 		this.revisePlan(trajectory);
-
-		// Position positionActual = this.reviseAircraftPosition();
-		// while(this.getEnvironment().getDistance(positionActual, destination)>5) {
-		// positionActual = this.reviseAircraftPosition();
-		// try {
-		// Thread.sleep(1000);
-		// } catch (InterruptedException e) {
-		// // TODO Auto-generated catch block
-		// e.printStackTrace();
-		// }
-		// System.out.println("Position Actual: "+positionActual);
-		// }
 
 		return trajectory;
 	}

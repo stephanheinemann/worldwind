@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -499,12 +500,13 @@ public class Session implements Identifiable {
 	 * 
 	 * @return the set of planner specifications that are a part of a given planner family
 	 */
-	public Set<Specification<Planner>> getPlannerSpecifications(PlannerFamily family) {
+	public List<Specification<Planner>> getPlannerSpecifications(PlannerFamily family) {
 		
 		return this.plannerRegistry.getSpecifications()
 				.stream()
 				.filter(s -> s.getPlannerFamily().equals(family))
-				.collect(Collectors.toSet());
+				.sorted((s1, s2) -> s1.getId().compareTo(s2.getId()))
+				.collect(Collectors.toList());
 	}
 	
 	/**

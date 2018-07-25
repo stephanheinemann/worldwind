@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
@@ -49,6 +50,9 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 
 	/** the expansion strategy for the planner */
 	private Strategy strategy = Strategy.EXTEND;
+	
+	/** the extension technique for the planner */
+	private Extension extension = Extension.LINEAR;
 
 	/** the maximum distance to extend a waypoint in the tree */
 	private double epsilon = 25d;
@@ -118,6 +122,24 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 */
 	public void setStrategy(Strategy strategy) {
 		this.strategy = strategy;
+	}
+
+	/**
+	 * Gets the extension technique for the planner.
+	 * 
+	 * @return the extension technique for the planner
+	 */
+	public Extension getExtension() {
+		return extension;
+	}
+
+	/**
+	 * Sets the extension technique for the planner.
+	 * 
+	 * @param extension the extension technique for the planner
+	 */
+	public void setExtension(Extension extension) {
+		this.extension = extension;
 	}
 
 	/**

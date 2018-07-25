@@ -67,6 +67,10 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 					"Strategy",
 					"the expansion strategy for the planner",
 					CATEGORY_SAMPLING);
+			PropertyDescriptor extension = this.createProperty(beanClass, "extension",
+					"Extension",
+					"the extension technique for the planner",
+					CATEGORY_SAMPLING);
 			PropertyDescriptor epsilon = this.createProperty(beanClass, "epsilon",
 					"Epsilon (m)",
 					"the maximum distance to extend a waypoint in the tree",
@@ -76,7 +80,7 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 					"the bias of the sampling algorithm towards goal",
 					CATEGORY_SAMPLING);
 			
-			PropertyDescriptor rvNew[] = {maxIter, strategy, epsilon, bias};
+			PropertyDescriptor rvNew[] = {maxIter, strategy, extension, epsilon, bias};
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 

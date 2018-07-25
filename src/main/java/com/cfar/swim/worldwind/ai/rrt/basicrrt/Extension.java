@@ -30,23 +30,25 @@
 package com.cfar.swim.worldwind.ai.rrt.basicrrt;
 
 /**
- * Enumerates the possible extension strategies for a RRT planner.
+ * Enumerates the possible extension techniques to create the next point in a
+ * RRT planner.
  * 
  * @author Manuel Rosa
  *
  */
-public enum Strategy {
+public enum Extension {
 
 	/**
-	 * The tree is grown in the direction of the randomly sampled position by a
-	 * maximum distance EPSILON
+	 * The connection between the position in the tree and the new sample is
+	 * attempted as a straight line
 	 */
-	EXTEND,
+	LINEAR,
 
 	/**
-	 * The tree is grown in the direction of the randomly sampled position until it
-	 * is trapped or the position is reached
+	 * The connection between the position in the tree and the new sample is
+	 * attempted by considering the aircraft capabilities and selecting the
+	 * projection of the sampled position in the feasibility region
 	 */
-	CONNECT
+	FEASIBLE
 
 }

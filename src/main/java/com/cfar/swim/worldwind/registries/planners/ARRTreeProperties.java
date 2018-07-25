@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
@@ -40,6 +41,9 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  *
  */
 public class ARRTreeProperties extends RRTreeProperties implements AnytimePlannerProperties, OnlinePlannerProperties {
+	
+	/** the sampling technique for the planner */
+	private Sampling sampling = Sampling.UNIFORM;
 	
 	/** the description of this planner properties bean */
 	private final static String DESCRIPTION_ARRT = "Anytime RRT: Anytime version of a RRT which computes plans with increasing quality as time allows until a ceratin improvement is reached.";
@@ -76,6 +80,26 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 			Strategy strategy, int maxIter, double epsilon, int bias) {
 		super(costPolicy, riskPolicy, strategy, maxIter, epsilon, bias);
 		this.setDescription(DESCRIPTION_ARRT);
+	}
+	
+	
+
+	/**
+	 * Gets the sampling technique for the planner.
+	 * 
+	 * @return the sampling technique for the planner
+	 */
+	public Sampling getSampling() {
+		return sampling;
+	}
+
+	/**
+	 * Sets the sampling technique for the planner.
+	 * 
+	 * @param sampling the sampling technique for the planner
+	 */
+	public void setSampling(Sampling sampling) {
+		this.sampling = sampling;
 	}
 
 	/**

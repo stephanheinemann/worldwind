@@ -34,9 +34,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Random;
 
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Status;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
 
@@ -101,8 +103,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @see RRTreePlanner#RRTreePlanner(Aircraft, Environment, double, int, int)
 	 */
 	public HRRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
-			double prob, int neighbors) {
-		super(aircraft, environment, epsilon, bias, maxIter);
+			Strategy strategy, Extension extension,	double prob, int neighbors) {
+		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension);
 		PROB_FLOOR = prob;
 		NEIGHBORS = neighbors;
 	}
@@ -404,7 +406,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 				waypointRand = this.selectWaypoint();
 			}
 
-			switch (super.getStrategy()) {
+			switch (super.getSTRATEGY()) {
 			case CONNECT:
 				status = this.connectRRT(waypointRand) != Status.TRAPPED;
 				break;

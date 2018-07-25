@@ -30,23 +30,25 @@
 package com.cfar.swim.worldwind.ai.rrt.basicrrt;
 
 /**
- * Enumerates the possible extension strategies for a RRT planner.
+ * Enumerates the possible sampling techniques for sampling the next point for a
+ * RRT planner.
  * 
  * @author Manuel Rosa
  *
  */
-public enum Strategy {
+public enum Sampling {
 
 	/**
-	 * The tree is grown in the direction of the randomly sampled position by a
-	 * maximum distance EPSILON
+	 * Samples a pseudo-random point from an uniform distribution over the entire
+	 * space delimited by the environment box
 	 */
-	EXTEND,
+	UNIFORM,
 
 	/**
-	 * The tree is grown in the direction of the randomly sampled position until it
-	 * is trapped or the position is reached
+	 * Samples a pseudo-random point from an uniform distribution over the
+	 * intersection of the environment box and an ellipsoid with focci in the start
+	 * and goal positions and a particular distance
 	 */
-	CONNECT
+	ELLIPSOIDAL;
 
 }

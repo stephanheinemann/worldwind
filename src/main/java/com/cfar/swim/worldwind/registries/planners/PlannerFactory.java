@@ -145,44 +145,40 @@ public class PlannerFactory implements Factory<Planner> {
 		else if (specification.getId().equals(Specification.PLANNER_RRT_ID)) {
 			RRTreeProperties properties = (RRTreeProperties) specification.getProperties();
 			planner = new RRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter());
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
-			((RRTreePlanner) planner).setStrategy(properties.getStrategy());
 		} else if (specification.getId().equals(Specification.PLANNER_HRRT_ID)) {
 			HRRTreeProperties properties = (HRRTreeProperties) specification.getProperties();
 			planner = new HRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter(), properties.getProbFloor(),
-					properties.getNeighbors());
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension(),
+					properties.getProbFloor(), properties.getNeighbors());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
-			((HRRTreePlanner) planner).setStrategy(properties.getStrategy());
 			((HRRTreePlanner) planner).setHeuristic(properties.getHeuristic());
 		} else if (specification.getId().equals(Specification.PLANNER_ARRT_ID)) {
 			ARRTreeProperties properties = (ARRTreeProperties) specification.getProperties();
-			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(),
-					properties.getEpsilon(), properties.getBias(), properties.getMaxIter(),
+			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter(),
+					properties.getStrategy(), properties.getExtension(), properties.getSampling(),
 					properties.isOnline(), properties.getPositionThreshold(), properties.getUpdateStep());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
-			((ARRTreePlanner) planner).setStrategy(properties.getStrategy());
 			((ARRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ARRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ARRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 		} else if (specification.getId().equals(Specification.PLANNER_DRRT_ID)) {
 			DRRTreeProperties properties = (DRRTreeProperties) specification.getProperties();
 			planner = new DRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter());
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
-			((DRRTreePlanner) planner).setStrategy(properties.getStrategy());
 		} else if (specification.getId().equals(Specification.PLANNER_ADRRT_ID)) {
 			ADRRTreeProperties properties = (ADRRTreeProperties) specification.getProperties();
-			planner = new ADRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter());
+			planner = new DRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
-			((ADRRTreePlanner) planner).setStrategy(properties.getStrategy());
 			((ADRRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ADRRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ADRRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
