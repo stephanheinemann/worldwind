@@ -128,8 +128,17 @@ public class DronekitDatalink extends Datalink {
 	 * @return the aircraft heading obtained via this dronekit datalink
 	 */
 	public Angle getAircraftHeading() {
-		// TODO: implement
-		return Angle.ZERO;
+		Angle aircraftHeading = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			com.cfar.swim.droneconnect.Orientation orientation = this.blockingStub.getOrientation(request);
+			aircraftHeading = new Angle( Angle.fromDegrees(orientation.getHeading()));
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftHeading;
 	}
 	
 	/**
@@ -138,8 +147,17 @@ public class DronekitDatalink extends Datalink {
 	 * @return the aircraft pitch obtained via this dronekit datalink
 	 */
 	public Angle getAircraftPitch() {
-		// TODO: implement
-		return Angle.ZERO;
+		Angle aircraftPitch = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			com.cfar.swim.droneconnect.Orientation orientation = this.blockingStub.getOrientation(request);
+			aircraftPitch = new Angle( Angle.fromRadians(orientation.getPitch()));
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftPitch;
 	}
 	
 	/**
@@ -148,8 +166,17 @@ public class DronekitDatalink extends Datalink {
 	 * @return the aircraft bank obtained via this dronekit datalink
 	 */
 	public Angle getAircraftBank() {
-		// TODO: implement
-		return Angle.ZERO;
+		Angle aircraftBank = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			com.cfar.swim.droneconnect.Orientation orientation = this.blockingStub.getOrientation(request);
+			aircraftBank = new Angle( Angle.fromRadians(orientation.getBank()));
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftBank;
 	}
 	
 	/**
@@ -158,8 +185,17 @@ public class DronekitDatalink extends Datalink {
 	 * @return the aircraft yaw obtained via this dronekit datalink
 	 */
 	public Angle getAircraftYaw() {
-		// TODO: implement
-		return Angle.ZERO;
+		Angle aircraftYaw = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			com.cfar.swim.droneconnect.Orientation orientation = this.blockingStub.getOrientation(request);
+			aircraftYaw = new Angle( Angle.fromRadians(orientation.getYaw()));
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftYaw;
 	}
 	
 	/**
