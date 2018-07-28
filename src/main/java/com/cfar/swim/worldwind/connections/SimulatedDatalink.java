@@ -29,10 +29,12 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -174,6 +176,21 @@ public class SimulatedDatalink extends Datalink {
 		}
 		
 		return currentPosition;
+	}
+	
+	/**
+	 * Gets the aircraft position with current time via this datalink.
+	 * 
+	 * @return the aircraft position with current time obtained via this datalink
+	 * 
+	 * @see Datalink#getAircraftTimedPosition()
+	 */
+	@Override
+	public Waypoint getAircraftTimedPosition() {
+		Waypoint timedPosition = new Waypoint(this.getAircraftPosition());
+		timedPosition.setAto(ZonedDateTime.now());
+		
+		return timedPosition;
 	}
 	
 	/**
@@ -367,5 +384,41 @@ public class SimulatedDatalink extends Datalink {
 	public Angle getAircraftYaw() {
 		return Angle.ZERO;
 	}
-
+	
+	/**
+	 * Gets the next position in the mission plan uploaded to the aircraft. 
+	 * 
+	 * @return the next position in the mission plan
+	 * 
+	 * @see Datalink#getNextWaypoint()
+	 */
+	@Override
+	public Position getNextWaypoint() {
+		// TODO: Implement
+		return null;
+	}
+	
+	/**
+	 * Gets a string representing the current status of the aircraft.
+	 * 
+	 * @return a string with the current status of the aircraft
+	 * 
+     * @see Datalink#getStatus()
+	 */
+	public String getStatus() {
+		// TODO: Implement
+		return null;
+	}
+	
+	/**
+	 * Checks if the aircraft is airborne.
+	 * 
+	 * @return true if the aircraft is airborne, false otherwise
+	 * 
+	 * @see Datalink#isAirborne()
+	 */
+	public boolean isAirborne() {
+		// TODO: Implement
+		return false;
+	}
 }

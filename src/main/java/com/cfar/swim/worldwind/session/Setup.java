@@ -62,6 +62,9 @@ public class Setup {
 
 	/** the desirability value of the desirability zone of this setup */
 	double desirabilitySpecification = 0.5;
+	
+	/** the default height for new waypoints of this setup */
+	double defaultWaypointHeight = -1.0;
 	// ...
 
 	/**
@@ -171,4 +174,24 @@ public class Setup {
 	public void setDesirabilitySpecification(double desirabilitySpecification) {
 		this.desirabilitySpecification = desirabilitySpecification;
 	}
+
+	/**
+	 * Gets the default height for new waypoints of this setup.
+	 * 
+	 * @return the default height for new waypoints of this setup
+	 */
+	public double getDefaultWaypointHeight() {
+		return defaultWaypointHeight;
+	}
+
+	/**
+	 * Sets the default height for new waypoints of this setup.
+	 * 
+	 * @param defaultWaypointHeight the default height for new waypoints of this setup
+	 */
+	public void setDefaultWaypointHeight(double defaultWaypointHeight) {
+		this.defaultWaypointHeight = defaultWaypointHeight;
+	}
+	
+	
 }

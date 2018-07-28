@@ -40,6 +40,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.cfar.swim.worldwind.planning.TrackPoint;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -131,6 +132,13 @@ public abstract class Datalink implements Connection {
 	 * @return the aircraft position obtained via this datalink
 	 */
 	public abstract Position getAircraftPosition();
+	
+	/**
+	 * Gets the aircraft position with current time via this datalink.
+	 * 
+	 * @return the aircraft position with current time obtained via this datalink
+	 */
+	public abstract Waypoint getAircraftTimedPosition();
 	
 	/**
 	 * Gets the aircraft track monitored via this datalink.
@@ -254,14 +262,34 @@ public abstract class Datalink implements Connection {
 	 */
 	public abstract void uploadFlightPath(Path path);
 	
+	/**
+	 * Gets the next position in the mission plan uploaded to the aircraft. 
+	 * 
+	 * @return the next position in the mission plan
+	 */
+	public abstract Position getNextWaypoint();
+	
+	/**
+	 * Gets a string representing the current status of the aircraft.
+	 * 
+	 * @return a string with the current status of the aircraft
+	 */
+	public abstract String getStatus();
+	
+	/**
+	 * Checks if the aircraft is airborne.
+	 * 
+	 * @return true if the aircraft is airborne, false otherwise
+	 */
+	public abstract boolean isAirborne();
+	
+	
 	// TODO: take-off specification / setup
 	// flight envelope (initial altitude, vertical speed, horizontal speed)
 	
-	// isAirborne
 	// isAutonomous
 	// uploadMission
 	// downloadMission
-	// getNextWaypoint (Position)
 	// getAttitude (Pitch, Roll, Yaw)
 	// getGroundSpeed
 	// getAirSpeed (True, Equivalent, Calibrated, Indicated)
@@ -353,8 +381,11 @@ public abstract class Datalink implements Connection {
 			if (!track.isEmpty() && track.peekFirst().isOld()) {
 				track.removeFirst();
 			}
-			
 			// add new track point
+			System.out.println("Status "+getStatus()+ " airborne? "+ isAirborne());
+			System.out.println("AAAAAAAA");
+			System.out.println("Next Position: "+ getNextWaypoint());
+			System.out.println("MonitorA");
 			BasicMarkerAttributes attributes = new BasicMarkerAttributes(
 					 Material.GREEN, BasicMarkerShape.ORIENTED_SPHERE, 1d);
 			attributes.setHeadingMaterial(Material.GREEN);

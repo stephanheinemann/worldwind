@@ -29,6 +29,10 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 import com.cfar.swim.droneconnect.Armed;
 import com.cfar.swim.droneconnect.DroneConnectGrpc;
 import com.cfar.swim.droneconnect.DroneConnectGrpc.DroneConnectBlockingStub;
@@ -37,6 +41,9 @@ import com.cfar.swim.droneconnect.Mode;
 import com.cfar.swim.droneconnect.Null;
 import com.cfar.swim.droneconnect.Safety;
 import com.cfar.swim.droneconnect.TakeoffToAltitude;
+import com.cfar.swim.droneconnect.Time;
+import com.cfar.swim.droneconnect.TimedPosition;
+import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -129,11 +136,10 @@ public class DronekitDatalink extends Datalink {
 	 */
 	public Angle getAircraftHeading() {
 		Angle aircraftHeading = null;
-		
 		if (this.isConnected()) {
 			Null request = Null.newBuilder().build();
-			com.cfar.swim.droneconnect.Orientation orientation = this.blockingStub.getOrientation(request);
-			aircraftHeading = new Angle( Angle.fromDegrees(orientation.getHeading()));
+			com.cfar.swim.droneconnect.Heading heading = this.blockingStub.getHeading(request);
+			aircraftHeading = Angle.fromDegrees(heading.getHeading());
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
@@ -151,8 +157,8 @@ public class DronekitDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Null request = Null.newBuilder().build();
-			com.cfar.swim.droneconnect.Orientation orientation = this.blockingStub.getOrientation(request);
-			aircraftPitch = new Angle( Angle.fromRadians(orientation.getPitch()));
+			com.cfar.swim.droneconnect.Attitude attitude = this.blockingStub.getAttitude(request);
+			aircraftPitch = Angle.fromRadians(attitude.getPitch());
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
@@ -170,8 +176,8 @@ public class DronekitDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Null request = Null.newBuilder().build();
-			com.cfar.swim.droneconnect.Orientation orientation = this.blockingStub.getOrientation(request);
-			aircraftBank = new Angle( Angle.fromRadians(orientation.getBank()));
+			com.cfar.swim.droneconnect.Attitude attitude = this.blockingStub.getAttitude(request);
+			aircraftBank = Angle.fromRadians(attitude.getBank());
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
@@ -189,8 +195,8 @@ public class DronekitDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Null request = Null.newBuilder().build();
-			com.cfar.swim.droneconnect.Orientation orientation = this.blockingStub.getOrientation(request);
-			aircraftYaw = new Angle( Angle.fromRadians(orientation.getYaw()));
+			com.cfar.swim.droneconnect.Attitude attitude = this.blockingStub.getAttitude(request);
+			aircraftYaw = Angle.fromRadians(attitude.getYaw());
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
@@ -220,6 +226,33 @@ public class DronekitDatalink extends Datalink {
 		}
 		
 		return aircraftPosition;
+	}
+	
+	/**
+	 * Gets the aircraft position via this dronekit datalink.
+	 * 
+	 * @return the aircraft position obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftTimedPosition()
+	 */
+	public Waypoint getAircraftTimedPosition() {
+		Waypoint aircraftTimedPosition = null;
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			TimedPosition timedPosition = this.blockingStub.getTimedPosition(request);
+			aircraftTimedPosition = new Waypoint( new Position(
+								Angle.fromDegrees(timedPosition.getPosition().getLat()),
+								Angle.fromDegrees(timedPosition.getPosition().getLon()),
+								timedPosition.getPosition().getGpsAltitude()));
+			Time time = timedPosition.getTime();
+			aircraftTimedPosition.setAto(ZonedDateTime.of(time.getYear(), time.getMonth(), time.getDay(),
+					time.getHour(), time.getMinute(), time.getSecond(), 0,
+					ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftTimedPosition;
 	}
 	
 	/**
@@ -464,6 +497,73 @@ public class DronekitDatalink extends Datalink {
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
+	}
+	
+	/**
+	 * Gets the next position in the mission plan uploaded to the aircraft. 
+	 * 
+	 * @return the next position in the mission plan
+	 * 
+	 * @see Datalink#getNextWaypoint()
+	 */
+	@Override
+	public Position getNextWaypoint() {
+		Position nextPosition = null;
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			com.cfar.swim.droneconnect.Position position = this.blockingStub.getNextWaypoint(request);
+			nextPosition = new Waypoint( new Position(
+								Angle.fromDegrees(position.getLat()),
+								Angle.fromDegrees(position.getLon()),
+								position.getGpsAltitude()));
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return nextPosition;
+	}
+	
+	/**
+	 * Gets a string representing the current status of the aircraft.
+	 * 
+	 * @return a string with the current status of the aircraft
+	 * 
+	 * @see Datalink#getStatus()
+	 */
+	@Override
+	public String getStatus() {
+		String aircraftStatus = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			com.cfar.swim.droneconnect.Status status = this.blockingStub.getStatus(request);
+			aircraftStatus = status.getStatus();
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftStatus;
+	}
+	
+	/**
+	 * Checks if the aircraft is airborne.
+	 * 
+	 * @return true if the aircraft is airborne, false otherwise
+	 * 
+	 * @see Datalink#isAirborne()
+	 */
+	@Override
+	public boolean isAirborne() {
+		boolean isAirborne = false;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			isAirborne = this.blockingStub.getStatus(request).getStatus().equals("ACTIVE");
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return isAirborne;
 	}
 	
 }
