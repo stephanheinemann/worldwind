@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.connections;
 import java.time.ZonedDateTime;
 import java.util.Iterator;
 
+import com.cfar.swim.droneconnect.Null;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.planning.Waypoint;
@@ -396,6 +397,19 @@ public class SimulatedDatalink extends Datalink {
 	public Position getNextWaypoint() {
 		// TODO: Implement
 		return null;
+	}
+	
+	/**
+	 * Gets the index of the next position in the mission plan uploaded to the aircraft. 
+	 * 
+	 * @return the index of the next position in the mission plan
+	 * 
+	 * @see Datalink#getNextWaypointIndex()
+	 */
+	@Override
+	public int getNextWaypointIndex() {
+		// TODO: Implement
+		return -1;
 	}
 	
 	/**

@@ -40,7 +40,7 @@ package com.cfar.swim.worldwind.registries.environments;
 public class SamplingEnvironmentProperties extends EnvironmentProperties {
 
 	/** the resolution of this sampling environment */
-	private double resolution = 5d;
+	private double resolution = 2d;
 
 	/**
 	 * Constructs a new sampling environment properties bean using default floor and

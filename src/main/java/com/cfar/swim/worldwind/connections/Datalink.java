@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.cfar.swim.droneconnect.Null;
 import com.cfar.swim.worldwind.planning.TrackPoint;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -270,6 +271,13 @@ public abstract class Datalink implements Connection {
 	public abstract Position getNextWaypoint();
 	
 	/**
+	 * Gets the index of the next position in the mission plan uploaded to the aircraft. 
+	 * 
+	 * @return the index of the next position in the mission plan
+	 */
+	public abstract int getNextWaypointIndex();
+	
+	/**
 	 * Gets a string representing the current status of the aircraft.
 	 * 
 	 * @return a string with the current status of the aircraft
@@ -382,10 +390,6 @@ public abstract class Datalink implements Connection {
 				track.removeFirst();
 			}
 			// add new track point
-			System.out.println("Status "+getStatus()+ " airborne? "+ isAirborne());
-			System.out.println("AAAAAAAA");
-			System.out.println("Next Position: "+ getNextWaypoint());
-			System.out.println("MonitorA");
 			BasicMarkerAttributes attributes = new BasicMarkerAttributes(
 					 Material.GREEN, BasicMarkerShape.ORIENTED_SPHERE, 1d);
 			attributes.setHeadingMaterial(Material.GREEN);

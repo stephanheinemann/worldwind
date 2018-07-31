@@ -83,17 +83,13 @@ public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 					"Online Planning",
 					"the starting position of the plan is updated as the aircraft moves until it reaches the goal",
 					CATEGORY_ONLINE);
-			PropertyDescriptor updateStep = this.createProperty(beanClass, "updateStep",
-					"Time Step (s)",
-					"the time step to update the current position of the aircraft",
-					CATEGORY_ONLINE);
 			PropertyDescriptor positionThreshold = this.createProperty(beanClass, "positionThreshold",
 					"Position Threshold (m)",
 					"the distance threshold to consider a position displacement as worthy of a new plan",
 					CATEGORY_ONLINE);
 
 			PropertyDescriptor rvNew[] = { sampling, minimumQuality, maximumQuality, qualityImprovement, online,
-					updateStep, positionThreshold };
+					positionThreshold };
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 

@@ -44,6 +44,7 @@ import com.cfar.swim.droneconnect.TakeoffToAltitude;
 import com.cfar.swim.droneconnect.Time;
 import com.cfar.swim.droneconnect.TimedPosition;
 import com.cfar.swim.worldwind.planning.Waypoint;
+import com.jogamp.common.util.SyncedRingbuffer;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -422,6 +423,12 @@ public class DronekitDatalink extends Datalink {
 				pso.onNext(pos);
 			}
 			pso.onCompleted();
+			// TODO: sleep introduced to emulate stub as blocking
+			try {
+				Thread.sleep(3000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
@@ -511,7 +518,7 @@ public class DronekitDatalink extends Datalink {
 		Position nextPosition = null;
 		if (this.isConnected()) {
 			Null request = Null.newBuilder().build();
-			com.cfar.swim.droneconnect.Position position = this.blockingStub.getNextWaypoint(request);
+			com.cfar.swim.droneconnect.Position position = this.blockingStub.getNextWaypoint(request).getPosition();
 			nextPosition = new Waypoint( new Position(
 								Angle.fromDegrees(position.getLat()),
 								Angle.fromDegrees(position.getLon()),
@@ -523,6 +530,29 @@ public class DronekitDatalink extends Datalink {
 		return nextPosition;
 	}
 	
+	/**
+	 * Gets the index of the next position in the mission plan uploaded to the
+	 * aircraft. Returns -1 if there is no next valid waypoint.
+	 * 
+	 * @return the index of the next position in the mission plan
+	 * 
+	 * @see Datalink#getNextWaypointIndex()
+	 */
+	@Override
+	public int getNextWaypointIndex() {
+		int index = -1;
+
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			index = this.blockingStub.getNextWaypoint(request).getIndex();
+		} else {
+			System.err.println("Exception in Next Waypoint Index");
+			throw new IllegalStateException("dronekit is not connected");
+		}
+
+		return index;
+	}
+
 	/**
 	 * Gets a string representing the current status of the aircraft.
 	 * 

@@ -182,9 +182,6 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 	/** the state of the online capabilities of the planner */
 	private boolean online = true;
 	
-	/** the time step to update the current position of the aircraft */
-	private double updateStep = 5d;
-	
 	/** the distance threshold to consider a position displacement as worthy of a new plan */
 	private double positionThreshold = 2d; 
 	
@@ -204,24 +201,6 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 	 */
 	public void setOnline(boolean online) {
 		this.online = online;
-	}
-	
-	/**
-	 * Gets the  time step to update the current position of the aircraft.
-	 * 
-	 * @return the time step to update the current position
-	 */
-	public double getUpdateStep() {
-		return updateStep;
-	}
-
-	/**
-	 * Sets the time step to update the current position of the aircraft.
-	 * 
-	 * @param updateStep the time step to update the current position
-	 */
-	public void setUpdateStep(double updateStep) {
-		this.updateStep = updateStep;
 	}
 
 	/**

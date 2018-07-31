@@ -161,12 +161,13 @@ public class PlannerFactory implements Factory<Planner> {
 			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
 					properties.getBias(), properties.getMaxIter(),
 					properties.getStrategy(), properties.getExtension(), properties.getSampling(),
-					properties.isOnline(), properties.getPositionThreshold(), properties.getUpdateStep());
+					properties.isOnline(), properties.getPositionThreshold());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((ARRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ARRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ARRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			((ARRTreePlanner) planner).setDatalink(scenario.getDatalink());
 		} else if (specification.getId().equals(Specification.PLANNER_DRRT_ID)) {
 			DRRTreeProperties properties = (DRRTreeProperties) specification.getProperties();
 			planner = new DRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),

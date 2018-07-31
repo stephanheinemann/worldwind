@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.ai;
 
+import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 /**
@@ -51,11 +52,18 @@ public interface OnlinePlanner extends Planner {
 	public boolean isOnline();
 	
 	/**
-	 * Gets the  time step to update the current position of the aircraft.
+	 * Gets the datalink connection of this planner.
 	 * 
-	 * @return the time step to update the current position
+	 * @return the datalink
 	 */
-	public double getUpdateStep();
+	public Datalink getDatalink();
+
+	/**
+	 * Sets the datalink connection of this planner.
+	 * 
+	 * @param datalink the datalink to set
+	 */
+	public void setDatalink(Datalink datalink);
 
 	/**
 	 * Gets the distance threshold to consider a position displacement as worthy of a new plan.
