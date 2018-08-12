@@ -1302,7 +1302,17 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 		return this.getWaypointList().stream().sorted((p1, p2) -> Double
 				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
+				.filter(p -> !p.equals(position))
 				.limit(kNear).collect(Collectors.toList());
+
+	}
+	
+	public List<? extends Position> findNearestDist(Position position, double maxDist) {
+
+		return this.getWaypointList().stream().sorted((p1, p2) -> Double
+				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
+				.filter(p -> this.getDistance(p, position) <= maxDist && !p.equals(position))
+				.collect(Collectors.toList());
 
 	}
 

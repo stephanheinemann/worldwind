@@ -45,12 +45,15 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	/** the description of this planner properties bean */
 	private final static String DESCRIPTION_RRT = "Rapidly-exploring Random Tree: Basic version of a RRT which grows a tree from a start to a goal positions by continuously sampling random points from the environment. It does not take the cost of each position into account and ignores traversable obstacles.";
 
+	/** the distance defining the goal region */
+	private double goalThreshold = 5d;
+
 	/** the maximum number of sampling iterations */
 	private int maxIter = 3_000;
 
 	/** the expansion strategy for the planner */
 	private Strategy strategy = Strategy.EXTEND;
-	
+
 	/** the extension technique for the planner */
 	private Extension extension = Extension.LINEAR;
 
@@ -196,6 +199,24 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 */
 	public void setBias(int bias) {
 		this.bias = bias;
+	}
+
+	/**
+	 * Gets the distance defining the goal region.
+	 * 
+	 * @return the distance defining the goal region
+	 */
+	public double getGoalThreshold() {
+		return goalThreshold;
+	}
+
+	/**
+	 * Sets the distance defining the goal region.
+	 * 
+	 * @param goalThreshold the distance defining the goal region
+	 */
+	public void setGoalThreshold(double goalThreshold) {
+		this.goalThreshold = goalThreshold;
 	}
 
 }

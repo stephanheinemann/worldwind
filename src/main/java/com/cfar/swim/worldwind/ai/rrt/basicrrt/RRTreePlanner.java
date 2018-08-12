@@ -66,7 +66,7 @@ import gov.nasa.worldwind.render.Path;
 public class RRTreePlanner extends AbstractPlanner {
 
 	/** the radius of the sphere defining the goal region */
-	private static final double GOAL_THRESHOLD = 1d; // meters?
+	private double goalThreshold = 5d;
 
 	/** the maximum number of sampling iterations */
 	private final int MAX_ITER;
@@ -207,6 +207,24 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.waypointNew = waypointNew;
 	}
 
+	/**
+	 * Gets the distance defining the goal region.
+	 * 
+	 * @return the distance defining the goal region
+	 */
+	public double getGoalThreshold() {
+		return goalThreshold;
+	}
+
+	/**
+	 * Sets the distance defining the goal region.
+	 * 
+	 * @param goalThreshold the distance defining the goal region
+	 */
+	public void setGoalThreshold(double goalThreshold) {
+		this.goalThreshold = goalThreshold;
+	}
+	
 	/**
 	 * Gets the maximum number of iterations for the planner to attempt to connect
 	 * to goal.
@@ -576,7 +594,7 @@ public class RRTreePlanner extends AbstractPlanner {
 
 	/**
 	 * Computes the estimated time over(eto) an waypoint using the eto of the
-	 * previous waypoint and the aircraft capabilities
+	 * previous waypoint and the aircraft capabilities.
 	 * 
 	 * @param source the previous waypoint with known eto
 	 * @param target the following waypoint with eto to be calculated
@@ -593,23 +611,34 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Adds the expanded waypoint to the list of waypoints
+	 * Adds the expanded waypoint to the list of waypoints.
 	 * 
 	 * @param waypointNew the expanded waypoint
 	 */
 	protected void addVertex(RRTreeWaypoint waypointNew) {
+		if(getWaypointList().contains(waypointNew))
+			this.getWaypointList().remove(waypointNew);
 		this.getWaypointList().add(waypointNew);
 	}
 
 	/**
 	 * Adds an edge (with set cost intervals) between the expanded waypoint and its
-	 * parent to the list of edges
+	 * parent to the list of edges.
 	 * 
 	 * @param waypoint the expanded waypoint
 	 */
 	protected void addEdge(RRTreeWaypoint waypoint) {
-		RRTreeWaypoint parent = waypoint.getParent();
-
+		this.addEdge(waypoint, waypoint.getParent());
+	}
+	
+	/**
+	 * Adds an edge (with set cost intervals) between the expanded waypoint and its
+	 * parent to the list of edges.
+	 * 
+	 * @param waypoint the expanded waypoint
+	 * @param parent the parent of the expanded waypoint
+	 */
+	protected void addEdge(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
 		Vec4 source = this.getEnvironment().getGlobe().computePointFromPosition(parent);
 		Vec4 target = this.getEnvironment().getGlobe().computePointFromPosition(waypoint);
 
@@ -620,13 +649,17 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Removes an edge from the list of edges
+	 * Removes an edge from the list of edges.
 	 * 
 	 * @param waypoint the waypoint whose edge (to its parent) is to be removed
 	 */
 	protected void removeEdge(RRTreeWaypoint waypoint) {
+		this.removeEdge(waypoint, waypoint.getParent());
+	}
+	
+	protected void removeEdge(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
 		List<Edge> edgeList = this.getEdgeList();
-		Edge edge = new Edge(waypoint.getParent(), waypoint);
+		Edge edge = new Edge(parent, waypoint);
 
 		edgeList.removeIf(e -> e.equals(edge));
 	}
@@ -642,6 +675,38 @@ public class RRTreePlanner extends AbstractPlanner {
 		double g = waypoint.getParent().getG();
 		g += this.getEnvironment().getStepCost(waypoint.getParent(), waypoint, waypoint.getParent().getEto(),
 				waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
+
+		return g;
+	}
+	
+	/**
+	 * Computes the estimated cost of a specified RRT waypoint through a specific
+	 * parent. If there is no edge containing both positions, a new temporary edge
+	 * is created. If the created edge is in conflict with terrain obstacles the
+	 * cost is set to Infinity.
+	 * 
+	 * @param waypoint the specified RRT waypoint in globe coordinates
+	 * @param parent the specific RRT waypoint to be considered as parent
+	 * 
+	 * @return g the estimated cost (g-value)
+	 */
+	protected double computeCost(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
+		double g = parent.getG();
+		
+		if(this.getEnvironment().getEdge(parent, waypoint).isPresent())
+			g += this.getEnvironment().getStepCost(parent, waypoint, parent.getEto(),
+				waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
+		else {
+			if(this.getEnvironment().checkConflict(waypoint, parent, getAircraft()))
+				g = Double.POSITIVE_INFINITY;
+			else {
+				this.addEdge(waypoint, parent);
+				g += this.getEnvironment().getStepCost(parent, waypoint, parent.getEto(),
+						waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
+				this.removeEdge(waypoint, parent);
+			}
+		}
+			
 
 		return g;
 	}
@@ -671,7 +736,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	protected boolean checkGoal(Position position) {
-		return this.getEnvironment().getDistance(position, this.getGoal()) < GOAL_THRESHOLD;
+		return this.getEnvironment().getDistance(position, this.getGoal()) < this.getGoalThreshold();
 	}
 
 	/**

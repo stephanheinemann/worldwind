@@ -79,8 +79,12 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 					"Goal Bias (%)",
 					"the bias of the sampling algorithm towards goal",
 					CATEGORY_SAMPLING);
+			PropertyDescriptor goalThreshold = this.createProperty(beanClass, "goalThreshold",
+					"Goal Threshold (m)",
+					"the distance defining the goal region",
+					CATEGORY_SAMPLING);
 			
-			PropertyDescriptor rvNew[] = {maxIter, strategy, extension, epsilon, bias};
+			PropertyDescriptor rvNew[] = {maxIter, strategy, extension, epsilon, bias, goalThreshold};
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 
