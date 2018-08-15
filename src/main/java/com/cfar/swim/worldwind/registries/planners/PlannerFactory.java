@@ -237,6 +237,9 @@ public class PlannerFactory implements Factory<Planner> {
 			((FAPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 			((FAPRMPlanner) planner).setLambda(properties.getLambda());
 			((FAPRMPlanner) planner).setDesirabilityZones(scenario.getDesirabilityZones());
+			((FAPRMPlanner) planner).setOnlineStatus(properties.isOnline());
+			((FAPRMPlanner) planner).setPositionThreshold(properties.getPositionThreshold());
+			((FAPRMPlanner) planner).setDatalink(scenario.getDatalink());
 		} else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
 			FADPRMProperties properties = (FADPRMProperties) specification.getProperties();
 			planner = new FADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());

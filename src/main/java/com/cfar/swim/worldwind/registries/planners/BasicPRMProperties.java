@@ -44,13 +44,13 @@ public class BasicPRMProperties extends AbstractPlannerProperties implements Any
 	private final static String DESCRIPTION_BASICPRM = "Probabilistic Roadmap: Basic version of a PRM that constructs a roadmap by sampling points in a continuous environment. Then, a deterministic planner is used to compute the desired trajectory.";
 
 	/** the maximum number of sampling iterations */
-	private int maxIter = 300;
+	private int maxIter = 500;
 
 	/** the maximum number of neighbors a waypoint can be connected to */
-	private int maxNeighbors = 20;
+	private int maxNeighbors = 15;
 
 	/** the maximum distance between two neighboring waypoints */
-	private double maxDistance = 200;
+	private double maxDistance = 30;
 
 	/** the query planner of this PRM planner properties bean */
 	private QueryPlanner queryPlanner = QueryPlanner.FAS;

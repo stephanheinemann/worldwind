@@ -31,7 +31,13 @@ package com.cfar.swim.worldwind.ai.prm.basicprm;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.ai.AnytimePlanner;
@@ -507,29 +513,54 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 	 * waypoints. It selects the waypoints with fewer neighbors and creates a new
 	 * waypoint around each of them.
 	 */
+	@SuppressWarnings("deprecation")
 	public void postConstruction() {
-		int maxPostIter = maxIter / 3;
-		int num = 0;
-		while (num < maxPostIter) {
-			double edgeCount = Double.POSITIVE_INFINITY;
-			Waypoint toExpand = null;
-			for (Waypoint waypoint : this.getWaypointList()) {
-				if (this.getEdgeList().stream().filter(s -> s.contains(waypoint)).count() < edgeCount) {
-					toExpand = waypoint;
-				}
-			}
-			double halfDistance = this.maxDistance / (Math.sqrt(3));
-			Waypoint newWaypoint = this.createWaypoint(this.samplePosition(toExpand, halfDistance));
+		//TODO : Review how many iterations to consider for post construction step (it is time consuming)
+		int maxPostIter = maxIter / 6;
+		HashMap<Waypoint, Integer> map = new HashMap<Waypoint, Integer>();
+		TreeMap<Waypoint, Integer> waypoints = new TreeMap<Waypoint, Integer>(new ValueComparator(map));
+
+		for (Waypoint waypoint : this.getWaypointList()) {
+			int connectedEdges = (int) this.getEdgeList().stream().filter(s -> s.contains(waypoint)).count();
+			map.put(waypoint, new Integer(connectedEdges));
+		}
+		
+		waypoints.putAll(map);
+		
+	    Set<Waypoint> keys = waypoints.keySet();
+	    @SuppressWarnings("rawtypes")
+		Iterator i = keys.iterator();
+	    for (int num = 0; num < maxPostIter; num++) {
+	    	Waypoint key = (Waypoint) i.next();
+	    	double halfDistance = this.maxDistance / (Math.sqrt(3));
+			Waypoint newWaypoint = this.createWaypoint(this.samplePosition(key, halfDistance));
 			while (this.getEnvironment().checkConflict(newWaypoint, getAircraft())) {
 				halfDistance = halfDistance / 2;
-				newWaypoint = this.createWaypoint(this.samplePosition(toExpand, halfDistance));
+				newWaypoint = this.createWaypoint(this.samplePosition(key, halfDistance));
 			}
 			this.getWaypointList().add(newWaypoint);
 			this.connectWaypoint(newWaypoint);
-			num++;
-		}
+	    }
 	}
 
+	class ValueComparator implements Comparator<Waypoint> {
+	    Map<Waypoint, Integer> base;
+
+	    public ValueComparator(Map<Waypoint, Integer> base) {
+	        this.base = base;
+	    }
+
+	    // Note: this comparator imposes orderings that are inconsistent with
+	    // equals.
+	    public int compare(Waypoint a, Waypoint b) {
+	        if (base.get(a) >= base.get(b)) {
+	            return 1;
+	        } else {
+	            return -1;
+	        } // returning 0 would merge keys
+	    }
+	}
+	
 	/**
 	 * Samples a position from a continuous space (box) defined around a given
 	 * position with specified edge length.
@@ -738,7 +769,6 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 			this.postConstruction();
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
-			this.postConstruction();
 		}
 
 		Trajectory trajectory = this.findPath(origin, destination, etd, this.planner);
@@ -769,10 +799,9 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination, waypoints);
-//			this.postConstruction();
+			this.postConstruction();
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination, waypoints);
-			this.postConstruction();
 		}
 
 		Trajectory trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
@@ -797,6 +826,29 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 			supports = (environment instanceof SamplingEnvironment);
 		}
 
+		return supports;
+	}
+	
+	/**
+	 * Indicates whether or not this PRM planner supports specified
+	 * waypoints.
+	 * 
+	 * @param waypoints the waypoints
+	 * 
+	 * @return true if waypoints are contained in the planner's environment,
+	 *         false otherwise
+	 */
+	@Override
+	public boolean supports(List<Position> waypoints) {
+		boolean supports = false;
+		
+		supports = super.supports(waypoints);
+		
+		for(Position waypoint : waypoints) {
+			if(this.getEnvironment().checkConflict(waypoint, getAircraft()))
+				supports = false;
+		}
+		
 		return supports;
 	}
 }

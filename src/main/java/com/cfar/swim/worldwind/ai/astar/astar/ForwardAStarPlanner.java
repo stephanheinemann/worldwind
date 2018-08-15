@@ -366,9 +366,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @return the neighbors of the expanded A* waypoint
 	 */
 	protected Set<? extends AStarWaypoint> expand(AStarWaypoint waypoint) {
-		
 	    Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
-
 	    // if a start has no neighbors, then it is not a waypoint in the
 	    // environment and its adjacent waypoints have to be determined for
 	    // initial expansion
@@ -554,7 +552,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected void compute() {
 		while (this.canExpand()) {
-
 			AStarWaypoint source = this.pollExpandable();
 			if (source.equals(this.getGoal())) {
 				this.connectPlan(source);
@@ -573,6 +570,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 					}
 				}
 			}
+		}
+		if(this.open.size()==0) {
+			System.out.println("Could not find a path");
+			this.plan.clear();
+			return;
 		}
 	}
 	
@@ -682,4 +684,83 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		return supports;
 	}
 	
+	// LazyPRM methods to correct the planner without creating a new A* planner
+	/**
+	 * Corrects the A* waypoints in open and closed that are sucessors of a conflict
+	 * waypoint found in the trajectory.
+	 * 
+	 * @param waypoint the conflict waypoint
+	 * @param waypointBefore the waypoint before the conflict waypoint
+	 */
+	public void correctWaypoint(Waypoint waypoint, Waypoint waypointBefore) {
+
+		HashSet<AStarWaypoint> toBeCorrected = new HashSet<AStarWaypoint>();
+		toBeCorrected.add((AStarWaypoint) waypoint);
+		toBeCorrected = this.propagateCorrections(toBeCorrected);
+		for (AStarWaypoint wpt : toBeCorrected) {
+			wpt.setG(Double.POSITIVE_INFINITY);
+			wpt.setParent(null);
+		}
+		this.open.removeAll(toBeCorrected);
+		this.closed.removeAll(toBeCorrected);
+		this.open.remove((AStarWaypoint) waypoint);
+
+		AStarWaypoint wpbefore = null;
+		for (AStarWaypoint wptaux : this.closed) {
+			if (wptaux.equals(waypointBefore)) {
+				wpbefore = wptaux;
+			}
+		}
+		this.removeExpanded(wpbefore);
+		this.addExpandable(wpbefore);
+
+	}
+
+	/**
+	 * Propagates the corrections to all A* waypoints.
+	 * 
+	 * @param waypoints the set of waypoints to correct
+	 * 
+	 * @return the total set of waypoints to correct
+	 */
+	public HashSet<AStarWaypoint> propagateCorrections(HashSet<AStarWaypoint> waypoints) {
+		HashSet<AStarWaypoint> newWaypoints = new HashSet<AStarWaypoint>();
+		for (AStarWaypoint waypoint : waypoints) {
+			for (AStarWaypoint wpt : this.open) {
+				if (wpt.getParent() == null)
+					continue;
+				if (wpt.getParent().equals(waypoint)) {
+					newWaypoints.add(wpt);
+				}
+			}
+			for (AStarWaypoint wpt : this.closed) {
+				if (wpt.getParent() == null)
+					continue;
+				if (wpt.getParent().equals(waypoint)) {
+					newWaypoints.add(wpt);
+				}
+			}
+
+		}
+		if (newWaypoints.size() == 0) {
+			return waypoints;
+		} else {
+			this.propagateCorrections(newWaypoints);
+		}
+		waypoints.addAll(newWaypoints);
+		return waypoints;
+	}
+
+	/**
+	 * Computes a new path, considering corrected waypoints.
+	 * 
+	 * @return the planned trajectory from the origin to the destination with the
+	 *         estimated time of departure
+	 */
+	public Trajectory continueComputing() {
+		this.compute();
+		Trajectory trajectory = this.createTrajectory();
+		this.revisePlan(trajectory);
+		return trajectory;
+	}
 }

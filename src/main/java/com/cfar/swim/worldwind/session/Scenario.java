@@ -710,7 +710,7 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public void addDesirabilityZone(Sector sector, double desirability) {
 		gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.getGlobe(), 1d,
-				sector, 0d, 100d);
+				sector, 0d, 200d);
 		Box envBox = new Box(bb);
 
 		DesirabilityZone desirabilityZone = new DesirabilityZone(envBox, desirability);
@@ -726,6 +726,14 @@ public class Scenario implements Identifiable, Enableable {
 	 */
 	public ArrayList<DesirabilityZone> getDesirabilityZones() {
 		return this.desirabilityZones;
+	}
+	
+	/**
+	 * Removes all desirability zones of this scenario.
+	 */
+	public void clearDesirabilityZones() {
+		this.desirabilityZones.clear();
+		this.pcs.firePropertyChange("desirabilityZones", null, this.desirabilityZones);
 	}
 
 	/**

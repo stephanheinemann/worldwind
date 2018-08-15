@@ -30,16 +30,19 @@
 package com.cfar.swim.worldwind.ai.prm.lazyprm;
 
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
 
 import com.cfar.swim.worldwind.ai.AbstractPlanner;
 import com.cfar.swim.worldwind.ai.Planner;
+import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
+import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
+import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.google.common.collect.Iterables;
@@ -106,9 +109,13 @@ public class LazyPRM extends BasicPRM {
 
 		while (num < maxIter) {
 			Waypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
-			this.getWaypointList().add(waypoint);
-			this.connectWaypoint(waypoint);
-			num++;
+			// checks conflicts with nodes => half lazy mode
+			// if collision wasn't checked for nodes => full lazy mode
+			if (!this.getEnvironment().checkConflict(waypoint, getAircraft())) {
+				this.getWaypointList().add(waypoint);
+				this.connectWaypoint(waypoint);
+				num++;
+			}
 		}
 
 	}
@@ -121,63 +128,77 @@ public class LazyPRM extends BasicPRM {
 	 * 
 	 * @return true if this trajectory is feasible, false otherwise
 	 */
-	public boolean correctTrajectory(Trajectory trajectory) {
+	public boolean correctTrajectoryFull(ForwardAStarPlanner aStar, Trajectory trajectory) {
 		if (trajectory == null)
 			return false;
-
-		HashSet<Waypoint> conflictWaypoints = new HashSet<Waypoint>();
-		HashSet<Edge> conflictEdges = new HashSet<Edge>();
-
-		for (Waypoint waypoint : trajectory.getWaypoints()) {
-			if (this.getEnvironment().checkConflict(waypoint, getAircraft()))
-				conflictWaypoints.add(waypoint);
-		}
-
-		if (!conflictWaypoints.isEmpty()) {
-			this.correctWaypoints(conflictWaypoints);
-			return false;
-		}
-		Waypoint wpt1 = Iterables.get(trajectory.getWaypoints(), 0);
-		Waypoint wpt2;
-		for (int i = 0; i < trajectory.getLength() - 1; i++) {
-			wpt2 = Iterables.get(trajectory.getWaypoints(), i + 1);
-			if (this.getEnvironment().checkConflict(wpt1, wpt2, getAircraft())) {
-				conflictEdges.add(new Edge(wpt1, wpt2));
+		
+		int index;
+		for(int i = 0; i < trajectory.getLength(); i++) {
+			// if i is even then select a waypoint in the natural order starting from start
+			// if i is odd then select a waypoint in the inverse order starting from goal
+			index = i/2; 
+			if((i % 2) == 1) {
+				index = trajectory.getLength() - 1 - index;		
 			}
-			wpt1 = wpt2;
+			Waypoint waypoint = Iterables.get(trajectory.getWaypoints(), index);
+			Waypoint waypointBefore = null;
+			if(index>0)
+				waypointBefore = Iterables.get(trajectory.getWaypoints(), index-1);
+			else
+				waypointBefore = Iterables.get(trajectory.getWaypoints(), index);
+			
+			if (this.getEnvironment().checkConflict(waypoint, getAircraft())) {
+				this.getWaypointList().removeIf(s -> s.equals(waypoint));
+				this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
+				aStar.correctWaypoint(waypoint, waypointBefore);
+				return false;
+			}	
 		}
-		if (!conflictEdges.isEmpty()) {
-			this.correctEdges(conflictEdges);
-			return false;
+		
+		for (int i = 0; i < trajectory.getLength() - 2; i++) {
+			index = i/2; 
+			if((i % 2) == 1) {
+				index = trajectory.getLength() - 2 - index;		
+			}
+			Waypoint waypointBefore = Iterables.get(trajectory.getWaypoints(), index);
+			Waypoint waypoint = Iterables.get(trajectory.getWaypoints(), index+1);
+			if (this.getEnvironment().checkConflict(waypointBefore, waypoint, getAircraft())) {
+				this.getEdgeList().remove(new Edge(waypointBefore, waypoint));
+				aStar.correctWaypoint(waypoint, waypointBefore);
+				return false;
+			}
 		}
 		return true;
 	}
 	
+	
 	/**
-	 * Corrects the waypoint and edge list by removing the waypoints that are in
+	 * Corrects a trajectory, checking if any of its waypoints or edges is in
 	 * conflict with terrain obstacles.
 	 * 
-	 * @param conflictWaypoints the set of waypoints that are in conflict with
-	 *            terrain obstacles
-	 */
-	public void correctWaypoints(HashSet<Waypoint> conflictWaypoints) {
-		for (Waypoint waypoint : conflictWaypoints) {
-			this.getWaypointList().remove(waypoint);
-			this.getEdgeList().removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
-		}
-	}
-
-	/**
-	 * Corrects the edge list by removing the edges that are in conflict with
-	 * terrain obstacles.
+	 * @param trajectory the planned trajectory
 	 * 
-	 * @param conflictEdges the set of edges that are in conflict with terrain
-	 *            obstacles
+	 * @return true if this trajectory is feasible, false otherwise
 	 */
-	public void correctEdges(HashSet<Edge> conflictEdges) {
-		for (Edge edge : conflictEdges) {
-			this.getEdgeList().remove(edge);
+	public boolean correctTrajectoryHalf(ForwardAStarPlanner aStar, Trajectory trajectory) {
+		if (trajectory == null)
+			return false;
+		
+		int index;
+		for (int i = 0; i < trajectory.getLength() - 2; i++) {
+			index = i/2; 
+			if((i % 2) == 1) {
+				index = trajectory.getLength() - 2 - index;		
+			}
+			Waypoint waypointBefore = Iterables.get(trajectory.getWaypoints(), index);
+			Waypoint waypoint = Iterables.get(trajectory.getWaypoints(), index+1);
+			if (this.getEnvironment().checkConflict(waypointBefore, waypoint, getAircraft())) {
+				this.getEdgeList().remove(new Edge(waypointBefore, waypoint));
+				aStar.correctWaypoint(waypoint, waypointBefore);
+				return false;
+			}
 		}
+		return true;
 	}
 	
 	/**
@@ -229,6 +250,121 @@ public class LazyPRM extends BasicPRM {
 	}
 
 	/**
+	 * Invokes a query planner to find a trajectory from an origin to a destination
+	 * at a specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * @param planner the planner used to find a path in this populated environment
+	 * 
+	 * @return the planned trajectory from the origin to the destination with the
+	 *         estimated time of departure
+	 */
+	public Trajectory findPath(Position origin, Position destination, ZonedDateTime etd, QueryPlanner planner) {
+		Trajectory trajectory = null;
+		switch (planner) {
+		case FAS:
+			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());
+			aStar.setCostPolicy(this.getCostPolicy());
+			aStar.setRiskPolicy(this.getRiskPolicy());
+			this.setRevisionListeners(aStar);
+			trajectory = aStar.plan(origin, destination, etd);
+			while (!this.correctTrajectoryHalf(aStar, trajectory)) {
+				trajectory = aStar.continueComputing();
+			}
+			break;
+		case ARA:
+			ARAStarPlanner araStar = new ARAStarPlanner(this.getAircraft(), this.getEnvironment());
+			araStar.setCostPolicy(this.getCostPolicy());
+			araStar.setRiskPolicy(this.getRiskPolicy());
+			araStar.setMinimumQuality(this.getMinimumQuality());
+			araStar.setMaximumQuality(this.getMaximumQuality());
+			araStar.setQualityImprovement(this.getQualityImprovement());
+			this.setRevisionListeners(araStar);
+			trajectory = araStar.plan(origin, destination, etd);
+			while (!this.correctTrajectoryHalf(araStar, trajectory)) {
+				trajectory = araStar.continueComputing();
+			}
+			break;
+		/*
+		 * case AD: ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(),
+		 * this.getEnvironment()); adStar.setCostPolicy(this.getCostPolicy());
+		 * adStar.setRiskPolicy(this.getRiskPolicy());
+		 * adStar.addPlanRevisionListener(new PlanRevisionListener() {
+		 * 
+		 * @Override public void revisePlan(Trajectory trajectory) { for
+		 * (PlanRevisionListener listener : planRevisionListeners) {
+		 * listener.revisePlan(trajectory); } } public void reviseObstacle() { for
+		 * (PlanRevisionListener listener : planRevisionListeners) {
+		 * listener.reviseObstacle(); } } }); trajectory = adStar.plan(origin,
+		 * destination, etd); break;
+		 */
+		}
+		return trajectory;
+	}
+
+	/**
+	 * Invokes a query planner to find a trajectory from an origin to a destination
+	 * along waypoints at a specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * @param planner the planner used to find a path in this populated environment
+	 * 
+	 * @return the planned trajectory from the origin to the destination with the
+	 *         estimated time of departure
+	 */
+
+	public Trajectory findPath(Position origin, Position destination, ZonedDateTime etd, List<Position> waypoints,
+			QueryPlanner planner) {
+		Trajectory trajectory = null;
+
+		switch (planner) {
+		case FAS:
+			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());
+			aStar.setCostPolicy(this.getCostPolicy());
+			aStar.setRiskPolicy(this.getRiskPolicy());
+			this.setRevisionListeners(aStar);
+			trajectory = aStar.plan(origin, destination, waypoints, etd);
+			while (!this.correctTrajectoryHalf(aStar, trajectory)) {
+				trajectory = aStar.plan(origin, destination, waypoints, etd);
+			}
+			break;
+		case ARA:
+			ARAStarPlanner araStar = new ARAStarPlanner(this.getAircraft(), this.getEnvironment());
+			araStar.setCostPolicy(this.getCostPolicy());
+			araStar.setRiskPolicy(this.getRiskPolicy());
+			araStar.setMinimumQuality(this.getMinimumQuality());
+			araStar.setMaximumQuality(this.getMaximumQuality());
+			araStar.setQualityImprovement(this.getQualityImprovement());
+			this.setRevisionListeners(araStar);
+			trajectory = araStar.plan(origin, destination, waypoints, etd);
+			while (!this.correctTrajectoryHalf(araStar, trajectory)) {
+				trajectory = araStar.plan(origin, destination, waypoints, etd);
+			}
+			break;
+		/*
+		 * case AD: ADStarPlanner adStar = new ADStarPlanner(this.getAircraft(),
+		 * this.getEnvironment()); adStar.setCostPolicy(this.getCostPolicy());
+		 * adStar.setRiskPolicy(this.getRiskPolicy());
+		 * adStar.addPlanRevisionListener(new PlanRevisionListener() {
+		 * 
+		 * @Override public void revisePlan(Trajectory trajectory) { for
+		 * (PlanRevisionListener listener : planRevisionListeners) {
+		 * listener.revisePlan(trajectory); } }
+		 * 
+		 * @Override public void reviseObstacle() { for (PlanRevisionListener listener :
+		 * planRevisionListeners) { listener.reviseObstacle(); } } }); trajectory =
+		 * adStar.plan(origin, destination, waypoints, etd); break;
+		 */
+		}
+		return trajectory;
+	}
+
+	
+	/**
 	 * Plans a trajectory from an origin to a destination at a specified estimated
 	 * time of departure.
 	 * 
@@ -253,14 +389,11 @@ public class LazyPRM extends BasicPRM {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination);
-			while (!this.correctTrajectory(trajectory)) {
-				trajectory = this.findPath(origin, destination, etd, this.planner);
-			}
+			super.postConstruction();
+			trajectory = this.findPath(origin, destination, etd, this.planner);
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
-			while (!this.correctTrajectory(trajectory)) {
-				trajectory = this.findPath(origin, destination, etd, this.planner);
-			}
+			trajectory = this.findPath(origin, destination, etd, this.planner);
 		}
 
 		this.revisePlan(trajectory);
@@ -292,14 +425,11 @@ public class LazyPRM extends BasicPRM {
 			this.initialize();
 			this.construct();
 			this.extendsConstruction(origin, destination);
-			while (!this.correctTrajectory(trajectory)) {
-				trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
-			}
+			super.postConstruction();
+			trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
 		} else if (this.getMode() == QueryMode.MULTIPLE) {
 			this.extendsConstruction(origin, destination);
-			while (!this.correctTrajectory(trajectory)) {
-				trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
-			}
+			trajectory = this.findPath(origin, destination, etd, waypoints, this.planner);
 		}
 
 		this.revisePlan(trajectory);

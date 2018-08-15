@@ -35,7 +35,7 @@ package com.cfar.swim.worldwind.registries.planners;
  * @author Henrique Ferreira
  *
  */
-public class FAPRMProperties extends AbstractPlannerProperties implements AnytimePlannerProperties {
+public class FAPRMProperties extends AbstractPlannerProperties implements AnytimePlannerProperties, OnlinePlannerProperties {
 
 	/** the description of this planner properties bean */
 	private final static String DESCRIPTION_FAPRM = "Flexible Anytime PRM: the sampling strategy consists of a trade-off between coverage of the configuration space and a heuristic optimization of the path cost and desirability. It has anytime capabilities.";
@@ -44,7 +44,7 @@ public class FAPRMProperties extends AbstractPlannerProperties implements Anytim
 	private int maxNeighbors = 15;
 
 	/** the maximum distance between two neighboring waypoints */
-	private double maxDistance = 400d;
+	private double maxDistance = 50d;
 
 	/** the bias of the sampling algorithm towards goal */
 	private int bias = 5;
@@ -56,7 +56,7 @@ public class FAPRMProperties extends AbstractPlannerProperties implements Anytim
 	private double maximumQuality = 1d;
 
 	/** the inflation amount to be applied to the current inflation */
-	private double qualityImprovement = 0.1;
+	private double qualityImprovement = 0.3;
 
 	/** the parameter lambda that weights the desirability influence on the cost */
 	private double lambda = 0.5;
@@ -68,7 +68,7 @@ public class FAPRMProperties extends AbstractPlannerProperties implements Anytim
 		super();
 		this.setMinimumQuality(0d);
 		this.setMaximumQuality(1d);
-		this.setQualityImprovement(0.1);
+		this.setQualityImprovement(0.3);
 		this.setDescription(DESCRIPTION_FAPRM);
 	}
 
@@ -240,5 +240,68 @@ public class FAPRMProperties extends AbstractPlannerProperties implements Anytim
 	 */
 	public void setLambda(double lambda) {
 		this.lambda = lambda;
+	}
+	
+	/** the state of the online capabilities of the planner */
+	private boolean online = false;
+	
+	/** the time step to update the current position of the aircraft */
+	private double updateStep = 5d;
+	
+	/** the distance threshold to consider a position displacement as worthy of a new plan */
+	private double positionThreshold = 2d; 
+	
+	/**
+	 * Checks if the online capabilities of the planner mode are active or not.
+	 * 
+	 * @return true if the planner mode is set to online, false otherwise
+	 */
+	public boolean isOnline() {
+		return online;
+	}
+	
+	/**
+	 * Sets the online capabilities of the planner as are active or not.
+	 * 
+	 * @param online the state of the online capabilities
+	 */
+	public void setOnline(boolean online) {
+		this.online = online;
+	}
+	
+	/**
+	 * Gets the  time step to update the current position of the aircraft.
+	 * 
+	 * @return the time step to update the current position
+	 */
+	public double getUpdateStep() {
+		return updateStep;
+	}
+
+	/**
+	 * Sets the time step to update the current position of the aircraft.
+	 * 
+	 * @param updateStep the time step to update the current position
+	 */
+	public void setUpdateStep(double updateStep) {
+		this.updateStep = updateStep;
+	}
+
+	/**
+	 * Gets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * 
+	 * @return the distance threshold for each position
+	 */
+	public double getPositionThreshold() {
+		return positionThreshold;
+	}
+
+	/**
+	 * Sets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * 
+	 * @param positionThreshold the distance threshold for each position
+	 */
+	public void setPositionThreshold(double positionThreshold) {
+		this.positionThreshold = positionThreshold;
 	}
 }
