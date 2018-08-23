@@ -40,6 +40,9 @@ import com.cfar.swim.worldwind.registries.Properties;
  *
  */
 public abstract class AircraftProperties implements Properties<Aircraft> {
+	
+	/**	the description of this aircraft properties bean */
+	private String description = "Description not yet available.";
 
 	/** the combat identification of this aircraft properties bean */
 	private CombatIdentification combatIdentification;
@@ -421,6 +424,24 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	 */
 	public void setMaximumAngleOfClimb(double maximumAngleOfClimb) {
 		this.maximumAngleOfClimb = maximumAngleOfClimb;
+	}
+	
+	/**
+	 * Gets the description of this aircraft properties bean.
+	 * 
+	 * @return the description of this aircraft properties bean
+	 */
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * Sets the description of this aircraft properties bean.
+	 * 
+	 * @param description the description of this aircraft properties bean
+	 */
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	/**

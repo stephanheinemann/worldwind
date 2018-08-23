@@ -41,6 +41,9 @@ import com.cfar.swim.worldwind.registries.Properties;
  */
 public abstract class DatalinkProperties implements Properties<Datalink> {
 	
+	/**	the description of this datalink properties bean */
+	private String description = "Description not yet available.";
+	
 	/** the downlink period of this datalink properties bean */
 	private long downlinkPeriod = 1000; // ms
 	
@@ -60,6 +63,24 @@ public abstract class DatalinkProperties implements Properties<Datalink> {
 	 */
 	public void setDownlinkPeriod(long downlinkPeriod) {
 		this.downlinkPeriod = downlinkPeriod;
+	}
+	
+	/**
+	 * Gets the description of this datalink properties bean.
+	 * 
+	 * @return the description of this datalink properties bean
+	 */
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * Sets the description of this datalink properties bean.
+	 * 
+	 * @param description the description of this datalink properties bean
+	 */
+	public void setDescription(String description) {
+		this.description = description;
 	}
 
 	/**

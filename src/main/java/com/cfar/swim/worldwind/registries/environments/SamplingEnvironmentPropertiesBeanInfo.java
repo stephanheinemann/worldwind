@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2018, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2018, Manuel Rosa (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,47 +29,57 @@
  */
 package com.cfar.swim.worldwind.registries.environments;
 
+import java.beans.BeanDescriptor;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+
 /**
- * Realizes the properties bean of a sampling environment.
+ * Realizes the properties bean of a Sampling Environment with the property
+ * descriptors for each parameter.
  * 
- * @author Stephan Heinemann
  * @author Manuel Rosa
- * @author Henrique Ferreira
  *
  */
-public class SamplingEnvironmentProperties extends EnvironmentProperties {
-	
-	/** the description of this planner properties bean */
-	private final static String DESCRIPTION_SAMPLING = "Sampling Environment: Bounding box delimiting the continuous space where an aircraft is allowed to fly. It is used as the basis for implemenation of sampling based planners.";
+public class SamplingEnvironmentPropertiesBeanInfo extends EnvironmentPropertiesBeanInfo {
 
-	/** the resolution of this sampling environment */
-	private double resolution = 2d;
+	/** the class which this bean info refers to */
+	private final static Class<SamplingEnvironmentProperties> beanClass = SamplingEnvironmentProperties.class;
 
-	/**
-	 * Constructs a new sampling environment properties bean using default floor and
-	 * ceiling property values.
-	 */
-	public SamplingEnvironmentProperties() {
-		super();
-		this.setDescription(DESCRIPTION_SAMPLING);
-	}
+	/** the category of parameters that are related with resolution */
+	protected final static String CATEGORY_RESOLUTION = "Resolution Parameters";
 
 	/**
-	 * Gets the resolution of this sampling environment
+	 * Customizes the property descriptors for each parameter of a Sampling Environment.
 	 * 
-	 * @return the resolution of this sampling environment
+	 * @return the array of property descriptors
+	 * 
+	 * @see EnvironmentPropertiesBeanInfo#getPropertyDescriptors()
 	 */
-	public double getResolution() {
-		return resolution;
+	@Override
+	public PropertyDescriptor[] getPropertyDescriptors() {
+
+		try {
+			PropertyDescriptor resolution = this.createProperty(beanClass, "resolution",
+					"Resolution (m)",
+					"the minimum resolution for paths in this environment",
+					CATEGORY_RESOLUTION);
+
+			PropertyDescriptor rvNew[] = { resolution };
+			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
+			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
+
+			return rv;
+		} catch (IntrospectionException e) {
+			throw new Error(e.toString());
+		}
 	}
 
 	/**
-	 * Sets the resolution of this sampling environment
+	 * Gets the bean descriptor of this Sampling Environment properties bean info.
 	 * 
-	 * @param resolution the resolution to set
+	 * @return the bean descriptor of this class
 	 */
-	public void setResolution(double resolution) {
-		this.resolution = resolution;
+	public BeanDescriptor getBeanDescriptor() {
+		return new BeanDescriptor(beanClass, null);
 	}
-
 }

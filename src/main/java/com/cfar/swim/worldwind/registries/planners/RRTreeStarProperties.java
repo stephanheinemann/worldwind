@@ -38,7 +38,7 @@ package com.cfar.swim.worldwind.registries.planners;
 public class RRTreeStarProperties extends RRTreeProperties {
 	
 	/** the description of this planner properties bean */
-	private final static String DESCRIPTION_RRTS = "RRT Star: TO BE DEFINED...";
+	private final static String DESCRIPTION_RRTS = "RRT Star: Extension to the basic RRT algorithm which produces optimal paths. As more positions are added to the tree, edges are recomputed if there is a lower cost path through the new position.";
 
 	/**
 	 * Constructs a new anytime dynamic RRTree planner properties bean.

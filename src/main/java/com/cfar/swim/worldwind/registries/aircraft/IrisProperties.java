@@ -39,6 +39,9 @@ import com.cfar.swim.worldwind.aircraft.Iris;
  *
  */
 public class IrisProperties extends AircraftProperties {
+	
+	/** the description of this Iris properties bean */
+	private final static String DESCRIPTION_IRIS = "Iris: Quadcopter commercially available produced by 3DR. It is an all-in-one autonomous vehicle relying on the Pixhawk autopilot system. It is equiped with a GPS receiver and is only suited for outdoors flying.";
 
 	/**
 	 * Constructs a new Iris aircraft properties bean.
@@ -61,6 +64,8 @@ public class IrisProperties extends AircraftProperties {
 		this.setMaximumRateOfDescentSpeed(Iris.MAX_RATE_OF_DESCENT_SPEED);
 		this.setMaximumSpeed(Iris.MAX_SPEED);
 		this.setSeparationRadius(Iris.SEPARATION_RADIUS);
+		
+		this.setDescription(DESCRIPTION_IRIS);
 	}
 
 }

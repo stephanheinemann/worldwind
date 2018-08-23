@@ -43,7 +43,7 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 public class RRTreeProperties extends AbstractPlannerProperties {
 
 	/** the description of this planner properties bean */
-	private final static String DESCRIPTION_RRT = "Rapidly-exploring Random Tree: Basic version of a RRT which grows a tree from a start to a goal positions by continuously sampling random points from the environment. It does not take the cost of each position into account and ignores traversable obstacles.";
+	private final static String DESCRIPTION_RRT = "Rapidly-exploring Random Tree: Basic version of a RRT which grows a tree from a start to a goal positions by continuously sampling random points from the environment. It does not take costs nor traversable obstacles into account.";
 
 	/** the distance defining the goal region */
 	private double goalThreshold = 5d;

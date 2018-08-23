@@ -39,6 +39,9 @@ import com.cfar.swim.worldwind.registries.Properties;
  *
  */
 public abstract class EnvironmentProperties implements Properties<Environment> {
+	
+	/**	the description of this environment properties bean */
+	private String description = "Description not yet available.";
 
 	/** the floor of this environment properties bean */
 	protected double floor;
@@ -101,6 +104,24 @@ public abstract class EnvironmentProperties implements Properties<Environment> {
 	 */
 	public void setCeiling(double ceiling) {
 		this.ceiling = ceiling;
+	}
+	
+	/**
+	 * Gets the description of this environment properties bean.
+	 * 
+	 * @return the description of this environment properties bean
+	 */
+	public String getDescription() {
+		return description;
+	}
+
+	/**
+	 * Sets the description of this environment properties bean.
+	 * 
+	 * @param description the description of this environment properties bean
+	 */
+	public void setDescription(String description) {
+		this.description = description;
 	}
 	
 	/**

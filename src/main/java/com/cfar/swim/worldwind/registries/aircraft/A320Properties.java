@@ -39,6 +39,9 @@ import com.cfar.swim.worldwind.aircraft.A320;
  *
  */
 public class A320Properties extends AircraftProperties {
+	
+	/** the description of this A320 properties bean */
+	private final static String DESCRIPTION_A320 = "A320: Fixed-wing, narrow-body, twin-engine aircraft manufactered by Airbus. It is used for short- to medium-range flights and is the one of the most popular aircraft in the world.";
 
 	/**
 	 * Constructs a new A320 aircraft properties bean.
@@ -61,6 +64,8 @@ public class A320Properties extends AircraftProperties {
 		this.setMaximumRateOfDescentSpeed(A320.MAX_RATE_OF_DESCENT_SPEED);
 		this.setMaximumSpeed(A320.MAX_SPEED);
 		this.setSeparationRadius(A320.SEPARATION_RADIUS);
+		
+		this.setDescription(DESCRIPTION_A320);
 	}
 
 }

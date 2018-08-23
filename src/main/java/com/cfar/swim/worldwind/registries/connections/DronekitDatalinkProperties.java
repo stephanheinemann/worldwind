@@ -38,6 +38,9 @@ package com.cfar.swim.worldwind.registries.connections;
  */
 public class DronekitDatalinkProperties extends DatalinkProperties {
 	
+	/** the description of this dronekit datalink properties bean */
+	private final static String DESCRIPTION_DRONEKIT = "DroneKit Datalink: Connection is established to a remote DroneKit server on a companion-computer. The DroneKit must already be running before the connection is started.";
+	
 	/** the standard localhost of a dronekit datalink properties bean */
 	public static final String DATALINK_LOCALHOST = "142.104.85.91";
 	
@@ -56,6 +59,7 @@ public class DronekitDatalinkProperties extends DatalinkProperties {
 	public DronekitDatalinkProperties() {
 		this.host = DronekitDatalinkProperties.DATALINK_LOCALHOST;
 		this.port = DronekitDatalinkProperties.DATALINK_GRPCPORT;
+		this.setDescription(DESCRIPTION_DRONEKIT);
 	}
 	
 	/**
