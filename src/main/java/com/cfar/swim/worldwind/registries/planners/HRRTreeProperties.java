@@ -113,4 +113,41 @@ public class HRRTreeProperties extends RRTreeProperties {
 		this.neighbors = neighbors;
 	}
 	
+
+	/** defines which formula to use for quality calculation */
+	public boolean myQuality = true;
+	
+	/** defines which formula to use for probability calculation */
+	public boolean myProbability = true;
+
+	/**
+	 * @return the myQuality
+	 */
+	public boolean isMyQuality() {
+		return myQuality;
+	}
+
+	/**
+	 * @param myQuality the myQuality to set
+	 */
+	public void setMyQuality(boolean myQuality) {
+		this.myQuality = myQuality;
+	}
+
+	/**
+	 * @return the myProbability
+	 */
+	public boolean isMyProbability() {
+		return myProbability;
+	}
+
+	/**
+	 * @param myProbability the myProbability to set
+	 */
+	public void setMyProbability(boolean myProbability) {
+		this.myProbability = myProbability;
+	}
+	
+	
+	
 }
