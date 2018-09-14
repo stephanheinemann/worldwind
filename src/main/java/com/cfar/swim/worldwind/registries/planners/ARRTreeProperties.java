@@ -180,7 +180,7 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 	
 	
 	/** the state of the online capabilities of the planner */
-	private boolean online = true;
+	private boolean online = false;
 	
 	/** the distance threshold to consider a position displacement as worthy of a new plan */
 	private double positionThreshold = 2d; 

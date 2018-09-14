@@ -111,7 +111,7 @@
                         N2706 W07306 CB TOP FL500 WI 150NM OF CENTRE i.e., a 150NM radius around -73.06 (lon), 27.06 (lat) -->
                     <iwxxm:geometry>
                         <aixm:AirspaceVolume gml:id="as1">
-                            <aixm:upperLimit uom="FL">10</aixm:upperLimit>
+                            <aixm:upperLimit uom="FL">7</aixm:upperLimit>
                             <aixm:upperLimitReference>STD</aixm:upperLimitReference>
                             <aixm:horizontalProjection>
                                 <aixm:Surface gml:id="tc-obs-N2706-sfc" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
@@ -123,8 +123,8 @@
                                                         <gml:Curve gml:id="curve01">
                                                             <gml:segments>
                                                                 <gml:CircleByCenterPoint numArc="1">
-                                                                    <gml:pos>38.73759 -9.13948</gml:pos>
-                                                                    <gml:radius uom="[nmi_i]">.04</gml:radius>
+                                                                    <gml:pos>38.73630 -9.13935</gml:pos>
+                                                                    <gml:radius uom="[nmi_i]">0.01</gml:radius>
                                                                 </gml:CircleByCenterPoint>
                                                             </gml:segments>
                                                         </gml:Curve>
@@ -181,8 +181,8 @@
                                                                 <gml:Curve gml:id="curve001">
                                                                     <gml:segments>
                                                                         <gml:CircleByCenterPoint numArc="1">
-                                                                            <gml:pos>38.73759 -9.13948</gml:pos>
-                                                                            <gml:radius uom="[nmi_i]">.04</gml:radius>
+                                                                            <gml:pos>38.73630 -9.13935</gml:pos>
+                                                                    		<gml:radius uom="[nmi_i]">0.01</gml:radius>
                                                                         </gml:CircleByCenterPoint>
                                                                     </gml:segments>
                                                                 </gml:Curve>

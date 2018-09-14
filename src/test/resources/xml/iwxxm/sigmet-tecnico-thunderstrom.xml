@@ -103,7 +103,7 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
                     <!-- This shape describes: N5390 W01190 CB TOP FL390 WI 150NM OF CENTRE -->
                     <iwxxm:geometry>
                         <aixm:AirspaceVolume gml:id="as1">
-                            <aixm:upperLimit uom="FL">10</aixm:upperLimit>
+                            <aixm:upperLimit uom="FL">7</aixm:upperLimit>
                             <aixm:upperLimitReference>STD</aixm:upperLimitReference>
                             <aixm:horizontalProjection>
                                 <aixm:Surface gml:id="tc-obs-N2706-sfc" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
@@ -115,8 +115,8 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
                                                         <gml:Curve gml:id="curve01">
                                                             <gml:segments>
                                                                 <gml:CircleByCenterPoint numArc="1">
-                                                                    <gml:pos>38.73759 -9.13948</gml:pos>
-                                                                    <gml:radius uom="[nmi_i]">0.04</gml:radius>
+                                                                    <gml:pos>38.7373 -9.1396</gml:pos>
+                                                                    <gml:radius uom="[nmi_i]">.02</gml:radius>
                                                                 </gml:CircleByCenterPoint>
                                                             </gml:segments>
                                                         </gml:Curve>
@@ -162,7 +162,7 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
                         <iwxxm:MeteorologicalPosition gml:id="sigmet-fcst-N2706">
                             <iwxxm:geometry>
                                 <aixm:AirspaceVolume gml:id="as2">
-                                	<aixm:upperLimit uom="FL">5000</aixm:upperLimit>
+                                	<aixm:upperLimit uom="FL">7</aixm:upperLimit>
                             		<aixm:upperLimitReference>STD</aixm:upperLimitReference>
                                     <aixm:horizontalProjection>
                                         <aixm:Surface gml:id="sfc002" srsName="http://www.opengis.net/def/crs/EPSG/0/4326">
@@ -174,8 +174,8 @@ YUDD SHANLON FIR/UIR OBSC TS FCST S OF N54 AND E OF W012 TOP FL390 MOV E WKN FCS
                                                                 <gml:Curve gml:id="curve001">
                                                                     <gml:segments>
                                                                         <gml:CircleByCenterPoint numArc="1">
-                                                                            <gml:pos>38.73759 -9.13948</gml:pos>
-                                                                            <gml:radius uom="[nmi_i]">0.04</gml:radius>
+                                                                            <gml:pos>38.7373 -9.1396</gml:pos>
+                                                                    <gml:radius uom="[nmi_i]">.02</gml:radius>
                                                                         </gml:CircleByCenterPoint>
                                                                     </gml:segments>
                                                                 </gml:Curve>

@@ -86,7 +86,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 
 	/** the step used to modify the relative weights of distances and costs */
 	// TODO: might be interesting to define proportionally to improvementFactor
-	private double step = 0.1d;
+	private double step = 0.2d; // step =(distbias -costbias)/5
 
 	/** the cost value bounding any new solution to be generated */
 	private double costBound = Double.POSITIVE_INFINITY;

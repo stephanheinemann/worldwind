@@ -22,8 +22,10 @@ import java.util.Set;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.Heuristic;
@@ -69,25 +71,31 @@ public class HRRTreePlannerTest {
 		
 		this.setScenario();
 		
-		this.embedObstacle();
+		this.embedObstacle1();
+		this.embedObstacle2();
 		
 		this.embedTerrain();
 		
 		System.out.println("Desired Repetitions #" + REPETITIONS);
 		
+		this.updateTitle("Enhancements");
 		System.out.println("-------------\n\tSimple Heuristic\n-------------");
+		this.printToFile("logs/"+title+".txt", "Simple");
 		this.testerHeuristic(Heuristic.hRRT);
-		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
 		System.out.println("-------------\n\tIterative Heuristic\n-------------");
+		this.printToFile("logs/"+title+".txt", "Iterative");
 		this.testerHeuristic(Heuristic.IkRRT);
-		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
 		System.out.println("-------------\n\tBest Heuristic\n-------------");
 		this.testerHeuristic(Heuristic.BkRRT);
+
+		this.updateTitle("Comparisson");
 		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
 		System.out.println("-------------\n\tBasic RRT\n-------------");
-		this.basicRRTreeTester(15, 5, Strategy.EXTEND, RiskPolicy.IGNORANCE);
-		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
-		this.basicRRTreeTester(15, 5, Strategy.EXTEND, RiskPolicy.AVOIDANCE);
+		this.printToFile("logs/"+title+".txt", "RRT_SAFETY");
+		this.basicRRTreeTester(15, 5, Strategy.EXTEND, RiskPolicy.SAFETY);
+		System.out.println("-------------\n\tAnytime RRT\n-------------");
+		this.printToFile("logs/"+title+".txt", "ARRT_SAFETY");
+		this.ARRTreeTester(15, 5, Strategy.EXTEND, RiskPolicy.SAFETY, Sampling.UNIFORM);
 		
 		System.out.println();
 	}
@@ -151,7 +159,6 @@ public class HRRTreePlannerTest {
 		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
 		long t0 = 0;
 		
-		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
 		// Compute plans
 		for (int i = 0; i < REPETITIONS; i++) {
 			plannerHRRT = new HRRTreePlanner(iris, samplingEnv, epsilon, bias, maxIter, Strategy.EXTEND, Extension.LINEAR, floor, neighbors);
@@ -172,14 +179,13 @@ public class HRRTreePlannerTest {
 			this.printToFile("logs/"+title+".txt", size, waypoints, cost, time);
 			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
 		}
+		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
 		this.processData(sizeT, waypointsT, costT, timeT);	
 	}
 	
 	
 	/** sets the elements of the test scenario */
 	public void setScenario() {
-		title = LocalDate.now().toString()+String.format("_%02d%02d", LocalTime.now().getHour(),LocalTime.now().getMinute());
-		
 		// Create box area in globe
 		globe = new Earth();
 		Sector tecnico = new Sector(
@@ -202,13 +208,29 @@ public class HRRTreePlannerTest {
 		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
 		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
 	}
+	public void updateTitle(String description) {
+		String aux = LocalDate.now().toString()+String.format("_%02d%02d", LocalTime.now().getHour(),LocalTime.now().getMinute());
+		title = aux+"_"+description;
+	}
 	
 	/** Embeds a SWIM obstacle */
-	public void embedObstacle() {
-		assertTrue(samplingEnv.getObstacles().isEmpty());
+	public void embedObstacle1() {
 		try {
 			IwxxmLoader loader = new IwxxmLoader();
-			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(new File("src/test/resources/xml/iwxxm/sigmet-tecnico-ts.xml"))));
+			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(new File("src/test/resources/xml/iwxxm/sigmet-tecnico-tropCyc.xml"))));
+			for (Obstacle obstacle : obstacles) {
+				samplingEnv.embed(obstacle);
+			}
+			assertTrue(!samplingEnv.getObstacles().isEmpty());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		samplingEnv.setTime(etd);
+	}
+	public void embedObstacle2() {
+		try {
+			IwxxmLoader loader = new IwxxmLoader();
+			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(new File("src/test/resources/xml/iwxxm/sigmet-tecnico-thunderstrom.xml"))));
 			for (Obstacle obstacle : obstacles) {
 				samplingEnv.embed(obstacle);
 			}
@@ -276,6 +298,18 @@ public class HRRTreePlannerTest {
 		
 	}
 	
+	public void printToFile(String fileID, String description) {
+		try(FileWriter fw = new FileWriter(fileID, true);
+			    BufferedWriter bw = new BufferedWriter(fw);
+			    PrintWriter out = new PrintWriter(bw))
+			{
+			    out.println(String.format("%s, %s, %s, %sf", description, description, description, description));
+			} catch (IOException e) {
+			    e.printStackTrace();
+			}
+		
+	}
+	
 	public void basicRRTreeTester(double epsilon, int bias, Strategy strategy, RiskPolicy risk) {
 		System.out.println(String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
 
@@ -301,4 +335,32 @@ public class HRRTreePlannerTest {
 		}
 		this.processData(sizeT, waypointsT, costT, timeT);
 	}
+	
+	public void ARRTreeTester(double epsilon, int bias, Strategy strategy, RiskPolicy risk, Sampling sampling) {
+		System.out.println(String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
+
+		ARRTreePlanner plannerARRT = new ARRTreePlanner(iris, samplingEnv, epsilon, bias, 3000, strategy, Extension.LINEAR, sampling, false, 0);
+		plannerARRT.setRiskPolicy(risk);
+		plannerARRT.setQualityImprovement(0.01); plannerARRT.setMinimumQuality(0d); plannerARRT.setMaximumQuality(1d);
+
+		Path path;
+		double size = 0, waypoints = 0, cost = 0d, time = 0d;
+		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
+		long t0 = 0;
+		// Compute plans
+		for (int i = 0; i < REPETITIONS; i++) {
+			t0 = System.currentTimeMillis();
+			path = plannerARRT.plan(origin, destination, etd);
+			size = Iterables.size(path.getPositions());
+			waypoints = plannerARRT.getWaypointList().size();
+			cost = plannerARRT.getGoal().getCost();
+			time = System.currentTimeMillis() - t0;
+			System.out.print(i+"\t");
+			this.log(size, waypoints, cost, time);
+			this.printToFile("logs/"+title+".txt", size, waypoints, cost, time);
+			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
+		}
+		this.processData(sizeT, waypointsT, costT, timeT);
+	}
+	
 }
