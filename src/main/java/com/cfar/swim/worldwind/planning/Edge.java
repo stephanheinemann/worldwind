@@ -254,10 +254,12 @@ public class Edge {
 				}
 			}
 		}
+		// TODO: Review cost policy implementation
 		if (!costList.isEmpty()) {
 			// cost is computed based on the minimum/average/maximum cost of all obstacles
 			// times the number of obstacles that affect this edge
-			switch (costPolicy) {
+			/*
+			 switch (costPolicy) {
 			case MINIMUM:
 				cost = costList.stream().mapToDouble(Double::doubleValue).min().getAsDouble() * costList.size();
 				break;
@@ -268,6 +270,8 @@ public class Edge {
 				cost = costList.stream().mapToDouble(Double::doubleValue).average().getAsDouble() * costList.size();
 				break;
 			}
+			 */
+			cost = costList.stream().mapToDouble(f -> f.doubleValue()).sum();
 		}
 
 		return cost;

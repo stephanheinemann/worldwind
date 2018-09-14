@@ -31,9 +31,12 @@ package com.cfar.swim.worldwind.tests;
 
 import static org.junit.Assert.assertTrue;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
@@ -61,8 +64,10 @@ import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.CoordinateTransformations;
 import com.cfar.swim.worldwind.iwxxm.IwxxmLoader;
+import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.render.airspaces.TerrainBox;
 import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -81,7 +86,7 @@ import gov.nasa.worldwind.render.Path;
  */
 public class RRTreePlannerTest {
 
-	static final int REPETITIONS = 30;
+	static final int REPETITIONS = 50;
 	Iris iris;
 	A320 a320;
 	Globe globe;
@@ -95,41 +100,25 @@ public class RRTreePlannerTest {
 		// Set inputs for planner
 		this.setScenario();
 		
-//		this.embedObstacle();
+		this.embedObstacle();
+		this.embedTerrain();
 		
 		System.out.println("Repetitions #" + REPETITIONS);
 		
-		/*
-		Position positionNew, positionNewT, positionRand;
-		RRTreePlanner plannerRRT = new RRTreePlanner(a320, samplingEnv, 250, 5, 1500);
-		for (int i = 0; i < REPETITIONS; i++) {
-			origin = new Position(Angle.fromDegrees(30), Angle.fromDegrees(20), 0);
-			positionRand = new Position(Angle.fromDegrees(origin.latitude.degrees+0.000),
-					Angle.fromDegrees(origin.longitude.degrees+0.000), origin.elevation+1000);
-			positionRand = samplingEnv.sampleRandomPosition();
-			positionNew = plannerRRT.growPosition(positionRand, origin);
-			positionNewT = this.growPositionENU(positionRand, origin, plannerRRT.getAircraft(), plannerRRT.getEPSILON());
-			System.out.println("Rand: "+positionRand+"\nNear: "+origin+
-					"\nNew:  "+positionNew +"\t"+samplingEnv.getDistance(origin, positionNew)+
-							"\t"+a320.getCapabilities().isFeasible(origin, positionNew, globe)+
-					"\nNewT: "+positionNewT+"\t"+samplingEnv.getDistance(origin, positionNewT)+
-							"\t"+a320.getCapabilities().isFeasible(origin, positionNewT, globe)+"\n");
-		}
-		*/
 		
 		// Basic RRTreePlanner
-		// Bias 5%
-		this.basicRRTreeTester(250, 5, Strategy.EXTEND);
 		/*
+		// Bias 5%
+		this.basicRRTreeTester(15, 5, Strategy.EXTEND);
 		// Bias 1%
 		this.basicRRTreeTester(250, 1, Strategy.EXTEND);
 
 		System.out.println();
 		// Heuristic RRTreePlanner
-		this.heuristicRRTreeTester(250, 5, .9, 5, Heuristic.hRRT);
-		this.heuristicRRTreeTester(250, 5, .9, 5, Heuristic.IkRRT);
-		this.heuristicRRTreeTester(250, 5, .9,  5, Heuristic.BkRRT);
 		 */
+		this.heuristicRRTreeTester(15, 5, .9, 5, Heuristic.hRRT);
+		this.heuristicRRTreeTester(15, 5, .9, 5, Heuristic.IkRRT);
+		this.heuristicRRTreeTester(15, 5, .9,  5, Heuristic.BkRRT);
 		
 		/*
 		// Anytime Dynamic
@@ -139,6 +128,29 @@ public class RRTreePlannerTest {
 	}
 
 	public void setScenario() {
+		// Create box area in globe
+		globe = new Earth();
+		Sector tecnico = new Sector(
+				Angle.fromDegrees(38.7381),
+				Angle.fromDegrees(38.7354),
+				Angle.fromDegrees(-9.1408),
+				Angle.fromDegrees(-9.1364));
+		double floor = 70d, ceilling = 150d;
+		gov.nasa.worldwind.geom.Box boxNASA = Sector.computeBoundingBox(globe, 1.0, tecnico, floor, ceilling);
+
+		// Create environment from box
+		samplingEnv = new SamplingEnvironment(new Box(boxNASA));
+		samplingEnv.setGlobe(globe);
+
+		// Set planner inputs
+		origin = Position.fromDegrees(38.737, -9.137, 75);
+		destination = Position.fromDegrees(38.7367, -9.1402, 105);
+		
+		etd = ZonedDateTime.of(LocalDate.of(2018, 8, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
+		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
+		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
+		
+		/*
 		// Create box area in globe
 		globe = new Earth();
 		Sector cadboroBay = new Sector(
@@ -158,6 +170,7 @@ public class RRTreePlannerTest {
 		etd = ZonedDateTime.of(LocalDate.of(2018, 5, 1), LocalTime.of(22, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 500, CombatIdentification.FRIEND);
 		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
+		*/
 	}
 
 	public void basicRRTreeTester(double epsilon, int bias, Strategy strategy) {
@@ -177,6 +190,7 @@ public class RRTreePlannerTest {
 			waypoints = plannerRRT.getWaypointList().size();
 			cost = plannerRRT.getGoal().getCost();
 			time = System.currentTimeMillis() - t0;
+			System.out.print(i+"\t");
 			this.log(size, waypoints, cost, time);
 			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
 		}
@@ -188,7 +202,8 @@ public class RRTreePlannerTest {
 				heuristic, epsilon,	bias, prob, nbr));
 
 		HRRTreePlanner plannerHRRT = new HRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, Strategy.EXTEND, Extension.LINEAR, prob, nbr);
-		plannerHRRT.setHeuristic(heuristic);
+		plannerHRRT.setHeuristic(heuristic); plannerHRRT.setRiskPolicy(RiskPolicy.IGNORANCE);
+		plannerHRRT.myProbability=false; plannerHRRT.myQuality=false;
 
 		Path path;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;
@@ -202,6 +217,7 @@ public class RRTreePlannerTest {
 			waypoints = plannerHRRT.getWaypointList().size();
 			cost = plannerHRRT.getGoal().getCost();
 			time = System.currentTimeMillis() - t0;
+			System.out.print(i+"\t");
 			this.log(size, waypoints, cost, time);
 			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
 		}
@@ -243,11 +259,12 @@ public class RRTreePlannerTest {
 		}
 	}
 	
+	/** Embeds a SWIM obstacle */
 	public void embedObstacle() {
 		assertTrue(samplingEnv.getObstacles().isEmpty());
 		try {
 			IwxxmLoader loader = new IwxxmLoader();
-			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(new File("src/test/resources/xml/iwxxm/sigmet-victoria-ts.xml"))));
+			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(new File("src/test/resources/xml/iwxxm/sigmet-tecnico-ts.xml"))));
 			for (Obstacle obstacle : obstacles) {
 				samplingEnv.embed(obstacle);
 			}
@@ -256,6 +273,34 @@ public class RRTreePlannerTest {
 			e.printStackTrace();
 		}
 		samplingEnv.setTime(etd);
+	}
+	
+	/** Embeds a set of terrain obstacles */
+	public void embedTerrain() {
+		assertTrue(samplingEnv.getTerrainObstacles().isEmpty());
+		
+		File file = new File("src/test/resources/csv/TecnicoTerrain.csv");
+		String line = "";
+		try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+			while ((line = br.readLine()) != null) {
+				String[] values = line.split(",");
+
+				double lat0 = Double.parseDouble(values[0]);
+				double lon0 = Double.parseDouble(values[1]);
+				double lat1 = Double.parseDouble(values[2]);
+				double lon1 = Double.parseDouble(values[3]);
+				double left = Double.parseDouble(values[4]);
+				double right = Double.parseDouble(values[5]);
+				double bottom = Double.parseDouble(values[6]);
+				double top = Double.parseDouble(values[7]);
+
+				samplingEnv.embed(new TerrainBox(LatLon.fromDegrees(lat0, lon0),
+						LatLon.fromDegrees(lat1, lon1), left, right, bottom, top));
+			}
+			assertTrue(!samplingEnv.getTerrainObstacles().isEmpty());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	

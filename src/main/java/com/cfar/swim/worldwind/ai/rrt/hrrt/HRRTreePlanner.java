@@ -56,7 +56,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 	/** defines which formula to use for quality calculation */
 	public boolean myQuality = false;
-	
+
 	/** defines which formula to use for probability calculation */
 	public boolean myProbability = true;
 
@@ -106,7 +106,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @see RRTreePlanner#RRTreePlanner(Aircraft, Environment, double, int, int)
 	 */
 	public HRRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
-			Strategy strategy, Extension extension,	double prob, int neighbors) {
+			Strategy strategy, Extension extension, double prob, int neighbors) {
 		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension);
 		PROB_FLOOR = prob;
 		NEIGHBORS = neighbors;
@@ -175,19 +175,23 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 */
 	protected double computeQuality(double cost) {
 		double relativeCost = 0d;
+		double diff = cost - costOpt;
+
+		if (Math.abs(diff) < 0.00001) // prevent numerical imprecision
+			return 1;
 
 		if (!myQuality)
 			relativeCost = (cost - costOpt) / (costMax - costOpt);
 		else {
 			if (cost > costOpt)
-				relativeCost = Math.exp(-1d / (cost - costOpt));
+				relativeCost = Math.exp(-costOpt / (cost - costOpt));
 			else
 				relativeCost = 0d; // limit case of exponential
 		}
 
 		return 1 - relativeCost;
 	}
-	
+
 	/**
 	 * Computes the probability of a certain waypoint given its quality.
 	 * 
@@ -290,7 +294,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 			neighborsList = (ArrayList<RRTreeWaypoint>) this.getEnvironment().findNearest(waypointRand, neighbors);
 			neighborsList = this.sortByQuality(neighborsList);
 			waypointNear = neighborsList.get(0);
-			
+
 			quality = computeQuality(waypointNear.getF());
 			quality = computeProbability(quality);
 
@@ -309,7 +313,15 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @return the sorted list of waypoints
 	 */
 	protected ArrayList<RRTreeWaypoint> sortByQuality(ArrayList<RRTreeWaypoint> waypointList) {
-		Collections.sort(waypointList, (a, b) -> a.getF() < b.getF() ? -1 : a.getF() == b.getF() ? 0 : 1);
+		if (!myProbability)
+			Collections.sort(waypointList, (a, b) -> a.getF() < b.getF() ? -1 : a.getF() == b.getF() ? 0 : 1);
+		else
+			Collections.sort(waypointList,
+					(a, b) -> this.computeProbability(computeQuality(a.getF())) > this
+							.computeProbability(computeQuality(b.getF())) ? -1
+									: this.computeProbability(computeQuality(a.getF())) == this
+											.computeProbability(computeQuality(b.getF())) ? 0 : 1);
+
 		return waypointList;
 	}
 
@@ -404,7 +416,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 		this.setWaypointNew(start);
 
 		this.costOpt = start.getF();
-		this.costMax = 0;// this.costOpt;
+		this.costMax = this.costOpt;
 	}
 
 	/**

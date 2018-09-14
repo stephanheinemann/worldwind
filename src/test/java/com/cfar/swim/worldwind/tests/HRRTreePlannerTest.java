@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.Heuristic;
@@ -44,6 +45,7 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Path;
 
 /**
  * @author Manuel
@@ -63,7 +65,7 @@ public class HRRTreePlannerTest {
 	
 	
 	@Test
-	public void RRTreeTester() {
+	public void HRRTreeTester() {
 		
 		this.setScenario();
 		
@@ -73,35 +75,75 @@ public class HRRTreePlannerTest {
 		
 		System.out.println("Desired Repetitions #" + REPETITIONS);
 		
+		System.out.println("-------------\n\tSimple Heuristic\n-------------");
+		this.testerHeuristic(Heuristic.hRRT);
+		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
+		System.out.println("-------------\n\tIterative Heuristic\n-------------");
+		this.testerHeuristic(Heuristic.IkRRT);
+		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
+		System.out.println("-------------\n\tBest Heuristic\n-------------");
+		this.testerHeuristic(Heuristic.BkRRT);
+		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
+		System.out.println("-------------\n\tBasic RRT\n-------------");
+		this.basicRRTreeTester(15, 5, Strategy.EXTEND, RiskPolicy.IGNORANCE);
+		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
+		this.basicRRTreeTester(15, 5, Strategy.EXTEND, RiskPolicy.AVOIDANCE);
+		
+		System.out.println();
+	}
+
+	public void testerHeuristic(Heuristic heuristic) {
 		// RISK POLICY OF IGNORANCE -- NO INFINITE COSTS
 		System.out.println("\n\tRISK POLICY OF IGNORANCE -- NO INFINITE COSTS");
 		// Original with high exploitation
 		System.out.println("--Original with high exploitation");
-		this.testHRRTreePlanner(15, 5, 3000, 1, 5, Heuristic.BkRRT, false, false, RiskPolicy.IGNORANCE);
+		this.testHRRTreePlanner(15, 5, 3000, 1, 5, heuristic, false, false, RiskPolicy.IGNORANCE);
 		// Modified probability with high exploitation
-		System.out.println("--Modified probability with high exploitation");
-		this.testHRRTreePlanner(15, 5, 3000, 0, 5, Heuristic.BkRRT, true, false, RiskPolicy.IGNORANCE);
+//		System.out.println("--Modified probability with high exploitation");
+//		this.testHRRTreePlanner(15, 5, 3000, 0, 5, heuristic, true, false, RiskPolicy.IGNORANCE);
 		// Modified quality with high exploitation
-		System.out.println("--Modified quality with high exploitation");
-		this.testHRRTreePlanner(15, 5, 3000, 1, 5, Heuristic.BkRRT, false, true, RiskPolicy.IGNORANCE);
+//		System.out.println("--Modified quality with high exploitation");
+//		this.testHRRTreePlanner(15, 5, 3000, 1, 5, heuristic, false, true, RiskPolicy.IGNORANCE);
+		// Fully modified with high exploitation
+		System.out.println("-- Fully modified with high exploitation");
+		this.testHRRTreePlanner(15, 5, 3000, 0, 5, heuristic, true, true, RiskPolicy.IGNORANCE);
 
-		/*
 		// RISK POLICY OF AVOIDANCE -- INFINITE COSTS
 		System.out.println("\n\tRISK POLICY OF AVOIDANCE -- INFINITE COSTS");
 		// Original with high exploitation
 		System.out.println("--Original with high exploitation");
-		this.testHRRTreePlanner(15, 5, 3000, 1, 5, Heuristic.BkRRT, false, false, RiskPolicy.AVOIDANCE);
+		this.testHRRTreePlanner(15, 5, 3000, 1, 5, heuristic, false, false, RiskPolicy.AVOIDANCE);
 		// Modified probability with high exploitation
-		System.out.println("--Modified probability with high exploitation");
-		this.testHRRTreePlanner(15, 5, 3000, 0, 5, Heuristic.BkRRT, true, false, RiskPolicy.AVOIDANCE);
+//		System.out.println("--Modified probability with high exploitation");
+//		this.testHRRTreePlanner(15, 5, 3000, 0, 5, heuristic, true, false, RiskPolicy.AVOIDANCE);
 		// Modified quality with high exploitation
-		System.out.println("--Modified quality with high exploitation");
-		this.testHRRTreePlanner(15, 5, 3000, 1, 5, Heuristic.BkRRT, false, true, RiskPolicy.AVOIDANCE);
-		*/
+//		System.out.println("--Modified quality with high exploitation");
+//		this.testHRRTreePlanner(15, 5, 3000, 1, 5, heuristic, false, true, RiskPolicy.AVOIDANCE);
+		// Fully modified with high exploitation
+		System.out.println("-- Fully modified with high exploitation");
+		this.testHRRTreePlanner(15, 5, 3000, 0, 5, heuristic, true, true, RiskPolicy.AVOIDANCE);
+		
+		// RISK POLICY OF IGNORANCE -- NO INFINITE COSTS
+		System.out.println("\n\tRISK POLICY OF IGNORANCE -- NO INFINITE COSTS");
+		// Original with high exploitation
+		System.out.println("--Original with high EXPLORATION");
+		this.testHRRTreePlanner(15, 5, 3000, 0.1, 5, heuristic, false, false, RiskPolicy.IGNORANCE);
+		// Modified probability with high exploitation
+//		System.out.println("--Modified probability with high EXPLORATION");
+//		this.testHRRTreePlanner(15, 5, 3000, 1, 5, heuristic, true, false, RiskPolicy.IGNORANCE);
+		// Modified quality with high exploitation
+//		System.out.println("--Modified quality with high EXPLORATION");
+//		this.testHRRTreePlanner(15, 5, 3000, 0.1, 5, heuristic, false, true, RiskPolicy.IGNORANCE);
+		// Fully modified with high exploitation
+		System.out.println("-- Fully modified with high EXPLORATION");
+		this.testHRRTreePlanner(15, 5, 3000, 1, 5, heuristic, true, true, RiskPolicy.IGNORANCE);
 	}
-
+	
 	
 	public void testHRRTreePlanner(double epsilon, int bias, int maxIter, double floor, int neighbors, Heuristic heuristic, boolean prob, boolean qual, RiskPolicy risk) {
+		System.out.println(String.format("\tHeuristic RRTreeTester - %s - e=%.1f b=%d p=%.2f n=%d (%s) -- (prob=%b | qual=%b)",
+				heuristic, epsilon,	bias, floor, neighbors, risk, prob, qual));
+		
 		HRRTreePlanner plannerHRRT;
 		
 		Trajectory trajectory;
@@ -109,6 +151,7 @@ public class HRRTreePlannerTest {
 		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
 		long t0 = 0;
 		
+		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
 		// Compute plans
 		for (int i = 0; i < REPETITIONS; i++) {
 			plannerHRRT = new HRRTreePlanner(iris, samplingEnv, epsilon, bias, maxIter, Strategy.EXTEND, Extension.LINEAR, floor, neighbors);
@@ -116,9 +159,7 @@ public class HRRTreePlannerTest {
 			plannerHRRT.myProbability=prob; plannerHRRT.myQuality=qual;
 			
 			t0 = System.currentTimeMillis();
-			System.out.print("Planning...");
 			trajectory = plannerHRRT.plan(origin, destination, etd);
-			System.out.print("Planned!\t");
 			if(trajectory.isEmpty()) {
 				System.out.println("No feasible solution was found");
 				i--; continue;
@@ -128,7 +169,7 @@ public class HRRTreePlannerTest {
 			cost = plannerHRRT.getGoal().getCost();
 			time = System.currentTimeMillis() - t0;
 			this.log(size, waypoints, cost, time);
-			this.printToFile(title+".txt", size, waypoints, cost, time);
+			this.printToFile("logs/"+title+".txt", size, waypoints, cost, time);
 			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
 		}
 		this.processData(sizeT, waypointsT, costT, timeT);	
@@ -233,5 +274,31 @@ public class HRRTreePlannerTest {
 			    e.printStackTrace();
 			}
 		
+	}
+	
+	public void basicRRTreeTester(double epsilon, int bias, Strategy strategy, RiskPolicy risk) {
+		System.out.println(String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
+
+		RRTreePlanner plannerRRT = new RRTreePlanner(iris, samplingEnv, epsilon, bias, 3000, strategy, Extension.LINEAR);
+		plannerRRT.setRiskPolicy(risk);
+
+		Path path;
+		double size = 0, waypoints = 0, cost = 0d, time = 0d;
+		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
+		long t0 = 0;
+		// Compute plans
+		for (int i = 0; i < REPETITIONS; i++) {
+			t0 = System.currentTimeMillis();
+			path = plannerRRT.plan(origin, destination, etd);
+			size = Iterables.size(path.getPositions());
+			waypoints = plannerRRT.getWaypointList().size();
+			cost = plannerRRT.getGoal().getCost();
+			time = System.currentTimeMillis() - t0;
+			System.out.print(i+"\t");
+			this.log(size, waypoints, cost, time);
+			this.printToFile("logs/"+title+".txt", size, waypoints, cost, time);
+			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;
+		}
+		this.processData(sizeT, waypointsT, costT, timeT);
 	}
 }
