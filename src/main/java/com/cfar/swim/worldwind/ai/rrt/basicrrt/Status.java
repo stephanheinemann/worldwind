@@ -31,7 +31,7 @@ package com.cfar.swim.worldwind.ai.rrt.basicrrt;
 
 /**
  * Enumerates the possible outcomes from the Extend and Connect steps of the RRT
- * planner
+ * planner.
  * 
  * @author Manuel Rosa
  *

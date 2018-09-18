@@ -42,8 +42,11 @@ public class HRRTreeProperties extends RRTreeProperties {
 	/** the description of this planner properties bean */
 	private final static String DESCRIPTION_HRRT = "Heuristic RRT: Heuristic version of a RRT which takes into account the cost of a given position when selecting the next position to expand. It considers the costs associated with traversable obstacles.";
 	
+	/** the enhancements for the quality and probability calculations */
+	private boolean enhancements = true;
+	
 	/** floor value to ensure the search is not overly biased against exploration */
-	private double probFloor = 0.9;
+	private double probFloor = 0.1;
 	
 	/** the number of neighbors to consider as parent for the sampled waypoint  */
 	private int neighbors = 5;
@@ -59,6 +62,24 @@ public class HRRTreeProperties extends RRTreeProperties {
 		this.setDescription(DESCRIPTION_HRRT);
 	}
 
+	/**
+	 * Returns the boolean value if the enhancements should be used or not.
+	 * 
+	 * @return true if the enhancements are to be used, false otherwise
+	 */
+	public boolean isEnhancements() {
+		return enhancements;
+	}
+
+	/**
+	 * Sets a boolean value representing if the enhancements should be used or not.
+	 * 
+	 * @param enhancements the enhancements to set
+	 */
+	public void setEnhancements(boolean enhancements) {
+		this.enhancements = enhancements;
+	}
+	
 	/**
 	 * Gets the heuristic algorithm for the planner
 	 * 
@@ -112,42 +133,5 @@ public class HRRTreeProperties extends RRTreeProperties {
 	public void setNeighbors(int neighbors) {
 		this.neighbors = neighbors;
 	}
-	
-
-	/** defines which formula to use for quality calculation */
-	public boolean myQuality = true;
-	
-	/** defines which formula to use for probability calculation */
-	public boolean myProbability = true;
-
-	/**
-	 * @return the myQuality
-	 */
-	public boolean isMyQuality() {
-		return myQuality;
-	}
-
-	/**
-	 * @param myQuality the myQuality to set
-	 */
-	public void setMyQuality(boolean myQuality) {
-		this.myQuality = myQuality;
-	}
-
-	/**
-	 * @return the myProbability
-	 */
-	public boolean isMyProbability() {
-		return myProbability;
-	}
-
-	/**
-	 * @param myProbability the myProbability to set
-	 */
-	public void setMyProbability(boolean myProbability) {
-		this.myProbability = myProbability;
-	}
-	
-	
 	
 }

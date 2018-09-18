@@ -34,6 +34,10 @@ import com.cfar.swim.worldwind.planning.Waypoint;
 import gov.nasa.worldwind.geom.Position;
 
 /**
+ * Realizes a RRT waypoint of a trajectory extending the basic waypoint to
+ * include an heuristic value to goal and the parent wapoint. RRT waypoints are
+ * used by RRT planners.
+ * 
  * @author Manuel Rosa
  *
  */

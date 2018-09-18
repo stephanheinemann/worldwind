@@ -83,9 +83,6 @@ public class RRTreePlanner extends AbstractPlanner {
 	/** the extension technique for the planner */
 	private final Extension EXTENSION;
 
-
-	// ---------- VARIABLES ----------
-
 	/** the start RRT waypoint */
 	private RRTreeWaypoint start = null;
 
@@ -97,8 +94,6 @@ public class RRTreePlanner extends AbstractPlanner {
 
 	/** the last computed plan */
 	private final LinkedList<Waypoint> plan = new LinkedList<>();
-
-	// ---------- CONSTRUCTORS ----------
 
 	/**
 	 * Constructs a basic RRT planner for a specified aircraft and environment using
@@ -141,8 +136,6 @@ public class RRTreePlanner extends AbstractPlanner {
 		STRATEGY = strategy;
 		EXTENSION = extension;
 	}
-
-	// ---------- Setters and Getters ----------
 
 	/**
 	 * Gets the continuum environment of this planner.
@@ -224,7 +217,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	public void setGoalThreshold(double goalThreshold) {
 		this.goalThreshold = goalThreshold;
 	}
-	
+
 	/**
 	 * Gets the maximum number of iterations for the planner to attempt to connect
 	 * to goal.
@@ -270,8 +263,6 @@ public class RRTreePlanner extends AbstractPlanner {
 	public Extension getEXTENSION() {
 		return EXTENSION;
 	}
-
-	// ---------- PROTECTED METHODS ----------
 
 	/**
 	 * Gets the list of already sampled waypoints
@@ -393,7 +384,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected RRTreeWaypoint sampleBiased(int bias) {
 		RRTreeWaypoint waypoint;
-		// Is there any problem in using the random package?
+
 		int rand = new Random().nextInt(100 - 1) + 1;
 
 		waypoint = (rand <= bias) ? this.getGoal() : this.sampleRandom();
@@ -435,7 +426,12 @@ public class RRTreePlanner extends AbstractPlanner {
 
 		// Finds the node in the tree closest to the sampled position
 		waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypoint, 1).get(0);
+
+		// TODO: Review the use of other metric functions to guide the search instead of
+		// just distance, e.g. nodes with 5m separation in altitude should be "further"
+		// than nodes with5m horizontal separation
 		// waypointNear = (RRTreeWaypoint) this.findNearestMetric(waypoint, 1).get(0);
+
 		// Create a new node by extension from near to sampled
 		success = this.newWaypoint(waypoint, waypointNear);
 
@@ -462,7 +458,7 @@ public class RRTreePlanner extends AbstractPlanner {
 
 	/**
 	 * Creates a new waypoint by extending a sampled waypoint in the direction of
-	 * the nearest waypoint following certain restrictions
+	 * the nearest waypoint following certain restrictions.
 	 * 
 	 * @param waypoint the waypoint to be reached
 	 * @param waypointNear the waypoint to be extended
@@ -510,7 +506,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Grows the tree in the direction of the waypoint from the nearest waypoint
+	 * Grows the tree in the direction of the waypoint from the nearest waypoint.
 	 * 
 	 * @param position the goal position to which the tree is grown
 	 * @param positionNear the source position from which the tree is grown
@@ -548,6 +544,15 @@ public class RRTreePlanner extends AbstractPlanner {
 		return positionNew;
 	}
 
+	/**
+	 * Grows the tree in the direction of the waypoint from the nearest waypoint
+	 * considering the aircraft capabilities to only produce feasible paths.
+	 * 
+	 * @param position the goal position to which the tree is grown
+	 * @param positionNear the source position from which the tree is grown
+	 * 
+	 * @return the new position resulting from the controlled growth of the tree
+	 */
 	protected Position growPositionFeasible(Position position, Position positionNear) {
 		Position positionNew;
 		Aircraft acft = this.getAircraft();
@@ -616,7 +621,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @param waypointNew the expanded waypoint
 	 */
 	protected void addVertex(RRTreeWaypoint waypointNew) {
-		if(getWaypointList().contains(waypointNew))
+		if (getWaypointList().contains(waypointNew))
 			this.getWaypointList().remove(waypointNew);
 		this.getWaypointList().add(waypointNew);
 	}
@@ -630,7 +635,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected void addEdge(RRTreeWaypoint waypoint) {
 		this.addEdge(waypoint, waypoint.getParent());
 	}
-	
+
 	/**
 	 * Adds an edge (with set cost intervals) between the expanded waypoint and its
 	 * parent to the list of edges.
@@ -656,7 +661,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected void removeEdge(RRTreeWaypoint waypoint) {
 		this.removeEdge(waypoint, waypoint.getParent());
 	}
-	
+
 	protected void removeEdge(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
 		List<Edge> edgeList = this.getEdgeList();
 		Edge edge = new Edge(parent, waypoint);
@@ -678,7 +683,7 @@ public class RRTreePlanner extends AbstractPlanner {
 
 		return g;
 	}
-	
+
 	/**
 	 * Computes the estimated cost of a specified RRT waypoint through a specific
 	 * parent. If there is no edge containing both positions, a new temporary edge
@@ -692,12 +697,12 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected double computeCost(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
 		double g = parent.getG();
-		
-		if(this.getEnvironment().getEdge(parent, waypoint).isPresent())
+
+		if (this.getEnvironment().getEdge(parent, waypoint).isPresent())
 			g += this.getEnvironment().getStepCost(parent, waypoint, parent.getEto(),
-				waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
+					waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
 		else {
-			if(this.getEnvironment().checkConflict(waypoint, parent, getAircraft()))
+			if (this.getEnvironment().checkConflict(waypoint, parent, getAircraft()))
 				g = Double.POSITIVE_INFINITY;
 			else {
 				this.addEdge(waypoint, parent);
@@ -706,7 +711,6 @@ public class RRTreePlanner extends AbstractPlanner {
 				this.removeEdge(waypoint, parent);
 			}
 		}
-			
 
 		return g;
 	}
@@ -780,7 +784,6 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.setWaypointNew(getStart());
 
 		this.setGoal(this.createWaypoint(destination));
-
 	}
 
 	/**
@@ -812,8 +815,6 @@ public class RRTreePlanner extends AbstractPlanner {
 		System.out.println("No path found after " + MAX_ITER + " iterations.");
 		return false;
 	}
-
-	// ---------- PUBLIC METHODS ----------
 
 	/**
 	 * Plans a trajectory from an origin to a destination at a specified estimated
@@ -926,7 +927,8 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return list of k-nearest waypoints sorted by increasing distance
 	 */
-	public List<? extends Position> findNearestMetric(Position position, int kNear) {
+	// TODO: Function needed for implementation not yet developed
+	protected List<? extends Position> findNearestMetric(Position position, int kNear) {
 
 		return this.getWaypointList().stream().sorted((p1, p2) -> Double
 				.compare(this.getDistanceMetric(p1, position), this.getDistanceMetric(p2, position)))
@@ -943,7 +945,8 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the weighted distance between the two positions
 	 */
-	public double getDistanceMetric(Position reference, Position position) {
+	// TODO: Function needed for implementation not yet developed
+	protected double getDistanceMetric(Position reference, Position position) {
 		Aircraft acft = this.getAircraft();
 
 		Vec4 pointENU = CoordinateTransformations.llh2enu(reference, position, this.getEnvironment().getGlobe());

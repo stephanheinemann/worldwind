@@ -47,21 +47,18 @@ import gov.nasa.worldwind.geom.Position;
 /**
  * Realizes an heuristic RRT planner that considers the cost of waypoints in the
  * sampling and in the expanding steps of a basic RRT planner in order to direct
- * the path to a more optimal solution
+ * the path to a more optimal solution.
  * 
  * @author Manuel Rosa
  *
  */
 public class HRRTreePlanner extends RRTreePlanner {
 
-	/** defines which formula to use for quality calculation */
-	public boolean myQuality = false;
-
-	/** defines which formula to use for probability calculation */
-	public boolean myProbability = true;
+	/** the enhancements for the quality and probability calculations */
+	private boolean enhancements = true;
 
 	/** floor value to ensure the search is not overly biased against exploration */
-	private final double PROB_FLOOR; // Value in [0,1] 0=basic RRT
+	private final double PROB_FLOOR; // Value in [0,1]
 
 	/** number of neighbors to consider to test a sampled waypoint */
 	private final int NEIGHBORS;
@@ -113,6 +110,24 @@ public class HRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
+	 * Returns the boolean value if the enhancements should be used or not.
+	 * 
+	 * @return true if the enhancements are to be used, false otherwise
+	 */
+	public boolean isEnhanced() {
+		return enhancements;
+	}
+
+	/**
+	 * Sets a boolean value representing if the enhancements should be used or not.
+	 * 
+	 * @param enhancements the enhancements to set
+	 */
+	public void setEnhancements(boolean enhancements) {
+		this.enhancements = enhancements;
+	}
+
+	/**
 	 * Gets the nearest RRT waypoint added to the tree.
 	 * 
 	 * @return the waypointNear the nearest waypoint added to the tree
@@ -149,7 +164,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
-	 * Gets the probability floor for the acceptance of a sampled waypoint
+	 * Gets the probability floor for the acceptance of a sampled waypoint.
 	 * 
 	 * @return the probability floor
 	 */
@@ -176,39 +191,29 @@ public class HRRTreePlanner extends RRTreePlanner {
 	protected double computeQuality(double cost) {
 		double relativeCost = 0d;
 		double diff = cost - costOpt;
+		double quality;
 
 		if (Math.abs(diff) < 0.00001) // prevent numerical imprecision
 			return 1;
 
-		if (!myQuality)
+		// original implementation of HRRT
+		if (!isEnhanced()) {
 			relativeCost = (cost - costOpt) / (costMax - costOpt);
+			quality = 1 - relativeCost;
+		}
+		// enhanced implementation of HRRT
 		else {
 			if (cost > costOpt)
 				relativeCost = Math.exp(-costOpt / (cost - costOpt));
 			else
 				relativeCost = 0d; // limit case of exponential
+
+			quality = 1 - relativeCost;
+			quality = (quality > PROB_FLOOR) ? quality : PROB_FLOOR;
 		}
 
-		return 1 - relativeCost;
-	}
+		return quality;
 
-	/**
-	 * Computes the probability of a certain waypoint given its quality.
-	 * 
-	 * @param cost the cost (f-value) of the waypoint
-	 * 
-	 * @return the probability of the waypoint [0,1]
-	 */
-	protected double computeProbability(double quality) {
-		double probability = 0d;
-
-		if (!myProbability)
-			probability = (quality < PROB_FLOOR) ? quality : PROB_FLOOR; // Minimum(qual,floor)
-		else {
-			probability = (quality > PROB_FLOOR) ? quality : PROB_FLOOR; // Maximum(qual,floor)
-		}
-
-		return probability;
 	}
 
 	/**
@@ -228,7 +233,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 			waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypointRand, 1).get(0);
 
 			quality = computeQuality(waypointNear.getF());
-			quality = computeProbability(quality);
+			if (!isEnhanced())
+				quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR; // Minimum(qual,floor)
 
 			rand = r.nextDouble();
 		}
@@ -260,8 +266,10 @@ public class HRRTreePlanner extends RRTreePlanner {
 			neighborsList = this.sortByQuality(neighborsList);
 
 			for (RRTreeWaypoint neighbor : neighborsList) {
-				quality = computeQuality(neighbor.getF());
-				quality = computeProbability(quality);
+				quality = computeQuality(waypointNear.getF());
+				if (!isEnhanced())
+					quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR; // Minimum(qual,floor)
+
 				rand = r.nextDouble();
 				if (rand < quality) {
 					this.waypointNear = neighbor;
@@ -296,7 +304,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 			waypointNear = neighborsList.get(0);
 
 			quality = computeQuality(waypointNear.getF());
-			quality = computeProbability(quality);
+			if (!isEnhanced())
+				quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR; // Minimum(qual,floor)
 
 			rand = r.nextDouble();
 		}
@@ -306,21 +315,18 @@ public class HRRTreePlanner extends RRTreePlanner {
 	}
 
 	/**
-	 * Sorts a list of waypoints by decreasing quality (i.e. by increasing f-value)
+	 * Sorts a list of waypoints by decreasing quality.
 	 * 
 	 * @param waypointList the list to be sorted
 	 * 
 	 * @return the sorted list of waypoints
 	 */
 	protected ArrayList<RRTreeWaypoint> sortByQuality(ArrayList<RRTreeWaypoint> waypointList) {
-		if (!myProbability)
+		if (!enhancements) // without enhancements quality is inversely proportional to total cost of node
 			Collections.sort(waypointList, (a, b) -> a.getF() < b.getF() ? -1 : a.getF() == b.getF() ? 0 : 1);
-		else
-			Collections.sort(waypointList,
-					(a, b) -> this.computeProbability(computeQuality(a.getF())) > this
-							.computeProbability(computeQuality(b.getF())) ? -1
-									: this.computeProbability(computeQuality(a.getF())) == this
-											.computeProbability(computeQuality(b.getF())) ? 0 : 1);
+		else // with enhancements quality may not be proportional to f if it was saturated
+			Collections.sort(waypointList, (a, b) -> computeQuality(a.getF()) > computeQuality(b.getF()) ? -1
+					: computeQuality(a.getF()) == computeQuality(b.getF()) ? 0 : 1);
 
 		return waypointList;
 	}

@@ -48,9 +48,6 @@ public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 	/** the category of parameters that are sampling related */
 	protected final static String CATEGORY_HEURISTIC = "Heuristic Parameters";
 	
-	/** the category of parameters that are related with my own implementation */
-	protected final static String CATEGORY_IMPROVEMENTS = "Heuristic Improvements";
-	
 	/**
 	 * Customizes the property descriptors for each parameter of an heuristic RRTree planner.
 	 * 
@@ -64,7 +61,7 @@ public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 		try {
 			PropertyDescriptor probFloor = this.createProperty(beanClass, "probFloor",
 					"Probability Floor",
-					"a value to ensure the search is not overly biased against exploration",
+					"a value to ensure the search is not overly biased against exploration \n(0 equals full exploitation for enhanced, 1 for non enhanced)",
 					CATEGORY_HEURISTIC);
 			PropertyDescriptor neighbors = this.createProperty(beanClass, "neighbors",
 					"Number Neighbors",
@@ -74,16 +71,12 @@ public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 					"Heuristic",
 					"the heuristic algorithm for the planner",
 					CATEGORY_HEURISTIC);
-			PropertyDescriptor myQuality = this.createProperty(beanClass, "myQuality",
-					"Quality",
-					"replace the linear quality calculation with an exponential",
-					CATEGORY_IMPROVEMENTS);
-			PropertyDescriptor myProbability = this.createProperty(beanClass, "myProbability",
-					"Probability",
-					"replace the probability floor function formula from minimum to maximum",
-					CATEGORY_IMPROVEMENTS);
+			PropertyDescriptor enhancements = this.createProperty(beanClass, "enhancements",
+					"Enhancements",
+					"the enhancements for the quality and probability calculations",
+					CATEGORY_HEURISTIC);
 			
-			PropertyDescriptor rvNew[] = {probFloor, neighbors, heuristic, myQuality, myProbability};
+			PropertyDescriptor rvNew[] = {probFloor, neighbors, heuristic, enhancements};
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 

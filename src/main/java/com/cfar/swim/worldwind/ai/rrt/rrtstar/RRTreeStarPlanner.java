@@ -99,6 +99,16 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 
 		return (int) Math.round(kNear);
 	}
+	
+	/**
+	 * Creates a new waypoint from a random position sampled from a uniformed
+	 * distribution over the environment space
+	 * 
+	 * @return waypoint the RRTreeWaypoint sampled
+	 */
+	protected RRTreeWaypoint sampleEllipsoidal() {
+		return this.createWaypoint(this.getEnvironment().samplePositionEllipsoide(getStart(), getGoal(), getGoal().getCost()));
+	}
 
 	/**
 	 * Chooses the least expensive waypoint from a list of near neighbors as parent
@@ -206,7 +216,8 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 		double oldCost = this.getGoal().getCost();
 
 		for (int i = 0; i < getMAX_ITER(); i++) {
-			RRTreeWaypoint waypointRand = this.sampleBiased(getBIAS());
+//			RRTreeWaypoint waypointRand = this.sampleBiased(getBIAS());
+			RRTreeWaypoint waypointRand = this.sampleEllipsoidal();
 			RRTreeWaypoint waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypointRand, 1).get(0);
 
 			success = this.newWaypoint(waypointRand, waypointNear);

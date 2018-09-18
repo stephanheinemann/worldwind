@@ -203,7 +203,7 @@ public class RRTreePlannerTest {
 
 		HRRTreePlanner plannerHRRT = new HRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, Strategy.EXTEND, Extension.LINEAR, prob, nbr);
 		plannerHRRT.setHeuristic(heuristic); plannerHRRT.setRiskPolicy(RiskPolicy.IGNORANCE);
-		plannerHRRT.myProbability=false; plannerHRRT.myQuality=false;
+		plannerHRRT.setEnhancements(false);
 
 		Path path;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;

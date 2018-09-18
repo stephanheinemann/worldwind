@@ -30,7 +30,7 @@
 package com.cfar.swim.worldwind.ai.rrt.hrrt;
 
 /**
- * Enumerates the possible heuristics to guide the search for an HRRTreePlanner
+ * Enumerates the possible heuristics to guide the search for an HRRTreePlanner.
  * 
  * @author Manuel Rosa
  *
