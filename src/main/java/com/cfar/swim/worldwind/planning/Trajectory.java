@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.time.Duration;
+import java.util.Iterator;
 
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
@@ -222,6 +223,37 @@ public class Trajectory extends Path implements Depictable {
 	 */
 	public Waypoint getLastWaypoint() {
 		return Iterables.getLast(this.getWaypoints(), null);
+	}
+	
+	/**
+	 * Removes the first waypoint of this trajectory.
+	 * 
+	 * @return a new trajectory without the first waypoint
+	 */
+	public Trajectory pollFirst() {
+		Iterable<? extends Waypoint> waypoints = this.getWaypoints();
+		Iterator<? extends Waypoint> iterator = waypoints.iterator();
+		
+		iterator.next();
+		iterator.remove();
+		
+		return new Trajectory(waypoints);
+	}
+	
+	/**
+	 * Removes the last waypoint of this trajectory.
+	 * 
+	 * @return a new trajectory without the first waypoint
+	 */
+	public Trajectory pollLast() {
+		Iterable<? extends Waypoint> waypoints = this.getWaypoints();
+		Iterator<? extends Waypoint> iterator = waypoints.iterator();
+		
+		while(iterator.hasNext())
+			iterator.next();
+		iterator.remove();
+		
+		return new Trajectory(waypoints);
 	}
 	
 	/**

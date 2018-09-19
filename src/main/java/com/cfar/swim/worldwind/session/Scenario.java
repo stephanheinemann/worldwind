@@ -125,7 +125,7 @@ public class Scenario implements Identifiable, Enableable {
 
 	/** the obstacles of this scenario */
 	private Set<Obstacle> obstacles;
-	
+
 	/** the terrain obstacles of this scenario */
 	private Set<TerrainObstacle> terrainObstacles;
 
@@ -328,7 +328,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void addObstaclesChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("obstacles", listener);
 	}
-	
+
 	/**
 	 * Adds a terrain obstacles change listener to this scenario.
 	 * 
@@ -727,7 +727,7 @@ public class Scenario implements Identifiable, Enableable {
 	public ArrayList<DesirabilityZone> getDesirabilityZones() {
 		return this.desirabilityZones;
 	}
-	
+
 	/**
 	 * Removes all desirability zones of this scenario.
 	 */
@@ -974,21 +974,44 @@ public class Scenario implements Identifiable, Enableable {
 			Iterator<? extends Waypoint> trajectoryIterator = this.trajectory.getWaypoints().iterator();
 			int number = 0;
 
+			// Compute total Dtg and Ttg
+			double partialCost = 0d, partialDtg = 0d;
+			Duration partialTtg = Duration.ZERO;
+			for (Waypoint wpt : this.trajectory.getWaypoints()) {
+				partialDtg += wpt.getDtg();
+				partialTtg = partialTtg.plus(wpt.getTtg());
+			}
+
 			if (waypointsIterator.hasNext()) {
 				Waypoint current = waypointsIterator.next();
+				
+				current.setCost(Math.round(partialCost * 10000d) / 10000d);
+				current.setDtg(Math.round(partialDtg * 100d) / 100d);
+				current.setTtg(partialTtg);
+				current.setEto(this.trajectory.getFirstWaypoint().getEto());
 
 				while (waypointsIterator.hasNext()) {
-					Waypoint next = waypointsIterator.next();
 					boolean isNext = false;
+					Waypoint next = waypointsIterator.next();
 
 					while (trajectoryIterator.hasNext() && !isNext) {
 						Waypoint waypoint = trajectoryIterator.next();
+						partialDtg -= waypoint.getDtg();
+						partialTtg = partialTtg.minus(waypoint.getTtg());
+						// TODO: Manuel: goal threshold may lead to waypoints that are not "equal"
 						if (waypoint.equals(next)) {
 							number = 0;
 							current = next;
 							isNext = true;
+							partialCost += waypoint.getCost();
+							partialCost = Math.abs(partialCost) >= 0.01 ? partialCost : 0d;
+							
+							current.setCost(Math.round(partialCost * 10000d) / 10000d);
+							current.setDtg(Math.round(partialDtg * 100d) / 100d);
+							current.setTtg(partialTtg);
+							current.setEto(waypoint.getEto());
 						}
-						waypoint.setDesignator(current.getDesignator() + "." + Integer.toString(number));
+						waypoint.setDesignator(current.getDesignator() + String.format(".%02d", number));
 						number++;
 					}
 				}
@@ -1022,7 +1045,8 @@ public class Scenario implements Identifiable, Enableable {
 						leg.add(waypoint);
 					} else if (waypoint.equals(from)) {
 						passedFrom = true;
-						leg.add(waypoint);
+						// Manuel: Removed so that first waypoint is not repeated
+						// leg.add(waypoint);
 					} else if (passedFrom) {
 						leg.add(waypoint);
 					}
@@ -1229,7 +1253,7 @@ public class Scenario implements Identifiable, Enableable {
 	public void notifyObstaclesChange() {
 		this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
 	}
-	
+
 	/**
 	 * Gets the terrain obstacles of this scenario.
 	 * 
@@ -1250,7 +1274,8 @@ public class Scenario implements Identifiable, Enableable {
 		if (null != terrainObstacle) {
 			if (this.terrainObstacles.add(terrainObstacle)) {
 				terrainObstacle.setThreshold(this.threshold);
-				this.pcs.firePropertyChange("terrainObstacles", null, Collections.unmodifiableSet(this.terrainObstacles));
+				this.pcs.firePropertyChange("terrainObstacles", null,
+						Collections.unmodifiableSet(this.terrainObstacles));
 
 				if (terrainObstacle.isEnabled() && this.environment.embed(terrainObstacle)) {
 					this.pcs.firePropertyChange("environment", null, this.environment);
@@ -1271,7 +1296,8 @@ public class Scenario implements Identifiable, Enableable {
 	public void removeTerrainObstacle(TerrainObstacle terrainObstacle) {
 		if (null != terrainObstacle) {
 			if (this.terrainObstacles.remove(terrainObstacle)) {
-				this.pcs.firePropertyChange("terrainObstacles", null, Collections.unmodifiableSet(this.terrainObstacles));
+				this.pcs.firePropertyChange("terrainObstacles", null,
+						Collections.unmodifiableSet(this.terrainObstacles));
 
 				if (this.environment.unembed(terrainObstacle)) {
 					this.pcs.firePropertyChange("environment", null, this.environment);
@@ -1303,7 +1329,8 @@ public class Scenario implements Identifiable, Enableable {
 		if (null != terrainObstacle) {
 			if (this.terrainObstacles.add(terrainObstacle)) {
 				terrainObstacle.setThreshold(this.threshold);
-				this.pcs.firePropertyChange("terrainObstacles", null, Collections.unmodifiableSet(this.terrainObstacles));
+				this.pcs.firePropertyChange("terrainObstacles", null,
+						Collections.unmodifiableSet(this.terrainObstacles));
 			}
 			if (this.environment.embed(terrainObstacle)) {
 				this.pcs.firePropertyChange("environment", null, this.environment);
