@@ -46,7 +46,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	private final static String DESCRIPTION_RRT = "Rapidly-exploring Random Tree: Basic version of a RRT which grows a tree from a start to a goal positions by continuously sampling random points from the environment. It does not take costs nor traversable obstacles into account.";
 
 	/** the distance defining the goal region */
-	private double goalThreshold = 5d;
+	private double goalThreshold = 1d;
 
 	/** the maximum number of sampling iterations */
 	private int maxIter = 3_000;

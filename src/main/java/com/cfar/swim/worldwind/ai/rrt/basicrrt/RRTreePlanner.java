@@ -875,7 +875,7 @@ public class RRTreePlanner extends AbstractPlanner {
 
 				// append partial trajectory to plan
 				if ((!plan.isEmpty()) && (!part.isEmpty())) {
-					plan.pollLast();
+					part = part.pollFirst();
 				}
 
 				for (Waypoint waypoint : part.getWaypoints()) {

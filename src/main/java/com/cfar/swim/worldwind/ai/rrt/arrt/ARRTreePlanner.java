@@ -37,14 +37,13 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AnytimePlanner;
-import com.cfar.swim.worldwind.ai.OnlinePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
@@ -60,23 +59,26 @@ import gov.nasa.worldwind.geom.Position;
  * @author Manuel Rosa
  *
  */
-public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, OnlinePlanner {
+public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 
 	// TODO: How to define this values?
-	private static final int MAX_SAMPLE_ATTEMPTS = 50;
-	private static final int MAX_NEIGHBORS = 5;
+	/** the maximum number of sampling attempts per iteration of uniform sampling */
+	private final int MAX_SAMPLE_ATTEMPTS = 50;
+
+	/** the maximum number of neighbors to be considered for expansion */
+	private final int MAX_NEIGHBORS = 5;
 
 	/** the sampling technique for the planner */
 	private final Sampling SAMPLING;
 
 	/** the initial relative weight of costs to calculate the cost of a waypoint */
-	private double initialCostBias; // Change to final?
+	private double initialCostBias = 0d;
 
 	/** the final relative weight of costs to calculate the cost of a waypoint */
-	private double finalCostBias; // Change to final?
+	private double finalCostBias = 1d;
 
 	/** the improvement factor for the cost of each new generated solution */
-	private double improvementFactor; // Change to final?
+	private double improvementFactor;
 
 	/** the relative weight of distances to calculate the cost of a waypoint */
 	private double distBias = 1d;
@@ -85,8 +87,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	private double costBias = 0d;
 
 	/** the step used to modify the relative weights of distances and costs */
-	// TODO: might be interesting to define proportionally to improvementFactor
-	private double step = 0.2d; // step =(distbias -costbias)/5
+	// TODO: should be defined proportionally to improvementFactor/initialBias
+	private double step = 0.2d; // step =(finalCostBias -initialCostBias)/4
 
 	/** the cost value bounding any new solution to be generated */
 	private double costBound = Double.POSITIVE_INFINITY;
@@ -102,8 +104,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 */
 	public ARRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		this.online = false;
-		this.positionThreshold = 2d;
+		// this.online = false;
+		// this.positionThreshold = 2d;
 		SAMPLING = Sampling.UNIFORM;
 	}
 
@@ -123,11 +125,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 * @see RRTreePlanner#RRTreePlanner(Aircraft, Environment, double, int, int)
 	 */
 	public ARRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
-			Strategy strategy, Extension extension, Sampling sampling,
-			boolean online, double positionThreshold) {
+			Strategy strategy, Extension extension, Sampling sampling) {
 		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension);
-		this.online = online;
-		this.positionThreshold = positionThreshold;
 		SAMPLING = sampling;
 	}
 
@@ -163,6 +162,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	@Override
 	public void setMinimumQuality(double initialCostBias) {
 		this.initialCostBias = initialCostBias;
+		this.step = (this.finalCostBias - this.initialCostBias) / 4d;
 	}
 
 	/**
@@ -190,6 +190,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	@Override
 	public void setMaximumQuality(double finalCostBias) {
 		this.finalCostBias = finalCostBias;
+		this.step = (this.finalCostBias - this.initialCostBias) / 4d;
 	}
 
 	/**
@@ -217,7 +218,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Gets the relative weight of distances to calculate the cost of a waypoint
+	 * Gets the relative weight of distances to calculate the cost of a waypoint.
 	 * 
 	 * @return the the relative weight of distances
 	 */
@@ -226,7 +227,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Sets the relative weight of distances to calculate the cost of a waypoint
+	 * Sets the relative weight of distances to calculate the cost of a waypoint.
 	 * 
 	 * @param distBias the relative weight of distances to set
 	 */
@@ -235,7 +236,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Gets the relative weight of costs to calculate the cost of a waypoint
+	 * Gets the relative weight of costs to calculate the cost of a waypoint.
 	 * 
 	 * @return the relative weight of costs
 	 */
@@ -244,7 +245,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Sets the relative weight of costs to calculate the cost of a waypoint
+	 * Sets the relative weight of costs to calculate the cost of a waypoint.
 	 * 
 	 * @param costBias the relative weight of costs to set
 	 */
@@ -253,7 +254,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Gets the step used to modify the relative weights of distances and costs
+	 * Gets the step used to modify the relative weights of distances and costs.
 	 * 
 	 * @return the step used to modify the relative weights
 	 */
@@ -262,7 +263,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Sets the step used to modify the relative weights of distances and costs
+	 * Sets the step used to modify the relative weights of distances and costs.
 	 * 
 	 * @param step the step used to modify the relative weights to set
 	 */
@@ -271,7 +272,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Gets the cost value bounding any new solution to be generated
+	 * Gets the cost value bounding any new solution to be generated.
 	 * 
 	 * @return the bounding cost value
 	 */
@@ -280,7 +281,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Sets the cost value bounding any new solution to be generated
+	 * Sets the cost value bounding any new solution to be generated.
 	 * 
 	 * @param costBound the bounding cost value to set
 	 */
@@ -289,8 +290,27 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
+	 * Gets the maximum number of sampling attempts per iteration of uniform
+	 * sampling.
+	 * 
+	 * @return the maximum number of sampling attempts
+	 */
+	protected int getMaxSampleAttempts() {
+		return MAX_SAMPLE_ATTEMPTS;
+	}
+
+	/**
+	 * Gets the maximum number of neighbors to be considered for expansion.
+	 * 
+	 * @return the maximum number of neighbors
+	 */
+	protected int getMaxNeighbors() {
+		return MAX_NEIGHBORS;
+	}
+
+	/**
 	 * Selects the cost between two waypoints considering the relative weights of
-	 * distance and cost at the moment of the call
+	 * distance and cost at the moment of the call.
 	 * 
 	 * @param waypoint the new waypoint to the tree towards
 	 * @param waypointNear the parent waypoint in the tree
@@ -303,7 +323,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Sorts a list of elements by increasing selected cost to a given waypoint
+	 * Sorts a list of elements by increasing selected cost to a given waypoint.
 	 * 
 	 * @param list the list with the elements to be sorted by selected cost
 	 * @param waypoint the waypoint to be considered as reference for the selected
@@ -336,18 +356,58 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	}
 
 	/**
-	 * Updates the cost value bounding the next solution to be generated
+	 * Updates the cost value bounding the next solution to be generated.
 	 */
 	protected void updateCostBound() {
 		this.setCostBound((1 - improvementFactor) * getGoal().getCost());
 	}
 
 	/**
-	 * Updates the relative weights of distances and costs.
+	 * Updates the relative weights of distances and costs with default step.
 	 */
 	protected void updateWeights() {
-		this.setDistBias(distBias - step < 1 - getMaximumQuality() ? 1 - getMaximumQuality() : distBias - step);
-		this.setCostBias(costBias + step > getMaximumQuality() ? getMaximumQuality() : costBias + step);
+		this.updateWeights(getStep());
+	}
+
+	/**
+	 * Updates the relative weights of distances and costs with a certain value.
+	 */
+	protected void updateWeights(double step) {
+		double costBias = this.getCostBias() + step;
+		costBias = costBias > this.getMaximumQuality() ? this.getMaximumQuality() : costBias;
+		costBias = costBias < this.getMinimumQuality() ? this.getMinimumQuality() : costBias;
+				
+		this.setCostBias(costBias);
+		this.setDistBias(1 - costBias);
+	}
+
+	/**
+	 * Saves the current data in the planner and environment to an anytime tree.
+	 * 
+	 * @param tree the tree where to save the current data
+	 */
+	@SuppressWarnings("unchecked")
+	protected void saveToTree(ARRTree tree) {
+		tree.setWaypointList((ArrayList<RRTreeWaypoint>) ((ArrayList<RRTreeWaypoint>) this.getWaypointList()).clone());
+		tree.setEdgeList((ArrayList<Edge>) ((ArrayList<Edge>) this.getEdgeList()).clone());
+		tree.setPlan((LinkedList<Waypoint>) this.getPlan().clone());
+		tree.setDistBias(this.getDistBias());
+		tree.setCostBias(this.getCostBias());
+		tree.setCostBound(this.getCostBound());
+	}
+
+	/**
+	 * Loads the data from an anytime tree to the current planner.
+	 * 
+	 * @param tree the tree from where to load the data
+	 */
+	protected void loadFromTree(ARRTree tree) {
+		this.setWaypointList(tree.getWaypointList());
+		this.setEdgeList(tree.getEdgeList());
+		this.setPlan(tree.getPlan());
+		this.setDistBias(tree.getDistBias());
+		this.setCostBias(tree.getCostBias());
+		this.setCostBound(tree.getCostBound());
 	}
 
 	/**
@@ -406,7 +466,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	/**
 	 * Extends the tree in the direction of the target waypoint, choosing to expand
 	 * the waypoint from the neighbors in the tree sorted by increasing selected
-	 * cost
+	 * cost.
 	 * 
 	 * @param waypointSamp the waypoint set as the goal for extension
 	 * 
@@ -422,7 +482,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 		neighborsList = this.sortSelectedCost(neighborsList, waypointSamp);
 
 		for (RRTreeWaypoint waypointNear : neighborsList) {
-			// TODO: Review alternative extension strategies
 			if (this.newWaypoint(waypointSamp, waypointNear)) {
 				waypointNew = this.getWaypointNew();
 				this.addEdge(waypointNew);
@@ -510,81 +569,44 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 		this.setCostBound(Double.POSITIVE_INFINITY);
 
 		Trajectory trajectory = new Trajectory();
+
+		// Anytime variables
 		boolean newPlan;
 		double costOld = Double.POSITIVE_INFINITY;
-		do {
-			// Anytime
-			if (!this.isImproved(costOld)) {
-				System.out.println("Anytime planning!!!");
-				this.clearExpendables();
-				this.addVertex(getStart());
-				this.setWaypointNew(getStart());
 
-				costOld = this.getGoal().getCost();
-				newPlan = this.compute();
+		// Auxiliary Trees
+		ARRTree treeR = new ARRTree(), treeT = new ARRTree();
+		treeT.setCostBias(this.getMinimumQuality());
+		treeT.setDistBias(1 - this.getCostBias());
+		treeT.setCostBound(Double.POSITIVE_INFINITY);
+
+		do {
+			this.clearExpendables();
+			this.addVertex(getStart());
+			this.setWaypointNew(getStart());
+
+			costOld = this.getGoal().getCost();
+			newPlan = this.compute();
+
+			this.saveToTree(treeT);
+
+			if (newPlan) {
+				trajectory = this.createTrajectory();
+				this.revisePlan(trajectory);
+
+				treeR.clone(treeT);
 
 				this.updateWeights();
-				if (newPlan) {
-					this.updateCostBound();
-					trajectory = this.createTrajectory();
-					this.revisePlan(trajectory);
-					System.out.println("NEW PLANNNNNNNNNNNNNN");
-					if(getDatalink().isConnected()) {
-						this.getDatalink().uploadFlightPath(trajectory);
-						System.out.println("UPLOADDDDDDDDDDDDDDDDDDDDDDDDDDDDD");
-					}
-				}
-			}
-			// Online
-			if (isOnline()) {
-				System.out.println("Online planning!!!");
-				this.updateAircraftTimedPosition();
-				System.out.println("Position updated!!");
-				
-				int index = getDatalink().getNextWaypointIndex();
-				System.out.println("Next Waypoint index = "+index);
-				if(index>=0 && index+3 <this.getPlan().size()) {
-					System.out.println("Current plan -----------------------");
-					for(Waypoint waypoint : this.getPlan())
-						System.out.println(waypoint);
-					System.out.println("------------------------------------");
-					System.out.println("In plan this is ... "+getPlan().get(index));
+				this.updateCostBound();
+				treeT.setBiases(this.getDistBias(), this.getCostBias());
+				treeT.setCostBound(this.getCostBound());
 
-    				// Check if the aircraft moved significantly
-//    				if (isSignificantMovement(getStart(), getAircraftTimedPosition())) {
-    					System.out.println("The aircraft moved significantly from previous start!!!");
-    					
-    					RRTreeWaypoint waypoint = this.findClosestWaypoint(getAircraftTimedPosition(), this.getPlan());
-    					System.out.println(
-    							"Real:  " + getAircraftTimedPosition() + "\t" + getAircraftTimedPosition().getAto());
-    					System.out.println("Close: " + waypoint + "\t" + waypoint.getEto());
-    
-    					// Check if the displacement is worthy of a new plan or just an improvement
-    					// TODO use interpolated position from edge instead of extreme waypoint
-//    					if (isSignificantMovement(waypoint, getAircraftTimedPosition())) {
-//    						System.out.println("The aircraft is too far from the closest waypoint for small adjust!!!");
-//    						// this.initialize(getPlan().get(index+2), destination, getAircraftTimedPosition().getAto());
-//    						this.setStart((RRTreeWaypoint)getPlan().get(index+2));
-//    						this.getStart().setH(computeHeuristic(getStart(), getGoal()));
-//    
-//    						this.setCostBias(this.getMinimumQuality());
-//    						this.setDistBias(1 - this.getCostBias());
-//    						this.setCostBound(Double.POSITIVE_INFINITY);
-//    						costOld = Double.POSITIVE_INFINITY;
-//    					} else {
-    						this.setStart((RRTreeWaypoint)getPlan().get(index+3));
-    						this.getStart().setH(this.computeHeuristic(getStart(), getGoal()));
-//    					}
-    
-//    				} else {
-//    					System.out.println("I think the aircraft is stopped... Am I right?");
-//    				}
-				} else
-					System.out.println("Negative indexxxx (or maximum) "+index);
+			} else {
+				this.updateWeights();
+				treeT.setBiases(this.getDistBias(), this.getCostBias());
 			}
 
-		} while ((!isOnline() && !isImproved(costOld)) || (isOnline() && !isInsideGoalRegion()));
-		System.out.println("Improved");
+		} while ((!isImproved(costOld)));
 
 		return trajectory;
 	}
@@ -603,12 +625,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 	 * 
 	 * @see RRTree#plan(Position, Position, List, ZonedDateTime)
 	 */
-	@SuppressWarnings("unchecked")
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 
+		// Multiple-waypoint-plan variables
 		LinkedList<Waypoint> plan = new LinkedList<>();
-		Waypoint currentOrigin;
+		Waypoint currentOrigin, currentDestination;
 		ZonedDateTime currentEtd;
 		Trajectory trajectory;
 
@@ -617,27 +639,27 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 				.collect(Collectors.toCollection(ArrayList::new));
 		destinations.add(new Waypoint(destination));
 
-		// initialize auxiliary variables
-		ArrayList<LinkedList<Waypoint>> planList = new ArrayList<>(destinations.size());
-		double[] boundCosts = new double[destinations.size()];
-		double[] newCosts = new double[destinations.size()];
-		double[] oldCosts = new double[destinations.size()];
+		// Auxiliary Trees
+		ARRTree[] treeR = new ARRTree[destinations.size()], treeT = new ARRTree[destinations.size()];
 		for (int i = 0; i < destinations.size(); i++) {
-			planList.add(new LinkedList<Waypoint>());
-			boundCosts[i] = Double.POSITIVE_INFINITY;
-			newCosts[i] = Double.POSITIVE_INFINITY;
-			oldCosts[i] = Double.POSITIVE_INFINITY;
+			treeR[i] = new ARRTree();
+			treeT[i] = new ARRTree();
+			treeT[i].setCostBias(this.getMinimumQuality());
+			treeT[i].setDistBias(1 - this.getCostBias());
+			treeT[i].setCostBound(Double.POSITIVE_INFINITY);
 		}
 
+		// Anytime variables
 		Trajectory part;
-		Waypoint currentDestination;
 		boolean newPlan, newPart, allImproved = false;
+		double costOld = Double.POSITIVE_INFINITY, costNew = Double.POSITIVE_INFINITY;
 
 		this.setCostBias(this.getMinimumQuality());
 		this.setDistBias(1 - this.getCostBias());
 
 		// Create new trajectories until all paths are considered improved
 		while (!allImproved) {
+			System.out.println("Outer loop");
 			// reset boolean values
 			allImproved = true;
 			newPlan = false;
@@ -648,35 +670,43 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 
 			// plan and concatenate partial trajectories
 			for (int i = 0; i < destinations.size(); i++) {
-				currentDestination = destinations.get(i);
-				this.setCostBound(boundCosts[i]);
+				this.loadFromTree(treeT[i]);
+				if (treeR[i].getPlan().isEmpty())
+					costOld = Double.POSITIVE_INFINITY;
+				else
+					costOld = treeR[i].getPlan().peekLast().getCost();
 
+				currentDestination = destinations.get(i);
 				this.initialize(currentOrigin, currentDestination, currentEtd);
 
 				newPart = this.compute();
 
+				this.saveToTree(treeT[i]);
+
 				if (newPart) {
-					part = this.createTrajectory();
-					planList.set(i, (LinkedList<Waypoint>) this.getPlan().clone());
+					treeR[i].clone(treeT[i]);
+
+					this.updateWeights();
 					this.updateCostBound();
-					boundCosts[i] = this.getCostBound();
-					newCosts[i] = this.getGoal().getCost();
+					treeT[i].setBiases(this.getDistBias(), this.getCostBias());
+					treeT[i].setCostBound(this.getCostBound());
+
 				} else {
-					part = new Trajectory((List<Waypoint>) planList.get(i).clone());
+					this.updateWeights();
+					treeT[i].setBiases(this.getDistBias(), this.getCostBias());
 				}
 
 				// newPlan must be true when at least one segment has a new plan
 				newPlan = newPlan || newPart;
+
 				// allImporved is true only when all segments are improved
-				allImproved = allImproved && this.isImproved(oldCosts[i], newCosts[i]);
-				System.out.println("newPart? " + newPart + " isImproved? " + this.isImproved(oldCosts[i], newCosts[i])
-						+ "\tOld: " + oldCosts[i] + " New: " + newCosts[i]);
+				costNew = treeR[i].getPlan().peekLast().getCost();
+				allImproved = allImproved && this.isImproved(costOld, costNew);
 
-				oldCosts[i] = newCosts[i];
-
+				part = this.createTrajectory(treeR[i].getPlan());
 				// append partial trajectory to plan
 				if ((!plan.isEmpty()) && (!part.isEmpty())) {
-					plan.pollLast();
+					part.pollFirst();
 				}
 				for (Waypoint waypoint : part.getWaypoints()) {
 					plan.add(waypoint);
@@ -687,9 +717,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 				currentEtd = currentOrigin.getEto();
 			}
 
-			// update weights to be used in next iteration
-			this.updateWeights();
-
 			// if the plan was modified
 			if (newPlan) {
 				// create trajectory from plan
@@ -698,142 +725,10 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner, Onl
 			}
 		}
 
-		System.out.println("Improved...");
 		trajectory = this.createTrajectory(plan);
 		this.revisePlan(trajectory);
 		return trajectory;
 
 	}
-
-	// Online Planner
-
-	/** the state of the online capabilities of the planner mode (active or not) */
-	private final boolean online;
-
-	/**
-	 * the distance threshold to consider a position displacement as worthy of a new
-	 * plan
-	 */
-	private final double positionThreshold;
-	
-	/** the datalink connection of this planner */ 
-	private Datalink datalink;
-
-	/** the current position of the aircraft */
-	private Waypoint aircraftTimedPosition;
-
-	/**
-	 * Checks if the online capabilities of the planner mode are active or not.
-	 * 
-	 * @return true if the planner mode is set to online, false otherwise
-	 */
-	public boolean isOnline() {
-		return online;
-	}
-
-	/**
-	 * Gets the distance threshold to consider a position displacement as worthy of
-	 * a new plan.
-	 * 
-	 * @return the distance threshold for each position
-	 */
-	public double getPositionThreshold() {
-		return positionThreshold;
-	}
-
-	/**
-	 * Gets the datalink connection of this planner.
-	 * 
-	 * @return the datalink
-	 */
-	public Datalink getDatalink() {
-		return datalink;
-	}
-
-	/**
-	 * Sets the datalink connection of this planner.
-	 * 
-	 * @param datalink the datalink to set
-	 */
-	public void setDatalink(Datalink datalink) {
-		this.datalink = datalink;
-	}
-
-	/**
-	 * Gets the current position of the aircraft.
-	 * 
-	 * @return the current position of the aircraft
-	 */
-	public Waypoint getAircraftTimedPosition() {
-		return aircraftTimedPosition;
-	}
-
-	/**
-	 * Sets the current position of the aircraft.
-	 * 
-	 * @param aircraftPosition the current position of the aircraft
-	 */
-	public void setAircraftTimedPosition(Waypoint aircraftTimedPosition) {
-		this.aircraftTimedPosition = aircraftTimedPosition;
-	}
-
-	/**
-	 * Check if the distance between the two positions is significant to consider
-	 * the current position as a different one.
-	 * 
-	 * @param previous the previous position to consider
-	 * @param current the current position to consider
-	 * 
-	 * @return true if the movement between the two positions is significant, false
-	 *         otherwise
-	 */
-	public boolean isSignificantMovement(Position previous, Position current) {
-		return this.getEnvironment().getDistance(previous, current) > this.getPositionThreshold();
-	}
-
-	/**
-	 * Checks if the current position of the aircraft is inside the goal region.
-	 * 
-	 * @return true if aircraft is inside the goal region, false otherwise
-	 */
-	public boolean isInsideGoalRegion() {
-		return this.checkGoal(getAircraftTimedPosition());
-	}
-
-	/**
-	 * Updates the current position of the aircraft in the planner by reading its
-	 * actual position from an external source.
-	 */
-	public void updateAircraftTimedPosition() {
-		this.setAircraftTimedPosition(getDatalink().getAircraftTimedPosition());
-	}
-
-	/**
-	 * Finds the closest waypoint to a reference position from a list of waypoints.
-	 * Waypoints are compared based on their Eto and the Ato of the position, the
-	 * closest is the last one which should already have been passed.
-	 * 
-	 * @param position the reference position
-	 * @param waypointList the waypoint list to be checked
-	 * 
-	 * @return the waypoint from the list closest to the position
-	 */
-	public RRTreeWaypoint findClosestWaypointTime(Waypoint waypoint, List<Waypoint> waypointList) {
-		RRTreeWaypoint closest = null;
-		for (Waypoint wpt : waypointList) {
-			closest = (RRTreeWaypoint) wpt;
-			if (wpt.getEto().compareTo(waypoint.getAto()) == 1)
-				break;
-		}
-		return closest;
-	}
-	public RRTreeWaypoint findClosestWaypoint(Waypoint waypoint, List<Waypoint> waypointList) {
-		RRTreeWaypoint closest = (RRTreeWaypoint) waypointList.stream().sorted((p1, p2) -> Double
-				.compare(this.getEnvironment().getNormalizedDistance(p1, waypoint),
-						this.getEnvironment().getNormalizedDistance(p2, waypoint)))
-				.findFirst().get();
-		return closest;
-	}
-
 
 }

@@ -33,19 +33,25 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.AnytimePlanner;
+import com.cfar.swim.worldwind.ai.DynamicPlanner;
+import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTree;
+import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
-import com.cfar.swim.worldwind.ai.rrt.drrt.DRRTreeWaypoint;
 import com.cfar.swim.worldwind.ai.rrt.drrt.DRRTreePlanner;
+import com.cfar.swim.worldwind.ai.rrt.drrt.DRRTreeWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.render.Obstacle;
@@ -64,33 +70,13 @@ import gov.nasa.worldwind.geom.Position;
  * @author Manuel Rosa
  *
  */
-public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
+public class ADRRTreePlanner extends ARRTreePlanner implements AnytimePlanner, DynamicPlanner {
 
-	// TODO: How to define this values?
-	private static final int MAX_SAMPLE_ATTEMPTS = 50;
-	private static final int MAX_NEIGHBORS = 5;
+	// TODO: temporary solution to add obstacle once
+	private boolean obstacleFlag = false;
 
-	/** the initial relative weight of costs to calculate the cost of a waypoint */
-	private double initialCostBias; // Change to final?
-
-	/** the final relative weight of costs to calculate the cost of a waypoint */
-	private double finalCostBias; // Change to final?
-
-	/** the improvement factor for the cost of each new generated solution */
-	private double improvementFactor; // Change to final?
-
-	/** the relative weight of distances to calculate the cost of a waypoint */
-	private double distBias = 1d;
-
-	/** the relative weight of costs to calculate the cost of a waypoint */
-	private double costBias = 0d;
-
-	/** the step used to modify the relative weights of distances and costs */
-	// TODO: might be interesting to define proportionally to improvementFactor
-	private double step = 0.2d;
-
-	/** the cost value bounding any new solution to be generated */
-	private double costBound = Double.POSITIVE_INFINITY;
+	/** the set with the difference between previous and current obstacle sets */
+	private HashSet<Obstacle> diffObstacles;
 
 	/**
 	 * Constructs an anytime dynamic RRT planner for a specified aircraft and
@@ -116,378 +102,313 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 	 * @param maxIter the maximum number of sampling iterations
 	 * @param strategy the expanding strategy for the planner
 	 * @param extension the extension technique for the planner
+	 * @param sampling the sampling technique for the planner
 	 * 
-	 * @see DRRTreePlanner#DRRTreePlanner(Aircraft, Environment, double, int, int, Strategy, Extension)
+	 * @see ARRTreePlanner#ARRTreePlanner(Aircraft, Environment, double, int, int,
+	 *      Strategy, Extension, Sampling)
 	 */
 	public ADRRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
-			Strategy strategy, Extension extension) {
-		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension);
+			Strategy strategy, Extension extension, Sampling sampling) {
+		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension, sampling);
 	}
 
 	/**
-	 * Gets the minimum quality (initial cost bias) of this ARRT planner.
+	 * Gets the start DRRT waypoint of this DRRT planner.
 	 * 
-	 * @return the minimum quality (initial cost bias) of this ARRT planner
+	 * @return the start DRRT waypoint of this DRRT planner
 	 * 
-	 * @see AnytimePlanner#getMinimumQuality()
+	 * @see RRTreePlanner#getStart()
 	 */
 	@Override
-	public double getMinimumQuality() {
-		return initialCostBias;
+	public DRRTreeWaypoint getStart() {
+		return (DRRTreeWaypoint) super.getStart();
 	}
 
 	/**
-	 * Sets the minimum quality (initial inflation) of this ARRT planner.
+	 * Gets the goal DRRT waypoint of this RRT planner.
 	 * 
-	 * @param initialCostBias the minimum quality (initial cost bias) of this ARRT
-	 *            planner
+	 * @return the goal DRRT waypoint of this DRRT planner
 	 * 
-	 * @see AnytimePlanner#setMinimumQuality(double)
+	 * @see RRTreePlanner#getGoal()
 	 */
 	@Override
-	public void setMinimumQuality(double initialCostBias) {
-		this.initialCostBias = initialCostBias;
+	public DRRTreeWaypoint getGoal() {
+		return (DRRTreeWaypoint) super.getGoal();
 	}
 
 	/**
-	 * Gets the maximum quality (final cost bias) of this ARRT planner.
+	 * Gets the newest DRRT waypoint added to the tree.
 	 * 
-	 * @return the maximum quality (final cost bias) of this ARRT planner
+	 * @return the waypointNew the newest waypoint added to the tree
 	 * 
-	 * @see AnytimePlanner#getMaximumQuality()
+	 * @see RRTreePlanner#getWaypointNew()
 	 */
 	@Override
-	public double getMaximumQuality() {
-		return finalCostBias;
+	public DRRTreeWaypoint getWaypointNew() {
+		return (DRRTreeWaypoint) super.getWaypointNew();
 	}
 
 	/**
-	 * Sets the maximum quality (final cost bias) of this ARRT planner.
+	 * Gets the set of different obstacles containing the difference between the
+	 * previous obstacle set and the current one.
 	 * 
-	 * @param finalCostBias the maximum quality (final cost bias) of this ARRT
-	 *            planner
-	 * 
-	 * @throws IllegalArgumentException if the final inflation is invalid
-	 * 
-	 * @see AnytimePlanner#setMaximumQuality(double)
+	 * @return the set of different obstacles containing the difference between the
+	 *         previous obstacle set and the current one
 	 */
-	@Override
-	public void setMaximumQuality(double finalCostBias) {
-		this.finalCostBias = finalCostBias;
+	public HashSet<Obstacle> getDiffObstacles() {
+		return diffObstacles;
 	}
 
 	/**
-	 * Gets the quality improvement of this ARRT planner.
+	 * Sets the set of different obstacles containing the difference between the
+	 * previous obstacle set and the current one.
 	 * 
-	 * @return the quality improvement of this ARRT planner
-	 * 
-	 * @see AnytimePlanner#getQualityImprovement()
+	 * @param diffObstacles the set of different obstacles containing the difference
+	 *            between the previous obstacle set and the current one
 	 */
-	@Override
-	public double getQualityImprovement() {
-		return improvementFactor;
+	public void setDiffObstacles(HashSet<Obstacle> diffObstacles) {
+		this.diffObstacles = diffObstacles;
 	}
 
 	/**
-	 * Sets the quality improvement of this ARRT planner.
-	 * 
-	 * @param improvementFactor the quality improvement of this ARRT planner
-	 * 
-	 * @see AnytimePlanner#setQualityImprovement(double)
-	 */
-	@Override
-	public void setQualityImprovement(double improvementFactor) {
-		this.improvementFactor = improvementFactor;
-	}
-
-	/**
-	 * Gets the relative weight of distances to calculate the cost of a waypoint
-	 * 
-	 * @return the the relative weight of distances
-	 */
-	public double getDistBias() {
-		return distBias;
-	}
-
-	/**
-	 * Sets the relative weight of distances to calculate the cost of a waypoint
-	 * 
-	 * @param distBias the relative weight of distances to set
-	 */
-	public void setDistBias(double distBias) {
-		this.distBias = distBias;
-	}
-
-	/**
-	 * Gets the relative weight of costs to calculate the cost of a waypoint
-	 * 
-	 * @return the relative weight of costs
-	 */
-	public double getCostBias() {
-		return costBias;
-	}
-
-	/**
-	 * Sets the relative weight of costs to calculate the cost of a waypoint
-	 * 
-	 * @param costBias the relative weight of costs to set
-	 */
-	public void setCostBias(double costBias) {
-		this.costBias = costBias;
-	}
-
-	/**
-	 * Gets the step used to modify the relative weights of distances and costs
-	 * 
-	 * @return the step used to modify the relative weights
-	 */
-	public double getStep() {
-		return step;
-	}
-
-	/**
-	 * Sets the step used to modify the relative weights of distances and costs
-	 * 
-	 * @param step the step used to modify the relative weights to set
-	 */
-	public void setStep(double step) {
-		this.step = step;
-	}
-
-	/**
-	 * Gets the cost value bounding any new solution to be generated
-	 * 
-	 * @return the bounding cost value
-	 */
-	public double getCostBound() {
-		return costBound;
-	}
-
-	/**
-	 * Sets the cost value bounding any new solution to be generated
-	 * 
-	 * @param costBound the bounding cost value to set
-	 */
-	public void setCostBound(double costBound) {
-		this.costBound = costBound;
-	}
-
-	/**
-	 * Selects the cost between two waypoints considering the relative weights of
-	 * distance and cost at the moment of the call
-	 * 
-	 * @param waypoint the new waypoint to the tree towards
-	 * @param waypointNear the parent waypoint in the tree
-	 * 
-	 * @return the cost of the new waypoint with specific relative weights
-	 */
-	protected double selectCost(DRRTreeWaypoint waypoint, DRRTreeWaypoint waypointNear) {
-		return this.getDistBias() * this.getEnvironment().getDistance(waypoint, waypointNear)
-				+ this.getCostBias() * waypoint.getCost();
-	}
-
-	/**
-	 * Sorts a list of elements by increasing selected cost to a given waypoint
-	 * 
-	 * @param list the list with the elements to be sorted by selected cost
-	 * @param waypoint the waypoint to be considered as reference for the selected
-	 *            cost
-	 * 
-	 * @return a new array list with its elements sorted by selected cost
-	 */
-	protected ArrayList<DRRTreeWaypoint> sortSelectedCost(ArrayList<DRRTreeWaypoint> list, DRRTreeWaypoint waypoint) {
-		return list.stream()
-				.sorted((w1, w2) -> Double.compare(this.selectCost(waypoint, w1), this.selectCost(waypoint, w2)))
-				.collect(Collectors.toCollection(ArrayList::new));
-	}
-
-	/**
-	 * Checks whether or not the current solution can be considered as having the
-	 * maximum improvement possible.
-	 * 
-	 * @return true if improvements reached a maximum, false otherwise
-	 */
-	protected boolean isImproved(double costOld) {
-		// double costDiff = (costOld - this.getGoal().getCost()) / costOld;
-		// return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
-		return false;
-	}
-
-	protected boolean isImproved(double costOld, double costNew) {
-		double costDiff = (costOld - costNew) / costOld;
-		return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
-	}
-
-	/**
-	 * Updates the cost value bounding the next solution to be generated
-	 */
-	protected void updateCostBound() {
-		this.setCostBound((1 - improvementFactor) * getGoal().getCost());
-	}
-
-	/**
-	 * Updates the relative weights of distances and costs.
-	 */
-	protected void updateWeights() {
-		this.updateWeights(step);
-	}
-
-	protected void updateWeights(double step) {
-		this.setDistBias(distBias - step < 1 - getMaximumQuality() ? 1 - getMaximumQuality() : distBias - step);
-		this.setCostBias(costBias + step > getMaximumQuality() ? getMaximumQuality() : costBias + step);
-	}
-
-	/**
-	 * Tests whether the dynamic changes in the obstacles are significant or not.
-	 * 
-	 * @return true if changes in obstacles are significant, false otherwise
-	 */
-	protected boolean areSignificant() {
-		// TODO: How to classify changes as being significant
-		return true;
-	}
-
-	/**
-	 * Saves the current data in the planner and environment to an anytime dynamic
-	 * tree.
-	 * 
-	 * @param tree the tree where to save the current data
+	 * Updates the set of different obstacles in the planner by saving the old
+	 * obstacles set, calling a function to allow the introduction of new obstacles
+	 * and computing the difference between the two.
 	 */
 	@SuppressWarnings("unchecked")
-	protected void saveToTree(ADTree tree) {
-		tree.setWaypointList((ArrayList<RRTreeWaypoint>) ((ArrayList<RRTreeWaypoint>) this.getWaypointList()).clone());
-		tree.setEdgeList((ArrayList<Edge>) ((ArrayList<Edge>) this.getEdgeList()).clone());
-		tree.setPlan((LinkedList<Waypoint>) this.getPlan().clone());
-		tree.setDistBias(this.getDistBias());
-		tree.setCostBias(this.getCostBias());
-		tree.setCostBound(this.getCostBound());
-	}
+	public void updateObstacles() {
+		HashSet<Obstacle> oldObstacles = (HashSet<Obstacle>) this.getEnvironment().getObstacles().clone();
 
-	/**
-	 * Loads the data from an anytime dynamic tree to the current planner.
-	 * 
-	 * @param tree the tree from where to load the data
-	 */
-	protected void loadFromTree(ADTree tree) {
-		this.setWaypointList(tree.getWaypointList());
-		this.setEdgeList(tree.getEdgeList());
-		this.setPlan(tree.getPlan());
-		this.setDistBias(tree.getDistBias());
-		this.setCostBias(tree.getCostBias());
-		this.setCostBound(tree.getCostBound());
-	}
-
-	/**
-	 * Samples a new waypoint from the environment with a given bias to the goal and
-	 * respecting the cost bound value defined for the desired solution.
-	 * 
-	 * @param bias the percentage value of bias to sample the goal
-	 * 
-	 * @return waypoint the DRRTreeWaypoint sampled
-	 */
-	protected DRRTreeWaypoint sampleTarget(double bias) {
-		DRRTreeWaypoint waypoint = null;
+		// TODO: Temporary solution
+		// Adds one obstacle with certain probability
 		int rand = new Random().nextInt(100 - 1) + 1;
-
-		if (rand <= bias)
-			return this.getGoal();
-
-		double heuristic = Double.POSITIVE_INFINITY;
-		int attempts = 0;
-		while (heuristic >= this.getCostBound()) {
-			if (attempts > MAX_SAMPLE_ATTEMPTS)
-				return null;
-			waypoint = (DRRTreeWaypoint) this.sampleRandom();
-			heuristic = this.computeHeuristic(getStart(), waypoint) + this.computeHeuristic(waypoint, getGoal());
-			attempts++;
+		if (rand <= 30 && !obstacleFlag) {
+			System.out.println("\t!!!!!!\t ADDING OBSTACLE\t!!!!!!");
+			this.reviseObstacle();
+			obstacleFlag = true;
 		}
 
-		return waypoint;
+		// this.reviseObstacle();
+		this.setDiffObstacles(getEnvironment().getDiffObstacles(oldObstacles));
 	}
 
 	/**
-	 * Extends the tree in the direction of the target waypoint, choosing to expand
-	 * the waypoint from the neighbors in the tree sorted by increasing selected
-	 * cost
+	 * Checks whether or not the changes made to the environment are significant to
+	 * take further actions.
 	 * 
-	 * @param waypointSamp the waypoint set as the goal for extension
-	 * 
-	 * @return true if an extension was successful and false otherwise
+	 * @return true if the changes are significant, false otherwise
 	 */
-	@SuppressWarnings("unchecked")
-	protected boolean extendToTarget(DRRTreeWaypoint waypointSamp) {
-		DRRTreeWaypoint waypointNew;
+	public boolean isSignificantChange() {
+		/*
+		// TODO: Review how to implement
+		int invalid = 0, total = this.getWaypointList().size();
 
-		ArrayList<DRRTreeWaypoint> neighborsList = (ArrayList<DRRTreeWaypoint>) this.getEnvironment()
-				.findNearest(waypointSamp, MAX_NEIGHBORS);
-
-		neighborsList = this.sortSelectedCost(neighborsList, waypointSamp);
-
-		for (DRRTreeWaypoint waypointNear : neighborsList) {
-			// TODO: Review alternative extension strategies
-			if (this.newWaypoint(waypointSamp, waypointNear)) {
-				waypointNew = this.getWaypointNew();
-				this.addEdge(waypointNew);
-
-				waypointNew.setG(computeCost(waypointNew));
-				waypointNew.setH(computeHeuristic(waypointNew, getGoal()));
-
-				if (waypointNew.getF() < this.getCostBound()) {
-					this.addVertex(waypointNew);
-					this.setWaypointNew(waypointNew);
-					return true;
-				} else {
-					// Edge should only stay in tree if previous test is passed
-					this.removeEdge(waypointNew);
-				}
+		for (RRTreeWaypoint wpt : this.getWaypointList()) {
+			DRRTreeWaypoint waypoint = (DRRTreeWaypoint) wpt;
+			if (!waypoint.isValid()) {
+				invalid++;
 			}
 		}
 
-		return false;
+		// If more than 50% of the waypoints became invalid it is significant change
+		return ((double) invalid) / total >= 0.5;
+		*/
+		return !isPathValid();
+	}
+
+	/**
+	 * Repairs/regrows a RRTree by trimming the invalidated nodes and computing a
+	 * new one.
+	 */
+	public void repair() {
+		this.trimRRT();
+		this.compute();
+	}
+
+	/**
+	 * Creates an DRRT waypoint at a specified position.
+	 * 
+	 * @param position the position
+	 * 
+	 * @return the DRRT waypoint at the specified position
+	 * 
+	 * @see RRTreePlanner#createWaypoint(Position)
+	 */
+	@Override
+	protected DRRTreeWaypoint createWaypoint(Position position) {
+		return new DRRTreeWaypoint(position);
+	}
+
+	/**
+	 * Gets the child waypoint from the two waypoints in the given edge.
+	 * 
+	 * @param edge the edge to be considered
+	 * 
+	 * @return the child waypoint of the edge
+	 */
+	protected DRRTreeWaypoint getEdgeChild(Edge edge) {
+		DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
+		DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
+
+		return waypoint2.getParent().equals(waypoint1) ? waypoint2 : waypoint1;
+	}
+
+	/**
+	 * Gets the child waypoint from the two waypoints in the given edge.
+	 * 
+	 * @param edge the edge to be considered
+	 * 
+	 * @return the child waypoint of the edge
+	 */
+	protected DRRTreeWaypoint getEdgeParent(Edge edge) {
+		DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
+		DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
+
+		return waypoint2.getParent().equals(waypoint1) ? waypoint1 : waypoint2;
+	}
+
+	/**
+	 * Updates the list of edges to be in accordance to the list of waypoints, i.e.
+	 * removes edges that contain waypoints (at least 1) which are no longer in the
+	 * waypoint list.
+	 */
+	// TODO: move to environment
+	protected void updateEdgeList() {
+		List<Edge> validEdges = new ArrayList<Edge>();
+
+		for (Edge edge : this.getEdgeList()) {
+			DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
+			if (!this.getWaypointList().contains(waypoint1))
+				continue;
+
+			DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
+			if (!this.getWaypointList().contains(waypoint2))
+				continue;
+
+			validEdges.add(edge);
+		}
+
+		this.setEdgeList(validEdges);
 	}
 
 	/**
 	 * Initializes the planner to plan from an origin to a destination at a
-	 * specified estimated time of departure.
+	 * specified estimated time of departure without clearing its expendable lists.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
-	 * 
-	 * @see RRTreePlanner#initialize(Position origin, Position destination,
-	 *      ZonedDateTime etd)
 	 */
-	@Override
-	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
-		super.initialize(origin, destination, etd);
-
+	protected void softInitialize(Position origin, Position destination, ZonedDateTime etd) {
+		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0d);
-		this.getStart().setH(this.computeHeuristic(getStart(), getGoal()));
+
+		RRTreeWaypoint start = this.createWaypoint(origin);
+		start.setEto(etd);
+		start.setG(0d);
+		start.setH(this.computeHeuristic(start, this.getGoal()));
+
+		this.setStart(start);
+		this.addVertex(start);
+		this.setWaypointNew(start);
 	}
 
 	/**
-	 * Computes a plan by growing a tree until the goal is reached
-	 * 
-	 * @see RRTreePlanner#compute()
+	 * Searches the tree and recursively invalidates all nodes whose parent is
+	 * invalidated.
 	 */
-	@Override
-	protected boolean compute() {
-		boolean status = false;
-		for (int i = 0; i < this.getMAX_ITER(); i++) {
-			DRRTreeWaypoint waypointRand = this.sampleTarget(this.getBIAS());
-			if (waypointRand != null) {
-				status = this.extendToTarget(waypointRand);
-				if (status) {
-					if (this.checkGoal()) {
-						this.getGoal().setG(this.computeCost(getWaypointNew()));
-						this.computePath();
-						return true;
-					}
-				}
-			}
+	protected void trimRRT() {
+		List<DRRTreeWaypoint> validWaypoints = new ArrayList<DRRTreeWaypoint>();
 
+		for (RRTreeWaypoint wpt : this.getWaypointList()) {
+			DRRTreeWaypoint waypoint = (DRRTreeWaypoint) wpt;
+			DRRTreeWaypoint parent = waypoint.getParent();
+			// Special case for start (no parent)
+			if (parent != null) {
+				if (!parent.isValid())
+					waypoint.setValidity(false);
+			} else {
+				waypoint.setValidity(true);
+			}
+			if (waypoint.isValid())
+				validWaypoints.add(waypoint);
 		}
-		return false;
+
+		this.setWaypointList(validWaypoints);
+		this.updateEdgeList();
+	}
+
+	/**
+	 * Invalidates all the waypoints affected by the new obstacle.
+	 * 
+	 * @param obstacle the new obstacle in the environment
+	 */
+	protected void invalidateWaypoints(Obstacle obstacle) {
+		for (Edge edge : this.findAffectedEdgesSpaceTime(obstacle)) {
+			this.getEdgeChild(edge).setValidity(false);
+		}
+	}
+
+	/**
+	 * Finds all the edges in the edge list which are affected by the given obstacle
+	 * considering spatial and temporal intersections.
+	 * 
+	 * @param obstacle the obstacle to be considered for intersection
+	 * 
+	 * @return the list of affected edges
+	 */
+	protected List<Edge> findAffectedEdgesSpaceTime(Obstacle obstacle) {
+		List<Edge> affectedEdgesSpace = this.getEdgeList().stream()
+				.filter(e -> obstacle.getExtent(this.getEnvironment().getGlobe()).intersects(e.getLine()))
+				.collect(Collectors.toList());
+
+		List<Edge> affectedEdgesSpaceTime = new ArrayList<Edge>();
+		DRRTreeWaypoint parent, child;
+		for (Edge edge : affectedEdgesSpace) {
+			parent = this.getEdgeParent(edge);
+			child = this.getEdgeChild(edge);
+			TimeInterval interval = new TimeInterval(parent.getEto(), child.getEto());
+			if (obstacle.getCostInterval().intersects(interval))
+				affectedEdgesSpaceTime.add(edge);
+		}
+
+		return affectedEdgesSpaceTime;
+	}
+
+	/**
+	 * Checks whether the current path to goal contains nodes which are marked as
+	 * invalid due to new obstacles in the environment.
+	 * 
+	 * @return true is the path is invalid, false otherwise
+	 */
+	protected boolean isPathValid() {
+		return this.isPathValid(getPlan());
+	}
+
+	/**
+	 * Checks whether a path contains nodes which are marked as invalid due to new
+	 * obstacles in the environment.
+	 * 
+	 * @param path the path to be checked
+	 * 
+	 * @return true is the path is invalid, false otherwise
+	 */
+	protected boolean isPathValid(LinkedList<Waypoint> path) {
+		DRRTreeWaypoint dynamicWaypoint;
+		int index;
+		for (Waypoint waypoint : path) {
+			index = this.getWaypointList().indexOf(waypoint);
+			// If it is still in the tree check validity
+			if (index >= 0) {
+				dynamicWaypoint = (DRRTreeWaypoint) this.getWaypointList().get(index);
+				if (!dynamicWaypoint.isValid())
+					return false;
+			}
+			// If it is not in the tree return invalid
+			else
+				return false;
+		}
+		return true;
 	}
 
 	/**
@@ -501,10 +422,11 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 	 * @return the planned trajectory from the origin to the destination with the
 	 *         estimated time of departure
 	 * 
-	 * @see DRRTreePlanner#plan(Position, Position, ZonedDateTime)
+	 * @see ARRTreePlanner#plan(Position, Position, ZonedDateTime)
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		// TODO: Implementation not fullt functional
 		this.initialize(origin, destination, etd);
 
 		this.setCostBias(this.getMinimumQuality());
@@ -516,32 +438,29 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 		// Anytime Dynamic variables
 		boolean newPlan;
 		double costOld = Double.POSITIVE_INFINITY;
-		HashSet<Obstacle> diffObstacles = new HashSet<>();
 
 		// Auxiliary Trees
-		ADTree treeR = new ADTree(), treeT = new ADTree();
-		
+		ARRTree treeR = new ARRTree(), treeT = new ARRTree();
 		treeT.setCostBias(this.getMinimumQuality());
 		treeT.setDistBias(1 - this.getCostBias());
 		treeT.setCostBound(Double.POSITIVE_INFINITY);
-		
-		while (!this.checkGoal(getStart())) {
+
+		// Check for new obstacles until the goal is reached
+		// while (!this.checkGoal(getStart())) {
+		for (int i = 0; i < 50; i++) {
+			// TODO: Move to next waypoint and check for new obstacles
+
 			// Anytime behavior
 			if (!this.isImproved(costOld)) {
-				System.out.println("\n\nImproving...");
-
 				this.loadFromTree(treeT);
-				
+
 				this.clearExpendables();
 				this.addVertex(getStart());
 				this.setWaypointNew(getStart());
-				
-				System.out.println("Set Costs to tree T: db=" + this.getDistBias() + " cb=" + this.getCostBias() + "Cs="
-						+ this.getCostBound());
 
 				costOld = this.getGoal().getCost();
 				newPlan = this.compute();
-				
+
 				this.saveToTree(treeT);
 
 				if (newPlan) {
@@ -555,7 +474,7 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 					this.updateCostBound();
 					treeT.setBiases(this.getDistBias(), this.getCostBias());
 					treeT.setCostBound(this.getCostBound());
-					
+
 				} else {
 					System.out.println("No new plan...");
 					this.updateWeights();
@@ -573,21 +492,19 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 			if (!this.getDiffObstacles().isEmpty()) {
 
 				// Invalidate Waypoints affected by new obstacles
-				System.out.println("Invalidating obstacles");
-				for (Obstacle obstacle : diffObstacles) {
-					System.out.println("Obstacle in diffObstacle");
+				for (Obstacle obstacle : this.getDiffObstacles()) {
 					this.invalidateWaypoints(obstacle);
 				}
 
 				// If changes were significant adjust weights
-				if (this.areSignificant()) {
-					System.out.println("Significant changes ocurred");
+				if (this.isSignificantChange()) {
 					// TODO: Define how much should weights be changed
 					this.updateWeights(-this.getStep());
 					treeT.setBiases(this.getDistBias(), this.getCostBias());
-					
+
 					// TODO: Define how to increase cost bound to find solution
 					this.setCostBound(10 * getCostBound());
+					System.out.println("Significant changes ocurred... D_b="+this.getDistBias()+" C_b="+this.getCostBias()+" C_s="+this.getCostBound());
 				}
 
 				// Check if the current path is still valid
@@ -598,22 +515,12 @@ public class ADRRTreePlanner extends DRRTreePlanner implements AnytimePlanner {
 					treeT.setCostBound(this.getCostBound());
 				}
 			}
-
-			// Print Plan
-			System.out.println("Current Path #" + this.getPlan().size());
-			for (Waypoint wpt : this.getPlan())
-				System.out.println(wpt + " Cost=" + wpt.getCost());
-			
 			// Update trajectory reflecting the modified plan
 			trajectory = this.createTrajectory();
 			this.revisePlan(trajectory);
-
-			//Move to next and save main tree
-			System.out.println("Moving to next");
-			this.moveToNext();
-			this.saveToTree(treeR);
 		}
 
 		return trajectory;
 	}
+
 }

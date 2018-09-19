@@ -27,24 +27,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
-
 /**
- * Realizes the properties bean of a dynamic RRTree planner.
- * 
  * @author Manuel Rosa
  *
  */
-public class DRRTreeProperties extends HRRTreeProperties {
-	
-	/** the description of this planner properties bean */
-	private final static String DESCRIPTION_DRRT = "Dynamic RRT: Dynamic version of a RRT which takes into account changes occured in the environment after the first plan was computed and recommputed new plans. Implemented as extension of HRRT to consider costs.";
-
-	/**
-	 * Constructs a new dynamic RRTree planner properties bean.
-	 */
-	public DRRTreeProperties() {
-		super();
-		this.setDescription(DESCRIPTION_DRRT);
-	}
-}
+package com.cfar.swim.worldwind.ai.rrt.oarrt;

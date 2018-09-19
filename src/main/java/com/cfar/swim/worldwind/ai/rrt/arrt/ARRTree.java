@@ -1,33 +1,7 @@
 /**
- * Copyright (c) 2018, Manuel Rosa (UVic Center for Aerospace Research)
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * 1. Redistributions of source code must retain the above copyright notice, this
- * list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright notice,
- * this list of conditions and the following disclaimer in the documentation
- * and/or other materials provided with the distribution.
- *
- * 3. Neither the name of the copyright holder nor the names of its contributors
- * may be used to endorse or promote products derived from this software without
- * specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
- * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
- * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ * 
  */
-package com.cfar.swim.worldwind.ai.rrt.adrrt;
+package com.cfar.swim.worldwind.ai.rrt.arrt;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -37,13 +11,13 @@ import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 /**
- * Realizes an anytime dynamic tree, it represents a structure only to hold
- * information
+ * Realizes an anytime tree, it represents a structure that holds information of
+ * the various fields in a tree.
  * 
  * @author Manuel Rosa
  *
  */
-public class ADTree {
+public class ARRTree {
 
 	/** the list of already sampled waypoints */
 	private ArrayList<RRTreeWaypoint> waypointList = null;
@@ -64,9 +38,9 @@ public class ADTree {
 	private double costBound;
 
 	/**
-	 * Empty constructor for default initialization of an anytime dynamic tree.
+	 * Empty constructor for default initialization of an anytime tree.
 	 */
-	public ADTree() {
+	public ARRTree() {
 		waypointList = new ArrayList<RRTreeWaypoint>();
 		edgeList = new ArrayList<Edge>();
 		plan = new LinkedList<Waypoint>();
@@ -76,7 +50,7 @@ public class ADTree {
 	}
 
 	/**
-	 * Full constructor for complete initialization of an anytime dynamic tree.
+	 * Full constructor for complete initialization of an anytime tree.
 	 * 
 	 * @param waypointList
 	 * @param edgeList
@@ -85,7 +59,7 @@ public class ADTree {
 	 * @param costBias
 	 * @param costBound
 	 */
-	public ADTree(ArrayList<RRTreeWaypoint> waypointList, ArrayList<Edge> edgeList, LinkedList<Waypoint> plan,
+	public ARRTree(ArrayList<RRTreeWaypoint> waypointList, ArrayList<Edge> edgeList, LinkedList<Waypoint> plan,
 			double distBias, double costBias, double costBound) {
 		this.waypointList = waypointList;
 		this.edgeList = edgeList;
@@ -195,7 +169,7 @@ public class ADTree {
 	 * @param other the other ADTree
 	 */
 	@SuppressWarnings("unchecked")
-	public void clone(ADTree other) {
+	public void clone(ARRTree other) {
 		this.waypointList = (ArrayList<RRTreeWaypoint>) other.getWaypointList().clone();
 		this.edgeList = (ArrayList<Edge>) other.getEdgeList().clone();
 		this.plan = (LinkedList<Waypoint>) other.getPlan().clone();

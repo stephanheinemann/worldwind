@@ -42,7 +42,7 @@ import com.cfar.swim.worldwind.planning.Waypoint;
  * @author Manuel Rosa
  *
  */
-public class DTree {
+public class DRRTree {
 
 	/** the list of already sampled waypoints */
 	private ArrayList<RRTreeWaypoint> waypointList = null;
@@ -53,16 +53,10 @@ public class DTree {
 	/** the last computed plan */
 	private LinkedList<Waypoint> plan = null;
 	
-	/** the starting waypoint of this tree */
-	private RRTreeWaypoint start = null;
-	
-	/** the goal waypoint of this tree */
-	private RRTreeWaypoint goal = null;
-
 	/**
 	 * Empty constructor for default initialization of a dynamic tree.
 	 */
-	public DTree() {
+	public DRRTree() {
 		waypointList = new ArrayList<RRTreeWaypoint>();
 		edgeList = new ArrayList<Edge>();
 		plan = new LinkedList<Waypoint>();
@@ -77,13 +71,10 @@ public class DTree {
 	 * @param start
 	 * @param goal
 	 */
-	public DTree(ArrayList<RRTreeWaypoint> waypointList, ArrayList<Edge> edgeList, LinkedList<Waypoint> plan,
-			RRTreeWaypoint start, RRTreeWaypoint goal) {
+	public DRRTree(ArrayList<RRTreeWaypoint> waypointList, ArrayList<Edge> edgeList, LinkedList<Waypoint> plan) {
 		this.waypointList = waypointList;
 		this.edgeList = edgeList;
 		this.plan = plan;
-		this.start = start;
-		this.goal = goal;
 	}
 
 	/**
@@ -129,40 +120,12 @@ public class DTree {
 	}
 
 	/**
-	 * @return the start
-	 */
-	public RRTreeWaypoint getStart() {
-		return start;
-	}
-
-	/**
-	 * @param start the start to set
-	 */
-	public void setStart(RRTreeWaypoint start) {
-		this.start = start;
-	}
-
-	/**
-	 * @return the goal
-	 */
-	public RRTreeWaypoint getGoal() {
-		return goal;
-	}
-
-	/**
-	 * @param goal the goal to set
-	 */
-	public void setGoal(RRTreeWaypoint goal) {
-		this.goal = goal;
-	}
-
-	/**
 	 * Clones the information from another ADTree to this one.
 	 * 
 	 * @param other the other ADTree
 	 */
 	@SuppressWarnings("unchecked")
-	public void clone(DTree other) {
+	public void clone(DRRTree other) {
 		this.waypointList = (ArrayList<RRTreeWaypoint>) other.getWaypointList().clone();
 		this.edgeList = (ArrayList<Edge>) other.getEdgeList().clone();
 		this.plan = (LinkedList<Waypoint>) other.getPlan().clone();

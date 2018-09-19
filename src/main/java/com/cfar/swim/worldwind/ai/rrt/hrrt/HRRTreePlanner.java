@@ -144,6 +144,44 @@ public class HRRTreePlanner extends RRTreePlanner {
 	public void setWaypointNear(RRTreeWaypoint waypointNear) {
 		this.waypointNear = waypointNear;
 	}
+	
+	
+
+	/**
+	 * Gets the estimated total cost of the optimal path from start to goal.
+	 * 
+	 * @return the estimated total cost of the optimal path
+	 */
+	public double getCostOpt() {
+		return costOpt;
+	}
+
+	/**
+	 * Sets the estimated total cost of the optimal path from start to goal.
+	 * 
+	 * @param costOpt the estimated total cost of the optimal path
+	 */
+	public void setCostOpt(double costOpt) {
+		this.costOpt = costOpt;
+	}
+
+	/**
+	 * Gets the maximum cost of all nodes already considered.
+	 * 
+	 * @return the maximum cost of all nodes
+	 */
+	public double getCostMax() {
+		return costMax;
+	}
+
+	/**
+	 * Sets the maximum cost of all nodes already considered.
+	 * 
+	 * @param costMax the maximum cost of all nodes
+	 */
+	public void setCostMax(double costMax) {
+		this.costMax = costMax;
+	}
 
 	/**
 	 * Gets the heuristic algorithm of this planner.
@@ -409,10 +447,10 @@ public class HRRTreePlanner extends RRTreePlanner {
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		this.clearExpendables();
 
-		this.setGoal(new RRTreeWaypoint(destination));
+		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0d);
 
-		RRTreeWaypoint start = new RRTreeWaypoint(origin);
+		RRTreeWaypoint start = this.createWaypoint(origin);
 		start.setEto(etd);
 		start.setG(0d);
 		start.setH(this.computeHeuristic(start, this.getGoal()));

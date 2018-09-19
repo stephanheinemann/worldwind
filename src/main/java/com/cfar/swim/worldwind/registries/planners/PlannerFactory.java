@@ -45,6 +45,7 @@ import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.drrt.DRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
+import com.cfar.swim.worldwind.ai.rrt.oarrt.OARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.rrtstar.RRTreeStarPlanner;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -163,33 +164,47 @@ public class PlannerFactory implements Factory<Planner> {
 		} else if (specification.getId().equals(Specification.PLANNER_ARRT_ID)) {
 			ARRTreeProperties properties = (ARRTreeProperties) specification.getProperties();
 			planner = new ARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter(),
-					properties.getStrategy(), properties.getExtension(), properties.getSampling(),
-					properties.isOnline(), properties.getPositionThreshold());
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension(),
+					properties.getSampling());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((ARRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ARRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ARRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
-			((ARRTreePlanner) planner).setDatalink(scenario.getDatalink());
 			((ARRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
 		} else if (specification.getId().equals(Specification.PLANNER_DRRT_ID)) {
 			DRRTreeProperties properties = (DRRTreeProperties) specification.getProperties();
 			planner = new DRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension());
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension(),
+					properties.getProbFloor(), properties.getNeighbors());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
+			((DRRTreePlanner) planner).setHeuristic(properties.getHeuristic());
 			((DRRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
+			((DRRTreePlanner) planner).setEnhancements(properties.isEnhancements());
 		} else if (specification.getId().equals(Specification.PLANNER_ADRRT_ID)) {
 			ADRRTreeProperties properties = (ADRRTreeProperties) specification.getProperties();
-			planner = new DRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension());
+			planner = new ADRRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension(),
+					properties.getSampling());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((ADRRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ADRRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ADRRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 			((ADRRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
+		} else if (specification.getId().equals(Specification.PLANNER_OARRT_ID)) {
+			OARRTreeProperties properties = (OARRTreeProperties) specification.getProperties();
+			planner = new OARRTreePlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension(),
+					properties.getSampling(), properties.getPositionThreshold());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((OARRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((OARRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((OARRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			((OARRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
+			((OARRTreePlanner) planner).setDatalink(scenario.getDatalink());
 		} else if (specification.getId().equals(Specification.PLANNER_RRTS_ID)) {
 			RRTreeStarProperties properties = (RRTreeStarProperties) specification.getProperties();
 			planner = new RRTreeStarPlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),

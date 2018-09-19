@@ -45,7 +45,7 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 	private CostPolicy costPolicy = CostPolicy.AVERAGE;
 	
 	/** the risk policy of this planner properties bean */
-	private RiskPolicy riskPolicy = RiskPolicy.SAFETY;
+	private RiskPolicy riskPolicy = RiskPolicy.IGNORANCE;
 	
 	/**	the description of this planner properties bean */
 	private String description = "Description not yet available.";
@@ -55,8 +55,6 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 	 * policy property values.
 	 */
 	public AbstractPlannerProperties() {
-		this.costPolicy = CostPolicy.AVERAGE;
-		this.riskPolicy = RiskPolicy.SAFETY;
 	}
 	
 	/**

@@ -32,8 +32,8 @@ package com.cfar.swim.worldwind.ai.rrt.drrt;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -42,9 +42,11 @@ import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
+import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Edge;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.render.Obstacle;
@@ -55,14 +57,20 @@ import gov.nasa.worldwind.geom.Position;
  * Realizes a dynamic RRT planner that plans a trajectory of an aircraft in an
  * environment considering a local cost and risk policy. The planner provides an
  * initial plan and then continuously checks if new obstacles are added. When an
- * obstacle affects the current plan, a new one is computed with information
+ * obstacle affects the current plan, a new one is computed with information.
+ * Implemented as an extension of the HRRT so that cost regions can be
+ * considered.
  * 
  * @author Manuel Rosa
  *
  */
-public class DRRTreePlanner extends RRTreePlanner implements DynamicPlanner {
+public class DRRTreePlanner extends HRRTreePlanner implements DynamicPlanner {
 
-	protected boolean obstacleFlag = false;
+	// TODO: temporary solution to add obstacle once
+	private boolean obstacleFlag = false;
+
+	/** the set with the difference between previous and current obstacle sets */
+	private HashSet<Obstacle> diffObstacles;
 
 	/**
 	 * Constructs a dynamic RRT planner for a specified aircraft and environment
@@ -89,11 +97,12 @@ public class DRRTreePlanner extends RRTreePlanner implements DynamicPlanner {
 	 * @param strategy the expanding strategy for the planner
 	 * @param extension the extension technique for the planner
 	 * 
-	 * @see RRTreePlanner#RRTreePlanner(Aircraft, Environment, double, int, int, Strategy, Extension)
+	 * @see RRTreePlanner#RRTreePlanner(Aircraft, Environment, double, int, int,
+	 *      Strategy, Extension)
 	 */
 	public DRRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
-			Strategy strategy, Extension extension) {
-		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension);
+			Strategy strategy, Extension extension, double prob, int neighbors) {
+		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension, prob, neighbors);
 	}
 
 	/**
@@ -131,247 +140,6 @@ public class DRRTreePlanner extends RRTreePlanner implements DynamicPlanner {
 	public DRRTreeWaypoint getWaypointNew() {
 		return (DRRTreeWaypoint) super.getWaypointNew();
 	}
-
-	/**
-	 * Creates an DRRT waypoint at a specified position.
-	 * 
-	 * @param position the position
-	 * 
-	 * @return the DRRT waypoint at the specified position
-	 * 
-	 * @see RRTreePlanner#createWaypoint(Position)
-	 */
-	@Override
-	protected DRRTreeWaypoint createWaypoint(Position position) {
-		return new DRRTreeWaypoint(position);
-	}
-
-	/**
-	 * Gets the child waypoint from the two waypoints in the given edge
-	 * 
-	 * @param edge the edge to be considered
-	 * 
-	 * @return the child waypoint of the edge
-	 */
-	protected DRRTreeWaypoint getEdgeChild(Edge edge) {
-		DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
-		DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
-
-		return waypoint2.getParent().equals(waypoint1) ? waypoint2 : waypoint1;
-	}
-
-	/**
-	 * Updates the list of edges to be in accordance to the list of waypoints, i.e.
-	 * removes edges that contain waypoints (at least 1) which are no longer in the
-	 * waypoint list.
-	 */
-	// TODO: move to environment
-	protected void updateEdgeList() {
-		List<Edge> validEdges = new ArrayList<Edge>();
-
-		for (Edge edge : this.getEdgeList()) {
-			DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
-			if (!this.getWaypointList().contains(waypoint1))
-				continue;
-
-			DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
-			if (!this.getWaypointList().contains(waypoint2))
-				continue;
-
-			validEdges.add(edge);
-		}
-
-		this.setEdgeList(validEdges);
-	}
-
-	/**
-	 * Searches the tree and recursively invalidates all nodes whose parent is
-	 * invalidated.
-	 */
-	protected void trimRRT() {
-		List<DRRTreeWaypoint> validWaypoints = new ArrayList<DRRTreeWaypoint>();
-
-		for (RRTreeWaypoint wpt : this.getWaypointList()) {
-			DRRTreeWaypoint waypoint = (DRRTreeWaypoint) wpt;
-			DRRTreeWaypoint parent = waypoint.getParent();
-			// Special case for start (no parent)
-			if (parent != null) {
-				if (!parent.isValid())
-					waypoint.setValidity(false);
-			} else {
-				waypoint.setValidity(true);
-			}
-			if (waypoint.isValid())
-				validWaypoints.add(waypoint);
-		}
-
-		this.setWaypointList(validWaypoints);
-		this.updateEdgeList();
-	}
-
-	/**
-	 * Invalidates all the waypoints affected by the new obstacle
-	 * 
-	 * @param obstacle the new obstacle in the environment
-	 */
-	protected void invalidateWaypoints(Obstacle obstacle) {
-		for (Edge edge : this.findAffectedEdges(obstacle)) {
-			this.getEdgeChild(edge).setValidity(false);
-		}
-	}
-
-	/**
-	 * Finds all the edges in the edge list which are affected by the given obstacle
-	 * 
-	 * @param obstacle the obstacle to be considered for intersection
-	 * 
-	 * @return the list of affected edges
-	 */
-	protected List<Edge> findAffectedEdges(Obstacle obstacle) {
-		return this.getEdgeList().stream()
-				.filter(e -> obstacle.getExtent(this.getEnvironment().getGlobe()).intersects(e.getLine()))
-				.collect(Collectors.toList());
-	}
-
-	/**
-	 * Checks whether the current path to goal contains nodes which are marked as
-	 * invalid due to new obstacles in the environment
-	 * 
-	 * @return true is the path is invalid, false otherwise
-	 */
-	protected boolean isPathValid() {
-		DRRTreeWaypoint dynamicWaypoint;
-		int index;
-		for (Waypoint waypoint : this.getPlan()) {
-			index = this.getWaypointList().indexOf(waypoint);
-			if (index >= 0) {
-				dynamicWaypoint = (DRRTreeWaypoint) this.getWaypointList().get(index);
-				if (!dynamicWaypoint.isValid()) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Plans a trajectory from an origin to a destination at a specified estimated
-	 * time of departure.
-	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param etd the estimated time of departure
-	 * 
-	 * @return the planned trajectory from the origin to the destination with the
-	 *         estimated time of departure
-	 * 
-	 * @see RRTreePlanner#plan(Position, Position, ZonedDateTime)
-	 */
-	@Override
-	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-
-		this.initialize(origin, destination, etd);
-		this.compute();
-		Trajectory trajectory = this.createTrajectory();
-		this.revisePlan(trajectory);
-
-		// Check for new obstacles until the goal is reached
-		// while (!this.checkGoal(getStart())) {
-		for (int i = 0; i < 50; i++) {
-			// TODO: Move to next waypoint and check for new obstacles
-
-			this.updateObstacles();
-			if (!this.getDiffObstacles().isEmpty()) {
-				// Invalidate Waypoints affected by new obstacles
-				for (Obstacle obstacle : diffObstacles)
-					this.invalidateWaypoints(obstacle);
-
-				// Check if the current path is still valid
-				if (!this.isPathValid()) {
-					this.repair();
-					System.out.println("[Path Regorwn] Sizes: WptL=" + this.getWaypointList().size() + " EdgL="
-							+ this.getEdgeList().size());
-				}
-			}
-
-			// Update trajectory reflecting the modified plan
-			trajectory = this.createTrajectory();
-			this.revisePlan(trajectory);
-		}
-
-		return trajectory;
-	}
-
-	/**
-	 * Plans a trajectory from an origin to a destination along waypoints at a
-	 * specified estimated time of departure.
-	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param waypoints the waypoints in globe coordinates
-	 * @param etd the estimated time of departure
-	 * 
-	 * @return the planned trajectory from the origin to the destination along the
-	 *         waypoints with the estimated time of departure
-	 * 
-	 * @see RRTreePlanner#plan(Position, Position, List, ZonedDateTime)
-	 */
-	@Override
-	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		// TODO: implement
-		return super.plan(origin, destination, waypoints, etd);
-	}
-
-	/**
-	 * Simulates the movement of the aircraft to the next waypoint in the plan.
-	 */
-	protected void moveToNext() {
-		DRRTreeWaypoint next = (DRRTreeWaypoint) this.getWaypointList()
-				.get(getWaypointList().indexOf(getNext(getStart())));
-		if (next == null)
-			return;
-
-		next.setParent(null);
-		next.setValidity(true);
-		this.setStart(next);
-		this.setWaypointNew(getStart());
-
-		// Remove waypoints not deriving from new start
-		List<DRRTreeWaypoint> soundWaypoints = new ArrayList<DRRTreeWaypoint>();
-		soundWaypoints.add(getStart());
-		for (RRTreeWaypoint wpt : this.getWaypointList()) {
-			DRRTreeWaypoint waypoint = (DRRTreeWaypoint) wpt;
-			ArrayList<DRRTreeWaypoint> predecessors = waypoint.getPredecessors();
-			if (predecessors.contains(next)) {
-				soundWaypoints.add(waypoint);
-			}
-		}
-
-		this.setWaypointList(soundWaypoints);
-		this.updateEdgeList();
-		this.getPlan().remove(0);
-	}
-
-	/**
-	 * Gets the waypoint in the plan after the current waypoint.
-	 * 
-	 * @param current the current waypoint
-	 * @return the next waypoint in the plan, null if last waypoint
-	 */
-	protected Waypoint getNext(Waypoint current) {
-		ListIterator<Waypoint> listIterator = this.getPlan().listIterator();
-		while (listIterator.hasNext()) {
-			if (current.equals(listIterator.next()))
-				break;
-		}
-		if (listIterator.hasNext())
-			return listIterator.next();
-		else
-			return null;
-	}
-
-	// Dynamic PLanner
-	private HashSet<Obstacle> diffObstacles;
 
 	/**
 	 * Gets the set of different obstacles containing the difference between the
@@ -445,4 +213,413 @@ public class DRRTreePlanner extends RRTreePlanner implements DynamicPlanner {
 		this.trimRRT();
 		this.compute();
 	}
+
+	/**
+	 * Creates an DRRT waypoint at a specified position.
+	 * 
+	 * @param position the position
+	 * 
+	 * @return the DRRT waypoint at the specified position
+	 * 
+	 * @see RRTreePlanner#createWaypoint(Position)
+	 */
+	@Override
+	protected DRRTreeWaypoint createWaypoint(Position position) {
+		return new DRRTreeWaypoint(position);
+	}
+
+	/**
+	 * Saves the current data in the planner and environment to a dynamic tree.
+	 * 
+	 * @param tree the tree where to save the current data
+	 */
+	@SuppressWarnings("unchecked")
+	protected void saveToTree(DRRTree tree) {
+		tree.setWaypointList((ArrayList<RRTreeWaypoint>) ((ArrayList<RRTreeWaypoint>) this.getWaypointList()).clone());
+		tree.setEdgeList((ArrayList<Edge>) ((ArrayList<Edge>) this.getEdgeList()).clone());
+		tree.setPlan((LinkedList<Waypoint>) this.getPlan().clone());
+	}
+
+	/**
+	 * Loads the data from an anytime tree to the current planner.
+	 * 
+	 * @param tree the tree from where to load the data
+	 */
+	protected void loadFromTree(DRRTree tree) {
+		this.setWaypointList(tree.getWaypointList());
+		this.setEdgeList(tree.getEdgeList());
+		this.setPlan(tree.getPlan());
+	}
+
+	/**
+	 * Gets the child waypoint from the two waypoints in the given edge.
+	 * 
+	 * @param edge the edge to be considered
+	 * 
+	 * @return the child waypoint of the edge
+	 */
+	protected DRRTreeWaypoint getEdgeChild(Edge edge) {
+		DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
+		DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
+
+		return waypoint2.getParent().equals(waypoint1) ? waypoint2 : waypoint1;
+	}
+
+	/**
+	 * Gets the child waypoint from the two waypoints in the given edge.
+	 * 
+	 * @param edge the edge to be considered
+	 * 
+	 * @return the child waypoint of the edge
+	 */
+	protected DRRTreeWaypoint getEdgeParent(Edge edge) {
+		DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
+		DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
+
+		return waypoint2.getParent().equals(waypoint1) ? waypoint1 : waypoint2;
+	}
+
+	/**
+	 * Updates the list of edges to be in accordance to the list of waypoints, i.e.
+	 * removes edges that contain waypoints (at least 1) which are no longer in the
+	 * waypoint list.
+	 */
+	// TODO: move to environment
+	protected void updateEdgeList() {
+		List<Edge> validEdges = new ArrayList<Edge>();
+
+		for (Edge edge : this.getEdgeList()) {
+			DRRTreeWaypoint waypoint1 = (DRRTreeWaypoint) edge.getPosition1();
+			if (!this.getWaypointList().contains(waypoint1))
+				continue;
+
+			DRRTreeWaypoint waypoint2 = (DRRTreeWaypoint) edge.getPosition2();
+			if (!this.getWaypointList().contains(waypoint2))
+				continue;
+
+			validEdges.add(edge);
+		}
+
+		this.setEdgeList(validEdges);
+	}
+
+	/**
+	 * Initializes the planner to plan from an origin to a destination at a
+	 * specified estimated time of departure without clearing its expendable lists.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 */
+	protected void softInitialize(Position origin, Position destination, ZonedDateTime etd) {
+		this.setGoal(this.createWaypoint(destination));
+		this.getGoal().setH(0d);
+
+		RRTreeWaypoint start = this.createWaypoint(origin);
+		start.setEto(etd);
+		start.setG(0d);
+		start.setH(this.computeHeuristic(start, this.getGoal()));
+
+		this.setStart(start);
+		this.addVertex(start);
+		this.setWaypointNew(start);
+
+		this.setCostOpt(start.getF());
+		this.setCostMax(start.getF());
+	}
+
+	/**
+	 * Searches the tree and recursively invalidates all nodes whose parent is
+	 * invalidated.
+	 */
+	protected void trimRRT() {
+		List<DRRTreeWaypoint> validWaypoints = new ArrayList<DRRTreeWaypoint>();
+
+		for (RRTreeWaypoint wpt : this.getWaypointList()) {
+			DRRTreeWaypoint waypoint = (DRRTreeWaypoint) wpt;
+			DRRTreeWaypoint parent = waypoint.getParent();
+			// Special case for start (no parent)
+			if (parent != null) {
+				if (!parent.isValid())
+					waypoint.setValidity(false);
+			} else {
+				waypoint.setValidity(true);
+			}
+			if (waypoint.isValid())
+				validWaypoints.add(waypoint);
+		}
+
+		this.setWaypointList(validWaypoints);
+		this.updateEdgeList();
+	}
+
+	/**
+	 * Invalidates all the waypoints affected by the new obstacle.
+	 * 
+	 * @param obstacle the new obstacle in the environment
+	 */
+	protected void invalidateWaypoints(Obstacle obstacle) {
+		for (Edge edge : this.findAffectedEdgesSpaceTime(obstacle)) {
+			this.getEdgeChild(edge).setValidity(false);
+		}
+	}
+
+	/**
+	 * Finds all the edges in the edge list which are affected by the given obstacle
+	 * considering spatial and temporal intersections.
+	 * 
+	 * @param obstacle the obstacle to be considered for intersection
+	 * 
+	 * @return the list of affected edges
+	 */
+	protected List<Edge> findAffectedEdgesSpaceTime(Obstacle obstacle) {
+		List<Edge> affectedEdgesSpace = this.getEdgeList().stream()
+				.filter(e -> obstacle.getExtent(this.getEnvironment().getGlobe()).intersects(e.getLine()))
+				.collect(Collectors.toList());
+
+		List<Edge> affectedEdgesSpaceTime = new ArrayList<Edge>();
+		DRRTreeWaypoint parent, child;
+		for (Edge edge : affectedEdgesSpace) {
+			parent = this.getEdgeParent(edge);
+			child = this.getEdgeChild(edge);
+			TimeInterval interval = new TimeInterval(parent.getEto(), child.getEto());
+			if (obstacle.getCostInterval().intersects(interval))
+				affectedEdgesSpaceTime.add(edge);
+		}
+
+		return affectedEdgesSpaceTime;
+	}
+
+	/**
+	 * Checks whether the current path to goal contains nodes which are marked as
+	 * invalid due to new obstacles in the environment.
+	 * 
+	 * @return true is the path is invalid, false otherwise
+	 */
+	protected boolean isPathValid() {
+		return this.isPathValid(getPlan());
+	}
+
+	/**
+	 * Checks whether a path contains nodes which are marked as invalid due to new
+	 * obstacles in the environment.
+	 * 
+	 * @param path the path to be checked
+	 * 
+	 * @return true is the path is invalid, false otherwise
+	 */
+	protected boolean isPathValid(LinkedList<Waypoint> path) {
+		DRRTreeWaypoint dynamicWaypoint;
+		int index;
+		for (Waypoint waypoint : path) {
+			index = this.getWaypointList().indexOf(waypoint);
+			// If it is still in the tree check validity
+			if (index >= 0) {
+				dynamicWaypoint = (DRRTreeWaypoint) this.getWaypointList().get(index);
+				if (!dynamicWaypoint.isValid())
+					return false;
+			}
+			// If it is not in the tree return invalid
+			else
+				return false;
+		}
+		return true;
+	}
+
+	/**
+	 * Plans a trajectory from an origin to a destination at a specified estimated
+	 * time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination with the
+	 *         estimated time of departure
+	 * 
+	 * @see RRTreePlanner#plan(Position, Position, ZonedDateTime)
+	 */
+	@Override
+	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+
+		this.initialize(origin, destination, etd);
+		this.compute();
+		Trajectory trajectory = this.createTrajectory();
+		this.revisePlan(trajectory);
+
+		// Check for new obstacles until the goal is reached
+		// while (!this.checkGoal(getStart())) {
+		for (int i = 0; i < 50; i++) {
+			// TODO: Move to next waypoint and check for new obstacles
+
+			this.updateObstacles();
+			if (!this.getDiffObstacles().isEmpty()) {
+				// Invalidate Waypoints affected by new obstacles
+				for (Obstacle obstacle : diffObstacles)
+					this.invalidateWaypoints(obstacle);
+
+				// Check if the current path is still valid
+				if (!this.isPathValid()) {
+					this.repair();
+					System.out.println("[Path Regorwn] Sizes: WptL=" + this.getWaypointList().size() + " EdgL="
+							+ this.getEdgeList().size());
+				}
+				// Update trajectory reflecting the modified plan
+				trajectory = this.createTrajectory();
+				this.revisePlan(trajectory);
+			}
+
+		}
+
+		return trajectory;
+	}
+
+	/**
+	 * Plans a trajectory from an origin to a destination along waypoints at a
+	 * specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param waypoints the waypoints in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination along the
+	 *         waypoints with the estimated time of departure
+	 * 
+	 * @see RRTreePlanner#plan(Position, Position, List, ZonedDateTime)
+	 */
+	@Override
+	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+
+		// Multiple-waypoint-plan variables
+		LinkedList<Waypoint> plan = new LinkedList<>();
+		Waypoint currentOrigin = new Waypoint(origin), currentDestination;
+		ZonedDateTime currentEtd = etd;
+		Trajectory trajectory, part;
+
+		// collect intermediate destinations
+		ArrayList<Waypoint> destinations = waypoints.stream().map(Waypoint::new)
+				.collect(Collectors.toCollection(ArrayList::new));
+		destinations.add(new Waypoint(destination));
+		int dim = destinations.size();
+
+		// Auxiliary Trees
+		DRRTree[] tree = new DRRTree[dim];
+		for (int i = 0; i < dim; i++) {
+			tree[i] = new DRRTree();
+		}
+
+		// Auxiliary variables
+		boolean previousValid = true;
+
+		// plan and concatenate partial trajectories
+		for (int i = 0; i < dim; i++) {
+			currentDestination = destinations.get(i);
+
+			if (!(currentOrigin.equals(currentDestination))) {
+				// plan partial trajectory
+				this.initialize(currentOrigin, currentDestination, currentEtd);
+				this.compute();
+
+				this.saveToTree(tree[i]);
+				part = this.createTrajectory();
+
+				// append partial trajectory to plan
+				if ((!plan.isEmpty()) && (!part.isEmpty())) {
+					plan.pollLast();
+				}
+
+				for (Waypoint waypoint : part.getWaypoints()) {
+					plan.add(waypoint);
+				}
+				if (plan.peekLast().equals(currentOrigin)) {
+					// if no plan could be found, return an empty trajectory
+					trajectory = new Trajectory();
+					this.revisePlan(trajectory);
+					return trajectory;
+				} else {
+					currentOrigin = plan.peekLast();
+					currentEtd = currentOrigin.getEto();
+				}
+			}
+		}
+
+		// Update trajectory reflecting the first plan
+		trajectory = this.createTrajectory(plan);
+		this.revisePlan(trajectory);
+
+		// Check for new obstacles until the goal is reached
+		// while (!this.checkGoal(getStart())) {
+		for (int j = 0; j < 50; j++) {
+			// TODO: Move to next waypoint and check for new obstacles
+
+			this.updateObstacles();
+			if (!this.getDiffObstacles().isEmpty()) {
+				// reset variables for multiple waypoint planning
+				currentOrigin = new Waypoint(origin);
+				currentEtd = etd;
+				plan.clear();
+				previousValid = true;
+
+				// Check which path became invalid
+				for (int i = 0; i < dim; i++) {
+					this.loadFromTree(tree[i]);
+
+					// Invalidate Waypoints affected by new obstacles
+					for (Obstacle obstacle : diffObstacles)
+						this.invalidateWaypoints(obstacle);
+
+					// Check if the partial path is still valid
+					// If this path and the previous components are still valid - do nothing
+					if (previousValid && this.isPathValid()) {
+					}
+					// Path is invalid and should be recomputed
+					else {
+						// If one of the previous paths was invalid all becomes invalid - clear
+						if (!previousValid) {
+							this.clearExpendables();
+						}
+						// If this path is the first invalid - trim
+						else {
+							previousValid = false;
+							this.trimRRT();
+						}
+						// plan partial trajectory
+						currentDestination = destinations.get(i);
+						this.softInitialize(currentOrigin, currentDestination, currentEtd);
+						this.compute();
+
+						this.saveToTree(tree[i]);
+					}
+					part = this.createTrajectory(tree[i].getPlan());
+
+					// append partial trajectory to plan
+					if ((!plan.isEmpty()) && (!part.isEmpty())) {
+						part.pollFirst();
+					}
+
+					for (Waypoint waypoint : part.getWaypoints()) {
+						plan.add(waypoint);
+					}
+
+					if (plan.peekLast().equals(currentOrigin)) {
+						// if no plan could be found, return an empty trajectory
+						trajectory = new Trajectory();
+						this.revisePlan(trajectory);
+						return trajectory;
+					} else {
+						currentOrigin = plan.peekLast();
+						currentEtd = currentOrigin.getEto();
+					}
+				}
+				// Update trajectory reflecting the modified plan
+				trajectory = this.createTrajectory(plan);
+				this.revisePlan(trajectory);
+			}
+		}
+
+		return trajectory;
+
+	}
+
 }

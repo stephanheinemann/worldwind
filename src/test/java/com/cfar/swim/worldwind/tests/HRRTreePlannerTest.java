@@ -321,7 +321,7 @@ public class HRRTreePlannerTest {
 	public void ARRTreeTester(double epsilon, int bias, Strategy strategy, RiskPolicy risk, Sampling sampling) {
 		System.out.println(String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
 
-		ARRTreePlanner plannerARRT = new ARRTreePlanner(iris, samplingEnv, epsilon, bias, 3000, strategy, Extension.LINEAR, sampling, false, 0);
+		ARRTreePlanner plannerARRT = new ARRTreePlanner(iris, samplingEnv, epsilon, bias, 3000, strategy, Extension.LINEAR, sampling);
 		plannerARRT.setRiskPolicy(risk);
 		plannerARRT.setQualityImprovement(0.01); plannerARRT.setMinimumQuality(0d); plannerARRT.setMaximumQuality(1d);
 

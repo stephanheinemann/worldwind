@@ -53,6 +53,7 @@ import org.xml.sax.InputSource;
 import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.Heuristic;
@@ -243,7 +244,7 @@ public class RRTreePlannerTest {
 		System.out.println(String.format("\tAnytimeDynamic RRTreeTester - () - e=%.1f b=%d cb_i=%.2f cb_f=%.2f imp=%.2f",
 				 epsilon, bias, init, fina, imp));
 
-		ADRRTreePlanner plannerADRRT = new ADRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, Strategy.EXTEND, Extension.LINEAR);
+		ADRRTreePlanner plannerADRRT = new ADRRTreePlanner(iris, samplingEnv, epsilon, bias, 1500, Strategy.EXTEND, Extension.LINEAR, Sampling.ELLIPSOIDAL);
 		plannerADRRT.setMinimumQuality(init);
 		plannerADRRT.setMaximumQuality(fina);
 		plannerADRRT.setQualityImprovement(imp);
