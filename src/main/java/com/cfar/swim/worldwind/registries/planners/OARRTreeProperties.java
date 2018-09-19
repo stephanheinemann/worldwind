@@ -43,7 +43,7 @@ public class OARRTreeProperties extends ARRTreeProperties implements AnytimePlan
 	private final static String DESCRIPTION_OARRT = "Online Anytime RRT: Online version with anytime capabilities of the RRT. It repeatedly computes better solutions as long until the connected aircraft is inside the goal region. Requires a datalink connection.";
 	
 	/** the state of the online capabilities of the planner */
-	private boolean online = false;
+	private boolean online = true;
 	
 	/** the distance threshold to consider a position displacement as worthy of a new plan */
 	private double positionThreshold = 2d; 
