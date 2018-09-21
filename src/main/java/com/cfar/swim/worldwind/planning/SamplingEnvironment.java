@@ -713,15 +713,8 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 		distance = this.getNormalizedDistance(origin, destination);
 
-		cost = edge.calculateCost(start, end, costPolicy);
-
-		if (riskPolicy.satisfies(cost - 1)) {
-			cost = distance * cost;
-		} else {
-			cost = Double.POSITIVE_INFINITY;
-		}
-
-		stepCost = cost;
+		cost = edge.calculateCost(start, end, costPolicy, riskPolicy);
+		stepCost = distance * cost;
 
 		return stepCost;
 	}
@@ -758,13 +751,8 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 		distance = this.getNormalizedDistance(origin, destination);
 
-		cost = edge.calculateCost(start, end, costPolicy);
-
-		if (riskPolicy.satisfies(cost - 1)) {
-			cost = distance * cost;
-		} else {
-			cost = Double.POSITIVE_INFINITY;
-		}
+		cost = edge.calculateCost(start, end, costPolicy, riskPolicy);
+		cost = distance * cost;
 
 		double desirability = edge.getDesirability();
 		double lambda = edge.getLambda();
