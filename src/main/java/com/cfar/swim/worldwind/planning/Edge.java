@@ -287,6 +287,7 @@ public class Edge {
 	 * @return the accumulated cost of this edge within the specified time span
 	 */
 	public double calculateCost(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy, RiskPolicy riskPolicy) {
+
 		double cost = 1d; // simple cost of normalized distance
 
 		Set<ZonedDateTime> times = new HashSet<ZonedDateTime>();
@@ -298,6 +299,7 @@ public class Edge {
 		// add all (weighted) cost of the cell
 		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
 
+		// For every interval get sub-Interval times
 		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
 			if (interval instanceof CostInterval) {
 				CostInterval costInterval = (CostInterval) interval;
@@ -322,10 +324,11 @@ public class Edge {
 		ZonedDateTime startPart = iterator.next(), endPart;
 		double costPart = 1d, costAux = 0d;
 
-		// For every sub-Interval
+		// For every sub-Interval calculate cost
 		while (iterator.hasNext()) {
 			endPart = iterator.next();
 			costPart = 1d;
+			costAux = 0d;
 			for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
 				if (interval instanceof CostInterval) {
 					CostInterval costInterval = (CostInterval) interval;
@@ -342,7 +345,11 @@ public class Edge {
 				}
 			}
 			costPart = costAux == 0d ? costPart : costAux;
-			costPart = riskPolicy.satisfies(costPart - 1) ? costPart : Double.POSITIVE_INFINITY;
+
+			// Risk Policy implementation
+			if (!riskPolicy.satisfies(costPart))
+				costPart = Double.POSITIVE_INFINITY;
+
 			costListTemporal.add(costPart);
 			startPart = endPart;
 		}
@@ -357,10 +364,9 @@ public class Edge {
 			break;
 		case AVERAGE:
 			// TODO: Replace by weighted average with duration of time interval
-			cost = costListTemporal.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
+			cost = costListTemporal.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
 			break;
 		}
-		System.out.println(costPolicy + " " + riskPolicy + "\tcost = " + cost);
 
 		return cost;
 	}

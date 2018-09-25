@@ -346,13 +346,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @return true if improvements reached a maximum, false otherwise
 	 */
 	protected boolean isImproved(double costOld) {
-		double costDiff = (costOld - this.getGoal().getCost()) / costOld;
-		return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
+		return this.isImproved(costOld, getGoal().getCost());
 	}
 
 	protected boolean isImproved(double costOld, double costNew) {
 		double costDiff = (costOld - costNew) / costOld;
-		return costDiff <= 0.05 && getCostBias() >= getMaximumQuality();
+		return costDiff <= getQualityImprovement() && getCostBias() >= getMaximumQuality();
 	}
 
 	/**
@@ -376,7 +375,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		double costBias = this.getCostBias() + step;
 		costBias = costBias > this.getMaximumQuality() ? this.getMaximumQuality() : costBias;
 		costBias = costBias < this.getMinimumQuality() ? this.getMinimumQuality() : costBias;
-				
+
 		this.setCostBias(costBias);
 		this.setDistBias(1 - costBias);
 	}
@@ -420,33 +419,27 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected RRTreeWaypoint sampleTarget(double bias) {
 		RRTreeWaypoint waypoint = null;
+		double heuristic = Double.POSITIVE_INFINITY;
 		int rand = new Random().nextInt(100 - 1) + 1;
 
-		if (rand <= bias) {
+		if (rand <= bias)
 			return this.getGoal();
-		}
 
 		switch (this.getSAMPLING()) {
+		// Ellipsoidal sampling
 		case ELLIPSOIDAL:
-			double dist = this.getEnvironment().getDistance(getStart(), getGoal()) > this.getCostBound()
-					? this.getEnvironment().getDistance(getStart(), getGoal())
-					: this.getCostBound();
-			try {
-				waypoint = this.sampleEllipsoid(getStart(), getGoal(), dist);
-			} catch (IllegalStateException e) {
-				System.err.println(e);
-			}
+			double dist = getEnvironment().getDistance(getStart(), getGoal()) > getCostBound()
+					? getEnvironment().getDistance(getStart(), getGoal())
+					: getCostBound();
+			waypoint = this.sampleEllipsoid(getStart(), getGoal(), dist);
+			// Uniform sampling
 		case UNIFORM:
 		default:
-			double heuristic = Double.POSITIVE_INFINITY;
-			int attempts = 0;
-			// Most points sampled from environment will not be inside heuristic region
-			while (heuristic >= this.getCostBound()) {
+			for (int attempts = 0; heuristic >= getCostBound(); attempts++) {
 				if (attempts > MAX_SAMPLE_ATTEMPTS)
 					return null;
 				waypoint = this.sampleRandom();
-				heuristic = this.computeHeuristic(getStart(), waypoint) + this.computeHeuristic(waypoint, getGoal());
-				attempts++;
+				heuristic = computeHeuristic(getStart(), waypoint) + computeHeuristic(waypoint, getGoal());
 			}
 		}
 
@@ -460,7 +453,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @return waypoint the RRTreeWaypoint sampled
 	 */
 	protected RRTreeWaypoint sampleEllipsoid(Position focusA, Position focusB, double distance) {
-		return this.createWaypoint(this.getEnvironment().samplePositionEllipsoide(focusA, focusB, distance));
+		return this.createWaypoint(this.getEnvironment().samplePositionEllipsoid(focusA, focusB, distance));
 	}
 
 	/**

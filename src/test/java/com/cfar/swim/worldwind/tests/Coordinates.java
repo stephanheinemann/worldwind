@@ -46,7 +46,7 @@ public class Coordinates {
 		System.out.println("Min distance (2c) =\t"+samplingEnv.getDistance(origin, destination)+
 				"\tMax distance (2a) =\t"+distance);
 		for(int i=0; i<100; i++) {
-			Position positionRand = samplingEnv.samplePositionEllipsoide(origin, destination, distance);
+			Position positionRand = samplingEnv.samplePositionEllipsoid(origin, destination, distance);
 			double distanceSum = samplingEnv.getDistance(origin, positionRand)+samplingEnv.getDistance(positionRand, destination);
 			boolean inside = samplingEnv.contains(positionRand);
 			System.out.println("Rand Position:  \t"+positionRand+"\tdS+dG = "+distanceSum+"\tInside? "+inside);

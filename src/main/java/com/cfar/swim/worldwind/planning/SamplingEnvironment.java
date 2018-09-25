@@ -68,7 +68,6 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  * 
  * @author Manuel Rosa
  * @author Henrique Ferreira
- *
  */
 public class SamplingEnvironment extends ContinuumBox implements Environment {
 
@@ -1151,7 +1150,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * 
 	 * @return the pseudo-random sampled position
 	 */
-	public Position samplePositionEllipsoide(Position focusA, Position focusB, double distance) {
+	public Position samplePositionEllipsoid(Position focusA, Position focusB, double distance) {
 		// Test if the box is more restrictive than the ellipsoid "diameter"
 		if (distance > this.getDiameter())
 			return sampleRandomPosition();
@@ -1208,7 +1207,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
-	 * Checks if a given position is in conflict with untraversable obstacles in the
+	 * Checks if a position is in conflict with untraversable obstacles in the
 	 * environment.
 	 * 
 	 * @param position the position in global coordinates
@@ -1221,7 +1220,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		// Check if position is inside the globe
 		if (this.isInsideGlobe(this.getGlobe(), position))
 			return true;
-		
+
 		// Create sphere around the position of the aircraft with its radius of action
 		Sphere sphere = new Sphere(getGlobe().computePointFromPosition(position), aircraft.getRadius());
 
@@ -1229,14 +1228,14 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
 		for (TerrainObstacle terrain : terrainSet) {
 			// Check if obstacle contains the waypoint
-			if(sphere.intersects(terrain.getFrustum(getGlobe()))) {
+			if (sphere.intersects(terrain.getFrustum(getGlobe()))) {
 				return true;
 			}
 		}
 		return false;
 	}
 
-	/**@param aircraft the aircraft to be considered
+	/**
 	 * Checks if a straight leg between the positions is in conflict with
 	 * untraversable obstacles in the environment.
 	 * 
@@ -1294,7 +1293,15 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 				.limit(kNear).collect(Collectors.toList());
 
 	}
-	
+
+	/**
+	 * Finds the waypoints nearer than the given distance to the given position.
+	 * 
+	 * @param position the position in global coordinates
+	 * @param maxDist the maximum distance to consider
+	 * 
+	 * @return list of nearest waypoints sorted by increasing distance
+	 */
 	public List<? extends Position> findNearestDist(Position position, double maxDist) {
 
 		return this.getWaypointList().stream().sorted((p1, p2) -> Double

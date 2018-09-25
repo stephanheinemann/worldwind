@@ -107,7 +107,7 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 * @return waypoint the RRTreeWaypoint sampled
 	 */
 	protected RRTreeWaypoint sampleEllipsoidal() {
-		return this.createWaypoint(this.getEnvironment().samplePositionEllipsoide(getStart(), getGoal(), getGoal().getCost()));
+		return this.createWaypoint(this.getEnvironment().samplePositionEllipsoid(getStart(), getGoal(), getGoal().getCost()));
 	}
 
 	/**
