@@ -78,7 +78,7 @@ import gov.nasa.worldwind.render.Path;
  *
  */
 public class RRTreeParameterTest {
-	static final int REPETITIONS = 10;
+	static final int REPETITIONS = 1;
 	String title;
 
 	Iris iris;
@@ -100,10 +100,12 @@ public class RRTreeParameterTest {
 	 * @@@@@@@@@@@@@@@@@@@@@@@@ TESTS @@@@@@@@@@@@@@@@@@@@@@@@
 	 */
 
+	/*
 	@Test
 	public void tuneIncrementalDist() {
 		System.out.println("Tuning incremental diatnce -- repetitions = " + REPETITIONS);
 	}
+	*/
 
 	@Test
 	public void tuneGoalBias() {
@@ -124,10 +126,12 @@ public class RRTreeParameterTest {
 		}
 	}
 
+	/*
 	@Test
 	public void tuneNumberNeighbors() {
 		System.out.println("Tuning number of neighbors -- repetitions = " + REPETITIONS);
 	}
+	*/
 
 	/*
 	 * @@@@@@@@@@@@@@@@@@@@@@@@ INIT @@@@@@@@@@@@@@@@@@@@@@@@
