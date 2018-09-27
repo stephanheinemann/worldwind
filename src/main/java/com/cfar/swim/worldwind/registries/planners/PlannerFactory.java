@@ -208,7 +208,8 @@ public class PlannerFactory implements Factory<Planner> {
 		} else if (specification.getId().equals(Specification.PLANNER_RRTS_ID)) {
 			RRTreeStarProperties properties = (RRTreeStarProperties) specification.getProperties();
 			planner = new RRTreeStarPlanner(scenario.getAircraft(), scenario.getEnvironment(), properties.getEpsilon(),
-					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension());
+					properties.getBias(), properties.getMaxIter(), properties.getStrategy(), properties.getExtension(),
+					properties.getSampling());
 			planner.setCostPolicy(properties.getCostPolicy());
 			planner.setRiskPolicy(properties.getRiskPolicy());
 			((RRTreeStarPlanner) planner).setGoalThreshold(properties.getGoalThreshold());

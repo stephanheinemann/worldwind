@@ -428,9 +428,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		switch (this.getSAMPLING()) {
 		// Ellipsoidal sampling
 		case ELLIPSOIDAL:
-			double dist = getEnvironment().getDistance(getStart(), getGoal()) > getCostBound()
+			double dist = getEnvironment().getDistance(getStart(), getGoal()) > getEnvironment().getDistance(getCostBound())
 					? getEnvironment().getDistance(getStart(), getGoal())
-					: getCostBound();
+					: getEnvironment().getDistance(getCostBound());
 			waypoint = this.sampleEllipsoid(getStart(), getGoal(), dist);
 			// Uniform sampling
 		case UNIFORM:

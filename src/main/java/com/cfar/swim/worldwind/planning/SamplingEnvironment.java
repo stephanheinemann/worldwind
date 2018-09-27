@@ -679,6 +679,18 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	public double getNormalizedDistance(Position position1, Position position2) {
 		return this.getDistance(position1, position2) / this.getDiameter();
 	}
+	
+	/**
+	 * Gets the normalized distance between two positions in this sampling
+	 * environment.
+	 * 
+	 * @param normDist the normalized distance between two positions
+	 * 
+	 * @return the distance between the two positions in this sampling environment
+	 */
+	public double getDistance(double normDist) {
+		return normDist * this.getDiameter();
+	}
 
 	/**
 	 * Gets the step cost from an origin to a destination position within this

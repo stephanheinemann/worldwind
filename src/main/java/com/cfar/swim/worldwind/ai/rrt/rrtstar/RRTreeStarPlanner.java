@@ -30,10 +30,12 @@
 package com.cfar.swim.worldwind.ai.rrt.rrtstar;
 
 import java.util.List;
+import java.util.Random;
 
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreeWaypoint;
+import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -53,6 +55,9 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class RRTreeStarPlanner extends RRTreePlanner {
 
+	/** the sampling technique for the planner */
+	private final Sampling SAMPLING;
+
 	/**
 	 * Constructs a RRT* planner for a specified aircraft and environment using
 	 * default local cost and risk policies.
@@ -64,6 +69,7 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 */
 	public RRTreeStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+		SAMPLING = Sampling.UNIFORM;
 	}
 
 	/**
@@ -82,8 +88,18 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 *      Strategy, Extension)
 	 */
 	public RRTreeStarPlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
-			Strategy strategy, Extension extension) {
+			Strategy strategy, Extension extension, Sampling sampling) {
 		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension);
+		SAMPLING = sampling;
+	}
+
+	/**
+	 * Gets the sampling technique for the planner.
+	 * 
+	 * @return the sampling technique for the planner
+	 */
+	public Sampling getSAMPLING() {
+		return SAMPLING;
 	}
 
 	/**
@@ -99,7 +115,24 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 
 		return (int) Math.round(kNear);
 	}
-	
+
+	/**
+	 * Samples a new waypoint from the environment with a given bias to the goal
+	 * 
+	 * @param bias the percentage value of bias to sample the goal
+	 * 
+	 * @return waypoint the RRTreeWaypoint sampled
+	 */
+	protected RRTreeWaypoint sampleEllipsoid(int bias) {
+		RRTreeWaypoint waypoint;
+
+		int rand = new Random().nextInt(100 - 1) + 1;
+
+		waypoint = (rand <= bias) ? this.getGoal() : this.sampleEllipsoidal();
+
+		return waypoint;
+	}
+
 	/**
 	 * Creates a new waypoint from a random position sampled from a uniformed
 	 * distribution over the environment space
@@ -107,7 +140,8 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 * @return waypoint the RRTreeWaypoint sampled
 	 */
 	protected RRTreeWaypoint sampleEllipsoidal() {
-		return this.createWaypoint(this.getEnvironment().samplePositionEllipsoid(getStart(), getGoal(), getGoal().getCost()));
+		return this.createWaypoint(this.getEnvironment().samplePositionEllipsoid(getStart(), getGoal(),
+				getEnvironment().getDistance(getGoal().getCost())));
 	}
 
 	/**
@@ -216,8 +250,17 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 		double oldCost = this.getGoal().getCost();
 
 		for (int i = 0; i < getMAX_ITER(); i++) {
-//			RRTreeWaypoint waypointRand = this.sampleBiased(getBIAS());
-			RRTreeWaypoint waypointRand = this.sampleEllipsoidal();
+			System.out.println("Iteration #" + i + "Goal Cost = " + getGoal().getCost());
+			RRTreeWaypoint waypointRand;
+			switch (this.getSAMPLING()) {
+			case ELLIPSOIDAL:
+				waypointRand = this.sampleEllipsoid(getBIAS());
+				break;
+			case UNIFORM:
+			default:
+				waypointRand = this.sampleBiased(getBIAS());
+				break;
+			}
 			RRTreeWaypoint waypointNear = (RRTreeWaypoint) this.getEnvironment().findNearest(waypointRand, 1).get(0);
 
 			success = this.newWaypoint(waypointRand, waypointNear);

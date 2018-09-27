@@ -29,46 +29,57 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
-import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
+import java.beans.BeanDescriptor;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
 
 /**
- * Realizes the properties bean of a RRTree Star planner.
+ * Realizes the properties bean of a RRTree star planner with the property
+ * descriptors for each parameter.
  * 
  * @author Manuel Rosa
  *
  */
-public class RRTreeStarProperties extends RRTreeProperties {
-	
-	/** the description of this planner properties bean */
-	private final static String DESCRIPTION_RRTS = "RRT Star: Extension to the basic RRT algorithm which produces optimal paths. As more positions are added to the tree, edges are recomputed if there is a lower cost path through the new position.";
+public class RRTreeStarPropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 
-	/** the sampling technique for the planner */
-	private Sampling sampling = Sampling.ELLIPSOIDAL;
-	
+	/** the class which this bean info refers to */
+	private final static Class<RRTreeStarProperties> beanClass = RRTreeStarProperties.class;
+
+
 	/**
-	 * Constructs a new RRTree star planner properties bean.
-	 */
-	public RRTreeStarProperties() {
-		super();
-		this.setDescription(DESCRIPTION_RRTS);
-	}
-	
-	/**
-	 * Gets the sampling technique for the planner.
+	 * Customizes the property descriptors for each parameter of a RRTree star
+	 * planner.
 	 * 
-	 * @return the sampling technique for the planner
+	 * @return the array of property descriptors
+	 * 
+	 * @see com.cfar.swim.worldwind.registries.planners.AbstractPlannerPropertiesBeanInfo#getPropertyDescriptors()
 	 */
-	public Sampling getSampling() {
-		return sampling;
+	@Override
+	public PropertyDescriptor[] getPropertyDescriptors() {
+
+		try {
+			PropertyDescriptor sampling = this.createProperty(beanClass, "sampling",
+					"Sampling Technique",
+					"the sampling technique for the planner",
+					CATEGORY_SAMPLING);
+
+			PropertyDescriptor rvNew[] = { sampling };
+			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
+			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
+
+			return rv;
+		} catch (IntrospectionException e) {
+			throw new Error(e.toString());
+		}
 	}
 
 	/**
-	 * Sets the sampling technique for the planner.
+	 * Gets the bean descriptor of this RRTree star properties bean info.
 	 * 
-	 * @param sampling the sampling technique for the planner
+	 * @return the bean descriptor of this class
 	 */
-	public void setSampling(Sampling sampling) {
-		this.sampling = sampling;
+	public BeanDescriptor getBeanDescriptor() {
+		return new BeanDescriptor(beanClass, null);
 	}
-
+	
 }

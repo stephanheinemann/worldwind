@@ -40,13 +40,13 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  * @author Manuel Rosa
  *
  */
-public class ARRTreeProperties extends RRTreeProperties implements AnytimePlannerProperties, OnlinePlannerProperties {
-	
-	/** the sampling technique for the planner */
-	private Sampling sampling = Sampling.UNIFORM;
+public class ARRTreeProperties extends RRTreeProperties implements AnytimePlannerProperties {
 	
 	/** the description of this planner properties bean */
 	private final static String DESCRIPTION_ARRT = "Anytime RRT: Anytime version of a RRT which computes plans with increasing quality as time allows until a ceratin improvement is reached.";
+	
+	/** the sampling technique for the planner */
+	private Sampling sampling = Sampling.UNIFORM;
 	
 	/** the initial relative weight of costs to calculate the cost of a waypoint */
 	private double initialCostBias = 0d;
@@ -176,48 +176,5 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 	@Override
 	public void setQualityImprovement(double improvementFactor) {
 		this.improvementFactor = improvementFactor;
-	}
-	
-	
-	/** the state of the online capabilities of the planner */
-	private boolean online = false;
-	
-	/** the distance threshold to consider a position displacement as worthy of a new plan */
-	private double positionThreshold = 2d; 
-	
-	/**
-	 * Checks if the online capabilities of the planner mode are active or not.
-	 * 
-	 * @return true if the planner mode is set to online, false otherwise
-	 */
-	public boolean isOnline() {
-		return online;
-	}
-	
-	/**
-	 * Sets the online capabilities of the planner as are active or not.
-	 * 
-	 * @param online the state of the online capabilities
-	 */
-	public void setOnline(boolean online) {
-		this.online = online;
-	}
-
-	/**
-	 * Gets the distance threshold to consider a position displacement as worthy of a new plan.
-	 * 
-	 * @return the distance threshold for each position
-	 */
-	public double getPositionThreshold() {
-		return positionThreshold;
-	}
-
-	/**
-	 * Sets the distance threshold to consider a position displacement as worthy of a new plan.
-	 * 
-	 * @param positionThreshold the distance threshold for each position
-	 */
-	public void setPositionThreshold(double positionThreshold) {
-		this.positionThreshold = positionThreshold;
 	}
 }
