@@ -250,7 +250,6 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 		double oldCost = this.getGoal().getCost();
 
 		for (int i = 0; i < getMAX_ITER(); i++) {
-			System.out.println("Iteration #" + i + "Goal Cost = " + getGoal().getCost());
 			RRTreeWaypoint waypointRand;
 			switch (this.getSAMPLING()) {
 			case ELLIPSOIDAL:
