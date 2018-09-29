@@ -233,7 +233,7 @@ public class Edge {
 	 * 
 	 * @return the accumulated cost of this edge within the specified time span
 	 */
-	public double calculateCostOld(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy) {
+	public double calculateCost(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		double cost = 1d; // simple cost of normalized distance
 		List<Double> costList = new ArrayList<Double>();
 
@@ -271,6 +271,10 @@ public class Edge {
 			 */
 			cost = costList.stream().mapToDouble(f -> f.doubleValue()).sum();
 		}
+		
+		// Risk Policy implementation
+		if (!riskPolicy.satisfies(costPart))
+			costPart = Double.POSITIVE_INFINITY;
 
 		return cost;
 	}
@@ -286,7 +290,7 @@ public class Edge {
 	 * 
 	 * @return the accumulated cost of this edge within the specified time span
 	 */
-	public double calculateCost(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy, RiskPolicy riskPolicy) {
+	public double calculateCostNew(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy, RiskPolicy riskPolicy) {
 
 		double cost = 1d; // simple cost of normalized distance
 
