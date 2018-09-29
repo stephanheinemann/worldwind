@@ -273,8 +273,8 @@ public class Edge {
 		}
 		
 		// Risk Policy implementation
-		if (!riskPolicy.satisfies(costPart))
-			costPart = Double.POSITIVE_INFINITY;
+		if (!riskPolicy.satisfies(cost))
+			cost = Double.POSITIVE_INFINITY;
 
 		return cost;
 	}
