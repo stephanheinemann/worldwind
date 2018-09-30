@@ -48,6 +48,7 @@ import java.util.Set;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
 import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
@@ -59,7 +60,9 @@ import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Box;
+import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.iwxxm.IwxxmLoader;
+import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
@@ -80,7 +83,7 @@ import gov.nasa.worldwind.globes.Globe;
  *
  */
 public class InterPlannerTest {
-	static final int REPETITIONS = 20;
+	static final int REPETITIONS = 5;
 	String title;
 
 	Iris iris;
@@ -97,7 +100,7 @@ public class InterPlannerTest {
 	static final int DEF_NEIGHBORS = 5;
 
 	private enum Scenario {
-		TECNICO;
+		TECNICO, SEA;
 	}
 
 	/*
@@ -108,15 +111,17 @@ public class InterPlannerTest {
 	@Test
 	public void comparePerformance() {
 		System.out.println("Inter Planner Performance -- repetitions = " + REPETITIONS);
-		Scenario[] scenarios = { Scenario.TECNICO };
+		Scenario[] scenarios = { Scenario.SEA };
 
 		this.updateTitle("InterPlanner");
 		for (Scenario scenario : scenarios) {
 			this.initScenario(scenario);
+			// Test A*
+			this.astarTester();
 			// Test PRM
-			this.basicPRMapTester(DEF_EPSILON);
+//			this.basicPRMapTester(DEF_EPSILON);
 			// Test RRT
-			this.heuristicRRTreeTester(DEF_EPSILON, DEF_BIAS, DEF_NEIGHBORS);
+//			this.heuristicRRTreeTester(DEF_EPSILON, DEF_BIAS, DEF_NEIGHBORS);
 		}
 
 	}
@@ -129,13 +134,18 @@ public class InterPlannerTest {
 
 	/** initializes the scenario with the desired obstacles- */
 	public void initScenario(Scenario scenario) {
-		this.setScenario();
 		switch (scenario) {
+		case SEA:
+			this.setScenario2();
+			this.embedSWIM2();
+			break;
 		case TECNICO:
 		default:
+			this.setScenario();
 			this.embedSWIM();
 			this.embedTerrain();
 		}
+		this.setOrignisDestinations();
 		System.out.println("Initialized Scenario -->\t" + scenario.toString());
 		this.printToFile("logs/" + title + ".txt", scenario.toString());
 	}
@@ -164,17 +174,51 @@ public class InterPlannerTest {
 		etd = ZonedDateTime.of(LocalDate.of(2018, 8, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
 		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
+	}
+	
+	public void setScenario2() {
+		// Create box area in globe
+		globe = new Earth();
+		Sector sea = new Sector(
+				Angle.fromDegrees(48.470),
+				Angle.fromDegrees(48.475),
+				Angle.fromDegrees(-123.26),
+				Angle.fromDegrees(-123.25));
+		double floor = 0d, ceilling = 50d;
+		gov.nasa.worldwind.geom.Box boxNASA = Sector.computeBoundingBox(globe, 1.0, sea, floor,
+				ceilling);
 
+		// Create environment from box
+		samplingEnv = new SamplingEnvironment(new Box(boxNASA));
+		samplingEnv.setGlobe(globe);
+		
+		int division = 25;
+		Box envBox = new Box(boxNASA);
+		double side = envBox.getRLength() / division;
+		Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
+		int sCells = (int) Math.ceil(envBox.getSLength() / side);
+		int tCells = (int) Math.ceil(envBox.getTLength() / side);
+		planningGrid = new PlanningGrid(envCube, division, sCells, tCells);
+		planningGrid.setGlobe(globe);
+
+		// Set planner inputs
+		Position origin = Position.fromDegrees(48.4705, -123.259, 10d);
+//		Position destination = Position.fromDegrees(48.4745, -123.251, 40d);
+
+		etd = ZonedDateTime.of(LocalDate.of(2018, 8, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
+		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
+		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
+	}
+	
+	public void setOrignisDestinations() {
 		// Set origins and destinations
 		for (int i = 0; i < REPETITIONS; i++) {
 			do {
 				origins[i] = samplingEnv.sampleRandomPosition();
-			} while (samplingEnv.isInsideGlobe(globe, origins[i])
-					|| samplingEnv.checkConflict(origins[i], iris));
+			} while (samplingEnv.checkConflict(origins[i], iris));
 			do {
 				destinations[i] = samplingEnv.sampleRandomPosition();
-			} while (samplingEnv.isInsideGlobe(globe, destinations[i])
-					|| samplingEnv.checkConflict(destinations[i], iris));
+			} while (samplingEnv.checkConflict(destinations[i], iris));
 		}
 
 		// Log origins and destinations
@@ -186,7 +230,6 @@ public class InterPlannerTest {
 			this.printToFile("logs/" + title + ".txt", destinations[i].getLatitude().getDegrees(),
 					destinations[i].getLongitude().getDegrees(), destinations[i].getAltitude(),
 					samplingEnv.getDistance(origins[i], destinations[i]));
-
 	}
 
 	/** Updates the title with the given string plus the current time */
@@ -260,6 +303,45 @@ public class InterPlannerTest {
 		}
 	}
 
+	public void embedSWIM2() {
+		this.embedObstacleS1();
+		this.embedObstacleS2();
+	}
+	
+	public void embedObstacleS1() {
+		try {
+			IwxxmLoader loader = new IwxxmLoader();
+			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(
+					new File("src/test/resources/xml/iwxxm/sigmet-victoria-tropCyc.xml"))));
+			for (Obstacle obstacle : obstacles) {
+				samplingEnv.embed(obstacle);
+				planningGrid.embed(obstacle);
+			}
+			assertTrue(!samplingEnv.getObstacles().isEmpty());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		samplingEnv.setTime(etd);
+		planningGrid.setTime(etd);
+	}
+	
+	public void embedObstacleS2() {
+		try {
+			IwxxmLoader loader = new IwxxmLoader();
+			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(
+					new File("src/test/resources/xml/iwxxm/sigmet-victoria-thunderstrom.xml"))));
+			for (Obstacle obstacle : obstacles) {
+				samplingEnv.embed(obstacle);
+				planningGrid.embed(obstacle);
+			}
+			assertTrue(!samplingEnv.getObstacles().isEmpty());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		samplingEnv.setTime(etd);
+		planningGrid.setTime(etd);
+	}
+	
 	/*
 	 * @@@@@@@@@@@@@@@@@@@@@@@@ LOGGERS @@@@@@@@@@@@@@@@@@@@@@@@
 	 */
@@ -281,7 +363,6 @@ public class InterPlannerTest {
 		System.out.println(
 				String.format("Waypoints created: %.1f Path size: %.1f Cost: %.4f Time: %.1f(ms)\n",
 						waypoints, size, cost, time));
-		assertTrue("RRTree should find a path", size > 0);
 	}
 
 	public void printToFile(String fileID, double size, double waypoints, double cost,
@@ -366,16 +447,16 @@ public class InterPlannerTest {
 		this.processData(sizeT, waypointsT, costT, timeT);
 	}
 
-	/** Heuristic RRT tester */
+	/** basic PRM tester */
 	public void basicPRMapTester(double maxDistance) {
 		samplingEnv.getWaypointList().clear();
 		samplingEnv.getEdgeList().clear();
 
 		RiskPolicy risk = RiskPolicy.IGNORANCE;
-		int maxIter = 300;
+		int maxIter = 3000;
 		int maxNeighbors = 15;
 		QueryPlanner queryPlanner = QueryPlanner.FAS;
-		QueryMode mode = QueryMode.SINGLE;
+		QueryMode mode = QueryMode.MULTIPLE;
 		double minimumQuality = 50d;
 		double maximumQuality = 1d;
 		double qualityImprovement = 1d;
@@ -393,6 +474,7 @@ public class InterPlannerTest {
 		this.printToFile("logs/" + title + ".txt", "PRM");
 		for (int i = 0; i < REPETITIONS; i++) {
 			plannerPRM = new BasicPRM(iris, samplingEnv);
+			plannerPRM.setCostPolicy(CostPolicy.AVERAGE);
 			plannerPRM.setRiskPolicy(risk);
 			plannerPRM.setMaxIter(maxIter);
 			plannerPRM.setMaxNeighbors(maxNeighbors);
@@ -415,6 +497,52 @@ public class InterPlannerTest {
 				size = Iterables.size(trajectory.getPositions());
 				waypoints = plannerPRM.getWaypointList().size();
 				cost = samplingEnv.getDistance(trajectory.getCost());
+				time = System.currentTimeMillis() - t0;
+			}
+			System.out.print("Iter  #" + i + "\t");
+			this.log(size, waypoints, cost, time);
+			this.printToFile("logs/" + title + ".txt", size, waypoints, cost, time);
+			sizeT += size;
+			waypointsT += waypoints;
+			costT += cost;
+			timeT += time;
+		}
+		this.processData(sizeT, waypointsT, costT, timeT);
+	}
+	
+	/** basic PRM tester */
+	public void astarTester() {
+		RiskPolicy risk = RiskPolicy.IGNORANCE;
+		CostPolicy costPolicy = CostPolicy.AVERAGE; 
+
+		System.out.println(String.format("\tforward A* tester"));
+
+		ForwardAStarPlanner plannerAS;
+
+		Trajectory trajectory;
+		double size = 0, waypoints = 0, cost = 0d, time = 0d;
+		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
+		long t0 = 0;
+
+		// Compute plans
+		this.printToFile("logs/" + title + ".txt", "A*");
+		for (int i = 0; i < REPETITIONS; i++) {
+			plannerAS = new ForwardAStarPlanner(iris, planningGrid);
+			plannerAS.setCostPolicy(costPolicy);
+			plannerAS.setRiskPolicy(risk);
+
+			t0 = System.currentTimeMillis();
+			trajectory = plannerAS.plan(origins[i], destinations[i], etd);
+			if (trajectory.isEmpty()) {
+				System.out.println("No feasible solution was found");
+				size = 0;
+				waypoints = 0;
+				cost = 0;
+				time = 0;
+			} else {
+				size = Iterables.size(trajectory.getPositions());
+				waypoints = 0;
+				cost = planningGrid.getDistance(trajectory.getCost());
 				time = System.currentTimeMillis() - t0;
 			}
 			System.out.print("Iter  #" + i + "\t");

@@ -123,8 +123,8 @@
                                                         <gml:Curve gml:id="curve01">
                                                             <gml:segments>
                                                                 <gml:CircleByCenterPoint numArc="1">
-                                                                    <gml:pos>38.73630 -9.13935</gml:pos>
-                                                                    <gml:radius uom="[nmi_i]">0.01</gml:radius>
+                                                                    <gml:pos>48.4715 -123.2525</gml:pos>
+                                                                    <gml:radius uom="[nmi_i]">0.05</gml:radius>
                                                                 </gml:CircleByCenterPoint>
                                                             </gml:segments>
                                                         </gml:Curve>
@@ -181,8 +181,8 @@
                                                                 <gml:Curve gml:id="curve001">
                                                                     <gml:segments>
                                                                         <gml:CircleByCenterPoint numArc="1">
-                                                                            <gml:pos>38.73630 -9.13935</gml:pos>
-                                                                    		<gml:radius uom="[nmi_i]">0.01</gml:radius>
+                                                                            <gml:pos>48.4715 -123.2525</gml:pos>
+                                                                    		<gml:radius uom="[nmi_i]">0.05</gml:radius>
                                                                         </gml:CircleByCenterPoint>
                                                                     </gml:segments>
                                                                 </gml:Curve>

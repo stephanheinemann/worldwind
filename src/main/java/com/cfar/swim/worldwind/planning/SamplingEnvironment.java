@@ -681,7 +681,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 	
 	/**
-	 * Gets the normalized distance between two positions in this sampling
+	 * Gets the true distance between two positions in this sampling
 	 * environment.
 	 * 
 	 * @param normDist the normalized distance between two positions

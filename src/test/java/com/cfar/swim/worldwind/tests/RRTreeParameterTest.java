@@ -48,6 +48,7 @@ import java.util.Set;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
+import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
@@ -123,11 +124,12 @@ public class RRTreeParameterTest {
 	}
 	*/
 
+	/*
 	@Test
 	public void tuneGoalBias() {
 		System.out.println("Tuning goal bias -- repetitions = " + REPETITIONS);
 		Scenario[] scenarios = { Scenario.COMPLETE};
-		int[] biases = { 0 };
+		int[] biases = { 1,5,10 };
 
 		this.updateTitle("BiasTune");
 		for (Scenario scenario : scenarios) {
@@ -141,15 +143,14 @@ public class RRTreeParameterTest {
 			}
 		}
 	}
-	/*
 	*/
 
 	/*
 	@Test
 	public void tuneNumberNeighbors() {
 		System.out.println("Tuning number of neighbors -- repetitions = " + REPETITIONS);
-		Scenario[] scenarios = { Scenario.COMPLETE, Scenario.TERRAIN, Scenario.SWIM };
-		int[] neighbors = { 3, 5, 10 };
+		Scenario[] scenarios = { Scenario.COMPLETE };
+		int[] neighbors = { 100 };
 
 		this.updateTitle("NeighborTune");
 		for (Scenario scenario : scenarios) {
@@ -163,6 +164,29 @@ public class RRTreeParameterTest {
 	}
 	*/
 
+	@Test
+	public void tuneSampling() {
+		System.out.println("Tuning sampling startegy -- repetitions = " + REPETITIONS);
+		Scenario[] scenarios = { Scenario.COMPLETE };
+		Sampling[] strategies = {Sampling.UNIFORM, Sampling.ELLIPSOIDAL};
+
+		this.updateTitle("SamplingTune");
+		for (Scenario scenario : scenarios) {
+			this.initScenario(scenario);
+			// Test ARRT
+			for (Sampling samp : strategies) {
+				this.anytimeRRTreeTester(DEF_EPSILON, DEF_BIAS, samp);
+			}
+			// Test RRTS
+			for (Sampling samp : strategies) {
+				//this.starRRTreeTester(DEF_EPSILON, DEF_BIAS, samp);
+			}
+		}
+		
+	}
+	/*
+	*/
+	
 	/*
 	@Test
 	public void debugPlanner() {
@@ -349,7 +373,7 @@ public class RRTreeParameterTest {
 	public void basicRRTreeTester(double epsilon, int bias) {
 		Strategy strategy = Strategy.EXTEND;
 		RiskPolicy risk = RiskPolicy.IGNORANCE;
-		int maxIter = 6000;
+		int maxIter = 3000;
 
 		System.out.println(
 				String.format("\tBasic RRTreeTester - %s - e=%.1f b=%d", strategy, epsilon, bias));
@@ -395,7 +419,7 @@ public class RRTreeParameterTest {
 		RiskPolicy risk = RiskPolicy.IGNORANCE;
 		boolean enhacements = true;
 		double floor = 0;
-		int maxIter = 6000;
+		int maxIter = 3000;
 		
 		System.out.println(String.format(
 				"\tHeuristic RRTreeTester - %s - e=%.1f b=%d p=%.2f n=%d (%s) -- (enhaced=%b)",
@@ -441,14 +465,54 @@ public class RRTreeParameterTest {
 	}
 
 	/** Anytime RRT tester */
-	public void anytimeRRTreeTester(double epsilon, int bias) {
+	public void anytimeRRTreeTester(double epsilon, int bias, Sampling sampling) {
+		RiskPolicy risk = RiskPolicy.IGNORANCE;
+		int maxIter = 3000;
 		
+		System.out.println(String.format(
+				"\tAnytime RRTreeTester e=%.1f b=%d (%s)", epsilon, bias, sampling.toString()));
+
+		ARRTreePlanner plannerARRT;
+
+		Trajectory trajectory;
+		double size = 0, waypoints = 0, cost = 0d, time = 0d;
+		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
+		long t0 = 0;
+
+		// Compute plans
+		this.printToFile("logs/" + title + ".txt", "ARRT"+"e"+epsilon+"b"+bias);
+		for (int i = 0; i < REPETITIONS; i++) {
+			plannerARRT = new ARRTreePlanner(iris, samplingEnv, epsilon, bias, maxIter,Strategy.EXTEND, Extension.LINEAR, sampling);
+			plannerARRT.setQualityImprovement(0.01); plannerARRT.setMinimumQuality(0d); plannerARRT.setMaximumQuality(1d);
+			plannerARRT.setRiskPolicy(risk);
+
+			t0 = System.currentTimeMillis();
+			trajectory = plannerARRT.plan(origin, destination, etd);
+			if (trajectory.isEmpty()) {
+				System.out.println("No feasible solution was found");
+				i--;
+				continue;
+			}
+			size = Iterables.size(trajectory.getPositions());
+			waypoints = plannerARRT.getWaypointList().size();
+			cost = plannerARRT.getGoal().getCost();
+			time = System.currentTimeMillis() - t0;
+			System.out.print("Iter  #"+i + "\t");
+			this.log(size, waypoints, cost, time);
+			this.printToFile("logs/" + title + ".txt", size, waypoints, cost, time);
+			sizeT += size;
+			waypointsT += waypoints;
+			costT += cost;
+			timeT += time;
+		}
+		this.processData(sizeT, waypointsT, costT, timeT);
 	}
 	
 	/** RRT* tester */
-	public void starRRTreeTester(double epsilon, int bias) {
+	public void starRRTreeTester(double epsilon, int bias, Sampling sampling) {
+		int maxIter = 2000;
 	
-		System.out.println( String.format("\tstar RRTreeTester: e=%.1f b=%d", epsilon, bias));
+		System.out.println( String.format("\tstar RRTreeTester: e=%.1f b=%d (%s)", epsilon, bias, sampling.toString()));
 		
 		RRTreeStarPlanner plannerRRTS;
 		
@@ -458,9 +522,9 @@ public class RRTreeParameterTest {
 		long t0 = 0;
 
 		// Compute plans
-//		this.printToFile("logs/" + title + ".txt", RRTS+"e"+epsilon+"b"+bias);
+		this.printToFile("logs/" + title + ".txt", "RRTS"+"e"+epsilon+"b"+bias);
 		for (int i = 0; i < REPETITIONS; i++) {
-			plannerRRTS  = new RRTreeStarPlanner(iris, samplingEnv, epsilon, bias, 1500, Strategy.EXTEND, Extension.LINEAR, Sampling.ELLIPSOIDAL);
+			plannerRRTS  = new RRTreeStarPlanner(iris, samplingEnv, epsilon, bias, maxIter, Strategy.EXTEND, Extension.LINEAR, sampling);
 			plannerRRTS.setCostPolicy(CostPolicy.AVERAGE);
 			plannerRRTS.setRiskPolicy(RiskPolicy.IGNORANCE);
 
@@ -477,16 +541,13 @@ public class RRTreeParameterTest {
 			time = System.currentTimeMillis() - t0;
 			System.out.print("Iter  #"+i + "\t");
 			this.log(size, waypoints, cost, time);
-//			this.printToFile("logs/" + title + ".txt", size, waypoints, cost, time);
+			this.printToFile("logs/" + title + ".txt", size, waypoints, cost, time);
 			sizeT += size;
 			waypointsT += waypoints;
 			costT += cost;
 			timeT += time;
 		}
 		this.processData(sizeT, waypointsT, costT, timeT);
-		
-		
-		
 	}
 	
 }

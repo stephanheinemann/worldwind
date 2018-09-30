@@ -1218,6 +1218,18 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 
 	/**
+	 * Gets the true distance between two positions in this planning
+	 * grid.
+	 * 
+	 * @param normDist the normalized distance between two positions
+	 * 
+	 * @return the distance between the two positions in this sampling environment
+	 */
+	public double getDistance(double normDist) {
+		return normDist * this.getNormalizer();
+	}
+	
+	/**
 	 * Gets the normalized distance between two positions in this planning grid.
 	 * 
 	 * @param position1 the first position

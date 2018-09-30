@@ -61,6 +61,8 @@ import gov.nasa.worldwind.geom.Position;
  */
 public class OARRTreePlanner extends ARRTreePlanner implements OnlinePlanner, AnytimePlanner {
 
+	private static final int DELAY_FACTOR = 3;
+
 	/** the state of the online capabilities of the planner mode (active or not) */
 	private final boolean online = true;
 
@@ -104,7 +106,8 @@ public class OARRTreePlanner extends ARRTreePlanner implements OnlinePlanner, An
 	 * @see ARRTreePlanner#ARRTreePlanner(Aircraft, Environment, double, int, int,
 	 *      Strategy, Extension, Sampling)
 	 */
-	public OARRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias, int maxIter,
+	public OARRTreePlanner(Aircraft aircraft, Environment environment, double epsilon, int bias,
+			int maxIter,
 			Strategy strategy, Extension extension, Sampling sampling, double positionThreshold) {
 		super(aircraft, environment, epsilon, bias, maxIter, strategy, extension, sampling);
 		this.positionThreshold = positionThreshold;
@@ -297,38 +300,28 @@ public class OARRTreePlanner extends ARRTreePlanner implements OnlinePlanner, An
 			// Online
 			if (isOnline()) {
 				this.updateAircraftTimedPosition();
-
 				int index = getDatalink().getNextWaypointIndex();
-				if (index >= 0 && index + 3 < this.getPlan().size()) {
+				int next = index + DELAY_FACTOR;
 
+				if (index >= 0 && next < this.getPlan().size()) {
 					// Check if the aircraft moved significantly
-					// if (isSignificantMovement(getStart(), getAircraftTimedPosition())) {
-					// RRTreeWaypoint waypoint =
-					// this.findClosestWaypointDist(getAircraftTimedPosition(), this.getPlan());
-					// Check if the displacement is worthy of a new plan or just an improvement
-					// TODO use interpolated position from edge instead of extreme waypoint
-					// if (isSignificantMovement(waypoint, getAircraftTimedPosition())) {
-					// this.initialize(getPlan().get(index+2), destination,
-					// getAircraftTimedPosition().getAto());
-					// this.setStart((RRTreeWaypoint)getPlan().get(index+2));
-					// this.getStart().setH(computeHeuristic(getStart(), getGoal()));
-					//
-					// this.setCostBias(this.getMinimumQuality());
-					// this.setDistBias(1 - this.getCostBias());
-					// this.setCostBound(Double.POSITIVE_INFINITY);
-					// costOld = Double.POSITIVE_INFINITY;
-					// } else {
-					this.setStart((RRTreeWaypoint) getPlan().get(index + 3));
-					this.getStart().setH(this.computeHeuristic(getStart(), getGoal()));
-					// }
-
-					// } else {
-					// System.out.println("I think the aircraft is stopped... Am I right?");
-					// }
-				} else
-					System.out.println("Negative indexxxx (or maximum) " + index);
+					if (isSignificantMovement(getStart(), getAircraftTimedPosition())) {
+						// Update start waypoint
+						this.setStart((RRTreeWaypoint) getPlan().get(next));
+						this.getStart().setH(computeHeuristic(getStart(), getGoal()));
+						RRTreeWaypoint waypoint = findClosestWaypointDist(getAircraftTimedPosition(), getPlan());
+						// Check if the displacement is significant for a new plan
+						if (isSignificantMovement(waypoint, getAircraftTimedPosition())) {
+							this.initialize(getPlan().get(next), destination, getAircraftTimedPosition().getAto());
+							// Reset anytime parameters
+							this.setCostBias(this.getMinimumQuality());
+							this.setDistBias(1 - this.getCostBias());
+							this.setCostBound(Double.POSITIVE_INFINITY);
+							costOld = Double.POSITIVE_INFINITY;
+						}
+					}
+				}
 			}
-
 		} while ((!isOnline() && !isImproved(costOld)) || (isOnline() && !isInsideGoalRegion()));
 
 		return trajectory;
