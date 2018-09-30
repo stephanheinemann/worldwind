@@ -186,7 +186,7 @@ public class HRRTreePlannerTest {
 		origin = Position.fromDegrees(38.737, -9.137, 75);
 		destination = Position.fromDegrees(38.7367, -9.1402, 105);
 		
-		etd = ZonedDateTime.of(LocalDate.of(2018, 8, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
+		etd = ZonedDateTime.of(LocalDate.of(2018, 10, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
 		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
 	}

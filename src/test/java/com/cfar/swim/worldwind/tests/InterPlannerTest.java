@@ -73,6 +73,7 @@ import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Earth;
@@ -83,7 +84,7 @@ import gov.nasa.worldwind.globes.Globe;
  *
  */
 public class InterPlannerTest {
-	static final int REPETITIONS = 5;
+	static final int REPETITIONS = 10;
 	String title;
 
 	Iris iris;
@@ -95,7 +96,7 @@ public class InterPlannerTest {
 	Position[] destinations = new Position[REPETITIONS];
 	ZonedDateTime etd;
 
-	static final double DEF_EPSILON = 15d;
+	static final double DEF_EPSILON = 50d;
 	static final int DEF_BIAS = 5;
 	static final int DEF_NEIGHBORS = 5;
 
@@ -116,12 +117,12 @@ public class InterPlannerTest {
 		this.updateTitle("InterPlanner");
 		for (Scenario scenario : scenarios) {
 			this.initScenario(scenario);
+			// Test RRT
+			this.heuristicRRTreeTester(DEF_EPSILON, DEF_BIAS, DEF_NEIGHBORS);
 			// Test A*
 			this.astarTester();
 			// Test PRM
 //			this.basicPRMapTester(DEF_EPSILON);
-			// Test RRT
-//			this.heuristicRRTreeTester(DEF_EPSILON, DEF_BIAS, DEF_NEIGHBORS);
 		}
 
 	}
@@ -171,7 +172,7 @@ public class InterPlannerTest {
 		Position origin = Position.fromDegrees(38.737, -9.137, 80);
 		// Position destination = Position.fromDegrees(38.7367, -9.1402, 105);
 
-		etd = ZonedDateTime.of(LocalDate.of(2018, 8, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
+		etd = ZonedDateTime.of(LocalDate.of(2018, 10, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
 		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
 	}
@@ -205,30 +206,33 @@ public class InterPlannerTest {
 		Position origin = Position.fromDegrees(48.4705, -123.259, 10d);
 //		Position destination = Position.fromDegrees(48.4745, -123.251, 40d);
 
-		etd = ZonedDateTime.of(LocalDate.of(2018, 8, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
+		etd = ZonedDateTime.of(LocalDate.of(2018, 10, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
 		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
 	}
 	
 	public void setOrignisDestinations() {
+		Position orig, dest;
 		// Set origins and destinations
 		for (int i = 0; i < REPETITIONS; i++) {
 			do {
-				origins[i] = samplingEnv.sampleRandomPosition();
-			} while (samplingEnv.checkConflict(origins[i], iris));
+				orig = samplingEnv.sampleRandomPosition();
+			} while (samplingEnv.checkConflict(orig, iris));
 			do {
-				destinations[i] = samplingEnv.sampleRandomPosition();
-			} while (samplingEnv.checkConflict(destinations[i], iris));
+				dest = samplingEnv.sampleRandomPosition();
+			} while (samplingEnv.checkConflict(dest, iris));
+			origins[i]=orig;
+			destinations[i]=dest;
 		}
 
 		// Log origins and destinations
 		this.printToFile("logs/" + title + ".txt", "Origins");
 		for (int i = 0; i < REPETITIONS; i++)
-			this.printToFile("logs/" + title + ".txt", origins[i].getLatitude().getDegrees(),
-					origins[i].getLongitude().getDegrees(), origins[i].getAltitude(), 0d);
+			this.printToFile("logs/" + title + ".txt", origins[i].getLatitude().getDegrees()*1000,
+					origins[i].getLongitude().getDegrees()*1000, origins[i].getAltitude(), 0d);
 		for (int i = 0; i < REPETITIONS; i++)
-			this.printToFile("logs/" + title + ".txt", destinations[i].getLatitude().getDegrees(),
-					destinations[i].getLongitude().getDegrees(), destinations[i].getAltitude(),
+			this.printToFile("logs/" + title + ".txt", destinations[i].getLatitude().getDegrees()*1000,
+					destinations[i].getLongitude().getDegrees()*1000, destinations[i].getAltitude(),
 					samplingEnv.getDistance(origins[i], destinations[i]));
 	}
 
@@ -398,7 +402,7 @@ public class InterPlannerTest {
 		Heuristic heuristic = Heuristic.BkRRT;
 		RiskPolicy risk = RiskPolicy.IGNORANCE;
 		boolean enhacements = true;
-		double floor = 0;
+		double floor = 0.2;
 		int maxIter = 3000;
 
 		System.out.println(String.format(
@@ -410,7 +414,7 @@ public class InterPlannerTest {
 		Trajectory trajectory;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;
 		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
-		long t0 = 0;
+		long t0 = 0, t1 =0;
 
 		// Compute plans
 		this.printToFile("logs/" + title + ".txt", "eHRRT");
@@ -424,18 +428,17 @@ public class InterPlannerTest {
 
 			t0 = System.currentTimeMillis();
 			trajectory = plannerHRRT.plan(origins[i], destinations[i], etd);
+			t1 = System.currentTimeMillis();
 			if (trajectory.isEmpty()) {
 				System.out.println("No feasible solution was found");
 				size = 0;
-				waypoints = 0;
 				cost = 0;
-				time = 0;
 			} else {
 				size = Iterables.size(trajectory.getPositions());
-				waypoints = plannerHRRT.getWaypointList().size();
 				cost = samplingEnv.getDistance(trajectory.getCost());
-				time = System.currentTimeMillis() - t0;
 			}
+			waypoints = plannerHRRT.getWaypointList().size();
+			time = t1 - t0;
 			System.out.print("Iter  #" + i + "\t");
 			this.log(size, waypoints, cost, time);
 			this.printToFile("logs/" + title + ".txt", size, waypoints, cost, time);
@@ -468,7 +471,7 @@ public class InterPlannerTest {
 		Trajectory trajectory;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;
 		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
-		long t0 = 0;
+		long t0 = 0, t1 = 0;
 
 		// Compute plans
 		this.printToFile("logs/" + title + ".txt", "PRM");
@@ -487,18 +490,18 @@ public class InterPlannerTest {
 
 			t0 = System.currentTimeMillis();
 			trajectory = plannerPRM.plan(origins[i], destinations[i], etd);
+			t1 = System.currentTimeMillis();
 			if (trajectory.isEmpty()) {
 				System.out.println("No feasible solution was found");
 				size = 0;
 				waypoints = 0;
 				cost = 0;
-				time = 0;
 			} else {
 				size = Iterables.size(trajectory.getPositions());
 				waypoints = plannerPRM.getWaypointList().size();
 				cost = samplingEnv.getDistance(trajectory.getCost());
-				time = System.currentTimeMillis() - t0;
 			}
+			time = t1 - t0;
 			System.out.print("Iter  #" + i + "\t");
 			this.log(size, waypoints, cost, time);
 			this.printToFile("logs/" + title + ".txt", size, waypoints, cost, time);
@@ -522,7 +525,7 @@ public class InterPlannerTest {
 		Trajectory trajectory;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;
 		double sizeT = 0, waypointsT = 0, costT = 0d, timeT = 0d;
-		long t0 = 0;
+		long t0 = 0, t1 = 0;
 
 		// Compute plans
 		this.printToFile("logs/" + title + ".txt", "A*");
@@ -533,6 +536,7 @@ public class InterPlannerTest {
 
 			t0 = System.currentTimeMillis();
 			trajectory = plannerAS.plan(origins[i], destinations[i], etd);
+			t1 = System.currentTimeMillis();
 			if (trajectory.isEmpty()) {
 				System.out.println("No feasible solution was found");
 				size = 0;
@@ -543,8 +547,8 @@ public class InterPlannerTest {
 				size = Iterables.size(trajectory.getPositions());
 				waypoints = 0;
 				cost = planningGrid.getDistance(trajectory.getCost());
-				time = System.currentTimeMillis() - t0;
 			}
+			time = t1 - t0;
 			System.out.print("Iter  #" + i + "\t");
 			this.log(size, waypoints, cost, time);
 			this.printToFile("logs/" + title + ".txt", size, waypoints, cost, time);
