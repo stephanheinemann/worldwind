@@ -82,57 +82,70 @@ public class PolicyTest {
 		
 		Vec4 source = globe.computePointFromPosition(origin);
 		Vec4 target = globe.computePointFromPosition(destination);
-		Edge edge = new Edge(origin, destination, new Line(source, target));
+		Edge edge = new Edge(origin, destination, Line.fromSegment(source, target));
 		edge.setCostIntervals(samplingEnv.embedIntervalTree(edge.getLine()));
 		int num = edge.getCostIntervals().size();
 		System.out.println("Cost Interval #"+num);
 		
-		source = globe.computePointFromPosition(Position.fromDegrees(48.473, -123.257, 10d));
-		target = globe.computePointFromPosition(Position.fromDegrees(48.4715, -123.2525, 10d));
+		source = globe.computePointFromPosition(Position.fromDegrees(48.473, -123.257, 10d)); //TS origin
+		target = globe.computePointFromPosition(Position.fromDegrees(48.4715, -123.2525, 10d)); // TC origin
 		// ThunderStorm to TropicalCyclone
-		Edge edgeY = new Edge(origin, destination, new Line(source, target));
+		Edge edgeY = new Edge(origin, destination, Line.fromSegment(source, target));
 		edgeY.setCostIntervals(samplingEnv.embedIntervalTree(edgeY.getLine()));
 		num = edgeY.getCostIntervals().size();
-		for(Interval<ChronoZonedDateTime<?>> interval : edgeY.getCostIntervals()) {
-			if (interval instanceof CostInterval) {
-				CostInterval costInterval = (CostInterval) interval;
-				System.out.println("ID: "+costInterval.getId());
-			}
-		}
 		System.out.println("Cost Interval #"+num);
 		
 		// TropicalCyclone to ThunderStorm
-		Edge edgeR = new Edge(origin, destination, new Line(target, source));
+		Edge edgeR = new Edge(origin, destination, Line.fromSegment(target, source));
 		edgeR.setCostIntervals(samplingEnv.embedIntervalTree(edgeR.getLine()));
 		num = edgeR.getCostIntervals().size();
-		for(Interval<ChronoZonedDateTime<?>> interval : edgeR.getCostIntervals()) {
-			if (interval instanceof CostInterval) {
-				CostInterval costInterval = (CostInterval) interval;
-				System.out.println("ID: "+costInterval.getId());
-			}
-		}
 		System.out.println("Cost Interval #"+num);
 		
 		double costOld=0d, costNew=0d;;
 		ZonedDateTime start, end;
 		
-		CostPolicy costPolicy = CostPolicy.MINIMUM;
-		RiskPolicy riskPolicy = RiskPolicy.SAFETY;
+		RiskPolicy[] riskPolicies = {RiskPolicy.IGNORANCE, RiskPolicy.SAFETY, RiskPolicy.AVOIDANCE};
+		CostPolicy[] costPolicies = CostPolicy.values();
 		
-		start = etd.minusDays(2); end = etd.plusDays(1);
-		costNew = edgeY.calculateCostNew(start, end, costPolicy, riskPolicy);
-		costOld = edgeY.calculateCost(start, end, costPolicy, riskPolicy);
-		System.out.println("Cost 0: "+costNew+"\t"+costOld);
+		// Only TS
+		start = etd.minusHours(2); end = etd.minusMinutes(5);
+		System.out.println("\n\t Start: "+start+"\t End: "+end);
+		for(RiskPolicy riskPolicy : riskPolicies) {
+			System.out.println("\tRisk Policy: "+riskPolicy.toString());
+			for(CostPolicy costPolicy : costPolicies) {
+				System.out.print("Cost Policy: "+costPolicy.toString()+"\t\t");
+				costNew = edgeY.calculateCostNew(start, end, costPolicy, riskPolicy);
+				costOld = edgeY.calculateCost(start, end, costPolicy, riskPolicy);
+				System.out.println("Cost New: "+costNew+"\t\tCost Old: "+costOld);
+			}
+		}
 		
-		start = etd; end = etd.plusHours(1);
-		costNew = edgeY.calculateCostNew(start, end, costPolicy, riskPolicy);
-		costOld = edgeY.calculateCost(start, end, costPolicy, riskPolicy);
-		System.out.println("Cost 1: "+costNew+"\t"+costOld);
+		// Both TS and TC
+		start = etd.minusHours(2); end = etd.plusHours(3);
+		System.out.println("\n\t Start: "+start+"\t End: "+end);
+		for(RiskPolicy riskPolicy : riskPolicies) {
+			System.out.println("\tRisk Policy: "+riskPolicy.toString());
+			for(CostPolicy costPolicy : costPolicies) {
+				System.out.print("Cost Policy: "+costPolicy.toString()+"\t\t");
+				costNew = edgeY.calculateCostNew(start, end, costPolicy, riskPolicy);
+				costOld = edgeY.calculateCost(start, end, costPolicy, riskPolicy);
+				System.out.println("Cost New: "+costNew+"\t\tCost Old: "+costOld);
+			}
+		}
 		
-		start = etd; end = etd.plusHours(3);
-		costNew = edgeY.calculateCostNew(start, end, costPolicy, riskPolicy);
-		costOld = edgeY.calculateCost(start, end, costPolicy, riskPolicy);
-		System.out.println("Cost 2: "+costNew+"\t"+costOld);
+		// Only TC
+		start = etd.plusMinutes(125); end = etd.plusHours(3);
+		System.out.println("\n\t Start: "+start+"\t End: "+end);
+		for(RiskPolicy riskPolicy : riskPolicies) {
+			System.out.println("\tRisk Policy: "+riskPolicy.toString());
+			for(CostPolicy costPolicy : costPolicies) {
+				System.out.print("Cost Policy: "+costPolicy.toString()+"\t\t");
+				costNew = edgeY.calculateCostNew(start, end, costPolicy, riskPolicy);
+				costOld = edgeY.calculateCost(start, end, costPolicy, riskPolicy);
+				System.out.println("Cost New: "+costNew+"\t\tCost Old: "+costOld);
+			}
+		}
+		
 	}
 	
 	public void setScenario2() {
@@ -161,9 +174,8 @@ public class PolicyTest {
 	
 	public void embedSWIM2() {
 		this.embedObstacleS1();
-		System.out.println("Obstacles total = "+samplingEnv.getObstacles().size());
 		this.embedObstacleS2();
-		System.out.println("Obstacles total = "+samplingEnv.getObstacles().size());
+		System.out.println("Obstacles total in SampEnv = "+samplingEnv.getObstacles().size());
 	}
 	
 	public void embedObstacleS1() {

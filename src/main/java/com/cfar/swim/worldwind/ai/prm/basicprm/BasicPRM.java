@@ -417,9 +417,13 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 		Vec4 sourcePoint = this.getEnvironment().getGlobe().computePointFromPosition(source);
 		Vec4 targetPoint = this.getEnvironment().getGlobe().computePointFromPosition(target);
 
-		Edge edgeNew = new Edge(source, target, new Line(sourcePoint, targetPoint));
-		edgeNew.setCostIntervals(this.getEnvironment().embedIntervalTree(edgeNew.getLine()));
-		this.getEdgeList().add(edgeNew);
+		if(sourcePoint.equals(targetPoint))
+			System.out.println("Source ("+source+") \tequals\t Target("+target+")");
+		else {
+			Edge edgeNew = new Edge(source, target, Line.fromSegment(sourcePoint, targetPoint));
+			edgeNew.setCostIntervals(this.getEnvironment().embedIntervalTree(edgeNew.getLine()));
+			this.getEdgeList().add(edgeNew);
+		}
 	}
 
 	/**
