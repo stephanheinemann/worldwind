@@ -95,12 +95,6 @@ public class PolicyTest {
 		num = edgeY.getCostIntervals().size();
 		System.out.println("Cost Interval #"+num);
 		
-		// TropicalCyclone to ThunderStorm
-		Edge edgeR = new Edge(origin, destination, Line.fromSegment(target, source));
-		edgeR.setCostIntervals(samplingEnv.embedIntervalTree(edgeR.getLine()));
-		num = edgeR.getCostIntervals().size();
-		System.out.println("Cost Interval #"+num);
-		
 		double costOld=0d, costNew=0d;;
 		ZonedDateTime start, end;
 		
@@ -121,7 +115,7 @@ public class PolicyTest {
 		}
 		
 		// Both TS and TC
-		start = etd.minusHours(2); end = etd.plusHours(3);
+		start = etd.plusMinutes(0); end = etd.plusHours(1);
 		System.out.println("\n\t Start: "+start+"\t End: "+end);
 		for(RiskPolicy riskPolicy : riskPolicies) {
 			System.out.println("\tRisk Policy: "+riskPolicy.toString());

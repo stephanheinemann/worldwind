@@ -29,8 +29,10 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -271,7 +273,7 @@ public class Edge {
 			 */
 			cost = costList.stream().mapToDouble(f -> f.doubleValue()).sum();
 		}
-		
+
 		// Risk Policy implementation
 		if (!riskPolicy.satisfies(cost))
 			cost = Double.POSITIVE_INFINITY;
@@ -290,7 +292,8 @@ public class Edge {
 	 * 
 	 * @return the accumulated cost of this edge within the specified time span
 	 */
-	public double calculateCostNew(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy, RiskPolicy riskPolicy) {
+	public double calculateCostNew(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
+			RiskPolicy riskPolicy) {
 
 		double cost = 1d; // simple cost of normalized distance
 
@@ -298,27 +301,24 @@ public class Edge {
 		times.add(start);
 		times.add(end);
 
-		Set<String> costIntervalIds = new HashSet<String>();
-
 		// add all (weighted) cost of the cell
 		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
 
 		// For every interval get sub-Interval times
+		ZonedDateTime lower, upper;
 		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
 			if (interval instanceof CostInterval) {
 				CostInterval costInterval = (CostInterval) interval;
+				lower = costInterval.getLower();
+				upper = costInterval.getUpper();
 
-				// only consider different overlapping cost intervals
-				if (!costIntervalIds.contains(costInterval.getId())) {
-					costIntervalIds.add(costInterval.getId());
+				// Add lower limit to times if it is higher than start
+				if (lower.isAfter(start))
+					times.add(costInterval.getLower());
+				// Add upper limit to times if it is lower than end
+				if (upper.isBefore(end))
+					times.add(costInterval.getUpper());
 
-					// Add lower limit to times if it is higher than start
-					if (costInterval.getLower().compareTo(start) > 0)
-						times.add(costInterval.getLower());
-					// Add upper limit to times if it is lower than end
-					if (costInterval.getUpper().compareTo(end) < 0)
-						times.add(costInterval.getUpper());
-				}
 			}
 		}
 
@@ -336,10 +336,11 @@ public class Edge {
 			for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
 				if (interval instanceof CostInterval) {
 					CostInterval costInterval = (CostInterval) interval;
+					lower = costInterval.getLower();
+					upper = costInterval.getUpper();
 
 					// Only consider intervals that fully contain this sub-interval
-					if (costInterval.getLower().compareTo(startPart) < 0
-							&& costInterval.getUpper().compareTo(endPart) > 0) {
+					if (!lower.isAfter(startPart) && !upper.isBefore(endPart)) {
 						if ((interval instanceof WeightedCostInterval)) {
 							costAux += ((WeightedCostInterval) interval).getWeightedCost();
 						} else {
@@ -367,8 +368,22 @@ public class Edge {
 			cost = costListTemporal.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
 			break;
 		case AVERAGE:
-			// TODO: Replace by weighted average with duration of time interval
-			cost = costListTemporal.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
+			// if the cost is the same during all sub intervals, avoids numerical errors
+			if (costListTemporal.stream().mapToDouble(Double::doubleValue).distinct().limit(2).count() <= 1) {
+				cost = costListTemporal.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
+				break;
+			}
+			ZonedDateTime startAux = sortedTimes.get(0), endAux;
+			double duration;
+			for (int i = 0; i < costListTemporal.size(); i++) {
+				endAux = sortedTimes.get(i + 1);
+				duration = Duration.between(startAux, endAux).getSeconds();
+				cost += costListTemporal.get(i) * duration;
+				startAux = endAux;
+			}
+			duration = Duration.between(start, end).getSeconds();
+			cost = cost / duration;
+
 			break;
 		}
 
