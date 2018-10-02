@@ -40,7 +40,7 @@ public enum RiskPolicy {
 	/**
 	 * Avoids all local risk
 	 */
-	AVOIDANCE(0d),
+	AVOIDANCE(1d),
 	/**
 	 * Accepts a maximum of 25% local risk
 	 */
