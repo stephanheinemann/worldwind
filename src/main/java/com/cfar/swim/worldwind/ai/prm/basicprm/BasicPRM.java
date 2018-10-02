@@ -418,12 +418,11 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 		Vec4 targetPoint = this.getEnvironment().getGlobe().computePointFromPosition(target);
 
 		if(sourcePoint.equals(targetPoint))
-			System.out.println("Source ("+source+") \tequals\t Target("+target+")");
-		else {
-			Edge edgeNew = new Edge(source, target, Line.fromSegment(sourcePoint, targetPoint));
-			edgeNew.setCostIntervals(this.getEnvironment().embedIntervalTree(edgeNew.getLine()));
-			this.getEdgeList().add(edgeNew);
-		}
+			return;
+		
+		Edge edgeNew = new Edge(source, target, Line.fromSegment(sourcePoint, targetPoint));
+		edgeNew.setCostIntervals(this.getEnvironment().embedIntervalTree(edgeNew.getLine()));
+		this.getEdgeList().add(edgeNew);
 	}
 
 	/**
@@ -469,10 +468,16 @@ public class BasicPRM extends AbstractPlanner implements AnytimePlanner {
 			this.getWaypointList().add(start);
 			this.connectWaypoint(start);
 		}
+		else {
+			System.out.println("start invalid");
+		}
 
 		if (!this.getEnvironment().checkConflict(goal, getAircraft())) {
 			this.getWaypointList().add(goal);
 			this.connectWaypoint(goal);
+		}
+		else {
+			System.out.println("goal invalid");
 		}
 	}
 

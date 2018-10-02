@@ -330,6 +330,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected void clearExpendables() {
 		this.getWaypointList().clear();
 		this.getEdgeList().clear();
+		this.getPlan().clear();
 	}
 
 	/**
@@ -647,10 +648,13 @@ public class RRTreePlanner extends AbstractPlanner {
 		Vec4 source = this.getEnvironment().getGlobe().computePointFromPosition(parent);
 		Vec4 target = this.getEnvironment().getGlobe().computePointFromPosition(waypoint);
 
-		Edge edge = new Edge(parent, waypoint, new Line(source, target));
-		edge.setCostIntervals(this.getEnvironment().embedIntervalTree(edge.getLine()));
+		if(source.equals(target))
+			return;
 
+		Edge edge = new Edge(parent, waypoint, Line.fromSegment(source, target));
+		edge.setCostIntervals(this.getEnvironment().embedIntervalTree(edge.getLine()));
 		this.getEdgeList().add(edge);
+
 	}
 
 	/**
