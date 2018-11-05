@@ -84,7 +84,7 @@ import gov.nasa.worldwind.globes.Globe;
  *
  */
 public class InterPlannerTest {
-	static final int REPETITIONS = 10;
+	static final int REPETITIONS = 100;
 	String title;
 
 	Iris iris;
@@ -92,13 +92,18 @@ public class InterPlannerTest {
 	Globe globe;
 	SamplingEnvironment samplingEnv;
 	PlanningGrid planningGrid;
+	Position origin, destination;
 	Position[] origins = new Position[REPETITIONS];
 	Position[] destinations = new Position[REPETITIONS];
 	ZonedDateTime etd;
 
-	static final double DEF_EPSILON = 50d;
+	static final double GOAL_THRESHOLD = 5d;
+	static final double DEF_EPSILON = 15d;
+	static final double DEF_EPSILON_SEA = 45d;
+	static final int DEF_DIVISION = (int) Math.round(1000d/DEF_EPSILON_SEA);
 	static final int DEF_BIAS = 5;
-	static final int DEF_NEIGHBORS = 5;
+	static final int DEF_NEIGHBORS = 15;
+	
 
 	private enum Scenario {
 		TECNICO, SEA;
@@ -112,23 +117,31 @@ public class InterPlannerTest {
 	@Test
 	public void comparePerformance() {
 		System.out.println("Inter Planner Performance -- repetitions = " + REPETITIONS);
-		Scenario[] scenarios = { Scenario.SEA };
+		Scenario[] scenarios = { Scenario.TECNICO };
 
 		this.updateTitle("InterPlanner");
 		for (Scenario scenario : scenarios) {
 			this.initScenario(scenario);
 			// Test RRT
 			this.heuristicRRTreeTester(DEF_EPSILON, DEF_BIAS, DEF_NEIGHBORS);
-			// Test A*
-			this.astarTester();
 			// Test PRM
-//			this.basicPRMapTester(DEF_EPSILON);
+			this.basicPRMapTester(2*DEF_EPSILON, DEF_NEIGHBORS);
+//			// Test A*
+//			this.astarTester();
 		}
 
 	}
 	/*
 	*/
 
+	/*
+	@Test
+	public void debugger() {
+		this.initScenario(Scenario.SEA);
+		this.heuristicRRTreeTester(DEF_EPSILON_SEA, DEF_BIAS, 15);
+	}
+	*/
+	
 	/*
 	 * @@@@@@@@@@@@@@@@@@@@@@@@ INIT @@@@@@@@@@@@@@@@@@@@@@@@
 	 */
@@ -169,8 +182,8 @@ public class InterPlannerTest {
 		samplingEnv.setGlobe(globe);
 
 		// Set planner inputs
-		Position origin = Position.fromDegrees(38.737, -9.137, 80);
-		// Position destination = Position.fromDegrees(38.7367, -9.1402, 105);
+		origin = Position.fromDegrees(38.737, -9.137, 80);
+		destination = Position.fromDegrees(38.7367, -9.1402, 105);
 
 		etd = ZonedDateTime.of(LocalDate.of(2018, 10, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
@@ -193,7 +206,8 @@ public class InterPlannerTest {
 		samplingEnv = new SamplingEnvironment(new Box(boxNASA));
 		samplingEnv.setGlobe(globe);
 		
-		int division = 25;
+		int division = DEF_DIVISION;
+		System.out.println("DIVISIONS PG = "+division);
 		Box envBox = new Box(boxNASA);
 		double side = envBox.getRLength() / division;
 		Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
@@ -203,8 +217,8 @@ public class InterPlannerTest {
 		planningGrid.setGlobe(globe);
 
 		// Set planner inputs
-		Position origin = Position.fromDegrees(48.4705, -123.259, 10d);
-//		Position destination = Position.fromDegrees(48.4745, -123.251, 40d);
+		origin = Position.fromDegrees(48.4705, -123.259, 10d);
+		destination = Position.fromDegrees(48.4745, -123.251, 40d);
 
 		etd = ZonedDateTime.of(LocalDate.of(2018, 10, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
@@ -213,17 +227,38 @@ public class InterPlannerTest {
 	
 	public void setOrignisDestinations() {
 		Position orig, dest;
+		boolean swim = false, terrain =false;
 		// Set origins and destinations
 		for (int i = 0; i < REPETITIONS; i++) {
 			do {
 				orig = samplingEnv.sampleRandomPosition();
-			} while (samplingEnv.checkConflict(orig, iris));
+				terrain = samplingEnv.checkConflict(orig, iris);
+				if(terrain)
+					continue;
+				swim = false;
+				for(Obstacle obs : samplingEnv.getObstacles()) {
+					swim = swim || samplingEnv.createBoundingBox(orig, 5).intersects(obs.getExtent(globe));
+					if(swim)
+						break;
+				}
+			} while (terrain || swim);
 			do {
 				dest = samplingEnv.sampleRandomPosition();
-			} while (samplingEnv.checkConflict(dest, iris));
+				terrain = samplingEnv.checkConflict(dest, iris);
+				if(terrain)
+					continue;
+				swim = false;
+				for(Obstacle obs : samplingEnv.getObstacles()) {
+					swim = swim || samplingEnv.createBoundingBox(dest, 5).intersects(obs.getExtent(globe));
+					if(swim)
+						break;
+				}
+			} while (terrain || swim || samplingEnv.getDistance(orig, dest)<2*GOAL_THRESHOLD);
 			origins[i]=orig;
 			destinations[i]=dest;
 		}
+		origins[0] = origin;
+		destinations[0] = destination;
 
 		// Log origins and destinations
 		this.printToFile("logs/" + title + ".txt", "Origins");
@@ -402,7 +437,7 @@ public class InterPlannerTest {
 		Heuristic heuristic = Heuristic.BkRRT;
 		RiskPolicy risk = RiskPolicy.IGNORANCE;
 		boolean enhacements = true;
-		double floor = 0.2;
+		double floor = 0d;
 		int maxIter = 3000;
 
 		System.out.println(String.format(
@@ -424,7 +459,7 @@ public class InterPlannerTest {
 			plannerHRRT.setHeuristic(heuristic);
 			plannerHRRT.setRiskPolicy(risk);
 			plannerHRRT.setEnhancements(enhacements);
-			plannerHRRT.setGoalThreshold(5d);
+			plannerHRRT.setGoalThreshold(GOAL_THRESHOLD);
 
 			t0 = System.currentTimeMillis();
 			trajectory = plannerHRRT.plan(origins[i], destinations[i], etd);
@@ -451,13 +486,12 @@ public class InterPlannerTest {
 	}
 
 	/** basic PRM tester */
-	public void basicPRMapTester(double maxDistance) {
+	public void basicPRMapTester(double maxDistance, int maxNeighbors) {
 		samplingEnv.getWaypointList().clear();
 		samplingEnv.getEdgeList().clear();
 
 		RiskPolicy risk = RiskPolicy.IGNORANCE;
-		int maxIter = 3000;
-		int maxNeighbors = 15;
+		int maxIter = 1500;
 		QueryPlanner queryPlanner = QueryPlanner.FAS;
 		QueryMode mode = QueryMode.MULTIPLE;
 		double minimumQuality = 50d;

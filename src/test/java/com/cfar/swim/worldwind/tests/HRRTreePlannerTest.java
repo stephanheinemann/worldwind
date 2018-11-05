@@ -55,7 +55,7 @@ import gov.nasa.worldwind.render.Path;
  */
 public class HRRTreePlannerTest {
 
-	static final int REPETITIONS = 10;
+	static final int REPETITIONS = 50;
 	String title;
 	
 	Iris iris;
@@ -78,16 +78,19 @@ public class HRRTreePlannerTest {
 		
 		System.out.println("Desired Repetitions #" + REPETITIONS);
 		
-		this.updateTitle("Enhancements");
+		this.updateTitle("EnhancementsI");
+		/*
 		System.out.println("-------------\n\tSimple Heuristic\n-------------");
 		this.printToFile("logs/"+title+".txt", "Simple");
 		this.testerHeuristic(Heuristic.hRRT);
+		 */
 		System.out.println("-------------\n\tIterative Heuristic\n-------------");
 		this.printToFile("logs/"+title+".txt", "Iterative");
 		this.testerHeuristic(Heuristic.IkRRT);
-		System.out.println("-------------\n\tBest Heuristic\n-------------");
-		this.testerHeuristic(Heuristic.BkRRT);
+//		System.out.println("-------------\n\tBest Heuristic\n-------------");
+//		this.testerHeuristic(Heuristic.BkRRT);
 
+		/*
 		this.updateTitle("Comparisson");
 		this.printToFile("logs/"+title+".txt", 0, 0, 0, 0); // SEPARATOR
 		System.out.println("-------------\n\tBasic RRT\n-------------");
@@ -96,7 +99,7 @@ public class HRRTreePlannerTest {
 		System.out.println("-------------\n\tAnytime RRT\n-------------");
 		this.printToFile("logs/"+title+".txt", "ARRT_SAFETY");
 		this.ARRTreeTester(15, 5, Strategy.EXTEND, RiskPolicy.SAFETY, Sampling.UNIFORM);
-		
+		*/
 		System.out.println();
 	}
 
@@ -157,6 +160,7 @@ public class HRRTreePlannerTest {
 			waypoints = plannerHRRT.getWaypointList().size();
 			cost = plannerHRRT.getGoal().getCost();
 			time = System.currentTimeMillis() - t0;
+			System.out.print("Iter  #"+i + "\t");
 			this.log(size, waypoints, cost, time);
 			this.printToFile("logs/"+title+".txt", size, waypoints, cost, time);
 			sizeT += size; waypointsT += waypoints; costT+= cost; timeT += time;

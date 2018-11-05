@@ -304,7 +304,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 			neighborsList = this.sortByQuality(neighborsList);
 
 			for (RRTreeWaypoint neighbor : neighborsList) {
-				quality = computeQuality(waypointNear.getF());
+				quality = computeQuality(neighbor.getF());
 				if (!isEnhanced())
 					quality = (quality < PROB_FLOOR) ? quality : PROB_FLOOR; // Minimum(qual,floor)
 
@@ -334,7 +334,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 		Random r = new Random();
 		double quality = -1.0, rand = 0;
-
+		
 		while (rand > quality) {
 			waypointRand = super.sampleBiased(super.getBIAS());
 			neighborsList = (ArrayList<RRTreeWaypoint>) this.getEnvironment().findNearest(waypointRand, neighbors);
@@ -347,6 +347,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 
 			rand = r.nextDouble();
 		}
+		//System.out.println("Cost = "+waypointNear.getG()+" TotalCost = "+waypointNear.getF()+" Quality = "+computeQuality(waypointNear.getF())+"\tWpt = "+waypointNear.toString());
 
 		this.waypointNear = waypointNear;
 		return waypointRand;
@@ -360,9 +361,11 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @return the sorted list of waypoints
 	 */
 	protected ArrayList<RRTreeWaypoint> sortByQuality(ArrayList<RRTreeWaypoint> waypointList) {
-		if (!enhancements) // without enhancements quality is inversely proportional to total cost of node
+		// without enhancements quality is inversely proportional to total cost of node
+		if (!enhancements)
 			Collections.sort(waypointList, (a, b) -> a.getF() < b.getF() ? -1 : a.getF() == b.getF() ? 0 : 1);
-		else // with enhancements quality may not be proportional to f if it was saturated
+		// with enhancements quality may not be proportional to f if it was saturated
+		else
 			Collections.sort(waypointList, (a, b) -> computeQuality(a.getF()) > computeQuality(b.getF()) ? -1
 					: computeQuality(a.getF()) == computeQuality(b.getF()) ? 0 : 1);
 

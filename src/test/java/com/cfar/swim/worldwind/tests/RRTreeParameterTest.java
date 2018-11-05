@@ -60,8 +60,10 @@ import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.geom.Box;
+import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.iwxxm.IwxxmLoader;
 import com.cfar.swim.worldwind.planning.CostPolicy;
+import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.SamplingEnvironment;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -89,14 +91,18 @@ public class RRTreeParameterTest {
 	Globe globe;
 	SamplingEnvironment samplingEnv;
 	Position origin, destination;
+	Position[] origins = new Position[REPETITIONS];
+	Position[] destinations = new Position[REPETITIONS];
 	ZonedDateTime etd;
 	
+	static final double GOAL_THRESHOLD = 5d;
 	static final double DEF_EPSILON = 15d;
+	static final double DEF_EPSILON_SEA = 45d;
 	static final int DEF_BIAS = 5;
 	static final int DEF_NEIGHBORS = 5;
 
 	private enum Scenario {
-		COMPLETE, SWIM, TERRAIN;
+		COMPLETE, SWIM, TERRAIN, SEA;
 	}
 
 	/*
@@ -149,25 +155,26 @@ public class RRTreeParameterTest {
 	@Test
 	public void tuneNumberNeighbors() {
 		System.out.println("Tuning number of neighbors -- repetitions = " + REPETITIONS);
-		Scenario[] scenarios = { Scenario.COMPLETE };
-		int[] neighbors = { 100 };
+		Scenario[] scenarios = { Scenario.SEA };
+		int[] neighbors = { 3,5,10,15 };
 
 		this.updateTitle("NeighborTune");
 		for (Scenario scenario : scenarios) {
 			this.initScenario(scenario);
 			// Test HRRT
 			for (int k : neighbors) {
-				this.heuristicRRTreeTester(DEF_EPSILON, DEF_BIAS, k);
+				this.heuristicRRTreeTester(DEF_EPSILON_SEA, DEF_BIAS, k);
 			}
 		}
 		
 	}
 	*/
 
+	/*
 	@Test
 	public void tuneSampling() {
-		System.out.println("Tuning sampling startegy -- repetitions = " + REPETITIONS);
-		Scenario[] scenarios = { Scenario.COMPLETE };
+		System.out.println("Tuning sampling strategy -- repetitions = " + REPETITIONS);
+		Scenario[] scenarios = { Scenario.TERRAIN, Scenario.COMPLETE };
 		Sampling[] strategies = {Sampling.UNIFORM, Sampling.ELLIPSOIDAL};
 
 		this.updateTitle("SamplingTune");
@@ -175,23 +182,33 @@ public class RRTreeParameterTest {
 			this.initScenario(scenario);
 			// Test ARRT
 			for (Sampling samp : strategies) {
-				this.anytimeRRTreeTester(DEF_EPSILON, DEF_BIAS, samp);
-			}
-			// Test RRTS
-			for (Sampling samp : strategies) {
-				//this.starRRTreeTester(DEF_EPSILON, DEF_BIAS, samp);
+				this.anytimeRRTreeTester(30, DEF_BIAS, samp);
 			}
 		}
 		
 	}
-	/*
 	*/
+	
+	@Test
+	public void comparePlanners() {
+		System.out.println("Tuning sampling strategy -- repetitions = " + REPETITIONS);
+		Scenario[] scenarios = {  Scenario.COMPLETE };
+
+		this.updateTitle("RRTFamily");
+		for (Scenario scenario : scenarios) {
+			this.initScenario(scenario);
+			// Test RRT*
+			this.starRRTreeTester(DEF_EPSILON, DEF_BIAS, Sampling.UNIFORM);
+		}
+		
+	}
 	
 	/*
 	@Test
 	public void debugPlanner() {
-		this.initScenario(Scenario.COMPLETE);
-		this.starRRTreeTester(25, DEF_BIAS);
+		this.initScenario(Scenario.SEA);
+		this.starRRTreeTester(25d, 1, Sampling.ELLIPSOIDAL);
+		this.starRRTreeTester(25d, 1, Sampling.UNIFORM);
 	}
 	*/
 
@@ -201,18 +218,24 @@ public class RRTreeParameterTest {
 
 	/** initializes the scenario with the desired obstacles- */
 	public void initScenario(Scenario scenario) {
-		this.setScenario();
 		switch (scenario) {
 		case COMPLETE:
 		default:
+			this.setScenario();
 			this.embedSWIM();
 			this.embedTerrain();
 			break;
 		case SWIM:
+			this.setScenario();
 			this.embedSWIM();
 			break;
 		case TERRAIN:
+			this.setScenario();
 			this.embedTerrain();
+			break;
+		case SEA:
+			this.setScenario2();
+			this.embedSWIM2();
 			break;
 		}
 		System.out.println("Initialized Scenario -->\t"+scenario.toString());
@@ -243,6 +266,77 @@ public class RRTreeParameterTest {
 		etd = ZonedDateTime.of(LocalDate.of(2018, 10, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
 		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
 		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
+	}
+	
+	public void setScenario2() {
+		// Create box area in globe
+		globe = new Earth();
+		Sector sea = new Sector(
+				Angle.fromDegrees(48.470),
+				Angle.fromDegrees(48.475),
+				Angle.fromDegrees(-123.26),
+				Angle.fromDegrees(-123.25));
+		double floor = 0d, ceilling = 50d;
+		gov.nasa.worldwind.geom.Box boxNASA = Sector.computeBoundingBox(globe, 1.0, sea, floor,
+				ceilling);
+
+		// Create environment from box
+		samplingEnv = new SamplingEnvironment(new Box(boxNASA));
+		samplingEnv.setGlobe(globe);
+		
+		// Set planner inputs
+		origin = Position.fromDegrees(48.4705, -123.259, 10d);
+		destination = Position.fromDegrees(48.4745, -123.251, 40d);
+
+		etd = ZonedDateTime.of(LocalDate.of(2018, 10, 1), LocalTime.of(0, 0), ZoneId.of("UTC"));
+		iris = new Iris(origin, 1, CombatIdentification.FRIEND);
+		a320 = new A320(origin, 5000, CombatIdentification.FRIEND);
+	}
+	
+	public void setOrignisDestinations() {
+		Position orig, dest;
+		boolean swim = false, terrain =false;
+		// Set origins and destinations
+		for (int i = 0; i < REPETITIONS; i++) {
+			do {
+				orig = samplingEnv.sampleRandomPosition();
+				terrain = samplingEnv.checkConflict(orig, iris);
+				if(terrain)
+					continue;
+				swim = false;
+				for(Obstacle obs : samplingEnv.getObstacles()) {
+					swim = swim || samplingEnv.createBoundingBox(orig, 5).intersects(obs.getExtent(globe));
+					if(swim)
+						break;
+				}
+			} while (terrain || swim);
+			do {
+				dest = samplingEnv.sampleRandomPosition();
+				terrain = samplingEnv.checkConflict(dest, iris);
+				if(terrain)
+					continue;
+				swim = false;
+				for(Obstacle obs : samplingEnv.getObstacles()) {
+					swim = swim || samplingEnv.createBoundingBox(dest, 5).intersects(obs.getExtent(globe));
+					if(swim)
+						break;
+				}
+			} while (terrain || swim || samplingEnv.getDistance(orig, dest)<2*GOAL_THRESHOLD);
+			origins[i]=orig;
+			destinations[i]=dest;
+		}
+		origins[0] = origin;
+		destinations[0] = destination;
+
+		// Log origins and destinations
+		this.printToFile("logs/" + title + ".txt", "Origins");
+		for (int i = 0; i < REPETITIONS; i++)
+			this.printToFile("logs/" + title + ".txt", origins[i].getLatitude().getDegrees()*1000,
+					origins[i].getLongitude().getDegrees()*1000, origins[i].getAltitude(), 0d);
+		for (int i = 0; i < REPETITIONS; i++)
+			this.printToFile("logs/" + title + ".txt", destinations[i].getLatitude().getDegrees()*1000,
+					destinations[i].getLongitude().getDegrees()*1000, destinations[i].getAltitude(),
+					samplingEnv.getDistance(origins[i], destinations[i]));
 	}
 
 	/** Updates the title with the given string plus the current time */
@@ -315,6 +409,43 @@ public class RRTreeParameterTest {
 			e.printStackTrace();
 		}
 	}
+	
+
+	public void embedSWIM2() {
+		this.embedObstacleS1();
+		this.embedObstacleS2();
+	}
+	
+	public void embedObstacleS1() {
+		try {
+			IwxxmLoader loader = new IwxxmLoader();
+			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(
+					new File("src/test/resources/xml/iwxxm/sigmet-victoria-tropCyc.xml"))));
+			for (Obstacle obstacle : obstacles) {
+				samplingEnv.embed(obstacle);
+			}
+			assertTrue(!samplingEnv.getObstacles().isEmpty());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		samplingEnv.setTime(etd);
+	}
+	
+	public void embedObstacleS2() {
+		try {
+			IwxxmLoader loader = new IwxxmLoader();
+			Set<Obstacle> obstacles = loader.load(new InputSource(new FileInputStream(
+					new File("src/test/resources/xml/iwxxm/sigmet-victoria-thunderstrom.xml"))));
+			for (Obstacle obstacle : obstacles) {
+				samplingEnv.embed(obstacle);
+			}
+			assertTrue(!samplingEnv.getObstacles().isEmpty());
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		samplingEnv.setTime(etd);
+	}
+	
 
 	/*
 	 * @@@@@@@@@@@@@@@@@@@@@@@@ LOGGERS @@@@@@@@@@@@@@@@@@@@@@@@
@@ -389,7 +520,7 @@ public class RRTreeParameterTest {
 		for (int i = 0; i < REPETITIONS; i++) {
 			plannerRRT = new RRTreePlanner(iris, samplingEnv, epsilon, bias, maxIter, strategy, Extension.LINEAR);
 			plannerRRT.setRiskPolicy(risk);
-			plannerRRT.setGoalThreshold(5d);
+			plannerRRT.setGoalThreshold(GOAL_THRESHOLD);
 			
 			t0 = System.currentTimeMillis();
 			trajectory = plannerRRT.plan(origin, destination, etd);
@@ -440,7 +571,7 @@ public class RRTreeParameterTest {
 			plannerHRRT.setHeuristic(heuristic);
 			plannerHRRT.setRiskPolicy(risk);
 			plannerHRRT.setEnhancements(enhacements);
-			plannerHRRT.setGoalThreshold(5d);
+			plannerHRRT.setGoalThreshold(GOAL_THRESHOLD);
 
 			t0 = System.currentTimeMillis();
 			trajectory = plannerHRRT.plan(origin, destination, etd);
@@ -467,7 +598,7 @@ public class RRTreeParameterTest {
 	/** Anytime RRT tester */
 	public void anytimeRRTreeTester(double epsilon, int bias, Sampling sampling) {
 		RiskPolicy risk = RiskPolicy.IGNORANCE;
-		int maxIter = 3000;
+		int maxIter = 2000;
 		
 		System.out.println(String.format(
 				"\tAnytime RRTreeTester e=%.1f b=%d (%s)", epsilon, bias, sampling.toString()));
@@ -485,6 +616,7 @@ public class RRTreeParameterTest {
 			plannerARRT = new ARRTreePlanner(iris, samplingEnv, epsilon, bias, maxIter,Strategy.EXTEND, Extension.LINEAR, sampling);
 			plannerARRT.setQualityImprovement(0.01); plannerARRT.setMinimumQuality(0d); plannerARRT.setMaximumQuality(1d);
 			plannerARRT.setRiskPolicy(risk);
+			plannerARRT.setGoalThreshold(GOAL_THRESHOLD);
 
 			t0 = System.currentTimeMillis();
 			trajectory = plannerARRT.plan(origin, destination, etd);
@@ -510,7 +642,7 @@ public class RRTreeParameterTest {
 	
 	/** RRT* tester */
 	public void starRRTreeTester(double epsilon, int bias, Sampling sampling) {
-		int maxIter = 2000;
+		int maxIter = 1800;
 	
 		System.out.println( String.format("\tstar RRTreeTester: e=%.1f b=%d (%s)", epsilon, bias, sampling.toString()));
 		
@@ -522,11 +654,12 @@ public class RRTreeParameterTest {
 		long t0 = 0;
 
 		// Compute plans
-		this.printToFile("logs/" + title + ".txt", "RRTS"+"e"+epsilon+"b"+bias);
+		this.printToFile("logs/" + title + ".txt", "RRTS"+"e"+epsilon+"b"+bias+"S"+sampling);
 		for (int i = 0; i < REPETITIONS; i++) {
 			plannerRRTS  = new RRTreeStarPlanner(iris, samplingEnv, epsilon, bias, maxIter, Strategy.EXTEND, Extension.LINEAR, sampling);
 			plannerRRTS.setCostPolicy(CostPolicy.AVERAGE);
 			plannerRRTS.setRiskPolicy(RiskPolicy.IGNORANCE);
+			plannerRRTS.setGoalThreshold(GOAL_THRESHOLD);
 
 			t0 = System.currentTimeMillis();
 			trajectory = plannerRRTS.plan(origin, destination, etd);
