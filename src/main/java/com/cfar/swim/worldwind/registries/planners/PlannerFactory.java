@@ -40,6 +40,7 @@ import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.faprm.FAPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
+import com.cfar.swim.worldwind.ai.prm.rigidprm.RigidPRM;
 import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.RRTreePlanner;
@@ -215,7 +216,27 @@ public class PlannerFactory implements Factory<Planner> {
 			((RRTreeStarPlanner) planner).setGoalThreshold(properties.getGoalThreshold());
 		}
 		// PRM Family
-		else if (specification.getId().equals(Specification.PLANNER_BASICPRM_ID)) {
+		else if (specification.getId().equals(Specification.PLANNER_RIGIDPRM_ID)) {
+			RigidPRMProperties properties = (RigidPRMProperties) specification.getProperties();
+			planner = new RigidPRM(scenario.getAircraft(), scenario.getEnvironment());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((RigidPRM) planner).setMaxIterConstruction(properties.getMaxIterConstruction());
+			((RigidPRM) planner).setMaxIterEnhancement(properties.getMaxIterEnhancement());
+			((RigidPRM) planner).setSameComponent(properties.isSameComponent());
+			((RigidPRM) planner).setMaxNeighbors(properties.getMaxNeighbors());
+			((RigidPRM) planner).setMaxDistance(properties.getMaxDistance());
+			((RigidPRM) planner).setOptimalMaxNeighbors(properties.isOptimalMaxNeighbors());
+			((RigidPRM) planner).setOptimalMaxDistance(properties.isOptimalMaxDistance());
+			((RigidPRM) planner).setSamplingStrategy(properties.getSamplingStrategy());
+			((RigidPRM) planner).setEnhancement(properties.getEnhancement());
+			((RigidPRM) planner).setDelayCollision(properties.getDelayCollision());
+			((RigidPRM) planner).setPlanner(properties.getPlanner());
+			((RigidPRM) planner).setMode(properties.getMode());
+			((RigidPRM) planner).setMinimumQuality(properties.getMinimumQuality());
+			((RigidPRM) planner).setMaximumQuality(properties.getMaximumQuality());
+			((RigidPRM) planner).setQualityImprovement(properties.getQualityImprovement());
+		} else if (specification.getId().equals(Specification.PLANNER_BASICPRM_ID)) {
 			BasicPRMProperties properties = (BasicPRMProperties) specification.getProperties();
 			planner = new BasicPRM(scenario.getAircraft(), scenario.getEnvironment());
 			planner.setCostPolicy(properties.getCostPolicy());

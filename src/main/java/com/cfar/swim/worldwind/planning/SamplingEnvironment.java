@@ -53,6 +53,7 @@ import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
+import com.cfar.swim.worldwind.render.airspaces.TerrainBox;
 
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
@@ -679,10 +680,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	public double getNormalizedDistance(Position position1, Position position2) {
 		return this.getDistance(position1, position2) / this.getDiameter();
 	}
-	
+
 	/**
-	 * Gets the true distance between two positions in this sampling
-	 * environment.
+	 * Gets the true distance between two positions in this sampling environment.
 	 * 
 	 * @param normDist the normalized distance between two positions
 	 * 
@@ -833,8 +833,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 * @return the set of affected edges
 	 */
 	public Set<Edge> findAffectedEdges(Obstacle obstacle) {
-		return this.getEdgeList().stream()
-				.filter(e -> obstacle.getExtent(this.getGlobe()).intersects(e.getLine()))
+		return this.getEdgeList().stream().filter(e -> obstacle.getExtent(this.getGlobe()).intersects(e.getLine()))
 				.collect(Collectors.toSet());
 	}
 
@@ -1120,6 +1119,27 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
+	 * Computes the free volume of the environment, that is, the portion that is not
+	 * covered by the terrain obstacles.
+	 * 
+	 * @return free, the volume of the free space
+	 */
+	public double computeFreeVolume() {
+		double environment, obstacle = 0, free;
+
+		environment = this.getRLength() * this.getSLength() * this.getTLength();
+		for (TerrainObstacle terrain : this.getTerrainObstacles()) {
+			if (terrain instanceof TerrainBox) {
+				TerrainBox box = (TerrainBox) terrain;
+				obstacle += box.getBox(this.globe).getRLength() * box.getBox(this.globe).getSLength()
+						* box.getBox(this.globe).getTLength();
+			}
+		}
+		free = environment - obstacle;
+		return free;
+	}
+
+	/**
 	 * Samples a position from a continuous space defined in the current
 	 * environment.
 	 * 
@@ -1299,10 +1319,10 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 */
 	public List<? extends Position> findNearest(Position position, int kNear) {
 
-		return this.getWaypointList().stream().sorted((p1, p2) -> Double
-				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
-				.filter(p -> !p.equals(position))
-				.limit(kNear).collect(Collectors.toList());
+		return this.getWaypointList().stream()
+				.sorted((p1, p2) -> Double.compare(this.getNormalizedDistance(p1, position),
+						this.getNormalizedDistance(p2, position)))
+				.filter(p -> !p.equals(position)).limit(kNear).collect(Collectors.toList());
 
 	}
 
@@ -1316,8 +1336,9 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 */
 	public List<? extends Position> findNearestDist(Position position, double maxDist) {
 
-		return this.getWaypointList().stream().sorted((p1, p2) -> Double
-				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
+		return this.getWaypointList().stream()
+				.sorted((p1, p2) -> Double.compare(this.getNormalizedDistance(p1, position),
+						this.getNormalizedDistance(p2, position)))
 				.filter(p -> this.getDistance(p, position) <= maxDist && !p.equals(position))
 				.collect(Collectors.toList());
 

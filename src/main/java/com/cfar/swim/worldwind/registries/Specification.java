@@ -92,6 +92,9 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of a RRT* planner */
 	public static final String PLANNER_RRTS_ID = "RRT*";
 	
+	/** the identifier of a Rigid PRM planner */
+	public static final String PLANNER_RIGIDPRM_ID = "Rigid PRM";
+	
 	/** the identifier of a Basic PRM planner */
 	public static final String PLANNER_BASICPRM_ID = "Basic PRM";
 	
