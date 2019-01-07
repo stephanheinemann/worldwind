@@ -44,89 +44,115 @@ import gov.nasa.worldwind.geom.Position;
 public class RigidPRMWaypoint extends Waypoint {
 
 	/** the validity of this waypoint in the current environment */
-	private boolean validity;
+	private boolean valid = false;
 
 	/** the number of neighbors that are connected to this waypoint */
 	private int neighbors = 0;
-	
-	/** the number of times the local planner failed to connect this waypoint to another */
+
+	/** the number of failed attempts to connect this waypoint to others */
 	private int connectionFailures = 0;
 
 	/** the number of the component which this waypoint belongs to */
-	private int component = 0;
+	private int component;
 
 	/**
-	 * @param position
+	 * Constructs a Rigid PRM waypoint at a specified position.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @see Waypoint#Waypoint(Position)
 	 */
 	public RigidPRMWaypoint(Position position) {
 		super(position);
-		// TODO Auto-generated constructor stub
 	}
 
 	/**
-	 * @return the validity
+	 * Checks if the current waypoint is considered to be valid or not regarding
+	 * terrain obstacles. It stores the true value if it has been already checked
+	 * for collision.
+	 * 
+	 * @return the validity the validity of this waypoint
 	 */
-	public boolean isValidity() {
-		return validity;
+	public boolean isValid() {
+		return valid;
 	}
 
 	/**
-	 * @param validity the validity to set
+	 * Sets the validity status of this waypoint regarding terrain obstacles.
+	 * 
+	 * @param valid the validity status of this waypoint to set.
+	 * 
 	 */
-	public void setValidity(boolean validity) {
-		this.validity = validity;
+	public void setValid(boolean valid) {
+		this.valid = valid;
 	}
 
 	/**
-	 * @return the neighbors
+	 * Gets the number of neighbors this waypoint has in the roadmap.
+	 * 
+	 * @return the number of neighbors
 	 */
 	public int getNeighbors() {
 		return neighbors;
 	}
 
 	/**
-	 * @param neighbors the neighbors to set
+	 * Sets the number of neighbors of this waypoint in the roadmap.
+	 * 
+	 * @param neighbors the number of neighbors to set
 	 */
 	public void setNeighbors(int neighbors) {
 		this.neighbors = neighbors;
 	}
 
 	/**
-	 * @param neighbors the neighbors to set
+	 * Increments the number of neighbors of this waypoint in the roadmap.
 	 */
 	public void incrementNeighbors() {
-		this.setNeighbors(this.neighbors+1);
+		this.setNeighbors(this.neighbors + 1);
 	}
-	
+
 	/**
-	 * @return the connectionFailures
+	 * Gets the number of failed attempts to connect this waypoint to other
+	 * waypoints.
+	 * 
+	 * @return the connectionFailures the number of failed attempts
 	 */
 	public int getConnectionFailures() {
 		return connectionFailures;
 	}
 
 	/**
-	 * @param connectionFailures the connectionFailures to set
+	 * Sets the number of failed attempts to connect this waypoint to other
+	 * waypoints.
+	 * 
+	 * @param connectionFailures the number of failed attempts to set.
 	 */
 	public void setConnectionFailures(int connectionFailures) {
 		this.connectionFailures = connectionFailures;
 	}
-	
+
 	/**
-	 * 
+	 * Increments the number of failed attempts to connect this waypoint to other
+	 * waypoints.
 	 */
 	public void incrementConnectionFailures() {
-		this.setConnectionFailures(this.connectionFailures+1);
+		this.setConnectionFailures(this.connectionFailures + 1);
 	}
+
 	/**
-	 * @return the component
+	 * Gets the number of the component of this waypoint.
+	 * 
+	 * @return the number of the component
 	 */
 	public int getComponent() {
 		return component;
 	}
 
 	/**
-	 * @param component the component to set
+	 * Sets the number of the component of this waypoint.
+	 * 
+	 * @param component the component number to set
 	 */
 	public void setComponent(int component) {
 		this.component = component;

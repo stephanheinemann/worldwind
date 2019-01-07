@@ -39,7 +39,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Henrique Ferreira
  *
  */
-public class FAPRMEdge extends Edge {
+public class DesirabilityEdge extends Edge {
 
 	/** the parameter lambda that weights the desirability influence on the cost */
 	private double lambda;
@@ -53,7 +53,7 @@ public class FAPRMEdge extends Edge {
 	 * @param position1 the first position
 	 * @param position2 the second position
 	 */
-	public FAPRMEdge(Position position1, Position position2) {
+	public DesirabilityEdge(Position position1, Position position2) {
 		super(position1, position2);
 	}
 
@@ -64,7 +64,7 @@ public class FAPRMEdge extends Edge {
 	 * @param position2 the second position
 	 * @param line the line formed by the two positions
 	 */
-	public FAPRMEdge(Position position1, Position position2, Line line) {
+	public DesirabilityEdge(Position position1, Position position2, Line line) {
 		super(position1, position2, line);
 	}
 

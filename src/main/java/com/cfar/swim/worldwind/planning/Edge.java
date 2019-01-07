@@ -32,7 +32,6 @@ package com.cfar.swim.worldwind.planning;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -71,6 +70,9 @@ public class Edge {
 	/** the cost interval tree encoding temporal costs */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
 			CostInterval.comparator);
+	
+	/** the validity of this edge regarding the terrain obstacles */
+	private boolean valid;
 
 	/**
 	 * Constructs an Edge based on two positions.
@@ -81,6 +83,7 @@ public class Edge {
 	public Edge(Position position1, Position position2) {
 		this.position1 = position1;
 		this.position2 = position2;
+		this.valid = false;
 	}
 
 	/**
@@ -94,6 +97,7 @@ public class Edge {
 		this.position1 = position1;
 		this.position2 = position2;
 		this.line = line;
+		this.valid = false;
 	}
 
 	/**
@@ -185,6 +189,24 @@ public class Edge {
 		this.costIntervals = costIntervals;
 	}
 
+	/**
+	 * Checks whether or not this edge is valid regarding the terrain obstacles.
+	 * 
+	 * @return the validity of this edge
+	 */
+	public boolean isValid() {
+		return valid;
+	}
+
+	/**
+	 * Sets the validity status of this edge regarding the terrain obstacles.
+	 * 
+	 * @param valid the validity status to set
+	 */
+	public void setValid(boolean valid) {
+		this.valid = valid;
+	}
+	
 	/**
 	 * Adds a cost interval to the cost interval tree of this edge.
 	 * 

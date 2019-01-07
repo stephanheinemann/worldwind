@@ -63,6 +63,12 @@ public class Setup {
 	/** the desirability value of the desirability zone of this setup */
 	double desirabilitySpecification = 0.5;
 	
+	/** the floor altitude of the desirability zone of this setup */
+	double floorDesirabilitySpecification = 0;
+	
+	/** the ceiling altitude of the desirability zone of this setup */
+	double ceilingDesirabilitySpecification = 100d;
+	
 	/** the default height for new waypoints of this setup */
 	double defaultWaypointHeight = -1.0;
 	// ...
@@ -175,6 +181,42 @@ public class Setup {
 		this.desirabilitySpecification = desirabilitySpecification;
 	}
 
+	/**
+	 * Gets the floor altitude of the desirability zone of this setup.
+	 * 
+	 * @return the floor altitude of the desirability zone
+	 */
+	public double getFloorDesirabilitySpecification() {
+		return floorDesirabilitySpecification;
+	}
+
+	/**
+	 * Sets the floor altitude of the desirability zone of this setup.
+	 * 
+	 * @param floorDesirabilitySpecification the floor altitude to set
+	 */
+	public void setFloorDesirabilitySpecification(double floorDesirabilitySpecification) {
+		this.floorDesirabilitySpecification = floorDesirabilitySpecification;
+	}
+	
+	/**
+	 * Gets the ceiling altitude of the desirability zone of this setup.
+	 * 
+	 * @return the ceiling altitude of the desirability zone
+	 */
+	public double getCeilingDesirabilitySpecification() {
+		return ceilingDesirabilitySpecification;
+	}
+
+	/**
+	 * Sets the ceiling altitude of the desirability zone of this setup.
+	 * 
+	 * @param ceilingDesirabilitySpecification the ceiling altitude to set
+	 */
+	public void setCeilingDesirabilitySpecification(double ceilingDesirabilitySpecification) {
+		this.ceilingDesirabilitySpecification = ceilingDesirabilitySpecification;
+	}
+	
 	/**
 	 * Gets the default height for new waypoints of this setup.
 	 * 

@@ -708,9 +708,9 @@ public class Scenario implements Identifiable, Enableable {
 	 * @param sector the sector of this desirability zone
 	 * @param desirability the desirability value of this desirability zone
 	 */
-	public void addDesirabilityZone(Sector sector, double desirability) {
+	public void addDesirabilityZone(Sector sector, double desirability, double floor, double ceiling) {
 		gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.getGlobe(), 1d,
-				sector, 0d, 200d);
+				sector, floor, ceiling);
 		Box envBox = new Box(bb);
 
 		DesirabilityZone desirabilityZone = new DesirabilityZone(envBox, desirability);

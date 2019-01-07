@@ -27,30 +27,24 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai.prm.basicprm;
+package com.cfar.swim.worldwind.ai.prm.rigidprm;
 
 /**
- * Enumerates the possible planners that can be used to find a path in a
- * previously populated roadmap.
+ * Enumerates the possible query modes that can be applied to a PRM planner.
  * 
  * @author Henrique Ferreira
  *
  */
-public enum QueryPlanner {
-	
+public enum QueryMode {
+
 	/**
-	 * a Forward A* planner
+	 * multiple query mode, uses the current roadmap to find a path
 	 */
-	FAS,
-	
+	MULTIPLE,
+
 	/**
-	 * Anytime Replanning A* planner
+	 * single query mode, builds a new roadmap and finds a path
 	 */
-	ARA,
-	
-	/**
-	 * Anytime Dynamic A*
-	 */
-	//AD
+	SINGLE
 
 }

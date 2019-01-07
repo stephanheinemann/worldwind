@@ -41,8 +41,6 @@ import com.cfar.swim.worldwind.ai.PlanRevisionListener;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.astar.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
@@ -116,8 +114,10 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 	/** the deflation amount to be applied to the current inflation */
 	private double deflationAmount;
 
+	/** the k optimal parameter of PRM* for maximum neighbors */
 	private double kprmstar;
 
+	/** the gamma optimal parameter of PRM* for maximum distance */
 	private double gammaprmstar;
 
 	/**
@@ -424,6 +424,46 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 	}
 
 	/**
+	 * Gets the kPRM parameter of PRM* for the maximum number of neighbors.
+	 * 
+	 * @return the kprmstar the value of the PRM* parameter for the maximum number
+	 *         of neighbors
+	 */
+	public double getKprmstar() {
+		return kprmstar;
+	}
+
+	/**
+	 * Sets the kPRM parameter of PRM* for the maximum number of neighbors.
+	 * 
+	 * @param kprmstar the value of the PRM* parameter for the maximum number of
+	 *            neighbors to set
+	 */
+	public void setKprmstar(double kprmstar) {
+		this.kprmstar = kprmstar;
+	}
+
+	/**
+	 * Gets the gammaPRM parameter of PRM* for the maximum distance.
+	 * 
+	 * @return the gammaprmstar the value of the PRM* parameter for the maximum
+	 *         distance
+	 */
+	public double getGammaprmstar() {
+		return gammaprmstar;
+	}
+
+	/**
+	 * Sets the gammaPRM parameter of PRM* for the maximum distance.
+	 * 
+	 * @param gammaprmstar the value of the PRM* parameter for the maximum distance
+	 *            to set
+	 */
+	public void setGammaprmstar(double gammaprmstar) {
+		this.gammaprmstar = gammaprmstar;
+	}
+
+	/**
 	 * Gets the sampling environment of this planner.
 	 * 
 	 * @return the sampling environment
@@ -516,9 +556,10 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 	 * 
 	 * @return the RigidPRMWaypoint at the specified position
 	 */
-	protected RigidPRMWaypoint createWaypoint(Position position) {
+	protected RigidPRMWaypoint createWaypoint(Position position, int component) {
 		RigidPRMWaypoint newWaypoint = new RigidPRMWaypoint(position);
 		newWaypoint.setEto(this.getEnvironment().getTime());
+		newWaypoint.setComponent(component);
 		return newWaypoint;
 	}
 
@@ -534,7 +575,7 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 		if (this.maxNeighbors == 0) {
 			this.maxNeighbors = Integer.MAX_VALUE;
 		} else if (this.isOptimalMaxNeighbors()) {
-			kprmstar = Math.E * (1.0 + (1.0 / 3.0));
+			this.setKprmstar(Math.E * (1.0 + (1.0 / 3.0)));
 		}
 
 		if (this.maxDistance == 0) {
@@ -542,7 +583,24 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 		} else if (this.isOptimalMaxDistance()) {
 			freespace = this.getEnvironment().computeFreeVolume();
 			unitball = (4.0 * Math.PI * Math.pow(1.0, 3.0)) / 3.0;
-			gammaprmstar = 2.0 * Math.pow(1.0 + (1.0 / 3.0), (1.0 / 3.0)) * Math.pow(freespace / unitball, (1.0 / 3.0));
+			this.setGammaprmstar(
+					2.0 * Math.pow(1.0 + (1.0 / 3.0), (1.0 / 3.0)) * Math.pow(freespace / unitball, (1.0 / 3.0)));
+		}
+	}
+
+	/**
+	 * Updates the component number stored in all waypoints, to reflect which
+	 * waypoints are in the same connected component.
+	 * 
+	 * @param waypoint the sampled waypoint
+	 * @param neighbor the neighbor waypoint
+	 */
+	protected void updateComponents(RigidPRMWaypoint waypoint, RigidPRMWaypoint neighbor) {
+		int component = waypoint.getComponent();
+		for (RigidPRMWaypoint wp : this.getWaypointList()) {
+			if (wp.getComponent() == component) {
+				wp.setComponent(neighbor.getComponent());
+			}
 		}
 	}
 
@@ -559,11 +617,11 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 		int numConnectedNeighbor = 0;
 
 		if (this.isOptimalMaxNeighbors()) {
-			this.maxNeighbors = (int) Math.ceil(kprmstar * Math.log(this.getWaypointList().size()));
+			this.maxNeighbors = (int) Math.ceil(this.getKprmstar() * Math.log(this.getWaypointList().size()));
 		}
 		if (this.isOptimalMaxDistance()) {
 			int n = this.getWaypointList().size();
-			this.maxDistance = gammaprmstar * Math.pow(Math.log(n) / n, (1.0 / 3.0));
+			this.maxDistance = this.getGammaprmstar() * Math.pow(Math.log(n) / n, (1.0 / 3.0));
 		}
 
 		this.getEnvironment().sortNearest(waypoint);
@@ -585,6 +643,7 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 
 			}
 		}
+
 	}
 
 	/**
@@ -601,6 +660,11 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 
+		if (!this.isSameComponent()) {
+			if (neighbor.getComponent() == waypoint.getComponent()) {
+				return connectable = false;
+			}
+		}
 		if (super.getEnvironment().getDistance(neighbor, waypoint) < maxDistance && num < maxNeighbors) {
 			if (capabilities.isFeasible(waypoint, neighbor, this.getEnvironment().getGlobe())
 					|| capabilities.isFeasible(neighbor, waypoint, this.getEnvironment().getGlobe())) {
@@ -631,6 +695,9 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 		this.getEdgeList().add(edgeNew);
 		source.incrementNeighbors();
 		target.incrementNeighbors();
+		if (!this.isSameComponent()) {
+			this.updateComponents(source, target);
+		}
 	}
 
 	/**
@@ -652,9 +719,22 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 
 		this.setConnectionStrategies();
 
+		RigidPRMWaypoint waypoint;
 		while (num < maxIterConstruction) {
-			// TODO: create switch case to include all sorts of sampling strategies
-			RigidPRMWaypoint waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition());
+			switch (this.samplingStrategy) {
+			case UNIFORM:
+				waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition(), num);
+				break;
+			case GAUSSIAN:
+				waypoint = this.createWaypoint(this.getEnvironment().sampleRandomGaussianPosition(), num);
+				while (!this.getEnvironment().contains(waypoint)) {
+					waypoint = this.createWaypoint(this.getEnvironment().sampleRandomGaussianPosition(), num);
+				}
+				break;
+			default:
+				waypoint = this.createWaypoint(this.getEnvironment().sampleRandomPosition(), num);
+				break;
+			}
 
 			if (this.getDelayCollision().equals(CollisionDelay.FULL)) {
 				this.getWaypointList().add(waypoint);
@@ -678,8 +758,9 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 	 * @param destination the destination position in globe coordinates
 	 */
 	protected void extendsConstruction(Position origin, Position destination) {
-		RigidPRMWaypoint start = this.createWaypoint(origin);
-		RigidPRMWaypoint goal = this.createWaypoint(destination);
+		int totalIter = this.maxIterConstruction + this.maxIterEnhancement;
+		RigidPRMWaypoint start = this.createWaypoint(origin, totalIter);
+		RigidPRMWaypoint goal = this.createWaypoint(destination, totalIter + 1);
 
 		if (!this.getEnvironment().checkConflict(start, getAircraft())) {
 			this.getWaypointList().add(start);
@@ -707,8 +788,9 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 	 * @param waypoints the list of intermediate positions in globe coordinates
 	 */
 	protected void extendsConstruction(Position origin, Position destination, List<Position> waypoints) {
-		RigidPRMWaypoint start = this.createWaypoint(origin);
-		RigidPRMWaypoint goal = this.createWaypoint(destination);
+		int totalIter = this.maxIterConstruction + this.maxIterEnhancement;
+		RigidPRMWaypoint start = this.createWaypoint(origin, totalIter);
+		RigidPRMWaypoint goal = this.createWaypoint(destination, totalIter + 1);
 
 		// TODO: add start and goal to the waypoints list and execute one single cycle
 		if (!this.getEnvironment().checkConflict(start, getAircraft())) {
@@ -728,7 +810,8 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 		}
 
 		for (Position pos : waypoints) {
-			RigidPRMWaypoint RigidPRMWaypoint = this.createWaypoint(pos);
+			int i = 2;
+			RigidPRMWaypoint RigidPRMWaypoint = this.createWaypoint(pos, totalIter + i);
 
 			if (!this.getEnvironment().checkConflict(RigidPRMWaypoint, getAircraft())) {
 				this.getWaypointList().add(RigidPRMWaypoint);
@@ -737,6 +820,7 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 				// TODO: execute proper error or exception
 				System.out.println("wp invalid");
 			}
+			i++;
 		}
 	}
 
@@ -768,7 +852,8 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 		while (num < maxIterEnhancement) {
 			RigidPRMWaypoint waypoint = waypoints.get(num);
 			double halfDistance = this.maxDistance / (Math.sqrt(3));
-			RigidPRMWaypoint newWaypoint = this.createWaypoint(this.samplePosition(waypoint, halfDistance));
+			RigidPRMWaypoint newWaypoint = this.createWaypoint(this.samplePosition(waypoint, halfDistance),
+					this.maxIterConstruction + num);
 
 			if (this.getDelayCollision().equals(CollisionDelay.FULL)) {
 				this.getWaypointList().add(newWaypoint);
@@ -777,7 +862,8 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 			} else {
 				while (this.getEnvironment().checkConflict(newWaypoint, getAircraft())) {
 					halfDistance = halfDistance / 2;
-					newWaypoint = this.createWaypoint(this.samplePosition(waypoint, halfDistance));
+					newWaypoint = this.createWaypoint(this.samplePosition(waypoint, halfDistance),
+							this.maxIterConstruction + num);
 				}
 				this.getWaypointList().add(newWaypoint);
 				this.connectWaypoint(newWaypoint);
@@ -892,27 +978,37 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 				waypointBefore = Iterables.get(trajectory.getWaypoints(), index - 1);
 			else
 				waypointBefore = Iterables.get(trajectory.getWaypoints(), index);
-
-			if (this.getEnvironment().checkConflict(waypoint, getAircraft())) {
-				this.getWaypointList().removeIf(s -> s.equals(waypoint));
-				this.getEdgeList()
-						.removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
-				aStar.correctWaypoint(waypoint, waypointBefore);
-				return false;
+			RigidPRMWaypoint rigid = (RigidPRMWaypoint) this.getEnvironment().getWaypoint(waypoint).get();
+			if (!rigid.isValid()) {
+				if (this.getEnvironment().checkConflict(waypoint, getAircraft())) {
+					this.getWaypointList().removeIf(s -> s.equals(waypoint));
+					this.getEdgeList()
+							.removeIf(s -> s.getPosition1().equals(waypoint) || s.getPosition2().equals(waypoint));
+					aStar.correctWaypoint(waypoint, waypointBefore);
+					return false;
+				} else {
+					rigid.setValid(true);
+				}
 			}
 		}
 
-		for (int i = 0; i < trajectory.getLength() - 2; i++) {
+		for (int i = 0; i < trajectory.getLength() - 1; i++) {
 			index = i / 2;
 			if ((i % 2) == 1) {
 				index = trajectory.getLength() - 2 - index;
 			}
 			Waypoint waypointBefore = Iterables.get(trajectory.getWaypoints(), index);
 			Waypoint waypoint = Iterables.get(trajectory.getWaypoints(), index + 1);
-			if (this.getEnvironment().checkConflict(waypointBefore, waypoint, getAircraft())) {
-				this.getEdgeList().remove(new Edge(waypointBefore, waypoint));
-				aStar.correctWaypoint(waypoint, waypointBefore);
-				return false;
+			Edge edge = this.getEnvironment().getEdge(waypoint, waypointBefore).get();
+			if (!edge.isValid()) {
+				if (this.getEnvironment().checkConflict(waypointBefore, waypoint, getAircraft())) {
+					this.getEdgeList().remove(new Edge(waypointBefore, waypoint));
+					aStar.correctWaypoint(waypoint, waypointBefore);
+					return false;
+				} else {
+					edge.setValid(true);
+				}
+
 			}
 		}
 		return true;
@@ -931,17 +1027,23 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 			return false;
 
 		int index;
-		for (int i = 0; i < trajectory.getLength() - 2; i++) {
+		for (int i = 0; i < trajectory.getLength() - 1; i++) {
 			index = i / 2;
 			if ((i % 2) == 1) {
 				index = trajectory.getLength() - 2 - index;
 			}
 			Waypoint waypointBefore = Iterables.get(trajectory.getWaypoints(), index);
 			Waypoint waypoint = Iterables.get(trajectory.getWaypoints(), index + 1);
-			if (this.getEnvironment().checkConflict(waypointBefore, waypoint, getAircraft())) {
-				this.getEdgeList().remove(new Edge(waypointBefore, waypoint));
-				aStar.correctWaypoint(waypoint, waypointBefore);
-				return false;
+			Edge edge = this.getEnvironment().getEdge(waypoint, waypointBefore).get();
+			if (!edge.isValid()) {
+				if (this.getEnvironment().checkConflict(waypointBefore, waypoint, getAircraft())) {
+					this.getEdgeList().remove(new Edge(waypointBefore, waypoint));
+					aStar.correctWaypoint(waypoint, waypointBefore);
+					return false;
+				} else {
+					edge.setValid(true);
+				}
+
 			}
 		}
 		return true;
@@ -974,15 +1076,22 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 			case HALF:
 				while (!this.correctTrajectoryHalf(aStar, trajectory)) {
 					trajectory = aStar.continueComputing();
+					if (trajectory.isEmpty()) {
+						break;
+					}
 				}
 				break;
 			case FULL:
 				while (!this.correctTrajectoryFull(aStar, trajectory)) {
 					trajectory = aStar.continueComputing();
+					if (trajectory.isEmpty()) {
+						break;
+					}
 				}
 				break;
 			}
 			break;
+		// TODO: review ARA implementation
 		case ARA:
 			ARAStarPlanner araStar = new ARAStarPlanner(this.getAircraft(), this.getEnvironment());
 			araStar.setCostPolicy(this.getCostPolicy());
@@ -997,6 +1106,7 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 			}
 			break;
 		}
+		this.revisePlan(trajectory);
 		return trajectory;
 	}
 
@@ -1017,6 +1127,7 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 			QueryPlanner planner) {
 		Trajectory trajectory = null;
 
+		// TODO: review multiple waypoints
 		switch (planner) {
 		case FAS:
 			ForwardAStarPlanner aStar = new ForwardAStarPlanner(this.getAircraft(), this.getEnvironment());

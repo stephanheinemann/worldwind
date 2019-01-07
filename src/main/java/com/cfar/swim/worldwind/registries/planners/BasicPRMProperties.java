@@ -29,8 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
+import com.cfar.swim.worldwind.ai.prm.rigidprm.QueryMode;
+import com.cfar.swim.worldwind.ai.prm.rigidprm.QueryPlanner;
 
 /**
  * Realizes the properties bean of a basic PRM planner.

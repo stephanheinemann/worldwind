@@ -433,6 +433,19 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	}
 
 	/**
+	 * Gets the waypoint from the list of waypoints in this environment which
+	 * corresponds to the given position
+	 * 
+	 * @param position1 the position to be checked
+	 * 
+	 * @return the correspondent waypoint in the list, if present, null otherwise
+	 */
+	public Optional<Waypoint> getWaypoint(Position position1) {
+
+		return this.waypointList.stream().filter(s -> s.equals(position1)).findFirst();
+	}
+
+	/**
 	 * Indicates whether or not this sampling environment contains a position.
 	 * 
 	 * @param position the position in globe coordinates
@@ -551,12 +564,15 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	 */
 	public Set<Position> getAdjacentWaypoints(Position position) {
 		// TODO: How to define limit to classify an waypoint as adjacent?
-		int kNear = 1;
-		if (null != this.globe) {
-			return new HashSet<Position>(this.findNearest(position, kNear));
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
+		// Changed to an empty set. Choosing the nearest one can be problematic
+		// (for getStepCost) if the two positions are not connected by an edge.
+		return new HashSet<Position>();
+		// int kNear = 1;
+		// if (null != this.globe) {
+		// return new HashSet<Position>(this.findNearest(position, kNear));
+		// } else {
+		// throw new IllegalStateException("globe is not set");
+		// }
 	}
 
 	/**
@@ -750,13 +766,13 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 	public double getDesirabilityStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 
-		FAPRMEdge edge = null;
+		DesirabilityEdge edge = null;
 		Optional<Edge> optEdge = this.getEdge(origin, destination);
 
 		if (!optEdge.isPresent())
 			throw new IllegalStateException("no edge containing both positions");
 		else
-			edge = (FAPRMEdge) optEdge.get();
+			edge = (DesirabilityEdge) optEdge.get();
 
 		double stepCost = 0d, distance, cost;
 
@@ -1158,6 +1174,45 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		x = minimum.x + (new Random().nextDouble() * (maximum.x - minimum.x));
 		y = minimum.y + (new Random().nextDouble() * (maximum.y - minimum.y));
 		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));
+
+		Vec4 point = new Vec4(x, y, z);
+
+		// Transform point from box frame to earth frame
+		point = this.transformBoxOriginToModel(point);
+
+		Position position = this.getGlobe().computePositionFromPoint(point);
+
+		return position;
+	}
+
+	/**
+	 * Samples a random position utilizing a gaussian distribution from a continuous
+	 * space defined in the current environment.
+	 * 
+	 * @return position in globe coordinates inside the environment
+	 */
+	public Position sampleRandomGaussianPosition() {
+		Vec4[] corners = this.getCorners();
+
+		// Point in box frame with all minimum coordinates
+		Vec4 minimum = this.transformModelToBoxOrigin(corners[0]);
+		// Point in box frame with all maximum coordinates
+		Vec4 maximum = this.transformModelToBoxOrigin(corners[6]);
+
+		double xMean, yMean, zMean, xSD, ySD, zSD, x, y, z;
+
+		Random r = new Random();
+
+		xMean = (minimum.x + maximum.x) / 2;
+		yMean = (minimum.y + maximum.y) / 2;
+		zMean = (minimum.z + maximum.z) / 2;
+
+		xSD = (maximum.x - xMean) / 2;
+		ySD = (maximum.y - yMean) / 2;
+		zSD = (maximum.z - zMean) / 2;
+		x = r.nextGaussian() * xSD + xMean;
+		y = r.nextGaussian() * ySD + yMean;
+		z = r.nextGaussian() * zSD + zMean;
 
 		Vec4 point = new Vec4(x, y, z);
 

@@ -29,10 +29,10 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
 import com.cfar.swim.worldwind.ai.prm.rigidprm.CollisionDelay;
 import com.cfar.swim.worldwind.ai.prm.rigidprm.EnhancementMode;
+import com.cfar.swim.worldwind.ai.prm.rigidprm.QueryMode;
+import com.cfar.swim.worldwind.ai.prm.rigidprm.QueryPlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Sampling;
 
 /**
@@ -53,7 +53,7 @@ public class RigidPRMProperties extends AbstractPlannerProperties implements Any
 	protected int maxIterEnhancement = 0;
 
 	/** the permission to connect RigidPRMWaypoints in the same connected component */
-	protected boolean sameComponent = false;
+	protected boolean sameComponent = true;
 
 	/** the maximum number of neighbors a RigidPRMWaypoint can be connected to */
 	protected int maxNeighbors = 15;

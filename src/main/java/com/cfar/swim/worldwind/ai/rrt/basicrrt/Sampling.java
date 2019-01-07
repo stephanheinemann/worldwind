@@ -43,6 +43,12 @@ public enum Sampling {
 	 * space delimited by the environment box
 	 */
 	UNIFORM,
+	
+	/**
+	 * Samples a pseudo-random point from an gaussian distribution over the entire
+	 * space delimited by the environment box
+	 */
+	GAUSSIAN,
 
 	/**
 	 * Samples a pseudo-random point from an uniform distribution over the
