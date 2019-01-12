@@ -27,70 +27,70 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai.prm.fadprm;
+package com.cfar.swim.worldwind.ai.prm.radprm;
 
 import java.util.Set;
 
-import com.cfar.swim.worldwind.ai.prm.faprm.FAPRMWaypoint;
+import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMWaypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes a FADPRM waypoint of a trajectory featuring estimates for costs, a
- * list of neighbors, the parameter beta and density. Also it stores the number
- * of the last search that affected this waypoint.
+ * Realizes a RADPRM waypoint of a trajectory that extends a FADPRM waypoint by
+ * including an utility attribute. This attribute reflects the usefulness of the
+ * waypoint in the roadmap.
  * 
  * @author Henrique Ferreira
  *
  */
-public class FADPRMWaypoint extends FAPRMWaypoint {
+public class RADPRMWaypoint extends FADPRMWaypoint {
 
-	/** the number of the last search that generated this waypoint */
-	private int search = 0;
+	/** the utility value of this waypoint*/
+	private double utility = 0;
 
 	/**
-	 * Constructs a FADPRM waypoint at a specified position.
+	 * Constructs a RADPRM waypoint at a specified position.
 	 * 
 	 * @param position the position in globe coordinates
 	 */
-	public FADPRMWaypoint(Position position) {
+	public RADPRMWaypoint(Position position) {
 		super(position);
 	}
 
 	/**
-	 * Gets the number of the last search that generated this FADPRM waypoint.
+	 * Gets the parent RADPRM waypoint of this RADPRM waypoint.
 	 * 
-	 * @return the search the number of the last search
+	 * @return the parent FADPRM waypoint of this RADPRM waypoint
 	 */
-	public int getSearch() {
-		return search;
-	}
-
-	/**
-	 * Sets the number of the last search that generated this FADPRM waypoint.
-	 * 
-	 * @param search the search to set
-	 */
-	public void setSearch(int search) {
-		this.search = search;
-	}
-
-	/**
-	 * Gets the parent FADPRM waypoint of this FADPRM waypoint.
-	 * 
-	 * @return the parent FADPRM waypoint of this FADPRM waypoint
-	 */
-	public FADPRMWaypoint getParent() {
-		return (FADPRMWaypoint) super.getParent();
+	public RADPRMWaypoint getParent() {
+		return (RADPRMWaypoint) super.getParent();
 	}
 	
 	/**
-	 * Gets the Set of neighbors of this FADPRM waypoint.
+	 * Gets the Set of neighbors of this RADPRM waypoint.
 	 * 
 	 * @return the neighbors the Set of neighbors of this waypoint
 	 */
 	@SuppressWarnings("unchecked")
-	public Set<? extends FADPRMWaypoint> getNeighbors() {
-		return (Set<FADPRMWaypoint>) super.getNeighbors();
+	public Set<? extends RADPRMWaypoint> getNeighbors() {
+		return (Set<RADPRMWaypoint>) super.getNeighbors();
+	}
+	
+	/**
+	 * Gets the utility value of this waypoint.
+	 * 
+	 * @return the utility the utility value of this waypoint
+	 */
+	public double getUtility() {
+		return utility;
+	}
+
+	/**
+	 * Sets the utility value of this waypoint.
+	 * 
+	 * @param utility the utility value to set
+	 */
+	public void setUtility(double utility) {
+		this.utility = utility;
 	}
 }

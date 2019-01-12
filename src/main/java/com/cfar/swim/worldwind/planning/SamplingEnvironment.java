@@ -783,7 +783,7 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 
 		double desirability = edge.getDesirability();
 		double lambda = edge.getLambda();
-		double costMultiplier = 1.5 * lambda - (lambda / desirability) + (1 / desirability) - 1;
+		double costMultiplier = 2 * lambda + (1-lambda)/desirability -1;
 		stepCost = cost * costMultiplier;
 
 		return stepCost;
@@ -1241,7 +1241,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		// Test if the box is more restrictive than the ellipsoid "diameter"
 		if (distance > this.getDiameter())
 			return sampleRandomPosition();
-
 		if (distance < this.getDistance(focusA, focusB)) {
 			throw new IllegalStateException("Distance between foci larger than bound");
 		}
@@ -1255,7 +1254,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 		double a = distance / 2d;
 		double c = this.getDistance(focusA, focusB) / 2d;
 		double b = Math.sqrt(a * a - c * c);
-
 		do {
 			// Sample random point inside a unit sphere
 			double r = 0d + new Random().nextDouble() * 1d;
@@ -1263,7 +1261,6 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 			double theta = 0d + new Random().nextDouble() * Math.PI;
 			double phi = 0d + new Random().nextDouble() * 2 * Math.PI;
 			Vec4 pointRand = CoordinateTransformations.polar2cartesian(phi, theta, r);
-
 			// Transform from sphere to ellipsoid
 			pointRand = new Vec4(pointRand.x * b, pointRand.y * a, pointRand.z * b);
 
@@ -1273,8 +1270,8 @@ public class SamplingEnvironment extends ContinuumBox implements Environment {
 			enuRand = CoordinateTransformations.rotationZ(pointRand, -angleZ);
 			enuRand = CoordinateTransformations.rotationX(enuRand, -angleX);
 			positionRand = CoordinateTransformations.enu2llh(positionM, enuRand, getGlobe());
-
 			// Check if point is inside box
+			
 		} while (!this.contains(positionRand));
 
 		return positionRand;

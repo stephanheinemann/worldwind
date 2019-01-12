@@ -27,70 +27,45 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai.prm.fadprm;
+package com.cfar.swim.worldwind.registries.planners;
 
-import java.util.Set;
-
-import com.cfar.swim.worldwind.ai.prm.faprm.FAPRMWaypoint;
-
-import gov.nasa.worldwind.geom.Position;
+import java.beans.BeanDescriptor;
+import java.beans.PropertyDescriptor;
 
 /**
- * Realizes a FADPRM waypoint of a trajectory featuring estimates for costs, a
- * list of neighbors, the parameter beta and density. Also it stores the number
- * of the last search that affected this waypoint.
+ * Realizes a FAD PRM properties bean info with the property descriptors for
+ * each parameter.
  * 
  * @author Henrique Ferreira
  *
  */
-public class FADPRMWaypoint extends FAPRMWaypoint {
+public class FADPRMPropertiesBeanInfo extends FAPRMPropertiesBeanInfo {
 
-	/** the number of the last search that generated this waypoint */
-	private int search = 0;
+	/** the class which this bean info refers to */
+	private final static Class<FADPRMProperties> beanClass = FADPRMProperties.class;
 
 	/**
-	 * Constructs a FADPRM waypoint at a specified position.
+	 * Customizes the property descriptors for each parameter of a FAD PRM planner.
 	 * 
-	 * @param position the position in globe coordinates
+	 * @return the array of property descriptors
+	 * 
+	 * @see com.cfar.swim.worldwind.registries.planners.AbstractPlannerPropertiesBeanInfo#getPropertyDescriptors()
 	 */
-	public FADPRMWaypoint(Position position) {
-		super(position);
+	@Override
+	public PropertyDescriptor[] getPropertyDescriptors() {
+
+			return  super.getPropertyDescriptors();
 	}
 
 	/**
-	 * Gets the number of the last search that generated this FADPRM waypoint.
+	 * Gets the bean descriptor of this FAD PRM properties bean info.
 	 * 
-	 * @return the search the number of the last search
-	 */
-	public int getSearch() {
-		return search;
-	}
-
-	/**
-	 * Sets the number of the last search that generated this FADPRM waypoint.
+	 * @return the bean descriptor of this class
 	 * 
-	 * @param search the search to set
+	 * @see com.cfar.swim.worldwind.registries.planners.AbstractPlannerPropertiesBeanInfo#getBeanDescriptor()
 	 */
-	public void setSearch(int search) {
-		this.search = search;
-	}
-
-	/**
-	 * Gets the parent FADPRM waypoint of this FADPRM waypoint.
-	 * 
-	 * @return the parent FADPRM waypoint of this FADPRM waypoint
-	 */
-	public FADPRMWaypoint getParent() {
-		return (FADPRMWaypoint) super.getParent();
-	}
-	
-	/**
-	 * Gets the Set of neighbors of this FADPRM waypoint.
-	 * 
-	 * @return the neighbors the Set of neighbors of this waypoint
-	 */
-	@SuppressWarnings("unchecked")
-	public Set<? extends FADPRMWaypoint> getNeighbors() {
-		return (Set<FADPRMWaypoint>) super.getNeighbors();
+	public BeanDescriptor getBeanDescriptor() {
+		return new BeanDescriptor(beanClass, null);
 	}
 }
+

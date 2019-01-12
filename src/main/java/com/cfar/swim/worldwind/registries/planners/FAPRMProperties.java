@@ -28,23 +28,25 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 package com.cfar.swim.worldwind.registries.planners;
- 
+
+import com.cfar.swim.worldwind.ai.prm.rigidprm.QueryMode;
+
 /**
  * Realizes the properties bean of a FA PRM planner.
  * 
  * @author Henrique Ferreira
  *
  */
-public class FAPRMProperties extends AbstractPlannerProperties implements AnytimePlannerProperties, OnlinePlannerProperties {
+public class FAPRMProperties extends AbstractPlannerProperties implements AnytimePlannerProperties {
 
 	/** the description of this planner properties bean */
 	private final static String DESCRIPTION_FAPRM = "Flexible Anytime PRM: the sampling strategy consists of a trade-off between coverage of the configuration space and a heuristic optimization of the path cost and desirability. It has anytime capabilities.";
 
 	/** the maximum number of neighbors a waypoint can be connected to */
-	private int maxNeighbors = 15;
+	private int maxNeighbors = 5;
 
 	/** the maximum distance between two neighboring waypoints */
-	private double maxDistance = 50d;
+	private double maxDistance = 60d;
 
 	/** the bias of the sampling algorithm towards goal */
 	private int bias = 5;
@@ -60,6 +62,12 @@ public class FAPRMProperties extends AbstractPlannerProperties implements Anytim
 
 	/** the parameter lambda that weights the desirability influence on the cost */
 	private double lambda = 0.5;
+
+	/** the improvement factor for the cost of each new generated solution */
+	private double solutionImprovement = 0.05;
+	
+	/** the query mode of this FA PRM properties */
+	protected QueryMode mode = QueryMode.SINGLE;
 
 	/**
 	 * Constructs a new FA PRM planner properties bean.
@@ -133,8 +141,7 @@ public class FAPRMProperties extends AbstractPlannerProperties implements Anytim
 	 */
 	@Override
 	public void setMinimumQuality(double initialInflation) {
-		if ((0d <= initialInflation) &&
-				(initialInflation <= this.maximumQuality)) {
+		if ((0d <= initialInflation) && (initialInflation <= this.maximumQuality)) {
 			this.minimumQuality = initialInflation;
 		} else {
 			throw new IllegalArgumentException("initial inflation is invalid");
@@ -241,67 +248,43 @@ public class FAPRMProperties extends AbstractPlannerProperties implements Anytim
 	public void setLambda(double lambda) {
 		this.lambda = lambda;
 	}
-	
-	/** the state of the online capabilities of the planner */
-	private boolean online = false;
-	
-	/** the time step to update the current position of the aircraft */
-	private double updateStep = 5d;
-	
-	/** the distance threshold to consider a position displacement as worthy of a new plan */
-	private double positionThreshold = 2d; 
-	
+
 	/**
-	 * Checks if the online capabilities of the planner mode are active or not.
+	 * Gets the query mode of this planner.
 	 * 
-	 * @return true if the planner mode is set to online, false otherwise
+	 * @return the mode the query mode
 	 */
-	public boolean isOnline() {
-		return online;
-	}
-	
-	/**
-	 * Sets the online capabilities of the planner as are active or not.
-	 * 
-	 * @param online the state of the online capabilities
-	 */
-	public void setOnline(boolean online) {
-		this.online = online;
-	}
-	
-	/**
-	 * Gets the  time step to update the current position of the aircraft.
-	 * 
-	 * @return the time step to update the current position
-	 */
-	public double getUpdateStep() {
-		return updateStep;
+	public QueryMode getMode() {
+		return mode;
 	}
 
 	/**
-	 * Sets the time step to update the current position of the aircraft.
+	 * Sets the query mode of this planner.
 	 * 
-	 * @param updateStep the time step to update the current position
+	 * @param mode the mode to set
 	 */
-	public void setUpdateStep(double updateStep) {
-		this.updateStep = updateStep;
+	public void setMode(QueryMode mode) {
+		this.mode = mode;
 	}
 
 	/**
-	 * Gets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * Gets the improvement factor for the cost of each new generated solution
 	 * 
-	 * @return the distance threshold for each position
+	 * @return the solutionImprovement the improvement factor for the cost of each
+	 *         new generated solution
 	 */
-	public double getPositionThreshold() {
-		return positionThreshold;
+	public double getSolutionImprovement() {
+		return solutionImprovement;
 	}
 
 	/**
-	 * Sets the distance threshold to consider a position displacement as worthy of a new plan.
+	 * Sets the improvement factor for the cost of each new generated solution
 	 * 
-	 * @param positionThreshold the distance threshold for each position
+	 * @param solutionImprovement the improvement factor for the cost of each new
+	 *            generated solution
 	 */
-	public void setPositionThreshold(double positionThreshold) {
-		this.positionThreshold = positionThreshold;
+	public void setSolutionImprovement(double solutionImprovement) {
+		this.solutionImprovement = solutionImprovement;
 	}
+
 }

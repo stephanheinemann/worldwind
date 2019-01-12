@@ -703,7 +703,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		}
 		this.open.removeAll(toBeCorrected);
 		this.closed.removeAll(toBeCorrected);
-		this.open.remove((AStarWaypoint) waypoint);
 
 		AStarWaypoint wpbefore = null;
 		for (AStarWaypoint wptaux : this.closed) {
@@ -760,7 +759,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	public Trajectory continueComputing() {
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();
-		this.revisePlan(trajectory);
 		return trajectory;
 	}
 }

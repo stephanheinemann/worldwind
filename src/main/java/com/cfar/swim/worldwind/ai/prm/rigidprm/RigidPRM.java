@@ -662,7 +662,7 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 
 		if (!this.isSameComponent()) {
 			if (neighbor.getComponent() == waypoint.getComponent()) {
-				return connectable = false;
+				return false;
 			}
 		}
 		if (super.getEnvironment().getDistance(neighbor, waypoint) < maxDistance && num < maxNeighbors) {
@@ -758,10 +758,12 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 	 * @param destination the destination position in globe coordinates
 	 */
 	protected void extendsConstruction(Position origin, Position destination) {
-		int totalIter = this.maxIterConstruction + this.maxIterEnhancement;
+		int totalIter = this.getWaypointList().size()+1;
 		RigidPRMWaypoint start = this.createWaypoint(origin, totalIter);
 		RigidPRMWaypoint goal = this.createWaypoint(destination, totalIter + 1);
 
+		this.setConnectionStrategies();
+		
 		if (!this.getEnvironment().checkConflict(start, getAircraft())) {
 			this.getWaypointList().add(start);
 			this.connectWaypoint(start);
@@ -792,6 +794,8 @@ public class RigidPRM extends AbstractPlanner implements AnytimePlanner {
 		RigidPRMWaypoint start = this.createWaypoint(origin, totalIter);
 		RigidPRMWaypoint goal = this.createWaypoint(destination, totalIter + 1);
 
+		this.setConnectionStrategies();
+		
 		// TODO: add start and goal to the waypoints list and execute one single cycle
 		if (!this.getEnvironment().checkConflict(start, getAircraft())) {
 			this.getWaypointList().add(start);

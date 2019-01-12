@@ -27,70 +27,8 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai.prm.fadprm;
-
-import java.util.Set;
-
-import com.cfar.swim.worldwind.ai.prm.faprm.FAPRMWaypoint;
-
-import gov.nasa.worldwind.geom.Position;
-
 /**
- * Realizes a FADPRM waypoint of a trajectory featuring estimates for costs, a
- * list of neighbors, the parameter beta and density. Also it stores the number
- * of the last search that affected this waypoint.
- * 
  * @author Henrique Ferreira
  *
  */
-public class FADPRMWaypoint extends FAPRMWaypoint {
-
-	/** the number of the last search that generated this waypoint */
-	private int search = 0;
-
-	/**
-	 * Constructs a FADPRM waypoint at a specified position.
-	 * 
-	 * @param position the position in globe coordinates
-	 */
-	public FADPRMWaypoint(Position position) {
-		super(position);
-	}
-
-	/**
-	 * Gets the number of the last search that generated this FADPRM waypoint.
-	 * 
-	 * @return the search the number of the last search
-	 */
-	public int getSearch() {
-		return search;
-	}
-
-	/**
-	 * Sets the number of the last search that generated this FADPRM waypoint.
-	 * 
-	 * @param search the search to set
-	 */
-	public void setSearch(int search) {
-		this.search = search;
-	}
-
-	/**
-	 * Gets the parent FADPRM waypoint of this FADPRM waypoint.
-	 * 
-	 * @return the parent FADPRM waypoint of this FADPRM waypoint
-	 */
-	public FADPRMWaypoint getParent() {
-		return (FADPRMWaypoint) super.getParent();
-	}
-	
-	/**
-	 * Gets the Set of neighbors of this FADPRM waypoint.
-	 * 
-	 * @return the neighbors the Set of neighbors of this waypoint
-	 */
-	@SuppressWarnings("unchecked")
-	public Set<? extends FADPRMWaypoint> getNeighbors() {
-		return (Set<FADPRMWaypoint>) super.getNeighbors();
-	}
-}
+package com.cfar.swim.worldwind.ai.prm.ofadprm;

@@ -33,7 +33,7 @@ import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes a FA PRM edge that extends a basic edge by incorporating a
+ * Realizes a Desirability edge that extends a basic edge by incorporating a
  * desirability value and a lambda factor.
  * 
  * @author Henrique Ferreira
@@ -69,16 +69,16 @@ public class DesirabilityEdge extends Edge {
 	}
 
 	/**
-	 * Gets the parameter lambda of this FAPRM edge.
+	 * Gets the parameter lambda of this desirability edge.
 	 * 
-	 * @return the lambda the parameter lambda of this FAPRM edge
+	 * @return the lambda the parameter lambda of this desirability edge
 	 */
 	public double getLambda() {
 		return lambda;
 	}
 
 	/**
-	 * Sets the parameter lambda of this FAPRM edge.
+	 * Sets the parameter lambda of this desirability edge.
 	 * 
 	 * @param lambda the parameter lambda to set
 	 */
@@ -87,16 +87,16 @@ public class DesirabilityEdge extends Edge {
 	}
 
 	/**
-	 * Gets the desirability value of this FAPRM edge.
+	 * Gets the desirability value of this desirability edge.
 	 * 
-	 * @return the desirability value of this FAPRM edge.
+	 * @return the desirability value of this desirability edge.
 	 */
 	public double getDesirability() {
 		return desirability;
 	}
 
 	/**
-	 * Sets the desirability value of this FAPRM edge.
+	 * Sets the desirability value of this desirability edge.
 	 * 
 	 * @param desirability the desirability value to set
 	 */

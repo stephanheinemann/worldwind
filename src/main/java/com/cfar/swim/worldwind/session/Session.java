@@ -66,7 +66,9 @@ import com.cfar.swim.worldwind.registries.planners.ForwardAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.LazyPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.OARRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.OFADPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
+import com.cfar.swim.worldwind.registries.planners.RADPRMProperties;
 import com.cfar.swim.worldwind.registries.planners.RRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.RRTreeStarProperties;
 import com.cfar.swim.worldwind.registries.planners.RigidPRMProperties;
@@ -199,6 +201,8 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_LAZYPRM_ID, new LazyPRMProperties(), PlannerFamily.PRM));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAPRM_ID, new FAPRMProperties(), PlannerFamily.PRM));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FADPRM_ID, new FADPRMProperties(), PlannerFamily.PRM));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RADPRM_ID, new RADPRMProperties(), PlannerFamily.PRM));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_OFADPRM_ID, new OFADPRMProperties(), PlannerFamily.PRM));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		this.datalinkRegistry.clearSpecifications();
@@ -211,7 +215,7 @@ public class Session implements Identifiable {
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_SAMPLING_ID));
-		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_RIGIDPRM_ID));
+		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_RADPRM_ID));
 		this.setup.setPlannerFamily(this.setup.getPlannerSpecification().getPlannerFamily());
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_DRONEKIT));
 	}

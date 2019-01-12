@@ -40,6 +40,8 @@ import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
 import com.cfar.swim.worldwind.ai.prm.fadprm.FADPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.faprm.FAPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.lazyprm.LazyPRM;
+import com.cfar.swim.worldwind.ai.prm.ofadprm.OFADPRMPlanner;
+import com.cfar.swim.worldwind.ai.prm.radprm.RADPRMPlanner;
 import com.cfar.swim.worldwind.ai.prm.rigidprm.RigidPRM;
 import com.cfar.swim.worldwind.ai.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.ai.rrt.arrt.ARRTreePlanner;
@@ -275,9 +277,7 @@ public class PlannerFactory implements Factory<Planner> {
 			((FAPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 			((FAPRMPlanner) planner).setLambda(properties.getLambda());
 			((FAPRMPlanner) planner).setDesirabilityZones(scenario.getDesirabilityZones());
-			((FAPRMPlanner) planner).setOnlineStatus(properties.isOnline());
-			((FAPRMPlanner) planner).setPositionThreshold(properties.getPositionThreshold());
-			((FAPRMPlanner) planner).setDatalink(scenario.getDatalink());
+			((FAPRMPlanner) planner).setMode(properties.getMode());
 		} else if (specification.getId().equals(Specification.PLANNER_FADPRM_ID)) {
 			FADPRMProperties properties = (FADPRMProperties) specification.getProperties();
 			planner = new FADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());
@@ -291,6 +291,39 @@ public class PlannerFactory implements Factory<Planner> {
 			((FADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 			((FADPRMPlanner) planner).setLambda(properties.getLambda());
 			((FADPRMPlanner) planner).setDesirabilityZones(scenario.getDesirabilityZones());
+			((FADPRMPlanner) planner).setMode(properties.getMode());
+		} else if (specification.getId().equals(Specification.PLANNER_RADPRM_ID)) {
+			RADPRMProperties properties = (RADPRMProperties) specification.getProperties();
+			planner = new RADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((RADPRMPlanner) planner).setMaxNeighbors(properties.getMaxNeighbors());
+			((RADPRMPlanner) planner).setMaxDistance(properties.getMaxDistance());
+			((RADPRMPlanner) planner).setBias(properties.getBias());
+			((RADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((RADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((RADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			((RADPRMPlanner) planner).setLambda(properties.getLambda());
+			((RADPRMPlanner) planner).setDesirabilityZones(scenario.getDesirabilityZones());
+			((RADPRMPlanner) planner).setMode(properties.getMode());
+			((RADPRMPlanner) planner).setRepairFraction(properties.getRepairFraction());
+		} else if (specification.getId().equals(Specification.PLANNER_OFADPRM_ID)) {
+			OFADPRMProperties properties = (OFADPRMProperties) specification.getProperties();
+			planner = new OFADPRMPlanner(scenario.getAircraft(), scenario.getEnvironment());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((OFADPRMPlanner) planner).setMaxNeighbors(properties.getMaxNeighbors());
+			((OFADPRMPlanner) planner).setMaxDistance(properties.getMaxDistance());
+			((OFADPRMPlanner) planner).setBias(properties.getBias());
+			((OFADPRMPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((OFADPRMPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((OFADPRMPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			((OFADPRMPlanner) planner).setLambda(properties.getLambda());
+			((OFADPRMPlanner) planner).setDesirabilityZones(scenario.getDesirabilityZones());
+			((OFADPRMPlanner) planner).setOnlineStatus(properties.isOnline());
+			((OFADPRMPlanner) planner).setPositionThreshold(properties.getPositionThreshold());
+			((OFADPRMPlanner) planner).setDatalink(scenario.getDatalink());
+			
 		}
 		// TODO: implement more planners
 

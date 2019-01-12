@@ -107,6 +107,12 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of a FADPRM planner */
 	public static final String PLANNER_FADPRM_ID = "FADPRM";
 	
+	/** the identifier of a RADPRM planner */
+	public static final String PLANNER_RADPRM_ID = "RADPRM";
+	
+	/** the identifier of a OFADPRM planner */
+	public static final String PLANNER_OFADPRM_ID = "OFADPRM";
+	
 	/** the identifier of a simulated datalink */
 	public static final String DATALINK_SIMULATED = "Simulated Datalink";
 	

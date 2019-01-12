@@ -54,10 +54,9 @@ public class FAPRMPropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo {
 	/** the category of parameters that are desirability related */
 	protected final static String CATEGORY_DESIRABILITY = "Desirability Parameters";
 	
-	/** the category of parameters that are online related */
-	protected final static String CATEGORY_ONLINE = "Online Parameters";
-
-
+	/** the category of parameters that are query related */
+	protected final static String CATEGORY_QUERY = "Query Parameters";
+	
 	/**
 	 * Customizes the property descriptors for each parameter of a FA PRM planner.
 	 * 
@@ -93,25 +92,21 @@ public class FAPRMPropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo {
 					"Increase Step",
 					"the quality improvement value",
 					CATEGORY_ANYTIME);
+			PropertyDescriptor solutionImprovement = this.createProperty(beanClass, "solutionImprovement",
+					"Cost Improvement Factor",
+					"the improvement factor to be applied to the solution",
+					CATEGORY_ANYTIME);
 			PropertyDescriptor lambda = this.createProperty(beanClass, "lambda",
 					"Lambda",
 					"the parameter that weights the desirability zones influence on the path cost",
 					CATEGORY_DESIRABILITY);
-			PropertyDescriptor online = this.createProperty(beanClass, "online",
-					"Online Planning",
-					"the starting position of the plan is updated as the aircraft moves until it reaches the goal",
-					CATEGORY_ONLINE);
-			PropertyDescriptor updateStep = this.createProperty(beanClass, "updateStep",
-					"Time Step (s)",
-					"the time step to update the current position of the aircraft",
-					CATEGORY_ONLINE);
-			PropertyDescriptor positionThreshold = this.createProperty(beanClass, "positionThreshold",
-					"Position Threshold (m)",
-					"the distance threshold to consider a position displacement as worthy of a new plan",
-					CATEGORY_ONLINE);
+			PropertyDescriptor mode = this.createProperty(beanClass, "mode",
+					"Mode",
+					"SINGLE reconstructs a new roadmap, MULTIPLE uses an existing roadmap",
+					CATEGORY_QUERY);
 
 			PropertyDescriptor rvNew[] = { maxNeighbors, maxDistance, minimumQuality, maximumQuality,
-					qualityImprovement, bias, lambda, online, updateStep, positionThreshold};
+					qualityImprovement, solutionImprovement, bias, lambda, mode};
 			PropertyDescriptor rvOld[] = super.getPropertyDescriptors();
 			PropertyDescriptor rv[] = this.addPropertyDescriptors(rvOld, rvNew);
 

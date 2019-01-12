@@ -27,70 +27,46 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai.prm.fadprm;
-
-import java.util.Set;
-
-import com.cfar.swim.worldwind.ai.prm.faprm.FAPRMWaypoint;
-
-import gov.nasa.worldwind.geom.Position;
+package com.cfar.swim.worldwind.registries.planners;
 
 /**
- * Realizes a FADPRM waypoint of a trajectory featuring estimates for costs, a
- * list of neighbors, the parameter beta and density. Also it stores the number
- * of the last search that affected this waypoint.
+ * Realizes the properties bean of a RAD PRM planner.
  * 
  * @author Henrique Ferreira
  *
  */
-public class FADPRMWaypoint extends FAPRMWaypoint {
+public class RADPRMProperties extends FADPRMProperties {
 
-	/** the number of the last search that generated this waypoint */
-	private int search = 0;
+	/** the description of this planner properties bean */
+	private final static String DESCRIPTION_RADPRM = "Repairable Anytime Dynamic PRM: extends a FADPRM planner by including repairing capabilities. It makes sure the roadmap stays away for an oversampling state, by removing useless waypoints.";
 
-	/**
-	 * Constructs a FADPRM waypoint at a specified position.
-	 * 
-	 * @param position the position in globe coordinates
-	 */
-	public FADPRMWaypoint(Position position) {
-		super(position);
-	}
-
-	/**
-	 * Gets the number of the last search that generated this FADPRM waypoint.
-	 * 
-	 * @return the search the number of the last search
-	 */
-	public int getSearch() {
-		return search;
-	}
-
-	/**
-	 * Sets the number of the last search that generated this FADPRM waypoint.
-	 * 
-	 * @param search the search to set
-	 */
-	public void setSearch(int search) {
-		this.search = search;
-	}
-
-	/**
-	 * Gets the parent FADPRM waypoint of this FADPRM waypoint.
-	 * 
-	 * @return the parent FADPRM waypoint of this FADPRM waypoint
-	 */
-	public FADPRMWaypoint getParent() {
-		return (FADPRMWaypoint) super.getParent();
-	}
+	/** the fraction of waypoints that should be removed */
+	private double repairFraction = 0.1;
 	
 	/**
-	 * Gets the Set of neighbors of this FADPRM waypoint.
-	 * 
-	 * @return the neighbors the Set of neighbors of this waypoint
+	 * Constructs a new RAD PRM planner properties bean.
 	 */
-	@SuppressWarnings("unchecked")
-	public Set<? extends FADPRMWaypoint> getNeighbors() {
-		return (Set<FADPRMWaypoint>) super.getNeighbors();
+	public RADPRMProperties() {
+		super();
+		this.setDescription(DESCRIPTION_RADPRM);
 	}
+
+	/**
+	 * Gets the repair fraction of this RADPRM planner.
+	 * 
+	 * @return the repairFraction of this RADPRM planner
+	 */
+	public double getRepairFraction() {
+		return repairFraction;
+	}
+
+	/**
+	 * Sets the repair fraction of this RADPRM planner.
+	 * 
+	 * @param repairFraction the repairFraction to set
+	 */
+	public void setRepairFraction(double repairFraction) {
+		this.repairFraction = repairFraction;
+	}
+	
 }

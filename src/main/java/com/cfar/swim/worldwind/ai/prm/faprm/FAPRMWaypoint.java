@@ -46,20 +46,20 @@ import gov.nasa.worldwind.geom.Position;
 public class FAPRMWaypoint extends Waypoint {
 
 	/** the distance between this FAPRM waypoint and the goal waypoint */
-	private double distanceToGoal;
+	private double h;
 
 	/** the neighbors of this FAPRM waypoint (connectable waypoints) */
 	private Set<FAPRMWaypoint> neighbors = new HashSet<>();
 
 	/** the number of waypoints within a small distance of this waypoint */
-	private int density;
+	private int density = 0;
 
 	/** the parameter beta that weights the importance of density and f-value */
 	private double beta;
 
 	/** the parent FAPRM waypoint of this FAPRM waypoint in a trajectory */
 	private FAPRMWaypoint parent = null;
-
+	
 	/**
 	 * Constructs a FAPRM waypoint at a specified position.
 	 * 
@@ -68,7 +68,7 @@ public class FAPRMWaypoint extends Waypoint {
 	public FAPRMWaypoint(Position position) {
 		super(position);
 		this.setCost(Double.POSITIVE_INFINITY);
-		this.setDistanceToGoal(Double.POSITIVE_INFINITY);
+		this.setH(Double.POSITIVE_INFINITY);
 	}
 
 	/**
@@ -76,17 +76,17 @@ public class FAPRMWaypoint extends Waypoint {
 	 * 
 	 * @return the distanceToGoal the distance to the goal waypoint
 	 */
-	public double getDistanceToGoal() {
-		return distanceToGoal;
+	public double getH() {
+		return h;
 	}
 
 	/**
 	 * Sets the normalized distance to the goal waypoint.
 	 * 
-	 * @param distanceToGoal the distanceToGoal to set
+	 * @param h the distanceToGoal to set
 	 */
-	public void setDistanceToGoal(double distanceToGoal) {
-		this.distanceToGoal = distanceToGoal;
+	public void setH(double h) {
+		this.h = h;
 	}
 
 	/**
@@ -178,21 +178,12 @@ public class FAPRMWaypoint extends Waypoint {
 	}
 
 	/**
-	 * Gets the estimated current cost (g-value) of this FAPRM waypoint.
-	 * 
-	 * @return the estimated current cost (g-value) of this FAPRM waypoint
-	 */
-	public double getG() {
-		return 1 / (1 + super.getCost());
-	}
-
-	/**
 	 * Gets the estimated total cost (f-value) of this FAPRM waypoint.
 	 * 
 	 * @return the estimated total cost (f-value) of this FAPRM waypoint
 	 */
 	public double getF() {
-		return 1 / (1 + (this.getCost() + this.getDistanceToGoal()));
+		return 1 / (1 + this.getCost() + this.getH());
 	}
 
 	/**
@@ -218,18 +209,16 @@ public class FAPRMWaypoint extends Waypoint {
 	 * 
 	 * @see Waypoint#compareTo(Waypoint)
 	 */
-	@SuppressWarnings("deprecation")
 	@Override
 	public int compareTo(Waypoint waypoint) {
-		// TODO: changed 2nd component of the key to G
 		int compareTo = 0;
 
 		if (waypoint instanceof FAPRMWaypoint) {
 			FAPRMWaypoint fadprmw = (FAPRMWaypoint) waypoint;
 			compareTo = new Double(this.getKey()).compareTo(fadprmw.getKey());
 			if (0 == compareTo) {
-				// break ties in favor of higher G-values
-				compareTo = new Double(fadprmw.getG()).compareTo(this.getG());
+				// break ties in favor of lower distances to goal
+				compareTo = new Double(1/fadprmw.getH()).compareTo(1/this.getH());
 			}
 		} else {
 			compareTo = super.compareTo(waypoint);
