@@ -551,7 +551,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	public boolean embed(ObstacleCylinder obstacle) {
 		boolean embedded = false;
-
 		if (null != this.globe) {
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
@@ -585,22 +584,46 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	public boolean embed(Obstacle obstacle) {
 		boolean embedded = false;
 
+		// New intersection method for obstacle cylinder, which solve the drawback of
+		// transforming the cylinder into a bounding box.
 		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
-				this.addCostInterval(obstacle.getCostInterval());
-				this.obstacles.add(obstacle);
+			if (!this.isEmbedded(obstacle)) {
+				if (obstacle instanceof ObstacleCylinder) {
+					ObstacleCylinder cyl = (ObstacleCylinder) obstacle;
+					if (cyl.newIntersects(this.globe, this)) {
+						this.addCostInterval(obstacle.getCostInterval());
+						this.obstacles.add(obstacle);
 
-				for (PlanningGrid child : this.getChildren()) {
-					if (child.embed(obstacle)) {
-						this.addAffectedChild(obstacle, child);
+						embedded = true;
 					}
 				}
-
-				embedded = true;
 			}
+			for (PlanningGrid child : this.getChildren()) {
+				if (child.embed(obstacle)) {
+					this.addAffectedChild(obstacle, child);
+				}
+			}
+
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
+		// if (null != this.globe) {
+		// if (!this.isEmbedded(obstacle) &&
+		// this.intersects(obstacle.getExtent(this.globe))) {
+		// this.addCostInterval(obstacle.getCostInterval());
+		// this.obstacles.add(obstacle);
+		//
+		// for (PlanningGrid child : this.getChildren()) {
+		// if (child.embed(obstacle)) {
+		// this.addAffectedChild(obstacle, child);
+		// }
+		// }
+		//
+		// embedded = true;
+		// }
+		// } else {
+		// throw new IllegalStateException("globe is not set");
+		// }
 
 		return embedded;
 	}
@@ -1218,8 +1241,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 
 	/**
-	 * Gets the true distance between two positions in this planning
-	 * grid.
+	 * Gets the true distance between two positions in this planning grid.
 	 * 
 	 * @param normDist the normalized distance between two positions
 	 * 
@@ -1228,7 +1250,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	public double getDistance(double normDist) {
 		return normDist * this.getNormalizer();
 	}
-	
+
 	/**
 	 * Gets the normalized distance between two positions in this planning grid.
 	 * 

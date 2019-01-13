@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.planning.CostInterval;
+import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
@@ -66,22 +67,22 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 
 	/** the current time of this obstacle cylinder */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
-	
+
 	/** the cost interval of this obstacle cylinder */
 	private CostInterval costInterval = new CostInterval("");
-	
+
 	/** the depiction of this obstacle cylinder */
 	protected Depiction depiction = null;
-	
+
 	/** the threshold cost of this obstacle cylinder */
 	private double thresholdCost = 0d;
-	
+
 	/** the active cost of this obstacle cylinder */
 	private double activeCost = 0d;
-	
+
 	/**
-	 * Constructs an obstacle cylinder at the specified location with the
-	 * specified bottom and top altitudes, and outer radius.
+	 * Constructs an obstacle cylinder at the specified location with the specified
+	 * bottom and top altitudes, and outer radius.
 	 * 
 	 * @param location the location of this obstacle cylinder
 	 * @param bottom the lower altitude of this obstacle cylinder in meters
@@ -97,7 +98,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
 	}
-	
+
 	/**
 	 * Moves this obstacle cylinder by adding a specified position.
 	 * 
@@ -112,7 +113,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 			this.depiction.move(position);
 		}
 	}
-	
+
 	/**
 	 * Moves this obstacle cylinder to a specified position.
 	 * 
@@ -127,7 +128,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 			this.depiction.moveTo(position);
 		}
 	}
-	
+
 	/**
 	 * Gets the depiction of this obstacle cylinder.
 	 * 
@@ -151,7 +152,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	public void setDepiction(Depiction depiction) {
 		this.depiction = depiction;
 	}
-	
+
 	/**
 	 * Indicates whether or not this obstacle cylinder has a depiction.
 	 * 
@@ -163,7 +164,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	public boolean hasDepiction() {
 		return (null != this.depiction);
 	}
-	
+
 	/**
 	 * Enables this obstacle cylinder.
 	 * 
@@ -174,7 +175,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		this.costInterval.enable();
 		this.update();
 	}
-	
+
 	/**
 	 * Disables this obstacle cylinder.
 	 * 
@@ -185,7 +186,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		this.costInterval.disable();
 		this.update();
 	}
-	
+
 	/**
 	 * Determines whether or not this obstacle cylinder is enabled.
 	 * 
@@ -197,7 +198,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	public boolean isEnabled() {
 		return this.costInterval.isEnabled();
 	}
-	
+
 	/**
 	 * Gets the cost interval of this obstacle cylinder.
 	 * 
@@ -206,7 +207,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	public CostInterval getCostInterval() {
 		return this.costInterval;
 	}
-	
+
 	/**
 	 * Sets the cost interval of this obstacle cylinder and updates its
 	 * representation accordingly.
@@ -217,7 +218,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		this.costInterval = costInterval;
 		this.update();
 	}
-	
+
 	/**
 	 * Sets the threshold cost of this obstacle cylinder and updates its
 	 * representation accordingly.
@@ -268,7 +269,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		this.time = time;
 		this.update();
 	}
-	
+
 	/**
 	 * Updates this obstacle cylinder.
 	 */
@@ -277,7 +278,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		this.updateVisibility();
 		this.updateAppearance();
 	}
-	
+
 	/**
 	 * Updates the active cost of this obstacle cylinder.
 	 */
@@ -288,7 +289,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 			this.activeCost = 0;
 		}
 	}
-	
+
 	/**
 	 * Updates the visibility of this obstacle cylinder.
 	 */
@@ -298,7 +299,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 			this.depiction.setVisible((0 != this.activeCost) && (this.activeCost > this.thresholdCost));
 		}
 	}
-	
+
 	/**
 	 * Updates the appearance of this obstacle cylinder.
 	 */
@@ -309,9 +310,10 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		} else {
 			this.getAttributes().setOpacity(0.5);
 		}
-		// TODO: elements could change color, transparency or even an associated image/icon 
+		// TODO: elements could change color, transparency or even an associated
+		// image/icon
 	}
-	
+
 	/**
 	 * Renders this obstacle cylinder.
 	 * 
@@ -326,61 +328,62 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	}
 
 	/**
-	 * Interpolates the midpoint obstacle cylinder between this and another
-	 * obstacle cylinder. The interpolation considers the spatial and temporal
-	 * attributes and modifies this obstacle cylinder accordingly.
+	 * Interpolates the midpoint obstacle cylinder between this and another obstacle
+	 * cylinder. The interpolation considers the spatial and temporal attributes and
+	 * modifies this obstacle cylinder accordingly.
 	 * 
 	 * @param other the other obstacle cylinder
-	 * @return the interpolated midpoint obstacle cylinder between this and
-	 *         the other obstacle cylinder
+	 * @return the interpolated midpoint obstacle cylinder between this and the
+	 *         other obstacle cylinder
 	 */
 	public ObstacleCylinder interpolate(ObstacleCylinder other) {
-		Position center = Position.interpolateGreatCircle(0.5d, this.getReferencePosition(), other.getReferencePosition());
+		Position center = Position.interpolateGreatCircle(0.5d, this.getReferencePosition(),
+				other.getReferencePosition());
 		LatLon location = new LatLon(center.getLatitude(), center.getLongitude());
-		
+
 		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5;
 		double top = (this.getAltitudes()[1] + other.getAltitudes()[1]) * 0.5;
 		double radius = (this.getRadii()[1] + other.getRadii()[1]) * 0.5;
-		
+
 		ObstacleCylinder interpolant = new ObstacleCylinder(location, bottom, top, radius);
-		
+
 		Duration startDuration = Duration.between(this.costInterval.getLower(), other.costInterval.getLower());
 		startDuration = startDuration.dividedBy(2);
 		ZonedDateTime start = this.costInterval.getLower().plus(startDuration);
-		
+
 		// ZonedDateTime end = this.costInterval.getUpper();
 		this.costInterval.setUpper(start);
 		ZonedDateTime end = other.costInterval.getLower();
-		
+
 		/*
-		Duration endDuration = Duration.between(this.costInterval.getUpper(), other.costInterval.getUpper());
-		endDuration = endDuration.dividedBy(2);
-		ZonedDateTime end = this.costInterval.getUpper().plus(endDuration);
-		*/
-		
+		 * Duration endDuration = Duration.between(this.costInterval.getUpper(),
+		 * other.costInterval.getUpper()); endDuration = endDuration.dividedBy(2);
+		 * ZonedDateTime end = this.costInterval.getUpper().plus(endDuration);
+		 */
+
 		// TODO: rounding or conservative ceiling might be more appropriate
 		double cost = (this.costInterval.getCost() + other.costInterval.getCost()) / 2d;
-		
+
 		CostInterval costInterval = new CostInterval(this.costInterval.getId(), start, end, cost);
 		interpolant.setCostInterval(costInterval);
-		
+
 		return interpolant;
 	}
-	
+
 	/**
 	 * Interpolates the midpoint obstacle cylinders between this and another
 	 * obstacle cylinder. The interpolation considers the spatial and temporal
-	 * attributes and modifies this obstacle cylinder accordingly. It is
-	 * performed recursively for the specified number of steps.
+	 * attributes and modifies this obstacle cylinder accordingly. It is performed
+	 * recursively for the specified number of steps.
 	 * 
 	 * @param other the other obstacle cylinder
 	 * @param steps the number of interpolation steps
-	 * @return the midpoint obstacle cylinders between this and the other
-	 *         obstacle cylinder
+	 * @return the midpoint obstacle cylinders between this and the other obstacle
+	 *         cylinder
 	 */
 	public List<ObstacleCylinder> interpolate(ObstacleCylinder other, int steps) {
 		List<ObstacleCylinder> interpolants = new ArrayList<>();
-		
+
 		if (1 == steps) {
 			interpolants.add(this.interpolate(other));
 		} else if (1 < steps) {
@@ -389,10 +392,10 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 			interpolants.add(interpolant);
 			interpolants.addAll(interpolant.interpolate(other, steps - 1));
 		}
-		
+
 		return interpolants;
 	}
-	
+
 	/**
 	 * Gets the geometric extent of this obstacle cylinder for a specified globe.
 	 * 
@@ -411,7 +414,86 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		double radius = this.getRadii()[1];
 		return new Cylinder(bottomCenter, topCenter, radius);
 		// TODO: check available method
-		//return super.getExtent(globe, 1d);
+		// return super.getExtent(globe, 1d);
+	}
+
+	/**
+	 * Creates a new intersection method for cylinders and planning grids, avoiding
+	 * transforming the cylinder into a bounding box.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param planningGrid the planningGrid to be checked for collision
+	 * 
+	 * @return true if the two extents are intersect each other, false otherwise.
+	 */
+	public boolean newIntersects(Globe globe, PlanningGrid planningGrid) {
+		// create a gov.nasa.worldwind.geom.Cylinder.Cylinder
+		Position bottomCenterP = new Position(this.getCenter(), this.getAltitudes()[0]);
+		Position topCenterP = new Position(this.getCenter(), this.getAltitudes()[1]);
+		Position centerP = new Position(this.getCenter(), (this.getAltitudes()[1] + this.getAltitudes()[0]) / 2);
+		Vec4 bottomCenter = globe.computePointFromPosition(bottomCenterP);
+		Vec4 topCenter = globe.computePointFromPosition(topCenterP);
+		double radius = this.getRadii()[1];
+		Cylinder cyl = new Cylinder(bottomCenter, topCenter, radius);
+
+		Vec4[] corners = planningGrid.getCorners();
+		Vec4 centerGrid = planningGrid.getCenter();
+		Vec4 nearest = null;
+		double distanceNearest = Double.MAX_VALUE, distanceCenter;
+
+		// Distance between the center of the grid and the center of the cylinder
+		distanceCenter = planningGrid.getDistance(globe.computePositionFromPoint(centerGrid), centerP);
+
+		// Find nearest corner of planning grid relative to the center of the cylinder
+		for (int i = 0; i < 8; i++) {
+			if (planningGrid.getDistance(globe.computePositionFromPoint(corners[i]), centerP) < distanceNearest) {
+				distanceNearest = planningGrid.getDistance(globe.computePositionFromPoint(corners[i]), centerP);
+				nearest = corners[i];
+			}
+		}
+		// the vector between the centers
+		Vec4 subCenter = centerGrid.subtract3(globe.computePointFromPosition(centerP));
+
+		// the vector between the nearest corner and the center of the cylinder
+		Vec4 subNearest = nearest.subtract3(globe.computePointFromPosition(centerP));
+
+		// the angle between the axis of the cylinder and the vector that goes from the
+		// center of the cylinder to the nearest corner
+		double angle = Math.acos(cyl.getAxisUnitDirection().dot3(subNearest) / subNearest.getLength3());
+
+		// the angle between the axis of the cylinder and the vector that goes from the
+		// center of the cylinder to the center of the planning grid
+		double angleCenters = Math.acos(cyl.getAxisUnitDirection().dot3(subCenter) / subCenter.getLength3());
+
+		double maxDistNearest = 0, maxDistCenter = 0;
+		// critical angle is the angle that separates the bottom and top planes from the
+		// lateral surface
+		double criticalAngle = Math.atan(cyl.getCylinderRadius() / (cyl.getCylinderHeight() / 2));
+
+		// maxDistNearest and maxDistCenter are the maximum distance between the center
+		// of the cylinder and its surface in the direction (angle) of the nearest
+		// corner and center of the grid, respectively.
+		if ((angle <= criticalAngle) || (angle >= Math.PI - criticalAngle)) {
+			maxDistNearest = (cyl.getCylinderHeight() / 2) / Math.cos(angle);
+		} else {
+			maxDistNearest = cyl.getCylinderRadius() / Math.cos(Math.PI / 2 - angle);
+		}
+
+		if ((angleCenters <= criticalAngle) || (angleCenters >= Math.PI - criticalAngle)) {
+			maxDistCenter = (cyl.getCylinderHeight() / 2) / Math.cos(angleCenters);
+		} else {
+			maxDistCenter = cyl.getCylinderRadius() / Math.cos(Math.PI / 2 - angleCenters);
+		}
+
+		// intersection is found if the cylinder contains the center of the planning
+		// grid, or if it contains the nearest corner, or if the planning grid contains
+		// the center of the cylinder
+		if (distanceCenter <= maxDistCenter || distanceNearest <= maxDistNearest
+				|| planningGrid.getFrustum().contains(globe.computePointFromPosition(centerP))) {
+			return true;
+		}
+		return false;
+
 	}
 
 }
