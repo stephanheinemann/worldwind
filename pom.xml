@@ -204,10 +204,8 @@
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Export-Package>${local-packages};-split-package:=merge-first</Export-Package>
-						<Private-Package>
-						com.binarydreamers.trees
-						</Private-Package>
+						<Export-Package>${local-packages},gov.nasa.worldwind.geom;-split-package:=first</Export-Package>
+						<Private-Package>com.binarydreamers.trees</Private-Package>
 						<_removeheaders>Built-By</_removeheaders>
 					</instructions>
 				</configuration>
@@ -319,7 +317,7 @@
 		<dependency>
 			<groupId>com.uvic-cfar.swim</groupId>
 			<artifactId>droneconnect</artifactId>
-			<version>1.0.0-alpha1</version>
+			<version>1.0.0-alpha2</version>
 		</dependency>
 	</dependencies>
 
