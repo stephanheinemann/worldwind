@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.media.opengl.GL2;
+import com.jogamp.opengl.GL2;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;

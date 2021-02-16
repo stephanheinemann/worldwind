@@ -167,7 +167,8 @@ public class BoxTest {
             	Angle.fromDegrees(5.0));
         gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(new Earth(), 1.0, sector, 0.0, 500000.0);
         Box box = new Box(bb);
-        Vec4 point = new Vec4(-889843.9756064053, 5581603.786233872, 3111118.000796212, 1.0);
+        //Vec4 point = new Vec4(-889843.9756064053, 5581603.786233872, 3111118.000796212, 1.0);
+        Vec4 point = box.getCenter();
         assertTrue(box.getFrustum().contains(point));
         
         Vec4[] corners = box.getCorners();

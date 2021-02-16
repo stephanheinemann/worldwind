@@ -548,7 +548,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
-	 * @return true if this regular grid contains the point, false otherwise
+	 * @return true if this box contains the point, false otherwise
 	 */
 	public boolean contains(Vec4 modelPoint) {
 		boolean contains = false;
