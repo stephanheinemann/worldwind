@@ -134,7 +134,7 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<includes>
-					<include>config/worldwind.xml</include>
+					<include>config/*.xml</include>
 				</includes>
 			</resource>
 		</resources>
@@ -279,21 +279,6 @@
 			<version>3.11</version>
 		</dependency>
 		<dependency>
-			<groupId>gov.nasa</groupId>
-			<artifactId>worldwind</artifactId>
-			<version>2.2.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.metsci.ext.org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt-main</artifactId>
-			<version>2.4.0-rc-20200202</version>
-		</dependency>
-		<dependency>
-			<groupId>com.metsci.ext.org.jogamp.jogl</groupId>
-			<artifactId>jogl-all-main</artifactId>
-			<version>2.4.0-rc-20200202</version>
-		</dependency>
-		<dependency>
 			<groupId>org.openjfx</groupId>
 			<artifactId>javafx-swing</artifactId>
 			<version>11.0.2</version>
@@ -308,6 +293,21 @@
 			<artifactId>junit</artifactId>
 			<version>4.13.2</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.uvic-cfar.swim.nasa.worldwind</groupId>
+			<artifactId>corex</artifactId>
+			<version>2.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.metsci.ext.org.jogamp.gluegen</groupId>
+			<artifactId>gluegen-rt-main</artifactId>
+			<version>2.4.0-rc-20200202</version>
+		</dependency>
+		<dependency>
+			<groupId>com.metsci.ext.org.jogamp.jogl</groupId>
+			<artifactId>jogl-all-main</artifactId>
+			<version>2.4.0-rc-20200202</version>
 		</dependency>
 		<dependency>
 			<groupId>com.uvic-cfar.swim</groupId>
