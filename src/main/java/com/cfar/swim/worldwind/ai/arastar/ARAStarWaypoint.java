@@ -58,6 +58,20 @@ public class ARAStarWaypoint extends AStarWaypoint {
 	}
 	
 	/**
+	 * Constructs an ARA* waypoint at a specified position with a specified
+	 * weight of the estimated remaining cost (epsilon).
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param epsilon the weight of the estimated remaining cost (epsilon)
+	 * 
+	 * @see AStarWaypoint#AStarWaypoint(Position)
+	 */
+	public ARAStarWaypoint(Position position, double epsilon) {
+		super(position);
+		this.setEpsilon(epsilon);
+	}
+	
+	/**
 	 * Gets the parent ARA* waypoint of this ARA* waypoint.
 	 * 
 	 * @return the parent ARA* waypoint of this ARA* waypoint

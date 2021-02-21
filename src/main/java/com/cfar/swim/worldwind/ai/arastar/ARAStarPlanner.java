@@ -230,7 +230,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected ARAStarWaypoint createWaypoint(Position position) {
-		return new ARAStarWaypoint(position);
+		return new ARAStarWaypoint(position, this.getInflation());
 	}
 	
 	/**
