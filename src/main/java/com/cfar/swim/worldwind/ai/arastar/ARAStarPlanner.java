@@ -489,6 +489,8 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	protected void improve() {
 		while (!this.isDeflated()) {
 			this.backup();
+			// TODO: potentially deflate below actual current suboptimality
+			// bound for more aggressive optimization 
 			this.deflate();
 			this.restore();
 			
@@ -626,6 +628,8 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			this.open.clear();
 			for (AStarWaypoint waypoint : this.backups.get(this.backupIndex)) {
 				((ARAStarWaypoint) waypoint).setEpsilon(this.getInflation());
+				// TODO: potentially prune open to optimize by removing
+				// waypoints with non-inflated waypoint.getF() > goal.getG()
 				this.open.add(waypoint);
 			}
 			restored = true;

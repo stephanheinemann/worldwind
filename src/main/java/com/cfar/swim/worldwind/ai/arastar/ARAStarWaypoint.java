@@ -109,17 +109,17 @@ public class ARAStarWaypoint extends AStarWaypoint {
 	}
 	
 	/**
-	 * Gets the estimated total cost (f-value) of this ARA* waypoint.
+	 * Gets the priority key for the expansion of this ARA* waypoint.
 	 * The heuristic of the estimated total cost is inflated (weighted) by
 	 * epsilon.
 	 * 
-	 * @return the estimated total cost (f-value) of this ARA* waypoint
+	 * @return the priority key for the expansion of this ARA* waypoint
 	 * 
 	 * @see #getEpsilon()
 	 * @see #setEpsilon(double)
 	 */
 	@Override
-	public double getF() {
+	public double getKey() {
 		return this.getG() + (this.getEpsilon() * this.getH());
 	}
 

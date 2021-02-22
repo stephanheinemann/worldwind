@@ -142,11 +142,11 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	}
 	
 	/**
-	 * Gets the estimated total cost (f-value) of this AD* waypoint.
+	 * Gets the priority key for the expansion of this AD* waypoint.
 	 * The heuristic of the estimated total cost is inflated (weighted) by
-	 * epsilon if this AD* waypoint is consistent or over-consistent.
+	 * epsilon only if this AD* waypoint is consistent or over-consistent.
 	 * 
-	 * @return the estimated total cost (f-value) of this AD* waypoint
+	 * @return the priority key for the expansion of this AD* waypoint
 	 * 
 	 * @see #getEpsilon()
 	 * @see #setEpsilon(double)
@@ -155,31 +155,31 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @see #isUnderConsistent()
 	 */
 	@Override
-	public double getF() {
-		double f = Double.POSITIVE_INFINITY;
+	public double getKey() {
+		double key = Double.POSITIVE_INFINITY;
 		
 		if (!this.isUnderConsistent()) {
-			f = this.getG() + (this.getEpsilon() * this.getH()); 
+			key = super.getKey(); 
 		} else {
-			f = this.getV() + this.getH();
+			key = this.getV() + this.getH();
 		}
 		
-		return f;
+		return key;
 	}
 
 	/**
-	 * Compares this AD* waypoint to another waypoint based on their estimated
-	 * total costs (f-values). If the estimated total costs of both AD*
-	 * waypoints is equal, then ties are broken in favor of higher estimated
-	 * current costs (g-values) or under-consistent costs (v-values). If the
-	 * other waypoint is not an AD* waypoint, then the natural order of
+	 * Compares this AD* waypoint to another waypoint based on their priority
+	 * keys for the expansion. If the priority keys for the expansion of both
+	 * AD* waypoints are equal, then ties are broken in favor of higher
+	 * estimated current costs (g-values) or under-consistent costs (v-values).
+	 * If the other waypoint is not an AD* waypoint, then the natural order of
 	 * general waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
 	 * @return -1, 0, 1, if this AD* waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their total
-	 *         estimated cost
+	 *         respectively, than the other waypoint based on their priority
+	 *         keys for the expansion
 	 * 
 	 * @see ARAStarWaypoint#compareTo(Waypoint)
 	 */
@@ -189,14 +189,14 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 		
 		if (waypoint instanceof ADStarWaypoint) {
 			ADStarWaypoint adsw = (ADStarWaypoint) waypoint;
-			compareTo = new Double(this.getF()).compareTo(adsw.getF());
+			compareTo = Double.valueOf(this.getKey()).compareTo(adsw.getKey());
 			if (0 == compareTo) {
 				if (!this.isUnderConsistent()) {
 					// break ties in favor of higher G-values
-					compareTo = new Double(adsw.getG()).compareTo(this.getG());
+					compareTo = Double.valueOf(adsw.getG()).compareTo(this.getG());
 				} else {
 					// break ties in favor of higher V-values
-					compareTo = new Double(adsw.getV()).compareTo(this.getV());
+					compareTo = Double.valueOf(adsw.getV()).compareTo(this.getV());
 				}
 			}
 		} else {

@@ -146,6 +146,15 @@ public class AStarWaypoint extends Waypoint {
 	}
 	
 	/**
+	 * Gets the priority key for the expansion of this A* waypoint.
+	 * 
+	 * @return the priority key for the expansion of this A* waypoint
+	 */
+	public double getKey() {
+		return this.getF();
+	}
+	
+	/**
 	 * Clones this A* waypoint without its parent and depiction.
 	 * 
 	 * @return the clone of this A* waypoint without its parent and depiction
@@ -160,17 +169,17 @@ public class AStarWaypoint extends Waypoint {
 	}
 	
 	/**
-	 * Compares this A* waypoint to another waypoint based on their estimated
-	 * total costs (f-values). If the estimated total costs of both A*
-	 * waypoints is equal, then ties are broken in favor of higher estimated
-	 * current costs (g-values). If the other waypoint is not an A* waypoint,
-	 * then the natural order of general waypoints applies.
+	 * Compares this A* waypoint to another waypoint based on their priority
+	 * keys for the expansion. If the priority keys for the expansion of both
+	 * A* waypoints are equal, then ties are broken in favor of higher
+	 * estimated current costs (g-values). If the other waypoint is not an A*
+	 * waypoint, then the natural order of general waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
 	 * @return -1, 0, 1, if this A* waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their total
-	 *         estimated cost
+	 *         respectively, than the other waypoint based on their priority
+	 *         keys for the expansion
 	 * 
 	 * @see Waypoint#compareTo(Waypoint)
 	 */
@@ -180,10 +189,10 @@ public class AStarWaypoint extends Waypoint {
 		
 		if (waypoint instanceof AStarWaypoint) {
 			AStarWaypoint asw = (AStarWaypoint) waypoint;
-			compareTo = new Double(this.getF()).compareTo(asw.getF());
+			compareTo = Double.valueOf(this.getKey()).compareTo(asw.getKey());
 			if (0 == compareTo) {
 				// break ties in favor of higher G-values
-				compareTo = new Double(asw.getG()).compareTo(this.getG());
+				compareTo = Double.valueOf(asw.getG()).compareTo(this.getG());
 			}
 		} else {
 			compareTo = super.compareTo(waypoint);

@@ -31,7 +31,7 @@ package com.cfar.swim.worldwind.ai;
 
 /**
  * Describes an anytime planner which issues plans featuring a specified
- * minimum quality or better. The anytime planner continuously attempts to
+ * minimum quality or better. An anytime planner continuously attempts to
  * revise a previously issued plan by incrementally improving its quality
  * until a maximum quality or better has been achieved.
  * 
