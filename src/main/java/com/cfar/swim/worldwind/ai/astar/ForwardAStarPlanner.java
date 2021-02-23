@@ -106,7 +106,18 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @return the A* waypoint at the specified position
 	 */
 	protected AStarWaypoint createWaypoint(Position position) {
-		return new AStarWaypoint(position);
+		AStarWaypoint aswp = null;
+		
+		// only create new waypoints if necessary
+		if (position.equals(this.getStart())) {
+			aswp = this.getStart();
+		} else if (position.equals(this.getGoal())) {
+			aswp = this.getGoal();
+		} else {
+			aswp = new AStarWaypoint(position);
+		}
+		
+		return aswp;
 	}
 	
 	/**

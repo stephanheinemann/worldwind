@@ -230,7 +230,20 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected ARAStarWaypoint createWaypoint(Position position) {
-		return new ARAStarWaypoint(position, this.getInflation());
+		ARAStarWaypoint araswp = null;
+		
+		// only create new waypoints if necessary
+		if (position.equals(this.getStart())) {
+			araswp = this.getStart();
+		} else if (position.equals(this.getGoal())) {
+			araswp = this.getGoal();
+		} else {
+			araswp = new ARAStarWaypoint(position);
+		}
+		
+		// set current inflation factor
+		araswp.setEpsilon(this.getInflation());
+		return araswp;
 	}
 	
 	/**
@@ -459,11 +472,6 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		while (this.canExpand()) {
 			ARAStarWaypoint source = this.pollExpandable();
 			
-			if (source.equals(this.getGoal())) {
-				this.connectPlan(source);
-				return;
-			}
-			
 			Set<? extends ARAStarWaypoint> neighbors = this.expand(source);
 			
 			for (ARAStarWaypoint target : neighbors) {
@@ -478,9 +486,12 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 						target = expanded.get();
 					}
 				}
+				
 				this.updateWaypoint(source, target);
 			}
 		}
+		
+		this.connectPlan(this.getGoal());
 	}
 	
 	/**
