@@ -267,7 +267,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	@Override
 	protected boolean canExpand() {
 		return super.canExpand() &&
-				(this.getGoal().getF() > this.peekExpandable().getF());
+				(this.getGoal().getKey() > this.peekExpandable().getKey());
 	}
 	
 	/**
