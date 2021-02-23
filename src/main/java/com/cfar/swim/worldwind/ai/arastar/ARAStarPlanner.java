@@ -233,14 +233,22 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		ARAStarWaypoint araswp = null;
 		
 		// only create new waypoints if necessary
-		if (position.equals(this.getStart())) {
+		if (this.hasStart() && this.getStart().equals(position)) {
 			araswp = this.getStart();
-		} else if (position.equals(this.getGoal())) {
+		} else if (this.hasGoal() && this.getGoal().equals(position)) {
 			araswp = this.getGoal();
 		} else {
 			araswp = new ARAStarWaypoint(position);
 		}
 		
+		// TODO: for now avoid visiting existing positions but a 4D waypoint
+		// may very well revisit an existing position to avoid higher costs
+		// avoid duplicating discovered waypoints
+		Optional<? extends ARAStarWaypoint> existing = this.findExisting(araswp);
+		if (existing.isPresent()) {
+			araswp = existing.get();
+		}
+
 		// set current inflation factor
 		araswp.setEpsilon(this.getInflation());
 		return araswp;
@@ -415,6 +423,42 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
+	 * Finds an inconsistent ARA* waypoint.
+	 * 
+	 * @param waypoint the inconsistent ARA* waypoint to be found
+	 * 
+	 * @return the found inconsistent ARA* waypoint, if any
+	 */
+	protected Optional<? extends ARAStarWaypoint>
+		findInconsistent(ARAStarWaypoint waypoint) {
+		
+		return this.incons.stream()
+				.filter(w -> w.equals(waypoint))
+				.findFirst();
+	}
+	
+	/**
+	 * Finds an existing ARA* waypoint.
+	 * 
+	 * @param waypoint the existing ARA* waypoint to be found
+	 * 
+	 * @return the found existing ARA* waypoint, if any
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Optional<? extends ARAStarWaypoint>
+		findExisting(AStarWaypoint waypoint) {
+		
+		Optional<? extends ARAStarWaypoint> existing = (Optional<? extends ARAStarWaypoint>) super.findExisting(waypoint);
+		
+		if (existing.isEmpty()) {
+			existing = this.findInconsistent((ARAStarWaypoint) waypoint);
+		}
+		
+		return existing;
+	}
+	
+	/**
 	 * Initializes the planner to plan from an origin to a destination at a
 	 * specified estimated time of departure. Performs backups and restorations
 	 * of expandable and inconsistent waypoints in case of a multi-part plan.
@@ -452,11 +496,8 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected void updateSets(AStarWaypoint waypoint) {
-		Optional<? extends ARAStarWaypoint> expanded =
-				this.findExpanded(waypoint);
-		
-		if (expanded.isPresent()) {
-			this.addInconsistent(expanded.get());
+		if (this.isExpanded(waypoint)) {
+			this.addInconsistent((ARAStarWaypoint) waypoint);
 		} else {
 			super.updateSets(waypoint);
 		}
@@ -475,18 +516,6 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			Set<? extends ARAStarWaypoint> neighbors = this.expand(source);
 			
 			for (ARAStarWaypoint target : neighbors) {
-				Optional<? extends ARAStarWaypoint> expandable =
-						this.findExpandable(target);
-				if (expandable.isPresent()) {
-					target = expandable.get();
-				} else {
-					Optional<? extends ARAStarWaypoint> expanded =
-							this.findExpanded(target);
-					if (expanded.isPresent()) {
-						target = expanded.get();
-					}
-				}
-				
 				this.updateWaypoint(source, target);
 			}
 		}

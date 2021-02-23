@@ -109,12 +109,20 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		AStarWaypoint aswp = null;
 		
 		// only create new waypoints if necessary
-		if (position.equals(this.getStart())) {
+		if (this.hasStart() && this.getStart().equals(position)) {
 			aswp = this.getStart();
-		} else if (position.equals(this.getGoal())) {
+		} else if (this.hasGoal() && this.getGoal().equals(position)) {
 			aswp = this.getGoal();
 		} else {
 			aswp = new AStarWaypoint(position);
+		}
+		
+		// TODO: for now avoid visiting existing positions but a 4D waypoint
+		// may very well revisit an existing position to avoid higher costs
+		// avoid duplicating discovered waypoints
+		Optional<? extends AStarWaypoint> existing = this.findExisting(aswp);
+		if (existing.isPresent()) {
+			aswp = existing.get();
 		}
 		
 		return aswp;
@@ -139,6 +147,17 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Determines whether or not this forward A* planner has a
+	 * start waypoint.
+	 * 
+	 * @return true if this forward A* planner has a start waypoint,
+	 *         false otherwise
+	 */
+	protected boolean hasStart() {
+		return (null != this.start);
+	}
+	
+	/**
 	 * Gets the goal A* waypoint of this forward A* planner.
 	 * 
 	 * @return the goal A* waypoint of this forward A* planner
@@ -154,6 +173,17 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected void setGoal(AStarWaypoint goal) {
 		this.goal = goal;
+	}
+	
+	/**
+	 * Determines whether or not this forward A* planner has a
+	 * goal waypoint.
+	 * 
+	 * @return true if this forward A* planner has a goal waypoint,
+	 *         false otherwise
+	 */
+	protected boolean hasGoal() {
+		return (null != this.goal);
 	}
 	
 	/**
@@ -337,6 +367,31 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		return this.closed.stream()
 				.filter(w -> w.equals(waypoint))
 				.findFirst();
+	}
+	
+	/**
+	 * Finds an existing A* waypoint.
+	 * 
+	 * @param waypoint the existing A* waypoint to be found
+	 * 
+	 * @return the found existing A* waypoint, if any
+	 */
+	protected Optional<? extends AStarWaypoint>
+		findExisting(AStarWaypoint waypoint) {
+		
+		Optional<? extends AStarWaypoint> existing = Optional.empty();
+		
+		Optional<? extends AStarWaypoint> expandable = this.findExpandable(waypoint);
+		if (expandable.isPresent()) {
+			existing = expandable;
+		} else {
+			Optional<? extends AStarWaypoint> expanded = this.findExpanded(waypoint);
+			if (expanded.isPresent()) {
+				existing = expanded;
+			}
+		}
+		
+		return existing;
 	}
 	
 	/**
@@ -563,13 +618,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			
 			for (AStarWaypoint target : neighbors) {
 				if (!this.isExpanded(target)) {
-					Optional<? extends AStarWaypoint> visited =
-							this.findExpandable(target);
-					if (visited.isPresent()) {
-						this.updateWaypoint(source, visited.get());
-					} else {
-						this.updateWaypoint(source, target);
-					}
+					this.updateWaypoint(source, target);
 				}
 			}
 		}

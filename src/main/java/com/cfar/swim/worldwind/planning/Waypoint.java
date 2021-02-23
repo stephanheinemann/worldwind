@@ -349,7 +349,7 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	public boolean equals(Object o) {
 		boolean equals = false;
 		
-		if (o instanceof Waypoint) {
+		if ((null != o) && (o instanceof Waypoint)) {
 			// TODO: waypoint is defined via position and time, position only
 			// is problematic when revisiting a position at different times
 			// TODO: possibly refine with ETO or waypoint designator
