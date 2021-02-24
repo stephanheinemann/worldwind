@@ -29,16 +29,21 @@
  */
 package com.cfar.swim.worldwind.ai.adstar;
 
+import java.time.ZonedDateTime;
 import java.util.Optional;
 import java.util.Set;
 
+import com.cfar.swim.worldwind.ai.DynamicPlanner;
 import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.arastar.ARAStarWaypoint;
 import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
 
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Path;
 
 /**
  * Realizes an Anytime Dynamic A* planner (AD*) that plans a trajectory of
@@ -47,7 +52,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Stephan Heinemann
  *
  */
-public class ADStarPlanner extends ARAStarPlanner {
+public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 
 	/**
 	 * Constructs an AD* planner for a specified aircraft and environment
@@ -72,7 +77,26 @@ public class ADStarPlanner extends ARAStarPlanner {
 	 */
 	@Override
 	protected ADStarWaypoint createWaypoint(Position position) {
-		return new ADStarWaypoint(position);
+		ADStarWaypoint adswp = null;
+		
+		// only create new waypoints if necessary
+		if (position.equals(this.getStart())) {
+			adswp = this.getStart();
+		} else if (position.equals(this.getGoal())) {
+			adswp = this.getGoal();
+		} else {
+			adswp = new ADStarWaypoint(position);
+		}
+		
+		// avoid duplicating discovered waypoints
+		Optional<? extends ARAStarWaypoint> existing = super.findExisting(adswp);
+		if (existing.isPresent()) {
+			adswp = (ADStarWaypoint) existing.get();
+		}
+		
+		// set current inflation factor
+		adswp.setEpsilon(this.getInflation());
+		return adswp;
 	}
 	
 	/**
@@ -157,21 +181,6 @@ public class ADStarPlanner extends ARAStarPlanner {
 	}
 	
 	/**
-	 * Finds the dependent target of an expanded AD* source waypoint.
-	 * The source waypoint is the parent of the target waypoint.
-	 *  
-	 * @param source the source AD* waypoint
-	 * @param target the dependent target AD* waypoint to be found
-	 * @return the found dependent target AD* waypoint, if any
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	protected Optional<? extends ADStarWaypoint>
-		findDependent(AStarWaypoint source, AStarWaypoint target) {
-		return (Optional<ADStarWaypoint>) super.findDependent(source, target);
-	}
-	
-	/**
 	 * Expands an AD* waypoint towards its neighbors in the environment.
 	 * 
 	 * @param waypoint the AD* waypoint to be expanded
@@ -200,61 +209,74 @@ public class ADStarPlanner extends ARAStarPlanner {
 		return neighbors;
 	}
 	
+	/**
+	 * Updates the planner waypoint sets for an updated AD* waypoint.
+	 * 
+	 * @param waypoint the updated AD* waypoint
+	 * 
+	 * @see ARAStarPlanner#updateSets(AStarWaypoint)
+	 */
 	@Override
 	protected void updateSets(AStarWaypoint waypoint) {
-		// TODO: finding the expandable is actually not required since no
-		// updates to it are necessary, isExpandable should be sufficient
-		// check precisely which waypoints should be retained and moved
-		// between the sets!
-		Optional<? extends ADStarWaypoint> expandable =
-				this.findExpandable(waypoint);
-		
 		if (((ADStarWaypoint) waypoint).isConsistent()) {
-			if (expandable.isPresent()) {
-				this.removeExpandable(expandable.get());
+			// consistent waypoints can be removed from sets
+			if (this.isExpandable(waypoint)) {
+				this.removeExpandable(waypoint);
 			} else if (this.isInconsistent((ADStarWaypoint) waypoint)) {
 				this.removeInconsistent((ADStarWaypoint) waypoint);
 			}
 		} else {
+			// inconsistent waypoints need to be considered for expansion
 			if (!this.isExpanded(waypoint)) {
-				if (expandable.isPresent()) {
-					this.removeExpandable(waypoint);
-					this.addExpandable(waypoint);
-				} else {
-					this.addExpandable(waypoint);
+				// priority queue requires re-insertion for key evaluation
+				if (!this.removeExpandable(waypoint)) {
+					waypoint.setH(this.getEnvironment()
+							.getNormalizedDistance(waypoint, this.getGoal()));
 				}
-			} else if (this.isInconsistent((ADStarWaypoint) waypoint)) {
+				this.addExpandable(waypoint);
+			} else if (!this.isInconsistent((ADStarWaypoint) waypoint)) {
 				this.addInconsistent((ADStarWaypoint) waypoint);
 			}
 		}
 	}
 	
-	protected void repairCost(ADStarWaypoint waypoint) {
-		// TODO: Fig. 18 (lines 25/26)
-		// TODO: find neighbors including start if in start region
-		// TODO: identify minimum v-cost neighbor if any (expandable, expanded)
-		// TODO: repair g-cost based on minimum v-cost and update parent
-		// TODO: maybe visited predecessors and successors should be stored...
+	/**
+	 * Repairs the estimated cost of a specified target AD* waypoint when
+	 * reached via a specified source AD* waypoint.
+	 * 
+	 * @param source the source AD* waypoint in globe coordinates
+	 * @param target the target AD* waypoint in globe coordinates
+	 */
+	protected void repairCost(ADStarWaypoint source, ADStarWaypoint target) {
+		Path leg = new Path(source, target);
+		Capabilities capabilities = this.getAircraft().getCapabilities();
+		Globe globe = this.getEnvironment().getGlobe();
+		// TODO: catch IllegalArgumentException (incapable) and exit
+		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
-		Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
+		double cost = this.getEnvironment().getStepCost(
+				source, target,
+				source.getEto(), end,
+				this.getCostPolicy(), this.getRiskPolicy());
 		
-		// add start to the start region
-		if (this.isInStartRegion(waypoint)) {
-			neighbors.add(this.getStart());
+		if ((source.getV() + cost) < target.getG()) {
+			target.setParent(source);
+			target.setG(source.getV() + cost);
+			target.setEto(end);
 		}
+	}
+	
+	/**
+	 * Repairs the estimated cost of a specified target AD* waypoint.
+	 * 
+	 * @param target the target AD* waypoint in globe coordinates
+	 */
+	protected void repair(ADStarWaypoint target) {
+		target.setG(Double.POSITIVE_INFINITY);
 		
-		// add goal to the goal region
-		if (this.isInGoalRegion(waypoint)) {
-			neighbors.add(this.getGoal());
+		for (AStarWaypoint source : target.getParents()) {
+			this.repairCost((ADStarWaypoint) source, target);
 		}
-		
-		for (Position neighbor : neighbors) {
-			ADStarWaypoint adsw = this.createWaypoint(neighbor);
-			Optional<? extends ADStarWaypoint> expandable =
-					this.findExpandable(adsw);
-		}
-		
-		// TODO: only incons gets backed up, parents have to be considered too
 	}
 	
 	/**
@@ -267,13 +289,9 @@ public class ADStarPlanner extends ARAStarPlanner {
 		while (this.canExpand()) {
 			ADStarWaypoint source = this.pollExpandable();
 			
-			if (source.equals(this.getGoal())) {
-				this.connectPlan(source);
-				return;
-			}
-			
 			Set<? extends ADStarWaypoint> neighbors = this.expand(source);
 			
+			// source is always inconsistent as per expandable invariant
 			if (source.isOverConsistent()) {
 				// propagate over-consistency
 				for (ADStarWaypoint target : neighbors) {
@@ -283,16 +301,15 @@ public class ADStarPlanner extends ARAStarPlanner {
 				// propagate under-consistency
 				for (ADStarWaypoint target : neighbors) {
 					// find target that depends on under-consistent source
-					Optional<? extends ADStarWaypoint> dependent =
-							this.findDependent(source, target);
-					
-					if (dependent.isPresent()) {
-						this.repairCost(dependent.get());
-						this.updateSets(dependent.get());
+					if (target.getParent().equals(source)) {
+						this.repair(target);
+						this.updateSets(target);
 					}
 				}
 			}
 		}
+		
+		this.connectPlan(this.getGoal());
 	}
 	
 }

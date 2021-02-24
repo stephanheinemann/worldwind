@@ -59,6 +59,20 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	}
 	
 	/**
+	 * Constructs an AD* waypoint at a specified position with a specified
+	 * weight of the estimated remaining cost (epsilon).
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param epsilon the weight of the estimated remaining cost (epsilon)
+	 * 
+	 * @see ARAStarWaypoint#ARAStarWaypoint(Position, double)
+	 */
+	public ADStarWaypoint(Position position, double epsilon) {
+		super(position, epsilon);
+		this.setV(Double.POSITIVE_INFINITY);
+	}
+	
+	/**
 	 * Gets the parent AD* waypoint of this AD* waypoint.
 	 * 
 	 * @return the parent AD* waypoint of this AD* waypoint
