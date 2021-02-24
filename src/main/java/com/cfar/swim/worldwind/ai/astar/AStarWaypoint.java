@@ -48,8 +48,8 @@ public class AStarWaypoint extends Waypoint {
 	/** the parent A* waypoint of this A* waypoint in a trajectory */
 	private AStarWaypoint parent = null;
 	
-	/** the visited neighbors of this A* waypoint in an environment */
-	private final Set<AStarWaypoint> neighbors = new HashSet<>();
+	/** all parents of this A* waypoint in an environment */
+	private Set<AStarWaypoint> parents = new HashSet<>();
 	
 	/** the estimated remaining cost (h-value) of this A* waypoint */
 	private double h;
@@ -77,21 +77,32 @@ public class AStarWaypoint extends Waypoint {
 	}
 	
 	/**
-	 * Sets the parent A* waypoint of this A* waypoint.
+	 * Sets the parent A* waypoint and updates all parents of this A* waypoint.
 	 * 
 	 * @param parent the parent A* waypoint of this A* waypoint
 	 */
 	public void setParent(AStarWaypoint parent) {
 		this.parent = parent;
+		this.parents.add(parent);
 	}
 	
-	// TODO: visibility and cloning issues
-	public Set<AStarWaypoint> getNeighbors() {
-		return this.neighbors;
+	/**
+	 * Resets all parent A* waypoints of this A* waypoint.
+	 */
+	public void resetParents() {
+		this.parent = null;
+		this.parents = new HashSet<>();
 	}
 	
-	public void setNeighbors(Set<AStarWaypoint> neighbors) {
-		this.neighbors.addAll(neighbors);
+	/**
+	 * Gets all parent A* waypoints of this A* waypoint
+	 * 
+	 * @return all parent A* waypoints of this A* waypoint
+	 */
+	public Set<AStarWaypoint> getParents() {
+		Set<AStarWaypoint> parents = new HashSet<>();
+		parents.addAll(this.parents);
+		return parents;
 	}
 	
 	/**
@@ -155,16 +166,16 @@ public class AStarWaypoint extends Waypoint {
 	}
 	
 	/**
-	 * Clones this A* waypoint without its parent and depiction.
+	 * Clones this A* waypoint without its parents and depiction.
 	 * 
-	 * @return the clone of this A* waypoint without its parent and depiction
+	 * @return the clone of this A* waypoint without its parents and depiction
 	 * 
 	 * @see Object#clone()
 	 */
 	@Override
 	public AStarWaypoint clone() {
 		AStarWaypoint waypoint = (AStarWaypoint) super.clone();
-		waypoint.setParent(null);
+		waypoint.resetParents();
 		return waypoint;
 	}
 	

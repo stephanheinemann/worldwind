@@ -350,21 +350,6 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
-	 * Finds the dependent target of an expanded ARA* source waypoint.
-	 * The source waypoint is the parent of the target waypoint.
-	 *  
-	 * @param source the source ARA* waypoint
-	 * @param target the dependent target ARA* waypoint to be found
-	 * @return the found dependent target ARA* waypoint, if any
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	protected Optional<? extends ARAStarWaypoint>
-		findDependent(AStarWaypoint source, AStarWaypoint target) {
-		return (Optional<ARAStarWaypoint>) super.findDependent(source, target);
-	}
-	
-	/**
 	 * Expands an ARA* waypoint towards its neighbors in the environment.
 	 * 
 	 * @param waypoint the ARA* waypoint to be expanded
@@ -488,7 +473,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
-	 * Updates the open set for an updated ARA* waypoint.
+	 * Updates the planner waypoint sets for an updated ARA* waypoint.
 	 * 
 	 * @param waypoint the updated ARA* waypoint
 	 * 

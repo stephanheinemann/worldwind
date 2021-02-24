@@ -395,35 +395,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Finds the dependent target of an expanded A* source waypoint.
-	 * The source waypoint is the parent of the target waypoint.
-	 *  
-	 * @param source the source A* waypoint
-	 * @param target the dependent target A* waypoint to be found
-	 * @return the found dependent target A* waypoint, if any
-	 */
-	protected Optional<? extends AStarWaypoint>
-		findDependent(AStarWaypoint source, AStarWaypoint target) {
-		Optional<? extends AStarWaypoint> dependent = Optional.empty();
-		
-		Optional<? extends AStarWaypoint> expanded =
-				this.findExpanded(target);
-		
-		if (expanded.isPresent() && expanded.get().getParent() == source) {
-			dependent = expanded;
-		} else {
-			Optional<? extends AStarWaypoint> expandable =
-					this.findExpandable(target);
-			if (expandable.isPresent() &&
-					expandable.get().getParent() == source) {
-				dependent = expandable;
-			}
-		}
-		
-		return dependent;
-	}
-	
-	/**
 	 * Expands an A* waypoint towards its neighbors in the environment.
 	 * 
 	 * @param waypoint the A* waypoint to be expanded
@@ -512,12 +483,12 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Updates the open set for an updated A* waypoint.
+	 * Updates the planner waypoint sets for an updated A* waypoint.
 	 * 
 	 * @param waypoint the updated A* waypoint
 	 */
 	protected void updateSets(AStarWaypoint waypoint) {
-		// priority queue requires re-insertion of contained modified object
+		// priority queue requires re-insertion for key evaluation
 		if (!this.removeExpandable(waypoint)) {
 			waypoint.setH(this.getEnvironment()
 					.getNormalizedDistance(waypoint, this.getGoal()));
