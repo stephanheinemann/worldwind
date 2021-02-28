@@ -350,9 +350,16 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 		boolean equals = false;
 		
 		if ((null != o) && (o instanceof Waypoint)) {
-			// TODO: waypoint is defined via position and time, position only
-			// is problematic when revisiting a position at different times
-			// TODO: possibly refine with ETO or waypoint designator
+			/*
+			 * Avoid visiting existing positions although a 4D waypoint may very
+			 * well revisit an existing position to avoid higher costs. The
+			 * computed trajectories shall however be space-optimal but not
+			 * necessarily time-optimal. To mitigate this issue, departure slots,
+			 * or more generally waypoint slots, could be considered and take into
+			 * account the aircraft capabilities appropriately (endurance).
+			 * 
+			 * https://github.com/stephanheinemann/worldwind/issues/24
+			 */
 			equals = this.position.equals(((Waypoint) o).position);
 		}
 	
