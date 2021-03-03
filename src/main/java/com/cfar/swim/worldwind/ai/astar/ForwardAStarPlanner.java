@@ -108,6 +108,18 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	protected AStarWaypoint createWaypoint(Position position) {
 		AStarWaypoint aswp = null;
 		
+		/*
+		 * Avoid visiting existing positions although a 4D waypoint may very
+		 * well revisit an existing position to avoid higher costs. The
+		 * computed trajectories shall however be space-optimal but not
+		 * necessarily time-optimal. To mitigate this issue, departure slots,
+		 * or more generally, waypoint slots could be considered and take into
+		 * account the aircraft capabilities appropriately (endurance). This
+		 * could realize the concept of holding or loitering.
+		 * 
+		 * https://github.com/stephanheinemann/worldwind/issues/24
+		 */
+		
 		// only create new waypoints if necessary
 		if (this.hasStart() && this.getStart().equals(position)) {
 			aswp = this.getStart();
@@ -117,8 +129,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			aswp = new AStarWaypoint(position);
 		}
 		
-		// TODO: for now avoid visiting existing positions but a 4D waypoint
-		// may very well revisit an existing position to avoid higher costs
 		// avoid duplicating discovered waypoints
 		Optional<? extends AStarWaypoint> existing = this.findExisting(aswp);
 		if (existing.isPresent()) {
@@ -403,7 +413,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected Set<? extends AStarWaypoint> expand(AStarWaypoint waypoint) {
 		Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
-		
+
 		// if a start has no neighbors, then it is not a waypoint in the
 		// environment and its adjacent waypoints have to be determined for
 		// initial expansion
@@ -411,21 +421,34 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			neighbors = this.getEnvironment().getAdjacentWaypoints(waypoint);
 		}
 		
+		// create neighborhood of waypoints with precision positions
+		Set<AStarWaypoint> neighborhood =
+				neighbors.stream()
+				.map(n -> this.createWaypoint(n)).collect(Collectors.toSet());
+		
+		// replace start and goal in neighborhood to avoid duplication
+		if (neighborhood.remove(this.getStart())) {
+			neighborhood.add(this.getStart());
+		}
+		if (neighborhood.remove(this.getGoal())) {
+			neighborhood.add(this.getGoal());
+		}
+
 		// expand start region position towards the start
-		if (this.isInStartRegion(waypoint.getPrecisionPosition())) {
-			neighbors.add(this.getStart());
+		if ((!waypoint.equals(this.getStart())) &&
+				this.isInStartRegion(waypoint.getPrecisionPosition())) {
+			neighborhood.add(this.getStart());
 		}
-		
+
 		// expand a goal region position towards the goal
-		if (this.isInGoalRegion(waypoint.getPrecisionPosition())) {
-			neighbors.add(this.getGoal());
+		if ((!waypoint.equals(this.getGoal())) &&
+				this.isInGoalRegion(waypoint.getPrecisionPosition())) {
+			neighborhood.add(this.getGoal());
 		}
-		
+
 		this.addExpanded(waypoint);
 		
-		return neighbors.stream()
-				.map(n -> this.createWaypoint(n))
-				.collect(Collectors.toSet());
+		return neighborhood;
 	}
 	
 	/**
@@ -435,6 +458,15 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected AStarWaypoint getFirstWaypoint() {
 		return this.plan.getFirst();
+	}
+	
+	/**
+	 * Gets the last A* waypoint of the current plan.
+	 * 
+	 * @return the last A* waypoint of the current plan
+	 */
+	protected AStarWaypoint getLastWaypoint() {
+		return this.plan.getLast();
 	}
 	
 	/**
@@ -454,7 +486,16 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Connects a plan of specified A* waypoints.
+	 * Determines whether or not the current plan has A* waypoints.
+	 * 
+	 * @return true if the current plan has A* waypoints, false otherwise
+	 */
+	protected boolean hasWaypoints() {
+		return !this.plan.isEmpty();
+	}
+	
+	/**
+	 * Connects a plan from a specified A* goal waypoint.
 	 * 
 	 * @param waypoint the last A* waypoint of a computed plan
 	 */
@@ -530,7 +571,12 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy());
 		
-		if ((source.getG() + cost) < target.getG()) {
+		// consider expansion cost and break ties with travel time
+		boolean improvedCost = (source.getG() + cost) < target.getG();
+		boolean equalCost = (source.getG() + cost) == target.getG();
+		boolean improvedTime = (target.hasEto() && end.isBefore(target.getEto()));
+		
+		if (improvedCost || (equalCost && improvedTime)) {
 			target.setParent(source);
 			target.setG(source.getG() + cost);
 			target.setEto(end);
@@ -538,7 +584,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Initializes the planner to plan from an origin to a destination at a
+	 * Initializes this A* planner to plan from an origin to a destination at a
 	 * specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
@@ -550,11 +596,13 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.clearExpanded();
 		this.clearWaypoints();
 		
+		this.setStart(null);
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setG(0);
 		this.getStart().setH(this.getEnvironment().getNormalizedDistance(origin, destination));
 		this.getStart().setEto(etd);
 		
+		this.setGoal(null);
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0);
 		
@@ -574,7 +622,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Computes a plan.
+	 * Computes an A* plan.
 	 */
 	protected void compute() {
 		while (this.canExpand()) {
@@ -596,6 +644,28 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Plans a part of a trajectory from an origin to a destination at a
+	 * specified estimated time of departure. If origin is the goal of the
+	 * current plan, then the resulting plan will be the trajectory from
+	 * the start of the current plan to the specified destination.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * @param partIndex the index of the part
+	 * 
+	 * @return the planned trajectory from origin at the estimated time of
+	 *         departure or the start leading to origin in the current plan to
+	 *         the destination
+	 * 
+	 */
+	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
+		this.initialize(origin, destination, etd);
+		this.compute();
+		return this.createTrajectory();
+	}
+	
+	/**
 	 * Plans a trajectory from an origin to a destination at a specified
 	 * estimated time of departure.
 	 * 
@@ -610,9 +680,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-		this.initialize(origin, destination, etd);
-		this.compute();
-		Trajectory trajectory = this.createTrajectory();
+		Trajectory trajectory = this.planPart(origin, destination, etd, 0);
 		this.revisePlan(trajectory);
 		return trajectory;
 	}
@@ -633,7 +701,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		LinkedList<Waypoint> plan = new LinkedList<>();
 		Waypoint currentOrigin = new Waypoint(origin);
 		ZonedDateTime currentEtd = etd;
 		
@@ -644,37 +711,39 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		destinations.add(new Waypoint(destination));
 		
 		// plan and concatenate partial trajectories
-		for (Waypoint currentDestination : destinations) {
+		for (int partIndex = 0; partIndex < destinations.size(); partIndex++) {
+			Waypoint currentDestination = destinations.get(partIndex);
 			if (!(currentOrigin.equals(currentDestination))) {
+				
+				/* 
+				 * Each part of a multi-part plan has to be computed completely
+				 * in order to finalize the ETO of the goal waypoint which
+				 * becomes the start waypoint of the next part and the basis
+				 * for any subsequent plan revisions. A possible repair of one
+				 * part requires the re-computation of all subsequent parts.
+				 * 
+				 * https://github.com/stephanheinemann/worldwind/issues/24
+				 */
+				
 				// plan partial trajectory
-				this.initialize(currentOrigin, currentDestination, currentEtd);
-				this.compute();
-				Trajectory part = this.createTrajectory();
+				// currentOrigin equals presently stored goal and is found during initialization
+				this.planPart(currentOrigin, currentDestination, currentEtd, partIndex);
 				
-				// append partial trajectory to plan
-				if ((!plan.isEmpty()) &&  (!part.isEmpty())) {
-					plan.pollLast();
-				}
-				
-				for (Waypoint waypoint : part.getWaypoints()) {
-					plan.add(waypoint);
-				}
-				
-				if (plan.peekLast().equals(currentOrigin)) {
+				if ((!this.hasWaypoints()) || (!this.getLastWaypoint().equals(currentDestination))) {
 					// if no plan could be found, return an empty trajectory
-					Trajectory trajectory = new Trajectory();
-					this.revisePlan(trajectory);
-					return trajectory;
+					Trajectory empty = new Trajectory();
+					this.revisePlan(empty);
+					return empty;
 				} else {
-					currentOrigin = plan.peekLast();
+					// revise growing trajectory for each part
+					this.revisePlan(this.createTrajectory());
+					currentOrigin = this.getLastWaypoint();
 					currentEtd = currentOrigin.getEto();
 				}
 			}
 		}
 		
-		Trajectory trajectory = new Trajectory(plan);
-		this.revisePlan(trajectory);
-		return trajectory;
+		return this.createTrajectory();
 	}
 	
 	/**

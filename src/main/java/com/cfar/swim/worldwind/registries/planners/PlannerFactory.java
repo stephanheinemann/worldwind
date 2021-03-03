@@ -33,6 +33,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import com.cfar.swim.worldwind.ai.Planner;
+import com.cfar.swim.worldwind.ai.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
@@ -131,6 +132,15 @@ public class PlannerFactory implements Factory<Planner> {
 			((ARAStarPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 			((ARAStarPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 			((ARAStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+		} else if (specification.getId().equals(Specification.PLANNER_ADS_ID)) {
+			ADStarProperties properties = (ADStarProperties) specification.getProperties();
+			planner = new ADStarPlanner(scenario.getAircraft(), scenario.getEnvironment());
+			planner.setCostPolicy(properties.getCostPolicy());
+			planner.setRiskPolicy(properties.getRiskPolicy());
+			((ADStarPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+			((ADStarPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+			((ADStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			// TODO: significant change property
 		}
 		// TODO: implement more planners
 		

@@ -208,6 +208,15 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	}
 	
 	/**
+	 * Determines whether or not this waypoint has a time to go.
+	 * 
+	 * @return true if this waypoint has a time to go, false otherwise
+	 */
+	public boolean hasTtg() {
+		return (null != this.ttg);
+	}
+	
+	/**
 	 * Gets the estimated time at this waypoint.
 	 * 
 	 * @return the estimated time at this waypoint
@@ -223,6 +232,15 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 */
 	public void setEto(ZonedDateTime eto) {
 		this.eto = eto;
+	}
+	
+	/**
+	 * Determines whether or not this waypoint has a estimated time over.
+	 * 
+	 * @return true if this waypoint has a estimated time over, false otherwise
+	 */
+	public boolean hasEto() {
+		return (null != this.eto);
 	}
 	
 	// TODO: actuals belong to track points instead?
@@ -243,6 +261,15 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 */
 	public void setAto(ZonedDateTime ato) {
 		this.ato = ato;
+	}
+	
+	/**
+	 * Determines whether or not this waypoint has an actual time over.
+	 * 
+	 * @return true if this waypoint has an actual time over, false otherwise
+	 */
+	public boolean hasAto() {
+		return (null != this.ato);
 	}
 	
 	/**
@@ -351,12 +378,14 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 		
 		if ((null != o) && (o instanceof Waypoint)) {
 			/*
-			 * Avoid visiting existing positions although a 4D waypoint may very
-			 * well revisit an existing position to avoid higher costs. The
-			 * computed trajectories shall however be space-optimal but not
-			 * necessarily time-optimal. To mitigate this issue, departure slots,
-			 * or more generally waypoint slots, could be considered and take into
-			 * account the aircraft capabilities appropriately (endurance).
+			 * Avoid visiting existing positions although a 4D waypoint may
+			 * very well revisit an existing position to avoid higher costs.
+			 * The computed trajectories shall however be space-optimal but not
+			 * necessarily time-optimal. To mitigate this issue, departure
+			 * slots, or more generally, waypoint slots could be considered and
+			 * take into account the aircraft capabilities appropriately
+			 * (endurance). This could realize the concept of holding or
+			 * loitering.
 			 * 
 			 * https://github.com/stephanheinemann/worldwind/issues/24
 			 */

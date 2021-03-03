@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.ai.adstar;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -40,6 +41,7 @@ import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.planning.Trajectory;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
@@ -54,6 +56,15 @@ import gov.nasa.worldwind.render.Path;
  */
 public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 
+	/** indicates whether or or not this AD* planner has terminated */
+	volatile private boolean terminated = false;
+	
+	/** indicates whether or or not this AD* planner has a significant dynamic change */
+	private boolean hasSignificantChange = false;
+	
+	/** the significant change threshold of this AD* planner */
+	private double significantChange = 0.25d;
+	
 	/**
 	 * Constructs an AD* planner for a specified aircraft and environment
 	 * using default local cost and risk policies without an initial inflation
@@ -79,10 +90,22 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	protected ADStarWaypoint createWaypoint(Position position) {
 		ADStarWaypoint adswp = null;
 		
+		/*
+		 * Avoid visiting existing positions although a 4D waypoint may very
+		 * well revisit an existing position to avoid higher costs. The
+		 * computed trajectories shall however be space-optimal but not
+		 * necessarily time-optimal. To mitigate this issue, departure slots,
+		 * or more generally, waypoint slots could be considered and take into
+		 * account the aircraft capabilities appropriately (endurance). This
+		 * could realize the concept of holding or loitering.
+		 * 
+		 * https://github.com/stephanheinemann/worldwind/issues/24
+		 */
+		
 		// only create new waypoints if necessary
-		if (position.equals(this.getStart())) {
+		if (this.hasStart() && this.getStart().equals(position)) {
 			adswp = this.getStart();
-		} else if (position.equals(this.getGoal())) {
+		} else if (this.hasGoal() && this.getGoal().equals(position)) {
 			adswp = this.getGoal();
 		} else {
 			adswp = new ADStarWaypoint(position);
@@ -192,21 +215,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Set<? extends ADStarWaypoint> expand(AStarWaypoint waypoint) {
-		// super.expand implicitly adds the expanded waypoint to the expanded set
-		Set<ADStarWaypoint> neighbors = (Set<ADStarWaypoint>) super.expand(waypoint);
-		ADStarWaypoint adsw = (ADStarWaypoint) waypoint;
-		
-		if (adsw.isOverConsistent()) {
-			// establish consistency
-			adsw.makeConsistent();
-		} else {
-			// eliminate under-consistency
-			adsw.setV(Double.POSITIVE_INFINITY);
-			this.removeExpanded(adsw);
-			this.updateSets(adsw);
-		}
-		
-		return neighbors;
+		return (Set<ADStarWaypoint>) super.expand(waypoint);
 	}
 	
 	/**
@@ -259,7 +268,12 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 				source.getEto(), end,
 				this.getCostPolicy(), this.getRiskPolicy());
 		
-		if ((source.getV() + cost) < target.getG()) {
+		// consider expansion cost and break ties with travel time
+		boolean improvedCost = (source.getV() + cost) < target.getG();
+		boolean equalCost = (source.getV() + cost) == target.getG();
+		boolean improvedTime = (target.hasEto() && end.isBefore(target.getEto()));
+		
+		if (improvedCost || (equalCost && improvedTime)) {
 			target.setParent(source);
 			target.setG(source.getV() + cost);
 			target.setEto(end);
@@ -280,24 +294,37 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	}
 	
 	/**
-	 * Computes a plan.
+	 * Computes an AD* plan.
 	 * 
 	 * @see ARAStarPlanner#compute()
 	 */
 	@Override
 	protected void compute() {
+		System.out.println("compute");
 		while (this.canExpand()) {
 			ADStarWaypoint source = this.pollExpandable();
 			
+			System.out.println("expanding");
 			Set<? extends ADStarWaypoint> neighbors = this.expand(source);
+			
+			System.out.println(source.getDesignator() + ": G = " + source.getG() + " V = " + source.getV());
 			
 			// source is always inconsistent as per expandable invariant
 			if (source.isOverConsistent()) {
+				System.out.println("over-consistent");
+				// establish consistency
+				source.makeConsistent();
 				// propagate over-consistency
 				for (ADStarWaypoint target : neighbors) {
 					this.updateWaypoint(source, target);
 				}
 			} else {
+				System.out.println("under-consistent");
+				// eliminate under-consistency
+				source.setV(Double.POSITIVE_INFINITY);
+				// expand implicitly adds the expanded waypoint to the expanded set
+				this.removeExpanded(source);
+				this.updateSets(source);
 				// propagate under-consistency
 				for (ADStarWaypoint target : neighbors) {
 					// find target that depends on under-consistent source
@@ -311,5 +338,177 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		
 		this.connectPlan(this.getGoal());
 	}
+	
+	/**
+	 * Terminates this AD* planner.
+	 * 
+	 * @see DynamicPlanner#terminate()
+	 */
+	@Override
+	public void terminate() {
+		this.terminated = true;
+	}
+	
+	/**
+	 * Indicates whether or not this AD* planner has terminated.
+	 * 
+	 * @return true if this AD* planner has terminated, false otherwise
+	 * 
+	 * @see DynamicPlanner#hasTerminated()
+	 */
+	@Override
+	public boolean hasTerminated() {
+		return this.terminated;
+	}
+	
+	/**
+	 * Repairs an AD* plan in case of dynamic changes.
+	 */
+	protected void repair() {
+		// TODO: determine and repair affected legs and target waypoints
+		ADStarWaypoint target = this.getStart();
+		if (!this.getStart().equals(target)) {
+			this.repair(target);
+			this.updateSets(target);
+		}
+	}
+	
+	/**
+	 * Sets the significant change threshold of this AD* planner.
+	 * 
+	 * @param significantChange the signficant change threshold of this AD*
+	 *                          planner
+	 */
+	public void setSignificantChange(double significantChange) {
+		this.significantChange = significantChange;
+	}
+	
+	/**
+	 * Indicates whether or or not this AD* planner has a significant dynamic
+	 * change.
+	 * 
+	 * @return true if this AD* planner has a significant dynamic change,
+	 *         false otherwise
+	 *
+	 * @see DynamicPlanner#hasSignificantChange()
+	 */
+	@Override
+	public boolean hasSignificantChange() {
+		return this.hasSignificantChange;
+	}
+	
+	/**
+	 * Improves an AD* plan incrementally.
+	 */
+	@Override
+	protected void improve(int partIndex) {
+		this.backup(partIndex);
+
+		// determine significant change
+		if (this.hasSignificantChange()) {
+			// TODO: implement significant change strategy
+			// increase e or re-plan from scratch
+		} else if (!this.isDeflated()) {
+			this.deflate();
+		}
+		
+		this.restore(partIndex);
+		
+		this.compute();
+		this.revisePlan(this.createTrajectory());
+	}
+	
+	/**
+	 * Elaborates an AD* plan
+	 * 
+	 */
+	@Override
+	protected void elaborate(int partIndex) {
+		while (!this.isDeflated() && !this.hasTerminated()) {
+			this.repair();
+			this.improve(partIndex);
+		}
+	}
+	
+	@Override
+	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
+		// TODO: if index affected by change (and all subsequent indices)
+		// if (this.isAffected) {
+		return super.planPart(origin, destination, etd, partIndex);
+		//}
+	}
+	
+	/**
+	 * Plans a trajectory from an origin to a destination at a specified
+	 * estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination with
+	 *         the estimated time of departure
+	 * 
+	 * @see ARAStarPlanner#plan(Position, Position, ZonedDateTime)
+	 */
+	@Override
+	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		this.initBackups(1);
+		Trajectory trajectory = new Trajectory();
+		
+		while (!this.hasTerminated()) {
+			trajectory = this.planPart(origin, destination, etd, 0);
+			// TODO: wait for changes here
+			/*
+			try {
+				this.wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			*/
+			this.terminate();
+		}
+		
+		this.revisePlan(trajectory);
+		return trajectory;
+	}
+	
+	/**
+	 * Plans a trajectory from an origin to a destination along waypoints at a
+	 * specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param waypoints the waypoints in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination along
+	 *         the waypoints with the estimated time of departure
+	 * 
+	 * @see ARAStarPlanner#plan(Position, Position, List, ZonedDateTime)
+	 */
+	@Override
+	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+		Trajectory trajectory = new Trajectory();
+		
+		while (!this.hasTerminated()) {
+			trajectory = super.plan(origin, destination, waypoints, etd);
+			// TODO: wait for changes here (iterating all parts or just from the affected)
+			/*
+			try {
+				this.wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			*/
+			this.terminate();
+		}
+		
+		return trajectory;
+	}
+	
+	protected void suspend() {}
+	
+	protected void resume() {}
 	
 }

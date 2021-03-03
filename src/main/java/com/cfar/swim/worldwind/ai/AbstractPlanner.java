@@ -64,6 +64,9 @@ public abstract class AbstractPlanner implements Planner {
 	/** the plan revision listeners of this abstract planner */
 	private final List<PlanRevisionListener> planRevisionListeners = new LinkedList<>();
 	
+	/** indicates whether or not revision notifications are enabled */
+	private boolean revisionsEnabled = true;
+	
 	/**
 	 * Constructs a motion planner with a specified aircraft and environment.
 	 * 
@@ -181,9 +184,25 @@ public abstract class AbstractPlanner implements Planner {
 	 * @param trajectory the revised trajectory
 	 */
 	protected void revisePlan(Trajectory trajectory) {
-		for (PlanRevisionListener listener : this.planRevisionListeners) {
-			listener.revisePlan(trajectory);
+		if (this.revisionsEnabled) {
+			for (PlanRevisionListener listener : this.planRevisionListeners) {
+				listener.revisePlan(trajectory);
+			}
 		}
+	}
+	
+	/**
+	 * Enables plan revision notification.
+	 */
+	protected void enableRevisions() {
+		this.revisionsEnabled = true;
+	}
+	
+	/**
+	 * Disables plan revision notification.
+	 */
+	protected void disableRevisions() {
+		this.revisionsEnabled = false;
 	}
 	
 	/**

@@ -103,12 +103,21 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 				this.getCostPolicy(), this.getRiskPolicy());
 		double targetG = source.getG() + cost;
 		
+		// consider expansion cost and break ties with travel time
+		boolean straight = (straightTargetG < targetG);
+		boolean improvedStraightCost = (straightTargetG < target.getG());
+		boolean equalStraightCost = (straightTargetG == target.getG());
+		boolean improvedStraightTime = (target.hasEto() && straightEnd.isBefore(target.getEto()));
+		boolean improvedCost = (targetG < target.getG());
+		boolean equalCost = (targetG == target.getG());
+		boolean improvedTime = (target.hasEto() && end.isBefore(target.getEto()));
+		
 		// take the better of the two trajectories
-		if ((straightTargetG < targetG) && (straightTargetG < target.getG())) {
+		if (straight && (improvedStraightCost || (equalStraightCost && improvedStraightTime))) {
 			target.setParent(parent);
 			target.setG(straightTargetG);
 			target.setEto(straightEnd);
-		} else if (targetG < target.getG()) {
+		} else if (improvedCost || (equalCost && improvedTime)) {
 			target.setParent(source);
 			target.setG(targetG);
 			target.setEto(end);

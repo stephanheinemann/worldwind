@@ -117,6 +117,7 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @return true if this AD* waypoint is consistent, false otherwise
 	 */
 	public boolean isConsistent() {
+		// TODO: consistency needs to consider ETOs - look ahead ETOs required
 		return this.getG() == this.getV();
 	}
 	
@@ -152,6 +153,7 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @see #isConsistent()
 	 */
 	public void makeConsistent() {
+		// TODO: consistency needs to consider ETOs - look ahead ETOs required
 		this.setV(this.getG());
 	}
 	
