@@ -57,7 +57,7 @@ import gov.nasa.worldwind.render.Path;
 public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 
 	/** indicates whether or or not this AD* planner has terminated */
-	volatile private boolean terminated = false;
+	private boolean terminated = false;
 	
 	/** indicates whether or or not this AD* planner has a significant dynamic change */
 	private boolean hasSignificantChange = false;
@@ -327,7 +327,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 				this.updateSets(source);
 				// propagate under-consistency
 				for (ADStarWaypoint target : neighbors) {
-					// find target that depends on under-consistent source
+					// find targets that depend on under-consistent source
 					if (target.getParent().equals(source)) {
 						this.repair(target);
 						this.updateSets(target);
@@ -345,8 +345,9 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * @see DynamicPlanner#terminate()
 	 */
 	@Override
-	public void terminate() {
+	public synchronized void terminate() {
 		this.terminated = true;
+		this.notifyAll();
 	}
 	
 	/**
@@ -357,7 +358,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * @see DynamicPlanner#hasTerminated()
 	 */
 	@Override
-	public boolean hasTerminated() {
+	public synchronized boolean hasTerminated() {
 		return this.terminated;
 	}
 	
@@ -458,15 +459,8 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		
 		while (!this.hasTerminated()) {
 			trajectory = this.planPart(origin, destination, etd, 0);
-			// TODO: wait for changes here
-			/*
-			try {
-				this.wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			*/
-			this.terminate();
+			// wait for termination or changes
+			this.suspend();
 		}
 		
 		this.revisePlan(trajectory);
@@ -493,22 +487,22 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		
 		while (!this.hasTerminated()) {
 			trajectory = super.plan(origin, destination, waypoints, etd);
-			// TODO: wait for changes here (iterating all parts or just from the affected)
-			/*
-			try {
-				this.wait();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			*/
-			this.terminate();
+			// wait for termination or changes
+			this.suspend();
 		}
 		
 		return trajectory;
 	}
 	
-	protected void suspend() {}
-	
-	protected void resume() {}
+	/**
+	 * Suspends this AD* planner until termination or context changes occur.
+	 */
+	protected synchronized void suspend() {
+		try {
+			this.wait();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
 	
 }
