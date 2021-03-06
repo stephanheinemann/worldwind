@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.session;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.connections.SwimConnection;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.registries.Specification;
 
@@ -55,7 +56,9 @@ public class Setup {
 	
 	/** the datalink specification of this setup */
 	Specification<Datalink> datalinkSpecification;
-	// ...
+	
+	/** the SWIM connection specification of this setup */
+	Specification<SwimConnection> swimConnectionSpecification;
 	
 	/**
 	 * Gets the aircraft specification of this setup.
@@ -85,7 +88,7 @@ public class Setup {
 	}
 	
 	/**
-	 * Sets the environment specification of this setup
+	 * Sets the environment specification of this setup.
 	 * 
 	 * @param environmentSpecification the environment specification to be set
 	 */
@@ -103,7 +106,7 @@ public class Setup {
 	}
 	
 	/**
-	 * Sets the planner specification of this setup
+	 * Sets the planner specification of this setup.
 	 * 
 	 * @param plannerSpecification the planner specification to be set
 	 */
@@ -121,12 +124,30 @@ public class Setup {
 	}
 	
 	/**
-	 * Sets the datalink specification of this setup
+	 * Sets the datalink specification of this setup.
 	 * 
 	 * @param datalinkSpecification the datalink specification to be set
 	 */
 	public void setDatalinkSpecification(Specification<Datalink> datalinkSpecification) {
 		this.datalinkSpecification = datalinkSpecification;
+	}
+	
+	/**
+	 * Gets the SWIM connection specification of this setup.
+	 * 
+	 * @return the SWIM connection specification of this setup
+	 */
+	public Specification<SwimConnection> getSwimConnectionSpecification() {
+		return this.swimConnectionSpecification;
+	}
+	
+	/**
+	 * Sets the SWIM connection specification of this setup.
+	 * 
+	 * @param swimConnectionSpecification the SWIM connection specification to be set
+	 */
+	public void setSwimConnectionSpecification(Specification<SwimConnection> swimConnectionSpecification) {
+		this.swimConnectionSpecification = swimConnectionSpecification;
 	}
 	
 }

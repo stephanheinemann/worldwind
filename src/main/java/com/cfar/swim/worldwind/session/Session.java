@@ -39,6 +39,7 @@ import java.util.Set;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.connections.SwimConnection;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Registry;
@@ -48,7 +49,11 @@ import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
 import com.cfar.swim.worldwind.registries.aircraft.IrisProperties;
 import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
+import com.cfar.swim.worldwind.registries.connections.FileSwimConnectionProperties;
+import com.cfar.swim.worldwind.registries.connections.LiveSwimConnectionProperties;
 import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
+import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionProperties;
+import com.cfar.swim.worldwind.registries.connections.SwimConnectionFactory;
 import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
@@ -119,6 +124,12 @@ public class Session implements Identifiable {
 	/** the datalink factory of this session */
 	private DatalinkFactory datalinkFactory = new DatalinkFactory();
 	
+	/** the SWIM connection registry of this session */
+	private Registry<SwimConnection> swimConnectionRegistry = new Registry<>();
+	
+	/** the SWIM connection factory of this session */
+	private SwimConnectionFactory swimConnectionFactory = new SwimConnectionFactory();
+	
 	/** the setup of this session */
 	private Setup setup;
 	
@@ -161,16 +172,19 @@ public class Session implements Identifiable {
 		
 		this.clearScenarios();
 		
+		// aircraft
 		this.aircraftRegistry.clearSpecifications();
 		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_IRIS_ID, new IrisProperties()));
 		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_A320_ID, new A320Properties()));
 		
+		// environments
 		this.environmentRegistry.clearSpecifications();
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_GRID_ID, new PlanningGridProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		
+		// planners
 		this.plannerRegistry.clearSpecifications();
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAS_ID, new ForwardAStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties()));
@@ -178,11 +192,16 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADS_ID, new ADStarProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
+		// datalinks
 		this.datalinkRegistry.clearSpecifications();
 		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.DATALINK_DRONEKIT, new DronekitDatalinkProperties()));
 		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.DATALINK_SIMULATED, new SimulatedDatalinkProperties()));
 		
-		// TODO: complete registries (SWIM setup)
+		// SWIM connections
+		this.swimConnectionRegistry.clearSpecifications();
+		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_FILE, new FileSwimConnectionProperties()));
+		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_SIMULATED, new SimulatedSwimConnectionProperties()));
+		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_LIVE, new LiveSwimConnectionProperties()));
 		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
@@ -190,6 +209,7 @@ public class Session implements Identifiable {
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
+		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.SWIM_FILE));
 	}
 	
 	/**
@@ -523,6 +543,47 @@ public class Session implements Identifiable {
 	public Factory<Datalink> getDatalinkFactory() {
 		return this.datalinkFactory;
 	}
+	
+	/**
+	 * Gets the SWIM connection specifications of this session.
+	 * 
+	 * @return the SWIM connection specifications of this session
+	 */
+	public Set<Specification<SwimConnection>> getSwimConnectionSpecifications() {
+		return this.swimConnectionRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified SWIM connection specification from this session.
+	 * 
+	 * @param id the SWiM connection specification identifier
+	 * 
+	 * @return the identified SWIM connection specification, or null otherwise
+	 */
+	public Specification<SwimConnection> getSwimConnectionSpecification(String id) {
+		Specification<SwimConnection> swimConnectionSpec = null;
+		Optional<Specification<SwimConnection>> optSpec =
+				this.swimConnectionRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			swimConnectionSpec = optSpec.get();
+		}
+		
+		return swimConnectionSpec;
+	}
+	
+	/**
+	 * Gets the SWIM connection factory of this session.
+	 * 
+	 * @return the SWIM connection factory of this session
+	 */
+	public Factory<SwimConnection> getSwimConnectionFactory() {
+		return this.swimConnectionFactory;
+	}
+	
 	
 	/**
 	 * Gets the setup of this session.

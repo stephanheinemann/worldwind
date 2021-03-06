@@ -27,10 +27,36 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai;
+package com.cfar.swim.worldwind.registries.connections;
 
-public interface DynamicCostListener {
+import com.cfar.swim.worldwind.connections.SwimConnection;
+import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.registries.Specification;
 
-	// notify(), notify(Obstacle), notify(significant)...
-	// notifyCostChange()
+/**
+ * Realizes a SWIM connection factory to create SWIM connections according to
+ * customized SWIM connection specifications.
+ * 
+ * @author Stephan Heinemann
+ * 
+ * @see Factory
+ * @see Specification
+ */
+public class SwimConnectionFactory implements Factory<SwimConnection> {
+	
+	/**
+	 * Creates a new SWIM Connection according to a customized SWIM connection
+	 * specification.
+	 * 
+	 * @param specification the customized SWIM connection specification
+	 * 
+	 * @return the created SWIM connection
+	 * 
+	 * @see Factory#createInstance(Specification)
+	 */
+	@Override
+	public SwimConnection createInstance(Specification<SwimConnection> specification) {
+		return null;
+	}
+
 }

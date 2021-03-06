@@ -27,10 +27,35 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai;
+package com.cfar.swim.worldwind.registries.connections;
 
-public interface DynamicCostListener {
+import com.cfar.swim.worldwind.connections.SwimConnection;
+import com.cfar.swim.worldwind.registries.Properties;
 
-	// notify(), notify(Obstacle), notify(significant)...
-	// notifyCostChange()
+/**
+ * Abstracts SWIM connection properties applicable to all SWIM connections.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public abstract class SwimConnectionProperties implements Properties<SwimConnection> {
+
+	/**
+	 * Clones this SWIM connection properties bean.
+	 * 
+	 * @return a clone of this SWIM connection properties bean
+	 * 
+	 * @see Properties#clone()
+	 */
+	@Override
+	public SwimConnectionProperties clone() {
+		SwimConnectionProperties clone = null;
+		try {
+			clone = (SwimConnectionProperties) super.clone();
+		} catch (CloneNotSupportedException e) {
+			e.printStackTrace();
+		}
+		return clone;
+	}
+	
 }

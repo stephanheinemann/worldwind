@@ -27,10 +27,37 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai;
+package com.cfar.swim.worldwind.registries.connections;
 
-public interface DynamicCostListener {
+import java.net.URI;
 
-	// notify(), notify(Obstacle), notify(significant)...
-	// notifyCostChange()
+/**
+ * Realizes the properties bean of a SWIM file connection.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public class FileSwimConnectionProperties extends SwimConnectionProperties {
+
+	/** the resource directory of this SWIM file connection properties bean */
+	private URI resourceDirectory = URI.create("classpath:xml/");
+
+	/**
+	 * Gets the resource directory of this SWIM file connection properties bean.
+	 * 
+	 * @return the resource directory of this SWIM file connection properties bean
+	 */
+	public URI getResourceDirectory() {
+		return this.resourceDirectory;
+	}
+
+	/**
+	 * Sets the resource directory of this SWIM file connection properties bean.
+	 * 
+	 * @param resourceDirectory the resource directory to be set
+	 */
+	public void setResourceDirectory(URI resourceDirectory) {
+		this.resourceDirectory = resourceDirectory;
+	}
+
 }

@@ -79,7 +79,14 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of a dronekit datalink */
 	public static final String DATALINK_DRONEKIT = "Dronekit Datalink";
 	
-	// TODO: SWIM ...
+	/** the identifier of a SWIM file */
+	public static final String SWIM_FILE = "SWIM File";
+	
+	/** the identifier of a simulated SWIM connection */
+	public static final String SWIM_SIMULATED = "Simulated SWIM";
+	
+	/** the identifier of a live SWIM connection */
+	public static final String SWIM_LIVE = "Live SWIM";
 	
 	/** the identifier of this specification */
 	private final String id;

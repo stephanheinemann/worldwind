@@ -27,10 +27,13 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.ai;
+package com.cfar.swim.worldwind.registries.connections;
 
-public interface DynamicCostListener {
-
-	// notify(), notify(Obstacle), notify(significant)...
-	// notifyCostChange()
+/**
+ * Realizes the properties bean of a live SWIM connection.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public class LiveSwimConnectionProperties extends SwimConnectionProperties {
 }
