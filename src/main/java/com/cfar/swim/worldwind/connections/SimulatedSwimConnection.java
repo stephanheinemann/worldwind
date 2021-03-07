@@ -29,5 +29,67 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.net.URI;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
 public class SimulatedSwimConnection extends SwimConnection {
+
+	/** the resource directory of this simulated SWIM connection */
+	private URI resourceDirectory = URI.create("classpath:xml/iwxxm/");
+	
+	/** the update period of this simulated SWIM connection */
+	private long updatePeriod = 5000; // ms
+	
+	/** the update probability of this simulated SWIM connection */
+	private float updateProbability = 0.5f;
+	
+	/** the update quantity of this simulated SWIM connection */
+	private int updateQuantity = 1;
+	
+	/** the executor of this simulated SWIM connection */
+	private ScheduledExecutorService executor = null;
+	
+	public SimulatedSwimConnection() {}
+	
+	public SimulatedSwimConnection(
+			URI resourceDirectory,
+			long updatePeriod,
+			float updateProbability,
+			int updateQuantity) {
+		
+		this.resourceDirectory = resourceDirectory;
+		this.updatePeriod = updatePeriod;
+		this.updateProbability = updateProbability;
+		this.updateQuantity = updateQuantity;
+		
+		// load updateQuantity files to be updated
+	}
+	
+	
+	@Override
+	public void connect() {
+		this.executor = Executors.newSingleThreadScheduledExecutor();
+		this.executor.scheduleAtFixedRate(new Runnable() {
+
+			@Override
+			public void run() {
+				System.out.println("running simulated SWIM connection");
+				// load files (IWXXM loader)
+				// add / enable / disable obstacles in associated scenario
+			}}, 0, this.updatePeriod, TimeUnit.MILLISECONDS);
+	}
+
+	@Override
+	public void disconnect() {
+		this.executor.shutdown();
+		// TODO: possibly await termination
+	}
+
+	@Override
+	public boolean isConnected() {
+		return !((null == this.executor) || this.executor.isShutdown());
+	}
+	
 }

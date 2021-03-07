@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
+import com.cfar.swim.worldwind.connections.LiveSwimConnection;
+import com.cfar.swim.worldwind.connections.SimulatedSwimConnection;
 import com.cfar.swim.worldwind.connections.SwimConnection;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -45,7 +47,7 @@ import com.cfar.swim.worldwind.registries.Specification;
 public class SwimConnectionFactory implements Factory<SwimConnection> {
 	
 	/**
-	 * Creates a new SWIM Connection according to a customized SWIM connection
+	 * Creates a new SWIM connection according to a customized SWIM connection
 	 * specification.
 	 * 
 	 * @param specification the customized SWIM connection specification
@@ -56,7 +58,22 @@ public class SwimConnectionFactory implements Factory<SwimConnection> {
 	 */
 	@Override
 	public SwimConnection createInstance(Specification<SwimConnection> specification) {
-		return null;
+		SwimConnection connection = null;
+		
+		if (specification.getId().equals(Specification.SWIM_SIMULATED)) {
+			SimulatedSwimConnectionProperties properties = (SimulatedSwimConnectionProperties) specification.getProperties();
+			connection = new SimulatedSwimConnection(
+					properties.getResourceDirectory(),
+					properties.getUpdatePeriod(),
+					properties.getUpdateProbability(),
+					properties.getUpdateQuantity());
+		} else if (specification.getId().equals(Specification.SWIM_LIVE)) {			
+			LiveSwimConnectionProperties properties = (LiveSwimConnectionProperties) specification.getProperties();
+			connection = new LiveSwimConnection();
+			// TODO: set properties for live SWIM connection
+		}
+		
+		return connection;
 	}
 
 }

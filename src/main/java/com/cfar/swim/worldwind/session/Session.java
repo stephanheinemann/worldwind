@@ -49,7 +49,6 @@ import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
 import com.cfar.swim.worldwind.registries.aircraft.IrisProperties;
 import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
-import com.cfar.swim.worldwind.registries.connections.FileSwimConnectionProperties;
 import com.cfar.swim.worldwind.registries.connections.LiveSwimConnectionProperties;
 import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
 import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionProperties;
@@ -199,9 +198,8 @@ public class Session implements Identifiable {
 		
 		// SWIM connections
 		this.swimConnectionRegistry.clearSpecifications();
-		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_FILE, new FileSwimConnectionProperties()));
-		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_SIMULATED, new SimulatedSwimConnectionProperties()));
 		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_LIVE, new LiveSwimConnectionProperties()));
+		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_SIMULATED, new SimulatedSwimConnectionProperties()));
 		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
@@ -209,7 +207,7 @@ public class Session implements Identifiable {
 		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
-		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.SWIM_FILE));
+		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.SWIM_SIMULATED));
 	}
 	
 	/**
@@ -604,7 +602,7 @@ public class Session implements Identifiable {
 	}
 	
 	/**
-	 * Indicates whether or not this session equals another session based on
+	 * Determines whether or not this session equals another session based on
 	 * their identifiers.
 	 * 
 	 * @param o the other session
@@ -615,10 +613,12 @@ public class Session implements Identifiable {
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public boolean equals(Object o) {
+	public final boolean equals(Object o) {
 		boolean equals = false;
 		
-		if (o instanceof Session) {
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof Session)) {
 			equals = this.id.equals(((Session) o).id);
 		}
 	
@@ -633,7 +633,7 @@ public class Session implements Identifiable {
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return this.id.hashCode();
 	}
 	

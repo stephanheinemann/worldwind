@@ -362,7 +362,7 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	}
 	
 	/**
-	 * Indicates whether or not this waypoint equals another waypoint based on
+	 * Determines whether or not this waypoint equals another waypoint based on
 	 * their precision position.
 	 * 
 	 * @param o the other waypoint
@@ -373,10 +373,12 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public boolean equals(Object o) {
+	public final boolean equals(Object o) {
 		boolean equals = false;
 		
-		if ((null != o) && (o instanceof Waypoint)) {
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof Waypoint)) {
 			/*
 			 * Avoid visiting existing positions although a 4D waypoint may
 			 * very well revisit an existing position to avoid higher costs.
@@ -403,7 +405,7 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return this.position.hashCode();
 	}
 	

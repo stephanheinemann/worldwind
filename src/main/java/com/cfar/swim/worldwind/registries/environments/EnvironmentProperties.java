@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.environments;
 
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.registries.Properties;
 
@@ -119,6 +121,47 @@ public abstract class EnvironmentProperties implements Properties<Environment> {
 			e.printStackTrace();
 		}
 		return clone;
+	}
+	
+	/**
+	 * Determines whether or not this environment properties bean equals
+	 * another environment properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other environment properties bean
+	 * 
+	 * @return true, if the aggregated properties of this environment
+	 *         properties bean equal the aggregated properties of the other
+	 *         environment properties bean, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof EnvironmentProperties)) {
+			EnvironmentProperties ep = (EnvironmentProperties) o;
+			equals = (this.ceiling == ep.ceiling) && (this.floor == ep.floor);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this environment properties bean based on its
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this environment properties bean based on its
+	 *         aggregated properties
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.ceiling, this.floor);
 	}
 	
 }

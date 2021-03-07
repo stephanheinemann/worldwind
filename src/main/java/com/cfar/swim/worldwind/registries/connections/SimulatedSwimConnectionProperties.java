@@ -29,14 +29,20 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
+import java.net.URI;
+import java.util.Objects;
+
 /**
  * Realizes the properties bean of a simulation SWIM connection.
  * 
  * @author Stephan Heinemann
  *
  */
-public class SimulatedSwimConnectionProperties extends FileSwimConnectionProperties {
+public class SimulatedSwimConnectionProperties extends SwimConnectionProperties {
 
+	/** the resource directory of this simulated SWIM connection properties bean */
+	private URI resourceDirectory = URI.create("classpath:xml/iwxxm/");
+	
 	/** the update period of this simulated SWIM connection properties bean */
 	private long updatePeriod = 5000; // ms
 	
@@ -45,6 +51,24 @@ public class SimulatedSwimConnectionProperties extends FileSwimConnectionPropert
 	
 	/** the update quantity of this simulated SWIM connection properties bean */
 	private int updateQuantity = 1;
+	
+	/**
+	 * Gets the resource directory of this simulated SWIM connection properties bean.
+	 * 
+	 * @return the resource directory of this simulated SWIM connection properties bean
+	 */
+	public URI getResourceDirectory() {
+		return this.resourceDirectory;
+	}
+
+	/**
+	 * Sets the resource directory of this simulated SWIM connection properties bean.
+	 * 
+	 * @param resourceDirectory the resource directory to be set
+	 */
+	public void setResourceDirectory(URI resourceDirectory) {
+		this.resourceDirectory = resourceDirectory;
+	}
 	
 	/**
 	 * Gets the update period of this simulated SWIM connection properties bean.
@@ -98,6 +122,53 @@ public class SimulatedSwimConnectionProperties extends FileSwimConnectionPropert
 	 */
 	public void setUpdateQuantity(int updateQuantity) {
 		this.updateQuantity = updateQuantity;
+	}
+	
+	/**
+	 * Determines whether or not this simulated SWIM connection properties bean
+	 * equals another simulated SWIM connection properties bean based on their
+	 * aggregated properties.
+	 * 
+	 * @param o the other simulated SWIM connection properties bean
+	 * 
+	 * @return true, if the aggregated properties of this simulated SWIM
+	 *         connection properties bean equal the aggregated properties of
+	 *         the other simulated SWIM connection properties bean,
+	 *         false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	public final boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof SimulatedSwimConnectionProperties)) {
+			SimulatedSwimConnectionProperties sscp = (SimulatedSwimConnectionProperties) o;
+			equals = (this.resourceDirectory.equals(sscp.resourceDirectory))
+					&& (this.updatePeriod == sscp.updatePeriod)
+					&& (this.updateProbability == sscp.updateProbability)
+					&& (this.updateQuantity == sscp.updateQuantity);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this simulated SWIM connection properties bean
+	 * based on its aggregated properties.
+	 * 
+	 * @return the hash code of this simulated SWIM connection properties bean
+	 *         based on its aggregated properties
+	 * 
+	 * @see Object#hashCode()
+	 */
+	public final int hashCode() {
+		return Objects.hash(
+				this.resourceDirectory,
+				this.updatePeriod,
+				this.updateProbability,
+				this.updateQuantity);
 	}
 	
 }

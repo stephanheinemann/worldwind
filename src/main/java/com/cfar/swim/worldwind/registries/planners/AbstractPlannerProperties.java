@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.Properties;
@@ -132,6 +134,48 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 			e.printStackTrace();
 		}
 		return clone;
+	}
+	
+	/**
+	 * Determines whether or not this abstract planner properties bean equals
+	 * another abstract planner properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other abstract planner properties bean
+	 * 
+	 * @return true, if the aggregated properties of this abstract planner
+	 *         properties bean equal the aggregated properties of the other
+	 *         abstract planner properties bean, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof AbstractPlannerProperties)) {
+			AbstractPlannerProperties fasp = (AbstractPlannerProperties) o;
+			equals = (this.costPolicy.equals(fasp.costPolicy))
+					&& (this.riskPolicy.equals(fasp.riskPolicy));
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this abstract planner properties bean based on its
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this abstract planner properties bean based on
+	 *         its aggregated properties
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.costPolicy, this.riskPolicy);
 	}
 	
 }

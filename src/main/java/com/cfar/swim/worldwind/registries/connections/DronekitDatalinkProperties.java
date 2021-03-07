@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
+import java.util.Objects;
 
 /**
  * Realizes the properties bean of a dronekit datalink.
@@ -92,6 +93,45 @@ public class DronekitDatalinkProperties extends DatalinkProperties {
 	 */
 	public void setPort(int port) {
 		this.port = port;
+	}
+	
+	/**
+	 * Determines whether or not this dronekit datalink properties bean equals
+	 * another dronekit datalink properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other dronekit datalink properties bean
+	 * 
+	 * @return true, if the aggregated properties of this dronekit datalink
+	 *         properties bean equal the aggregated properties of the other
+	 *         dronekit datalink properties bean, false otherwise
+	 * 
+	 * @see DatalinkProperties#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals && (o instanceof DronekitDatalinkProperties)) {
+			DronekitDatalinkProperties ddlp = (DronekitDatalinkProperties) o;
+			equals = (this.host.equals(ddlp.host) && (this.port == ddlp.port));
+		}
+			
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this dronekit datalink properties bean based on
+	 * its aggregated properties.
+	 * 
+	 * @return the hash code of this dronekit datalink properties bean based on
+	 *         its aggregated properties
+	 * 
+	 * @see DatalinkProperties#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(this.getDownlinkPeriod(), this.host, this.port);
 	}
 	
 }

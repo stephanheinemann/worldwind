@@ -57,5 +57,43 @@ public class ForwardAStarProperties extends AbstractPlannerProperties {
 	public ForwardAStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
 	}
+	
+	/**
+	 * Determines whether or not this forward A* planner properties bean equals
+	 * another forward A* planner properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other forward A* planner properties bean
+	 * 
+	 * @return true, if the aggregated properties of this forward A* planner
+	 *         properties bean equal the aggregated properties of the other
+	 *         forward A* planner properties bean, false otherwise
+	 * 
+	 * @see AbstractPlanner#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals) {
+			equals = (this.getClass() == o.getClass());
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this forward A* planner properties bean based on
+	 * its aggregated properties.
+	 * 
+	 * @return the hash code of this forward A* planner properties bean based
+	 *         on its aggregated properties
+	 * 
+	 * @see AbstractPlanner#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
 
 }

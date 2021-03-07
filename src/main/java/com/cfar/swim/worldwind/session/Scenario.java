@@ -49,6 +49,8 @@ import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.SimulatedDatalink;
+import com.cfar.swim.worldwind.connections.SimulatedSwimConnection;
+import com.cfar.swim.worldwind.connections.SwimConnection;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -112,6 +114,9 @@ public class Scenario implements Identifiable, Enableable {
 	/** the datalink of this scenario */
 	private Datalink datalink;
 	
+	/** thie SWIM connection of this scenario */
+	private SwimConnection swimConnection;
+	
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
 	
@@ -162,6 +167,7 @@ public class Scenario implements Identifiable, Enableable {
 		this.waypoints = new ArrayList<Waypoint>();
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
 		this.setDatalink(new SimulatedDatalink());
+		this.setSwimConnection(new SimulatedSwimConnection());
 		this.setTrajectory(new Trajectory());
 		this.obstacles = new HashSet<Obstacle>();
 	}
@@ -818,7 +824,7 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Sets the planner of this scenario.
 	 * 
-	 * @param planner the planner of this scenario
+	 * @param planner the planner to be set
 	 * 
 	 * @throws IllegalArgumentException if planner is null
 	 */
@@ -842,13 +848,37 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Sets the datalink of this scenario.
 	 * 
-	 * @param datalink the datalink of this scenario
+	 * @param datalink the datalink to be set
 	 * 
-	 * @throws IllegalArgumentException if planner is null
+	 * @throws IllegalArgumentException if datalink is null
 	 */
 	public void setDatalink(Datalink datalink) {
 		if (null != datalink) {
 			this.datalink = datalink;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	/**
+	 * Gets the SWIM connection of this scenario.
+	 * 
+	 * @return the SWIM connection of this scenario
+	 */
+	public SwimConnection getSwimConnection() {
+		return this.swimConnection;
+	}
+
+	/**
+	 * Sets the SWIM connection of this scenario.
+	 * 
+	 * @param swimConnection the SWIM connection to be set
+	 * 
+	 * @throws IllegalArgumentException if swimConnection is null
+	 */
+	public void setSwimConnection(SwimConnection swimConnection) {
+		if (null != swimConnection) {
+			this.swimConnection = swimConnection;
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -1164,7 +1194,7 @@ public class Scenario implements Identifiable, Enableable {
 	}
 	
 	/**
-	 * Indicates whether or not this scenario equals another scenario based on
+	 * Determines whether or not this scenario equals another scenario based on
 	 * their identifiers.
 	 * 
 	 * @param o the other scenario
@@ -1175,10 +1205,12 @@ public class Scenario implements Identifiable, Enableable {
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public boolean equals(Object o) {
+	public final boolean equals(Object o) {
 		boolean equals = false;
 		
-		if (o instanceof Scenario) {
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof Scenario)) {
 			equals = this.id.equals(((Scenario) o).id);
 		}
 	
@@ -1193,7 +1225,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return this.id.hashCode();
 	}
 	

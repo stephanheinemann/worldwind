@@ -31,19 +31,15 @@ package com.cfar.swim.worldwind.connections;
 
 public abstract class SwimConnection implements Connection {
 
-	// TODO: types of SWIM data etc.
+	// TODO: types of SWIM data (AXXM, WXXM, FIXM, etc.)
 	
 	@Override
-	public void connect() {
-	}
+	public abstract void connect();
 
 	@Override
-	public void disconnect() {
-	}
+	public abstract void disconnect();
 
 	@Override
-	public boolean isConnected() {
-		return false;
-	}
+	public abstract boolean isConnected();
 	
 }
