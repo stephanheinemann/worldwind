@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.aircraft;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Iterator;
+import java.util.Objects;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 
@@ -524,6 +525,75 @@ public class Capabilities {
 	 */
 	public ZonedDateTime getEstimatedTime(Path path, Globe globe, ZonedDateTime start) {
 		return start.plus(this.getEstimatedDuration(path, globe));
+	}
+	
+	/**
+	 * Determines whether or not this capabilities bean equals another one
+	 * based on their aggregated capabilities.
+	 * 
+	 * @param the other capabilities bean
+	 * 
+	 * @return true if the aggregated capabilities of this capabilities bean
+	 *         equal the aggregated capabilities of the other one,
+	 *         false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof Capabilities)) {
+			Capabilities c = (Capabilities) o;
+			equals = (this.approachRateOfDescent == c.approachRateOfDescent)
+					&& (this.approachSpeed == c.approachSpeed)
+					&& (this.cruiseClimbSpeed == c.cruiseClimbSpeed)
+					&& (this.cruiseDescentSpeed == c.cruiseDescentSpeed)
+					&& (this.cruiseRateOfClimb == c.cruiseRateOfClimb)
+					&& (this.cruiseRateOfDescent == c.cruiseRateOfDescent)
+					&& (this.cruiseSpeed == c.cruiseSpeed)
+					&& (this.maximumAngleOfClimb.equals(c.maximumAngleOfClimb))
+					&& (this.maximumAngleOfClimbSpeed == c.maximumAngleOfClimbSpeed)
+					&& (this.maximumGlideSpeed == c.maximumGlideSpeed)
+					&& (this.maximumRateOfClimb == c.maximumRateOfClimb)
+					&& (this.maximumRateOfClimbSpeed == c.maximumRateOfClimbSpeed)
+					&& (this.maximumRateOfDescent == c.maximumRateOfDescent)
+					&& (this.maximumRateOfDescentSpeed == c.maximumRateOfDescentSpeed)
+					&& (this.maximumSpeed == c.maximumSpeed);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this capabilities bean based on its aggregated
+	 * capabilities.
+	 * 
+	 * @return the hash code of this capabilities bean based on its aggregated
+	 *         capabilities
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(
+				this.approachRateOfDescent,
+				this.approachSpeed,
+				this.cruiseClimbSpeed,
+				this.cruiseDescentSpeed,
+				this.cruiseRateOfClimb,
+				this.cruiseRateOfDescent,
+				this.cruiseSpeed,
+				this.maximumAngleOfClimb,
+				this.maximumAngleOfClimbSpeed,
+				this.maximumGlideSpeed,
+				this.maximumRateOfClimb,
+				this.maximumRateOfClimbSpeed,
+				this.maximumRateOfDescent,
+				this.maximumRateOfDescentSpeed,
+				this.maximumSpeed);
 	}
 	
 }

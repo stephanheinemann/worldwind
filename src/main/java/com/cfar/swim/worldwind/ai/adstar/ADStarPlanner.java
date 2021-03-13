@@ -42,7 +42,9 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Trajectory;
-
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.ADStarProperties;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -351,6 +353,15 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	}
 	
 	/**
+	 * Recycles this AD* planner.
+	 * 
+	 * @see DynamicPlanner#recycle()
+	 */
+	public synchronized void recycle() {
+		this.terminated = false;
+	}
+	
+	/**
 	 * Indicates whether or not this AD* planner has terminated.
 	 * 
 	 * @return true if this AD* planner has terminated, false otherwise
@@ -503,6 +514,34 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Determines whether or not this AD* planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this AD* planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof ADStarProperties)) {
+			ADStarProperties adsp = (ADStarProperties) specification.getProperties();
+			// TODO: add significant change property
+			matches = (this.getCostPolicy().equals(adsp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(adsp.getRiskPolicy()))
+					&& (this.getMinimumQuality() == adsp.getMinimumQuality())
+					&& (this.getMaximumQuality() == adsp.getMaximumQuality())
+					&& (this.getQualityImprovement() == adsp.getQualityImprovement()
+					&& (specification.getId().equals(Specification.PLANNER_ADS_ID)));
+		}
+		
+		return matches;
 	}
 	
 }

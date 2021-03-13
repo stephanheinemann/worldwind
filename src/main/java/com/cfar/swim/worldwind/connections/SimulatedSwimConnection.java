@@ -29,30 +29,64 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.io.File;
 import java.net.URI;
+import java.net.URL;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import javax.xml.bind.JAXBException;
+
+import com.cfar.swim.worldwind.data.SwimData;
+import com.cfar.swim.worldwind.iwxxm.IwxxmLoader;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionProperties;
+
+/**
+ * Realizes a simulated SWIM connection
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class SimulatedSwimConnection extends SwimConnection {
 
 	/** the resource directory of this simulated SWIM connection */
-	private URI resourceDirectory = URI.create("classpath:xml/iwxxm/");
+	private URI resourceDirectory; 
 	
 	/** the update period of this simulated SWIM connection */
-	private long updatePeriod = 5000; // ms
+	private long updatePeriod;
 	
 	/** the update probability of this simulated SWIM connection */
-	private float updateProbability = 0.5f;
+	private float updateProbability;
 	
 	/** the update quantity of this simulated SWIM connection */
-	private int updateQuantity = 1;
+	private int updateQuantity;
 	
 	/** the executor of this simulated SWIM connection */
-	private ScheduledExecutorService executor = null;
+	private ScheduledExecutorService executor;
 	
-	public SimulatedSwimConnection() {}
+	/**
+	 * Constructs a default simulated SWIM connection.
+	 */
+	public SimulatedSwimConnection() {
+		this.resourceDirectory = URI.create("classpath:xml/iwxxm/");
+		this.updatePeriod = 5000; // ms
+		this.updateProbability = 0.5f;
+		this.updateQuantity = 1;
+		this.executor = null;
+	}
 	
+	/**
+	 * Constructs a simulated SWIM connection with a specified resource
+	 * directory, update period, probability and quantity.
+	 * 
+	 * @param resourceDirectory the resource directory
+	 * @param updatePeriod the update period
+	 * @param updateProbability the update probability
+	 * @param updateQuantity the update quantity
+	 */
 	public SimulatedSwimConnection(
 			URI resourceDirectory,
 			long updatePeriod,
@@ -67,29 +101,96 @@ public class SimulatedSwimConnection extends SwimConnection {
 		// load updateQuantity files to be updated
 	}
 	
-	
+	/**
+	 * Connects this simulated SWIM connection.
+	 */
 	@Override
 	public void connect() {
-		this.executor = Executors.newSingleThreadScheduledExecutor();
-		this.executor.scheduleAtFixedRate(new Runnable() {
-
-			@Override
-			public void run() {
-				System.out.println("running simulated SWIM connection");
-				// load files (IWXXM loader)
-				// add / enable / disable obstacles in associated scenario
-			}}, 0, this.updatePeriod, TimeUnit.MILLISECONDS);
+		if (!this.isConnected()) {
+			this.executor = Executors.newSingleThreadScheduledExecutor();
+			this.executor.scheduleAtFixedRate(new Runnable() {
+	
+				@Override
+				public void run() {
+					System.out.println("running simulated SWIM connection");
+					
+					//resourceDirectory.toURL().getFile();
+					
+					//URL resourceURL = this.getClass().getClassLoader().getResource("/home/stephan/");
+					//System.out.println(resourceURL.getFile());
+					/*
+					File directory = new File("/home/stephan");
+					if (directory.isDirectory()) {
+						for (String filename : directory.list())
+							System.out.println(filename);
+					}
+					*/
+					
+					/*
+					try {
+						IwxxmLoader loader = new IwxxmLoader();
+					} catch (JAXBException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					*/
+					// load files (IWXXM loader)
+					// add / enable / disable obstacles in associated scenario
+					if (hasSubscribed(SwimData.IWXXM)) {
+						System.out.println("IWXXM has been subscribed");
+					}
+					// ...
+				}}, 0, this.updatePeriod, TimeUnit.MILLISECONDS);
+		}
 	}
-
+	
+	/**
+	 * Disconnects this simulated SWIM connection.
+	 */
 	@Override
 	public void disconnect() {
-		this.executor.shutdown();
-		// TODO: possibly await termination
+		if (this.isConnected()) {
+			this.executor.shutdown();
+			this.executor = null;
+		}
 	}
-
+	
+	/**
+	 * Determines whether or not this simulated SWIM connection is connected.
+	 * 
+	 * @return true if this simulated SWIM connection is connected,
+	 *         false otherwise
+	 */
 	@Override
 	public boolean isConnected() {
-		return !((null == this.executor) || this.executor.isShutdown());
+		return (null != this.executor);
+	}
+
+	/**
+	 * Determines whether or not this simulated SWIM connection matches a
+	 * specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this simulated SWIM connection matches the
+	 *         specification, false otherwise
+	 * 
+	 * @see SwimConnection#matches(Specification)
+	 */
+	@Override
+	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = super.matches(specification);
+		
+		if (matches && (specification.getProperties() instanceof SimulatedSwimConnectionProperties)) {
+			SimulatedSwimConnectionProperties sscp = (SimulatedSwimConnectionProperties) specification.getProperties();
+			matches = (this.resourceDirectory.equals(sscp.getResourceDirectory())
+					&& (this.updatePeriod == sscp.getUpdatePeriod())
+					&& (this.updateProbability == sscp.getUpdateProbability())
+					&& (this.updateQuantity == sscp.getUpdateQuantity()))
+					&& (specification.getId().equals(Specification.SWIM_SIMULATED));
+		}
+		
+		return matches;
 	}
 	
 }

@@ -33,6 +33,9 @@ import com.cfar.swim.droneconnect.Armed;
 import com.cfar.swim.droneconnect.DroneConnectGrpc;
 import com.cfar.swim.droneconnect.DroneConnectGrpc.DroneConnectBlockingStub;
 import com.cfar.swim.droneconnect.DroneConnectGrpc.DroneConnectStub;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
 import com.cfar.swim.droneconnect.Mode;
 import com.cfar.swim.droneconnect.Null;
 import com.cfar.swim.droneconnect.Safety;
@@ -428,6 +431,30 @@ public class DronekitDatalink extends Datalink {
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
+	}
+	
+	/**
+	 * Determines whether or not this dronekit datalink matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this dronekit datalink matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see Datalink#matches(Specification)
+	 */
+	@Override
+	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = super.matches(specification);
+		
+		if (matches && (specification.getProperties() instanceof DronekitDatalinkProperties)) {
+			DronekitDatalinkProperties ddlp = (DronekitDatalinkProperties) specification.getProperties();
+			matches = (this.host.equals(ddlp.getHost()))
+						&& (this.port == ddlp.getPort())
+						&& (specification.getId().equals(Specification.DATALINK_DRONEKIT));
+		}
+	
+		return matches;
 	}
 	
 }

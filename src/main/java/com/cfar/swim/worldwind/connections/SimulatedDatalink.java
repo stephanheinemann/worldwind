@@ -33,7 +33,8 @@ import java.util.Iterator;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
-
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Earth;
@@ -367,5 +368,22 @@ public class SimulatedDatalink extends Datalink {
 	public Angle getAircraftYaw() {
 		return Angle.ZERO;
 	}
-
+	
+	/**
+	 * Determines whether or not this simulated datalink matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this simulated datalink matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see Datalink#matches(Specification)
+	 */
+	@Override
+	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = super.matches(specification);
+		matches &= (specification.getId().equals(Specification.DATALINK_SIMULATED));
+		return matches;
+	}
+	
 }

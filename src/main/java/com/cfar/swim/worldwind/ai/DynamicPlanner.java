@@ -47,6 +47,11 @@ public interface DynamicPlanner extends Planner, DynamicCostListener {
 	public void terminate();
 	
 	/**
+	 * Recycles this dynamic planner.
+	 */
+	public void recycle();
+	
+	/**
 	 * Indicates whether or not this dynamic planner has terminated.
 	 * 
 	 * @return true if this dynamic planner has terminated, false otherwise

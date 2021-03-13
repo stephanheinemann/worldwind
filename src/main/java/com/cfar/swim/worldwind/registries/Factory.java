@@ -43,11 +43,31 @@ package com.cfar.swim.worldwind.registries;
 public interface Factory<Registree> {
 	
 	/**
-	 * Creates an item according to a customized specification.
+	 * Gets the specification of this factory.
 	 * 
-	 * @param specification the customized specification
+	 * @return the specification of this factory
+	 */
+	public Specification<Registree> getSpecification();
+	
+	/**
+	 * Sets the specification of this factory.
+	 * 
+	 * @param specification the specification to be set
+	 */
+	public void setSpecification(Specification<Registree> specification);
+	
+	/**
+	 * Determines whether or not this factory has a specification.
+	 * 
+	 * @return true if this factory has a specification, false otherwise
+	 */
+	public boolean hasSpecification();
+	
+	/**
+	 * Creates an item according to the specification of this factory.
+	 * 
 	 * @return the created item
 	 */
-	public Registree createInstance(Specification<Registree> specification);
+	public Registree createInstance();
 
 }

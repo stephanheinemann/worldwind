@@ -37,6 +37,7 @@ import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -47,7 +48,7 @@ import gov.nasa.worldwind.geom.Position;
  * @author Stephan Heinemann
  *
  */
-public interface Planner {
+public interface Planner extends FactoryProduct {
 
 	/**
 	 * Gets the aircraft of this planner.

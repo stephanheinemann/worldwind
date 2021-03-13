@@ -32,7 +32,8 @@ package com.cfar.swim.worldwind.registries.connections;
 import com.cfar.swim.worldwind.connections.LiveSwimConnection;
 import com.cfar.swim.worldwind.connections.SimulatedSwimConnection;
 import com.cfar.swim.worldwind.connections.SwimConnection;
-import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.data.SwimData;
+import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 
 /**
@@ -41,36 +42,79 @@ import com.cfar.swim.worldwind.registries.Specification;
  * 
  * @author Stephan Heinemann
  * 
- * @see Factory
+ * @see AbstractFactory
  * @see Specification
  */
-public class SwimConnectionFactory implements Factory<SwimConnection> {
+public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 	
 	/**
-	 * Creates a new SWIM connection according to a customized SWIM connection
+	 * Constructs a new SWIM connection factory without a customized
 	 * specification.
 	 * 
-	 * @param specification the customized SWIM connection specification
+	 * @see AbstractFactory
+	 */
+	public SwimConnectionFactory() {
+		super();
+	}
+	
+	/**
+	 * Constructs a new SWIM connection factory to create registered SWIM
+	 * connections according to a customized SWIM connection specification.
+	 * 
+	 * @param specification the SWIM connection specification describing the
+	 *                      registered SWIM connection
+	 * 
+	 * @see AbstractFactory
+	 */
+	public SwimConnectionFactory(Specification<SwimConnection> specification) {
+		super(specification);
+	}
+
+	/**
+	 * Creates a new SWIM connection according to the customized SWIM
+	 * connection specification of this SWIM connection factory.
 	 * 
 	 * @return the created SWIM connection
 	 * 
-	 * @see Factory#createInstance(Specification)
+	 * @see AbstractFactory#createInstance()
 	 */
 	@Override
-	public SwimConnection createInstance(Specification<SwimConnection> specification) {
+	public SwimConnection createInstance() {
 		SwimConnection connection = null;
 		
-		if (specification.getId().equals(Specification.SWIM_SIMULATED)) {
-			SimulatedSwimConnectionProperties properties = (SimulatedSwimConnectionProperties) specification.getProperties();
-			connection = new SimulatedSwimConnection(
-					properties.getResourceDirectory(),
-					properties.getUpdatePeriod(),
-					properties.getUpdateProbability(),
-					properties.getUpdateQuantity());
-		} else if (specification.getId().equals(Specification.SWIM_LIVE)) {			
-			LiveSwimConnectionProperties properties = (LiveSwimConnectionProperties) specification.getProperties();
-			connection = new LiveSwimConnection();
-			// TODO: set properties for live SWIM connection
+		if (this.hasSpecification()) {
+			if (this.specification.getId().equals(Specification.SWIM_SIMULATED)) {
+				SimulatedSwimConnectionProperties properties = (SimulatedSwimConnectionProperties) this.specification.getProperties();
+				connection = new SimulatedSwimConnection(
+						properties.getResourceDirectory(),
+						properties.getUpdatePeriod(),
+						properties.getUpdateProbability(),
+						properties.getUpdateQuantity());
+				if (properties.getSubscribesAIXM())
+					connection.subscribe(SwimData.AIXM);
+				if (properties.getSubscribesFIXM())
+					connection.subscribe(SwimData.FIXM);
+				if (properties.getSubscribesWXXM())
+					connection.subscribe(SwimData.WXXM);
+				if (properties.getSubscribesIWXXM())
+					connection.subscribe(SwimData.IWXXM);
+				if (properties.getSubscribesAMXM())
+					connection.subscribe(SwimData.AMXM);
+			} else if (this.specification.getId().equals(Specification.SWIM_LIVE)) {			
+				LiveSwimConnectionProperties properties = (LiveSwimConnectionProperties) this.specification.getProperties();
+				connection = new LiveSwimConnection();
+				// TODO: set properties for live SWIM connection
+				if (properties.getSubscribesAIXM())
+					connection.subscribe(SwimData.AIXM);
+				if (properties.getSubscribesFIXM())
+					connection.subscribe(SwimData.FIXM);
+				if (properties.getSubscribesWXXM())
+					connection.subscribe(SwimData.WXXM);
+				if (properties.getSubscribesIWXXM())
+					connection.subscribe(SwimData.IWXXM);
+				if (properties.getSubscribesAMXM())
+					connection.subscribe(SwimData.AMXM);
+			}
 		}
 		
 		return connection;

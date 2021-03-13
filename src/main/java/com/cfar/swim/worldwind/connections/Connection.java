@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+
 /**
  * Describes a connection which can be used to connect to and communicate
  * with entities such as aircraft (datalink connection) or the SWIM network.
@@ -36,7 +38,7 @@ package com.cfar.swim.worldwind.connections;
  * @author Stephan Heinemann
  *
  */
-public interface Connection {
+public interface Connection extends FactoryProduct {
 
 	/**
 	 * Connects this connection.

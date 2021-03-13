@@ -29,17 +29,100 @@
  */
 package com.cfar.swim.worldwind.connections;
 
-public abstract class SwimConnection implements Connection {
+import java.util.HashSet;
 
-	// TODO: types of SWIM data (AXXM, WXXM, FIXM, etc.)
+import com.cfar.swim.worldwind.data.SwimData;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.connections.SwimConnectionProperties;
+
+/**
+ * Abstracts a SWIM connection.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public abstract class SwimConnection implements Connection {
 	
+	/** the SWIM subscriptions of this SWIM connection */
+	HashSet<SwimData> subscriptions = new HashSet<SwimData>();
+	
+	/**
+	 * Connects this SWIM connection.
+	 */
 	@Override
 	public abstract void connect();
-
+	
+	/**
+	 * Disconnects this SWIM connection.
+	 */
 	@Override
 	public abstract void disconnect();
-
+	
+	/**
+	 * Determines whether or not this SWIM connection is connected.
+	 * 
+	 * 
+	 * @return true if this SWIM connection is connected, false otherwise
+	 */
 	@Override
 	public abstract boolean isConnected();
+	
+	/**
+	 * Subscribes this connection to a specified SWIM data protocol.
+	 * 
+	 * @param protocol the SWIM data protocol to be subscribed to
+	 */
+	public synchronized void subscribe(SwimData protocol) {
+		this.subscriptions.add(protocol);
+	}
+	
+	/**
+	 * Unsubscribes this connection from a specified SWIM data protocol.
+	 * 
+	 * @param protocol the SWIM data protocol to be unsubscribed from
+	 */
+	public synchronized void unsubscribe(SwimData protocol) {
+		this.subscriptions.remove(protocol);
+	}
+	
+	/**
+	 * Determines whether or not this SWIM connection has subscribed to a
+	 * specified SWIM data protocol.
+	 * 
+	 * @param protocol the SWIM data protocol
+
+	 * @return true if this SWIM connection has subscribed to the specified
+	 *         SWIM data protocol
+	 */
+	public synchronized boolean hasSubscribed(SwimData protocol) {
+		return this.subscriptions.contains(protocol);
+	}
+	
+	/**
+	 * Determines whether or not this SWIM connection matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this SWIM connection matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see Connection#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof SwimConnectionProperties)) {
+			SwimConnectionProperties scp = (SwimConnectionProperties) specification.getProperties();
+			matches = (this.hasSubscribed(SwimData.AIXM) == scp.getSubscribesAIXM()
+					&& (this.hasSubscribed(SwimData.AMXM) == scp.getSubscribesAMXM())
+					&& (this.hasSubscribed(SwimData.FIXM) == scp.getSubscribesFIXM())
+					&& (this.hasSubscribed(SwimData.IWXXM) == scp.getSubscribesIWXXM())
+					&& (this.hasSubscribed(SwimData.WXXM) == scp.getSubscribesWXXM()));
+		}
+		
+		return matches;
+	}
 	
 }

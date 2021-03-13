@@ -50,7 +50,8 @@ import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
-
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -768,6 +769,23 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		}
 		
 		return supports;
+	}
+	
+	/**
+	 * Determines whether or not this forward A* planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this forward A* planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see AbstractPlannert#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = super.matches(specification);
+		matches &= (specification.getId().equals(Specification.PLANNER_FAS_ID));
+		return matches;
 	}
 	
 }

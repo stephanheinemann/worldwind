@@ -37,6 +37,9 @@ import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -258,5 +261,28 @@ public abstract class AbstractPlanner implements Planner {
 		
 		return supports;
 	}
-
+	
+	/**
+	 * Determines whether or not this abstract planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this abstract planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof AbstractPlannerProperties)) {
+			AbstractPlannerProperties app = (AbstractPlannerProperties) specification.getProperties();
+			matches = this.getCostPolicy().equals(app.getCostPolicy())
+					&& this.getRiskPolicy().equals(app.getRiskPolicy());
+		}
+		
+		return matches;
+	}
+	
 }

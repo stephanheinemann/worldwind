@@ -32,7 +32,7 @@ package com.cfar.swim.worldwind.registries.connections;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DronekitDatalink;
 import com.cfar.swim.worldwind.connections.SimulatedDatalink;
-import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 
 
@@ -42,30 +42,51 @@ import com.cfar.swim.worldwind.registries.Specification;
  * 
  * @author Stephan Heinemann
  * 
- * @see Factory
+ * @see AbstractFactory
  * @see Specification
  */
-public class DatalinkFactory implements Factory<Datalink> {
+public class DatalinkFactory extends AbstractFactory<Datalink> {
 	
 	/**
-	 * Creates a new datalink according to a customized datalink specification.
+	 * Constructs a new datalink factory without a customized specification.
 	 * 
-	 * @param specification the customized datalink specification
+	 * @see AbstractFactory
+	 */
+	public DatalinkFactory() {
+		super();
+	}
+	
+	/**
+	 * Constructs a new datalink factory to create registered datalinks
+	 * according to a customized datalink specification.
+	 * 
+	 * @param specification the datalink specification describing the
+	 *                      registered datalink
+	 * 
+	 * @see AbstractFactory
+	 */
+	public DatalinkFactory(Specification<Datalink> specification) {
+		super(specification);
+	}
+
+	/**
+	 * Creates a new datalink according to the customized datalink
+	 * specification of this datalink factory.
 	 * 
 	 * @return the created datalink
 	 * 
-	 * @see Factory#createInstance(Specification)
+	 * @see AbstractFactory#createInstance()
 	 */
 	@Override
-	public Datalink createInstance(Specification<Datalink> specification) {
+	public Datalink createInstance() {
 		Datalink connection = null;
 		
-		if (specification.getId().equals(Specification.DATALINK_SIMULATED)) {
-			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) specification.getProperties();
+		if (this.specification.getId().equals(Specification.DATALINK_SIMULATED)) {
+			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) this.specification.getProperties();
 			connection = new SimulatedDatalink();
 			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
-		} else if (specification.getId().equals(Specification.DATALINK_DRONEKIT)) {			
-			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) specification.getProperties();
+		} else if (this.specification.getId().equals(Specification.DATALINK_DRONEKIT)) {			
+			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) this.specification.getProperties();
 			connection = new DronekitDatalink(properties.getHost(), properties.getPort());
 			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
 		}

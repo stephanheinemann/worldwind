@@ -55,7 +55,8 @@ public class DronekitTest {
 		properties.setHost("206.87.166.221");
 		properties.setPort(50051);
 		DatalinkFactory datalinkFactory = new DatalinkFactory();
-		Datalink datalink = datalinkFactory.createInstance(datalinkSpecification);
+		datalinkFactory.setSpecification(datalinkSpecification);
+		Datalink datalink = datalinkFactory.createInstance();
 		
 		// connect
 		datalink.connect();

@@ -36,6 +36,9 @@ import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.ThetaStarProperties;
 
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -122,6 +125,30 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 			target.setG(targetG);
 			target.setEto(end);
 		}
+	}
+	
+	/**
+	 * Determines whether or not this Theta* planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this Theta* planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof ThetaStarProperties)) {
+			ThetaStarProperties tsp = (ThetaStarProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(tsp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(tsp.getRiskPolicy()))
+					&& (specification.getId().equals(Specification.PLANNER_TS_ID));
+		}
+		
+		return matches;
 	}
 
 }

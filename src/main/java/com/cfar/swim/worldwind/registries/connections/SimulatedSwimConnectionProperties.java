@@ -136,14 +136,13 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	 *         the other simulated SWIM connection properties bean,
 	 *         false otherwise
 	 * 
-	 * @see Object#equals(Object)
+	 * @see SwimConnectionProperties#equals(Object)
 	 */
+	@Override
 	public final boolean equals(Object o) {
-		boolean equals = false;
+		boolean equals = super.equals(o);
 		
-		if (this == o) {
-			equals = true;
-		} else if ((null != o) && (o instanceof SimulatedSwimConnectionProperties)) {
+		if (equals && (o instanceof SimulatedSwimConnectionProperties)) {
 			SimulatedSwimConnectionProperties sscp = (SimulatedSwimConnectionProperties) o;
 			equals = (this.resourceDirectory.equals(sscp.resourceDirectory))
 					&& (this.updatePeriod == sscp.updatePeriod)
@@ -161,10 +160,16 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	 * @return the hash code of this simulated SWIM connection properties bean
 	 *         based on its aggregated properties
 	 * 
-	 * @see Object#hashCode()
+	 * @see SwimConnectionProperties#hashCode()
 	 */
+	@Override
 	public final int hashCode() {
 		return Objects.hash(
+				this.getSubscribesAIXM(),
+				this.getSubscribesAMXM(),
+				this.getSubscribesFIXM(),
+				this.getSubscribesIWXXM(),
+				this.getSubscribesWXXM(),
 				this.resourceDirectory,
 				this.updatePeriod,
 				this.updateProbability,

@@ -32,7 +32,7 @@ package com.cfar.swim.worldwind.registries.aircraft;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Iris;
-import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -45,47 +45,70 @@ import gov.nasa.worldwind.geom.Position;
  * 
  * @author Stephan Heinemann
  * 
- * @see Factory
+ * @see AbstractFactory
  * @see Specification
  */
-public class AircraftFactory implements Factory<Aircraft> {
+public class AircraftFactory extends AbstractFactory<Aircraft> {
 
 	/**
-	 * Creates a new aircraft according to a customized aircraft specification.
+	 * Constructs a new aircraft factory without a customized specification.
 	 * 
-	 * @param specification the customized aircraft specification
+	 * @see AbstractFactory
+	 */
+	public AircraftFactory() {
+		super();
+	}
+	
+	/**
+	 * Constructs a new aircraft factory to create registered aircraft
+	 * according to a customized aircraft specification.
+	 * 
+	 * @param specification the aircraft specification describing the
+	 *                      registered aircraft
+	 * 
+	 * @see AbstractFactory
+	 */
+	public AircraftFactory(Specification<Aircraft> specification) {
+		super(specification);
+	}
+
+	/**
+	 * Creates a new aircraft according to the customized aircraft
+	 * specification of this aircraft factory.
 	 * 
 	 * @return the created aircraft
 	 * 
-	 * @see Factory#createInstance(Specification)
+	 * @see AbstractFactory#createInstance()
 	 */
 	@Override
-	public Aircraft createInstance(Specification<Aircraft> specification) {
+	public Aircraft createInstance() {
 		Aircraft aircraft = null;
 		
-		AircraftProperties properties = (AircraftProperties) specification.getProperties();
-		
-		if (specification.getId().equals(Specification.AIRCRAFT_IRIS_ID)) {
-			aircraft = new Iris(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
-		} else if (specification.getId().equals(Specification.AIRCRAFT_A320_ID)) {
-			aircraft = new A320(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
+		if (this.hasSpecification()) {
+			AircraftProperties properties = (AircraftProperties) this.specification.getProperties();
+			
+			if (this.specification.getId().equals(Specification.AIRCRAFT_IRIS_ID)) {
+				aircraft = new Iris(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
+			} else if (this.specification.getId().equals(Specification.AIRCRAFT_A320_ID)) {
+				aircraft = new A320(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
+			}
+			
+			aircraft.getCapabilities().setApproachRateOfDescent(properties.getApproachRateOfDescent());
+			aircraft.getCapabilities().setApproachSpeed(properties.getApproachSpeed());
+			aircraft.getCapabilities().setCruiseClimbSpeed(properties.getCruiseClimbSpeed());
+			aircraft.getCapabilities().setCruiseDescentSpeed(properties.getCruiseDescentSpeed());
+			aircraft.getCapabilities().setCruiseRateOfClimb(properties.getCruiseRateOfClimb());
+			aircraft.getCapabilities().setCruiseRateOfDescent(properties.getCruiseRateOfDescent());
+			aircraft.getCapabilities().setCruiseSpeed(properties.getCruiseSpeed());
+			aircraft.getCapabilities().setMaximumAngleOfClimb(Angle.fromDegrees(properties.getMaximumAngleOfClimb()));
+			aircraft.getCapabilities().setMaximumAngleOfClimbSpeed(properties.getMaximumAngleOfClimbSpeed());
+			aircraft.getCapabilities().setMaximumGlideSpeed(properties.getMaximumGlideSpeed());
+			aircraft.getCapabilities().setMaximumRateOfClimb(properties.getMaximumRateOfClimb());
+			aircraft.getCapabilities().setMaximumRateOfClimbSpeed(properties.getMaximumRateOfClimbSpeed());
+			aircraft.getCapabilities().setMaximumRateOfDescent(properties.getMaximumRateOfDescent());
+			aircraft.getCapabilities().setMaximumRateOfDescentSpeed(properties.getMaximumRateOfDescent());
+			aircraft.getCapabilities().setMaximumSpeed(properties.getMaximumSpeed());
 		}
-		
-		aircraft.getCapabilities().setApproachRateOfDescent(properties.getApproachRateOfDescent());
-		aircraft.getCapabilities().setApproachSpeed(properties.getApproachSpeed());
-		aircraft.getCapabilities().setCruiseClimbSpeed(properties.getCruiseClimbSpeed());
-		aircraft.getCapabilities().setCruiseDescentSpeed(properties.getCruiseDescentSpeed());
-		aircraft.getCapabilities().setCruiseRateOfClimb(properties.getCruiseRateOfClimb());
-		aircraft.getCapabilities().setCruiseRateOfDescent(properties.getCruiseRateOfDescent());
-		aircraft.getCapabilities().setCruiseSpeed(properties.getCruiseSpeed());
-		aircraft.getCapabilities().setMaximumAngleOfClimb(Angle.fromDegrees(properties.getMaximumAngleOfClimb()));
-		aircraft.getCapabilities().setMaximumAngleOfClimbSpeed(properties.getMaximumAngleOfClimbSpeed());
-		aircraft.getCapabilities().setMaximumGlideSpeed(properties.getMaximumGlideSpeed());
-		aircraft.getCapabilities().setMaximumRateOfClimb(properties.getMaximumRateOfClimb());
-		aircraft.getCapabilities().setMaximumRateOfClimbSpeed(properties.getMaximumRateOfClimbSpeed());
-		aircraft.getCapabilities().setMaximumRateOfDescent(properties.getMaximumRateOfDescent());
-		aircraft.getCapabilities().setMaximumRateOfDescentSpeed(properties.getMaximumRateOfDescent());
-		aircraft.getCapabilities().setMaximumSpeed(properties.getMaximumSpeed());
 		
 		return aircraft;
 	}

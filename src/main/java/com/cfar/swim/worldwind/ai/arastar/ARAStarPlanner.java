@@ -42,7 +42,9 @@ import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Trajectory;
-
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
 import gov.nasa.worldwind.geom.Position;
 
 
@@ -684,6 +686,33 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			restored = true;
 		}
 		return restored;
+	}
+	
+	/**
+	 * Determines whether or not this ARA* planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this ARA* planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof ARAStarProperties)) {
+			ARAStarProperties fasp = (ARAStarProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(fasp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(fasp.getRiskPolicy()))
+					&& (this.getMinimumQuality() == fasp.getMinimumQuality())
+					&& (this.getMaximumQuality() == fasp.getMaximumQuality())
+					&& (this.getQualityImprovement() == fasp.getQualityImprovement()
+					&& (specification.getId().equals(Specification.PLANNER_ARAS_ID)));
+		}
+		
+		return matches;
 	}
 	
 }

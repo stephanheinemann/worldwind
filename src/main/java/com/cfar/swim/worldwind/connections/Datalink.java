@@ -40,6 +40,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import com.cfar.swim.worldwind.planning.TrackPoint;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.connections.DatalinkProperties;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -394,6 +397,28 @@ public abstract class Datalink implements Connection {
 	 */
 	public void addTrackChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("track", listener);
+	}
+	
+	/**
+	 * Determines whether or not this datalink matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this datalink matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see Connection#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof DatalinkProperties)) {
+			DatalinkProperties dlp = (DatalinkProperties) specification.getProperties();
+			matches = (this.downlinkPeriod == dlp.getDownlinkPeriod());
+		}
+	
+		return matches;
 	}
 	
 }
