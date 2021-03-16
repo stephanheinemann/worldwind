@@ -35,6 +35,8 @@ import com.cfar.swim.worldwind.data.SwimData;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.SwimConnectionProperties;
+import com.cfar.swim.worldwind.session.ObstacleManager;
+import com.cfar.swim.worldwind.session.ObstacleProvider;
 
 /**
  * Abstracts a SWIM connection.
@@ -42,10 +44,16 @@ import com.cfar.swim.worldwind.registries.connections.SwimConnectionProperties;
  * @author Stephan Heinemann
  *
  */
-public abstract class SwimConnection implements Connection {
+public abstract class SwimConnection implements Connection, ObstacleProvider {
 	
 	/** the SWIM subscriptions of this SWIM connection */
-	HashSet<SwimData> subscriptions = new HashSet<SwimData>();
+	private HashSet<SwimData> subscriptions = new HashSet<SwimData>();
+	
+	/** this obstacle manager of this SWIM connection */
+	private ObstacleManager obstacleManager = null;
+	
+	/** indicates whether or not this SWIM connection automatically commits obstacle changes */
+	private boolean autoCommit = false;
 	
 	/**
 	 * Connects this SWIM connection.
@@ -100,6 +108,70 @@ public abstract class SwimConnection implements Connection {
 	}
 	
 	/**
+	 * Gets the obstacle manager of this SWIM connection.
+	 * 
+	 * @return the obstacle manager of this SWIM connection
+	 * 
+	 * @see ObstacleProvider#getObstacleManager()
+	 */
+	@Override
+	public synchronized ObstacleManager getObstacleManager() {
+		return this.obstacleManager;
+	}
+	
+	/**
+	 * Sets the obstacle manager of this SWIM connection.
+	 * 
+	 * @param obstacleManager the obstacle manager to be set
+	 * 
+	 * @see ObstacleProvider#setObstacleManager(ObstacleManager)
+	 */
+	@Override
+	public synchronized void setObstacleManager(ObstacleManager obstacleManager) {
+		this.obstacleManager = obstacleManager;
+	}
+	
+	/**
+	 * Indicates whether or not this SWIM connection has an obstacle manager.
+	 * 
+	 * @return true if this SWIM connection has an obstacle manager,
+	 *         false otherwise
+	 * 
+	 * @see ObstacleProvider#hasObstacleManager()
+	 */
+	@Override
+	public synchronized boolean hasObstacleManager() {
+		return (null != this.obstacleManager);
+	}
+	/**
+	 * Gets whether or not this SWIM connection automatically commits obstacle
+	 * changes.
+	 * 
+	 * @return true if this SWIM connection automatically commits obstacle
+	 *         changes, false otherwise
+	 * 
+	 * @see ObstacleProvider#getAutoCommit()
+	 */
+	@Override
+	public synchronized boolean getAutoCommit() {
+		return this.autoCommit;
+	}
+	
+	/**
+	 * Sets whether or not this SWIM connection automatically commits obstacle
+	 * changes.
+	 * 
+	 * @param autoCommit true if this SWIM connection automatically commits
+	 *                   obstacle changes, false otherwise
+	 * 
+	 * @see ObstacleProvider#setAutoCommit(boolean)
+	 */
+	@Override
+	public synchronized void setAutoCommit(boolean autoCommit) {
+		this.autoCommit = autoCommit;
+	}
+	
+	/**
 	 * Determines whether or not this SWIM connection matches a specification.
 	 * 
 	 * @param specification the specification to be matched
@@ -119,7 +191,8 @@ public abstract class SwimConnection implements Connection {
 					&& (this.hasSubscribed(SwimData.AMXM) == scp.getSubscribesAMXM())
 					&& (this.hasSubscribed(SwimData.FIXM) == scp.getSubscribesFIXM())
 					&& (this.hasSubscribed(SwimData.IWXXM) == scp.getSubscribesIWXXM())
-					&& (this.hasSubscribed(SwimData.WXXM) == scp.getSubscribesWXXM()));
+					&& (this.hasSubscribed(SwimData.WXXM) == scp.getSubscribesWXXM())
+					&& (this.autoCommit == scp.getAutoCommit()));
 		}
 		
 		return matches;

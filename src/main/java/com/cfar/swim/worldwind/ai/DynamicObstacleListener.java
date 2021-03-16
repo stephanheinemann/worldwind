@@ -29,8 +29,26 @@
  */
 package com.cfar.swim.worldwind.ai;
 
-public interface DynamicCostListener {
+import com.cfar.swim.worldwind.session.ObstacleManager;
 
-	// notify(), notify(Obstacle), notify(significant)...
-	// notifyCostChange()
+/**
+ * Describes a dynamic obstacle listener.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public interface DynamicObstacleListener {
+
+	/**
+	 * Notifies this dynamic obstacle listener about a pending obstacle change.
+	 */
+	public void notifyPendingObstacleChange();
+	
+	/**
+	 * Sets the obstacle manager of this dynamic obstacle listener.
+	 * 
+	 * @param obstacleManager the obstacle manager to be set
+	 */
+	public void setObstacleManager(ObstacleManager obstacleManager);
+	
 }

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import com.cfar.swim.worldwind.ai.DynamicObstacleListener;
 import com.cfar.swim.worldwind.ai.DynamicPlanner;
 import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.arastar.ARAStarWaypoint;
@@ -45,6 +46,8 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.ADStarProperties;
+import com.cfar.swim.worldwind.session.ObstacleManager;
+
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -542,6 +545,25 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		}
 		
 		return matches;
+	}
+
+	/**
+	 * @see DynamicObstacleListener#notifyPendingObstacleChange()
+	 */
+	@Override
+	public synchronized void notifyPendingObstacleChange() {
+		// TODO Auto-generated method stub
+		// TODO: resume planner if suspended (notify)
+		
+	}
+
+	/**
+	 * @see DynamicObstacleListener#setObstacleManager(ObstacleManager)
+	 */
+	@Override
+	public void setObstacleManager(ObstacleManager obstacleManager) {
+		// TODO Auto-generated method stub
+		// TODO: set obstacle manager to be consulted during planning
 	}
 	
 }

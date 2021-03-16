@@ -57,6 +57,9 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 	/** the AMXM subscription status of this SWIM connection properties bean */
 	private boolean subscribesAMXM = false;
 	
+	/** the auto commit status of this SWIM connection properties bean */
+	private boolean autoCommit = false;
+	
 	/**
 	 * Gets the AIXM subscription status of this SWIM connection properties bean.
 	 * 
@@ -148,6 +151,24 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 	}
 	
 	/**
+	 * Gets the auto commit status of this SWIM connection properties bean.
+	 * 
+	 * @return the auto commit status of this SWIM connection properties bean
+	 */
+	public boolean getAutoCommit() {
+		return this.autoCommit;
+	}
+	
+	/**
+	 * Sets the auto commit status of this SWIM connection properties bean.
+	 * 
+	 * @param autoCommit the auto commit status of this SWIM connection properties bean
+	 */
+	public void setAutoCommit(boolean autoCommit) {
+		this.autoCommit = autoCommit;
+	}
+	
+	/**
 	 * Clones this SWIM connection properties bean.
 	 * 
 	 * @return a clone of this SWIM connection properties bean
@@ -190,7 +211,8 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 					&& (this.subscribesAMXM == scp.subscribesAMXM)
 					&& (this.subscribesFIXM == scp.subscribesFIXM)
 					&& (this.subscribesIWXXM == scp.subscribesIWXXM)
-					&& (this.subscribesWXXM == scp.subscribesWXXM);
+					&& (this.subscribesWXXM == scp.subscribesWXXM)
+					&& (this.autoCommit == scp.autoCommit);
 		}
 		
 		return equals;
@@ -212,7 +234,8 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 				this.subscribesAMXM,
 				this.subscribesFIXM,
 				this.subscribesIWXXM,
-				this.subscribesWXXM);
+				this.subscribesWXXM,
+				this.autoCommit);
 	}
 	
 }

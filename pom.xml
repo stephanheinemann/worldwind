@@ -137,6 +137,13 @@
 					<include>config/*.xml</include>
 				</includes>
 			</resource>
+			<resource>
+				<directory>src/test/resources</directory>
+				<includes>
+					<include>xml/**/*.xml</include>
+				</includes>
+				<targetPath>swim</targetPath>
+			</resource>
 		</resources>
 		<plugins>
 			<plugin>

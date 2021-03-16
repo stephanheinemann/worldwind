@@ -29,20 +29,33 @@
  */
 package com.cfar.swim.worldwind.connections;
 
-import java.io.File;
-import java.net.URI;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBException;
+
+import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.data.SwimData;
 import com.cfar.swim.worldwind.iwxxm.IwxxmLoader;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionProperties;
+import com.cfar.swim.worldwind.render.Obstacle;
 
 /**
  * Realizes a simulated SWIM connection
@@ -51,9 +64,27 @@ import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionPro
  *
  */
 public class SimulatedSwimConnection extends SwimConnection {
-
+	
+	/** the AIXM directory name */
+	public static final String AIXM_DIRECTORY = "aixm";
+	
+	/** the AMXM directory name */
+	public static final String AMXM_DIRECTORY = "amxm";
+	
+	/** the FIXM directory name */
+	public static final String FIXM_DIRECTORY = "fixm";
+	
+	/** the IWXXM directory name */
+	public static final String IWXXM_DIRECTORY = "iwxxm";
+	
+	/** the WXXM directory name */
+	public static final String WXXM_DIRECTORY = "wxxm";
+	
 	/** the resource directory of this simulated SWIM connection */
-	private URI resourceDirectory; 
+	private String resourceDirectory; 
+	
+	/** the file system of the resource directory */
+	private FileSystem resourceFileSystem;
 	
 	/** the update period of this simulated SWIM connection */
 	private long updatePeriod;
@@ -71,10 +102,10 @@ public class SimulatedSwimConnection extends SwimConnection {
 	 * Constructs a default simulated SWIM connection.
 	 */
 	public SimulatedSwimConnection() {
-		this.resourceDirectory = URI.create("classpath:xml/iwxxm/");
-		this.updatePeriod = 5000; // ms
-		this.updateProbability = 0.5f;
-		this.updateQuantity = 1;
+		this.resourceDirectory = SimulatedSwimConnectionProperties.SWIM_RESOURCE_DIRECTORY;
+		this.updatePeriod = SimulatedSwimConnectionProperties.SWIM_UPDATE_PERIOD;
+		this.updateProbability = SimulatedSwimConnectionProperties.SWIM_UPDATE_PERIOD;
+		this.updateQuantity = SimulatedSwimConnectionProperties.SWIM_UPDATE_QUANTITY;
 		this.executor = null;
 	}
 	
@@ -88,7 +119,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 	 * @param updateQuantity the update quantity
 	 */
 	public SimulatedSwimConnection(
-			URI resourceDirectory,
+			String resourceDirectory,
 			long updatePeriod,
 			float updateProbability,
 			int updateQuantity) {
@@ -97,8 +128,6 @@ public class SimulatedSwimConnection extends SwimConnection {
 		this.updatePeriod = updatePeriod;
 		this.updateProbability = updateProbability;
 		this.updateQuantity = updateQuantity;
-		
-		// load updateQuantity files to be updated
 	}
 	
 	/**
@@ -107,40 +136,42 @@ public class SimulatedSwimConnection extends SwimConnection {
 	@Override
 	public void connect() {
 		if (!this.isConnected()) {
-			this.executor = Executors.newSingleThreadScheduledExecutor();
-			this.executor.scheduleAtFixedRate(new Runnable() {
-	
-				@Override
-				public void run() {
-					System.out.println("running simulated SWIM connection");
-					
-					//resourceDirectory.toURL().getFile();
-					
-					//URL resourceURL = this.getClass().getClassLoader().getResource("/home/stephan/");
-					//System.out.println(resourceURL.getFile());
-					/*
-					File directory = new File("/home/stephan");
-					if (directory.isDirectory()) {
-						for (String filename : directory.list())
-							System.out.println(filename);
-					}
-					*/
-					
-					/*
+			URL directoryURL = this.getClass().getClassLoader().getResource(resourceDirectory);
+			
+			if (null != directoryURL) {
+				Path swimDirectory = null;
+				try {
+					// use platform file system for file URIs
+					swimDirectory = Paths.get(directoryURL.toURI());
+					this.resourceFileSystem = null;
+				} catch (URISyntaxException use) {
+					use.printStackTrace();
+				} catch (FileSystemNotFoundException fsnfe) {
+					// create file system for jar URIs
 					try {
-						IwxxmLoader loader = new IwxxmLoader();
-					} catch (JAXBException e) {
-						// TODO Auto-generated catch block
+						this.resourceFileSystem = FileSystems.newFileSystem(
+								directoryURL.toURI(), Collections.emptyMap());
+						swimDirectory = Paths.get(directoryURL.toURI());
+					} catch (URISyntaxException use) {
+						use.printStackTrace();
+					} catch (IOException ioe) {
+						ioe.printStackTrace();
+					}	
+				}
+				
+				if ((null != swimDirectory)
+						&& (Files.isDirectory(swimDirectory, LinkOption.NOFOLLOW_LINKS))) {
+					try {
+						Files.list(swimDirectory).forEachOrdered(System.out::println);
+						this.executor = Executors.newSingleThreadScheduledExecutor();
+						this.executor.scheduleAtFixedRate(
+								new SimulatedSwimLoader(swimDirectory),
+								0, this.updatePeriod, TimeUnit.MILLISECONDS);
+					} catch (IOException e) {
 						e.printStackTrace();
 					}
-					*/
-					// load files (IWXXM loader)
-					// add / enable / disable obstacles in associated scenario
-					if (hasSubscribed(SwimData.IWXXM)) {
-						System.out.println("IWXXM has been subscribed");
-					}
-					// ...
-				}}, 0, this.updatePeriod, TimeUnit.MILLISECONDS);
+				}
+			}
 		}
 	}
 	
@@ -151,7 +182,19 @@ public class SimulatedSwimConnection extends SwimConnection {
 	public void disconnect() {
 		if (this.isConnected()) {
 			this.executor.shutdown();
+			try {
+				this.executor.awaitTermination(this.updatePeriod, TimeUnit.MILLISECONDS);
+			} catch (InterruptedException ie) {
+				ie.printStackTrace();
+			}
 			this.executor = null;
+			try {
+				if (null != this.resourceFileSystem) {
+					this.resourceFileSystem.close();
+				}
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
 		}
 	}
 	
@@ -191,6 +234,61 @@ public class SimulatedSwimConnection extends SwimConnection {
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Realizes a simulated SWIM loader.
+	 * 
+	 * @author Stephan Heinemann
+	 */
+	private class SimulatedSwimLoader implements Runnable {
+
+		/** the SWIM resource directory of this simulated SWIM loader */
+		private Path swimDirectory;
+		
+		/**
+		 * Constructs a new simulated SWIM loader with a specified SWIM
+		 * resource directory.
+		 * 
+		 * @param swimDirectory the SWIM resource directory
+		 */
+		public SimulatedSwimLoader(Path swimDirectory) {
+			this.swimDirectory = swimDirectory;
+		}
+		
+		/**
+		 * Runs the simulated SWIM loader.
+		 */
+		@Override
+		public void run() {
+			if (hasSubscribed(SwimData.IWXXM)) {
+				Path iwxxmDirectory = swimDirectory.resolve(SimulatedSwimConnection.IWXXM_DIRECTORY);
+				try {
+					IwxxmLoader loader = new IwxxmLoader();
+					Set<Path> iwxxmFiles = Files.list(iwxxmDirectory).collect(Collectors.toSet());
+					for (Path iwxxmFile : iwxxmFiles) {
+						int updates = 0;
+						if ((Math.random() <= updateProbability) && (updates < updateQuantity)) {
+							updates++;
+							Set<Obstacle>obstacles = loader.load(new InputSource(Files.newInputStream(iwxxmFile)));
+							if (null != obstacles) {
+								// TODO: obstacle manager access should be atomic
+								if (hasObstacleManager()) {
+									getObstacleManager().requestObstacleChange(obstacles);
+									if (getAutoCommit()) {
+										getObstacleManager().commitObstacleChange();
+									}
+								}
+							}
+						}
+					}
+				} catch (IOException | JAXBException e) {
+					e.printStackTrace();
+				}
+			}
+			// TODO: check other subscriptions
+		}
+		
 	}
 	
 }

@@ -29,7 +29,6 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
-import java.net.URI;
 import java.util.Objects;
 
 /**
@@ -40,24 +39,46 @@ import java.util.Objects;
  */
 public class SimulatedSwimConnectionProperties extends SwimConnectionProperties {
 
+	/** the default resource directory of this simulated SWIM connection properties bean */
+	public static final String SWIM_RESOURCE_DIRECTORY = "swim/xml";
+	
+	/** the default update period of this simulated SWIM connection properties bean */
+	public static final int SWIM_UPDATE_PERIOD = 5000;
+	
+	/** the default update probability of this simulated SWIM connection properties bean */
+	public static final float SWIM_UPDATE_PROBABILITY = 0.5f;
+	
+	/** the default update quantity of this simulated SWIM connection properties bean */
+	public static final int SWIM_UPDATE_QUANTITY = 1;
+	
 	/** the resource directory of this simulated SWIM connection properties bean */
-	private URI resourceDirectory = URI.create("classpath:xml/iwxxm/");
+	private String resourceDirectory;
 	
 	/** the update period of this simulated SWIM connection properties bean */
-	private long updatePeriod = 5000; // ms
+	private long updatePeriod; // ms
 	
 	/** the update probability of this simulated SWIM connection properties bean */
-	private float updateProbability = 0.5f;
+	private float updateProbability;
 	
 	/** the update quantity of this simulated SWIM connection properties bean */
-	private int updateQuantity = 1;
+	private int updateQuantity;
+	
+	/**
+	 * Constructs a new simulated SWIM connection properties bean.
+	 */
+	public SimulatedSwimConnectionProperties() {
+		this.resourceDirectory = SimulatedSwimConnectionProperties.SWIM_RESOURCE_DIRECTORY;
+		this.updatePeriod = SimulatedSwimConnectionProperties.SWIM_UPDATE_PERIOD;
+		this.updateProbability = SimulatedSwimConnectionProperties.SWIM_UPDATE_PROBABILITY;
+		this.updateQuantity = SimulatedSwimConnectionProperties.SWIM_UPDATE_QUANTITY;
+	}
 	
 	/**
 	 * Gets the resource directory of this simulated SWIM connection properties bean.
 	 * 
 	 * @return the resource directory of this simulated SWIM connection properties bean
 	 */
-	public URI getResourceDirectory() {
+	public String getResourceDirectory() {
 		return this.resourceDirectory;
 	}
 
@@ -66,7 +87,7 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	 * 
 	 * @param resourceDirectory the resource directory to be set
 	 */
-	public void setResourceDirectory(URI resourceDirectory) {
+	public void setResourceDirectory(String resourceDirectory) {
 		this.resourceDirectory = resourceDirectory;
 	}
 	

@@ -37,7 +37,7 @@ package com.cfar.swim.worldwind.ai;
  * @author Stephan Heinemann
  * 
  */
-public interface DynamicPlanner extends Planner, DynamicCostListener {
+public interface DynamicPlanner extends Planner, DynamicObstacleListener {
 
 	// TODO: merge with and check for PRM/RTT interface
 	
