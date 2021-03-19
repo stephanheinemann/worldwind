@@ -334,7 +334,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 				// propagate under-consistency
 				for (ADStarWaypoint target : neighbors) {
 					// find targets that depend on under-consistent source
-					if (target.getParent().equals(source)) {
+					if (target.hasParent() && target.getParent().equals(source)) {
 						this.repair(target);
 						this.updateSets(target);
 					}
@@ -388,10 +388,29 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	
 	/**
 	 * Repairs an AD* plan in case of dynamic changes.
+	 * 
+	 * @param partIndex the index of the part to be repaired
 	 */
-	protected void repair() {
+	protected void repair(int partIndex) {
 		if (this.needsRepair()) {
 			Set<ADStarWaypoint> affectedWaypoints = new HashSet<ADStarWaypoint>();
+			
+			// TODO: all previously computed parts have to be checked for affected waypoints
+			/*
+			if (0 < partIndex) {
+				this.backup(partIndex);
+				for (int index = 0; index < partIndex; index++) {
+					this.restore(index);
+					// TODO: check for obstacle interference and repair
+					// TODO: subsequent plans may require complete re-plan
+					// TODO: re-establish plan waypoints for repair decision?
+					// TODO: recursive versus iterative? (partIndex-1)
+					this.planPart(this.getStart(), this.getGoal(), this.getStart().getEto(), index);
+					this.backup(index);
+				}
+				this.restore(partIndex);
+			}
+			*/
 			
 			// find waypoints affected by obstacles according to their ETO
 			for (Obstacle obstacle : this.obstacleManager.commitObstacleChange()) {
@@ -471,7 +490,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	@Override
 	protected void elaborate(int partIndex) {
 		while ((!this.isDeflated() || this.needsRepair()) && !this.hasTerminated()) {
-			this.repair();
+			this.repair(partIndex);
 			this.improve(partIndex);
 		}
 	}

@@ -87,6 +87,16 @@ public class AStarWaypoint extends Waypoint {
 	}
 	
 	/**
+	 * Determines whether or not this A* waypoint has a parent A* waypoint.
+	 * 
+	 * @return true if this A* waypoint has a parent A* waypoint,
+	 *         false otherwise
+	 */
+	public boolean hasParent() {
+		return (null != this.parent);
+	}
+	
+	/**
 	 * Resets all parent A* waypoints of this A* waypoint.
 	 */
 	public void resetParents() {
