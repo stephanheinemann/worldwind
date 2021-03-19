@@ -256,9 +256,11 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		}
 		
 		// avoid duplicating discovered waypoints
-		Optional<? extends ARAStarWaypoint> existing = this.findExisting(araswp);
-		if (existing.isPresent()) {
-			araswp = existing.get();
+		Optional<? extends AStarWaypoint> visitedWaypoint = this.findVisited(araswp);
+		if (visitedWaypoint.isPresent()) {
+			araswp = (ARAStarWaypoint) visitedWaypoint.get();
+		} else {
+			this.addVisited(araswp);
 		}
 
 		// set current inflation factor
@@ -299,8 +301,10 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected boolean canExpand() {
+		// allow for equal keys to propagate under-consistency to goal
+		// and achieve potential improvements in terms of ETO
 		return super.canExpand() &&
-				(this.getGoal().getKey() > this.peekExpandable().getKey());
+				(this.getGoal().getKey() >= this.peekExpandable().getKey());
 	}
 	
 	/**
@@ -542,7 +546,8 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * Plans a part of a trajectory from an origin to a destination at a
 	 * specified estimated time of departure. If origin is the goal of the
 	 * current plan, then the resulting plan will be the trajectory from
-	 * the start of the current plan to the specified destination.
+	 * the start of the current plan to the specified destination. Improves
+	 * the computed trajectory incrementally.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates

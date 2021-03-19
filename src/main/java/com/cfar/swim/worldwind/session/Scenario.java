@@ -898,8 +898,7 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	 * @return the planned trajectory of this scenario
 	 */
 	public synchronized Trajectory getTrajectory() {
-		// TODO: trajectory should be immutable (at least contained waypoints)
-		// needs to be immutable: an unmodifiable clone
+		// the waypoints of a trajectory are immutable (createTrajectory)
 		return this.trajectory;
 	}
 
@@ -1206,14 +1205,14 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	}
 	
 	/**
-	 * Request an obstacle change (addition or removal).
+	 * Submits an obstacle change (addition or removal) to this scenario.
 	 * 
 	 * @param obstacles the obstacles to be changed
 	 * 
-	 * @see ObstacleManager#requestObstacleChange(Set)
+	 * @see ObstacleManager#submitObstacleChange(Set)
 	 */
 	@Override
-	public synchronized void requestObstacleChange(Set<Obstacle> obstacles) {
+	public synchronized void submitObstacleChange(Set<Obstacle> obstacles) {
 		this.pendingObstacles.addAll(obstacles);
 		if (this.getPlanner() instanceof DynamicObstacleListener) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
@@ -1221,7 +1220,7 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	}
 	
 	/**
-	 * Commits an obstacle change (addition or removal).
+	 * Commits an obstacle change (addition or removal) to this scenario.
 	 * 
 	 * @return the obstacles that were changed
 	 * 
@@ -1229,24 +1228,37 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	 */
 	@Override
 	public synchronized Set<Obstacle> commitObstacleChange() {
-		Set<Obstacle> committedObstacles = Collections.emptySet();
-		// commit changed obstacles (and obtain a set of committed obstacles)
+		Set<Obstacle> committedObstacles = new HashSet<Obstacle>();
 		for (Obstacle obstacle : this.pendingObstacles) {
-			// TODO: obtain committed (actually changed) obstacles?
-			this.addObstacle(obstacle);
+			if (!this.getObstacles().contains(obstacle)) {
+				this.addObstacle(obstacle);
+				committedObstacles.add(obstacle);
+			}
 		}
 		this.pendingObstacles.clear();
 		return committedObstacles;
 	}
 	
 	/**
-	 * Retracts an obstacle change (addition or removal).
+	 * Retracts an obstacle change (addition or removal) from this scenario.
 	 * 
 	 * @see ObstacleManager#retractObstacleChange()
 	 */
 	@Override
 	public synchronized void retractObstacleChange() {
 		this.pendingObstacles.clear();
+	}
+	
+	/**
+	 * Determines whether or not this scenario has an obstacle change.
+	 * 
+	 * @return true if this scenario has an obstacle change, false otherwise
+	 * 
+	 * @see ObstacleManager#hasObstacleChange()
+	 */
+	@Override
+	public synchronized boolean hasObstacleChange() {
+		return !this.pendingObstacles.isEmpty();
 	}
 	
 	/**

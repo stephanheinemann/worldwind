@@ -14,22 +14,33 @@ import com.cfar.swim.worldwind.render.Obstacle;
 public interface ObstacleManager {
 
 	/**
-	 * Request an obstacle change (addition or removal).
+	 * Submits an obstacle change (addition or removal) to this obstacle
+	 * manager.
 	 * 
 	 * @param obstacles the obstacles to be changed
 	 */
-	public void requestObstacleChange(Set<Obstacle> obstacles);
+	public void submitObstacleChange(Set<Obstacle> obstacles);
 	
 	/**
-	 * Commits an obstacle change (addition or removal).
+	 * Commits an obstacle change (addition or removal) to this obstacle
+	 * manager.
 	 * 
 	 * @return the obstacles that were changed
 	 */
 	public Set<Obstacle> commitObstacleChange();
 	
 	/**
-	 * Retracts an obstacle change (addition or removal).
+	 * Retracts an obstacle change (addition or removal) from this obstacle
+	 * manager.
 	 */
 	public void retractObstacleChange();
+	
+	/**
+	 * Determines whether or not this obstacle manager has an obstacle change.
+	 * 
+	 * @return true if this obstacle manager has an obstacle change,
+	 *         false otherwise
+	 */
+	public boolean hasObstacleChange();
 	
 }

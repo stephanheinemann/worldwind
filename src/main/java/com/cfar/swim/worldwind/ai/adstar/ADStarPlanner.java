@@ -30,9 +30,11 @@
 package com.cfar.swim.worldwind.ai.adstar;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.ai.DynamicObstacleListener;
 import com.cfar.swim.worldwind.ai.DynamicPlanner;
@@ -46,6 +48,7 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.ADStarProperties;
+import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.session.ObstacleManager;
 
 import gov.nasa.worldwind.geom.Position;
@@ -60,9 +63,12 @@ import gov.nasa.worldwind.render.Path;
  *
  */
 public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
-
+	
 	/** indicates whether or or not this AD* planner has terminated */
 	private boolean terminated = false;
+	
+	/** the obstacle manager of this AD* planner */
+	private ObstacleManager obstacleManager = null;
 	
 	/** indicates whether or or not this AD* planner has a significant dynamic change */
 	private boolean hasSignificantChange = false;
@@ -117,9 +123,11 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		}
 		
 		// avoid duplicating discovered waypoints
-		Optional<? extends ARAStarWaypoint> existing = super.findExisting(adswp);
-		if (existing.isPresent()) {
-			adswp = (ADStarWaypoint) existing.get();
+		Optional<? extends AStarWaypoint> visitedWaypoint = this.findVisited(adswp);
+		if (visitedWaypoint.isPresent()) {
+			adswp = (ADStarWaypoint) visitedWaypoint.get();
+		} else {
+			this.addVisited(adswp);
 		}
 		
 		// set current inflation factor
@@ -305,18 +313,12 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 */
 	@Override
 	protected void compute() {
-		System.out.println("compute");
 		while (this.canExpand()) {
 			ADStarWaypoint source = this.pollExpandable();
-			
-			System.out.println("expanding");
 			Set<? extends ADStarWaypoint> neighbors = this.expand(source);
-			
-			System.out.println(source.getDesignator() + ": G = " + source.getG() + " V = " + source.getV());
 			
 			// source is always inconsistent as per expandable invariant
 			if (source.isOverConsistent()) {
-				System.out.println("over-consistent");
 				// establish consistency
 				source.makeConsistent();
 				// propagate over-consistency
@@ -324,10 +326,9 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 					this.updateWaypoint(source, target);
 				}
 			} else {
-				System.out.println("under-consistent");
 				// eliminate under-consistency
-				source.setV(Double.POSITIVE_INFINITY);
-				// expand implicitly adds the expanded waypoint to the expanded set
+				source.makeUndetermined();
+				// expanding implicitly adds the expanded waypoint to the expanded set
 				this.removeExpanded(source);
 				this.updateSets(source);
 				// propagate under-consistency
@@ -377,14 +378,41 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	}
 	
 	/**
+	 * Determines whether or not an AD* plan needs a potential repair.
+	 * 
+	 * @return true if the AD* plan needs a potential repair, false otherwise
+	 */
+	protected boolean needsRepair() {
+		return this.hasObstacleManager() && this.obstacleManager.hasObstacleChange();
+	}
+	
+	/**
 	 * Repairs an AD* plan in case of dynamic changes.
 	 */
 	protected void repair() {
-		// TODO: determine and repair affected legs and target waypoints
-		ADStarWaypoint target = this.getStart();
-		if (!this.getStart().equals(target)) {
-			this.repair(target);
-			this.updateSets(target);
+		if (this.needsRepair()) {
+			Set<ADStarWaypoint> affectedWaypoints = new HashSet<ADStarWaypoint>();
+			
+			// find waypoints affected by obstacles according to their ETO
+			for (Obstacle obstacle : this.obstacleManager.commitObstacleChange()) {
+				affectedWaypoints.addAll(
+						this.getEnvironment()
+							.getAffectedWaypointPositions(obstacle)
+							.stream()
+							.map(position -> this.createWaypoint(position))
+							.filter(waypoint -> waypoint.hasEto())
+							.filter(waypoint -> obstacle.getCostInterval().contains(waypoint.getEto()))
+							.collect(Collectors.toSet())
+						);
+			}
+			
+			// repair affected waypoints
+			for (ADStarWaypoint target : affectedWaypoints) {
+				if (!this.getStart().equals(target)) {
+					this.repair(target);
+					this.updateSets(target);
+				}
+			}
 		}
 	}
 	
@@ -414,6 +442,8 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	
 	/**
 	 * Improves an AD* plan incrementally.
+	 * 
+	 * @param the index of the plan to be improved
 	 */
 	@Override
 	protected void improve(int partIndex) {
@@ -434,23 +464,48 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	}
 	
 	/**
-	 * Elaborates an AD* plan
+	 * Elaborates an AD* plan.
 	 * 
+	 * @param partIndex the index of the plan to be elaborated
 	 */
 	@Override
 	protected void elaborate(int partIndex) {
-		while (!this.isDeflated() && !this.hasTerminated()) {
+		while ((!this.isDeflated() || this.needsRepair()) && !this.hasTerminated()) {
 			this.repair();
 			this.improve(partIndex);
 		}
 	}
 	
+	/**
+	 * Plans a part of a trajectory from an origin to a destination at a
+	 * specified estimated time of departure. If origin is the goal of the
+	 * current plan, then the resulting plan will be the trajectory from
+	 * the start of the current plan to the specified destination. Repairs
+	 * and improves an existing trajectory incrementally if required.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * @param partIndex the index of the part
+	 * 
+	 * @return the planned trajectory from origin at the estimated time of
+	 *         departure or the start leading to origin in the current plan to
+	 *         the destination
+	 * 
+	 * @see ARAStarPlanner#planPart(Position, Position, ZonedDateTime, int)
+	 */
 	@Override
 	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
 		// TODO: if index affected by change (and all subsequent indices)
 		// if (this.isAffected) {
-		return super.planPart(origin, destination, etd, partIndex);
-		//}
+		// TODO: replan from scratch if affected by previous index and start inconsistent
+		// TODO: consider proper initialization and index change while planning subsequent parts
+		if (this.hasWaypoints()) {
+			this.elaborate(partIndex);
+			return this.createTrajectory();
+		} else {
+			return super.planPart(origin, destination, etd, partIndex);
+		}
 	}
 	
 	/**
@@ -473,11 +528,12 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		
 		while (!this.hasTerminated()) {
 			trajectory = this.planPart(origin, destination, etd, 0);
-			// wait for termination or changes
+			this.revisePlan(trajectory);
+			// wait for termination or dynamic changes
 			this.suspend();
 		}
 		
-		this.revisePlan(trajectory);
+		this.clearWaypoints();
 		return trajectory;
 	}
 	
@@ -501,10 +557,11 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		
 		while (!this.hasTerminated()) {
 			trajectory = super.plan(origin, destination, waypoints, etd);
-			// wait for termination or changes
+			// wait for termination or dynamic changes
 			this.suspend();
 		}
 		
+		this.clearWaypoints();
 		return trajectory;
 	}
 	
@@ -517,6 +574,41 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Notifies this AD* planner about a pending obstacle change.
+	 *
+	 * @see DynamicObstacleListener#notifyPendingObstacleChange()
+	 */
+	@Override
+	public synchronized void notifyPendingObstacleChange() {
+		this.notifyAll();
+	}
+
+	/**
+	 * Sets the obstacle manager of this AD* planner.
+	 * 
+	 * @param obstacleManager the obstacle manager to be set
+	 * 
+	 * @see DynamicObstacleListener#setObstacleManager(ObstacleManager)
+	 */
+	@Override
+	public synchronized void setObstacleManager(ObstacleManager obstacleManager) {
+		this.obstacleManager = obstacleManager;
+	}
+	
+	/**
+	 * Determines whether or not this AD* planner has an obstacle manager.
+	 * 
+	 * @return true if this AD* planner has an obstacle manager,
+	 *         false otherwise
+	 * 
+	 * @see DynamicObstacleListener#hasObstacleManager()
+	 */
+	@Override
+	public synchronized boolean hasObstacleManager() {
+		return (null != this.obstacleManager);
 	}
 	
 	/**
@@ -545,25 +637,6 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		}
 		
 		return matches;
-	}
-
-	/**
-	 * @see DynamicObstacleListener#notifyPendingObstacleChange()
-	 */
-	@Override
-	public synchronized void notifyPendingObstacleChange() {
-		// TODO Auto-generated method stub
-		// TODO: resume planner if suspended (notify)
-		
-	}
-
-	/**
-	 * @see DynamicObstacleListener#setObstacleManager(ObstacleManager)
-	 */
-	@Override
-	public void setObstacleManager(ObstacleManager obstacleManager) {
-		// TODO Auto-generated method stub
-		// TODO: set obstacle manager to be consulted during planning
 	}
 	
 }

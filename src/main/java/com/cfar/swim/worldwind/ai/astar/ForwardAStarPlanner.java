@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.ai.astar;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -52,6 +53,7 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -64,6 +66,9 @@ import gov.nasa.worldwind.render.Path;
  *
  */
 public class ForwardAStarPlanner extends AbstractPlanner {
+	
+	/** the set of already visited A* waypoints */
+	protected Set<AStarWaypoint> visited = new HashSet<>();
 	
 	/** the priority queue of expandable A* waypoints */
 	protected PriorityQueue<AStarWaypoint> open = new PriorityQueue<>();
@@ -131,9 +136,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		}
 		
 		// avoid duplicating discovered waypoints
-		Optional<? extends AStarWaypoint> existing = this.findExisting(aswp);
-		if (existing.isPresent()) {
-			aswp = existing.get();
+		Optional<? extends AStarWaypoint> visitedWaypoint = this.findVisited(aswp);
+		if (visitedWaypoint.isPresent()) {
+			aswp = visitedWaypoint.get();
+		} else {
+			this.addVisited(aswp);
 		}
 		
 		return aswp;
@@ -235,6 +242,64 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected boolean isInGoalRegion(Position position) {
 		return this.goalRegion.contains(position);
+	}
+	
+	/**
+	 * Adds an A* waypoint to the visited set of this forward A* planner.
+	 * 
+	 * @param waypoint the A* waypoint to be added
+	 * 
+	 * @return true if the A* waypoint was added to the visited set of this
+	 *         forward A* planner, false otherwise
+	 */
+	protected boolean addVisited(AStarWaypoint waypoint) {
+		return this.visited.add(waypoint);
+	}
+	
+	/**
+	 * Removes an A* waypoint to the visited set of this forward A* planner.
+	 * 
+	 * @param waypoint the A* waypoint to be removed
+	 * 
+	 * @return true if the A* waypoint was removed from the visited set of this
+	 *         forward A* planner, false otherwise
+	 */
+	protected boolean removeVisited(AStarWaypoint waypoint) {
+		return this.visited.remove(waypoint);
+	}
+	
+	/**
+	 * Clears the visited set of this forward A* planner.
+	 */
+	protected void clearVisited() {
+		this.visited.clear();
+	}
+	
+	/**
+	 * Determines whether or not the visited set of this forward A* planner
+	 * contains an A* waypoint.
+	 * 
+	 * @param waypoint the A* waypoint to be tested
+	 * 
+	 * @return true if the A* waypoint is contained in the visited set of this
+	 *         forward A* planner, false otherwise
+	 */
+	protected boolean containsVisited(AStarWaypoint waypoint) {
+		return this.visited.contains(waypoint);
+	}
+	
+	/**
+	 * Finds an A* waypoint in the visited set of this forward A* planner, if
+	 * present.
+	 * 
+	 * @param waypoint the A* waypoint to be found
+	 * 
+	 * @return the found A* waypoint, if present 
+	 */
+	protected Optional<? extends AStarWaypoint> findVisited(AStarWaypoint waypoint) {
+		return this.visited.stream()
+				.filter(visitedWaypoint -> visitedWaypoint.equals(waypoint))
+				.findFirst();
 	}
 	
 	/**
@@ -419,7 +484,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		// environment and its adjacent waypoints have to be determined for
 		// initial expansion
 		if (neighbors.isEmpty()) {
-			neighbors = this.getEnvironment().getAdjacentWaypoints(waypoint);
+			neighbors = this.getEnvironment().getAdjacentWaypointPositions(waypoint);
 		}
 		
 		// create neighborhood of waypoints with precision positions
@@ -521,7 +586,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	@SuppressWarnings("unchecked")
 	protected Trajectory createTrajectory() {
-		return new Trajectory((List<Waypoint>) this.plan.clone());
+		return new Trajectory(Collections.unmodifiableList((List<Waypoint>) this.plan.clone()));
 	}
 	
 	/**
@@ -546,9 +611,13 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @param target the target A* waypoint in globe coordinates
 	 */
 	protected void updateWaypoint(AStarWaypoint source, AStarWaypoint target) {
-		double gOld = target.getG();
+		double cost = target.getG();
+		ZonedDateTime eto = target.getEto();
 		this.computeCost(source, target);
-		if (target.getG() < gOld) {
+		// update improved costs and break ties with ETOs
+		if ((target.getG() < cost) ||
+				((target.getG() == cost)
+						&& (null != eto) && eto.isAfter(target.getEto()))) {
 			this.updateSets(target);
 		}
 	}
@@ -593,6 +662,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @param etd the estimated time of departure
 	 */
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
+		this.clearVisited();
 		this.clearExpandables();
 		this.clearExpanded();
 		this.clearWaypoints();
@@ -608,13 +678,13 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.getGoal().setH(0);
 		
 		// the adjacent waypoints to the origin
-		this.setStartRegion(this.getEnvironment().getAdjacentWaypoints(origin)
+		this.setStartRegion(this.getEnvironment().getAdjacentWaypointPositions(origin)
 				.stream()
 				.map(PrecisionPosition::new)
 				.collect(Collectors.toSet()));
 		
 		// the adjacent waypoints to the destination
-		this.setGoalRegion(this.getEnvironment().getAdjacentWaypoints(destination)
+		this.setGoalRegion(this.getEnvironment().getAdjacentWaypointPositions(destination)
 				.stream()
 				.map(PrecisionPosition::new)
 				.collect(Collectors.toSet()));

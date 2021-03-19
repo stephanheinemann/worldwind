@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.ai.adstar;
 
+import java.time.ZonedDateTime;
+
 import com.cfar.swim.worldwind.ai.arastar.ARAStarWaypoint;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -45,6 +47,9 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	
 	/** the estimated previous expansion cost (v-value) of this AD* waypoint */
 	private double v;
+	
+	/** the previous expansion estimated time over this AD* waypoint */
+	private ZonedDateTime vEto = null;
 	
 	/**
 	 * Constructs an AD* waypoint at a specified position.
@@ -110,6 +115,36 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	}
 	
 	/**
+	 *  Gets the previous expansion estimated time over this AD* waypoint.
+	 * 
+	 * @return the previous expansion estimated time over this AD* waypoint
+	 */
+	public ZonedDateTime getVEto() {
+		return this.vEto;
+	}
+	
+	/**
+	 * Sets the previous expansion estimated time over this AD* waypoint.
+	 * 
+	 * @param vEto the previous expansion estimated time over this AD*
+	 *        waypoint
+	 */
+	public void setVEto(ZonedDateTime vEto) {
+		this.vEto = vEto;
+	}
+	
+	/**
+	 * Determines whether or not this AD* waypoint has a previous expansion
+	 * estimated time over.
+	 * 
+	 * @return true if this AD* waypoint has a previous expansion estimated
+	 *         time over, false otherwise
+	 */
+	public boolean hasVEto() {
+		return (null != this.vEto);
+	}
+	
+	/**
 	 * Indicates whether or not this AD* waypoint is consistent, that is, if
 	 * its current estimated cost (g-value) equals the estimated cost of its
 	 * last expansion (v-value).
@@ -117,8 +152,11 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @return true if this AD* waypoint is consistent, false otherwise
 	 */
 	public boolean isConsistent() {
-		// TODO: consistency needs to consider ETOs - look ahead ETOs required
-		return this.getG() == this.getV();
+		// consistency needs to consider ETOs: previous expansion ETOs required
+		// TODO: possibly consider slot times (hold / loiter)
+		return (this.getG() == this.getV())
+				&& this.hasEto() && this.hasVEto()
+				&& this.getEto().equals(this.getVEto());
 	}
 	
 	/**
@@ -131,7 +169,12 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @return true if this AD* waypoint is over-consistent, false otherwise
 	 */
 	public boolean isOverConsistent() {
-		return this.getG() < this.getV();
+		// consistency needs to consider ETOs: previous expansion ETOs required
+		// TODO: possibly consider slot times (hold / loiter)
+		return (this.getG() < this.getV()) ||
+				((this.getG() == this.getV())
+						&& this.hasEto() && this.hasVEto()
+						&& this.getEto().isBefore(this.getVEto()));
 	}
 	
 	/**
@@ -144,7 +187,12 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @return true if this AD* waypoint is under-consistent, false otherwise
 	 */
 	public boolean isUnderConsistent() {
-		return this.getG() > this.getV();
+		// consistency needs to consider ETOs: previous expansion ETOs required
+		// TODO: possibly consider slot times (hold / loiter)
+		return (this.getG() > this.getV()) ||
+				((this.getG() == this.getV())
+						&& this.hasEto() && this.hasVEto()
+						&& this.getEto().isAfter(this.getVEto()));
 	}
 	
 	/**
@@ -153,8 +201,18 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @see #isConsistent()
 	 */
 	public void makeConsistent() {
-		// TODO: consistency needs to consider ETOs - look ahead ETOs required
+		// consistency needs to consider ETOs: previous expansion ETOs required
 		this.setV(this.getG());
+		this.setVEto(this.getEto());
+	}
+	
+	/**
+	 * Makes this AD* waypoint undetermined.
+	 */
+	public void makeUndetermined() {
+		// consistency needs to consider ETO: previous expansion ETOs required
+		this.setV(Double.POSITIVE_INFINITY);
+		this.setVEto(null);
 	}
 	
 	/**

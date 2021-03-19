@@ -51,4 +51,13 @@ public interface DynamicObstacleListener {
 	 */
 	public void setObstacleManager(ObstacleManager obstacleManager);
 	
+	/**
+	 * Determines whether or not this dynamic obstacle listener has an obstacle
+	 * manager.
+	 * 
+	 * @return true if this dynamic obstacle listener has an obstacle manager,
+	 *         false otherwise
+	 */
+	public boolean hasObstacleManager();
+	
 }

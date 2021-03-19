@@ -23,7 +23,7 @@ public interface ObstacleProvider {
 	public void setObstacleManager(ObstacleManager obstacleManager);
 	
 	/**
-	 * Indicates whether or not this obstacle provider has an obstacle manager.
+	 * Determines whether or not this obstacle provider has an obstacle manager.
 	 * 
 	 * @return true if this obstacle provider has an obstacle manager,
 	 *         false otherwise

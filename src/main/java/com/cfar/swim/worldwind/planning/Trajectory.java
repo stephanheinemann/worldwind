@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.time.Duration;
+import java.util.Collections;
 
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
@@ -39,6 +40,7 @@ import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Path;
+import gov.nasa.worldwind.render.Renderable;
 
 /**
  * Realizes a trajectory of waypoints which represents a path in both
@@ -198,7 +200,13 @@ public class Trajectory extends Path implements Depictable {
 	 */
 	@SuppressWarnings("unchecked")
 	public Iterable<? extends Waypoint> getWaypoints() {
-		return (Iterable<Waypoint>) super.getPositions();
+		Iterable<Waypoint> waypoints = (Iterable<Waypoint>) super.getPositions();
+		
+		if (null == waypoints) {
+			waypoints = Collections.emptySet();
+		}
+		
+		return waypoints;
 	}
 	
 	/**

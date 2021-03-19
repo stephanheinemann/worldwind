@@ -132,7 +132,7 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	}
 	
 	/**
-	 * Indicates whether or not this SWIM connection has an obstacle manager.
+	 * Determines whether or not this SWIM connection has an obstacle manager.
 	 * 
 	 * @return true if this SWIM connection has an obstacle manager,
 	 *         false otherwise
