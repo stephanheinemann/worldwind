@@ -33,6 +33,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Comparator;
+import java.util.Objects;
 
 import com.binarydreamers.trees.Interval;
 
@@ -195,5 +196,45 @@ public class TimeInterval implements Interval<ChronoZonedDateTime<?>> {
 			return value;
 		}
 	};
+	
+	/**
+	 * Determines whether or not this time interval equals another time
+	 * interval based on their start and end times.
+	 * 
+	 * @param o the other time interval
+	 * 
+	 * @return true if this time interval equals the other time interval based
+	 *         on their start and end times, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			TimeInterval ti = (TimeInterval) o;
+			equals = ((this.start.equals(ti.start))
+					&& (this.end.equals(ti.end)));
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this time interval based on its start and end
+	 * times.
+	 * 
+	 * @return the hash code of this time interval based on its start and end
+	 *         times
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.start, this.end);
+	}
 	
 }

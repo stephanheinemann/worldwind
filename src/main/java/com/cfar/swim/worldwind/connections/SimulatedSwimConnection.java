@@ -161,15 +161,10 @@ public class SimulatedSwimConnection extends SwimConnection {
 				
 				if ((null != swimDirectory)
 						&& (Files.isDirectory(swimDirectory, LinkOption.NOFOLLOW_LINKS))) {
-					try {
-						Files.list(swimDirectory).forEachOrdered(System.out::println);
-						this.executor = Executors.newSingleThreadScheduledExecutor();
-						this.executor.scheduleAtFixedRate(
-								new SimulatedSwimLoader(swimDirectory),
-								0, this.updatePeriod, TimeUnit.MILLISECONDS);
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
+					this.executor = Executors.newSingleThreadScheduledExecutor();
+					this.executor.scheduleAtFixedRate(
+							new SimulatedSwimLoader(swimDirectory),
+							0, this.updatePeriod, TimeUnit.MILLISECONDS);
 				}
 			}
 		}

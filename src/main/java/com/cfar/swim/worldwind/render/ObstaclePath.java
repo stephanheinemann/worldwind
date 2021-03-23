@@ -327,5 +327,40 @@ public class ObstaclePath extends Path implements Obstacle {
 	public Extent getExtent(Globe globe) {
 		return super.getExtent(globe, 1d);
 	}
-
+	
+	/**
+	 * Determines whether or not this obstacle path equals another one based on
+	 * their cost intervals.
+	 * 
+	 * @param o the other obstacle path
+	 * 
+	 * @return true if this obstacle path equals the other one based on their
+	 *         cost intervals, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	public final boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof ObstaclePath)) {
+			ObstaclePath op = (ObstaclePath) o;
+			equals = this.getCostInterval().equals(op.getCostInterval());
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this obstacle path based on its cost interval.
+	 * 
+	 * @return the hash code of this obstacle path based on its cost interval
+	 * 
+	 * @see Object#hashCode()
+	 */
+	public final int hashCode() {
+		return this.getCostInterval().hashCode();
+	}
+	
 }

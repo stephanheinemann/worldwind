@@ -117,7 +117,7 @@ public class PlanningGridProperties extends EnvironmentProperties {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(this.ceiling, this.division, this.floor);
+		return Objects.hash(super.hashCode(), this.division);
 	}
 	
 }

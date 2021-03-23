@@ -131,7 +131,7 @@ public class DronekitDatalinkProperties extends DatalinkProperties {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(this.getDownlinkPeriod(), this.host, this.port);
+		return Objects.hash(super.hashCode(), this.host, this.port);
 	}
 	
 }

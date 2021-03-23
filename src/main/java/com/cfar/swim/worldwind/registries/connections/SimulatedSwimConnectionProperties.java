@@ -186,11 +186,7 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	@Override
 	public final int hashCode() {
 		return Objects.hash(
-				this.getSubscribesAIXM(),
-				this.getSubscribesAMXM(),
-				this.getSubscribesFIXM(),
-				this.getSubscribesIWXXM(),
-				this.getSubscribesWXXM(),
+				super.hashCode(),
 				this.resourceDirectory,
 				this.updatePeriod,
 				this.updateProbability,

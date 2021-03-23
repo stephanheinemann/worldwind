@@ -334,5 +334,40 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	}
 	
 	// TODO: interpolation and geometric conversion methods
-
+	
+	/**
+	 * Determines whether or not this obstacle sphere equals another one based
+	 * on their cost intervals.
+	 * 
+	 * @param o the other obstacle sphere
+	 * 
+	 * @return true if this obstacle sphere equals the other one based on their
+	 *         cost intervals, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	public final boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof ObstacleSphere)) {
+			ObstacleSphere os = (ObstacleSphere) o;
+			equals = this.getCostInterval().equals(os.getCostInterval());
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this obstacle sphere based on its cost interval.
+	 * 
+	 * @return the hash code of this obstacle sphere based on its cost interval
+	 * 
+	 * @see Object#hashCode()
+	 */
+	public final int hashCode() {
+		return this.getCostInterval().hashCode();
+	}
+	
 }

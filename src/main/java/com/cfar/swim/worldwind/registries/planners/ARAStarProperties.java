@@ -238,8 +238,7 @@ public class ARAStarProperties extends ForwardAStarProperties implements Anytime
 	@Override
 	public int hashCode() {
 		return Objects.hash(
-				this.costPolicy,
-				this.riskPolicy,
+				super.hashCode(),
 				this.deflationAmount,
 				this.finalInflation,
 				this.initialInflation);

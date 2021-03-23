@@ -1214,7 +1214,10 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	@Override
 	public synchronized void submitObstacleChange(Set<Obstacle> obstacles) {
 		this.pendingObstacles.addAll(obstacles);
-		if (this.getPlanner() instanceof DynamicObstacleListener) {
+		this.pendingObstacles.removeAll(this.obstacles);
+		// only notify dynamic obstacle listener about new obstacles
+		if ((!this.pendingObstacles.isEmpty())
+				&& this.getPlanner() instanceof DynamicObstacleListener) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
 		}
 	}
