@@ -205,6 +205,15 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Gets the start region of this forward A* planner.
+	 * 
+	 * @return the start region of this forward A* planner
+	 */
+	protected Set<PrecisionPosition> getStartRegion() {
+		return this.startRegion;
+	}
+	
+	/**
 	 * Sets the start region of this forward A* planner.
 	 * 
 	 * @param startRegion the start region of this forward A* planner
@@ -222,6 +231,15 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	protected boolean isInStartRegion(Position position) {
 		return this.startRegion.contains(position);
+	}
+	
+	/**
+	 * Gets the goal region of this forward A* planner.
+	 * 
+	 * @return the goal region of this forward A* planner
+	 */
+	protected Set<PrecisionPosition> getGoalRegion() {
+		return this.goalRegion;
 	}
 	
 	/**
@@ -568,7 +586,8 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	protected void connectPlan(AStarWaypoint waypoint) {
 		this.clearWaypoints();
 		
-		while ((null != waypoint)) {
+		// only connect plan from reached goal featuring ETO
+		while ((null != waypoint) && (waypoint.hasEto())) {
 			this.addFirstWaypoint(waypoint.clone());
 			waypoint = waypoint.getParent();
 			if (null != waypoint) {
@@ -662,18 +681,18 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @param etd the estimated time of departure
 	 */
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
+		this.setStart(null);
+		this.setGoal(null);
 		this.clearVisited();
 		this.clearExpandables();
 		this.clearExpanded();
 		this.clearWaypoints();
 		
-		this.setStart(null);
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setG(0);
 		this.getStart().setH(this.getEnvironment().getNormalizedDistance(origin, destination));
 		this.getStart().setEto(etd);
 		
-		this.setGoal(null);
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0);
 		
@@ -731,7 +750,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * 
 	 */
 	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
-		this.initialize(origin, destination, etd);
 		this.compute();
 		return this.createTrajectory();
 	}
@@ -751,6 +769,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		this.initialize(origin, destination, etd);
 		Trajectory trajectory = this.planPart(origin, destination, etd, 0);
 		this.revisePlan(trajectory);
 		return trajectory;
@@ -772,18 +791,18 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		Waypoint currentOrigin = new Waypoint(origin);
+		AStarWaypoint currentOrigin = new AStarWaypoint(origin);
 		ZonedDateTime currentEtd = etd;
 		
 		// collect intermediate destinations
-		ArrayList<Waypoint> destinations = waypoints.stream()
-				.map(Waypoint::new)
+		ArrayList<AStarWaypoint> destinations = waypoints.stream()
+				.map(AStarWaypoint::new)
 				.collect(Collectors.toCollection(ArrayList::new));
-		destinations.add(new Waypoint(destination));
+		destinations.add(new AStarWaypoint(destination));
 		
 		// plan and concatenate partial trajectories
 		for (int partIndex = 0; partIndex < destinations.size(); partIndex++) {
-			Waypoint currentDestination = destinations.get(partIndex);
+			AStarWaypoint currentDestination = destinations.get(partIndex);
 			if (!(currentOrigin.equals(currentDestination))) {
 				
 				/* 
@@ -797,7 +816,14 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				 */
 				
 				// plan partial trajectory
-				// currentOrigin equals presently stored goal and is found during initialization
+				this.initialize(currentOrigin, currentDestination, currentEtd);
+				
+				// connect part to previous part via goal parent for trajectory
+				// generation, previous goal and start need to be separate
+				// objects for AD* repairs
+				if (currentOrigin.hasParent()) {
+					this.getStart().setParent(currentOrigin.getParent());
+				}
 				this.planPart(currentOrigin, currentDestination, currentEtd, partIndex);
 				
 				if ((!this.hasWaypoints()) || (!this.getLastWaypoint().equals(currentDestination))) {
@@ -808,7 +834,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				} else {
 					// revise growing trajectory for each part
 					this.revisePlan(this.createTrajectory());
-					currentOrigin = this.getLastWaypoint();
+					currentOrigin = this.getGoal();
 					currentEtd = currentOrigin.getEto();
 				}
 			}

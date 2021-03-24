@@ -70,6 +70,9 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	/** the obstacle manager of this AD* planner */
 	private ObstacleManager obstacleManager = null;
 	
+	/** the dynamic obstacles of an obstacle commitment by this AD* planner */
+	private Set<Obstacle> dynamicObstacles = null;
+	
 	/** indicates whether or or not this AD* planner has a significant dynamic change */
 	private boolean hasSignificantChange = false;
 	
@@ -393,44 +396,61 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 */
 	protected void repair(int partIndex) {
 		if (this.needsRepair()) {
-			Set<ADStarWaypoint> affectedWaypoints = new HashSet<ADStarWaypoint>();
+			ADStarWaypoint partStart = (ADStarWaypoint) this.getStart().clone();
 			
-			// TODO: all previously computed parts have to be checked for affected waypoints
-			/*
-			if (0 < partIndex) {
+			if (0 == partIndex) {
+				// recursion anchor to repair first part
+				// TODO: obstacles should be added instead of replaced
+				// TODO: each parts needs its own obstacles to work on
+				this.dynamicObstacles = this.obstacleManager.commitObstacleChange();
+			} else  {
+				// recursion step to repair previous parts
 				this.backup(partIndex);
-				for (int index = 0; index < partIndex; index++) {
-					this.restore(index);
-					// TODO: check for obstacle interference and repair
-					// TODO: subsequent plans may require complete re-plan
-					// TODO: re-establish plan waypoints for repair decision?
-					// TODO: recursive versus iterative? (partIndex-1)
-					this.planPart(this.getStart(), this.getGoal(), this.getStart().getEto(), index);
-					this.backup(index);
-				}
+				double partInflation = this.getInflation();
+				this.setInflation(this.getMaximumQuality());
+				this.restore(partIndex -1);
+				this.planPart(this.getStart(), this.getGoal(), null, partIndex - 1);
+				partStart.setEto(this.getGoal().getEto());
+				partStart.setParent(this.getGoal().getParent());
+				this.backup(partIndex - 1);
+				this.setInflation(partInflation);
 				this.restore(partIndex);
 			}
-			*/
 			
-			// find waypoints affected by obstacles according to their ETO
-			for (Obstacle obstacle : this.obstacleManager.commitObstacleChange()) {
+			// determine waypoints affected by obstacles
+			Set<ADStarWaypoint> affectedWaypoints = new HashSet<>();
+			for (Obstacle obstacle : this.dynamicObstacles) {
 				affectedWaypoints.addAll(
 						this.getEnvironment()
-							.getAffectedWaypointPositions(obstacle)
-							.stream()
-							.map(position -> this.createWaypoint(position))
-							.filter(waypoint -> waypoint.hasEto())
-							.filter(waypoint -> obstacle.getCostInterval().contains(waypoint.getEto()))
-							.collect(Collectors.toSet())
-						);
+						.getAffectedWaypointPositions(obstacle)
+						.stream()
+						.map(position -> this.createWaypoint(position))
+						.filter(waypoint -> waypoint.hasEto())
+						.filter(waypoint -> obstacle.getCostInterval().contains(waypoint.getEto()))
+						.collect(Collectors.toSet()));
 			}
 			
-			// repair affected waypoints
-			for (ADStarWaypoint target : affectedWaypoints) {
-				if (!this.getStart().equals(target)) {
-					this.repair(target);
-					this.updateSets(target);
+			// TODO: consider departure slots: early arrival with holding / loitering
+			if (this.getStart().getEto().equals(partStart.getEto())) {
+				// repair affected waypoints for current part
+				
+				if (partStart.hasParent()) {
+					this.getStart().setParent(partStart.getParent());
 				}
+				
+				for (ADStarWaypoint target : affectedWaypoints) {
+					if (!this.getStart().equals(target)) {
+						this.repair(target);
+						this.updateSets(target);
+					}
+				}
+			} else {
+				// plan current part from scratch if start ETO has changed
+				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
+				if (partStart.hasParent()) {
+					this.getStart().setParent(partStart.getParent());
+				}
+				super.planPart(this.getStart(), this.getGoal(), partStart.getEto(), partIndex);
 			}
 		}
 	}
@@ -471,7 +491,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		// determine significant change
 		if (this.hasSignificantChange()) {
 			// TODO: implement significant change strategy
-			// increase e or re-plan from scratch
+			// increase epsilon or re-plan from scratch
 		} else if (!this.isDeflated()) {
 			this.deflate();
 		}
@@ -489,10 +509,13 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 */
 	@Override
 	protected void elaborate(int partIndex) {
+		// proceed to next part only if fully deflated and not in need of repair
 		while ((!this.isDeflated() || this.needsRepair()) && !this.hasTerminated()) {
 			this.repair(partIndex);
 			this.improve(partIndex);
 		}
+		// always backup at least once for potential repair later
+		this.backup(partIndex);
 	}
 	
 	/**
@@ -515,14 +538,12 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 */
 	@Override
 	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
-		// TODO: if index affected by change (and all subsequent indices)
-		// if (this.isAffected) {
-		// TODO: replan from scratch if affected by previous index and start inconsistent
-		// TODO: consider proper initialization and index change while planning subsequent parts
 		if (this.hasWaypoints()) {
+			// repair and improve existing plan after dynamic changes
 			this.elaborate(partIndex);
 			return this.createTrajectory();
 		} else {
+			// plan from scratch
 			return super.planPart(origin, destination, etd, partIndex);
 		}
 	}
@@ -543,6 +564,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initBackups(1);
+		this.initialize(origin, destination, etd);
 		Trajectory trajectory = new Trajectory();
 		
 		while (!this.hasTerminated()) {
@@ -575,7 +597,12 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		Trajectory trajectory = new Trajectory();
 		
 		while (!this.hasTerminated()) {
-			trajectory = super.plan(origin, destination, waypoints, etd);
+			if (this.hasWaypoints()) {
+				this.elaborate(waypoints.size());
+				trajectory = this.createTrajectory();
+			} else {
+				trajectory = super.plan(origin, destination, waypoints, etd);
+			}
 			// wait for termination or dynamic changes
 			this.suspend();
 		}
