@@ -71,7 +71,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	private ObstacleManager obstacleManager = null;
 	
 	/** the dynamic obstacles of an obstacle commitment by this AD* planner */
-	private Set<Obstacle> dynamicObstacles = null;
+	private Set<Obstacle> dynamicObstacles = new HashSet<>();
 	
 	/** indicates whether or or not this AD* planner has a significant dynamic change */
 	private boolean hasSignificantChange = false;
@@ -386,7 +386,13 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * @return true if the AD* plan needs a potential repair, false otherwise
 	 */
 	protected boolean needsRepair() {
-		return this.hasObstacleManager() && this.obstacleManager.hasObstacleChange();
+		if (this.hasObstacleManager() && this.obstacleManager.hasObstacleChange()) {
+			Set<Obstacle> dynamicObstacles = this.obstacleManager.commitObstacleChange();
+			this.dynamicObstacles.addAll(dynamicObstacles);
+			this.share(dynamicObstacles);
+		}
+		
+		return !this.dynamicObstacles.isEmpty();
 	}
 	
 	/**
@@ -398,18 +404,14 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		if (this.needsRepair()) {
 			ADStarWaypoint partStart = (ADStarWaypoint) this.getStart().clone();
 			
-			if (0 == partIndex) {
-				// recursion anchor to repair first part
-				// TODO: obstacles should be added instead of replaced
-				// TODO: each parts needs its own obstacles to work on
-				this.dynamicObstacles = this.obstacleManager.commitObstacleChange();
-			} else  {
-				// recursion step to repair previous parts
+			// repair previous parts before current part
+			if (this.hasDynamicObstacles(partIndex - 1)) {
 				this.backup(partIndex);
 				double partInflation = this.getInflation();
 				this.setInflation(this.getMaximumQuality());
 				this.restore(partIndex -1);
 				this.planPart(this.getStart(), this.getGoal(), null, partIndex - 1);
+				// TODO: what if no plan could be found
 				partStart.setEto(this.getGoal().getEto());
 				partStart.setParent(this.getGoal().getParent());
 				this.backup(partIndex - 1);
@@ -429,15 +431,16 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 						.filter(waypoint -> obstacle.getCostInterval().contains(waypoint.getEto()))
 						.collect(Collectors.toSet()));
 			}
+			this.dynamicObstacles.clear();
 			
-			// TODO: consider departure slots: early arrival with holding / loitering
+			// TODO: consider departure slots to avoid planning from scratch
+			// TODO: consider early arrivals with holding / loitering
 			if (this.getStart().getEto().equals(partStart.getEto())) {
-				// repair affected waypoints for current part
-				
+				// connect current to previous part
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
 				}
-				
+				// repair affected waypoints for current part
 				for (ADStarWaypoint target : affectedWaypoints) {
 					if (!this.getStart().equals(target)) {
 						this.repair(target);
@@ -538,7 +541,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 */
 	@Override
 	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
-		if (this.hasWaypoints()) {
+		if (this.hasBackup(partIndex)) {
 			// repair and improve existing plan after dynamic changes
 			this.elaborate(partIndex);
 			return this.createTrajectory();
@@ -563,9 +566,9 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		Trajectory trajectory = new Trajectory();
 		this.initBackups(1);
 		this.initialize(origin, destination, etd);
-		Trajectory trajectory = new Trajectory();
 		
 		while (!this.hasTerminated()) {
 			trajectory = this.planPart(origin, destination, etd, 0);
@@ -574,7 +577,6 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 			this.suspend();
 		}
 		
-		this.clearWaypoints();
 		return trajectory;
 	}
 	
@@ -595,9 +597,10 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		Trajectory trajectory = new Trajectory();
+		this.initBackups(waypoints.size() + 1);
 		
 		while (!this.hasTerminated()) {
-			if (this.hasWaypoints()) {
+			if (this.hasBackup(waypoints.size())) {
 				this.elaborate(waypoints.size());
 				trajectory = this.createTrajectory();
 			} else {
@@ -607,7 +610,6 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 			this.suspend();
 		}
 		
-		this.clearWaypoints();
 		return trajectory;
 	}
 	
@@ -655,6 +657,126 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	@Override
 	public synchronized boolean hasObstacleManager() {
 		return (null != this.obstacleManager);
+	}
+	
+	/**
+	 * Realizes a backup of this AD* planner.
+	 * 
+	 * @author Stephan Heinemann
+	 * 
+	 * @see ARAStarPlanner.Backup
+	 */
+	protected class Backup extends ARAStarPlanner.Backup {
+		
+		/** the dynamic obstacles of this AD* backup */
+		public Set<Obstacle> dynamicObstacles = new HashSet<>();
+		
+		/**
+		 * Clears this AD* backup.
+		 * 
+		 * @see ARAStarPlanner.Backup#clear()
+		 */
+		@Override
+		public void clear() {
+			super.clear();
+			this.dynamicObstacles.clear();
+		}
+		
+		/**
+		 * Determines whether or not this AD* backup is empty.
+		 * 
+		 * @return true if this AD* backup is empty, false otherwise
+		 * 
+		 * @see ARAStarPlanner.Backup#isEmpty()
+		 */
+		@Override
+		public boolean isEmpty() {
+			return super.isEmpty() && this.dynamicObstacles.isEmpty();
+		}
+	}
+	
+	/**
+	 * Initializes a number backups for this AD* planner.
+	 * 
+	 * @param size the number of backups for this AD* planner
+	 */
+	@Override
+	protected void initBackups(int size) {
+		this.backups.clear();
+		for (int backupIndex = 0; backupIndex < size; backupIndex++) {
+			this.backups.add(backupIndex, new Backup());
+		}
+	}
+	
+	/**
+	 * Backs up this AD* planner for incremental improvement and dynamic repair.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if a backup has been performed, false otherwise
+	 */
+	@Override
+	protected boolean backup(int backupIndex) {
+		boolean backedup = super.backup(backupIndex);
+		
+		if (backedup) {
+			Backup backup = (Backup) this.backups.get(backupIndex);
+			backedup = backup.dynamicObstacles.addAll(this.dynamicObstacles);
+		}
+		
+		return backedup;
+	}
+	
+	/**
+	 * Restores this AD* planner for incremental improvement and dynamic repair.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if a restore has been performed, false otherwise
+	 */
+	@Override
+	protected boolean restore(int backupIndex) {
+		boolean restored = super.restore(backupIndex);
+		
+		if (restored) {
+			Backup backup = (Backup) this.backups.get(backupIndex);
+			this.dynamicObstacles.clear();
+			restored = this.dynamicObstacles.addAll(backup.dynamicObstacles);
+		}
+		
+		return restored;
+	}
+	
+	/**
+	 * Shares dynamic obstacles among all existing AD* backups for dynamic repair.
+	 * 
+	 * @param dynamicObstacles the dynamic obstacles to be shared
+	 */
+	protected void share(Set<Obstacle> dynamicObstacles) {
+		for (int backupIndex = 0; backupIndex < backups.size(); backupIndex++) {
+			if (this.hasBackup(backupIndex)) {
+				Backup backup = (Backup) this.backups.get(backupIndex);
+				backup.dynamicObstacles.addAll(dynamicObstacles);
+			}
+		}
+	}
+	
+	/**
+	 * Determines whether or not an AD* backup has dynamic obstacles.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if the AD* backup has dynamic obstacles, false otherwise
+	 */
+	protected boolean hasDynamicObstacles(int backupIndex) {
+		boolean hasDynamicObstacles = false;
+		
+		if (this.hasBackup(backupIndex)) {
+			Backup backup = (Backup) this.backups.get(backupIndex);
+			hasDynamicObstacles = !backup.dynamicObstacles.isEmpty();
+		}
+		
+		return hasDynamicObstacles;
 	}
 	
 	/**

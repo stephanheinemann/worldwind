@@ -31,7 +31,6 @@ package com.cfar.swim.worldwind.ai.arastar;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -47,6 +46,7 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
+
 import gov.nasa.worldwind.geom.Position;
 
 
@@ -612,40 +612,40 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/** the backups of this ARA* planner */
-	private final ArrayList<Backup> backups = new ArrayList<>();
+	protected final ArrayList<Backup> backups = new ArrayList<>();
 	
 	/**
 	 * Realizes a backup of this ARA* planner.
 	 * 
 	 * @author Stephan Heinemann
 	 */
-	private class Backup {
-		/** the start waypoint backup */
+	protected class Backup {
+		/** the start waypoint of this ARA* backup */
 		public ARAStarWaypoint start = null;
 		
-		/** the goal waypoint backup */
+		/** the goal waypoint of this ARA* backup */
 		public ARAStarWaypoint goal = null;
 		
-		/** the start region backup */
+		/** the start region of this ARA* backup */
 		public Set<PrecisionPosition> startRegion = new HashSet<>();
 		
-		/** the goal region backup */
+		/** the goal region of this ARA* backup */
 		public Set<PrecisionPosition> goalRegion = new HashSet<>();
 		
-		/** the visited waypoints backup */
+		/** the visited waypoints of this ARA* backup */
 		public Set<AStarWaypoint> visited = new HashSet<>();
 		
-		/** the open waypoints backup */
+		/** the open waypoints of this ARA* backup */
 		public Set<AStarWaypoint> open = new HashSet<>();
 		
-		/** the inconsistent waypoints backup */
+		/** the inconsistent waypoints of this ARA* backup */
 		public Set<ARAStarWaypoint> incons = new HashSet<>();
 		
-		/** the closed waypoints backup */
+		/** the closed waypoints of this ARA* backup */
 		public Set<AStarWaypoint> closed = new HashSet<>();
 		
 		/**
-		 * Clears this backup.
+		 * Clears this ARA* backup.
 		 */
 		public void clear() {
 			this.start = null;
@@ -659,9 +659,9 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		}
 		
 		/**
-		 * Determines whether or not this backup is empty.
+		 * Determines whether or not this ARA* backup is empty.
 		 * 
-		 * @return true if this backup is empty, false otherwise
+		 * @return true if this ARA* backup is empty, false otherwise
 		 */
 		public boolean isEmpty() {
 			return (null == this.start) && (null == this.goal)
@@ -709,7 +709,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
-	 * Backs up the waypoints of this ARA* planner for improvement.
+	 * Backs up this ARA* planner for incremental improvement.
 	 * 
 	 * @param backupIndex the index of the backup
 	 * 
@@ -734,7 +734,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
-	 * Restores the waypoints of this ARA* planner for improvement.
+	 * Restores this ARA* planner for incremental improvement.
 	 * 
 	 * @param backupIndex the index of the backup
 	 * 
