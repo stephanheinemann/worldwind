@@ -29,6 +29,29 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
+/**
+ * Describes the properties bean of a dynamic planner.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public interface DynamicPlannerProperties extends PlannerProperties {
-	// TODO: significant change property
+	
+	/**
+	 * Gets the significant change threshold of this dynamic planner properties
+	 * bean.
+	 * 
+	 * @return the significant change threshold of this dynamic planner
+	 *         properties bean
+	 */
+	public double getSignificantChange();
+	
+	/**
+	 * Sets the significant change threshold of this dynamic planner properties
+	 * bean.
+	 * 
+	 * @param significantChange the significant change threshold to be set
+	 */
+	public void setSignificantChange(double significantChange);
+	
 }

@@ -156,8 +156,8 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((ADStarPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
 				((ADStarPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
 				((ADStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+				((ADStarPlanner) planner).setSignificantChange(properties.getSignificantChange());
 				((ADStarPlanner) planner).setObstacleManager(this.scenario);
-				// TODO: significant change property
 			}
 			// TODO: implement more planners
 		}

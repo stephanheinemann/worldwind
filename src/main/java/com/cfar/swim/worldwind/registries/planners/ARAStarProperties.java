@@ -210,7 +210,7 @@ public class ARAStarProperties extends ForwardAStarProperties implements Anytime
 	 *         properties bean equal the aggregated properties of the other
 	 *         ARA* planner properties bean, false otherwise
 	 * 
-	 * @see ForwardAStarPlanner#equals(Object)
+	 * @see ForwardAStarProperties#equals(Object)
 	 */
 	@Override
 	public boolean equals(Object o) {
@@ -233,7 +233,7 @@ public class ARAStarProperties extends ForwardAStarProperties implements Anytime
 	 * @return the hash code of this ARA* planner properties bean based on its
 	 *         aggregated properties
 	 * 
-	 * @see ForwardAStarPlanner#hashCode()
+	 * @see ForwardAStarProperties#hashCode()
 	 */
 	@Override
 	public int hashCode() {

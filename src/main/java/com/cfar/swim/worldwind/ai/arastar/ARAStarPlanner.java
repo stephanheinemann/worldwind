@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.ai.arastar;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -187,7 +188,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
-	 * Deflates the current inflation by the deflation amount, or otherwise to
+	 * Decreases the current inflation by the deflation amount, or otherwise to
 	 * the final deflation.
 	 */
 	protected void deflate() {
@@ -524,7 +525,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	protected void improve(int partIndex) {
 		this.backup(partIndex);
-		// TODO: potentially deflate below actual current suboptimality
+		// TODO: potentially deflate below actual current sub-optimality
 		// bound for more aggressive optimization 
 		this.deflate();
 		this.restore(partIndex);
@@ -644,6 +645,9 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		/** the closed waypoints of this ARA* backup */
 		public Set<AStarWaypoint> closed = new HashSet<>();
 		
+		/** the plan waypoints of this ARA* backup */
+		public List<AStarWaypoint> plan = new LinkedList<>(); 
+		
 		/**
 		 * Clears this ARA* backup.
 		 */
@@ -656,6 +660,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			this.open.clear();
 			this.incons.clear();
 			this.closed.clear();
+			this.plan.clear();
 		}
 		
 		/**
@@ -670,7 +675,8 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 					&& this.visited.isEmpty()
 					&& this.open.isEmpty()
 					&& this.incons.isEmpty()
-					&& this.closed.isEmpty();
+					&& this.closed.isEmpty()
+					&& this.plan.isEmpty();
 		}
 	}
 	
@@ -728,6 +734,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			backup.open.addAll(this.open);
 			backup.incons.addAll(this.incons);
 			backup.closed.addAll(this.closed);
+			backup.plan.addAll(this.plan);
 			backedup = true;
 		}
 		return backedup;
@@ -780,6 +787,9 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			// clear inconsistent and expandable waypoints
 			this.clearInconsistent();
 			this.clearExpanded();
+			
+			this.clearWaypoints();
+			this.plan.addAll(backup.plan);
 			
 			restored = true;
 		}

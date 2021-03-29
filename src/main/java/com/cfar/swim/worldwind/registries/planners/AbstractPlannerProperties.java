@@ -43,6 +43,8 @@ import com.cfar.swim.worldwind.registries.Properties;
  */
 public abstract class AbstractPlannerProperties implements PlannerProperties {
 
+	// TODO: maximum slot time (departure or waypoint in general)
+	
 	/** the cost policy of this planner properties bean */
 	CostPolicy costPolicy;
 	

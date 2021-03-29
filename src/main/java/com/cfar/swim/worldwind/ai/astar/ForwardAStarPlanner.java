@@ -50,7 +50,6 @@ import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.planning.Trajectory;
-import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 
@@ -88,8 +87,8 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	/** the goal region */
 	private Set<PrecisionPosition> goalRegion;
 	
-	/** the last computed plan */
-	private final LinkedList<AStarWaypoint> plan = new LinkedList<>();
+	/** the computed plan */
+	protected LinkedList<AStarWaypoint> plan = new LinkedList<>();
 	
 	/**
 	 * Constructs a basic forward A* planner for a specified aircraft and
@@ -579,22 +578,25 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Gets the A* waypoints of the current plan.
+	 * 
+	 * @return the A* waypoints of the current plan
+	 */
+	protected List<AStarWaypoint> getWaypoints() {
+		return Collections.unmodifiableList(this.plan);
+	}
+	
+	/**
 	 * Connects a plan from a specified A* goal waypoint.
 	 * 
 	 * @param waypoint the last A* waypoint of a computed plan
 	 */
 	protected void connectPlan(AStarWaypoint waypoint) {
 		this.clearWaypoints();
-		
 		// only connect plan from reached goal featuring ETO
 		while ((null != waypoint) && (waypoint.hasEto())) {
-			this.addFirstWaypoint(waypoint.clone());
+			this.addFirstWaypoint(waypoint);
 			waypoint = waypoint.getParent();
-			if (null != waypoint) {
-				// TODO: this is not good enough and environment airdata intervals are required
-				waypoint.setTtg(Duration.between(waypoint.getEto(), this.getFirstWaypoint().getEto()));
-				waypoint.setDtg(this.getEnvironment().getDistance(waypoint, this.getFirstWaypoint()));
-			}
 		}
 	}
 	
@@ -603,9 +605,25 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * 
 	 * @return the trajectory of the computed plan
 	 */
-	@SuppressWarnings("unchecked")
 	protected Trajectory createTrajectory() {
-		return new Trajectory(Collections.unmodifiableList((List<Waypoint>) this.plan.clone()));
+		LinkedList<AStarWaypoint> waypoints = new LinkedList<>();
+		
+		this.plan.descendingIterator()
+			.forEachRemaining(waypoint -> {
+				AStarWaypoint current = waypoint.clone();
+				if (waypoints.isEmpty()) {
+					current.setTtg(Duration.ZERO);
+					current.setDtg(0d);
+				} else {
+					// TODO: this is not good enough and environment air-data intervals are required
+					// TODO: consider time and distance to next versus to goal waypoint
+					waypoints.getFirst().setTtg(Duration.between(current.getEto(), waypoints.getFirst().getEto()));
+					waypoints.getFirst().setDtg(this.getEnvironment().getDistance(current, waypoints.getFirst()));
+				}
+				waypoints.addFirst(current);
+			});
+		
+		return new Trajectory(Collections.unmodifiableList(waypoints));
 	}
 	
 	/**

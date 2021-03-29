@@ -59,30 +59,18 @@ public interface DynamicPlanner extends Planner, DynamicObstacleListener {
 	public boolean hasTerminated();
 	
 	/**
+	 * Gets the significant change threshold of this dynamic planner.
+	 * 
+	 * @return the significant change threshold of this dynamic planner
+	 */
+	public double getSignificantChange();
+	
+	/**
 	 * Sets the significant change threshold of this dynamic planner.
 	 * 
-	 * @param significantChange the signficant change threshold of this dynamic
-	 *                          planner
+	 * @param significantChange the significant change threshold of this
+	 *                          dynamic planner
 	 */
 	public void setSignificantChange(double significantChange);
 	
-	/**
-	 * Indicates whether or or not this dynamic planner has a significant
-	 * dynamic change.
-	 * 
-	 * @return true if this dynamic planner has a significant dynamic change,
-	 *         false otherwise
-	 */
-	public boolean hasSignificantChange();
-	
-	// repairCost(Waypoint)
-	
-	// significant cost = affected legs / current legs (e.g. accept 0.25)
-	// changes close to start versus goal (resulting repair)
-	
-	// setSignficantCostChange
-	// isSignificantCostChange
-	// notifyCostChange (implements Cost/Obstacle ChangeListener, registers at DynamicEnvironment)
-	// Environment <- StaticEnvironment, DynamicEnvironment ?
-	// DynamicEnvironment.registerDynamicCostListener(DynamicCostListener dcl)
 }

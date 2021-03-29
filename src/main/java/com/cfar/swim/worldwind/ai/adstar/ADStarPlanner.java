@@ -72,12 +72,12 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	
 	/** the dynamic obstacles of an obstacle commitment by this AD* planner */
 	private Set<Obstacle> dynamicObstacles = new HashSet<>();
-	
-	/** indicates whether or or not this AD* planner has a significant dynamic change */
-	private boolean hasSignificantChange = false;
-	
+		
 	/** the significant change threshold of this AD* planner */
-	private double significantChange = 0.25d;
+	private double significantChange = 0.5d;
+	
+	/** the actual change of this AD* planner */
+	private double change = 0d;
 	
 	/**
 	 * Constructs an AD* planner for a specified aircraft and environment
@@ -310,77 +310,6 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	}
 	
 	/**
-	 * Computes an AD* plan.
-	 * 
-	 * @see ARAStarPlanner#compute()
-	 */
-	@Override
-	protected void compute() {
-		while (this.canExpand()) {
-			ADStarWaypoint source = this.pollExpandable();
-			Set<? extends ADStarWaypoint> neighbors = this.expand(source);
-			
-			// source is always inconsistent as per expandable invariant
-			if (source.isOverConsistent()) {
-				// establish consistency
-				source.makeConsistent();
-				// propagate over-consistency
-				for (ADStarWaypoint target : neighbors) {
-					this.updateWaypoint(source, target);
-				}
-			} else {
-				// eliminate under-consistency
-				source.makeUndetermined();
-				// expanding implicitly adds the expanded waypoint to the expanded set
-				this.removeExpanded(source);
-				this.updateSets(source);
-				// propagate under-consistency
-				for (ADStarWaypoint target : neighbors) {
-					// find targets that depend on under-consistent source
-					if (target.hasParent() && target.getParent().equals(source)) {
-						this.repair(target);
-						this.updateSets(target);
-					}
-				}
-			}
-		}
-		
-		this.connectPlan(this.getGoal());
-	}
-	
-	/**
-	 * Terminates this AD* planner.
-	 * 
-	 * @see DynamicPlanner#terminate()
-	 */
-	@Override
-	public synchronized void terminate() {
-		this.terminated = true;
-		this.notifyAll();
-	}
-	
-	/**
-	 * Recycles this AD* planner.
-	 * 
-	 * @see DynamicPlanner#recycle()
-	 */
-	public synchronized void recycle() {
-		this.terminated = false;
-	}
-	
-	/**
-	 * Indicates whether or not this AD* planner has terminated.
-	 * 
-	 * @return true if this AD* planner has terminated, false otherwise
-	 * 
-	 * @see DynamicPlanner#hasTerminated()
-	 */
-	@Override
-	public synchronized boolean hasTerminated() {
-		return this.terminated;
-	}
-	
-	/**
 	 * Determines whether or not an AD* plan needs a potential repair.
 	 * 
 	 * @return true if the AD* plan needs a potential repair, false otherwise
@@ -459,27 +388,140 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	}
 	
 	/**
+	 * Computes an AD* plan.
+	 * 
+	 * @see ARAStarPlanner#compute()
+	 */
+	@Override
+	protected void compute() {
+		while (this.canExpand()) {
+			ADStarWaypoint source = this.pollExpandable();
+			Set<? extends ADStarWaypoint> neighbors = this.expand(source);
+			
+			// source is always inconsistent as per expandable invariant
+			if (source.isOverConsistent()) {
+				// establish consistency
+				source.makeConsistent();
+				// propagate over-consistency
+				for (ADStarWaypoint target : neighbors) {
+					this.updateWaypoint(source, target);
+				}
+			} else {
+				// eliminate under-consistency
+				source.makeUndetermined();
+				// expanding implicitly adds the expanded waypoint to the expanded set
+				this.removeExpanded(source);
+				this.updateSets(source);
+				// propagate under-consistency
+				for (ADStarWaypoint target : neighbors) {
+					// find targets that depend on under-consistent source
+					if (target.hasParent() && target.getParent().equals(source)) {
+						this.repair(target);
+						this.updateSets(target);
+					}
+				}
+			}
+		}
+		
+		this.connectPlan(this.getGoal());
+	}
+	
+	/**
+	 * Terminates this AD* planner.
+	 * 
+	 * @see DynamicPlanner#terminate()
+	 */
+	@Override
+	public synchronized void terminate() {
+		this.terminated = true;
+		this.notifyAll();
+	}
+	
+	/**
+	 * Recycles this AD* planner.
+	 * 
+	 * @see DynamicPlanner#recycle()
+	 */
+	public synchronized void recycle() {
+		this.terminated = false;
+	}
+	
+	/**
+	 * Indicates whether or not this AD* planner has terminated.
+	 * 
+	 * @return true if this AD* planner has terminated, false otherwise
+	 * 
+	 * @see DynamicPlanner#hasTerminated()
+	 */
+	@Override
+	public synchronized boolean hasTerminated() {
+		return this.terminated;
+	}
+	
+	/**
+	 * Gets the significant change threshold of this AD* planner.
+	 * 
+	 * @return the significant change threshold of this AD* planner.
+	 * 
+	 * @see DynamicPlanner#getSignificantChange()
+	 */
+	public double getSignificantChange() {
+		return this.significantChange;
+	}
+	
+	/**
 	 * Sets the significant change threshold of this AD* planner.
 	 * 
-	 * @param significantChange the signficant change threshold of this AD*
-	 *                          planner
+	 * @param significantChange the significant change threshold to be set
+	 * 
+	 * @see DynamicPlanner#setSignificantChange(double)
 	 */
 	public void setSignificantChange(double significantChange) {
 		this.significantChange = significantChange;
 	}
 	
 	/**
-	 * Indicates whether or or not this AD* planner has a significant dynamic
+	 * Determines whether or or not this AD* planner has a significant dynamic
 	 * change.
 	 * 
 	 * @return true if this AD* planner has a significant dynamic change,
 	 *         false otherwise
-	 *
-	 * @see DynamicPlanner#hasSignificantChange()
 	 */
-	@Override
-	public boolean hasSignificantChange() {
-		return this.hasSignificantChange;
+	protected boolean hasSignificantChange() {
+		boolean hasSignificantChange = false;
+		// TODO: examine different determination policies including
+		// (1) consistent, under-consistent, over-consistent waypoints
+		// (2) inconsistencies close to start versus close to goal (ETOs)
+		// (3) even if the current trajectory is not directly affected,
+		//     the surrounding environment could allow for improvements
+		
+		// the amount of waypoints in the current plan
+		int wc = this.getWaypoints().size();
+		// the amount of inconsistent waypoints in the current plan
+		long ic = this.getWaypoints().stream()
+			.filter(waypoint -> !((ADStarWaypoint) waypoint).isConsistent())
+			.count();
+		// the ratio of inconsistent to all waypoints in the current plan
+		if (0 != wc) {
+			this.change = ((double) ic) / wc;
+			hasSignificantChange = (this.change >= this.significantChange);
+		}
+		
+		return hasSignificantChange;
+	}
+	
+	/**
+	 * Increases the current inflation depending on the actual dynamic change.
+	 */
+	protected void inflate() {
+		// TODO: consider different significant change handling strategies
+		// increase epsilon or re-plan from scratch
+		double qualityRange = this.getMinimumQuality() - this.getMaximumQuality();
+		double qualityAdjustment = this.getMaximumQuality() + (this.change * qualityRange);
+		
+		if (this.getInflation() < qualityAdjustment) {
+			this.setInflation(qualityAdjustment);
+		}
 	}
 	
 	/**
@@ -493,9 +535,10 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 
 		// determine significant change
 		if (this.hasSignificantChange()) {
-			// TODO: implement significant change strategy
-			// increase epsilon or re-plan from scratch
+			// inflate to lower quality or re-plan from scratch
+			this.inflate();
 		} else if (!this.isDeflated()) {
+			// deflate to higher quality and continue improving
 			this.deflate();
 		}
 		
@@ -795,12 +838,12 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		
 		if ((null != specification) && (specification.getProperties() instanceof ADStarProperties)) {
 			ADStarProperties adsp = (ADStarProperties) specification.getProperties();
-			// TODO: add significant change property
 			matches = (this.getCostPolicy().equals(adsp.getCostPolicy()))
 					&& (this.getRiskPolicy().equals(adsp.getRiskPolicy()))
 					&& (this.getMinimumQuality() == adsp.getMinimumQuality())
 					&& (this.getMaximumQuality() == adsp.getMaximumQuality())
 					&& (this.getQualityImprovement() == adsp.getQualityImprovement()
+					&& (this.getSignificantChange() == adsp.getSignificantChange())
 					&& (specification.getId().equals(Specification.PLANNER_ADS_ID)));
 		}
 		
