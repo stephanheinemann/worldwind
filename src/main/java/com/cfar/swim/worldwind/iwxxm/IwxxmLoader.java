@@ -90,7 +90,9 @@ public class IwxxmLoader implements ObstacleLoader {
 	
 	public Set<Obstacle> loadSigmet(SIGMETType sigmet) throws JAXBException {
 		if (sigmet.getStatus().equals(SIGMETReportStatusType.CANCELLATION)) {
-			return null; //this.loadCancelSigmet(sigmet);
+			// TODO: create obstacles with negative costs
+			// TODO: scenario should remove obstacles with negative costs
+			return null;// this.loadCancelSigmet(sigmet);
 		} else if (sigmet.getStatus().equals(SIGMETReportStatusType.NORMAL)) {
 			return this.loadNormalSigmet(sigmet);
 		}

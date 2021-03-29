@@ -44,11 +44,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.cfar.swim.worldwind.ai.DynamicObstacleListener;
 import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.SimulatedDatalink;
+import com.cfar.swim.worldwind.connections.SimulatedSwimConnection;
+import com.cfar.swim.worldwind.connections.SwimConnection;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planning.Environment;
@@ -71,7 +74,7 @@ import gov.nasa.worldwind.globes.Globe;
  * @author Stephan Heinemann
  *
  */
-public class Scenario implements Identifiable, Enableable {
+public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	
 	/** the default scenario identifier */
 	public static final String DEFAULT_SCENARIO_ID = "Default Scenario";
@@ -112,6 +115,9 @@ public class Scenario implements Identifiable, Enableable {
 	/** the datalink of this scenario */
 	private Datalink datalink;
 	
+	/** thie SWIM connection of this scenario */
+	private SwimConnection swimConnection;
+	
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
 	
@@ -119,7 +125,10 @@ public class Scenario implements Identifiable, Enableable {
 	private Trajectory trajectory;
 	
 	/** the obstacles of this scenario */
-	private Set<Obstacle> obstacles;
+	private HashSet<Obstacle> obstacles;
+	
+	/** the pending (uncommitted) obstacles of this scenario */
+	private HashSet<Obstacle> pendingObstacles;
 	
 	/** the timer executor of this scenario */
 	private ScheduledExecutorService executor;
@@ -145,7 +154,7 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Initializes this scenario.
 	 */
-	public void init() {
+	public synchronized void init() {
 		// TODO: improve initial scenario
 		this.time = ZonedDateTime.now(ZoneId.of("UTC"));
 		this.timeController = new TimeController(0);
@@ -162,8 +171,11 @@ public class Scenario implements Identifiable, Enableable {
 		this.waypoints = new ArrayList<Waypoint>();
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
 		this.setDatalink(new SimulatedDatalink());
+		this.setSwimConnection(new SimulatedSwimConnection());
+		this.getSwimConnection().setObstacleManager(this);
 		this.setTrajectory(new Trajectory());
 		this.obstacles = new HashSet<Obstacle>();
+		this.pendingObstacles = new HashSet<Obstacle>();
 	}
 	
 	/**
@@ -174,7 +186,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * @see Identifiable#getId()
 	 */
 	@Override
-	public String getId() {
+	public synchronized String getId() {
 		return this.id;
 	}
 	
@@ -184,7 +196,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * @see Enableable#enable()
 	 */
 	@Override
-	public void enable() {
+	public synchronized void enable() {
 		this.isEnabled = true;
 		this.pcs.firePropertyChange("isEnabled", null, this.isEnabled);
 	}
@@ -195,7 +207,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * @see Enableable#disable()
 	 */
 	@Override
-	public void disable() {
+	public synchronized void disable() {
 		this.isEnabled = false;
 		this.pcs.firePropertyChange("isEnabled", null, this.isEnabled);
 	}
@@ -208,7 +220,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * @see Enableable#isEnabled()
 	 */
 	@Override
-	public boolean isEnabled() {
+	public synchronized boolean isEnabled() {
 		return this.isEnabled;
 	}
 	
@@ -217,7 +229,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the property change listener to be added
 	 */
-	public void addPropertyChangeListener(PropertyChangeListener listener) {
+	public synchronized void addPropertyChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener(listener);
 	}
 	
@@ -226,14 +238,14 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the property change listener to be removed
 	 */
-	public void removePropertyChangeListener(PropertyChangeListener listener) {
+	public synchronized void removePropertyChangeListener(PropertyChangeListener listener) {
 		this.pcs.removePropertyChangeListener(listener);
 	}
 	
 	/**
 	 * Removes all property change listeners from this scenario.
 	 */
-	public void clearPropertyChangeListeners() {
+	public synchronized void clearPropertyChangeListeners() {
 		for (PropertyChangeListener listener : this.pcs.getPropertyChangeListeners()) {
 			this.pcs.removePropertyChangeListener(listener);
 		}
@@ -244,7 +256,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the enabled change listener to be added
 	 */
-	public void addEnabledChangeListener(PropertyChangeListener listener) {
+	public synchronized void addEnabledChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("isEnabled", listener);
 	}
 	
@@ -253,7 +265,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the time change listener to be added
 	 */
-	public void addTimeChangeListener(PropertyChangeListener listener) {
+	public synchronized void addTimeChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("time", listener);
 	}
 	
@@ -262,7 +274,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the cost threshold change listener to be added
 	 */
-	public void addThresholdChangeListener(PropertyChangeListener listener) {
+	public synchronized void addThresholdChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("threshold", listener);
 	}
 	
@@ -271,7 +283,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the aircraft change listener to be added
 	 */
-	public void addAircraftChangeListener(PropertyChangeListener listener) {
+	public synchronized void addAircraftChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("aircraft", listener);
 	} 
 	
@@ -280,7 +292,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the environment change listener to be added
 	 */
-	public void addEnvironmentChangeListener(PropertyChangeListener listener) {
+	public synchronized void addEnvironmentChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("environment", listener);
 	}
 	
@@ -289,7 +301,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the waypoints change listener to be added
 	 */
-	public void addWaypointsChangeListener(PropertyChangeListener listener) {
+	public synchronized void addWaypointsChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("waypoints", listener);
 	}
 	
@@ -298,7 +310,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the trajectory change listener to be added
 	 */
-	public void addTrajectoryChangeListener(PropertyChangeListener listener) {
+	public synchronized void addTrajectoryChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("trajectory", listener);
 	}
 	
@@ -307,7 +319,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param listener the obstacles change listener to be added
 	 */
-	public void addObstaclesChangeListener(PropertyChangeListener listener) {
+	public synchronized void addObstaclesChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("obstacles", listener);
 	}
 	
@@ -319,7 +331,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the time of this scenario
 	 */
-	public ZonedDateTime getTime() {
+	public synchronized ZonedDateTime getTime() {
 		return this.time;
 	}
 	
@@ -330,7 +342,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if time is null
 	 */
-	public void setTime(ZonedDateTime time) {
+	public synchronized void setTime(ZonedDateTime time) {
 		if (null != time) {
 			this.time = time;
 			
@@ -357,7 +369,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param factor the advancement factor
 	 */
-	public void startTime(int factor) {
+	public synchronized void startTime(int factor) {
 		if (!this.isTimed()) {
 			this.timeController.reset();
 			this.timeController.setFactor(factor);
@@ -369,7 +381,7 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Stops the time for this scenario.
 	 */
-	public void stopTime() {
+	public synchronized void stopTime() {
 		if (null != this.executor) {
 			this.executor.shutdown();
 			this.executor = null;
@@ -379,21 +391,21 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Tracks the real time for this scenario.
 	 */
-	public void trackTime() {
+	public synchronized void trackTime() {
 		this.startTime(0);
 	}
 	
 	/**
 	 * Starts the current time for this scenario.
 	 */
-	public void playTime() {
+	public synchronized void playTime() {
 		this.startTime(1);
 	}
 	
 	/**
 	 * Rewinds the time for this scenario.
 	 */
-	public void rewindTime() {
+	public synchronized void rewindTime() {
 		if (this.isTimePlaying()) {
 			int factor = this.timeController.getFactor();
 			if (1 < factor) {
@@ -409,7 +421,7 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Fast forwards the time for this scenario.
 	 */
-	public void fastForwardTime() {
+	public synchronized void fastForwardTime() {
 		if (this.isTimePlaying()) {
 			int factor = this.timeController.getFactor();
 			if (-1 > factor) {
@@ -427,7 +439,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return true if this scenario is tracking the real time, false otherwise
 	 */
-	public boolean isTimeTracking() {
+	public synchronized boolean isTimeTracking() {
 		return (null != this.executor) && (0 == this.timeController.getFactor());
 	}
 	
@@ -436,7 +448,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return true if this scenario is playing its current time, false otherwise
 	 */
-	public boolean isTimePlaying() {
+	public synchronized boolean isTimePlaying() {
 		return (null != this.executor) && (0 != this.timeController.getFactor());
 	}
 	
@@ -445,7 +457,7 @@ public class Scenario implements Identifiable, Enableable {
 	 *  
 	 * @return true if this scenario is being timed, false otherwise
 	 */
-	public boolean isTimed() {
+	public synchronized boolean isTimed() {
 		return (null != this.executor);
 	}
 	
@@ -454,7 +466,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the cost threshold of this scenario
 	 */
-	public double getThreshold() {
+	public synchronized double getThreshold() {
 		return this.threshold;
 	}
 	
@@ -463,7 +475,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param threshold the cost threshold to be set
 	 */
-	public void setThreshold(double threshold) {
+	public synchronized void setThreshold(double threshold) {
 		this.threshold = threshold;
 		
 		if (this.hasAircraft()) {
@@ -482,7 +494,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the globe of this scenario
 	 */
-	public Globe getGlobe() {
+	public synchronized Globe getGlobe() {
 		return this.globe;
 	}
 	
@@ -493,7 +505,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if globe is null
 	 */
-	public void setGlobe(Globe globe) {
+	public synchronized void setGlobe(Globe globe) {
 		if (null != globe) {
 			this.globe = globe;
 			this.environment.setGlobe(globe);
@@ -507,7 +519,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the planning sector of this scenario
 	 */
-	public Sector getSector() {
+	public synchronized Sector getSector() {
 		return this.sector;
 	}
 	
@@ -518,7 +530,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if sector is null
 	 */
-	public void setSector(Sector sector) {
+	public synchronized void setSector(Sector sector) {
 		if (null != sector) {
 			this.sector = sector;
 		} else {
@@ -531,7 +543,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the aircraft of this scenario
 	 */
-	public Aircraft getAircraft() {
+	public synchronized Aircraft getAircraft() {
 		return this.aircraft;
 	}
 	
@@ -540,7 +552,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param aircraft the aircraft to be set
 	 */
-	public void setAircraft(Aircraft aircraft) {
+	public synchronized void setAircraft(Aircraft aircraft) {
 		this.aircraft = aircraft;
 		
 		if (null != this.aircraft) {
@@ -555,7 +567,7 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Removes the aircraft from this scenario.
 	 */
-	public void removeAircraft() {
+	public synchronized void removeAircraft() {
 		this.aircraft = null;
 		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
 	}
@@ -565,7 +577,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return true if this scenario has an aircraft, false otherwise
 	 */
-	public boolean hasAircraft() {
+	public synchronized boolean hasAircraft() {
 		return (null != this.aircraft);
 	}
 	
@@ -574,7 +586,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param position the position the aircraft is moved to
 	 */
-	public void moveAircraft(Position position) {
+	public synchronized void moveAircraft(Position position) {
 		if (this.hasAircraft()) {
 			this.aircraft.moveTo(position);
 			this.pcs.firePropertyChange("aircraft", null, this.aircraft);
@@ -587,7 +599,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * the last waypoint of the trajectory, the aircraft is moved to the
 	 * first or last waypoint, respectively.
 	 */
-	public void moveAircraftOnTrajectory() {
+	public synchronized void moveAircraftOnTrajectory() {
 		if (this.hasAircraft() && this.hasTrajectory()) {
 			
 			// find trajectory leg for the time of this scenario 
@@ -623,7 +635,7 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Notifies this scenario about a changed aircraft.
 	 */
-	public void notifyAircraftChange() {
+	public synchronized void notifyAircraftChange() {
 		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
 	}
 	
@@ -632,7 +644,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the environment of this scenario
 	 */
-	public Environment getEnvironment() {
+	public synchronized Environment getEnvironment() {
 		return this.environment;
 	}
 	
@@ -643,7 +655,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if environment is null
 	 */
-	public void setEnvironment(Environment environment) {
+	public synchronized void setEnvironment(Environment environment) {
 		if (null != environment) {
 			this.environment = environment;
 			this.environment.setGlobe(this.globe);
@@ -665,17 +677,19 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Notifies this scenario about a changed environment.
 	 */
-	public void notifyEnvironmentChange() {
+	public synchronized void notifyEnvironmentChange() {
 		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
 	
 	/**
 	 * Gets the waypoints of this scenario.
 	 * 
-	 * @return the waypoints of this scenario
+	 * @return the waypoints of this scenario as immutable list
 	 */
-	public List<Waypoint> getWaypoints() {
-		return Collections.unmodifiableList(this.waypoints);
+	@SuppressWarnings("unchecked")
+	public synchronized List<Waypoint> getWaypoints() {
+		// needs to be immutable: an unmodifiable clone
+		return Collections.unmodifiableList((List<Waypoint>) this.waypoints.clone());
 	}
 	
 	/**
@@ -685,7 +699,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if waypoint is null
 	 */
-	public void addWaypoint(Waypoint waypoint) {
+	public synchronized void addWaypoint(Waypoint waypoint) {
 		if (null != waypoint) {
 			String designator = Integer.toString(this.waypoints.size());
 			waypoint.setDesignator(designator);
@@ -693,7 +707,7 @@ public class Scenario implements Identifiable, Enableable {
 				waypoint.getDepiction().getAnnotation().setText(designator);
 			} 
 			this.waypoints.add(waypoint);
-			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+			this.pcs.firePropertyChange("waypoints", null, this.getWaypoints());
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -708,11 +722,11 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if waypoint is null
 	 */
-	public void addWaypoint(int index, Waypoint waypoint) {
+	public synchronized void addWaypoint(int index, Waypoint waypoint) {
 		if (null != waypoint) {
 			this.waypoints.add(index, waypoint);
 			this.sequenceWaypoints();
-			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+			this.pcs.firePropertyChange("waypoints", null, this.getWaypoints());
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -726,7 +740,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if any waypoint is null
 	 */
-	public void updateWaypoint(Waypoint oldWaypoint, Waypoint newWaypoint) {
+	public synchronized void updateWaypoint(Waypoint oldWaypoint, Waypoint newWaypoint) {
 		if ((null != oldWaypoint) && (null != newWaypoint)) {
 			int index = this.waypoints.indexOf(oldWaypoint);
 			if (-1 != index) {
@@ -737,7 +751,7 @@ public class Scenario implements Identifiable, Enableable {
 				}
 				this.waypoints.remove(index);
 				this.waypoints.add(index, newWaypoint);
-				this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+				this.pcs.firePropertyChange("waypoints", null, this.getWaypoints());
 			}
 		} else {
 			throw new IllegalArgumentException();
@@ -752,11 +766,11 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if waypoint is null
 	 */
-	public void removeWaypoint(Waypoint waypoint) {
+	public synchronized void removeWaypoint(Waypoint waypoint) {
 		if (null != waypoint) {
 			this.waypoints.remove(waypoint);
 			this.sequenceWaypoints();
-			this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+			this.pcs.firePropertyChange("waypoints", null, this.getWaypoints());
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -768,18 +782,18 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param index the index of the waypoint to be removed
 	 */
-	public void removeWaypoint(int index) {
+	public synchronized void removeWaypoint(int index) {
 		this.waypoints.remove(index);
 		this.sequenceWaypoints();
-		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		this.pcs.firePropertyChange("waypoints", null, this.getWaypoints());
 	}
 	
 	/**
 	 * Removes all waypoints of this scenario.
 	 */
-	public void clearWaypoints() {
+	public synchronized void clearWaypoints() {
 		this.waypoints.clear();
-		this.pcs.firePropertyChange("waypoints", null, Collections.unmodifiableList(this.waypoints));
+		this.pcs.firePropertyChange("waypoints", null, this.getWaypoints());
 	}
 	
 	/**
@@ -787,7 +801,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return true if this scenario has waypoints, false otherwise
 	 */
-	public boolean hasWaypoints() {
+	public synchronized boolean hasWaypoints() {
 		return !this.waypoints.isEmpty();
 	}
 	
@@ -811,18 +825,18 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the planner of this scenario
 	 */
-	public Planner getPlanner() {
+	public synchronized Planner getPlanner() {
 		return this.planner;
 	}
 
 	/**
 	 * Sets the planner of this scenario.
 	 * 
-	 * @param planner the planner of this scenario
+	 * @param planner the planner to be set
 	 * 
 	 * @throws IllegalArgumentException if planner is null
 	 */
-	public void setPlanner(Planner planner) {
+	public synchronized void setPlanner(Planner planner) {
 		if (null != planner) {
 			this.planner = planner;
 		} else {
@@ -835,20 +849,44 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the datalink of this scenario
 	 */
-	public Datalink getDatalink() {
+	public synchronized Datalink getDatalink() {
 		return this.datalink;
 	}
 
 	/**
 	 * Sets the datalink of this scenario.
 	 * 
-	 * @param datalink the datalink of this scenario
+	 * @param datalink the datalink to be set
 	 * 
-	 * @throws IllegalArgumentException if planner is null
+	 * @throws IllegalArgumentException if datalink is null
 	 */
-	public void setDatalink(Datalink datalink) {
+	public synchronized void setDatalink(Datalink datalink) {
 		if (null != datalink) {
 			this.datalink = datalink;
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	/**
+	 * Gets the SWIM connection of this scenario.
+	 * 
+	 * @return the SWIM connection of this scenario
+	 */
+	public synchronized SwimConnection getSwimConnection() {
+		return this.swimConnection;
+	}
+
+	/**
+	 * Sets the SWIM connection of this scenario.
+	 * 
+	 * @param swimConnection the SWIM connection to be set
+	 * 
+	 * @throws IllegalArgumentException if swimConnection is null
+	 */
+	public synchronized void setSwimConnection(SwimConnection swimConnection) {
+		if (null != swimConnection) {
+			this.swimConnection = swimConnection;
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -859,7 +897,8 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return the planned trajectory of this scenario
 	 */
-	public Trajectory getTrajectory() {
+	public synchronized Trajectory getTrajectory() {
+		// the waypoints of a trajectory are immutable (createTrajectory)
 		return this.trajectory;
 	}
 
@@ -870,12 +909,12 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if trajectory is null
 	 */
-	public void setTrajectory(Trajectory trajectory) {
+	public synchronized void setTrajectory(Trajectory trajectory) {
 		if (null != trajectory) {
 			this.trajectory = trajectory;
 			this.sequenceTrajectory();
 			this.moveAircraftOnTrajectory();
-			this.pcs.firePropertyChange("trajectory", null, this.trajectory);
+			this.pcs.firePropertyChange("trajectory", null, this.getTrajectory());
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -884,9 +923,9 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Clears the planned trajectory of this scenario.
 	 */
-	public void clearTrajectory() {
+	public synchronized void clearTrajectory() {
 		this.trajectory = new Trajectory();
-		this.pcs.firePropertyChange("trajectory", null, this.trajectory);
+		this.pcs.firePropertyChange("trajectory", null, this.getTrajectory());
 	}
 	
 	/**
@@ -894,7 +933,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @return true if this scenario has a computed trajectory, false otherwise
 	 */
-	public boolean hasTrajectory() {
+	public synchronized boolean hasTrajectory() {
 		return (null != this.trajectory.getWaypoints());
 	}
 	
@@ -940,7 +979,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 *  @throws IllegalArgumentException if any waypoint is null
 	 */
-	public List<Waypoint> getTrajectoryLeg(Waypoint from, Waypoint to) {
+	public synchronized List<Waypoint> getTrajectoryLeg(Waypoint from, Waypoint to) {
 		List<Waypoint> leg = new ArrayList<Waypoint>();
 		
 		if ((null != from) && (null != to)) {
@@ -971,10 +1010,12 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Gets the obstacles of this scenario.
 	 * 
-	 * @return the obstacles of this scenario
+	 * @return the obstacles of this scenario as immutable set
 	 */
-	public Set<Obstacle> getObstacles() {
-		return Collections.unmodifiableSet(this.obstacles);
+	@SuppressWarnings("unchecked")
+	public synchronized Set<Obstacle> getObstacles() {
+		// needs to be immutable: an unmodifiable clone
+		return Collections.unmodifiableSet((Set<Obstacle>) this.obstacles.clone());
 	}
 	
 	/**
@@ -984,12 +1025,12 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if obstacle is null
 	 */
-	public void addObstacle(Obstacle obstacle) {
+	public synchronized void addObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
 			if (this.obstacles.add(obstacle)) {
 				obstacle.setTime(this.time);
 				obstacle.setThreshold(this.threshold);
-				this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+				this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 				
 				if (obstacle.isEnabled() && this.environment.embed(obstacle)) {
 					this.pcs.firePropertyChange("environment", null, this.environment);
@@ -1007,10 +1048,10 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if obstacle is null
 	 */
-	public void removeObstacle(Obstacle obstacle) {
+	public synchronized void removeObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
 			if (this.obstacles.remove(obstacle)) {
-				this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+				this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 				
 				if (this.environment.unembed(obstacle)) {
 					this.pcs.firePropertyChange("environment", null, this.environment);
@@ -1026,7 +1067,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param costIntervalId the cost interval identifier
 	 */
-	public void removeObstacles(String costIntervalId) {
+	public synchronized void removeObstacles(String costIntervalId) {
 		boolean removed = false;
 		boolean unembedded = false;
 		
@@ -1043,7 +1084,7 @@ public class Scenario implements Identifiable, Enableable {
 		}
 		
 		if (removed) {
-			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+			this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 		}
 		
 		if (unembedded) {
@@ -1054,9 +1095,9 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Removes all obstacles from this scenario.
 	 */
-	public void clearObstacles() {
+	public synchronized void clearObstacles() {
 		this.obstacles.clear();
-		this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+		this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 		this.environment.unembedAll();
 		this.pcs.firePropertyChange("environment", null, this.environment);
 	}
@@ -1068,12 +1109,12 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if obstacle is null
 	 */
-	public void embedObstacle(Obstacle obstacle) {
+	public synchronized void embedObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
 			if (this.obstacles.add(obstacle)) {
 				obstacle.setTime(this.time);
 				obstacle.setThreshold(this.threshold);
-				this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+				this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 			}
 			if (this.environment.embed(obstacle)) {
 				this.pcs.firePropertyChange("environment", null, this.environment);
@@ -1090,7 +1131,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @throws IllegalArgumentException if obstacle is null
 	 */
-	public void unembedObstacle(Obstacle obstacle) {
+	public synchronized void unembedObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
 			if (this.environment.unembed(obstacle)) {
 				this.pcs.firePropertyChange("environment", null, this.environment);
@@ -1105,7 +1146,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param costIntervalId the cost interval identifier
 	 */
-	public void enableObstacles(String costIntervalId) {
+	public synchronized void enableObstacles(String costIntervalId) {
 		boolean enabled = false;
 		boolean embedded = false;
 		
@@ -1120,7 +1161,7 @@ public class Scenario implements Identifiable, Enableable {
 		}
 		
 		if (enabled) {
-			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+			this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 		}
 		
 		if (embedded) {
@@ -1133,7 +1174,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * 
 	 * @param costIntervalId the cost interval identifier
 	 */
-	public void disableObstacles(String costIntervalId) {
+	public synchronized void disableObstacles(String costIntervalId) {
 		boolean disabled = false;
 		boolean unembedded = false;
 		
@@ -1148,7 +1189,7 @@ public class Scenario implements Identifiable, Enableable {
 		}
 		
 		if (disabled) {
-			this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+			this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 		}
 		
 		if (unembedded) {
@@ -1159,12 +1200,72 @@ public class Scenario implements Identifiable, Enableable {
 	/**
 	 * Notifies this scenario about a changed obstacles.
 	 */
-	public void notifyObstaclesChange() {
-		this.pcs.firePropertyChange("obstacles", null, Collections.unmodifiableSet(this.obstacles));
+	public synchronized void notifyObstaclesChange() {
+		this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 	}
 	
 	/**
-	 * Indicates whether or not this scenario equals another scenario based on
+	 * Submits an obstacle change (addition or removal) to this scenario.
+	 * 
+	 * @param obstacles the obstacles to be changed
+	 * 
+	 * @see ObstacleManager#submitObstacleChange(Set)
+	 */
+	@Override
+	public synchronized void submitObstacleChange(Set<Obstacle> obstacles) {
+		this.pendingObstacles.addAll(obstacles);
+		this.pendingObstacles.removeAll(this.obstacles);
+		// only notify dynamic obstacle listener about new obstacles
+		if ((!this.pendingObstacles.isEmpty())
+				&& this.getPlanner() instanceof DynamicObstacleListener) {
+			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		}
+	}
+	
+	/**
+	 * Commits an obstacle change (addition or removal) to this scenario.
+	 * 
+	 * @return the obstacles that were changed
+	 * 
+	 * @see ObstacleManager#commitObstacleChange()
+	 */
+	@Override
+	public synchronized Set<Obstacle> commitObstacleChange() {
+		Set<Obstacle> committedObstacles = new HashSet<Obstacle>();
+		for (Obstacle obstacle : this.pendingObstacles) {
+			if (!this.getObstacles().contains(obstacle)) {
+				this.addObstacle(obstacle);
+				committedObstacles.add(obstacle);
+			}
+		}
+		this.pendingObstacles.clear();
+		return committedObstacles;
+	}
+	
+	/**
+	 * Retracts an obstacle change (addition or removal) from this scenario.
+	 * 
+	 * @see ObstacleManager#retractObstacleChange()
+	 */
+	@Override
+	public synchronized void retractObstacleChange() {
+		this.pendingObstacles.clear();
+	}
+	
+	/**
+	 * Determines whether or not this scenario has an obstacle change.
+	 * 
+	 * @return true if this scenario has an obstacle change, false otherwise
+	 * 
+	 * @see ObstacleManager#hasObstacleChange()
+	 */
+	@Override
+	public synchronized boolean hasObstacleChange() {
+		return !this.pendingObstacles.isEmpty();
+	}
+	
+	/**
+	 * Determines whether or not this scenario equals another scenario based on
 	 * their identifiers.
 	 * 
 	 * @param o the other scenario
@@ -1175,10 +1276,12 @@ public class Scenario implements Identifiable, Enableable {
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public boolean equals(Object o) {
+	public synchronized final boolean equals(Object o) {
 		boolean equals = false;
 		
-		if (o instanceof Scenario) {
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof Scenario)) {
 			equals = this.id.equals(((Scenario) o).id);
 		}
 	
@@ -1193,7 +1296,7 @@ public class Scenario implements Identifiable, Enableable {
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public int hashCode() {
+	public synchronized final int hashCode() {
 		return this.id.hashCode();
 	}
 	

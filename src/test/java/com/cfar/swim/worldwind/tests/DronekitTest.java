@@ -34,6 +34,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import org.junit.Ignore;
 
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -46,6 +47,7 @@ import gov.nasa.worldwind.render.Path;
 
 public class DronekitTest {
 
+	@Ignore
 	@Test
 	public void testConnection() throws InterruptedException {
 		Specification<Datalink> datalinkSpecification = new Specification<>(Specification.DATALINK_DRONEKIT, new DronekitDatalinkProperties());
@@ -53,7 +55,8 @@ public class DronekitTest {
 		properties.setHost("206.87.166.221");
 		properties.setPort(50051);
 		DatalinkFactory datalinkFactory = new DatalinkFactory();
-		Datalink datalink = datalinkFactory.createInstance(datalinkSpecification);
+		datalinkFactory.setSpecification(datalinkSpecification);
+		Datalink datalink = datalinkFactory.createInstance();
 		
 		// connect
 		datalink.connect();

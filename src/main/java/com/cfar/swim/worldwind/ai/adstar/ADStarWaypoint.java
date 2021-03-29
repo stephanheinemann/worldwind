@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.ai.adstar;
 
+import java.time.ZonedDateTime;
+
 import com.cfar.swim.worldwind.ai.arastar.ARAStarWaypoint;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -46,6 +48,9 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	/** the estimated previous expansion cost (v-value) of this AD* waypoint */
 	private double v;
 	
+	/** the previous expansion estimated time over this AD* waypoint */
+	private ZonedDateTime vEto = null;
+	
 	/**
 	 * Constructs an AD* waypoint at a specified position.
 	 * 
@@ -55,6 +60,20 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 */
 	public ADStarWaypoint(Position position) {
 		super(position);
+		this.setV(Double.POSITIVE_INFINITY);
+	}
+	
+	/**
+	 * Constructs an AD* waypoint at a specified position with a specified
+	 * weight of the estimated remaining cost (epsilon).
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param epsilon the weight of the estimated remaining cost (epsilon)
+	 * 
+	 * @see ARAStarWaypoint#ARAStarWaypoint(Position, double)
+	 */
+	public ADStarWaypoint(Position position, double epsilon) {
+		super(position, epsilon);
 		this.setV(Double.POSITIVE_INFINITY);
 	}
 	
@@ -96,6 +115,36 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	}
 	
 	/**
+	 *  Gets the previous expansion estimated time over this AD* waypoint.
+	 * 
+	 * @return the previous expansion estimated time over this AD* waypoint
+	 */
+	public ZonedDateTime getVEto() {
+		return this.vEto;
+	}
+	
+	/**
+	 * Sets the previous expansion estimated time over this AD* waypoint.
+	 * 
+	 * @param vEto the previous expansion estimated time over this AD*
+	 *        waypoint
+	 */
+	public void setVEto(ZonedDateTime vEto) {
+		this.vEto = vEto;
+	}
+	
+	/**
+	 * Determines whether or not this AD* waypoint has a previous expansion
+	 * estimated time over.
+	 * 
+	 * @return true if this AD* waypoint has a previous expansion estimated
+	 *         time over, false otherwise
+	 */
+	public boolean hasVEto() {
+		return (null != this.vEto);
+	}
+	
+	/**
 	 * Indicates whether or not this AD* waypoint is consistent, that is, if
 	 * its current estimated cost (g-value) equals the estimated cost of its
 	 * last expansion (v-value).
@@ -103,7 +152,11 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @return true if this AD* waypoint is consistent, false otherwise
 	 */
 	public boolean isConsistent() {
-		return this.getG() == this.getV();
+		// consistency needs to consider ETOs: previous expansion ETOs required
+		// TODO: possibly consider slot times (hold / loiter)
+		return (this.getG() == this.getV())
+				&& this.hasEto() && this.hasVEto()
+				&& this.getEto().equals(this.getVEto());
 	}
 	
 	/**
@@ -116,7 +169,12 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @return true if this AD* waypoint is over-consistent, false otherwise
 	 */
 	public boolean isOverConsistent() {
-		return this.getG() < this.getV();
+		// consistency needs to consider ETOs: previous expansion ETOs required
+		// TODO: possibly consider slot times (hold / loiter)
+		return (this.getG() < this.getV()) ||
+				((this.getG() == this.getV())
+						&& this.hasEto() && this.hasVEto()
+						&& this.getEto().isBefore(this.getVEto()));
 	}
 	
 	/**
@@ -129,7 +187,12 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @return true if this AD* waypoint is under-consistent, false otherwise
 	 */
 	public boolean isUnderConsistent() {
-		return this.getG() > this.getV();
+		// consistency needs to consider ETOs: previous expansion ETOs required
+		// TODO: possibly consider slot times (hold / loiter)
+		return (this.getG() > this.getV()) ||
+				((this.getG() == this.getV())
+						&& this.hasEto() && this.hasVEto()
+						&& this.getEto().isAfter(this.getVEto()));
 	}
 	
 	/**
@@ -138,15 +201,26 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @see #isConsistent()
 	 */
 	public void makeConsistent() {
+		// consistency needs to consider ETOs: previous expansion ETOs required
 		this.setV(this.getG());
+		this.setVEto(this.getEto());
 	}
 	
 	/**
-	 * Gets the estimated total cost (f-value) of this AD* waypoint.
+	 * Makes this AD* waypoint undetermined.
+	 */
+	public void makeUndetermined() {
+		// consistency needs to consider ETO: previous expansion ETOs required
+		this.setV(Double.POSITIVE_INFINITY);
+		this.setVEto(null);
+	}
+	
+	/**
+	 * Gets the priority key for the expansion of this AD* waypoint.
 	 * The heuristic of the estimated total cost is inflated (weighted) by
-	 * epsilon if this AD* waypoint is consistent or over-consistent.
+	 * epsilon only if this AD* waypoint is consistent or over-consistent.
 	 * 
-	 * @return the estimated total cost (f-value) of this AD* waypoint
+	 * @return the priority key for the expansion of this AD* waypoint
 	 * 
 	 * @see #getEpsilon()
 	 * @see #setEpsilon(double)
@@ -155,31 +229,31 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * @see #isUnderConsistent()
 	 */
 	@Override
-	public double getF() {
-		double f = Double.POSITIVE_INFINITY;
+	public double getKey() {
+		double key = Double.POSITIVE_INFINITY;
 		
 		if (!this.isUnderConsistent()) {
-			f = this.getG() + (this.getEpsilon() * this.getH()); 
+			key = super.getKey(); 
 		} else {
-			f = this.getV() + this.getH();
+			key = this.getV() + this.getH();
 		}
 		
-		return f;
+		return key;
 	}
 
 	/**
-	 * Compares this AD* waypoint to another waypoint based on their estimated
-	 * total costs (f-values). If the estimated total costs of both AD*
-	 * waypoints is equal, then ties are broken in favor of higher estimated
-	 * current costs (g-values) or under-consistent costs (v-values). If the
-	 * other waypoint is not an AD* waypoint, then the natural order of
+	 * Compares this AD* waypoint to another waypoint based on their priority
+	 * keys for the expansion. If the priority keys for the expansion of both
+	 * AD* waypoints are equal, then ties are broken in favor of higher
+	 * estimated current costs (g-values) or under-consistent costs (v-values).
+	 * If the other waypoint is not an AD* waypoint, then the natural order of
 	 * general waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
 	 * @return -1, 0, 1, if this AD* waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their total
-	 *         estimated cost
+	 *         respectively, than the other waypoint based on their priority
+	 *         keys for the expansion
 	 * 
 	 * @see ARAStarWaypoint#compareTo(Waypoint)
 	 */
@@ -189,14 +263,14 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 		
 		if (waypoint instanceof ADStarWaypoint) {
 			ADStarWaypoint adsw = (ADStarWaypoint) waypoint;
-			compareTo = new Double(this.getF()).compareTo(adsw.getF());
+			compareTo = Double.valueOf(this.getKey()).compareTo(adsw.getKey());
 			if (0 == compareTo) {
 				if (!this.isUnderConsistent()) {
 					// break ties in favor of higher G-values
-					compareTo = new Double(adsw.getG()).compareTo(this.getG());
+					compareTo = Double.valueOf(adsw.getG()).compareTo(this.getG());
 				} else {
 					// break ties in favor of higher V-values
-					compareTo = new Double(adsw.getV()).compareTo(this.getV());
+					compareTo = Double.valueOf(adsw.getV()).compareTo(this.getV());
 				}
 			}
 		} else {

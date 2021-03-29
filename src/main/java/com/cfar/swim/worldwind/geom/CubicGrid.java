@@ -256,40 +256,40 @@ public class CubicGrid extends RegularGrid {
 	
 	/**
 	 * Looks up the cubic grid cells (maximum eight) containing a specified
-	 * point in world model coordinates considering numerical inaccuracies.
+	 * vector in world model coordinates considering numerical inaccuracies.
 	 * Cells are looked up recursively and only non-parent cells are
 	 * considered.
 	 * 
-	 * @param modelPoint the point in world model coordinates
+	 * @param modelVector the vector in world model coordinates
 	 * 
-	 * @return the cubic non-parent grid cells containing the specified point
+	 * @return the cubic non-parent grid cells containing the specified vector
 	 * 
 	 * @see RegularGrid#lookupCells(Vec4)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public Set<? extends CubicGrid> lookupCells(Vec4 modelPoint) {
-		return (Set<CubicGrid>) super.lookupCells(modelPoint);
+	public Set<? extends CubicGrid> lookupCells(Vec4 modelVector) {
+		return (Set<CubicGrid>) super.lookupCells(modelVector);
 	}
 	
 	/**
 	 * Looks up the cubic grid cells (maximum eight) containing a specified
-	 * point in world model coordinates considering numerical inaccuracies.
+	 * vector in world model coordinates considering numerical inaccuracies.
 	 * Cells are looked up recursively to a specified depth level. A zero depth
 	 * does not consider any children. A negative depth performs a full
 	 * recursive search and considers non-parent cells only. 
 	 * 
-	 * @param modelPoint the point in world model coordinates
+	 * @param modelVector the vector in world model coordinates
 	 * @param depth the hierarchical depth of the lookup operation
 	 * 
-	 * @return the cubic grid cells containing the specified point
+	 * @return the cubic grid cells containing the specified vector
 	 * 
 	 * @see RegularGrid#lookupCells(Vec4, int)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
-	public Set<? extends CubicGrid> lookupCells(Vec4 modelPoint, int depth) {
-		return (Set<CubicGrid>) super.lookupCells(modelPoint, depth);
+	public Set<? extends CubicGrid> lookupCells(Vec4 modelVector, int depth) {
+		return (Set<CubicGrid>) super.lookupCells(modelVector, depth);
 	}
 	
 	/**
@@ -364,8 +364,8 @@ public class CubicGrid extends RegularGrid {
 	 * Computes the directions for a cubic grid traversal using Bresenham's
 	 * algorithm.
 	 * 
-	 * @param source the source point in grid coordinates
-	 * @param target the target point in grid coordinates
+	 * @param source the source vector in grid coordinates
+	 * @param target the target vector in grid coordinates
 	 * 
 	 * @return the directions of steps on each axis, that is, -1, 0 or 1
 	 */
@@ -382,21 +382,21 @@ public class CubicGrid extends RegularGrid {
 	}
 	
 	/**
-	 * Computes the cell indices for a point in this cubic grid favoring
+	 * Computes the cell indices for a vector in this cubic grid favoring
 	 * specified directions to be applied in case of multiple matches.
 	 * 
-	 * @param point the point in grid coordinates
+	 * @param vector the vector in grid coordinates
 	 * @param directions the favoring directions
 	 * 
-	 * @return the grid cell coordinates for the point in this cubic grid
+	 * @return the grid cell coordinates for the vector in this cubic grid
 	 *         favoring the directions
 	 */
-	private int[] computeIndices(Vec4 point, int[] directions) {
+	private int[] computeIndices(Vec4 vector, int[] directions) {
 		int[] indices = new int[3];
 		
-		int[] rci = RegularGrid.getCellIndices(point.x, this.rLength, this.cells.length);
-		int[] sci = RegularGrid.getCellIndices(point.y, this.sLength, this.cells[0].length);
-		int[] tci = RegularGrid.getCellIndices(point.z, this.tLength, this.cells[0][0].length);
+		int[] rci = RegularGrid.getCellIndices(vector.x, this.rLength, this.cells.length);
+		int[] sci = RegularGrid.getCellIndices(vector.y, this.sLength, this.cells[0].length);
+		int[] tci = RegularGrid.getCellIndices(vector.z, this.tLength, this.cells[0][0].length);
 		
 		// take directions into account to decide for the better index
 		if ((rci[0] != -1) && (rci[1] != -1)) {
@@ -421,18 +421,18 @@ public class CubicGrid extends RegularGrid {
 	}
 	
 	/**
-	 * Computes the minimum and maximum reference boundaries of a point for a
+	 * Computes the minimum and maximum reference boundaries of a vector for a
 	 * traversal of this cubic grid using Bresenham's algorithm.
 	 * 
-	 * @param point the point in grid coordinates
+	 * @param vector the vector in grid coordinates
 	 * @param directions the traversal directions
 	 * 
-	 * @return the minimum and maximum reference boundaries of the point
+	 * @return the minimum and maximum reference boundaries of the vector
 	 */
-	private double[][] computeMinMax(Vec4 point, int[] directions) {
+	private double[][] computeMinMax(Vec4 vector, int[] directions) {
 		double[][] minmax = new double[3][2];
 		double side = this.getChild(0, 0, 0).getLength();
-		int[] indices = this.computeIndices(point, directions);
+		int[] indices = this.computeIndices(vector, directions);
 		
 		minmax[0][0] = side * indices[0];
 		minmax[0][1] = minmax[0][0] + side;
@@ -447,14 +447,14 @@ public class CubicGrid extends RegularGrid {
 	}
 	
 	/**
-	 * Computes the reference distances of two points for a traversal of this
+	 * Computes the reference distances of two vectors for a traversal of this
 	 * cubic grid using Bresenham's algorithm.
 	 * 
-	 * @param source the source point in grid coordinates
-	 * @param target the target point in grid coordinates
+	 * @param source the source vector in grid coordinates
+	 * @param target the target vector in grid coordinates
 	 * @param directions the traversal directions
 	 * 
-	 * @return the reference distances of the two points
+	 * @return the reference distances of the two vectors
 	 */
 	@SuppressWarnings("unused")
 	private double[][] computeDistances(Vec4 source, Vec4 target, int[] directions) {
@@ -502,42 +502,42 @@ public class CubicGrid extends RegularGrid {
 	}
 	
 	/**
-	 * Gets the intersection points of a line segment with the cells of this
+	 * Gets the intersection vectors of a line segment with the cells of this
 	 * cubic grid. A full recursive search is performed considering only
 	 * non-parent cells.
 	 * 
-	 * @param source the source point of the line segment in model coordinates
-	 * @param target the target point of the line segment in model coordinates
+	 * @param source the source vector of the line segment in model coordinates
+	 * @param target the target vector of the line segment in model coordinates
 	 * 
-	 * @return the intersection points of the line segment with the cells of
+	 * @return the intersection vectors of the line segment with the cells of
 	 *         this cubic grid
 	 */
-	public LinkedHashSet<Vec4> getIntersectionPoints(Vec4 source, Vec4 target) {
-		return this.getIntersectionPoints(source, target, -1);
+	public LinkedHashSet<Vec4> getIntersectionVectors(Vec4 source, Vec4 target) {
+		return this.getIntersectionVectors(source, target, -1);
 	}
 	
 	/**
-	 * Gets the intersection points of a line segment with the cells of this
+	 * Gets the intersection vectors of a line segment with the cells of this
 	 * cubic grid taking a specified hierarchical depth into account. A zero
 	 * depth does not consider any children. A negative depth performs a full
 	 * recursive search and considers non-parent cells only.
 	 * 
-	 * @param source the source point of the line segment in model coordinates
-	 * @param target the target point of the line segment in model coordinates
+	 * @param source the source vector of the line segment in model coordinates
+	 * @param target the target vector of the line segment in model coordinates
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return the intersection points of the line segment with the cells of
+	 * @return the intersection vectors of the line segment with the cells of
 	 *         this cubic grid taking the hierarchical depth into account
 	 */
-	public LinkedHashSet<Vec4> getIntersectionPoints(Vec4 source, Vec4 target, int depth) {
-		LinkedHashSet<PrecisionVec4> intersectionPoints = new LinkedHashSet<PrecisionVec4>();
+	public LinkedHashSet<Vec4> getIntersectionVectors(Vec4 source, Vec4 target, int depth) {
+		LinkedHashSet<PrecisionVec4> intersectionVectors = new LinkedHashSet<PrecisionVec4>();
 		
 		// clip the end points of the segment to this cell
 		Vec4[] endPoints = Line.clipToFrustum(source, target, this.getFrustum());
 		
 		// if this cell is intersected by the line segment
 		if (null != endPoints) {
-			intersectionPoints.add(new PrecisionVec4(endPoints[0]));
+			intersectionVectors.add(new PrecisionVec4(endPoints[0]));
 			
 			// recurse for children if required
 			if ((depth != 0) && this.hasChildren()) {
@@ -557,10 +557,10 @@ public class CubicGrid extends RegularGrid {
 							srcIndices[0],
 							srcIndices[1],
 							srcIndices[2]);
-					// collect intersection points recursively in order
+					// collect intersection vectors recursively in order
 					// TODO: observed NPE here: intersectedChild? Precision?
-					intersectionPoints.addAll(
-							intersectedChild.getIntersectionPoints(source, target, depth - 1)
+					intersectionVectors.addAll(
+							intersectedChild.getIntersectionVectors(source, target, depth - 1)
 								.stream()
 								.map(PrecisionVec4::new)
 								.collect(Collectors.toCollection(LinkedHashSet<PrecisionVec4>::new)));
@@ -589,18 +589,18 @@ public class CubicGrid extends RegularGrid {
 						srcIndices[0],
 						srcIndices[1],
 						srcIndices[2]);
-				// collect intersection points recursively in order
-				intersectionPoints.addAll(
-						intersectedChild.getIntersectionPoints(source, target, depth - 1)
+				// collect intersection vectors recursively in order
+				intersectionVectors.addAll(
+						intersectedChild.getIntersectionVectors(source, target, depth - 1)
 							.stream()
 							.map(PrecisionVec4::new)
 							.collect(Collectors.toCollection(LinkedHashSet<PrecisionVec4>::new)));
 			}
 			
-			intersectionPoints.add(new PrecisionVec4(endPoints[1]));
+			intersectionVectors.add(new PrecisionVec4(endPoints[1]));
 		}
 		
-		return intersectionPoints
+		return intersectionVectors
 				.stream()
 				.map(PrecisionVec4::getOriginal)
 				.collect(Collectors.toCollection(LinkedHashSet<Vec4>::new));

@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.ai.arastar;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -40,8 +41,12 @@ import com.cfar.swim.worldwind.ai.AnytimePlanner;
 import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -183,7 +188,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
-	 * Deflates the current inflation by the deflation amount, or otherwise to
+	 * Decreases the current inflation by the deflation amount, or otherwise to
 	 * the final deflation.
 	 */
 	protected void deflate() {
@@ -230,7 +235,40 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected ARAStarWaypoint createWaypoint(Position position) {
-		return new ARAStarWaypoint(position);
+		ARAStarWaypoint araswp = null;
+		
+		/*
+		 * Avoid visiting existing positions although a 4D waypoint may very
+		 * well revisit an existing position to avoid higher costs. The
+		 * computed trajectories shall however be space-optimal but not
+		 * necessarily time-optimal. To mitigate this issue, departure slots,
+		 * or more generally, waypoint slots could be considered and take into
+		 * account the aircraft capabilities appropriately (endurance). This
+		 * could realize the concept of holding or loitering.
+		 * 
+		 * https://github.com/stephanheinemann/worldwind/issues/24
+		 */
+		
+		// only create new waypoints if necessary
+		if (this.hasStart() && this.getStart().equals(position)) {
+			araswp = this.getStart();
+		} else if (this.hasGoal() && this.getGoal().equals(position)) {
+			araswp = this.getGoal();
+		} else {
+			araswp = new ARAStarWaypoint(position);
+		}
+		
+		// avoid duplicating discovered waypoints
+		Optional<? extends AStarWaypoint> visitedWaypoint = this.findVisited(araswp);
+		if (visitedWaypoint.isPresent()) {
+			araswp = (ARAStarWaypoint) visitedWaypoint.get();
+		} else {
+			this.addVisited(araswp);
+		}
+
+		// set current inflation factor
+		araswp.setEpsilon(this.getInflation());
+		return araswp;
 	}
 	
 	/**
@@ -266,8 +304,10 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected boolean canExpand() {
+		// allow for equal keys to propagate under-consistency to goal
+		// and achieve potential improvements in terms of ETO
 		return super.canExpand() &&
-				(this.getGoal().getF() > this.peekExpandable().getF());
+				(this.getGoal().getKey() >= this.peekExpandable().getKey());
 	}
 	
 	/**
@@ -329,21 +369,6 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
-	 * Finds the dependent target of an expanded ARA* source waypoint.
-	 * The source waypoint is the parent of the target waypoint.
-	 *  
-	 * @param source the source ARA* waypoint
-	 * @param target the dependent target ARA* waypoint to be found
-	 * @return the found dependent target ARA* waypoint, if any
-	 */
-	@SuppressWarnings("unchecked")
-	@Override
-	protected Optional<? extends ARAStarWaypoint>
-		findDependent(AStarWaypoint source, AStarWaypoint target) {
-		return (Optional<ARAStarWaypoint>) super.findDependent(source, target);
-	}
-	
-	/**
 	 * Expands an ARA* waypoint towards its neighbors in the environment.
 	 * 
 	 * @param waypoint the ARA* waypoint to be expanded
@@ -402,9 +427,44 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
-	 * Initializes the planner to plan from an origin to a destination at a
-	 * specified estimated time of departure. Performs backups and restorations
-	 * of expandable and inconsistent waypoints in case of a multi-part plan.
+	 * Finds an inconsistent ARA* waypoint.
+	 * 
+	 * @param waypoint the inconsistent ARA* waypoint to be found
+	 * 
+	 * @return the found inconsistent ARA* waypoint, if any
+	 */
+	protected Optional<? extends ARAStarWaypoint>
+		findInconsistent(ARAStarWaypoint waypoint) {
+		
+		return this.incons.stream()
+				.filter(w -> w.equals(waypoint))
+				.findFirst();
+	}
+	
+	/**
+	 * Finds an existing ARA* waypoint.
+	 * 
+	 * @param waypoint the existing ARA* waypoint to be found
+	 * 
+	 * @return the found existing ARA* waypoint, if any
+	 */
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Optional<? extends ARAStarWaypoint>
+		findExisting(AStarWaypoint waypoint) {
+		
+		Optional<? extends ARAStarWaypoint> existing = (Optional<? extends ARAStarWaypoint>) super.findExisting(waypoint);
+		
+		if (existing.isEmpty()) {
+			existing = this.findInconsistent((ARAStarWaypoint) waypoint);
+		}
+		
+		return existing;
+	}
+	
+	/**
+	 * Initializes this ARA* planner to plan from an origin to a destination at
+	 * a specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
@@ -414,24 +474,15 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
-		this.backup();
-		this.backupIndex++;
-		
 		super.initialize(origin, destination, etd);
 		this.clearInconsistent();
-		
-		if (this.improving) {
-			this.restore();
-		} else {
-			this.setInflation(this.getMinimumQuality());
-		}
-		
+		this.setInflation(this.getMinimumQuality());
 		this.getGoal().setEpsilon(this.getInflation());
 		this.getStart().setEpsilon(this.getInflation());
 	}
 	
 	/**
-	 * Updates the open set for an updated ARA* waypoint.
+	 * Updates the planner waypoint sets for an updated ARA* waypoint.
 	 * 
 	 * @param waypoint the updated ARA* waypoint
 	 * 
@@ -439,18 +490,15 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected void updateSets(AStarWaypoint waypoint) {
-		Optional<? extends ARAStarWaypoint> expanded =
-				this.findExpanded(waypoint);
-		
-		if (expanded.isPresent()) {
-			this.addInconsistent(expanded.get());
+		if (this.isExpanded(waypoint)) {
+			this.addInconsistent((ARAStarWaypoint) waypoint);
 		} else {
 			super.updateSets(waypoint);
 		}
 	}
 	
 	/**
-	 * Computes a plan.
+	 * Computes an ARA* plan.
 	 * 
 	 * @see ForwardAStarPlanner#compute()
 	 */
@@ -459,46 +507,67 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		while (this.canExpand()) {
 			ARAStarWaypoint source = this.pollExpandable();
 			
-			if (source.equals(this.getGoal())) {
-				this.connectPlan(source);
-				return;
-			}
-			
 			Set<? extends ARAStarWaypoint> neighbors = this.expand(source);
 			
 			for (ARAStarWaypoint target : neighbors) {
-				Optional<? extends ARAStarWaypoint> expandable =
-						this.findExpandable(target);
-				if (expandable.isPresent()) {
-					target = expandable.get();
-				} else {
-					Optional<? extends ARAStarWaypoint> expanded =
-							this.findExpanded(target);
-					if (expanded.isPresent()) {
-						target = expanded.get();
-					}
-				}
 				this.updateWaypoint(source, target);
 			}
+		}
+		
+		this.connectPlan(this.getGoal());
+	}
+	
+	/**
+	 * Improves an ARA* plan incrementally.
+	 * 
+	 * @param partIndex the index of the plan part to be improved
+	 * 
+	 */
+	protected void improve(int partIndex) {
+		this.backup(partIndex);
+		// TODO: potentially deflate below actual current sub-optimality
+		// bound for more aggressive optimization 
+		this.deflate();
+		this.restore(partIndex);
+		
+		this.compute();
+		this.revisePlan(this.createTrajectory());
+	}
+	
+	/**
+	 * Elaborates an ARA* plan.
+	 * 
+	 * @param partIndex the index of the plan part to be elaborated
+	 */
+	protected void elaborate(int partIndex) {
+		while (!this.isDeflated()) {
+			this.improve(partIndex);
 		}
 	}
 	
 	/**
-	 * Improves a plan incrementally.
+	 * Plans a part of a trajectory from an origin to a destination at a
+	 * specified estimated time of departure. If origin is the goal of the
+	 * current plan, then the resulting plan will be the trajectory from
+	 * the start of the current plan to the specified destination. Improves
+	 * the computed trajectory incrementally.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * @param partIndex the index of the part
+	 * 
+	 * @return the planned trajectory from origin at the estimated time of
+	 *         departure or the start leading to origin in the current plan to
+	 *         the destination
+	 * 
+	 * @see ForwardAStarPlanner#planPart(Position, Position, ZonedDateTime, int)
 	 */
-	protected void improve() {
-		while (!this.isDeflated()) {
-			this.backup();
-			this.deflate();
-			this.restore();
-			
-			this.clearInconsistent();
-			this.clearExpanded();
-			
-			this.compute();
-			Trajectory trajectory = this.createTrajectory();
-			this.revisePlan(trajectory);
-		}
+	@Override
+	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
+		super.planPart(origin, destination, etd, partIndex);
+		this.elaborate(partIndex);
+		return this.createTrajectory();
 	}
 	
 	/**
@@ -518,12 +587,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initBackups(1);
 		this.initialize(origin, destination, etd);
-		
-		this.compute();
-		this.revisePlan(this.createTrajectory());
-		this.improve();
-		
-		Trajectory trajectory = this.createTrajectory();
+		Trajectory trajectory = this.planPart(origin, destination, etd, 0);
 		this.revisePlan(trajectory);
 		return trajectory;
 	}
@@ -545,92 +609,218 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
 		this.initBackups(waypoints.size() + 1);
-		
-		Trajectory trajectory = super.plan(origin, destination, waypoints, etd);
-		
-		this.improving = true;
-		while (!this.isDeflated()) {
-			this.deflate();
-			this.backupIndex = -1;
-			trajectory = super.plan(origin, destination, waypoints, etd);
-		}
-		this.improving = false;
-		
-		return trajectory;
+		return super.plan(origin, destination, waypoints, etd);
 	}
 	
-	/** indicates whether or not a multi-part plan is being improved */
-	private boolean improving = false;
-	
-	/** the index of the backed up expandable and inconsistent waypoints */
-	private int backupIndex = -1;
-	
-	/** the backed up expandable and inconsistent waypoints */
-	private final ArrayList<ArrayList<AStarWaypoint>> backups = new ArrayList<>();
+	/** the backups of this ARA* planner */
+	protected final ArrayList<Backup> backups = new ArrayList<>();
 	
 	/**
-	 * Initializes a number of open backup priority queues.
+	 * Realizes a backup of this ARA* planner.
 	 * 
-	 * @param size the number of open backup priority queues
+	 * @author Stephan Heinemann
+	 */
+	protected class Backup {
+		/** the start waypoint of this ARA* backup */
+		public ARAStarWaypoint start = null;
+		
+		/** the goal waypoint of this ARA* backup */
+		public ARAStarWaypoint goal = null;
+		
+		/** the start region of this ARA* backup */
+		public Set<PrecisionPosition> startRegion = new HashSet<>();
+		
+		/** the goal region of this ARA* backup */
+		public Set<PrecisionPosition> goalRegion = new HashSet<>();
+		
+		/** the visited waypoints of this ARA* backup */
+		public Set<AStarWaypoint> visited = new HashSet<>();
+		
+		/** the open waypoints of this ARA* backup */
+		public Set<AStarWaypoint> open = new HashSet<>();
+		
+		/** the inconsistent waypoints of this ARA* backup */
+		public Set<ARAStarWaypoint> incons = new HashSet<>();
+		
+		/** the closed waypoints of this ARA* backup */
+		public Set<AStarWaypoint> closed = new HashSet<>();
+		
+		/** the plan waypoints of this ARA* backup */
+		public List<AStarWaypoint> plan = new LinkedList<>(); 
+		
+		/**
+		 * Clears this ARA* backup.
+		 */
+		public void clear() {
+			this.start = null;
+			this.goal = null;
+			this.startRegion.clear();
+			this.goalRegion.clear();
+			this.visited.clear();
+			this.open.clear();
+			this.incons.clear();
+			this.closed.clear();
+			this.plan.clear();
+		}
+		
+		/**
+		 * Determines whether or not this ARA* backup is empty.
+		 * 
+		 * @return true if this ARA* backup is empty, false otherwise
+		 */
+		public boolean isEmpty() {
+			return (null == this.start) && (null == this.goal)
+					&& this.startRegion.isEmpty()
+					&& this.goalRegion.isEmpty()
+					&& this.visited.isEmpty()
+					&& this.open.isEmpty()
+					&& this.incons.isEmpty()
+					&& this.closed.isEmpty()
+					&& this.plan.isEmpty();
+		}
+	}
+	
+	/**
+	 * Initializes a number backups for this ARA* planner.
+	 * 
+	 * @param size the number of backups for this ARA* planner
 	 */
 	protected void initBackups(int size) {
 		this.backups.clear();
-		for (int openIndex = 0; openIndex < size; openIndex++) {
-			this.backups.add(openIndex, new ArrayList<AStarWaypoint>());
+		for (int backupIndex = 0; backupIndex < size; backupIndex++) {
+			this.backups.add(backupIndex, new Backup());
 		}
-		this.backupIndex = -1;
 	}
 	
 	/**
-	 * Determines whether or not a backup can be performed.
+	 * Determines whether or not a backup of this ARA* planner can be performed.
+	 * 
+	 * @param backupIndex the index of the backup
 	 * 
 	 * @return true if a backup can be performed, false otherwise
 	 */
-	protected boolean canBackup() {
-		return (-1 < this.backupIndex) && (this.backupIndex < this.backups.size());
+	protected boolean canBackup(int backupIndex) {
+		return (-1 < backupIndex) && (backupIndex < this.backups.size());
 	}
 	
 	/**
-	 * Determines whether or not a backup is available.
+	 * Determines whether or not this ARA* planner has a backup.
 	 * 
-	 * @return true if a backup is available, false otherwise
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if this ARA* planner has a backup, false otherwise
 	 */
-	protected boolean hasBackup() {
-		return this.canBackup() && (!this.backups.get(this.backupIndex).isEmpty());
+	protected boolean hasBackup(int backupIndex) {
+		return this.canBackup(backupIndex) && (!this.backups.get(backupIndex).isEmpty());
 	}
 	
 	/**
-	 * Backs up inconsistent and expandable ARA* waypoints for improvement.
+	 * Backs up this ARA* planner for incremental improvement.
+	 * 
+	 * @param backupIndex the index of the backup
 	 * 
 	 * @return true if a backup has been performed, false otherwise
 	 */
-	protected boolean backup() {
+	protected boolean backup(int backupIndex) {
 		boolean backedup = false;
-		if (this.canBackup()) {
-			this.backups.get(this.backupIndex).clear();
-			this.backups.get(this.backupIndex).addAll(this.open);
-			this.backups.get(this.backupIndex).addAll(this.incons);
+		if (this.canBackup(backupIndex)) {
+			Backup backup = this.backups.get(backupIndex);
+			backup.clear();
+			backup.start = this.getStart();
+			backup.goal = this.getGoal();
+			backup.startRegion.addAll(this.getStartRegion());
+			backup.goalRegion.addAll(this.getGoalRegion());
+			backup.visited.addAll(this.visited);
+			backup.open.addAll(this.open);
+			backup.incons.addAll(this.incons);
+			backup.closed.addAll(this.closed);
+			backup.plan.addAll(this.plan);
 			backedup = true;
 		}
 		return backedup;
 	}
 	
 	/**
-	 * Restores expandable ARA* waypoints for improvement.
+	 * Restores this ARA* planner for incremental improvement.
 	 * 
-	 * @return true if a restoral has been performed, false otherwise
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if a restore has been performed, false otherwise
 	 */
-	protected boolean restore() {
+	protected boolean restore(int backupIndex) {
 		boolean restored = false;
-		if (this.hasBackup()) {
-			this.open.clear();
-			for (AStarWaypoint waypoint : this.backups.get(this.backupIndex)) {
+		if (this.hasBackup(backupIndex)) {
+			Backup backup = this.backups.get(backupIndex);
+			// restore start and goal waypoints
+			this.setStart(backup.start);
+			this.getStart().setEpsilon(this.getInflation());
+			this.setGoal(backup.goal);
+			this.getGoal().setEpsilon(this.getInflation());
+			
+			// restore start and goal regions
+			this.getStartRegion().clear();
+			this.getStartRegion().addAll(backup.startRegion);
+			this.getGoalRegion().clear();
+			this.getGoalRegion().addAll(backup.goalRegion);
+			
+			// restore visited waypoints
+			this.clearVisited();
+			for (AStarWaypoint waypoint : backup.visited) {
 				((ARAStarWaypoint) waypoint).setEpsilon(this.getInflation());
-				this.open.add(waypoint);
+				this.addVisited(waypoint);
 			}
+			
+			// restore expandable waypoints
+			this.clearExpandables();
+			for (AStarWaypoint waypoint : backup.open) {
+				((ARAStarWaypoint) waypoint).setEpsilon(this.getInflation());
+				// TODO: potentially prune open to optimize by removing
+				// waypoints with non-inflated waypoint.getF() > goal.getG()
+				this.addExpandable(waypoint);
+			}
+			// merge inconsistent with expandable waypoints for improvement
+			for (ARAStarWaypoint waypoint : backup.incons) {
+				waypoint.setEpsilon(this.getInflation());
+				this.addExpandable(waypoint);
+			}
+			
+			// clear inconsistent and expandable waypoints
+			this.clearInconsistent();
+			this.clearExpanded();
+			
+			this.clearWaypoints();
+			this.plan.addAll(backup.plan);
+			
 			restored = true;
 		}
 		return restored;
+	}
+	
+	/**
+	 * Determines whether or not this ARA* planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this ARA* planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof ARAStarProperties)) {
+			ARAStarProperties fasp = (ARAStarProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(fasp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(fasp.getRiskPolicy()))
+					&& (this.getMinimumQuality() == fasp.getMinimumQuality())
+					&& (this.getMaximumQuality() == fasp.getMaximumQuality())
+					&& (this.getQualityImprovement() == fasp.getQualityImprovement()
+					&& (specification.getId().equals(Specification.PLANNER_ARAS_ID)));
+		}
+		
+		return matches;
 	}
 	
 }

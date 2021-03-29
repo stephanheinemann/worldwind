@@ -208,6 +208,15 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	}
 	
 	/**
+	 * Determines whether or not this waypoint has a time to go.
+	 * 
+	 * @return true if this waypoint has a time to go, false otherwise
+	 */
+	public boolean hasTtg() {
+		return (null != this.ttg);
+	}
+	
+	/**
 	 * Gets the estimated time at this waypoint.
 	 * 
 	 * @return the estimated time at this waypoint
@@ -223,6 +232,15 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 */
 	public void setEto(ZonedDateTime eto) {
 		this.eto = eto;
+	}
+	
+	/**
+	 * Determines whether or not this waypoint has a estimated time over.
+	 * 
+	 * @return true if this waypoint has a estimated time over, false otherwise
+	 */
+	public boolean hasEto() {
+		return (null != this.eto);
 	}
 	
 	// TODO: actuals belong to track points instead?
@@ -243,6 +261,15 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 */
 	public void setAto(ZonedDateTime ato) {
 		this.ato = ato;
+	}
+	
+	/**
+	 * Determines whether or not this waypoint has an actual time over.
+	 * 
+	 * @return true if this waypoint has an actual time over, false otherwise
+	 */
+	public boolean hasAto() {
+		return (null != this.ato);
 	}
 	
 	/**
@@ -335,7 +362,7 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	}
 	
 	/**
-	 * Indicates whether or not this waypoint equals another waypoint based on
+	 * Determines whether or not this waypoint equals another waypoint based on
 	 * their precision position.
 	 * 
 	 * @param o the other waypoint
@@ -346,13 +373,24 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public boolean equals(Object o) {
+	public final boolean equals(Object o) {
 		boolean equals = false;
 		
-		if (o instanceof Waypoint) {
-			// TODO: waypoint is defined via position and time, position only
-			// is problematic when revisiting a position at different times
-			// TODO: possibly refine with ETO or waypoint designator
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof Waypoint)) {
+			/*
+			 * Avoid visiting existing positions although a 4D waypoint may
+			 * very well revisit an existing position to avoid higher costs.
+			 * The computed trajectories shall however be space-optimal but not
+			 * necessarily time-optimal. To mitigate this issue, departure
+			 * slots, or more generally, waypoint slots could be considered and
+			 * take into account the aircraft capabilities appropriately
+			 * (endurance). This could realize the concept of holding or
+			 * loitering.
+			 * 
+			 * https://github.com/stephanheinemann/worldwind/issues/24
+			 */
 			equals = this.position.equals(((Waypoint) o).position);
 		}
 	
@@ -367,7 +405,7 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return this.position.hashCode();
 	}
 	

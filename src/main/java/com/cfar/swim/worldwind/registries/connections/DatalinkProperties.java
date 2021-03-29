@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.registries.Properties;
 
@@ -78,6 +80,45 @@ public abstract class DatalinkProperties implements Properties<Datalink> {
 			e.printStackTrace();
 		}
 		return clone;
+	}
+	
+	/**
+	 * Determines whether or not this datalink properties bean equals another
+	 * datalink properties bean based on their aggregated properties.
+	 * 
+	 * @param o the other datalink properties bean
+	 * 
+	 * @return true, if the aggregated properties of this datalink properties
+	 *         bean equal the aggregated properties of the other datalink
+	 *         properties bean, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof DatalinkProperties)) {
+			equals = (this.downlinkPeriod == ((DatalinkProperties) o).downlinkPeriod);
+		}
+			
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this datalink properties bean based on its
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this datalink properties bean based on its
+	 *         aggregated properties
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.downlinkPeriod);
 	}
 
 }

@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import javax.media.opengl.GL2;
+import com.jogamp.opengl.GL2;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
@@ -319,7 +319,7 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not this regular grid has children.
+	 * Determines whether or not this regular grid has children.
 	 * 
 	 * @return true if this regular grid has children, false otherwise
 	 */
@@ -349,7 +349,7 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not this regular grid has a particular child.
+	 * Determines whether or not this regular grid has a particular child.
 	 * 
 	 * @param r the <code>R</code> index of the child cell
 	 * @param s the <code>S</code> index of the child cell
@@ -386,7 +386,7 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not this regular grid has a parent.
+	 * Determines whether or not this regular grid has a parent.
 	 * 
 	 * @return true if this regular grid has a parent, false otherwise
 	 */
@@ -465,42 +465,42 @@ public class RegularGrid extends Box {
 	
 	/**
 	 * Looks up the regular grid cells (maximum eight) containing a specified
-	 * point in world model coordinates considering numerical inaccuracies.
+	 * vector in world model coordinates considering numerical inaccuracies.
 	 * Cells are looked up recursively and only non-parent cells are
 	 * considered.
 	 * 
-	 * @param modelPoint the point in world model coordinates
+	 * @param modelVector the vector in world model coordinates
 	 * 
-	 * @return the regular non-parent grid cells containing the specified point
+	 * @return the regular non-parent grid cells containing the specified vector
 	 */
-	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint) {
-		return this.lookupCells(modelPoint, -1);
+	public Set<? extends RegularGrid> lookupCells(Vec4 modelVector) {
+		return this.lookupCells(modelVector, -1);
 	}
 	
 	/**
 	 * Looks up the regular grid cells (maximum eight) containing a specified
-	 * point in world model coordinates considering numerical inaccuracies.
+	 * vector in world model coordinates considering numerical inaccuracies.
 	 * Cells are looked up recursively to a specified depth level. A zero depth
 	 * does not consider any children. A negative depth performs a full
 	 * recursive search and considers non-parent cells only. 
 	 * 
-	 * @param modelPoint the point in world model coordinates
+	 * @param modelVector the vector in world model coordinates
 	 * @param depth the hierarchical depth of the lookup operation
 	 * 
-	 * @return the regular grid cells containing the specified point
+	 * @return the regular grid cells containing the specified vector
 	 */
-	public Set<? extends RegularGrid> lookupCells(Vec4 modelPoint, int depth) {
+	public Set<? extends RegularGrid> lookupCells(Vec4 modelVector, int depth) {
 		Set<RegularGrid> lookedUpCells = new HashSet<RegularGrid>(8);
 		
-		// transform point to cell (body) coordinates
-		Vec4 cellPoint = this.transformModelToBoxOrigin(modelPoint);
+		// transform vector to cell (body) coordinates
+		Vec4 cellVector = this.transformModelToBoxOrigin(modelVector);
 		
-		if (this.containsV(cellPoint)) {
+		if (this.containsV(cellVector)) {
 			if (this.hasChildren() && (0 != depth)) {
 				// lookup containing cells using the cell (body) coordinates
-				int[] rCellIndices = RegularGrid.getCellIndices(cellPoint.x, this.rLength, this.cells.length);
-				int[] sCellIndices = RegularGrid.getCellIndices(cellPoint.y, this.sLength, this.cells[0].length);
-				int[] tCellIndices = RegularGrid.getCellIndices(cellPoint.z, this.tLength, this.cells[0][0].length);
+				int[] rCellIndices = RegularGrid.getCellIndices(cellVector.x, this.rLength, this.cells.length);
+				int[] sCellIndices = RegularGrid.getCellIndices(cellVector.y, this.sLength, this.cells[0].length);
+				int[] tCellIndices = RegularGrid.getCellIndices(cellVector.z, this.tLength, this.cells[0][0].length);
 				// each axis has at most two valid indices - a maximum of eight cells
 				for (int r : rCellIndices) {
 					if (r != -1) {
@@ -508,7 +508,7 @@ public class RegularGrid extends Box {
 							if (s != -1) {
 								for (int t : tCellIndices) {
 									if (t != -1) {
-										lookedUpCells.addAll(this.cells[r][s][t].lookupCells(modelPoint, depth - 1));
+										lookedUpCells.addAll(this.cells[r][s][t].lookupCells(modelVector, depth - 1));
 									}
 								}
 							}
@@ -584,94 +584,96 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point is a waypoint in this regular grid.
-	 * A full recursive search is performed considering only non-parent cells.
+	 * Determines whether or not a vector is a waypoint vector in this regular
+	 * grid. A full recursive search is performed considering only non-parent
+	 * cells.
 	 * 
-	 * @param point the point in world model coordinates
+	 * @param vector the vector in world model coordinates
 	 * 
-	 * @return true if the point is a waypoint in this regular grid,
+	 * @return true if the vector is a waypoint vector in this regular grid,
 	 *         false otherwise
 	 * 
-	 * @see RegularGrid#isWaypoint(Vec4, int)
+	 * @see RegularGrid#isWaypointVector(Vec4, int)
 	 */
-	public boolean isWayoint(Vec4 point) {
-		return this.isWaypoint(point, -1);
+	public boolean isWaypointVector(Vec4 vector) {
+		return this.isWaypointVector(vector, -1);
 	}
 	
 	/**
-	 * Indicates whether or not a point is a waypoint in this regular grid
-	 * taking a specified hierarchical depth into account. A zero depth does
-	 * not consider any children. A negative depth performs a full recursive
-	 * search and considers non-parent cells only.
+	 * Determines whether or not a vector is a waypoint vector in this regular
+	 * grid taking a specified hierarchical depth into account. A zero depth
+	 * does not consider any children. A negative depth performs a full
+	 * recursive search and considers non-parent cells only.
 	 * 
-	 * @param point the point in world model coordinates
+	 * @param vector the vector in world model coordinates
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return true if the point is a waypoint in this regular grid taking the
-	 *         hierarchical depth into account, false otherwise
+	 * @return true if the vector is a waypoint vector in this regular grid
+	 *         taking the hierarchical depth into account, false otherwise
 	 */
-	public boolean isWaypoint(Vec4 point, int depth) {
-		boolean isWaypoint = false;
-		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
+	public boolean isWaypointVector(Vec4 vector, int depth) {
+		boolean isWaypointVector = false;
+		Set<? extends RegularGrid> cells = this.lookupCells(vector, depth);
 		
 		switch (this.neighborhood) {
 		case CELL_26:
-			isWaypoint = (0 < cells.stream().filter(c -> c.isCenter(point)).count());
+			isWaypointVector = (0 < cells.stream().filter(c -> c.isCenter(vector)).count());
 			break;
 		case VERTEX_6:
 		case VERTEX_26:
 		default:
-			isWaypoint = (0 < cells.stream().filter(c -> c.isCorner(point)).count());
+			isWaypointVector = (0 < cells.stream().filter(c -> c.isCorner(vector)).count());
 		}
 	
-		return isWaypoint;
+		return isWaypointVector;
 	}
 	
 	/**
-	 * Gets the adjacent waypoints of a point in this regular grid. A full
-	 * recursive search is performed considering only non-parent cells.
+	 * Gets the adjacent waypoint vectors of a vector in this regular grid. A
+	 * full recursive search is performed considering only non-parent cells.
 	 * 
-	 * @param point the point in world model coordinates
+	 * @param vector the vector in world model coordinates
 	 * 
-	 * @return the adjacent waypoints of the point in this
-	 *         regular grid, or the waypoint itself
+	 * @return the adjacent waypoints vectors of the vector in this
+	 *         regular grid, or the waypoint vector itself
 	 * 
-	 * @see RegularGrid#getAdjacentWaypoints(Vec4, int)
+	 * @see RegularGrid#getAdjacentWaypointVectors(Vec4, int)
 	 */
-	public Set<Vec4> getAdjacentWaypoints(Vec4 point) {
-		return this.getAdjacentWaypoints(point, -1);
+	public Set<Vec4> getAdjacentWaypointVectors(Vec4 vector) {
+		return this.getAdjacentWaypointVectors(vector, -1);
 	}
 	
 	/**
-	 * Gets the adjacent waypoints of a point in this regular grid taking a
-	 * specified hierarchical depth into account. A zero depth does not
-	 * consider any children. A negative depth performs a full recursive
+	 * Gets the adjacent waypoint vectors of a vector in this regular grid
+	 * taking a specified hierarchical depth into account. A zero depth does
+	 * not consider any children. A negative depth performs a full recursive
 	 * search and considers non-parent cells only.
 	 * 
-	 * @param point the point in world model coordinates
+	 * @param vector the vector in world model coordinates
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return the adjacent waypoints of the point in this regular grid taking
-	 *         the hierarchical depth into account, or the waypoint itself
+	 * @return the adjacent waypoint vectors of the vector in this regular grid
+	 *         taking the hierarchical depth into account, or the waypoint
+	 *         vector itself
 	 */
-	public Set<Vec4> getAdjacentWaypoints(Vec4 point, int depth) {
-		Set<Vec4> adjacentWaypoints = new HashSet<Vec4>();
-		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
+	public Set<Vec4> getAdjacentWaypointVectors(Vec4 vector, int depth) {
+		Set<Vec4> adjacentWaypointVectors = new HashSet<Vec4>();
+		Set<? extends RegularGrid> cells = this.lookupCells(vector, depth);
 		Set<? extends RegularGrid> waypointCells;
 		
 		switch(this.neighborhood) {
 		case CELL_26:
 			waypointCells = cells
 				.stream()
-				.filter(c -> c.isCenter(point))
+				.filter(c -> c.isCenter(vector))
 				.collect(Collectors.toSet());
 			
 			if (waypointCells.isEmpty()) {
 				for (RegularGrid cell : cells) {
-					adjacentWaypoints.add(cell.getCenter());
+					adjacentWaypointVectors.add(cell.getCenter());
 				}
 			} else {
-				adjacentWaypoints.add(point);
+				adjacentWaypointVectors.add(vector);
 			}
 			break;
 		case VERTEX_6:
@@ -679,37 +681,37 @@ public class RegularGrid extends Box {
 		default:
 			waypointCells = cells
 				.stream()
-				.filter(c -> c.isCorner(point))
+				.filter(c -> c.isCorner(vector))
 				.collect(Collectors.toSet());
 			
 			if (waypointCells.isEmpty()) {
 				for (RegularGrid cell : cells) {
-					adjacentWaypoints.addAll(Arrays.asList(cell.getCorners()));
+					adjacentWaypointVectors.addAll(Arrays.asList(cell.getCorners()));
 				}
 			} else {
-				adjacentWaypoints.add(point);
+				adjacentWaypointVectors.add(vector);
 			}
 		}
 		
-		return adjacentWaypoints;
+		return adjacentWaypointVectors;
 	}
 	
 	/**
-	 * Indicates whether or not a point is adjacent to a waypoint in this
-	 * regular grid.
+	 * Determines whether or not a vector is adjacent to a waypoint vector in
+	 * this regular grid.
 	 * 
-	 * @param point the point in world model coordinates
-	 * @param waypoint the waypoint in world model coordinates
+	 * @param vector the vector in world model coordinates
+	 * @param waypointVector the waypoint vector in world model coordinates
 	 * 
-	 * @return true if the point is adjacent to the waypoint in this
+	 * @return true if the vector is adjacent to the waypoint vector in this
 	 *         regular grid, false otherwise
 	 */
-	public boolean isAdjacentWaypoint(Vec4 point, Vec4 waypoint) {
-		return this.getAdjacentWaypoints(point)
+	public boolean isAdjacentWaypointVector(Vec4 vector, Vec4 waypointVector) {
+		return this.getAdjacentWaypointVectors(vector)
 				.stream()
 				.map(PrecisionVec4::new)
 				.collect(Collectors.toSet())
-				.contains(new PrecisionVec4(waypoint));
+				.contains(new PrecisionVec4(waypointVector));
 	}
 	
 	/**
@@ -762,7 +764,7 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not this regular grid is a neighbor of another
+	 * Determines whether or not this regular grid is a neighbor of another
 	 * regular grid.
 	 * 
 	 * @param neighbor the potential neighbor
@@ -777,7 +779,7 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not this regular grid is a neighbor of another
+	 * Determines whether or not this regular grid is a neighbor of another
 	 * regular grid taking a specified hierarchical depth into account.
 	 * 
 	 * @param neighbor the potential neighbor
@@ -793,39 +795,39 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Gets the neighbors of a point in this regular grid. A full recursive
+	 * Gets the neighbors of a vector in this regular grid. A full recursive
 	 * search is performed considering non-parent cells only.
 	 * 
-	 * @param point the point in world model coordinates
+	 * @param vector the vector in world model coordinates
 	 * 
-	 * @return the neighbors of the point in this regular grid
+	 * @return the neighbors of the vector in this regular grid
 	 * 
 	 * @see RegularGrid#getNeighbors(Vec4, int)
 	 */
-	public Set<Vec4> getNeighbors(Vec4 point) {
-		return this.getNeighbors(point, -1);
+	public Set<Vec4> getNeighbors(Vec4 vector) {
+		return this.getNeighbors(vector, -1);
 	}
 	
 	/**
-	 * Gets the neighbors of a point in this regular grid taking a specified
+	 * Gets the neighbors of a vector in this regular grid taking a specified
 	 * hierarchical depth into account. A zero depth does not consider any
 	 * children. A negative depth performs a full recursive search and
 	 * considers non-parent cells only.
 	 * 
-	 * @param point the point in world model coordinates
+	 * @param vector the vector in world model coordinates
 	 * @param depth the hierarchical depth for finding neighbors
 	 * 
-	 * @return the neighbors of the point in this regular grid 
+	 * @return the neighbors of the vector in this regular grid 
 	 */
-	public Set<Vec4> getNeighbors(Vec4 point, int depth) {
+	public Set<Vec4> getNeighbors(Vec4 vector, int depth) {
 		Set<PrecisionVec4> neighbors = new HashSet<PrecisionVec4>();
-		Set<? extends RegularGrid> cells = this.lookupCells(point, depth);
+		Set<? extends RegularGrid> cells = this.lookupCells(vector, depth);
 		
 		for (RegularGrid cell : cells) {
 			
 			switch(this.neighborhood) {
 			case CELL_26:
-				if (cell.isCenter(point)) {
+				if (cell.isCenter(vector)) {
 					neighbors.addAll(
 							this.getNeighbors(depth)
 							.stream()
@@ -835,9 +837,9 @@ public class RegularGrid extends Box {
 				}
 				break;
 			case VERTEX_6:
-				if (cell.isCorner(point)) {
+				if (cell.isCorner(vector)) {
 					neighbors.addAll(
-							Arrays.asList(cell.getNeighborCorners(point))
+							Arrays.asList(cell.getNeighborCorners(vector))
 							.stream()
 							.map(PrecisionVec4::new)
 							.collect(Collectors.toSet()));
@@ -845,9 +847,9 @@ public class RegularGrid extends Box {
 				break;
 			case VERTEX_26:
 			default:
-				if (cell.isCorner(point)) {
+				if (cell.isCorner(vector)) {
 					neighbors.addAll(
-							Arrays.asList(cell.getOtherCorners(point))
+							Arrays.asList(cell.getOtherCorners(vector))
 							.stream()
 							.map(PrecisionVec4::new)
 							.collect(Collectors.toSet()));
@@ -862,17 +864,18 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not two points are neighbors in this regular grid.
+	 * Determines whether or not two vectors are neighbors in this regular
+	 * grid.
 	 * 
-	 * @param point the point
-	 * @param neighbor the potential neighbor of the point
+	 * @param vector the vector
+	 * @param neighbor the potential neighbor of the vector
 	 * 
-	 * @return true if the two points are neighbors, false otherwise
+	 * @return true if the two vectors are neighbors, false otherwise
 	 * 
 	 * @see RegularGrid#getNeighbors(Vec4)
 	 */
-	public boolean areNeighbors(Vec4 point, Vec4 neighbor) {
-		return this.getNeighbors(point)
+	public boolean areNeighbors(Vec4 vector, Vec4 neighbor) {
+		return this.getNeighbors(vector)
 				.stream()
 				.map(Vec4::toHomogeneousPoint3)
 				.map(PrecisionVec4::new)
@@ -881,20 +884,20 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Indicates whether or not two points are neighbors in this regular grid
+	 * Determines whether or not two vectors are neighbors in this regular grid
 	 * taking a specified hierarchical depth into account.
 	 * 
-	 * @param point the point
-	 * @param neighbor the potential neighbor of the point
+	 * @param vector the vector
+	 * @param neighbor the potential neighbor of the vector
 	 * @param depth the hierarchical depth
 	 * 
-	 * @return true if the two points are neighbors taking the hierarchical
+	 * @return true if the two vectors are neighbors taking the hierarchical
 	 *              depth into account, false otherwise
 	 * 
 	 * @see RegularGrid#getNeighbors(Vec4, int)
 	 */
-	public boolean areNeighbors(Vec4 point, Vec4 neighbor, int depth) {
-		return this.getNeighbors(point, depth)
+	public boolean areNeighbors(Vec4 vector, Vec4 neighbor, int depth) {
+		return this.getNeighbors(vector, depth)
 				.stream()
 				.map(Vec4::toHomogeneousPoint3)
 				.map(PrecisionVec4::new)

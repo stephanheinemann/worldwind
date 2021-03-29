@@ -120,7 +120,6 @@ public class RegularGridTest {
             
             
             // TODO: separate test procedures
-            
             Sector uvic = new Sector(
             	Angle.fromDegrees(48.462836),
             	Angle.fromDegrees(48.463418),
@@ -137,7 +136,6 @@ public class RegularGridTest {
             //uvicGrid.setThresholdCost(50);
             //uvicGrid.setGlobe(model.getGlobe());
             renderableLayer.addRenderable(uvicGrid);
-            
             
             Sector large = new Sector(
             	Angle.fromDegrees(0.0),
@@ -175,6 +173,7 @@ public class RegularGridTest {
             //tsGrid.addChildren(3, 3, 0, 2, 2, 2);
             renderableLayer.addRenderable(tsGrid);
             
+            /*
             Sector tc = new Sector(
                 	Angle.fromDegrees(25.0),
                 	Angle.fromDegrees(30.0),
@@ -188,6 +187,7 @@ public class RegularGridTest {
             tcGrid.setThreshold(0);
             //tcGrid.addChildren(tcGrid.getTLength() / 4.0);
             renderableLayer.addRenderable(tcGrid);
+            */
             
             iris = new Iris(new Position(ts.getCentroid(), 50000), 5000, CombatIdentification.FRIEND);
             iris.setCostInterval(new CostInterval(
@@ -210,10 +210,12 @@ public class RegularGridTest {
             renderableLayer.addRenderable(a320);
             
             // TODO: add time slider with steps between min and max time (set using calender-like input)
+            /*
             this.timePanel = new JFXPanel();
         	this.timePanel.setSize(300, 400);
         	this.timePanel.setScene(createScene(wwd));
         	this.getContentPane().add(this.timePanel, BorderLayout.WEST);
+			*/
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -267,25 +269,30 @@ public class RegularGridTest {
 		
 		try {
 		Layer layer = model.getLayers().getLayersByClass(RenderableLayer.class).get(0);
-			
+		
+		uvicGrid.setGlobe(model.getGlobe());
 		largeGrid.setGlobe(model.getGlobe());
-		IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
-		largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
+		//IwxxmUpdater largeUpdater = new IwxxmUpdater(model, largeGrid);
+		//largeUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS2.xml")));
+		
 		
 		tsGrid.setGlobe(model.getGlobe());
+		/*
 		IwxxmUpdater tsUpdater = new IwxxmUpdater(model, tsGrid);
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1a-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-TS.xml")));
 		tsUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-1b-CNL.xml")));
+		*/
 		
-		tcGrid.setGlobe(model.getGlobe());
+		//tcGrid.setGlobe(model.getGlobe());
+		
 		/*
 		IwxxmUpdater tcUpdater = new IwxxmUpdater(model, tcGrid);
 		tcUpdater.add(new InputSource(new FileInputStream("src/test/resources/xml/iwxxm/sigmet-A6-2-TC.xml")));
 		*/
 		
-		list.registerDataActivationListerner(largeUpdater);
-		list.registerDataActivationListerner(tsUpdater);
+		//list.registerDataActivationListerner(largeUpdater);
+		//list.registerDataActivationListerner(tsUpdater);
 		//list.registerDataActivationListerner(tcUpdater);
 		
 		// TODO: this seems to be the expected rst versus xyz bug
@@ -409,8 +416,8 @@ public class RegularGridTest {
         ((RenderableLayer) layer).addRenderable(lcubicGrid);
         */
         
-		Position origin = tsGrid.getCornerPositions()[0];
-		Position destination = tsGrid.getCornerPositions()[6];
+		//Position origin = tsGrid.getCornerPositions()[0];
+		//Position destination = tsGrid.getCornerPositions()[6];
 		
 		/*
 		Sphere originSphere = new Sphere(tsGrid.getCorners()[0], 50000);
@@ -422,6 +429,7 @@ public class RegularGridTest {
 		((RenderableLayer) layer).addRenderable(ps);
 		*/
 		
+		/*
 		ForwardAStarPlanner planner = new ForwardAStarPlanner(iris, tsGrid);
 		Trajectory trajectory = planner.plan(origin, destination, ZonedDateTime.now());
 		trajectory.setVisible(true);
@@ -482,6 +490,7 @@ public class RegularGridTest {
 		path3.getAttributes().setOutlineWidth(5d);
 		path3.getAttributes().setOutlineOpacity(0.5d);
 		((RenderableLayer) layer).addRenderable(path3);
+		*/
 		
 		/*
 		Set<? extends PlanningGrid> ics = largeGrid.getIntersectedCells(
@@ -499,10 +508,11 @@ public class RegularGridTest {
 		*/
 		
 		//Set<PlanningGrid> intersectedCells = new HashSet<PlanningGrid>();
-		PlanningGrid child1 = largeGrid.getChild(0, 9, 0);
-		PlanningGrid child2 = largeGrid.getChild(0, 9, 4);
-		Position o1 = largeGrid.getGlobe().computePositionFromPoint(/*largeGrid.getCorners()[0]*//*child1.getCorners()[5]*/largeGrid.getBottomCenter());
-		Position o2 = largeGrid.getGlobe().computePositionFromPoint(/*largeGrid.getCorners()[6]*/child2.getCorners()[5]/*largeGrid.getBottomCenter()*/);
+		//PlanningGrid child1 = largeGrid.getChild(0, 9, 0);
+		//PlanningGrid child2 = largeGrid.getChild(0, 9, 4);
+		//Position o1 = largeGrid.getGlobe().computePositionFromPoint(/*largeGrid.getCorners()[0]*//*child1.getCorners()[5]*/largeGrid.getBottomCenter());
+		//Position o2 = largeGrid.getGlobe().computePositionFromPoint(/*largeGrid.getCorners()[6]*/child2.getCorners()[5]/*largeGrid.getBottomCenter()*/);
+		/*
 		Path ip = new Path(largeGrid.getIntersectedPositions(o1, o2));
 		ip.setVisible(true);
 		ip.setShowPositions(true);
@@ -517,6 +527,7 @@ public class RegularGridTest {
 			GlobeAnnotation ga = new GlobeAnnotation(p.toString() , p);
 			((RenderableLayer) layer).addRenderable(ga);
 		}
+		*/
 		
 		/*
 		for (Vec4 intersectionPoint : largeGrid.getIntersectionPoints(child1.getCorners()[5], child2.getCorners()[5])) {

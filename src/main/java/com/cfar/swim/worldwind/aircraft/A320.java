@@ -29,6 +29,9 @@
  */
 package com.cfar.swim.worldwind.aircraft;
 
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.symbology.SymbologyConstants;
@@ -126,4 +129,21 @@ public class A320 extends FixedWingCivilAircraft {
 		this.getDepiction().setModifier(SymbologyConstants.SPEED, A320.CRUISE_SPEED);
 	}
 
+	/**
+	 * Determines whether or not this A320 matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this A320 matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FixedWingCivilAircraft#matches(Specification)
+	 */
+	@Override
+	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = super.matches(specification);
+		matches &= specification.getId().equals(Specification.AIRCRAFT_A320_ID);
+		return matches;
+	}
+	
 }

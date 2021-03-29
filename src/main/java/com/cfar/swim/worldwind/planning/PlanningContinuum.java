@@ -97,19 +97,19 @@ public class PlanningContinuum implements Environment {
 	}
 
 	@Override
-	public boolean isWaypoint(Position position) {
+	public boolean isWaypointPosition(Position position) {
 		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
-	public Set<Position> getAdjacentWaypoints(Position position) {
+	public Set<Position> getAdjacentWaypointPositions(Position position) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
+	public boolean isAdjacentWaypointPosition(Position position, Position waypoint) {
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -256,6 +256,24 @@ public class PlanningContinuum implements Environment {
 	public void unembedAll() {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public Set<? extends Environment> getAffectedChildren(Obstacle obstacle) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Set<Position> getAffectedWaypointPositions(Set<Obstacle> obstacles) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 	
 }

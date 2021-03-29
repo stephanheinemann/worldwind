@@ -44,6 +44,12 @@ import gov.nasa.worldwind.util.Logging;
 public final class TransformationMatrix extends Matrix {
 	
 	/**
+	 * the precision used to compensate for numerical inaccuracies during
+	 * vector orthonormality checks 
+	 */
+	public static final int PRECISION_ORTHONOMAL = 1;
+	
+	/**
 	 * Constructs a new transform matrix from orthonormal rotation vectors.
 	 * 
 	 * @throws IllegalArgumentException if the rotation vectors are not
@@ -65,9 +71,9 @@ public final class TransformationMatrix extends Matrix {
 		Vec4 u = new Vec4(m12, m22, m32);
 		Vec4 f = new Vec4(m13, m23, m33);
 		
-		if (!(new PrecisionVec4(s, 2).areOrthonormal(u, f))) {
+		if (!(new PrecisionVec4(s, TransformationMatrix.PRECISION_ORTHONOMAL).areOrthonormal(u, f))) {
 			// TODO: review message resource bundle
-			String msg = Logging.getMessage("generic.NonOrthonormalVectors");
+			String msg = "Vectors are non-orthonormal: " + u + ", " + f;//Logging.getMessage("generic.NonOrthonormalVectors");
 			Logging.logger().severe(msg);
 			throw new IllegalArgumentException(msg);
 		}
@@ -104,8 +110,8 @@ public final class TransformationMatrix extends Matrix {
             throw new IllegalArgumentException(msg);
         }
         
-        if (!(new PrecisionVec4(axes[0],2).areOrthonormal(axes[1], axes[2]))) {
-        	String msg = Logging.getMessage("generic.NonOrthonormalVectors");
+        if (!(new PrecisionVec4(axes[0], TransformationMatrix.PRECISION_ORTHONOMAL).areOrthonormal(axes[1], axes[2]))) {
+        	String msg = "Vectors are non-orthonormal: " + axes[1] + ", " + axes[2];//Logging.getMessage("generic.NonOrthonormalVectors");
 			Logging.logger().severe(msg);
 			throw new IllegalArgumentException(msg);
         }
@@ -122,7 +128,7 @@ public final class TransformationMatrix extends Matrix {
 	}
 	
 	/**
-	 * Constructs a transformation matrix that transform from a local to a
+	 * Constructs a transformation matrix that transforms from a local to a
 	 * global reference system with the specified origin and orthonormal axes
 	 * of the local system.
 	 * 
@@ -137,7 +143,7 @@ public final class TransformationMatrix extends Matrix {
 	}
 	
 	/**
-	 * Constructs a transformation matrix that transform from a global to a
+	 * Constructs a transformation matrix that transforms from a global to a
 	 * local reference system with the specified origin and orthonormal axes
 	 * of the local system.
 	 * 

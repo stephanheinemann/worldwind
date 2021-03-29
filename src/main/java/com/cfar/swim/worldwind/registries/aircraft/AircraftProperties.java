@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.aircraft;
 
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.registries.Properties;
@@ -440,4 +442,76 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 		}
 		return clone;
 	}
+
+	/**
+	 * Determines whether or not this aircraft properties bean equals another
+	 * aircraft properties bean based on their aggregated properties.
+	 * 
+	 * @param o the other aircraft properties bean
+	 * 
+	 * @return true, if the aggregated properties of this aircraft properties
+	 *         bean equal the aggregated properties of the other aircraft
+	 *         properties bean, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = false;
+
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof AircraftProperties)) {
+			AircraftProperties ap = (AircraftProperties) o;
+			return Objects.equals(this.combatIdentification, ap.combatIdentification)
+					&& (this.maximumAngleOfClimbSpeed == ap.maximumAngleOfClimbSpeed)
+					&& (this.maximumRateOfClimbSpeed == ap.maximumAngleOfClimbSpeed)
+					&& (this.cruiseClimbSpeed == ap.cruiseClimbSpeed)
+					&& (this.cruiseSpeed == ap.cruiseSpeed)
+					&& (this.cruiseDescentSpeed == ap.cruiseDescentSpeed)
+					&& (this.approachSpeed == ap.approachSpeed)
+					&& (this.maximumGlideSpeed == ap.maximumGlideSpeed)
+					&& (this.maximumRateOfDescentSpeed == ap.maximumRateOfDescentSpeed)
+					&& (this.maximumSpeed == ap.maximumSpeed)
+					&& (this.maximumRateOfClimb == ap.maximumRateOfClimb)
+					&& (this.cruiseRateOfClimb == ap.cruiseRateOfClimb)
+					&& (this.cruiseRateOfDescent == ap.cruiseRateOfDescent)
+					&& (this.approachRateOfDescent == ap.approachRateOfDescent)
+					&& (this.maximumRateOfDescent == ap.maximumRateOfDescent)
+					&& (this.maximumAngleOfClimb == ap.maximumAngleOfClimb);
+		}
+
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this aircraft properties bean based on its
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this aircraft properties bean based on its
+	 *         aggregated properties
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(
+				this.combatIdentification,
+				this.maximumAngleOfClimbSpeed,
+				this.maximumRateOfClimbSpeed,
+				this.cruiseClimbSpeed,
+				this.cruiseSpeed,
+				this.cruiseDescentSpeed,
+				this.approachSpeed,
+				this.maximumGlideSpeed,
+				this.maximumRateOfDescentSpeed,
+				this.maximumSpeed,
+				this.maximumRateOfClimb,
+				this.cruiseRateOfClimb,
+				this.cruiseRateOfDescent,
+				this.approachRateOfDescent,
+				this.maximumRateOfDescent,
+				this.maximumAngleOfClimb);
+	}
+	
 }

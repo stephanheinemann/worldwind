@@ -338,5 +338,40 @@ public class ObstacleBox extends Box implements Obstacle {
 	}
 	
 	// TODO: interpolation and geometric conversion methods
+	
+	/**
+	 * Determines whether or not this obstacle box equals another one based on
+	 * their cost intervals.
+	 * 
+	 * @param o the other obstacle box
+	 * 
+	 * @return true if this obstacle box equals the other one based on their
+	 *         cost intervals, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	public final boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof ObstacleBox)) {
+			ObstacleBox ob = (ObstacleBox) o;
+			equals = this.getCostInterval().equals(ob.getCostInterval());
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this obstacle box based on its cost interval.
+	 * 
+	 * @return the hash code of this obstacle box based on its cost interval
+	 * 
+	 * @see Object#hashCode()
+	 */
+	public final int hashCode() {
+		return this.getCostInterval().hashCode();
+	}
 
 }

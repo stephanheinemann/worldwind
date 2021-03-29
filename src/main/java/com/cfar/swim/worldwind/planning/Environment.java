@@ -72,7 +72,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	// TODO: data could be made available via WXXM and IWXXM
 	
 	/**
-	 * Indicates whether or not this environment contains a position.
+	 * Determines whether or not this environment contains a position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
@@ -81,36 +81,37 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public boolean contains(Position position);
 	
 	/**
-	 * Indicates whether or not a position is a waypoint in this environment.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return true if the position is a waypoint in this environment,
-	 *         false otherwise
-	 */
-	public boolean isWaypoint(Position position);
-	
-	/**
-	 * Gets the adjacent waypoints of a position in this environment.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return the adjacent waypoints of the position in this
-	 *         environment, or the waypoint position itself
-	 */
-	public Set<Position> getAdjacentWaypoints(Position position);
-	
-	/**
-	 * Indicates whether or not a position is adjacent to a waypoint in this
+	 * Determines whether or not a position is a waypoint position in this
 	 * environment.
 	 * 
 	 * @param position the position in globe coordinates
-	 * @param waypoint the waypoint in globe coordinates
 	 * 
-	 * @return true if the position is adjacent to the waypoint in this
-	 *         environment, false otherwise
+	 * @return true if the position is a waypoint position in this environment,
+	 *         false otherwise
 	 */
-	public boolean isAdjacentWaypoint(Position position, Position waypoint);
+	public boolean isWaypointPosition(Position position);
+	
+	/**
+	 * Gets the adjacent waypoint positions of a position in this environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the adjacent waypoint positions of the position in this
+	 *         environment, or the waypoint position itself
+	 */
+	public Set<Position> getAdjacentWaypointPositions(Position position);
+	
+	/**
+	 * Determines whether or not a position is adjacent to a waypoint position
+	 * in this environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param waypointPosition the waypoint position in globe coordinates
+	 * 
+	 * @return true if the position is adjacent to the waypoint position in
+	 *         this environment, false otherwise
+	 */
+	public boolean isAdjacentWaypointPosition(Position position, Position waypointPosition);
 	
 	/**
 	 * Gets the center position of this environment in globe coordinates.
@@ -127,7 +128,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public Set<? extends Environment> getNeighbors();
 	
 	/**
-	 * Indicates whether or not this environment is a neighbor of another
+	 * Determines whether or not this environment is a neighbor of another
 	 * environment.
 	 * 
 	 * @param neighbor the potential neighbor
@@ -147,7 +148,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public Set<Position> getNeighbors(Position position);
 	
 	/**
-	 * Indicates whether or not two positions are neighbors in this
+	 * Determines whether or not two positions are neighbors in this
 	 * environment.
 	 * 
 	 * @param position the position
@@ -158,7 +159,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public boolean areNeighbors(Position position, Position neighbor);
 	
 	/**
-	 * Indicates whether or not this environment is refined.
+	 * Determines whether or not this environment is refined.
 	 * 
 	 * @return true if this environment is refined, false otherwise
 	 */
@@ -207,7 +208,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public void unembedAll();
 	
 	/**
-	 * Indicates whether or not an obstacle is embedded in this environment.
+	 * Determines whether or not an obstacle is embedded in this environment.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
@@ -222,6 +223,36 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @param obstacle the embedded obstacle
 	 */
 	public void refresh(Obstacle obstacle);
+	
+	/**
+	 * Gets the children of this environment that are affected by an obstacle
+	 * embedding.
+	 *  
+	 * @param obstacle the embedded obstacle
+	 * @return the children of this environment that are affected by an
+	 *         obstacle embedding
+	 */
+	public Set<? extends Environment> getAffectedChildren(Obstacle obstacle);
+	
+	/**
+	 * Gets the waypoint positions of this environment that are affected by an
+	 * obstacle embedding.
+	 * 
+	 * @param obstacle the embedded obstacle
+	 * @return the waypoint positions of this environment that are affected by
+	 *         an obstacle embedding
+	 */
+	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle);
+	
+	/**
+	 * Gets the waypoint positions of this environment that are affected by
+	 * obstacle embeddings.
+	 * 
+	 * @param obstacles the embedded obstacles
+	 * @return the waypoint positions of this environment that are affected by
+	 *         obstacle embeddings
+	 */
+	public Set<Position> getAffectedWaypointPositions(Set<Obstacle> obstacles);
 	
 	/**
 	 * Gets the distance between two positions in this environment.

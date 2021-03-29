@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.render.annotations;
 
+import java.awt.Color;
+
 import gov.nasa.worldwind.event.SelectEvent;
 import gov.nasa.worldwind.render.Highlightable;
 import gov.nasa.worldwindx.examples.util.ButtonAnnotation;
@@ -89,6 +91,10 @@ public class ControlAnnotation extends ButtonAnnotation implements Highlightable
 		this.defaultOpacity = 0.5d;
 		this.highlightedOpacity = 1.0d;
 		this.setHighlighted(false);
+		this.getAttributes().setCornerRadius(10);
+		this.getAttributes().setBorderColor(new Color(40, 110, 175));
+		this.getAttributes().setBorderStippleFactor(1);
+		this.getAttributes().setBorderWidth(0);
 	}
 	
 	/**
@@ -248,6 +254,20 @@ public class ControlAnnotation extends ButtonAnnotation implements Highlightable
 	 */
 	public void setHighlightedOpacity(double highlightedOpacity) {
 		this.highlightedOpacity = highlightedOpacity;
+	}
+	
+	/**
+	 * Frames this control annotation.
+	 */
+	public void frame() {
+		this.getAttributes().setBorderWidth(5);
+	}
+	
+	/**
+	 * Unframes this control annotation.
+	 */
+	public void unframe() {
+		this.getAttributes().setBorderWidth(0);
 	}
 	
 }

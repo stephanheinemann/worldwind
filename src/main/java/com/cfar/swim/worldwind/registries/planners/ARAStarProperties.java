@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.planners;
 
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 
@@ -195,6 +197,51 @@ public class ARAStarProperties extends ForwardAStarProperties implements Anytime
 		} else {
 			throw new IllegalArgumentException("deflation amount is invalid");
 		}
+	}
+	
+	/**
+	 * Determines whether or not this ARA* planner properties bean equals
+	 * another ARA* planner properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other ARA* planner properties bean
+	 * 
+	 * @return true, if the aggregated properties of this ARA* planner
+	 *         properties bean equal the aggregated properties of the other
+	 *         ARA* planner properties bean, false otherwise
+	 * 
+	 * @see ForwardAStarProperties#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals) {
+			ARAStarProperties arasp = (ARAStarProperties) o;
+			equals = (this.deflationAmount == arasp.deflationAmount)
+					&& (this.finalInflation == arasp.finalInflation)
+					&& (this.initialInflation == arasp.initialInflation);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this ARA* planner properties bean based on its
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this ARA* planner properties bean based on its
+	 *         aggregated properties
+	 * 
+	 * @see ForwardAStarProperties#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(
+				super.hashCode(),
+				this.deflationAmount,
+				this.finalInflation,
+				this.initialInflation);
 	}
 
 }

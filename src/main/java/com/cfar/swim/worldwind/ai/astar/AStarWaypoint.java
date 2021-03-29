@@ -48,8 +48,8 @@ public class AStarWaypoint extends Waypoint {
 	/** the parent A* waypoint of this A* waypoint in a trajectory */
 	private AStarWaypoint parent = null;
 	
-	/** the visited neighbors of this A* waypoint in an environment */
-	private final Set<AStarWaypoint> neighbors = new HashSet<>();
+	/** all parents of this A* waypoint in an environment */
+	private Set<AStarWaypoint> parents = new HashSet<>();
 	
 	/** the estimated remaining cost (h-value) of this A* waypoint */
 	private double h;
@@ -77,21 +77,42 @@ public class AStarWaypoint extends Waypoint {
 	}
 	
 	/**
-	 * Sets the parent A* waypoint of this A* waypoint.
+	 * Sets the parent A* waypoint and updates all parents of this A* waypoint.
 	 * 
 	 * @param parent the parent A* waypoint of this A* waypoint
 	 */
 	public void setParent(AStarWaypoint parent) {
 		this.parent = parent;
+		this.parents.add(parent);
 	}
 	
-	// TODO: visibility and cloning issues
-	public Set<AStarWaypoint> getNeighbors() {
-		return this.neighbors;
+	/**
+	 * Determines whether or not this A* waypoint has a parent A* waypoint.
+	 * 
+	 * @return true if this A* waypoint has a parent A* waypoint,
+	 *         false otherwise
+	 */
+	public boolean hasParent() {
+		return (null != this.parent);
 	}
 	
-	public void setNeighbors(Set<AStarWaypoint> neighbors) {
-		this.neighbors.addAll(neighbors);
+	/**
+	 * Resets all parent A* waypoints of this A* waypoint.
+	 */
+	public void resetParents() {
+		this.parent = null;
+		this.parents = new HashSet<>();
+	}
+	
+	/**
+	 * Gets all parent A* waypoints of this A* waypoint
+	 * 
+	 * @return all parent A* waypoints of this A* waypoint
+	 */
+	public Set<AStarWaypoint> getParents() {
+		Set<AStarWaypoint> parents = new HashSet<>();
+		parents.addAll(this.parents);
+		return parents;
 	}
 	
 	/**
@@ -146,31 +167,40 @@ public class AStarWaypoint extends Waypoint {
 	}
 	
 	/**
-	 * Clones this A* waypoint without its parent and depiction.
+	 * Gets the priority key for the expansion of this A* waypoint.
 	 * 
-	 * @return the clone of this A* waypoint without its parent and depiction
+	 * @return the priority key for the expansion of this A* waypoint
+	 */
+	public double getKey() {
+		return this.getF();
+	}
+	
+	/**
+	 * Clones this A* waypoint without its parents and depiction.
+	 * 
+	 * @return the clone of this A* waypoint without its parents and depiction
 	 * 
 	 * @see Object#clone()
 	 */
 	@Override
 	public AStarWaypoint clone() {
 		AStarWaypoint waypoint = (AStarWaypoint) super.clone();
-		waypoint.setParent(null);
+		waypoint.resetParents();
 		return waypoint;
 	}
 	
 	/**
-	 * Compares this A* waypoint to another waypoint based on their estimated
-	 * total costs (f-values). If the estimated total costs of both A*
-	 * waypoints is equal, then ties are broken in favor of higher estimated
-	 * current costs (g-values). If the other waypoint is not an A* waypoint,
-	 * then the natural order of general waypoints applies.
+	 * Compares this A* waypoint to another waypoint based on their priority
+	 * keys for the expansion. If the priority keys for the expansion of both
+	 * A* waypoints are equal, then ties are broken in favor of higher
+	 * estimated current costs (g-values). If the other waypoint is not an A*
+	 * waypoint, then the natural order of general waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
 	 * @return -1, 0, 1, if this A* waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their total
-	 *         estimated cost
+	 *         respectively, than the other waypoint based on their priority
+	 *         keys for the expansion
 	 * 
 	 * @see Waypoint#compareTo(Waypoint)
 	 */
@@ -180,10 +210,10 @@ public class AStarWaypoint extends Waypoint {
 		
 		if (waypoint instanceof AStarWaypoint) {
 			AStarWaypoint asw = (AStarWaypoint) waypoint;
-			compareTo = new Double(this.getF()).compareTo(asw.getF());
+			compareTo = Double.valueOf(this.getKey()).compareTo(asw.getKey());
 			if (0 == compareTo) {
 				// break ties in favor of higher G-values
-				compareTo = new Double(asw.getG()).compareTo(this.getG());
+				compareTo = Double.valueOf(asw.getG()).compareTo(this.getG());
 			}
 		} else {
 			compareTo = super.compareTo(waypoint);
