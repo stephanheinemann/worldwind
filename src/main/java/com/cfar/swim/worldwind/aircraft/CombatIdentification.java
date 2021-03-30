@@ -60,11 +60,8 @@ public enum CombatIdentification {
 	 * Gets the string representation of this combat identification
 	 * 
 	 * @return the string representation of this combat identification
-	 * 
-	 * @see Enum#toString()
 	 */
-	@Override
-	public String toString() {
+	public String getString() {
 		return this.combatIdentification;
 	}
 	

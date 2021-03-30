@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries;
 
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.util.Customizable;
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -67,7 +69,23 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of a Theta* planner */
 	public static final String PLANNER_TS_ID = "Theta*";
 	
-	// TODO: aircraft, planner ...
+	/** the identifier of an ARA* planner */
+	public static final String PLANNER_ARAS_ID = "ARA*";
+	
+	/** the identifier of an AD* planner */
+	public static final String PLANNER_ADS_ID = "AD*";
+	
+	/** the identifier of a dronekit datalink */
+	public static final String DATALINK_DRONEKIT = "Dronekit Datalink";
+	
+	/** the identifier of a simulated datalink */
+	public static final String DATALINK_SIMULATED = "Simulated Datalink";
+	
+	/** the identifier of a live SWIM connection */
+	public static final String SWIM_LIVE = "Live SWIM";
+	
+	/** the identifier of a simulated SWIM connection */
+	public static final String SWIM_SIMULATED = "Simulated SWIM";
 	
 	/** the identifier of this specification */
 	private final String id;
@@ -147,6 +165,46 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	@Override
 	public int compareTo(Specification<Registree> specification) {
 		return this.id.compareTo(specification.getId());
+	}
+	
+	/**
+	 * Determines whether or not this specification equals another
+	 * specification based on their identifiers and aggregated properties.
+	 * 
+	 * @param o the other specification
+	 * 
+	 * @return true, if the identifier and aggregated properties of this
+	 *         specification equal the identifier and aggregated properties
+	 *         of the other specification, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof Specification)) {
+			Specification<?> s = (Specification<?>) o;
+			equals = (this.id.equals(s.id) && this.properties.equals(s.properties));
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this specification based on its identifier and
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this specification based on its identifier and
+	 *         aggregated properties
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(this.id, this.properties);
 	}
 
 }

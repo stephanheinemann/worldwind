@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.environments;
 
+import java.util.Objects;
+
 /**
  * Realizes the properties bean of a planning grid environment.
  * 
@@ -77,6 +79,45 @@ public class PlanningGridProperties extends EnvironmentProperties {
 	 */
 	public void setDivsion(int division) {
 		this.division = division;
+	}
+	
+	/**
+	 * Determines whether or not this planning grid properties bean equals
+	 * another planning grid properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other planning grid properties bean
+	 * 
+	 * @return true, if the aggregated properties of this planning grid
+	 *         properties bean equal the aggregated properties of the other
+	 *         planning grid properties bean, false otherwise
+	 * 
+	 * @see EnvironmentProperties#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals && (o instanceof PlanningGridProperties)) {
+			PlanningGridProperties pgp = (PlanningGridProperties) o;
+			equals = (this.division == pgp.division);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this planning grid properties bean based on its
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this planning grid properties bean based on its
+	 *         aggregated properties
+	 * 
+	 * @see EnvironmentProperties#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(super.hashCode(), this.division);
 	}
 	
 }

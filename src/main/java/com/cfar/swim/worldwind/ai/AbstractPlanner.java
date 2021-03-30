@@ -29,12 +29,17 @@
  */
 package com.cfar.swim.worldwind.ai;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
+import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -47,17 +52,23 @@ import gov.nasa.worldwind.geom.Position;
  */
 public abstract class AbstractPlanner implements Planner {
 
-	/** the aircraft of this planner */
+	/** the aircraft of this abstract planner */
 	private Aircraft aircraft = null;
 	
-	/** the environment of this planner */
+	/** the environment of this abstract planner */
 	private Environment environment = null;
 	
-	/** the cost policy of this planner */
+	/** the cost policy of this abstract planner */
 	private CostPolicy costPolicy = CostPolicy.AVERAGE;
 	
-	/** the risk policy of this planner */
+	/** the risk policy of this abstract planner */
 	private RiskPolicy riskPolicy = RiskPolicy.SAFETY;
+	
+	/** the plan revision listeners of this abstract planner */
+	private final List<PlanRevisionListener> planRevisionListeners = new LinkedList<>();
+	
+	/** indicates whether or not revision notifications are enabled */
+	private boolean revisionsEnabled = true;
 	
 	/**
 	 * Constructs a motion planner with a specified aircraft and environment.
@@ -123,7 +134,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * 
 	 * @return the risk policy of this abstract planner
 	 * 
-	 * @see Planner#getRisPolicy()
+	 * @see Planner#getRiskPolicy()
 	 */
 	@Override
 	public RiskPolicy getRiskPolicy() {
@@ -140,6 +151,61 @@ public abstract class AbstractPlanner implements Planner {
 	@Override
 	public void setRiskPolicy(RiskPolicy riskPolicy) {
 		this.riskPolicy = riskPolicy;
+	}
+	
+	/**
+	 * Adds a plan revision listener to this abstract planner that will be
+	 * notified whenever a plan has been revised.
+	 * 
+	 * @param listener the plan revision listener to be added
+	 * 
+	 * @see Planner#addPlanRevisionListener(PlanRevisionListener)
+	 * @see PlanRevisionListener
+	 */
+	@Override
+	public void addPlanRevisionListener(PlanRevisionListener listener) {
+		this.planRevisionListeners.add(listener);
+	};
+	
+	/**
+	 * Removes a plan revision listener from this abstract planner.
+	 * 
+	 * @param listener the plan revision listener to be removed
+	 * 
+	 * @see Planner#addPlanRevisionListener(PlanRevisionListener)
+	 * @see PlanRevisionListener
+	 */
+	@Override
+	public void removePlanRevisionListener(PlanRevisionListener listener) {
+		this.planRevisionListeners.remove(listener);
+	}
+	
+	/**
+	 * Revises a plan notifying the plan revision listeners of this abstract
+	 * planner.
+	 * 
+	 * @param trajectory the revised trajectory
+	 */
+	protected void revisePlan(Trajectory trajectory) {
+		if (this.revisionsEnabled) {
+			for (PlanRevisionListener listener : this.planRevisionListeners) {
+				listener.revisePlan(trajectory);
+			}
+		}
+	}
+	
+	/**
+	 * Enables plan revision notification.
+	 */
+	protected void enableRevisions() {
+		this.revisionsEnabled = true;
+	}
+	
+	/**
+	 * Disables plan revision notification.
+	 */
+	protected void disableRevisions() {
+		this.revisionsEnabled = false;
 	}
 	
 	/**
@@ -195,5 +261,28 @@ public abstract class AbstractPlanner implements Planner {
 		
 		return supports;
 	}
-
+	
+	/**
+	 * Determines whether or not this abstract planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this abstract planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof AbstractPlannerProperties)) {
+			AbstractPlannerProperties app = (AbstractPlannerProperties) specification.getProperties();
+			matches = this.getCostPolicy().equals(app.getCostPolicy())
+					&& this.getRiskPolicy().equals(app.getRiskPolicy());
+		}
+		
+		return matches;
+	}
+	
 }

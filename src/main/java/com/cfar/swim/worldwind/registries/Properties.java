@@ -49,4 +49,22 @@ public interface Properties<Registree> extends Cloneable {
 	 */
 	public Properties<Registree> clone();
 	
+	/**
+	 * Determines whether or not this properties bean equals another one.
+	 * 
+	 * @param o the other properties bean
+	 * @return true if this properties bean equals the other one,
+	 *         false otherwise
+	 */
+	@Override
+	public boolean equals(Object o);
+	
+	/**
+	 * Gets the hash code of this properties bean.
+	 * 
+	 * @return the hash code of this properties bean
+	 */
+	@Override
+	public int hashCode();
+	
 }

@@ -35,6 +35,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -143,7 +145,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not this planning grid contains a position.
+	 * Determines whether or not this planning grid contains a position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
@@ -192,7 +194,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not a position in globe coordinates is a corner of
+	 * Determines whether or not a position in globe coordinates is a corner of
 	 * this planning grid considering numerical inaccuracies.
 	 * 
 	 * @param position the position in globe coordinates
@@ -239,7 +241,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not a position in globe coordinates is the center
+	 * Determines whether or not a position in globe coordinates is the center
 	 * of this planning grid considering numerical inaccuracies.
 	 * 
 	 * @param position the position in globe coordinates
@@ -679,7 +681,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not an obstacle is embedded in this planning grid.
+	 * Determines whether or not an obstacle is embedded in this planning grid.
 	 * 
 	 * @param obstacle the obstacle
 	 * 
@@ -708,7 +710,75 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			this.affectedChildren.put(obstacle, children);
 		}
 	}
-
+	
+	/**
+	 * Gets the children of this planning grid that are affected by an obstacle
+	 * embedding.
+	 *  
+	 * @param obstacle the embedded obstacle
+	 * @return the children of this planning grid that are affected by an
+	 *         obstacle embedding
+	 * 
+	 * @see Environment#getAffectedChildren(Obstacle)
+	 */
+	@Override
+	public Set<? extends PlanningGrid> getAffectedChildren(Obstacle obstacle) {
+		Set<PlanningGrid> affectedChildren = new HashSet<PlanningGrid>();
+		
+		if (this.affectedChildren.containsKey(obstacle)) {
+			affectedChildren.addAll(this.affectedChildren.get(obstacle));
+		}
+		
+		return Collections.unmodifiableSet(affectedChildren);
+	}
+	
+	/**
+	 * Gets the waypoint positions of this planning grid that are affected by
+	 * an obstacle embedding.
+	 * 
+	 * @param obstacle the embedded obstacle
+	 * @return the waypoint positions of this planning grid that are affected
+	 *         by an obstacle embedding
+	 * 
+	 * @see Environment#getAffectedWaypointPositions(Obstacle)
+	 */
+	@Override
+	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle) {
+		Set<Position> affectedWaypointPositions = new HashSet<Position>();
+		
+		if (null != obstacle) {
+			for (PlanningGrid affectedChild : this.getAffectedChildren(obstacle)) {
+				affectedWaypointPositions.addAll(Arrays.asList(affectedChild.getCornerPositions()));
+				affectedWaypointPositions.addAll(affectedChild.getAffectedWaypointPositions(obstacle));
+			}
+		}
+		
+		return Collections.unmodifiableSet(affectedWaypointPositions);
+	}
+	
+	/**
+	 * Gets the waypoint positions of this planning grid that are affected by
+	 * obstacle embeddings.
+	 * 
+	 * @param obstacles the embedded obstacles
+	 * @return the waypoint positions of this planning grid that are affected by
+	 *         obstacle embeddings
+	 * 
+	 * @see Environment#getAffectedWaypointPositions(Set)
+	 */
+	@Override
+	public Set<Position> getAffectedWaypointPositions(Set<Obstacle> obstacles) {
+		Set<Position> affectedWaypointPositions = new HashSet<Position>();
+		
+		if (null != obstacles) {
+			for (Obstacle obstacle : obstacles) {
+				affectedWaypointPositions.addAll(this.getAffectedWaypointPositions(obstacle));
+			}
+		}
+		
+		return Collections.unmodifiableSet(affectedWaypointPositions);
+	}
+	
 	/**
 	 * Adds the specified number of children on each axis to this planning grid
 	 * and propagates existing obstacle embeddings.
@@ -760,7 +830,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return the children of this planning grid
 	 * 
 	 * @see CubicGrid#getChildren()
-	 * @see Environment#getChildren()
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
@@ -812,7 +881,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not this planning grid is refined, that is,
+	 * Determines whether or not this planning grid is refined, that is,
 	 * has children.
 	 * 
 	 * @return true if this planning grid is refined, false otherwise
@@ -852,7 +921,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	/**
 	 * Coarsens, that is, removes the children of this planning grid.
 	 *
-	 * @see Environemnt#coarsen
+	 * @see Environment#coarsen
 	 */
 	@Override
 	public void coarsen() {
@@ -861,18 +930,18 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	
 	/**
 	 * Looks up the planning grid cells (maximum eight) containing a specified
-	 * point in world model coordinates considering numerical inaccuracies.
+	 * vector in world model coordinates considering numerical inaccuracies.
 	 * 
-	 * @param modelPoint the point in world model coordinates
+	 * @param modelVector the vector in world model coordinates
 	 * 
-	 * @return the planning grid cells containing the specified point
+	 * @return the planning grid cells containing the specified vector
 	 * 
 	 * @see CubicGrid#lookupCells(Vec4)
 	 */
 	@Override
 	@SuppressWarnings("unchecked")
-	public Set<? extends PlanningGrid> lookupCells(Vec4 modelPoint) {
-		return (Set<PlanningGrid>) super.lookupCells(modelPoint);
+	public Set<? extends PlanningGrid> lookupCells(Vec4 modelVector) {
+		return (Set<PlanningGrid>) super.lookupCells(modelVector);
 	}
 	
 	/**
@@ -949,12 +1018,12 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
-	 * @see CubicGrid#getIntersectionPoints(Vec4, Vec4)
+	 * @see CubicGrid#getIntersectionVectors(Vec4, Vec4)
 	 */
 	public Iterable<? extends Position> getIntersectedPositions(Position origin, Position destination) {
 		if (null != this.globe) {
 			return
-				super.getIntersectionPoints(
+				super.getIntersectionVectors(
 					this.globe.computePointFromPosition(origin),
 					this.globe.computePointFromPosition(destination))
 				.stream()
@@ -966,45 +1035,47 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not a position is a waypoint in this planning grid.
+	 * Determines whether or not a position is a waypoint position in this
+	 * planning grid.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return true if the position is a waypoint in this planning grid,
-	 *         false otherwise
+	 * @return true if the position is a waypoint position in this planning
+	 *         grid, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
-	 * @see Environment#isWaypoint(Position)
-	 * @see RegularGrid#isWayoint(Vec4)
+	 * @see Environment#isWaypointPosition(Position)
+	 * @see RegularGrid#isWaypointVector(Vec4)
 	 */
 	@Override
-	public boolean isWaypoint(Position position) {
+	public boolean isWaypointPosition(Position position) {
 		if (null != this.globe) {
-			return super.isWayoint(this.globe.computePointFromPosition(position));
+			return super.isWaypointVector(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
 	
 	/**
-	 * Gets the adjacent waypoints of a position in this planning grid.
+	 * Gets the adjacent waypoint positions of a position in this planning
+	 * grid.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return the adjacent waypoints of the position in this
-	 *         planning grid, or the waypoint position itself
+	 * @return the adjacent waypoint positions of the position in this planning
+	 *         grid, or the waypoint position itself
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
-	 * @see Environment#getAdjacentWaypoints(Position)
-	 * @see RegularGrid#getAdjacentWaypoints(Vec4)
+	 * @see Environment#getAdjacentWaypointPositions(Position)
+	 * @see RegularGrid#getAdjacentWaypointVectors(Vec4)
 	 */
 	@Override
-	public Set<Position> getAdjacentWaypoints(Position position) {
+	public Set<Position> getAdjacentWaypointPositions(Position position) {
 		if (null != this.globe) {
-			Set<Vec4> waypoints = super.getAdjacentWaypoints(this.globe.computePointFromPosition(position));
-			return waypoints
+			Set<Vec4> waypointVectors = super.getAdjacentWaypointVectors(this.globe.computePointFromPosition(position));
+			return waypointVectors
 					.stream()
 					.map(this.globe::computePositionFromPoint)
 					.collect(Collectors.toSet());
@@ -1014,26 +1085,26 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not a position is adjacent to a waypoint in this
-	 * planning grid.
+	 * Determines whether or not a position is adjacent to a waypoint position
+	 * in this planning grid.
 	 * 
 	 * @param position the position in globe coordinates
-	 * @param waypoint the waypoint in globe coordinates
+	 * @param waypointPosition the waypoint position in globe coordinates
 	 * 
-	 * @return true if the position is adjacent to the waypoint in this
-	 *         planning grid, false otherwise
+	 * @return true if the position is adjacent to the waypoint position in
+	 *         this planning grid, false otherwise
 	 * 
 	 * @throws IllegalStateException if the globe is not set
 	 * 
-	 * @see Environment#isAdjacentWaypoint(Position, Position)
-	 * @see RegularGrid#isAdjacentWaypoint(Vec4, Vec4)
+	 * @see Environment#isAdjacentWaypointPosition(Position, Position)
+	 * @see RegularGrid#isAdjacentWaypointVector(Vec4, Vec4)
 	 */
 	@Override
-	public boolean isAdjacentWaypoint(Position position, Position waypoint) {
+	public boolean isAdjacentWaypointPosition(Position position, Position waypointPosition) {
 		if (null != this.globe) {
-			return super.isAdjacentWaypoint(
+			return super.isAdjacentWaypointVector(
 					this.globe.computePointFromPosition(position),
-					this.globe.computePointFromPosition(waypoint));
+					this.globe.computePointFromPosition(waypointPosition));
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
@@ -1073,7 +1144,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not this planning grid is a neighbor of another
+	 * Determines whether or not this planning grid is a neighbor of another
 	 * environment.
 	 * 
 	 * @param neighbor the potential neighbor
@@ -1109,8 +1180,8 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		// TODO: planning could be based on Vec4 with a final transformation of the route
 		
 		if (null != this.globe) {
-			Set<Vec4> neighborPoints = super.getNeighbors(this.globe.computePointFromPosition(position));
-			for (Vec4 neighbor : neighborPoints) {
+			Set<Vec4> neighborVectors = super.getNeighbors(this.globe.computePointFromPosition(position));
+			for (Vec4 neighbor : neighborVectors) {
 				neighbors.add(this.globe.computePositionFromPoint(neighbor));
 			}
 		} else {
@@ -1121,7 +1192,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Indicates whether or not two positions are neighbors in this planning
+	 * Determines whether or not two positions are neighbors in this planning
 	 * grid.
 	 * 
 	 * @param position the position

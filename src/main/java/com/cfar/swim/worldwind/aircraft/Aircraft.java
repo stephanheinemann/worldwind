@@ -29,8 +29,12 @@
  */
 package com.cfar.swim.worldwind.aircraft;
 
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.aircraft.AircraftProperties;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
+import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525Constants;
@@ -41,20 +45,25 @@ import gov.nasa.worldwind.symbology.milstd2525.MilStd2525Constants;
  * @author Stephan Heinemann
  *
  */
-public abstract class Aircraft extends ObstacleSphere {
+public abstract class Aircraft extends ObstacleSphere implements FactoryProduct {
 
+	/** the combat identification of this aircraft */
+	protected final CombatIdentification cid;
+	
 	/** the capabilities of this aircraft */
 	protected Capabilities capabilities = null;
 	
 	/**
 	 * Constructs a new aircraft at a specified position with a specified
-	 * separation radius.
+	 * separation radius and combat identification.
 	 * 
 	 * @param position the position
 	 * @param radius the separation radius
+	 * @param cid the combat identification
 	 */
-	public Aircraft(Position position, double radius) {
+	public Aircraft(Position position, double radius, CombatIdentification cid) {
 		super(position, radius);
+		this.cid = cid;
 	}
 	
 	/**
@@ -97,6 +106,46 @@ public abstract class Aircraft extends ObstacleSphere {
 		default:
 			return MilStd2525Constants.MATERIAL_UNKNOWN;
 		}
+	}
+	
+	/**
+	 * Determines whether or not this aircraft matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this aircraft matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof AircraftProperties)) {
+			AircraftProperties properties = (AircraftProperties) specification.getProperties();
+			if (this.getRadius() == properties.getSeparationRadius()
+					&& (this.cid.equals(properties.getCombatIdentification()))) {
+				Capabilities capabilities = new Capabilities();
+				capabilities.setApproachRateOfDescent(properties.getApproachRateOfDescent());
+	            capabilities.setApproachSpeed(properties.getApproachSpeed());
+	            capabilities.setCruiseClimbSpeed(properties.getCruiseClimbSpeed());
+	            capabilities.setCruiseDescentSpeed(properties.getCruiseDescentSpeed());
+	            capabilities.setCruiseRateOfClimb(properties.getCruiseRateOfClimb());
+	            capabilities.setCruiseRateOfDescent(properties.getCruiseRateOfDescent());
+	            capabilities.setCruiseSpeed(properties.getCruiseSpeed());
+	            capabilities.setMaximumAngleOfClimb(Angle.fromDegrees(properties.getMaximumAngleOfClimb()));
+	            capabilities.setMaximumAngleOfClimbSpeed(properties.getMaximumAngleOfClimbSpeed());
+	            capabilities.setMaximumGlideSpeed(properties.getMaximumGlideSpeed());
+	            capabilities.setMaximumRateOfClimb(properties.getMaximumRateOfClimb());
+	            capabilities.setMaximumRateOfClimbSpeed(properties.getMaximumRateOfClimbSpeed());
+	            capabilities.setMaximumRateOfDescent(properties.getMaximumRateOfDescent());
+	            capabilities.setMaximumRateOfDescentSpeed(properties.getMaximumRateOfDescentSpeed());
+	            capabilities.setMaximumSpeed(properties.getMaximumSpeed());
+	            matches = this.capabilities.equals(capabilities);
+			}
+		}
+		return matches;
 	}
 	
 }

@@ -64,7 +64,7 @@ public abstract class Quadcopter extends Aircraft {
 	 * @param cid the combat identification
 	 */
 	public Quadcopter(Position position, double radius, CombatIdentification cid) {
-		super(position, radius);
+		super(position, radius, cid);
 		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
 		this.getAttributes().setMaterial(this.getMaterial(cid));
 		

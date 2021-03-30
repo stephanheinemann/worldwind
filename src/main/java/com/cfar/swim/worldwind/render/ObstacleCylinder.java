@@ -405,4 +405,40 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 		return super.getExtent(globe, 1d);
 	}
 	
+	/**
+	 * Determines whether or not this obstacle cylinder equals another one
+	 * based on their cost intervals.
+	 * 
+	 * @param o the other obstacle cylinder
+	 * 
+	 * @return true if this obstacle cylinder equals the other one based on
+	 *         their cost intervals, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	public final boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof ObstacleCylinder)) {
+			ObstacleCylinder oc = (ObstacleCylinder) o;
+			equals = this.getCostInterval().equals(oc.getCostInterval());
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this obstacle cylinder based on its cost interval.
+	 * 
+	 * @return the hash code of this obstacle cylinder based on its cost
+	 *         interval
+	 * 
+	 * @see Object#hashCode()
+	 */
+	public final int hashCode() {
+		return this.getCostInterval().hashCode();
+	}
+	
 }

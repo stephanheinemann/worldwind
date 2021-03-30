@@ -52,7 +52,7 @@ import jfxtras.scene.control.LocalDateTimePicker;
  * of a world window.
  * 
  * @see WorldWindow
- * @see LocalDatTimePicker
+ * @see LocalDateTimePicker
  * 
  * @author Stephan Heinemann
  *

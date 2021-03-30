@@ -33,10 +33,10 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.uvic-cfar.swim</groupId>
 	<artifactId>worldwind</artifactId>
-	<version>1.0.0-alpha2</version>
+	<version>1.0.0-alpha3</version>
 	<packaging>bundle</packaging>
 	<name>SWIM Worldwind</name>
-	<description>NASA Worldwind extensions for SWIM-based planning, decision-making and support.</description>
+	<description>NASA Worldwind Extensions for SWIM-based Planning, Decision-Making and Support</description>
 
 	<inceptionYear>2016</inceptionYear>
 	<licenses>
@@ -46,19 +46,19 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
-	<url>http://rigi-lab-03.cs.uvic.ca/safcs/worldwind</url>
+	<url>http://cfarcis/safcs/worldwind</url>
 
 	<organization>
 		<name>UVic Center for Aerospace Research</name>
-		<url>http://www.uvic-cfar.com</url>
+		<url>https://cfar.engr.uvic.ca</url>
 	</organization>
 
 	<developers>
 		<developer>
 			<organization>UVic Center for Aerospace Research</organization>
-			<organizationUrl>http://www.uvic-cfar.com</organizationUrl>
+			<organizationUrl>https://cfar.engr.uvic.ca</organizationUrl>
 			<name>Stephan Heinemann</name>
-			<email>stephan@rigiresearch.com</email>
+			<email>stephan.cfar@gmail.com</email>
 		</developer>
 	</developers>
 
@@ -74,7 +74,7 @@
 	</issueManagement>
 
 	<ciManagement>
-		<url>http://rigi-lab-03.cs.uvic.ca:8008</url>
+		<url>http://cfarcis:8080</url>
 		<system>Jenkins</system>
 		<notifiers>
 			<notifier>
@@ -83,7 +83,7 @@
 				<sendOnSuccess>false</sendOnSuccess>
 				<sendOnWarning>false</sendOnWarning>
 				<configuration>
-					<address>stephan@rigiresearch.com</address>
+					<address>stephan.cfar@gmail.com</address>
 				</configuration>
 			</notifier>
 		</notifiers>
@@ -98,15 +98,15 @@
 			<distributionManagement>
 				<repository>
 					<id>maven-releases</id>
-					<url>http://rigi-lab-03.cs.uvic.ca:8081/repository/maven-releases</url>
+					<url>http://cfarcis:8081/repository/maven-releases</url>
 				</repository>
 				<snapshotRepository>
 					<id>maven-snapshots</id>
-					<url>http://rigi-lab-03.cs.uvic.ca:8081/repository/maven-snapshots</url>
+					<url>http://cfarcis:8081/repository/maven-snapshots</url>
 				</snapshotRepository>
 				<site>
 					<id>maven-site</id>
-					<url>scp://rigi-lab-03.cs.uvic.ca/var/www/html/safcs/worldwind</url>
+					<url>scp://cfarcis/var/www/html/safcs/worldwind</url>
 				</site>
 			</distributionManagement>
 		</profile>
@@ -134,40 +134,48 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<includes>
-					<include>config/worldwind.xml</include>
+					<include>config/*.xml</include>
 				</includes>
+			</resource>
+			<resource>
+				<directory>src/test/resources</directory>
+				<includes>
+					<include>xml/**/*.xml</include>
+				</includes>
+				<targetPath>swim</targetPath>
 			</resource>
 		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
-				<version>2.7</version>
+				<version>3.2.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-clean-plugin</artifactId>
-				<version>3.0.0</version>
+				<version>3.1.0</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.5.1</version>
+				<version>3.8.1</version>
 				<configuration>
-					<compilerVersion>1.8</compilerVersion>
-					<source>1.8</source>
-					<target>1.8</target>
+					<compilerVersion>11</compilerVersion>
+					<source>11</source>
+					<target>11</target>
+					<release>11</release>
 				</configuration>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
-				<version>2.19.1</version>
+				<version>3.0.0-M5</version>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.2.1</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -183,7 +191,7 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>2.10.4</version>
+				<version>3.2.0</version>
 				<configuration>
 					<archive>
 						<manifest>
@@ -200,14 +208,12 @@
 			<plugin>
 				<groupId>org.apache.felix</groupId>
 				<artifactId>maven-bundle-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>5.1.1</version>
 				<extensions>true</extensions>
 				<configuration>
 					<instructions>
-						<Export-Package>${local-packages};-split-package:=merge-first</Export-Package>
-						<Private-Package>
-						com.binarydreamers.trees
-						</Private-Package>
+						<Export-Package>${local-packages},gov.nasa.worldwind.geom;-split-package:=first</Export-Package>
+						<Private-Package>com.binarydreamers.trees</Private-Package>
 						<_removeheaders>Built-By</_removeheaders>
 					</instructions>
 				</configuration>
@@ -220,24 +226,24 @@
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-site-plugin</artifactId>
-				<version>3.5.1</version>
+				<version>3.9.1</version>
 				<dependencies>
 					<dependency>
 						<groupId>org.apache.maven.wagon</groupId>
 						<artifactId>wagon-ssh</artifactId>
-						<version>2.10</version>
+						<version>3.4.2</version>
 					</dependency>
 				</dependencies>
 			</plugin>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-project-info-reports-plugin</artifactId>
-				<version>2.9</version>
+				<version>3.1.1</version>
 			</plugin>
 			<plugin>
 				<groupId>com.mycila</groupId>
 				<artifactId>license-maven-plugin</artifactId>
-				<version>2.11</version>
+				<version>3.0</version>
 				<configuration>
 					<aggregate>true</aggregate>
 					<header>src/main/resources/license/license.txt</header>
@@ -270,51 +276,61 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-lang3</artifactId>
-			<version>3.4</version>
+			<groupId>javax.xml.bind</groupId>
+			<artifactId>jaxb-api</artifactId>
+			<version>2.3.1</version>
 		</dependency>
 		<dependency>
-			<groupId>gov.nasa</groupId>
-			<artifactId>worldwind</artifactId>
-			<version>2.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>gov.nasa</groupId>
-			<artifactId>worldwindx</artifactId>
-			<version>2.0.0</version>
-		</dependency>
-		<dependency>
-			<groupId>com.uvic-cfar.swim</groupId>
-			<artifactId>milstd2525</artifactId>
-			<version>1.0.0-alpha2</version>
+			<groupId>org.glassfish.jaxb</groupId>
+			<artifactId>jaxb-runtime</artifactId>
+			<version>2.3.1</version>
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.jogamp.gluegen</groupId>
-			<artifactId>gluegen-rt-main</artifactId>
-			<version>2.2.4</version>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.11</version>
 		</dependency>
 		<dependency>
-			<groupId>org.jogamp.jogl</groupId>
-			<artifactId>jogl-all-main</artifactId>
-			<version>2.2.4</version>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-swing</artifactId>
+			<version>11.0.2</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jfxtras</groupId>
 			<artifactId>jfxtras-controls</artifactId>
-			<version>8.0-r5</version>
+			<version>11-r1</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>4.13.2</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.uvic-cfar.swim.nasa.worldwind</groupId>
+			<artifactId>corex</artifactId>
+			<version>2.2.0</version>
+		</dependency>
+		<dependency>
+			<groupId>com.metsci.ext.org.jogamp.gluegen</groupId>
+			<artifactId>gluegen-rt-main</artifactId>
+			<version>2.4.0-rc-20200202</version>
+		</dependency>
+		<dependency>
+			<groupId>com.metsci.ext.org.jogamp.jogl</groupId>
+			<artifactId>jogl-all-main</artifactId>
+			<version>2.4.0-rc-20200202</version>
 		</dependency>
 		<dependency>
 			<groupId>com.uvic-cfar.swim</groupId>
 			<artifactId>iwxxm-jaxb</artifactId>
 			<version>2.0.0-beta5</version>
+		</dependency>
+		<dependency>
+			<groupId>com.uvic-cfar.swim</groupId>
+			<artifactId>droneconnect</artifactId>
+			<version>1.0.0-alpha3</version>
 		</dependency>
 	</dependencies>
 

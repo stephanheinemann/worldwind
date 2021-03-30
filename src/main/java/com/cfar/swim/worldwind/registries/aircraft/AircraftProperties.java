@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries.aircraft;
 
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.registries.Properties;
@@ -118,16 +120,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the combat identification of this aircraft property bean.
+	 * Gets the combat identification of this aircraft properties bean.
 	 * 
-	 * @return the combat identification of this aircraft property bean
+	 * @return the combat identification of this aircraft properties bean
 	 */
 	public CombatIdentification getCombatIdentification() {
 		return this.combatIdentification;
 	}
 
 	/**
-	 * Sets the combat identification of this aircraft property bean.
+	 * Sets the combat identification of this aircraft properties bean.
 	 * 
 	 * @param combatIdentification the combat identification to be set
 	 */
@@ -136,16 +138,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 
 	/**
-	 * Gets the separation radius of this aircraft property bean.
+	 * Gets the separation radius of this aircraft properties bean.
 	 * 
-	 * @return the separation radius of this aircraft property bean
+	 * @return the separation radius of this aircraft properties bean
 	 */
 	public double getSeparationRadius() {
 		return this.separationRadius;
 	}
 	
 	/**
-	 * Sets the separation radius of this aircraft property bean.
+	 * Sets the separation radius of this aircraft properties bean.
 	 * 
 	 * @param separationRadius the separation radius to be set
 	 */
@@ -154,16 +156,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 
 	/**
-	 * Gets the maximum angle of climb speed of this aircraft property bean.
+	 * Gets the maximum angle of climb speed of this aircraft properties bean.
 	 * 
-	 * @return the maximum angle of climb speed of this aircraft property bean
+	 * @return the maximum angle of climb speed of this aircraft properties bean
 	 */
 	public double getMaximumAngleOfClimbSpeed() {
 		return maximumAngleOfClimbSpeed;
 	}
 	
 	/**
-	 * Sets the maximum angle of climb speed of this aircraft property bean.
+	 * Sets the maximum angle of climb speed of this aircraft properties bean.
 	 * 
 	 * @param maximumAngleOfClimbSpeed the maximum angle of climb speed to be set
 	 */
@@ -172,16 +174,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the maximum rate of climb speed of this aircraft property bean.
+	 * Gets the maximum rate of climb speed of this aircraft properties bean.
 	 * 
-	 * @return the maximum rate of climb speed of this aircraft property bean
+	 * @return the maximum rate of climb speed of this aircraft properties bean
 	 */
 	public double getMaximumRateOfClimbSpeed() {
 		return maximumRateOfClimbSpeed;
 	}
 	
 	/**
-	 * Sets the maximum rate of climb speed of this aircraft property bean.
+	 * Sets the maximum rate of climb speed of this aircraft properties bean.
 	 * 
 	 * @param maximumRateOfClimbSpeed the maximum rate of climb speed to be set
 	 */
@@ -190,16 +192,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the cruise climb speed of this aircraft property bean.
+	 * Gets the cruise climb speed of this aircraft properties bean.
 	 * 
-	 * @return the cruise climb speed of this aircraft property bean
+	 * @return the cruise climb speed of this aircraft properties bean
 	 */
 	public double getCruiseClimbSpeed() {
 		return cruiseClimbSpeed;
 	}
 	
 	/**
-	 * Sets the cruise climb speed of this aircraft property bean.
+	 * Sets the cruise climb speed of this aircraft properties bean.
 	 * 
 	 * @param cruiseClimbSpeed the cruise climb speed to be set
 	 */
@@ -208,34 +210,34 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the cruise speed of this aircraft property bean.
+	 * Gets the cruise speed of this aircraft properties bean.
 	 * 
-	 * @return the cruise speed of this aircraft property bean
+	 * @return the cruise speed of this aircraft properties bean
 	 */
 	public double getCruiseSpeed() {
 		return this.cruiseSpeed;
 	}
 	
 	/**
-	 * Sets the cruise speed of this aircraft property bean.
+	 * Sets the cruise speed of this aircraft properties bean.
 	 * 
-	 * @param cruise speed the cruise speed to be set
+	 * @param cruiseSpeed the cruise speed to be set
 	 */
 	public void setCruiseSpeed(double cruiseSpeed) {
 		this.cruiseSpeed = cruiseSpeed;
 	}
 	
 	/**
-	 * Gets the cruise descent speed of this aircraft property bean.
+	 * Gets the cruise descent speed of this aircraft properties bean.
 	 * 
-	 * @return the cruise descent speed of this aircraft property bean
+	 * @return the cruise descent speed of this aircraft properties bean
 	 */
 	public double getCruiseDescentSpeed() {
 		return cruiseDescentSpeed;
 	}
 	
 	/**
-	 * Sets the cruise descent speed of this aircraft property bean.
+	 * Sets the cruise descent speed of this aircraft properties bean.
 	 * 
 	 * @param cruiseDescentSpeed the cruies descent speed to be set
 	 */
@@ -244,16 +246,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the approach speed of this aircraft property bean.
+	 * Gets the approach speed of this aircraft properties bean.
 	 * 
-	 * @return the approach speed of this aircraft property bean
+	 * @return the approach speed of this aircraft properties bean
 	 */
 	public double getApproachSpeed() {
 		return approachSpeed;
 	}
 	
 	/**
-	 * Sets the approach speed of this aircraft property bean.
+	 * Sets the approach speed of this aircraft properties bean.
 	 * 
 	 * @param approachSpeed the approach speed to be set
 	 */
@@ -262,16 +264,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the maximum glide speed of this aircraft property bean.
+	 * Gets the maximum glide speed of this aircraft properties bean.
 	 * 
-	 * @return the maximum glide speed of this aircraft property bean
+	 * @return the maximum glide speed of this aircraft properties bean
 	 */
 	public double getMaximumGlideSpeed() {
 		return maximumGlideSpeed;
 	}
 	
 	/**
-	 * Sets the maximum glide speed of this aircraft property bean.
+	 * Sets the maximum glide speed of this aircraft properties bean.
 	 * 
 	 * @param maximumGlideSpeed the maximum glide speed to be set
 	 */
@@ -280,16 +282,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the maximum rate of descent speed of this aircraft property bean.
+	 * Gets the maximum rate of descent speed of this aircraft properties bean.
 	 * 
-	 * @return the maximum rate of descent speed of this aircraft property bean
+	 * @return the maximum rate of descent speed of this aircraft properties bean
 	 */
 	public double getMaximumRateOfDescentSpeed() {
 		return maximumRateOfDescentSpeed;
 	}
 	
 	/**
-	 * Sets the maximum rate of descent speed of this aircraft property bean.
+	 * Sets the maximum rate of descent speed of this aircraft properties bean.
 	 * 
 	 * @param maximumRateOfDescentSpeed the the maximum rate of descent speed to be set
 	 */
@@ -298,16 +300,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the maximum speed of this aircraft property bean.
+	 * Gets the maximum speed of this aircraft properties bean.
 	 * 
-	 * @return the maximum speed of this aircraft property bean
+	 * @return the maximum speed of this aircraft properties bean
 	 */
 	public double getMaximumSpeed() {
 		return maximumSpeed;
 	}
 	
 	/**
-	 * Sets the maximum speed of this aircraft property bean.
+	 * Sets the maximum speed of this aircraft properties bean.
 	 * 
 	 * @param maximumSpeed the maximum speed to be set
 	 */
@@ -316,16 +318,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 
 	/**
-	 * Gets the maximum rate of climb of this aircraft property bean.
+	 * Gets the maximum rate of climb of this aircraft properties bean.
 	 * 
-	 * @return the maximum rate of climb of this aircraft property bean
+	 * @return the maximum rate of climb of this aircraft properties bean
 	 */
 	public double getMaximumRateOfClimb() {
 		return maximumRateOfClimb;
 	}
 	
 	/**
-	 * Sets the maximum rate of climb of this aircraft property bean.
+	 * Sets the maximum rate of climb of this aircraft properties bean.
 	 * 
 	 * @param maximumRateOfClimb the maximumRateOfClimb to be set
 	 */
@@ -334,16 +336,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the cruise rate of climb of this aircraft property bean.
+	 * Gets the cruise rate of climb of this aircraft properties bean.
 	 * 
-	 * @return the cruise rate of climb of this aircraft property bean
+	 * @return the cruise rate of climb of this aircraft properties bean
 	 */
 	public double getCruiseRateOfClimb() {
 		return cruiseRateOfClimb;
 	}
 	
 	/**
-	 * Sets the cruise rate of climb of this aircraft property bean.
+	 * Sets the cruise rate of climb of this aircraft properties bean.
 	 * 
 	 * @param cruiseRateOfClimb the cruise rate of climb to be set
 	 */
@@ -352,16 +354,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the cruise rate of descent of this aircraft property bean.
+	 * Gets the cruise rate of descent of this aircraft properties bean.
 	 * 
-	 * @return the cruise rate of descent of this aircraft property bean
+	 * @return the cruise rate of descent of this aircraft properties bean
 	 */
 	public double getCruiseRateOfDescent() {
 		return cruiseRateOfDescent;
 	}
 	
 	/**
-	 * Sets the cruise rate of descent of this aircraft property bean.
+	 * Sets the cruise rate of descent of this aircraft properties bean.
 	 * 
 	 * @param cruiseRateOfDescent the cruise rate of descent to be set
 	 */
@@ -370,16 +372,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the approach rate of descent of this aircraft property bean.
+	 * Gets the approach rate of descent of this aircraft properties bean.
 	 * 
-	 * @return the approach rate of descent of this aircraft property bean
+	 * @return the approach rate of descent of this aircraft properties bean
 	 */
 	public double getApproachRateOfDescent() {
 		return approachRateOfDescent;
 	}
 	
 	/**
-	 * Sets the approach rate of descent of this aircraft property bean.
+	 * Sets the approach rate of descent of this aircraft properties bean.
 	 * 
 	 * @param approachRateOfDescent the approach rate of descent to be set
 	 */
@@ -388,16 +390,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the maximum rate of descent of this aircraft property bean.
+	 * Gets the maximum rate of descent of this aircraft properties bean.
 	 * 
-	 * @return the maximum rate of descent of this aircraft property bean
+	 * @return the maximum rate of descent of this aircraft properties bean
 	 */
 	public double getMaximumRateOfDescent() {
 		return maximumRateOfDescent;
 	}
 	
 	/**
-	 * Sets the maximum rate of descent of this aircraft property bean.
+	 * Sets the maximum rate of descent of this aircraft properties bean.
 	 * 
 	 * @param maximumRateOfDescent the maximum rate of descent to be set
 	 */
@@ -406,16 +408,16 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	}
 	
 	/**
-	 * Gets the maximum angle of climb of this aircraft property bean.
+	 * Gets the maximum angle of climb of this aircraft properties bean.
 	 * 
-	 * @return the maximum angle of climb of this aircraft property bean
+	 * @return the maximum angle of climb of this aircraft properties bean
 	 */
 	public double getMaximumAngleOfClimb() {
 		return maximumAngleOfClimb;
 	}
 	
 	/**
-	 * Sets the maximum angle of climb of this aircraft property bean.
+	 * Sets the maximum angle of climb of this aircraft properties bean.
 	 * 
 	 * @param maximumAngleOfClimb the maximum angle of climb to be set
 	 */
@@ -440,4 +442,76 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 		}
 		return clone;
 	}
+
+	/**
+	 * Determines whether or not this aircraft properties bean equals another
+	 * aircraft properties bean based on their aggregated properties.
+	 * 
+	 * @param o the other aircraft properties bean
+	 * 
+	 * @return true, if the aggregated properties of this aircraft properties
+	 *         bean equal the aggregated properties of the other aircraft
+	 *         properties bean, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = false;
+
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof AircraftProperties)) {
+			AircraftProperties ap = (AircraftProperties) o;
+			return Objects.equals(this.combatIdentification, ap.combatIdentification)
+					&& (this.maximumAngleOfClimbSpeed == ap.maximumAngleOfClimbSpeed)
+					&& (this.maximumRateOfClimbSpeed == ap.maximumAngleOfClimbSpeed)
+					&& (this.cruiseClimbSpeed == ap.cruiseClimbSpeed)
+					&& (this.cruiseSpeed == ap.cruiseSpeed)
+					&& (this.cruiseDescentSpeed == ap.cruiseDescentSpeed)
+					&& (this.approachSpeed == ap.approachSpeed)
+					&& (this.maximumGlideSpeed == ap.maximumGlideSpeed)
+					&& (this.maximumRateOfDescentSpeed == ap.maximumRateOfDescentSpeed)
+					&& (this.maximumSpeed == ap.maximumSpeed)
+					&& (this.maximumRateOfClimb == ap.maximumRateOfClimb)
+					&& (this.cruiseRateOfClimb == ap.cruiseRateOfClimb)
+					&& (this.cruiseRateOfDescent == ap.cruiseRateOfDescent)
+					&& (this.approachRateOfDescent == ap.approachRateOfDescent)
+					&& (this.maximumRateOfDescent == ap.maximumRateOfDescent)
+					&& (this.maximumAngleOfClimb == ap.maximumAngleOfClimb);
+		}
+
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this aircraft properties bean based on its
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this aircraft properties bean based on its
+	 *         aggregated properties
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(
+				this.combatIdentification,
+				this.maximumAngleOfClimbSpeed,
+				this.maximumRateOfClimbSpeed,
+				this.cruiseClimbSpeed,
+				this.cruiseSpeed,
+				this.cruiseDescentSpeed,
+				this.approachSpeed,
+				this.maximumGlideSpeed,
+				this.maximumRateOfDescentSpeed,
+				this.maximumSpeed,
+				this.maximumRateOfClimb,
+				this.cruiseRateOfClimb,
+				this.cruiseRateOfDescent,
+				this.approachRateOfDescent,
+				this.maximumRateOfDescent,
+				this.maximumAngleOfClimb);
+	}
+	
 }

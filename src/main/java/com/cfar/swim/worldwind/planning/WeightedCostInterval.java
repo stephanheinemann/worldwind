@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.time.ZonedDateTime;
+import java.util.Objects;
 
 /**
  * Realizes a weighted cost interval based on a cost interval.
@@ -154,6 +155,44 @@ public class WeightedCostInterval extends CostInterval {
 	 */
 	public double getWeightedCost() {
 		return this.weight * this.cost;
+	}
+	
+	/**
+	 * Determines whether or not this weighted cost interval equals another
+	 * cost interval based on their identifiers, costs, weights as well as
+	 * start and end times.
+	 * 
+	 * @param o the other weighted cost interval
+	 * 
+	 * @return true if this weighted cost interval equals the other weighted
+	 *         cost interval based on their identifiers, costs, weights as well
+	 *         as start and end times
+	 * 
+	 * @see CostInterval#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals) {
+			equals = this.weight == ((WeightedCostInterval) o).weight;
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this weighted cost interval based on its
+	 * identifier, cost, weight as well as start and end times.
+	 * 
+	 * @return the hash code of this weighted cost interval based on its
+	 *         identifier, cost, weight as well as start and end times
+	 * 
+	 * @see CostInterval#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), this.weight);
 	}
 	
 }

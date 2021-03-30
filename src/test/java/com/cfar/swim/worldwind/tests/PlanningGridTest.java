@@ -90,11 +90,11 @@ public class PlanningGridTest {
         assertEquals(false, child.isCorner(position));
         assertEquals(true, child.isCenter(position));
         assertEquals(0, child.getNeighbors(position).size());
-        assertEquals(8, child.getAdjacentWaypoints(position).size());
+        assertEquals(8, child.getAdjacentWaypointPositions(position).size());
         assertEquals(0, planningGrid.getNeighbors(position).size());
-        assertEquals(8, planningGrid.getAdjacentWaypoints(position).size());
-        assertEquals(false, child.isWaypoint(position));
-        assertEquals(false, planningGrid.isWaypoint(position));
+        assertEquals(8, planningGrid.getAdjacentWaypointPositions(position).size());
+        assertEquals(false, child.isWaypointPosition(position));
+        assertEquals(false, planningGrid.isWaypointPosition(position));
         assertEquals(true, child.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
         assertEquals(true, planningGrid.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
 	}

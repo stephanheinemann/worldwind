@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.planning;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.Comparator;
+import java.util.Objects;
 
 import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.util.Enableable;
@@ -228,5 +229,48 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 			return value;
 		}
 	};
+	
+	/**
+	 * Determines whether or not this cost interval equals another cost
+	 * interval based on their identifiers, costs as well as start and end
+	 * times.
+	 * 
+	 * @param o the other cost interval
+	 * 
+	 * @return true if this cost interval equals the other cost interval based
+	 *         on their identifiers, costs as well as start and end times,
+	 *         false otherwise
+	 * 
+	 * @see TimeInterval#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals) {
+			CostInterval ci = (CostInterval) o;
+			equals = this.id.equals(ci.id)
+					&& (this.cost == ci.cost);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this cost interval based on its identifier, cost
+	 * as well as start and end times.
+	 * 
+	 * @return the hash code of this cost interval based on its identifier,
+	 *         cost as well as start and end times
+	 * 
+	 * @see TimeInterval#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(
+				super.hashCode(),
+				this.id,
+				this.cost);
+	}
 	
 }

@@ -38,7 +38,7 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  * @author Stephan Heinemann
  *
  */
-public class ThetaStarProperties extends PlannerProperties {
+public class ThetaStarProperties extends ForwardAStarProperties {
 
 	/**
 	 * Constructs a new Theta* planner properties bean.

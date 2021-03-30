@@ -33,9 +33,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 import com.cfar.swim.worldwind.ai.Planner;
+import com.cfar.swim.worldwind.ai.adstar.ADStarPlanner;
+import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
-import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
 
@@ -45,10 +47,10 @@ import com.cfar.swim.worldwind.session.Scenario;
  * 
  * @author Stephan Heinemann
  * 
- * @see Factory
+ * @see AbstractFactory
  * @see Specification
  */
-public class PlannerFactory implements Factory<Planner> {
+public class PlannerFactory extends AbstractFactory<Planner> {
 
 	// TODO: Both, environment and planner factory need the active scenario
 	// maybe pull up scenario functionality into abstract factory
@@ -60,13 +62,30 @@ public class PlannerFactory implements Factory<Planner> {
 	private ActiveScenarioChangeListener ascl = new ActiveScenarioChangeListener();
 	
 	/**
-	 * Constructs a new planner factory with a specified scenario.
-	 * The scenario aggregates an aircraft and environment which shall not be
-	 * part of the planner specification.
+	 * Constructs a new planner factory with a specified scenario. The scenario
+	 * aggregates an aircraft and environment which shall not be part of the
+	 * planner specification.
 	 * 
 	 * @param scenario the scenario of this planner factory
 	 */
 	public PlannerFactory(Scenario scenario) {
+		this.scenario = scenario;
+	}
+	
+	/**
+	 * Constructs a new planner factory with a specified scenario to create
+	 * registered planners according to a customized planner specification.
+	 * The scenario aggregates an aircraft and an environment which shall
+	 * not be part of the environment specification.
+	 * 
+	 * @param specification the planner specification describing the
+	 *                      registered planner
+	 * @param scenario the scenario of this planner factory
+	 * 
+	 * @see AbstractFactory
+	 */
+	public PlannerFactory(Specification<Planner> specification, Scenario scenario) {
+		super(specification);
 		this.scenario = scenario;
 	}
 	
@@ -98,32 +117,50 @@ public class PlannerFactory implements Factory<Planner> {
 	}
 	
 	/**
-	 * Creates a new planner according to a customized planner specification.
-	 * 
-	 * @param specification the customized planner specification
+	 * Creates a new planner according to the customized planner specification
+	 * of this planner factory.
 	 * 
 	 * @return the created planner
 	 * 
-	 * @see Factory#createInstance(Specification)
+	 * @see AbstractFactory#createInstance()
 	 */
 	@Override
-	public Planner createInstance(Specification<Planner> specification) {
+	public Planner createInstance() {
 		Planner planner = null;
 		
-		// TODO: validate scenario for planner creation?
-		
-		if (specification.getId().equals(Specification.PLANNER_FAS_ID)) {
-			ForwardAStarProperties properties = (ForwardAStarProperties) specification.getProperties();
-			planner = new ForwardAStarPlanner(scenario.getAircraft(), scenario.getEnvironment());
-			planner.setCostPolicy(properties.getCostPolicy());
-			planner.setRiskPolicy(properties.getRiskPolicy());
-		} else if (specification.getId().equals(Specification.PLANNER_TS_ID)) {
-			ThetaStarProperties properties = (ThetaStarProperties) specification.getProperties();
-			planner = new ThetaStarPlanner(scenario.getAircraft(), scenario.getEnvironment());
-			planner.setCostPolicy(properties.getCostPolicy());
-			planner.setRiskPolicy(properties.getRiskPolicy());
+		// TODO: validate scenario for planner creation? (supports)
+		if (this.hasSpecification()) {
+			if (this.specification.getId().equals(Specification.PLANNER_FAS_ID)) {
+				ForwardAStarProperties properties = (ForwardAStarProperties) this.specification.getProperties();
+				planner = new ForwardAStarPlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+			} else if (this.specification.getId().equals(Specification.PLANNER_TS_ID)) {
+				ThetaStarProperties properties = (ThetaStarProperties) this.specification.getProperties();
+				planner = new ThetaStarPlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+			} else if (this.specification.getId().equals(Specification.PLANNER_ARAS_ID)) {
+				ARAStarProperties properties = (ARAStarProperties) this.specification.getProperties();
+				planner = new ARAStarPlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+				((ARAStarPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+				((ARAStarPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+				((ARAStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+			} else if (this.specification.getId().equals(Specification.PLANNER_ADS_ID)) {
+				ADStarProperties properties = (ADStarProperties) this.specification.getProperties();
+				planner = new ADStarPlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+				((ADStarPlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+				((ADStarPlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+				((ADStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+				((ADStarPlanner) planner).setSignificantChange(properties.getSignificantChange());
+				((ADStarPlanner) planner).setObstacleManager(this.scenario);
+			}
+			// TODO: implement more planners
 		}
-		// TODO: implement more planners
 		
 		return planner;
 	}
@@ -132,10 +169,14 @@ public class PlannerFactory implements Factory<Planner> {
 	 * Realizes an active scenario change listener for this planner factory.
 	 * 
 	 * @author Stephan Heinemann
-	 * 
 	 */
 	private class ActiveScenarioChangeListener implements PropertyChangeListener {
 		
+		/**
+		 * Notifies the planner factory about an active scenario change.
+		 * 
+		 * @param evt the property change event
+		 */
 		@Override
 		public void propertyChange(PropertyChangeEvent evt) {
 			if (evt.getNewValue() instanceof Scenario) {

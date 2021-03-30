@@ -38,7 +38,7 @@ import com.cfar.swim.worldwind.planning.Environment;
 import com.cfar.swim.worldwind.planning.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.PlanningRoadmap;
-import com.cfar.swim.worldwind.registries.Factory;
+import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
 
@@ -50,10 +50,10 @@ import gov.nasa.worldwind.geom.Sector;
  * 
  * @author Stephan Heinemann
  * 
- * @see Factory
+ * @see AbstractFactory
  * @see Specification
  */
-public class EnvironmentFactory implements Factory<Environment> {
+public class EnvironmentFactory extends AbstractFactory<Environment> {
 	
 	// TODO: Both, environment and planner factory need the active scenario
 	// maybe pull up scenario functionality into abstract factory
@@ -65,13 +65,30 @@ public class EnvironmentFactory implements Factory<Environment> {
 	private ActiveScenarioChangeListener ascl = new ActiveScenarioChangeListener();
 	
 	/**
-	 * Constructs a new environment factory with a specified scenario.
-	 * The scenario aggregates a globe and sector which shall not be
-	 * part of the environment specification.
+	 * Constructs a new environment factory with a specified scenario. The
+	 * scenario aggregates a globe and sector which shall not be part of the
+	 * environment specification.
 	 * 
 	 * @param scenario the scenario of this environment factory
 	 */
 	public EnvironmentFactory(Scenario scenario) {
+		this.scenario = scenario;
+	}
+	
+	/**
+	 * Constructs a new environment factory with a specified scenario to create
+	 * registered environments according to a customized environment
+	 * specification. The scenario aggregates a globe and sector which shall
+	 * not be part of the environment specification.
+	 * 
+	 * @param specification the environment specification describing the
+	 *                      registered environment
+	 * @param scenario the scenario of this environment factory
+	 * 
+	 * @see AbstractFactory
+	 */
+	public EnvironmentFactory(Specification<Environment> specification, Scenario scenario) {
+		super(specification);
 		this.scenario = scenario;
 	}
 	
@@ -103,35 +120,36 @@ public class EnvironmentFactory implements Factory<Environment> {
 	}
 	
 	/**
-	 * Creates a new environment according to a customized environment specification.
-	 * 
-	 * @param specification the customized environment specification
+	 * Creates a new environment according to the customized environment
+	 * specification of this environment factory.
 	 * 
 	 * @return the created environment
 	 * 
-	 * @see Factory#createInstance(Specification)
+	 * @see AbstractFactory#createInstance()
 	 */
 	@Override
-	public Environment createInstance(Specification<Environment> specification) {
+	public Environment createInstance() {
 		Environment environment = null;
 		
-		if (specification.getId().equals(Specification.PLANNING_GRID_ID)) {
-			PlanningGridProperties properties = (PlanningGridProperties) specification.getProperties();
-			gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
-            Box envBox = new Box(bb);
-            double side = envBox.getRLength() / properties.getDivsion();
-            Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
-            int sCells = (int) Math.ceil(envBox.getSLength() / side);
-            int tCells = (int) Math.ceil(envBox.getTLength() / side);
-            environment = new PlanningGrid(envCube, properties.getDivsion(), sCells, tCells);
-            environment.setThreshold(0d);
-            environment.setGlobe(this.scenario.getGlobe());
-		} else if (specification.getId().equals(Specification.PLANNING_ROADMAP_ID)) {
-			// TODO: implement
-			environment = new PlanningRoadmap();
-		} else if (specification.getId().equals(Specification.PLANNING_CONTINUUM_ID)) {
-			// TODO: implement
-			environment = new PlanningContinuum();
+		if (this.hasSpecification()) {
+			if (this.specification.getId().equals(Specification.PLANNING_GRID_ID)) {
+				PlanningGridProperties properties = (PlanningGridProperties) this.specification.getProperties();
+				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
+	            Box envBox = new Box(bb);
+	            double side = envBox.getRLength() / properties.getDivsion();
+	            Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
+	            int sCells = (int) Math.ceil(envBox.getSLength() / side);
+	            int tCells = (int) Math.ceil(envBox.getTLength() / side);
+	            environment = new PlanningGrid(envCube, properties.getDivsion(), sCells, tCells);
+	            environment.setThreshold(0d);
+	            environment.setGlobe(this.scenario.getGlobe());
+			} else if (this.specification.getId().equals(Specification.PLANNING_ROADMAP_ID)) {
+				// TODO: implement
+				environment = new PlanningRoadmap();
+			} else if (this.specification.getId().equals(Specification.PLANNING_CONTINUUM_ID)) {
+				// TODO: implement
+				environment = new PlanningContinuum();
+			}
 		}
 		
 		return environment;
@@ -141,10 +159,14 @@ public class EnvironmentFactory implements Factory<Environment> {
 	 * Realizes an active scenario change listener for this environment factory.
 	 * 
 	 * @author Stephan Heinemann
-	 *
 	 */
 	private class ActiveScenarioChangeListener implements PropertyChangeListener {
 		
+		/**
+		 * Notifies the environment factory about an active scenario change.
+		 * 
+		 * @param evt the property change event
+		 */
 		@Override
 		public void propertyChange(PropertyChangeEvent evt) {
 			if (evt.getNewValue() instanceof Scenario) {

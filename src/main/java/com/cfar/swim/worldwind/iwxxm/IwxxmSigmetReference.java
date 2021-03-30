@@ -185,12 +185,12 @@ public class IwxxmSigmetReference {
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public boolean equals(Object object) {
+	public final boolean equals(Object object) {
 		boolean equals = false;
 		
 		if (object == this) {
 			equals = true;
-		} else if (object instanceof IwxxmSigmetReference) {
+		} else if ((null != object) && (object instanceof IwxxmSigmetReference)) {
 			IwxxmSigmetReference sigmetReference = (IwxxmSigmetReference) object;
 			
 			equals = new EqualsBuilder()
@@ -213,7 +213,7 @@ public class IwxxmSigmetReference {
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return new HashCodeBuilder(79, 83)
 				.append(this.airspaceDesignator)
 				.append(this.airspaceName)

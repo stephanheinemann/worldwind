@@ -31,11 +31,14 @@ package com.cfar.swim.worldwind.ai.thetastar;
 
 import java.time.ZonedDateTime;
 
+import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.ThetaStarProperties;
 
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -71,14 +74,14 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 	 * @param target the target waypoint in globe coordinates
 	 */
 	@Override
-	protected void computeCost(Waypoint source, Waypoint target) {
+	protected void computeCost(AStarWaypoint source, AStarWaypoint target) {
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
 		// TODO: catch IllegalArgumentException (incapable) and exit
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
-		Waypoint parent = null;
+		AStarWaypoint parent = null;
 		double straightCost = Double.POSITIVE_INFINITY;
 		double straightTargetG = Double.POSITIVE_INFINITY;
 		ZonedDateTime straightEnd = null;
@@ -103,16 +106,49 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 				this.getCostPolicy(), this.getRiskPolicy());
 		double targetG = source.getG() + cost;
 		
+		// consider expansion cost and break ties with travel time
+		boolean straight = (straightTargetG < targetG);
+		boolean improvedStraightCost = (straightTargetG < target.getG());
+		boolean equalStraightCost = (straightTargetG == target.getG());
+		boolean improvedStraightTime = (target.hasEto() && straightEnd.isBefore(target.getEto()));
+		boolean improvedCost = (targetG < target.getG());
+		boolean equalCost = (targetG == target.getG());
+		boolean improvedTime = (target.hasEto() && end.isBefore(target.getEto()));
+		
 		// take the better of the two trajectories
-		if ((straightTargetG < targetG) && (straightTargetG < target.getG())) {
+		if (straight && (improvedStraightCost || (equalStraightCost && improvedStraightTime))) {
 			target.setParent(parent);
 			target.setG(straightTargetG);
 			target.setEto(straightEnd);
-		} else if (targetG < target.getG()) {
+		} else if (improvedCost || (equalCost && improvedTime)) {
 			target.setParent(source);
 			target.setG(targetG);
 			target.setEto(end);
 		}
+	}
+	
+	/**
+	 * Determines whether or not this Theta* planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this Theta* planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof ThetaStarProperties)) {
+			ThetaStarProperties tsp = (ThetaStarProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(tsp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(tsp.getRiskPolicy()))
+					&& (specification.getId().equals(Specification.PLANNER_TS_ID));
+		}
+		
+		return matches;
 	}
 
 }
