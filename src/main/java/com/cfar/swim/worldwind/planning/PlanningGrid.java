@@ -830,7 +830,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return the children of this planning grid
 	 * 
 	 * @see CubicGrid#getChildren()
-	 * @see Environment#getChildren()
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
@@ -922,7 +921,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	/**
 	 * Coarsens, that is, removes the children of this planning grid.
 	 *
-	 * @see Environemnt#coarsen
+	 * @see Environment#coarsen
 	 */
 	@Override
 	public void coarsen() {

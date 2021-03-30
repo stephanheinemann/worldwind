@@ -69,7 +69,7 @@ public class ForwardAStarProperties extends AbstractPlannerProperties {
 	 *         properties bean equal the aggregated properties of the other
 	 *         forward A* planner properties bean, false otherwise
 	 * 
-	 * @see AbstractPlanner#equals(Object)
+	 * @see AbstractPlannerProperties#equals(Object)
 	 */
 	@Override
 	public boolean equals(Object o) {
@@ -89,7 +89,7 @@ public class ForwardAStarProperties extends AbstractPlannerProperties {
 	 * @return the hash code of this forward A* planner properties bean based
 	 *         on its aggregated properties
 	 * 
-	 * @see AbstractPlanner#hashCode()
+	 * @see AbstractPlannerProperties#hashCode()
 	 */
 	@Override
 	public int hashCode() {

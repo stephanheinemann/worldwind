@@ -50,7 +50,24 @@ public final class TransformationMatrix extends Matrix {
 	public static final int PRECISION_ORTHONOMAL = 1;
 	
 	/**
-	 * Constructs a new transform matrix from orthonormal rotation vectors.
+	 * Constructs a new transformation matrix from orthonormal rotation vectors.
+	 * 
+	 * @param m11 the 1,1 component of the transformation matrix
+	 * @param m12 the 1,2 component of the transformation matrix
+	 * @param m13 the 1,3 component of the transformation matrix
+	 * @param m14 the 1,4 component of the transformation matrix
+	 * @param m21 the 2,1 component of the transformation matrix
+	 * @param m22 the 2,2 component of the transformation matrix
+	 * @param m23 the 2,3 component of the transformation matrix
+	 * @param m24 the 2,4 component of the transformation matrix
+	 * @param m31 the 3,1 component of the transformation matrix
+	 * @param m32 the 3,2 component of the transformation matrix
+	 * @param m33 the 3,3 component of the transformation matrix
+	 * @param m34 the 4,4 component of the transformation matrix
+	 * @param m41 the 4,1 component of the transformation matrix
+	 * @param m42 the 4,2 component of the transformation matrix
+	 * @param m43 the 4,3 component of the transformation matrix
+	 * @param m44 the 4,4 component of the transformation matrix
 	 * 
 	 * @throws IllegalArgumentException if the rotation vectors are not
 	 *         orthonormal

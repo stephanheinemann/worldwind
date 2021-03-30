@@ -162,6 +162,16 @@ public class RegularGrid extends Box {
 	 * This factory method is used during child construction and supposed to be
 	 * overridden by specializing classes.
 	 * 
+	 * @param axes the axes vector of the regular grid
+	 * @param rMin the lower limit of the r axis
+	 * @param rMax the upper limit of the r axis
+	 * @param sMin the lower limit of the s axis
+	 * @param sMax the upper limit of the s axis
+	 * @param tMin the lower limit of the t axis
+	 * @param tMax the upper limit of the t axis
+	 * 
+	 * @return a new regular grid
+	 * 
 	 * @see RegularGrid#RegularGrid(Vec4[], double, double, double, double, double, double)
 	 */
 	protected RegularGrid newInstance(

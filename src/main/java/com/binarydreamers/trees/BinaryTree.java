@@ -32,7 +32,7 @@ import java.util.SortedSet;
  *           Ronald L. Rivest, Clifford Stein.
  *        chapter 13.2
  * @author John Thomas McDole
- * @param <T>
+ * @param <V> the item type of the binary tree
  */
 public class BinaryTree<V extends Comparable<V>> implements SortedSet<V> {
 	private IntervalNode<V> root;
@@ -1019,9 +1019,6 @@ public class BinaryTree<V extends Comparable<V>> implements SortedSet<V> {
 
 	/**
 	 * Verify every node of the tree has the correct height
-	 *
-	 * @param node to test
-	 * @return height of this node
 	 */
 	protected void verifyHeight() {
 		verifyHeight(root);
@@ -1029,9 +1026,6 @@ public class BinaryTree<V extends Comparable<V>> implements SortedSet<V> {
 
 	/**
 	 * Verify every node of the tree has the correct balance factor between right and left nodes
-	 * 
-	 * @param node to test
-	 * @return height of this node
 	 */
 	protected void verifyOrder() {
 		if(root == null) return;
@@ -1047,6 +1041,10 @@ public class BinaryTree<V extends Comparable<V>> implements SortedSet<V> {
 
 	/**
 	 * Search the tree for the matching element, or the 'nearest' one.
+	 * 
+	 * @param element the element to be searched
+	 * 
+	 * @return the matching or nearest element
 	 */
 	public V searchNearestElement(V element) {
 		return searchNearestElement(element, SearchNearest.SEARCH_NEAREST_ABSOLUTE);
@@ -1054,6 +1052,11 @@ public class BinaryTree<V extends Comparable<V>> implements SortedSet<V> {
 
 	/**
 	 * Search the tree for the matching element, or the 'nearest' one.
+	 * 
+	 * @param element the element to be searched
+	 * @param nearestOption the nearest option to the element to be searched
+	 * 
+	 * @return the matching or nearest element
 	 */
 	public V searchNearestElement(V element, SearchNearest nearestOption) {
 		IntervalNode<V> found = searchNearest(element, nearestOption);
@@ -1073,6 +1076,12 @@ public class BinaryTree<V extends Comparable<V>> implements SortedSet<V> {
 
 	/**
 	 * Search the tree for the matching element, or the 'nearest' node.
+	 * 
+	 * @param element the element to be searched
+	 * @param option the nearest option to the element to be searched
+	 * 
+	 * @return the matching element or the nearest node
+	 * 
 	 */
 	protected IntervalNode<V> searchNearest(V element, SearchNearest option) {
 		if (element == null)

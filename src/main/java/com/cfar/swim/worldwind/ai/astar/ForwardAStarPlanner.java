@@ -893,7 +893,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @return true if the this forward A* planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see AbstractPlannert#matches(Specification)
+	 * @see AbstractPlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {

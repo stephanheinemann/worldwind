@@ -221,7 +221,7 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	/**
 	 * Sets the cruise speed of this aircraft properties bean.
 	 * 
-	 * @param cruise speed the cruise speed to be set
+	 * @param cruiseSpeed the cruise speed to be set
 	 */
 	public void setCruiseSpeed(double cruiseSpeed) {
 		this.cruiseSpeed = cruiseSpeed;
