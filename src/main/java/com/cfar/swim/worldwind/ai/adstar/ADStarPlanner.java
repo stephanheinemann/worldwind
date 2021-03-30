@@ -180,7 +180,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * @return the polled AD* waypoint from the expandable AD* waypoints
 	 *         if any, null otherwise
 	 * 
-	 * @see ARAStarWaypoint#pollExpandable()
+	 * @see ARAStarPlanner#pollExpandable()
 	 */
 	@Override
 	protected ADStarWaypoint pollExpandable() {
@@ -210,7 +210,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * 
 	 * @return the found expanded AD* waypoint, if any
 	 * 
-	 * @see ARAStarPlanner#findExpanded(ARAStarWaypoint)
+	 * @see ARAStarPlanner#findExpanded(AStarWaypoint)
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
@@ -527,7 +527,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	/**
 	 * Improves an AD* plan incrementally.
 	 * 
-	 * @param the index of the plan to be improved
+	 * @param partIndex the index of the plan to be improved
 	 */
 	@Override
 	protected void improve(int partIndex) {

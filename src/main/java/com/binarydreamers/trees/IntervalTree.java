@@ -33,7 +33,7 @@ import java.util.SortedSet;
  *           Ronald L. Rivest, Clifford Stein.
  *        chapter 13.2
  * @author John Thomas McDole
- * @param <T>
+ * @param <V> the item type of the interval tree
  */
 public class IntervalTree<V extends Comparable<V>> implements SortedSet<Interval<V>> {
 	private IntervalNode<V> root;
@@ -1083,9 +1083,6 @@ public class IntervalTree<V extends Comparable<V>> implements SortedSet<Interval
 
 	/**
 	 * Verify every node of the tree has the correct height
-	 *
-	 * @param node to test
-	 * @return height of this node
 	 */
 	protected void verifyHeight() {
 		verifyHeight(root);
@@ -1093,9 +1090,6 @@ public class IntervalTree<V extends Comparable<V>> implements SortedSet<Interval
 
 	/**
 	 * Verify every node of the tree has the correct balance factor between right and left nodes
-	 * 
-	 * @param node to test
-	 * @return height of this node
 	 */
 	protected void verifyOrder() {
 		if(root == null) return;
@@ -1114,8 +1108,9 @@ public class IntervalTree<V extends Comparable<V>> implements SortedSet<Interval
 	 * 
 	 * TODO(jtmcdole): should be a set backed by the tree?
 	 *
-	 * @param interval
-	 * @return
+	 * @param interval the interval to be searched
+	 * 
+	 * @return the list of found intervals
 	 */
 	public List<Interval<V>> searchInterval(Interval<V> interval) {
 		List<Interval<V>> found = new ArrayList<Interval<V>>();
@@ -1125,6 +1120,10 @@ public class IntervalTree<V extends Comparable<V>> implements SortedSet<Interval
 
 	/**
 	 * Search each node, recursively matching against the search interval
+	 * 
+	 * @param interval the search interval
+	 * @param node the interval node
+	 * @param storage the interval storage
 	 */
 	private void searchIntervalRecursive(Interval<V> interval, IntervalNode<V> node,
 			List<Interval<V>> storage) {
@@ -1156,6 +1155,10 @@ public class IntervalTree<V extends Comparable<V>> implements SortedSet<Interval
 
 	/**
 	 * Search the tree for the matching element, or the 'nearest' one.
+	 * 
+	 * @param element the element to be searched
+	 * 
+	 * @return the found interval
 	 */
 	public Interval<V> searchNearestElement(Interval<V> element) {
 		return searchNearestElement(element, SearchNearest.SEARCH_NEAREST_ABSOLUTE);
@@ -1163,6 +1166,11 @@ public class IntervalTree<V extends Comparable<V>> implements SortedSet<Interval
 
 	/**
 	 * Search the tree for the matching element, or the 'nearest' one.
+	 * 
+	 * @param element the element to be searched
+	 * @param nearestOption the nearest option to the element
+	 * 
+	 * @return the found interval
 	 */
 	public Interval<V> searchNearestElement(Interval<V> element, SearchNearest nearestOption) {
 		IntervalNode<V> found = searchNearest(element, nearestOption);
@@ -1182,6 +1190,11 @@ public class IntervalTree<V extends Comparable<V>> implements SortedSet<Interval
 
 	/**
 	 * Search the tree for the matching element, or the 'nearest' node.
+	 * 
+	 * @param element the element to be searched
+	 * @param option the nearest option to the element
+	 * 
+	 * @return the found interval node
 	 */
 	protected IntervalNode<V> searchNearest(Interval<V> element, SearchNearest option) {
 		if (element == null)

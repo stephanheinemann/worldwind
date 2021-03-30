@@ -92,7 +92,7 @@ public class PlanningGridProperties extends EnvironmentProperties {
 	 *         properties bean equal the aggregated properties of the other
 	 *         planning grid properties bean, false otherwise
 	 * 
-	 * @see Environment#equals(Object)
+	 * @see EnvironmentProperties#equals(Object)
 	 */
 	@Override
 	public final boolean equals(Object o) {
@@ -113,7 +113,7 @@ public class PlanningGridProperties extends EnvironmentProperties {
 	 * @return the hash code of this planning grid properties bean based on its
 	 *         aggregated properties
 	 * 
-	 * @see Environment#hashCode()
+	 * @see EnvironmentProperties#hashCode()
 	 */
 	@Override
 	public final int hashCode() {

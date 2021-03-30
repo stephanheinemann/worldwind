@@ -134,7 +134,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * 
 	 * @return the risk policy of this abstract planner
 	 * 
-	 * @see Planner#getRisPolicy()
+	 * @see Planner#getRiskPolicy()
 	 */
 	@Override
 	public RiskPolicy getRiskPolicy() {

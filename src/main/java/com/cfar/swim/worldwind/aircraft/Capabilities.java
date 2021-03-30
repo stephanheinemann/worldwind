@@ -531,7 +531,7 @@ public class Capabilities {
 	 * Determines whether or not this capabilities bean equals another one
 	 * based on their aggregated capabilities.
 	 * 
-	 * @param the other capabilities bean
+	 * @param o the other capabilities bean
 	 * 
 	 * @return true if the aggregated capabilities of this capabilities bean
 	 *         equal the aggregated capabilities of the other one,

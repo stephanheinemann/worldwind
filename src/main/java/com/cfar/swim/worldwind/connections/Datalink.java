@@ -306,9 +306,7 @@ public abstract class Datalink implements Connection {
 	}
 	
 	/**
-	 * Starts the datalink monitor with a specified monitoring period.
-	 * 
-	 * @param period the monitoring period in milliseconds
+	 * Starts the datalink monitor with the current downlink period.
 	 */
 	public void startMonitoring() {
 		if (!this.isMonitoring()) {

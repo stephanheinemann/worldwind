@@ -56,7 +56,7 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @see ARAWaypoint#AStarWaypoint(Position)
+	 * @see ARAStarWaypoint#ARAStarWaypoint(Position)
 	 */
 	public ADStarWaypoint(Position position) {
 		super(position);
