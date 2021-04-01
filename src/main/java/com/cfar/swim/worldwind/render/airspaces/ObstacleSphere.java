@@ -87,7 +87,7 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	public ObstacleSphere(Position center, double radius) {
 		super(LatLon.fromDegrees(center.getLatitude().degrees, center.getLongitude().degrees), radius);
 		this.setAltitudes(center.getAltitude() - radius, center.getAltitude() + radius);
-		this.getAttributes().setOpacity(0.25);
+		this.getAttributes().setInteriorOpacity(0.25);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
 	}
@@ -297,11 +297,11 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 * Updates the appearance of this obstacle sphere.
 	 */
 	protected void updateAppearance() {
-		this.getAttributes().setMaterial(new Material(ObstacleColor.getColor(activeCost)));
+		this.getAttributes().setInteriorMaterial(new Material(ObstacleColor.getColor(activeCost)));
 		if (0 > this.activeCost) {
-			this.getAttributes().setOpacity(1.0);
+			this.getAttributes().setInteriorOpacity(1.0);
 		} else {
-			this.getAttributes().setOpacity(0.5);
+			this.getAttributes().setInteriorOpacity(0.5);
 		}
 		// TODO: elements could change color, transparency or even an associated image/icon 
 	}

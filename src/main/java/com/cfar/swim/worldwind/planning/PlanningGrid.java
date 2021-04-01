@@ -58,10 +58,10 @@ import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
 
+import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
-import gov.nasa.worldwind.render.Polyline;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
@@ -1235,7 +1235,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			positions.add(position1);
 			positions.add(position2);
 			LengthMeasurer measurer = new LengthMeasurer(positions);
-			measurer.setPathType(Polyline.LINEAR);
+			measurer.setPathType(AVKey.LINEAR);
 			measurer.setFollowTerrain(false);
 			return measurer.getLength(this.globe);
 		} else {

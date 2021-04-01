@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.geom.precision;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Realizes a double value with a specified numerical precision.
@@ -61,7 +62,7 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 */
 	public PrecisionDouble(double d) {
 		// TODO: the correct default precision should probably be a function (percentage) of the value
-		this(new BigDecimal(d).setScale(Precision.PRECISION, BigDecimal.ROUND_HALF_UP));
+		this(new BigDecimal(d).setScale(Precision.PRECISION, RoundingMode.HALF_UP));
 		this.original = d;
 	}
 	
@@ -73,7 +74,7 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 * @param precision the precision
 	 */
 	public PrecisionDouble(double d, int precision) {
-		this(new BigDecimal(d).setScale(precision, BigDecimal.ROUND_HALF_UP));
+		this(new BigDecimal(d).setScale(precision, RoundingMode.HALF_UP));
 		this.precision = precision;
 		this.original = d;
 	}
@@ -137,7 +138,7 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 */
 	@Override
 	public Double getOriginal() {
-		return new Double(this.original);
+		return Double.valueOf(this.original);
 	}
 	
 	// TODO: override arithmetic operations to propagate
