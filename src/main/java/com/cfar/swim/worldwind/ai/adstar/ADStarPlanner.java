@@ -39,7 +39,6 @@ import java.util.stream.Collectors;
 import com.cfar.swim.worldwind.ai.DynamicObstacleListener;
 import com.cfar.swim.worldwind.ai.DynamicPlanner;
 import com.cfar.swim.worldwind.ai.arastar.ARAStarPlanner;
-import com.cfar.swim.worldwind.ai.arastar.ARAStarWaypoint;
 import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
