@@ -133,12 +133,12 @@ public class LazyPRM extends BasicPRM {
 			return false;
 		
 		int index;
-		for(int i = 0; i < trajectory.getLength(); i++) {
+		for(int i = 0; i < trajectory.getWaypointsLength(); i++) {
 			// if i is even then select a waypoint in the natural order starting from start
 			// if i is odd then select a waypoint in the inverse order starting from goal
 			index = i/2; 
 			if((i % 2) == 1) {
-				index = trajectory.getLength() - 1 - index;		
+				index = trajectory.getWaypointsLength() - 1 - index;		
 			}
 			Waypoint waypoint = Iterables.get(trajectory.getWaypoints(), index);
 			Waypoint waypointBefore = null;
@@ -155,10 +155,10 @@ public class LazyPRM extends BasicPRM {
 			}	
 		}
 		
-		for (int i = 0; i < trajectory.getLength() - 2; i++) {
+		for (int i = 0; i < trajectory.getWaypointsLength() - 2; i++) {
 			index = i/2; 
 			if((i % 2) == 1) {
-				index = trajectory.getLength() - 2 - index;		
+				index = trajectory.getWaypointsLength() - 2 - index;		
 			}
 			Waypoint waypointBefore = Iterables.get(trajectory.getWaypoints(), index);
 			Waypoint waypoint = Iterables.get(trajectory.getWaypoints(), index+1);
@@ -185,10 +185,10 @@ public class LazyPRM extends BasicPRM {
 			return false;
 		
 		int index;
-		for (int i = 0; i < trajectory.getLength() - 2; i++) {
+		for (int i = 0; i < trajectory.getWaypointsLength() - 2; i++) {
 			index = i/2; 
 			if((i % 2) == 1) {
-				index = trajectory.getLength() - 2 - index;		
+				index = trajectory.getWaypointsLength() - 2 - index;		
 			}
 			Waypoint waypointBefore = Iterables.get(trajectory.getWaypoints(), index);
 			Waypoint waypoint = Iterables.get(trajectory.getWaypoints(), index+1);

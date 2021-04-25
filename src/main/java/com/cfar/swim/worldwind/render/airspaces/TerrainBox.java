@@ -39,6 +39,7 @@ import com.cfar.swim.worldwind.util.Depiction;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Frustum;
 import gov.nasa.worldwind.geom.LatLon;
+import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
@@ -46,6 +47,7 @@ import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Renderable;
 import gov.nasa.worldwind.render.airspaces.AbstractAirspace;
 import gov.nasa.worldwind.render.airspaces.Box;
+import gov.nasa.worldwind.util.Logging;
 import gov.nasa.worldwind.util.WWMath;
 
 /**
@@ -222,7 +224,63 @@ public class TerrainBox extends Box implements TerrainObstacle {
 	public Frustum getFrustum(Globe globe) {
 		return (new com.cfar.swim.worldwind.geom.Box(this.getBox(globe))).getFrustum();
 	}
+	
+	// TODO: this code is not available in the super class anymore
+	protected static final int A_LOW_LEFT = 0;
+    protected static final int A_LOW_RIGHT = 1;
+    protected static final int A_UPR_LEFT = 2;
+    protected static final int A_UPR_RIGHT = 3;
+    protected static final int B_LOW_LEFT = 4;
+    protected static final int B_LOW_RIGHT = 5;
+    protected static final int B_UPR_LEFT = 6;
+    protected static final int B_UPR_RIGHT = 7;
+	
+    // TODO: this code is not available in the super class anymore
+	public static Vec4[] computeStandardVertices(Globe globe, double verticalExaggeration, TerrainBox box)
+    {
+        if (globe == null)
+        {
+            String message = Logging.getMessage("nullValue.GlobeIsNull");
+            Logging.logger().severe(message);
+            throw new IllegalArgumentException(message);
+        }
 
+        if (box == null)
+        {
+            String message = Logging.getMessage("nullValue.BoxIsNull");
+            Logging.logger().severe(message);
+            throw new IllegalArgumentException(message);
+        }
+
+        double[] altitudes = box.getAltitudes(verticalExaggeration);
+
+        // Compute the Cartesian points of this Box's first and second locations at the upper and lower altitudes.
+        Vec4 al = globe.computePointFromPosition(box.getLocations()[0], altitudes[0]);
+        Vec4 au = globe.computePointFromPosition(box.getLocations()[0], altitudes[1]);
+        Vec4 bl = globe.computePointFromPosition(box.getLocations()[1], altitudes[0]);
+        Vec4 bu = globe.computePointFromPosition(box.getLocations()[1], altitudes[1]);
+
+        // Compute vectors at the first and second locations that are perpendicular to the vector connecting the two
+        // points and perpendicular to the Globe's normal at each point. These perpendicular vectors are used to
+        // determine this Box's points to the left and right of its Cartesian points.
+        Vec4 aNormal = globe.computeSurfaceNormalAtPoint(al);
+        Vec4 bNormal = globe.computeSurfaceNormalAtPoint(bl);
+        Vec4 ab = bl.subtract3(al).normalize3();
+        Vec4 aPerp = ab.cross3(aNormal).normalize3();
+        Vec4 bPerp = ab.cross3(bNormal).normalize3();
+
+        Vec4[] vertices = new Vec4[8];
+        vertices[TerrainBox.A_LOW_LEFT] = new Line(al, aPerp).getPointAt(-box.getWidths()[0]);
+        vertices[TerrainBox.A_LOW_RIGHT] = new Line(al, aPerp).getPointAt(box.getWidths()[1]);
+        vertices[TerrainBox.A_UPR_LEFT] = new Line(au, aPerp).getPointAt(-box.getWidths()[0]);
+        vertices[TerrainBox.A_UPR_RIGHT] = new Line(au, aPerp).getPointAt(box.getWidths()[1]);
+        vertices[TerrainBox.B_LOW_LEFT] = new Line(bl, bPerp).getPointAt(-box.getWidths()[0]);
+        vertices[TerrainBox.B_LOW_RIGHT] = new Line(bl, bPerp).getPointAt(box.getWidths()[1]);
+        vertices[TerrainBox.B_UPR_LEFT] = new Line(bu, bPerp).getPointAt(-box.getWidths()[0]);
+        vertices[TerrainBox.B_UPR_RIGHT] = new Line(bu, bPerp).getPointAt(box.getWidths()[1]);
+        return vertices;
+    }
+	
 	/**
 	 * Gets the geometric box of this terrain obstacle box for a specified globe.
 	 * 
@@ -232,7 +290,7 @@ public class TerrainBox extends Box implements TerrainObstacle {
 	 */
 	public gov.nasa.worldwind.geom.Box getBox(Globe globe) {
 
-		Vec4[] vertices = Box.computeStandardVertices(globe, 1d, this);
+		Vec4[] vertices = TerrainBox.computeStandardVertices(globe, 1d, this);
 
 		Iterable<Vec4> verticesIterable = Arrays.asList(vertices);
 		Vec4[] axes = WWMath.computePrincipalAxes(verticesIterable);

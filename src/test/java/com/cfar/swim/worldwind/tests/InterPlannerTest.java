@@ -50,8 +50,8 @@ import org.xml.sax.InputSource;
 
 import com.cfar.swim.worldwind.ai.astar.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.ai.prm.basicprm.BasicPRM;
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryMode;
-import com.cfar.swim.worldwind.ai.prm.basicprm.QueryPlanner;
+import com.cfar.swim.worldwind.ai.prm.rigidprm.QueryMode;
+import com.cfar.swim.worldwind.ai.prm.rigidprm.QueryPlanner;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Extension;
 import com.cfar.swim.worldwind.ai.rrt.basicrrt.Strategy;
 import com.cfar.swim.worldwind.ai.rrt.hrrt.HRRTreePlanner;

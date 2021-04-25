@@ -668,7 +668,7 @@ public class RRTreeParameterTest {
 				i--;
 				continue;
 			}
-			size = trajectory.getLength();
+			size = trajectory.getWaypointsLength();
 			waypoints = plannerRRTS.getWaypointList().size();
 			cost = plannerRRTS.getGoal().getCost();
 			time = System.currentTimeMillis() - t0;

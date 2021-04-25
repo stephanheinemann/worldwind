@@ -92,7 +92,7 @@ public class Trajectory extends Path implements Depictable {
 	 * @return true if this trajectory is empty, false otherwise
 	 */
 	public boolean isEmpty() {
-		return (0 == this.getLength());
+		return (0 == this.getWaypointsLength());
 	}
 	
 	/**
@@ -100,7 +100,7 @@ public class Trajectory extends Path implements Depictable {
 	 * 
 	 * @return the length of this trajectory in number of waypoints
 	 */
-	public int getLength() {
+	public int getWaypointsLength() {
 		// Needed to prevent propagation of null iterator
 		if(this.getWaypoints()==null)
 			return 0;
