@@ -245,15 +245,15 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * Compares this AD* waypoint to another waypoint based on their priority
 	 * keys for the expansion. If the priority keys for the expansion of both
 	 * AD* waypoints are equal, then ties are broken in favor of higher
-	 * estimated current costs (g-values) or under-consistent costs (v-values).
-	 * If the other waypoint is not an AD* waypoint, then the natural order of
-	 * general waypoints applies.
+	 * estimated current costs (g-values) or under-consistent costs (v-values),
+	 * and earlier ETOs. If the other waypoint is not an AD* waypoint, then the
+	 * natural order of general waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
-	 * @return -1, 0, 1, if this AD* waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their priority
-	 *         keys for the expansion
+	 * @return less than 0, 0, greater than 0, if this AD* waypoint is less
+	 *         than, equal, or greater, respectively, than the other waypoint
+	 *         based on their priority keys for the expansion
 	 * 
 	 * @see ARAStarWaypoint#compareTo(Waypoint)
 	 */
@@ -271,6 +271,11 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 				} else {
 					// break ties in favor of higher V-values
 					compareTo = Double.valueOf(adsw.getV()).compareTo(this.getV());
+				}
+				
+				if ((0 == compareTo) && (this.hasEto())) {
+					// break ties in favor of lower ETOs
+					compareTo = this.getEto().compareTo(adsw.getEto());
 				}
 			}
 		} else {

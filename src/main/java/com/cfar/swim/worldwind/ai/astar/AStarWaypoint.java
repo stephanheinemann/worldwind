@@ -193,14 +193,15 @@ public class AStarWaypoint extends Waypoint {
 	 * Compares this A* waypoint to another waypoint based on their priority
 	 * keys for the expansion. If the priority keys for the expansion of both
 	 * A* waypoints are equal, then ties are broken in favor of higher
-	 * estimated current costs (g-values). If the other waypoint is not an A*
-	 * waypoint, then the natural order of general waypoints applies.
+	 * estimated current costs (g-values) and earlier ETOs. If the other
+	 * waypoint is not an A* waypoint, then the natural order of general
+	 * waypoints applies.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
-	 * @return -1, 0, 1, if this A* waypoint is less than, equal, or greater,
-	 *         respectively, than the other waypoint based on their priority
-	 *         keys for the expansion
+	 * @return less than 0, 0, greater than 0, if this A* waypoint is less
+	 *         than, equal, or greater, respectively, than the other waypoint
+	 *         based on their priority keys for the expansion
 	 * 
 	 * @see Waypoint#compareTo(Waypoint)
 	 */
@@ -214,6 +215,10 @@ public class AStarWaypoint extends Waypoint {
 			if (0 == compareTo) {
 				// break ties in favor of higher G-values
 				compareTo = Double.valueOf(asw.getG()).compareTo(this.getG());
+				if ((0 == compareTo) && (this.hasEto())) {
+					// break ties in favor of lower ETOs
+					compareTo = this.getEto().compareTo(asw.getEto());
+				}
 			}
 		} else {
 			compareTo = super.compareTo(waypoint);
