@@ -267,7 +267,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates equals the
+	 * Determines whether or not a point in world model coordinates equals the
 	 * origin of this box considering numerical inaccuracies.
 	 * 
 	 * @param point the point in world model coordinates
@@ -282,7 +282,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates equals the
+	 * Determines whether or not a point in world model coordinates equals the
 	 * center of this box considering numerical inaccuracies.
 	 * 
 	 * @param point the point in world model coordinates
@@ -297,7 +297,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates equals a
+	 * Determines whether or not a point in world model coordinates equals a
 	 * corner of this box considering numerical inaccuracies. 
 	 * 
 	 * @param point the point in world model coordinates
@@ -487,13 +487,14 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return the box vector
 	 */
 	public Vec4 transformModelToBoxCenter(Vec4 modelPoint) {
-		Matrix transformMatrix = TransformationMatrix.toLocalOrientation(this.getCenter(), this.getAxes());
+		Matrix transformMatrix = TransformationMatrix.toLocalOrientation(
+				this.getCenter(), this.getAxes());
 		return modelPoint.transformBy4(transformMatrix);
 	}
 	
 	/**
-	 * Indicates whether or not a value lies on the <code>R</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Determines whether or not a value lies on the <code>R</code> axis of
+	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param r the value
 	 * 
@@ -505,8 +506,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a value lies on the <code>S</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Determines whether or not a value lies on the <code>S</code> axis of
+	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param s the value
 	 * 
@@ -518,8 +519,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a value lies on the <code>T</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Determines whether or not a value lies on the <code>T</code> axis of
+	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param t the value
 	 * 
@@ -531,7 +532,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a vector in box coordinates is contained in
+	 * Determines whether or not a vector in box coordinates is contained in
 	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param v the vector in box coordinates
@@ -543,8 +544,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates is contained
-	 * in this box.
+	 * Determines whether or not a point in world model coordinates is
+	 * contained in this box.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
@@ -562,7 +563,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a line segment intersects this box when
+	 * Determines whether or not a line segment intersects this box when
 	 * expanding its sides with an expansion vector.
 	 * 
 	 * @param p0 the first point of the line segment
@@ -618,7 +619,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a line segment intersects this box.
+	 * Determines whether or not a line segment intersects this box.
 	 * 
 	 * @param p0 the first point of the line segment
 	 * @param p1 the second point of the line segment
@@ -630,15 +631,15 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not (the bounding box of) a cylinder intersects this
-	 * box. 
+	 * Determines whether or not (the bounding box of) a cylinder intersects
+	 * this box. 
 	 * 
 	 * @param cylinder the cylinder
 	 * 
 	 * @return true if the (bounding box of the) cylinder intersects this box,
 	 *         false otherwise
 	 */
-	public boolean intersectsCylinder(Cylinder cylinder) {
+	public boolean intersectsCylinderBoundingBox(Cylinder cylinder) {
 		// expand box by effective cylinder radii
 		double rx = cylinder.getEffectiveRadius(this.planes[0]); // r-min plane
 		double ry = cylinder.getEffectiveRadius(this.planes[2]); // s-min plane
@@ -647,6 +648,87 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		Vec4 expansion = new Vec4(rx, ry, rz);
 		// perform the conservatively approximate (cylinder bounding box) intersection check
 		return this.intersectsLineSegment(cylinder.getBottomCenter(), cylinder.getTopCenter(), expansion);
+	}
+	
+	/**
+	 * Determines whether or not a cylinder intersects this box.
+	 * 
+	 * @param cylinder the cylinder
+	 * 
+	 * @return true if the cylinder intersects this box, false otherwise
+	 */
+	public boolean intersectsCylinder(Cylinder cylinder) {
+		Vec4 boxCenter = this.getCenter();
+		Vec4 cylCenter = cylinder.getCenter();
+		
+		// distance from box center to cylinder center
+		double distanceCenter = boxCenter.distanceTo3(cylCenter);
+		// vector between box center and cylinder center
+		Vec4 subCenter = boxCenter.subtract3(cylCenter);
+		
+		// shortest distance from box corner to cylinder center 
+		double distanceNearest = Double.MAX_VALUE;
+		Vec4 nearestCorner = null;
+		
+		// nearest box corner to cylinder center
+		for (Vec4 corner : this.getCorners()) {
+			double distanceCorner = corner.distanceTo3(cylCenter);
+			if (distanceNearest > distanceCorner) {
+				distanceNearest = distanceCorner;
+				nearestCorner = corner;
+			}
+		}
+		
+		// vector between nearest box corner and cylinder center
+		Vec4 subNearest = nearestCorner.subtract3(cylCenter);
+		
+		// angle between the axis of the cylinder and the vector from the
+		// center of the cylinder to the nearest corner
+		double angleNearest = Math.acos(
+				cylinder.getAxisUnitDirection().dot3(subNearest)
+				/ subNearest.getLength3());
+		
+		// angle between the axis of the cylinder and the vector from the
+		// center of the cylinder to the center of the box
+		double angleCenter = Math.acos(
+				cylinder.getAxisUnitDirection().dot3(subCenter)
+				/ subCenter.getLength3());
+		
+		// critical angle of the cylinder is the angle that separates the
+		// bottom and top planes from the lateral surface
+		double angleCritical = Math.atan(
+				cylinder.getCylinderRadius()
+				/ (cylinder.getCylinderHeight() / 2));
+		
+		// maxDistNearest and maxDistCenter are the maximum distances between
+		// the center of the cylinder and its surface in the direction (angle)
+		// of the nearest corner and center of the box, respectively
+		double maxDistNearest = 0, maxDistCenter = 0;
+		
+		if ((angleNearest <= angleCritical)
+				|| (angleNearest >= (Math.PI - angleCritical))) {
+			maxDistNearest = (cylinder.getCylinderHeight() / 2)
+					/ Math.cos(angleNearest);
+		} else {
+			maxDistNearest = cylinder.getCylinderRadius()
+					/ Math.cos((Math.PI / 2) - angleNearest);
+		}
+		
+		if ((angleCenter <= angleCritical)
+				|| (angleCenter >= (Math.PI - angleCritical))) {
+			maxDistCenter = (cylinder.getCylinderHeight() / 2)
+					/ Math.cos(angleCenter);
+		} else {
+			maxDistCenter = cylinder.getCylinderRadius()
+					/ Math.cos((Math.PI / 2) - angleCenter);
+		}
+		
+		// intersection is present if the cylinder contains the center of the
+		// box or its the nearest corner, or if the box contains the center of
+		// the cylinder
+		return ((distanceCenter <= maxDistCenter)
+				|| (distanceNearest <= maxDistNearest)
+				|| this.contains(cylCenter));
 	}
 	
 	/**
@@ -684,7 +766,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not an extent intersects this box.
+	 * Determines whether or not an extent intersects this box.
 	 * 
 	 * @param extent the extent
 	 * 
@@ -697,7 +779,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a line segment intersects this box.
+	 * Determines whether or not a line segment intersects this box.
 	 * 
 	 * @param pa one end of the line segment
 	 * @param pb the other end of the line segment

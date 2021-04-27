@@ -412,7 +412,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		
 		return new Cylinder(bottomCenter, topCenter, radius);
 		// TODO: check available method
-		//return super.getExtent(globe, 1d);
+		//return super.computeExtent(globe, 1d);
 	}
 
 	/**
