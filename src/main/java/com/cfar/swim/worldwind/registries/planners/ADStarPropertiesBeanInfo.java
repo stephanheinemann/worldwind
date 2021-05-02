@@ -27,49 +27,59 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.session;
+package com.cfar.swim.worldwind.registries.planners;
 
-import java.util.Set;
-
-import com.cfar.swim.worldwind.render.Obstacle;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
- * Describes an obstacle manager responsible for requesting and committing
- * obstacle changes.
- * 
- * @author Stephan Heinemann
- *
- */
-public interface ObstacleManager {
-
-	/**
-	 * Submits an obstacle change (addition or removal) to this obstacle
-	 * manager.
-	 * 
-	 * @param obstacles the obstacles to be changed
-	 */
-	public void submitObstacleChange(Set<Obstacle> obstacles);
+* Realizes an AD* properties bean information customizing the descriptors for
+* each property.
+* 
+* @author Stephan Heinemann
+*
+*/
+public class ADStarPropertiesBeanInfo extends ARAStarPropertiesBeanInfo {
 	
 	/**
-	 * Commits an obstacle change (addition or removal) to this obstacle
-	 * manager.
-	 * 
-	 * @return the obstacles that were changed
+	 * Constructs an AD* properties bean information.
 	 */
-	public Set<Obstacle> commitObstacleChange();
+	public ADStarPropertiesBeanInfo() {
+		super(ADStarProperties.class);
+	}
 	
 	/**
-	 * Retracts an obstacle change (addition or removal) from this obstacle
-	 * manager.
-	 */
-	public void retractObstacleChange();
-	
-	/**
-	 * Determines whether or not this obstacle manager has an obstacle change.
+	 * Customizes the property descriptors for each property of an AD*
+	 * properties bean.
 	 * 
-	 * @return true if this obstacle manager has an obstacle change,
-	 *         false otherwise
+	 * @return the array of customized property descriptors
+	 * 
+	 * @see java.beans.SimpleBeanInfo#getPropertyDescriptors()
 	 */
-	public boolean hasObstacleChange();
+	@Override
+	public PropertyDescriptor[] getPropertyDescriptors() {
+		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
+		
+		try {
+			PropertyDescriptor significantChange = this.createPropertyDescriptor(
+					"significantChange",
+					this.dictionary.getString("property.planner.ads.significantChange.name"),
+					this.dictionary.getString("property.planner.ads.significantChange.description"),
+					this.dictionary.getString("property.planner.category.dynamic"));
+		
+			PropertyDescriptor[] adsDescriptors = new PropertyDescriptor[] {
+					significantChange};
+			descriptors = Stream.concat(
+					Arrays.stream(descriptors), Arrays.stream(adsDescriptors))
+					.toArray(PropertyDescriptor[]::new);
+		
+		} catch (IntrospectionException e) {
+			e.printStackTrace();
+		}
+		
+		return descriptors;
+	}
 	
 }

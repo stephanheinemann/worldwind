@@ -27,49 +27,59 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.session;
+package com.cfar.swim.worldwind.registries.environments;
 
-import java.util.Set;
-
-import com.cfar.swim.worldwind.render.Obstacle;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
- * Describes an obstacle manager responsible for requesting and committing
- * obstacle changes.
- * 
- * @author Stephan Heinemann
- *
- */
-public interface ObstacleManager {
-
-	/**
-	 * Submits an obstacle change (addition or removal) to this obstacle
-	 * manager.
-	 * 
-	 * @param obstacles the obstacles to be changed
-	 */
-	public void submitObstacleChange(Set<Obstacle> obstacles);
+* Realizes a planning grid properties bean information customizing the
+* descriptors for each property.
+* 
+* @author Stephan Heinemann
+*
+*/
+public class PlanningGridPropertiesBeanInfo extends EnvironmentPropertiesBeanInfo {
 	
 	/**
-	 * Commits an obstacle change (addition or removal) to this obstacle
-	 * manager.
-	 * 
-	 * @return the obstacles that were changed
+	 * Constructs a planning grid properties bean information.
 	 */
-	public Set<Obstacle> commitObstacleChange();
+	public PlanningGridPropertiesBeanInfo() {
+		super(PlanningGridProperties.class);
+	}
 	
 	/**
-	 * Retracts an obstacle change (addition or removal) from this obstacle
-	 * manager.
-	 */
-	public void retractObstacleChange();
-	
-	/**
-	 * Determines whether or not this obstacle manager has an obstacle change.
+	 * Customizes the property descriptors for each property of a planning grid
+	 * properties bean.
 	 * 
-	 * @return true if this obstacle manager has an obstacle change,
-	 *         false otherwise
+	 * @return the array of customized property descriptors
+	 * 
+	 * @see java.beans.SimpleBeanInfo#getPropertyDescriptors()
 	 */
-	public boolean hasObstacleChange();
+	@Override
+	public PropertyDescriptor[] getPropertyDescriptors() {
+		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
+		
+		try {
+			PropertyDescriptor division = this.createPropertyDescriptor(
+					"division",
+					this.dictionary.getString("property.environment.grid.division.name"),
+					this.dictionary.getString("property.environment.grid.division.description"),
+					this.dictionary.getString("property.environment.category.resolution"));
+		
+			PropertyDescriptor[] gridDescriptors = new PropertyDescriptor[] {
+					division};
+			descriptors = Stream.concat(
+					Arrays.stream(descriptors), Arrays.stream(gridDescriptors))
+					.toArray(PropertyDescriptor[]::new);
+		
+		} catch (IntrospectionException e) {
+			e.printStackTrace();
+		}
+		
+		return descriptors;
+	}
 	
 }

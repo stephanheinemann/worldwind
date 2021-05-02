@@ -27,49 +27,46 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.session;
+package com.cfar.swim.worldwind.util;
 
-import java.util.Set;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
-import com.cfar.swim.worldwind.render.Obstacle;
+import gov.nasa.worldwind.Configuration;
 
 /**
- * Describes an obstacle manager responsible for requesting and committing
- * obstacle changes.
+ * Realizes a resource bundle loader.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface ObstacleManager {
+public final class ResourceBundleLoader {
 
-	/**
-	 * Submits an obstacle change (addition or removal) to this obstacle
-	 * manager.
-	 * 
-	 * @param obstacles the obstacles to be changed
-	 */
-	public void submitObstacleChange(Set<Obstacle> obstacles);
+	/** the locale configuration key of this resource bundle loader */
+	private static final String LOCALE_KEY = "com.cfar.swim.worldwind.avkey.Locale";
+	
+	/** the dictionary bundle */
+	private static final String DICTIONARY_BUNDLE = "com.cfar.swim.worldwind.dictionaries.Dictionary";
 	
 	/**
-	 * Commits an obstacle change (addition or removal) to this obstacle
-	 * manager.
+	 * Gets the dictionary bundle for the configured locale.
 	 * 
-	 * @return the obstacles that were changed
+	 * @return the dictionary bundle for the configured locale
 	 */
-	public Set<Obstacle> commitObstacleChange();
+	public static ResourceBundle getDictionaryBundle() {
+		Locale locale = new Locale(Configuration.getStringValue(ResourceBundleLoader.LOCALE_KEY));
+		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
+	}
 	
 	/**
-	 * Retracts an obstacle change (addition or removal) from this obstacle
-	 * manager.
-	 */
-	public void retractObstacleChange();
-	
-	/**
-	 * Determines whether or not this obstacle manager has an obstacle change.
+	 * Gets the dictionary bundle for a specified locale.
 	 * 
-	 * @return true if this obstacle manager has an obstacle change,
-	 *         false otherwise
+	 * @param locale the dictionary locale
+	 * 
+	 * @return the dictionary bundle for the specified locale
 	 */
-	public boolean hasObstacleChange();
+	public static ResourceBundle getDictionaryBundle(Locale locale) {
+		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
+	}
 	
 }

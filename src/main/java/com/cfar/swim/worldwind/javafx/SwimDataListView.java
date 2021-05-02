@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.data.DataActivationListener;
+import com.cfar.swim.worldwind.util.ResourceBundleLoader;
 
 import gov.nasa.worldwind.WorldWindow;
 import javafx.event.ActionEvent;
@@ -57,10 +58,12 @@ public class SwimDataListView extends ListView<String> {
 	private final ContextMenu contextMenu = new ContextMenu();
 	
 	/** the context menu item string to enable SWIM data */
-	private static final String ENABLE = "Enable";
+	private static final String ENABLE = ResourceBundleLoader
+			.getDictionaryBundle().getString("action.enable");
 	
 	/** the context menu item string to disable SWIM data */
-	private static final String DISABLE = "Disable";
+	private static final String DISABLE = ResourceBundleLoader
+			.getDictionaryBundle().getString("action.disable");
 	
 	/** the data activation listeners of this SWIM data list view */
 	private List<DataActivationListener> dataActivationListeners = new ArrayList<DataActivationListener>();

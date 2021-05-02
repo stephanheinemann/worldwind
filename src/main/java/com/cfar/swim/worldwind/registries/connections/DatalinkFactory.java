@@ -81,11 +81,11 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 	public Datalink createInstance() {
 		Datalink connection = null;
 		
-		if (this.specification.getId().equals(Specification.DATALINK_SIMULATED)) {
+		if (this.specification.getId().equals(Specification.CONNECTION_DATALINK_SIMULATED_ID)) {
 			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) this.specification.getProperties();
 			connection = new SimulatedDatalink();
 			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
-		} else if (this.specification.getId().equals(Specification.DATALINK_DRONEKIT)) {			
+		} else if (this.specification.getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID)) {
 			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) this.specification.getProperties();
 			connection = new DronekitDatalink(properties.getHost(), properties.getPort());
 			connection.setDownlinkPeriod(properties.getDownlinkPeriod());

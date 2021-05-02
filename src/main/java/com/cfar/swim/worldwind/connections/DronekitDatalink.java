@@ -33,13 +33,13 @@ import com.cfar.swim.droneconnect.Armed;
 import com.cfar.swim.droneconnect.DroneConnectGrpc;
 import com.cfar.swim.droneconnect.DroneConnectGrpc.DroneConnectBlockingStub;
 import com.cfar.swim.droneconnect.DroneConnectGrpc.DroneConnectStub;
-import com.cfar.swim.worldwind.registries.FactoryProduct;
-import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
 import com.cfar.swim.droneconnect.Mode;
 import com.cfar.swim.droneconnect.Null;
 import com.cfar.swim.droneconnect.Safety;
 import com.cfar.swim.droneconnect.TakeoffToAltitude;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -451,7 +451,7 @@ public class DronekitDatalink extends Datalink {
 			DronekitDatalinkProperties ddlp = (DronekitDatalinkProperties) specification.getProperties();
 			matches = (this.host.equals(ddlp.getHost()))
 						&& (this.port == ddlp.getPort())
-						&& (specification.getId().equals(Specification.DATALINK_DRONEKIT));
+						&& (specification.getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID));
 		}
 	
 		return matches;

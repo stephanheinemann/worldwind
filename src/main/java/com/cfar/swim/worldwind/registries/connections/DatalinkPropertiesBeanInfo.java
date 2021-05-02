@@ -27,49 +27,66 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.session;
+package com.cfar.swim.worldwind.registries.connections;
 
-import java.util.Set;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
 
-import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.registries.PropertiesBeanInfo;
 
 /**
- * Describes an obstacle manager responsible for requesting and committing
- * obstacle changes.
+ * Realizes a datalink properties bean information customizing the descriptors
+ * for each property.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface ObstacleManager {
+public class DatalinkPropertiesBeanInfo extends PropertiesBeanInfo {
 
 	/**
-	 * Submits an obstacle change (addition or removal) to this obstacle
-	 * manager.
-	 * 
-	 * @param obstacles the obstacles to be changed
+	 * Constructs a datalink properties bean information.
 	 */
-	public void submitObstacleChange(Set<Obstacle> obstacles);
+	public DatalinkPropertiesBeanInfo() {
+		super(DatalinkProperties.class);
+	}
 	
 	/**
-	 * Commits an obstacle change (addition or removal) to this obstacle
-	 * manager.
+	 * Constructs a datalink properties bean information.
 	 * 
-	 * @return the obstacles that were changed
+	 * @param beanClass the properties bean class of the properties bean
 	 */
-	public Set<Obstacle> commitObstacleChange();
+	public DatalinkPropertiesBeanInfo(
+			Class<? extends DatalinkProperties> beanClass) {
+		super(beanClass);
+	}
 	
 	/**
-	 * Retracts an obstacle change (addition or removal) from this obstacle
-	 * manager.
-	 */
-	public void retractObstacleChange();
-	
-	/**
-	 * Determines whether or not this obstacle manager has an obstacle change.
+	 * Customizes the property descriptors for each property of a datalink
+	 * connection properties bean.
 	 * 
-	 * @return true if this obstacle manager has an obstacle change,
-	 *         false otherwise
+	 * @return the array of customized property descriptors
+	 * 
+	 * @see java.beans.SimpleBeanInfo#getPropertyDescriptors()
 	 */
-	public boolean hasObstacleChange();
+	@Override
+	public PropertyDescriptor[] getPropertyDescriptors() {
+		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
+		
+		try {
+			PropertyDescriptor downlinkPeriod = this.createPropertyDescriptor(
+					"downlinkPeriod",
+					this.dictionary.getString("property.connection.datalink.downlinkPeriod.name"),
+					this.dictionary.getString("property.connection.datalink.downlinkPeriod.description"),
+					this.dictionary.getString("property.connection.datalink.category.connection"));
+		
+			descriptors = new PropertyDescriptor[] {
+					downlinkPeriod};
+		
+		} catch (IntrospectionException e) {
+			e.printStackTrace();
+		}
+		
+		return descriptors;
+	}
 	
 }

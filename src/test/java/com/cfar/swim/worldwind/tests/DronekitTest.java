@@ -33,8 +33,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Test;
 import org.junit.Ignore;
+import org.junit.Test;
 
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -50,7 +50,7 @@ public class DronekitTest {
 	@Ignore
 	@Test
 	public void testConnection() throws InterruptedException {
-		Specification<Datalink> datalinkSpecification = new Specification<>(Specification.DATALINK_DRONEKIT, new DronekitDatalinkProperties());
+		Specification<Datalink> datalinkSpecification = new Specification<>(Specification.CONNECTION_DATALINK_DRONEKIT_ID, new DronekitDatalinkProperties());
 		DronekitDatalinkProperties properties = (DronekitDatalinkProperties) datalinkSpecification.getProperties();
 		properties.setHost("206.87.166.221");
 		properties.setPort(50051);

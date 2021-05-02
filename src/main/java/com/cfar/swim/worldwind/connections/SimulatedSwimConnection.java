@@ -225,7 +225,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 					&& (this.updatePeriod == sscp.getUpdatePeriod())
 					&& (this.updateProbability == sscp.getUpdateProbability())
 					&& (this.updateQuantity == sscp.getUpdateQuantity()))
-					&& (specification.getId().equals(Specification.SWIM_SIMULATED));
+					&& (specification.getId().equals(Specification.CONNECTION_SWIM_SIMULATED_ID));
 		}
 		
 		return matches;

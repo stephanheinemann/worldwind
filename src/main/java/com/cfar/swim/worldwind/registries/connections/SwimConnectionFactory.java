@@ -83,7 +83,7 @@ public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 		SwimConnection connection = null;
 		
 		if (this.hasSpecification()) {
-			if (this.specification.getId().equals(Specification.SWIM_SIMULATED)) {
+			if (this.specification.getId().equals(Specification.CONNECTION_SWIM_SIMULATED_ID)) {
 				SimulatedSwimConnectionProperties properties = (SimulatedSwimConnectionProperties) this.specification.getProperties();
 				connection = new SimulatedSwimConnection(
 						properties.getResourceDirectory(),
@@ -101,7 +101,7 @@ public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 				if (properties.getSubscribesAMXM())
 					connection.subscribe(SwimData.AMXM);
 				connection.setAutoCommit(properties.getAutoCommit());
-			} else if (this.specification.getId().equals(Specification.SWIM_LIVE)) {			
+			} else if (this.specification.getId().equals(Specification.CONNECTION_SWIM_LIVE_ID)) {
 				LiveSwimConnectionProperties properties = (LiveSwimConnectionProperties) this.specification.getProperties();
 				connection = new LiveSwimConnection();
 				// TODO: set properties for live SWIM connection

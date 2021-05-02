@@ -132,21 +132,21 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 		Environment environment = null;
 		
 		if (this.hasSpecification()) {
-			if (this.specification.getId().equals(Specification.PLANNING_GRID_ID)) {
+			if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_GRID_ID)) {
 				PlanningGridProperties properties = (PlanningGridProperties) this.specification.getProperties();
 				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
 	            Box envBox = new Box(bb);
-	            double side = envBox.getRLength() / properties.getDivsion();
+	            double side = envBox.getRLength() / properties.getDivision();
 	            Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
 	            int sCells = (int) Math.ceil(envBox.getSLength() / side);
 	            int tCells = (int) Math.ceil(envBox.getTLength() / side);
-	            environment = new PlanningGrid(envCube, properties.getDivsion(), sCells, tCells);
+	            environment = new PlanningGrid(envCube, properties.getDivision(), sCells, tCells);
 	            environment.setThreshold(0d);
 	            environment.setGlobe(this.scenario.getGlobe());
-			} else if (this.specification.getId().equals(Specification.PLANNING_ROADMAP_ID)) {
+			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID)) {
 				// TODO: implement
 				environment = new PlanningRoadmap();
-			} else if (this.specification.getId().equals(Specification.PLANNING_CONTINUUM_ID)) {
+			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID)) {
 				// TODO: implement
 				environment = new PlanningContinuum();
 			}

@@ -173,41 +173,41 @@ public class Session implements Identifiable {
 		
 		// aircraft
 		this.aircraftRegistry.clearSpecifications();
-		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_IRIS_ID, new IrisProperties()));
-		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_A320_ID, new A320Properties()));
+		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_IRIS_ID, Specification.AIRCRAFT_IRIS_DESCRIPTION, new IrisProperties()));
+		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_A320_ID, Specification.AIRCRAFT_A320_DESCRIPTION, new A320Properties()));
 		
 		// environments
 		this.environmentRegistry.clearSpecifications();
-		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_GRID_ID, new PlanningGridProperties()));
-		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
-		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_GRID_ID, Specification.ENVIRONMENT_PLANNING_GRID_DESCRIPTION, new PlanningGridProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		
 		// planners
 		this.plannerRegistry.clearSpecifications();
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAS_ID, new ForwardAStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, new ARAStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADS_ID, new ADStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAS_ID, Specification.PLANNER_FAS_DESCRIPTION, new ForwardAStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, Specification.PLANNER_TS_DESCRIPTION, new ThetaStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, Specification.PLANNER_ARAS_DESCRIPTION, new ARAStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADS_ID, Specification.PLANNER_ADS_DESCRIPTION, new ADStarProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		// datalinks
 		this.datalinkRegistry.clearSpecifications();
-		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.DATALINK_DRONEKIT, new DronekitDatalinkProperties()));
-		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.DATALINK_SIMULATED, new SimulatedDatalinkProperties()));
+		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_DRONEKIT_ID, Specification.CONNECTION_DATALINK_DRONEKIT_DESCRIPTION, new DronekitDatalinkProperties()));
+		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_SIMULATED_ID, Specification.CONNECTION_DATALINK_SIMULATED_DESCRIPTION, new SimulatedDatalinkProperties()));
 		
 		// SWIM connections
 		this.swimConnectionRegistry.clearSpecifications();
-		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_LIVE, new LiveSwimConnectionProperties()));
-		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_SIMULATED, new SimulatedSwimConnectionProperties()));
+		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.CONNECTION_SWIM_LIVE_ID, Specification.CONNECTION_SWIM_LIVE_DESCRIPTION, new LiveSwimConnectionProperties()));
+		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.CONNECTION_SWIM_SIMULATED_ID, Specification.CONNECTION_SWIM_SIMULATED_DESCRIPTION, new SimulatedSwimConnectionProperties()));
 		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
-		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
+		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.ENVIRONMENT_PLANNING_GRID_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
-		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
-		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.SWIM_SIMULATED));
+		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.CONNECTION_DATALINK_SIMULATED_ID));
+		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.CONNECTION_SWIM_SIMULATED_ID));
 	}
 	
 	/**

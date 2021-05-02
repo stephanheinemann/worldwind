@@ -38,7 +38,7 @@
 	<name>SWIM Worldwind</name>
 	<description>NASA Worldwind Extensions for SWIM-based Planning, Decision-Making and Support</description>
 
-	<inceptionYear>2016</inceptionYear>
+	<inceptionYear>2021</inceptionYear>
 	<licenses>
 		<license>
 			<name>The BSD 3-Clause License</name>
@@ -134,6 +134,7 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<includes>
+					<include>com/cfar/swim/worldwind/**/*.properties</include>
 					<include>config/*.xml</include>
 				</includes>
 			</resource>
@@ -253,6 +254,7 @@
 					</properties>
 					<excludes>
 						<exclude>src/test/resources/xml/**/*.xml</exclude>
+						<exclude>src/main/resources/config/**/*.xml</exclude>
 						<exclude>src/main/java/com/binarydreamers/trees/**/*.java</exclude>
 					</excludes>
 				</configuration>
@@ -300,6 +302,11 @@
 			<groupId>org.jfxtras</groupId>
 			<artifactId>jfxtras-controls</artifactId>
 			<version>11-r1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.controlsfx</groupId>
+			<artifactId>controlsfx</artifactId>
+			<version>11.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>junit</groupId>

@@ -463,7 +463,7 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 			equals = true;
 		} else if ((null != o) && (o instanceof AircraftProperties)) {
 			AircraftProperties ap = (AircraftProperties) o;
-			return Objects.equals(this.combatIdentification, ap.combatIdentification)
+			equals = Objects.equals(this.combatIdentification, ap.combatIdentification)
 					&& (this.maximumAngleOfClimbSpeed == ap.maximumAngleOfClimbSpeed)
 					&& (this.maximumRateOfClimbSpeed == ap.maximumAngleOfClimbSpeed)
 					&& (this.cruiseClimbSpeed == ap.cruiseClimbSpeed)

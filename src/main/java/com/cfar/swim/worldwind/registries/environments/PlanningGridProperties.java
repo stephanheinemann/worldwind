@@ -67,7 +67,7 @@ public class PlanningGridProperties extends EnvironmentProperties {
 	 * @return the division for the longest axis of this planning grid
 	 *         properties bean
 	 */
-	public int getDivsion() {
+	public int getDivision() {
 		return this.division;
 	}
 	
@@ -77,7 +77,7 @@ public class PlanningGridProperties extends EnvironmentProperties {
 	 * 
 	 * @param division the division for the longest axis to be set
 	 */
-	public void setDivsion(int division) {
+	public void setDivision(int division) {
 		this.division = division;
 	}
 	
