@@ -276,4 +276,10 @@ public class PlanningRoadmap implements Environment {
 		return null;
 	}
 
+	@Override
+	public double getBaseCost() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }

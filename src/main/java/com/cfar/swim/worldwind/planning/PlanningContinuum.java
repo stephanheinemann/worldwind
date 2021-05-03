@@ -275,5 +275,11 @@ public class PlanningContinuum implements Environment {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	@Override
+	public double getBaseCost() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
 	
 }

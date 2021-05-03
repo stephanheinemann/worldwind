@@ -73,6 +73,9 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  */
 public class PlanningGrid extends CubicGrid implements Environment {
 	
+	/** the base cost of this planning grid */
+	private static final double BASE_COST = 1d;
+	
 	/** the globe of this planning grid */
 	private Globe globe = null;
 	
@@ -83,7 +86,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
 	
 	/** the current accumulated active cost of this planning grid */
-	private double activeCost = 1d;
+	private double activeCost = PlanningGrid.BASE_COST;
 	
 	/** the threshold cost of this planning grid */
 	private double thresholdCost = 0d;
@@ -384,6 +387,18 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
+	 * Gets the base cost of a normalized step in this planning grid.
+	 * 
+	 * @return the base cost of a normalized step in this planning grid
+	 * 
+	 * @see Environment#getBaseCost()
+	 */
+	@Override
+	public double getBaseCost() {
+		return PlanningGrid.BASE_COST;
+	}
+	
+	/**
 	 * Gets the accumulated cost of this planning grid at specified time
 	 * instant.
 	 * 
@@ -410,7 +425,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 */
 	@Override
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = 1d; // simple cost of normalized distance
+		double cost = this.getBaseCost(); // simple cost of normalized distance
 		
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
@@ -1301,7 +1316,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 			// add all (weighted) cost of the cell
 			double cellCost = segmentCell.getCost(start, end);
 			// boost cell cost if local risk is not acceptable
-			if (riskPolicy.satisfies(cellCost - 1)) {
+			if (riskPolicy.satisfies(cellCost - this.getBaseCost())) {
 				costs.add(distance * cellCost);
 			} else {
 				costs.add(Double.POSITIVE_INFINITY);

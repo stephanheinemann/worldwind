@@ -307,6 +307,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @return the cost intervals within the specified time span
 	 */
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end);
+	
+	/**
+	 * Gets the base cost of a normalized step in this environment.
+	 * 
+	 * @return the base cost of a normalized step in this environment
+	 */
+	public double getBaseCost();
 
 	/**
 	 * Gets the accumulated cost of this environment within a specified time
