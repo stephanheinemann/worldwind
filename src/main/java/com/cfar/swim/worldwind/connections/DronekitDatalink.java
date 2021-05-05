@@ -29,14 +29,24 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+
 import com.cfar.swim.droneconnect.Armed;
+import com.cfar.swim.droneconnect.Attitude;
 import com.cfar.swim.droneconnect.DroneConnectGrpc;
 import com.cfar.swim.droneconnect.DroneConnectGrpc.DroneConnectBlockingStub;
 import com.cfar.swim.droneconnect.DroneConnectGrpc.DroneConnectStub;
+import com.cfar.swim.droneconnect.Heading;
 import com.cfar.swim.droneconnect.Mode;
 import com.cfar.swim.droneconnect.Null;
 import com.cfar.swim.droneconnect.Safety;
+import com.cfar.swim.droneconnect.Status;
 import com.cfar.swim.droneconnect.TakeoffToAltitude;
+import com.cfar.swim.droneconnect.Time;
+import com.cfar.swim.droneconnect.TimedPosition;
+import com.cfar.swim.worldwind.planning.AircraftTrackPoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
@@ -57,6 +67,29 @@ import io.grpc.stub.StreamObserver;
  *
  */
 public class DronekitDatalink extends Datalink {
+	
+	/** the unknown status of an aircraft connected via a dronekit datalink */
+	public static final String STATUS_UNKNOWN = "UNKNOWN";
+	
+	/** the active status of an aircraft connected via a dronekit datalink */
+	public static final String STATUS_ACTIVE = "ACTIVE";
+	
+	/** the unknown mode of an aircraft connected via a dronekit datalink */
+	public static final String MODE_UNKNOWN = "UNKNOWN";
+	
+	/** the auto mode of an aircraft connected via a dronekit datalink */
+	public static final String MODE_AUTO = "AUTO";
+	
+	/** the land mode of an aircraft connected via a dronekit datalink */
+	public static final String MODE_LAND = "LAND";
+	
+	/** the return to land mode of an aircraft connected via a dronekit datalink */
+	public static final String MODE_RTL = "RTL";
+	
+	/** the stabilize mode of an aircraft connected via a dronekit datalink */
+	public static final String MODE_STABILIZE = "STABILIZE";
+	
+	// TODO: available status and mode constants (consider enum)
 	
 	/** the remote host of this dronekit datalink */
 	private String host;
@@ -86,6 +119,7 @@ public class DronekitDatalink extends Datalink {
 		this.port = port;
 		this.channel = null;
 		this.blockingStub = null;
+		this.getAircraftTrack().setName(host + ":" + port);
 	}
 	
 	/**
@@ -114,7 +148,7 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Indicates whether or not this dronekit datalink is connected.
+	 * Determines whether or not this dronekit datalink is connected.
 	 * 
 	 * @return true if this dronekit datalink is connected, false otherwise
 	 * 
@@ -126,67 +160,25 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Gets the aircraft heading via this dronekit datalink.
+	 * Gets the aircraft status via this dronekit datalink.
 	 * 
-	 * @return the aircraft heading obtained via this dronekit datalink
+	 * @return the aircraft status obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftStatus()
 	 */
-	public Angle getAircraftHeading() {
-		// TODO: implement
-		return Angle.ZERO;
-	}
-	
-	/**
-	 * Gets the aircraft pitch via this dronekit datalink.
-	 * 
-	 * @return the aircraft pitch obtained via this dronekit datalink
-	 */
-	public Angle getAircraftPitch() {
-		// TODO: implement
-		return Angle.ZERO;
-	}
-	
-	/**
-	 * Gets the aircraft bank via this dronekit datalink.
-	 * 
-	 * @return the aircraft bank obtained via this dronekit datalink
-	 */
-	public Angle getAircraftBank() {
-		// TODO: implement
-		return Angle.ZERO;
-	}
-	
-	/**
-	 * Gets the aircraft yaw via this dronekit datalink.
-	 * 
-	 * @return the aircraft yaw obtained via this dronekit datalink
-	 */
-	public Angle getAircraftYaw() {
-		// TODO: implement
-		return Angle.ZERO;
-	}
-	
-	/**
-	 * Gets the aircraft position via this dronekit datalink.
-	 * 
-	 * @return the aircraft position obtained via this dronekit datalink
-	 * 
-	 * @see Datalink#getAircraftPosition()
-	 */
-	public Position getAircraftPosition() {
-		Position aircraftPosition = null;
+	@Override
+	public String getAircraftStatus() {
+		String aircraftStatus = null;
 		
 		if (this.isConnected()) {
 			Null request = Null.newBuilder().build();
-			com.cfar.swim.droneconnect.Position position = this.blockingStub.getPosition(request);
-			aircraftPosition = new Position(
-					Angle.fromDegrees(position.getLat()),
-					Angle.fromDegrees(position.getLon()),
-					position.getGpsAltitude());
+			Status status = this.blockingStub.getStatus(request);
+			aircraftStatus = status.getStatus();
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
 		
-		return aircraftPosition;
+		return aircraftStatus;
 	}
 	
 	/**
@@ -228,6 +220,155 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
+	 * Gets the aircraft heading via this dronekit datalink.
+	 * 
+	 * @return the aircraft heading obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftHeading()
+	 */
+	@Override
+	public Angle getAircraftHeading() {
+		Angle aircraftHeading = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			Heading heading = this.blockingStub.getHeading(request);
+			aircraftHeading = Angle.fromDegrees(heading.getHeading());
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftHeading;
+	}
+	
+	/**
+	 * Gets the aircraft pitch via this dronekit datalink.
+	 * 
+	 * @return the aircraft pitch obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftPitch()
+	 */
+	@Override
+	public Angle getAircraftPitch() {
+		Angle aircraftPitch = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			Attitude attitude = this.blockingStub.getAttitude(request);
+			aircraftPitch = Angle.fromRadians(attitude.getPitch());
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftPitch;
+	}
+	
+	/**
+	 * Gets the aircraft bank via this dronekit datalink.
+	 * 
+	 * @return the aircraft bank obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftBank()
+	 */
+	@Override
+	public Angle getAircraftBank() {
+		Angle aircraftBank = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			Attitude attitude = this.blockingStub.getAttitude(request);
+			aircraftBank = Angle.fromRadians(attitude.getBank());
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftBank;
+	}
+	
+	/**
+	 * Gets the aircraft yaw via this dronekit datalink.
+	 * 
+	 * @return the aircraft yaw obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftYaw()
+	 */
+	@Override
+	public Angle getAircraftYaw() {
+		Angle aircraftYaw = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			Attitude attitude = this.blockingStub.getAttitude(request);
+			aircraftYaw = Angle.fromRadians(attitude.getYaw());
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftYaw;
+	}
+	
+	/**
+	 * Gets the aircraft position via this dronekit datalink.
+	 * 
+	 * @return the aircraft position obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftPosition()
+	 */
+	@Override
+	public Position getAircraftPosition() {
+		Position aircraftPosition = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			com.cfar.swim.droneconnect.Position position = this.blockingStub.getPosition(request);
+			aircraftPosition = new Position(
+					Angle.fromDegrees(position.getLat()),
+					Angle.fromDegrees(position.getLon()),
+					position.getGpsAltitude());
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftPosition;
+	}
+	
+	/**
+	 * Gets an aircraft track point via this dronekit datalink.
+	 * 
+	 * @return an aircraft track point obtained via this dronekit datalink
+	 * 
+	 * @see Datalink#getAircraftTrackPoint()
+	 */
+	@Override
+	public AircraftTrackPoint getAircraftTrackPoint() {
+		AircraftTrackPoint aircraftTrackPoint = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			// TODO: refactor dronekit interface: getTrackPoint() including attitude
+			TimedPosition timedPosition = this.blockingStub.getTimedPosition(request);
+			Attitude attitude = this.blockingStub.getAttitude(request);
+			
+			aircraftTrackPoint = new AircraftTrackPoint(new Position(
+					Angle.fromDegrees(timedPosition.getPosition().getLat()),
+					Angle.fromDegrees(timedPosition.getPosition().getLon()),
+					timedPosition.getPosition().getGpsAltitude()));
+			Time time = timedPosition.getTime();
+			aircraftTrackPoint.setAto(ZonedDateTime.of(
+					time.getYear(), time.getMonth(), time.getDay(),
+					time.getHour(), time.getMinute(), time.getSecond(), 0,
+					ZoneId.ofOffset("UTC", ZoneOffset.UTC)));
+			aircraftTrackPoint.setPitch(Angle.fromDegrees(attitude.getPitch()));
+			aircraftTrackPoint.setBank(Angle.fromDegrees(attitude.getBank()));
+			aircraftTrackPoint.setYaw(Angle.fromDegrees(attitude.getYaw()));
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return aircraftTrackPoint;
+	}
+	
+	/**
 	 * Enables the aircraft safety via this dronekit datalink.
 	 * 
 	 * @see Datalink#enableAircraftSafety()
@@ -258,8 +399,8 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Indicates whether or not the aircraft safety is enabled for the aircraft
-	 * connected via this dronekit datalink.
+	 * Determines whether or not the aircraft safety is enabled for the
+	 * aircraft connected via this dronekit datalink.
 	 * 
 	 * @return true if the aircraft safety is enabled, false otherwise
 	 * 
@@ -310,7 +451,7 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Indicates whether or not the aircraft connected via this dronekit
+	 * Determines whether or not the aircraft connected via this dronekit
 	 * datalink is armed.
 	 * 
 	 * @return true if the aircraft is armed, false otherwise
@@ -332,17 +473,18 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Uploads a flight path to the aircraft connected via this dronekit
-	 * datalink.
+	 * Uploads a mission flight path to the aircraft connected via this
+	 * dronekit datalink.
 	 * 
-	 * @param path the flight path to be uploaded
+	 * @param path the mission flight path to be uploaded
 	 * 
-	 * @see Datalink#uploadFlightPath(Path)
+	 * @see Datalink#uploadMission(Path)
 	 */
 	@Override
-	public void uploadFlightPath(Path path) {
+	public void uploadMission(Path path) {
 		if (this.isConnected()) {
 			NullStreamObserver nso = new NullStreamObserver();
+			// TODO: refactor dronekit interface: setMission()
 			StreamObserver<com.cfar.swim.droneconnect.Position> pso = this.stub.setPath(nso);
 			for (Position position : path.getPositions()) {
 				com.cfar.swim.droneconnect.Position pos = com.cfar.swim.droneconnect.Position
@@ -359,6 +501,141 @@ public class DronekitDatalink extends Datalink {
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
+	}
+	
+	/**
+	 * Downloads a mission flight path from the aircraft connected via this
+	 * dronekit datalink.
+	 * 
+	 * @return the downloaded mission flight path
+	 * 
+	 * @see Datalink#downloadMission()
+	 */
+	@Override
+	public Path downloadMission() {
+		// TODO: refactor dronekit interface: implement stub.getMission()
+		return null;
+	}
+	
+	/**
+	 * Gets the next position of the mission flight path from the aircraft
+	 * connected via this dronekit datalink.
+	 * 
+	 * @return the next position of the mission flight path
+	 * 
+	 * @see Datalink#getNextMissionPosition()
+	 */
+	@Override
+	public Position getNextMissionPosition() {
+		Position nextPosition = null;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			// TODO: refactor dronekit interface: getNextMissionPosition()
+			com.cfar.swim.droneconnect.Position position = this.blockingStub.getNextWaypoint(request).getPosition();
+			nextPosition = new Position(
+					Angle.fromDegrees(position.getLat()),
+					Angle.fromDegrees(position.getLon()),
+					position.getGpsAltitude());
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return nextPosition;
+	}
+	
+	/**
+	 * Gets the index of the next position of the mission flight path from
+	 * the aircraft connected via this dronekit datalink.
+	 * 
+	 * @return the index of the next position of the mission flight path
+	 * 
+	 * @see Datalink#getNextMissionPositionIndex()
+	 */
+	@Override
+	public int getNextMissionPositionIndex() {
+		int index = -1;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			// TODO: refactor dronekit interface: getNextMissionPositionIndex()
+			index = this.blockingStub.getNextWaypoint(request).getIndex();
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+
+		return index;
+	}
+	
+	/**
+	 * Initiates a take-off for the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @see Datalink#takeOff()
+	 */
+	@Override
+	public void takeOff() {
+		if (this.isConnected()) {
+			// TODO: include take-off setup (initial altitude)
+			TakeoffToAltitude altitude = TakeoffToAltitude.newBuilder().setAltitude(5d).build();
+			this.blockingStub.takeoff(altitude);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+	}
+	
+	/**
+	 * Initiates a landing for the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @see Datalink#land()
+	 */
+	@Override
+	public void land() {
+		if (this.isConnected()) {
+			Mode landMode = Mode.newBuilder().setMode(DronekitDatalink.MODE_LAND).build();
+			this.blockingStub.setMode(landMode);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+	}
+	
+	/**
+	 * Initiates a return to and landing at the launch position for the
+	 * aircraft connected via this dronekit datalink.
+	 * 
+	 * @see Datalink#returnToLaunch()
+	 */
+	@Override
+	public void returnToLaunch() {
+		if (this.isConnected()) {
+			Mode landMode = Mode.newBuilder().setMode(DronekitDatalink.MODE_RTL).build();
+			this.blockingStub.setMode(landMode);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+	}
+	
+	/**
+	 * Determines whether or not the aircraft connected via this dronekit
+	 * datalink is airborne.
+	 * 
+	 * @return true if the aircraft is airborne, false otherwise
+	 * 
+	 * @see Datalink#isAirborne()
+	 */
+	public boolean isAirborne() {
+		boolean isAirborne = false;
+		
+		if (this.isConnected()) {
+			Null request = Null.newBuilder().build();
+			isAirborne = this.blockingStub.getStatus(request)
+					.getStatus().equals(DronekitDatalink.STATUS_ACTIVE);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+		
+		return isAirborne;
 	}
 	
 	/**
@@ -379,57 +656,6 @@ public class DronekitDatalink extends Datalink {
 
 		@Override
 		public void onCompleted() {
-		}
-	}
-	
-	/**
-	 * Initiates a take-off for the aircraft connected via this dronekit
-	 * datalink.
-	 * 
-	 * @see Datalink#takeOff()
-	 */
-	@Override
-	public void takeOff() {
-		if (this.isConnected()) {
-			// TODO: include take-off setup
-			TakeoffToAltitude altitude = TakeoffToAltitude.newBuilder().setAltitude(5d).build();
-			this.blockingStub.takeoff(altitude);
-		} else {
-			throw new IllegalStateException("dronekit is not connected");
-		}
-	}
-	
-	/**
-	 * Initiates a landing for the aircraft connected via this dronekit
-	 * datalink.
-	 * 
-	 * @see Datalink#land()
-	 */
-	@Override
-	public void land() {
-		if (this.isConnected()) {
-			// TODO: flight mode enumeration
-			Mode landMode = Mode.newBuilder().setMode("LAND").build();
-			this.blockingStub.setMode(landMode);
-		} else {
-			throw new IllegalStateException("dronekit is not connected");
-		}
-	}
-	
-	/**
-	 * Initiates a return to and landing at the launch position for the
-	 * aircraft connected via this dronekit datalink.
-	 * 
-	 * @see Datalink#returnToLaunch()
-	 */
-	@Override
-	public void returnToLaunch() {
-		if (this.isConnected()) {
-			// TODO: flight mode enumeration
-			Mode landMode = Mode.newBuilder().setMode("RTL").build();
-			this.blockingStub.setMode(landMode);
-		} else {
-			throw new IllegalStateException("dronekit is not connected");
 		}
 	}
 	

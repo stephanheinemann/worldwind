@@ -37,6 +37,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.connections.DronekitDatalink;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
@@ -67,15 +68,15 @@ public class DronekitTest {
 		assertEquals(second.getAltitude(), 9700d, 0.1d);
 		
 		Path path = new Path(first, second);
-		datalink.uploadFlightPath(path);
+		datalink.uploadMission(path);
 		
-		while(!datalink.getAircraftMode().equals("AUTO")) {
+		while(!datalink.getAircraftMode().equals(DronekitDatalink.MODE_AUTO)) {
 			System.out.println(datalink.getAircraftMode());
 			Thread.sleep(1000);
 		}
 		
 		// set mode
-		datalink.setAircraftMode("STABILIZE");
+		datalink.setAircraftMode(DronekitDatalink.MODE_STABILIZE);
 		System.out.println(datalink.getAircraftPosition());
 		
 		// set safety

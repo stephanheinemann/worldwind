@@ -31,25 +31,19 @@ package com.cfar.swim.worldwind.connections;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.Iterator;
-import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.cfar.swim.worldwind.planning.TrackPoint;
+import com.cfar.swim.worldwind.planning.AircraftTrack;
+import com.cfar.swim.worldwind.planning.AircraftTrackPoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DatalinkProperties;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Path;
-import gov.nasa.worldwind.render.markers.BasicMarkerAttributes;
-import gov.nasa.worldwind.render.markers.BasicMarkerShape;
 
 /**
  * Abstracts a datalink connection to connect to and communicate with aircraft.
@@ -65,10 +59,8 @@ public abstract class Datalink implements Connection {
 	/** the downlink (monitoring) period of this datalink */
 	private long downlinkPeriod = 1000; // ms
 	
-	// TODO: Track as own class similar to Trajectory of Waypoints storing ATO
-	
 	/** the track of the source of this datalink */
-	private ConcurrentLinkedDeque<TrackPoint> track = new ConcurrentLinkedDeque<>();
+	private AircraftTrack track = new AircraftTrack();
 	
 	/** the monitor executor of this datalink */
 	private ScheduledExecutorService executor = null;
@@ -91,7 +83,7 @@ public abstract class Datalink implements Connection {
 	public abstract void disconnect();
 	
 	/**
-	 * Indicates whether or not this datalink is connected.
+	 * Determines whether or not this datalink is connected.
 	 * 
 	 * @return true if this datalink is connected, false otherwise
 	 * 
@@ -99,6 +91,27 @@ public abstract class Datalink implements Connection {
 	 */
 	@Override
 	public abstract boolean isConnected();
+	
+	/**
+	 * Gets the aircraft status via this datalink.
+	 * 
+	 * @return the aircraft status obtained via this datalink
+	 */
+	public abstract String getAircraftStatus();
+	
+	/**
+	 * Gets the aircraft mode via this datalink.
+	 * 
+	 * @return the aircraft mode obtained via this datalink
+	 */
+	public abstract String getAircraftMode();
+	
+	/**
+	 * Sets the aircraft mode via this datalink.
+	 * 
+	 * @param aircraftMode the aircraft mode to be set
+	 */
+	public abstract void setAircraftMode(String aircraftMode);
 	
 	/**
 	 * Gets the aircraft heading via this datalink.
@@ -136,60 +149,19 @@ public abstract class Datalink implements Connection {
 	public abstract Position getAircraftPosition();
 	
 	/**
+	 * Gets an aircraft track point via this datalink.
+	 * 
+	 * @return an aircraft track point obtained via this datalink
+	 */
+	public abstract AircraftTrackPoint getAircraftTrackPoint();
+	
+	/**
 	 * Gets the aircraft track monitored via this datalink.
 	 * 
 	 * @return the aircraft track monitored via this datalink
 	 */
-	public Iterable<TrackPoint> getAircraftTrack() {
-		// TODO: return Path, Trajectory or Track with set ATOs
+	public AircraftTrack getAircraftTrack() {
 		return this.track;
-	}
-	
-	/**
-	 * Gets the first track point of the aircraft track
-	 * monitored via this datalink.
-	 * 
-	 * @return the first track point of the aircraft track
-	 *         monitored via this datalink
-	 */
-	public TrackPoint getFirstTrackPoint() {
-		return this.track.peekFirst();
-	}
-	
-	/**
-	 * Gets the last track point of the aircraft track
-	 * monitored via this datalink.
-	 * 
-	 * @return the last track point of the aircraft track
-	 *         monitored via this datalink
-	 */
-	public TrackPoint getLastTrackPoint() {
-		return this.track.peekLast();
-	}
-	
-	/**
-	 * Gets a previous track point at a specified index of the reverse
-	 * aircraft track monitored via this datalink.
-	 * 
-	 * @param index the index of the track point of the reverse aircraft track
-	 * 
-	 * @return the previous track point at the specified index of the reverse
-	 *         aircraft track monitored via this datalink
-	 */
-	public TrackPoint getPreviousTrackPoint(int index) {
-		TrackPoint previousTrackPoint = null;
-		Iterator<TrackPoint> reverseTrackIterator = this.track.descendingIterator();
-		
-		while (reverseTrackIterator.hasNext() && index > 0) {
-			reverseTrackIterator.next();
-			index--;
-		}
-		
-		if (reverseTrackIterator.hasNext()) {
-			previousTrackPoint = reverseTrackIterator.next();
-		}
-		
-		return previousTrackPoint;
 	}
 	
 	/**
@@ -199,20 +171,6 @@ public abstract class Datalink implements Connection {
 		this.track.clear();
 		this.pcs.firePropertyChange("track", null, this.track);
 	}
-	
-	/**
-	 * Gets the aircraft mode via this datalink.
-	 * 
-	 * @return the aircraft mode obtained via this datalink
-	 */
-	public abstract String getAircraftMode();
-	
-	/**
-	 * Sets the aircraft mode via this datalink.
-	 * 
-	 * @param aircraftMode the aircraft mode to be set
-	 */
-	public abstract void setAircraftMode(String aircraftMode);
 	
 	/**
 	 * Enables the aircraft safety via this datalink.
@@ -225,8 +183,8 @@ public abstract class Datalink implements Connection {
 	public abstract void disableAircraftSafety();
 	
 	/**
-	 * Indicates whether or not the aircraft safety is enabled for the aircraft
-	 * connected via this datalink.
+	 * Determines whether or not the aircraft safety is enabled for the
+	 * aircraft connected via this datalink.
 	 * 
 	 * @return true if the aircraft safety is enabled, false otherwise
 	 */
@@ -243,33 +201,44 @@ public abstract class Datalink implements Connection {
 	public abstract void disarmAircraft();
 	
 	/**
-	 * Indicates whether or not the aircraft connected via this datalink
-	 * is armed.
+	 * Determines whether or not the aircraft connected via this datalink is
+	 * armed.
 	 * 
 	 * @return true if the aircraft is armed, false otherwise
 	 */
 	public abstract boolean isAircraftArmed();
 	
 	/**
-	 * Uploads a flight path to the aircraft connected via this datalink.
+	 * Uploads a mission flight path to the aircraft connected via this
+	 * datalink.
 	 * 
-	 * @param path the flight path to be uploaded
+	 * @param path the mission flight path to be uploaded
 	 */
-	public abstract void uploadFlightPath(Path path);
+	public abstract void uploadMission(Path path);
 	
-	// TODO: take-off specification / setup
-	// flight envelope (initial altitude, vertical speed, horizontal speed)
+	/**
+	 * Downloads a mission flight path from the aircraft connected via this
+	 * datalink.
+	 * 
+	 * @return the downloaded mission flight path
+	 */
+	public abstract Path downloadMission();
 	
-	// isAirborne
-	// isAutonomous
-	// uploadMission
-	// downloadMission
-	// getNextWaypoint (Position)
-	// getAttitude (Pitch, Roll, Yaw)
-	// getGroundSpeed
-	// getAirSpeed (True, Equivalent, Calibrated, Indicated)
-	// TODO: have Scenario listen for track changes towards the next
-	// waypoint if airborne and update ATO accordingly
+	/**
+	 * Gets the next position of the mission flight path from the aircraft
+	 * connected via this datalink.
+	 * 
+	 * @return the next position of the mission flight path
+	 */
+	public abstract Position getNextMissionPosition();
+	
+	/**
+	 * Gets the index of the next position of the mission flight path from
+	 * the aircraft connected via this datalink.
+	 * 
+	 * @return the index of the next position of the mission flight path
+	 */
+	public abstract int getNextMissionPositionIndex();
 	
 	/**
 	 * Initiates a take-off for the aircraft connected via this datalink.
@@ -286,6 +255,23 @@ public abstract class Datalink implements Connection {
 	 * aircraft connected via this datalink.
 	 */
 	public abstract void returnToLaunch();
+	
+	/**
+	 * Determines whether or not the aircraft connected via this datalink is
+	 * airborne.
+	 * 
+	 * @return true if the aircraft is airborne, false otherwise
+	 */
+	public abstract boolean isAirborne();
+	
+	// TODO: take-off specification / setup
+	// flight envelope (initial altitude, vertical speed, horizontal speed)
+	// isAutonomous (mode)
+	// getAttitude (Pitch, Roll, Yaw)
+	// getGroundSpeed
+	// getAirSpeed (True, Equivalent, Calibrated, Indicated)
+	// TODO: have Scenario listen for track changes towards the next position
+	// if airborne and update ATO accordingly
 	
 	/**
 	 * Gets the downlink (monitoring) period of this datalink.
@@ -312,7 +298,11 @@ public abstract class Datalink implements Connection {
 		if (!this.isMonitoring()) {
 			this.clearAircraftTrack();
 			this.executor = Executors.newSingleThreadScheduledExecutor();
-			this.executor.scheduleAtFixedRate(new DatalinkMonitor(), 0, this.downlinkPeriod, TimeUnit.MILLISECONDS);
+			this.executor.scheduleAtFixedRate(
+					new DatalinkMonitor(),
+					0,
+					this.downlinkPeriod,
+					TimeUnit.MILLISECONDS);
 		}
 	}
 	
@@ -327,7 +317,7 @@ public abstract class Datalink implements Connection {
 	}
 	
 	/**
-	 * Indicates whether or not this datalink is being monitored.
+	 * Determines whether or not this datalink is being monitored.
 	 * 
 	 * @return true if this datalink is being monitored, false otherwise
 	 */
@@ -356,14 +346,7 @@ public abstract class Datalink implements Connection {
 			}
 			
 			// add new track point
-			BasicMarkerAttributes attributes = new BasicMarkerAttributes(
-					 Material.GREEN, BasicMarkerShape.ORIENTED_SPHERE, 1d);
-			attributes.setHeadingMaterial(Material.GREEN);
-			TrackPoint trackPoint = new TrackPoint(getAircraftPosition(), attributes);
-			trackPoint.setPitch(getAircraftPitch());
-			trackPoint.setRoll(getAircraftBank());
-			trackPoint.setHeading(getAircraftHeading());
-			trackPoint.setTime(ZonedDateTime.now(ZoneId.of("UTC")));
+			AircraftTrackPoint trackPoint = getAircraftTrackPoint();
 			track.add(trackPoint);
 			pcs.firePropertyChange("track", null, track);
 			// TODO: extend monitored properties

@@ -29,10 +29,12 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.planning.AircraftTrackPoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 
@@ -49,6 +51,29 @@ import gov.nasa.worldwind.render.Path;
  *
  */
 public class SimulatedDatalink extends Datalink {
+	
+	/** the unknown status of an aircraft connected via a simulated datalink */
+	public static final String STATUS_UNKNOWN = "UNKNOWN";
+	
+	/** the active status of an aircraft connected via a simulated datalink */
+	public static final String STATUS_ACTIVE = "ACTIVE";
+	
+	/** the unknown mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_UNKNOWN = "UNKNOWN";
+	
+	/** the auto mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_AUTO = "AUTO";
+	
+	/** the land mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_LAND = "LAND";
+	
+	/** the return to land mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_RTL = "RTL";
+	
+	/** the stabilize mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_STABILIZE = "STABILIZE";
+	
+	// TODO: available status and mode constants (consider enum)
 	
 	/** the gobe of this simulated datalink */
 	private Globe globe = new Earth();
@@ -71,6 +96,9 @@ public class SimulatedDatalink extends Datalink {
 	/** the planned flight path iterator of this simulated datalink source */
 	private Iterator<? extends Position> positionIterator = null;
 	
+	/** the index of the next position in the planned flight path */
+	private int positionIndex = 0;
+	
 	/** the estimated time on a leg of the planned flight path */
 	private double ete = 0d;
 	
@@ -89,8 +117,18 @@ public class SimulatedDatalink extends Datalink {
 	/** indicates whether or not the source of this simulated datalink is safe */
 	private boolean isAircraftSafetyEnabled = true;
 	
+	/** the aircraft status of this simulated datalink source */
+	private String aircraftStatus = SimulatedDatalink.STATUS_UNKNOWN;
+	
 	/** the aircraft mode of this simulated datalink source */
-	private String aircraftMode = "UNKNOWN";
+	private String aircraftMode = SimulatedDatalink.MODE_UNKNOWN;
+	
+	/**
+	 * Constructs a new simulated datatlink.
+	 */
+	public SimulatedDatalink() {
+		this.getAircraftTrack().setName("Simulated Iris");
+	}
 	
 	/**
 	 * Connects this simulated datalink.
@@ -113,7 +151,7 @@ public class SimulatedDatalink extends Datalink {
 	}
 	
 	/**
-	 * Indicates whether or not this simulated datalink is connected.
+	 * Determines whether or not this simulated datalink is connected.
 	 * 
 	 * @return true if this simulated datalink is connected, false otherwise
 	 * 
@@ -125,7 +163,21 @@ public class SimulatedDatalink extends Datalink {
 	}
 	
 	/**
+	 * Gets the aircraft status via this simulated datalink.
+	 * 
+	 * @return the aircraft status obtained via this simulated datalink
+	 * 
+	 * @see Datalink#getAircraftStatus()
+	 */
+	@Override
+	public String getAircraftStatus() {
+		return this.aircraftStatus;
+	}
+	
+	/**
 	 * Gets the aircraft mode via this simulated datalink.
+	 * 
+	 * @return the aircraft mode obtained via this simulated datalink
 	 * 
 	 * @see Datalink#getAircraftMode()
 	 */
@@ -144,182 +196,6 @@ public class SimulatedDatalink extends Datalink {
 	@Override
 	public void setAircraftMode(String aircraftMode) {
 		this.aircraftMode = aircraftMode;
-	}
-	
-	/**
-	 * Gets the aircraft position via this simulated datalink.
-	 * 
-	 * @return the aircraft position obtained via this simulated datalink
-	 * 
-	 * @see Datalink#getAircraftPosition()
-	 */
-	@Override
-	public Position getAircraftPosition() {
-		Position currentPosition = this.iris.getReferencePosition();
-		
-		if ((null != this.flightPath) && this.isAirborne) {
-			if (this.ate >= this.ete) {
-				this.lastPosition = this.nextPosition;
-				if (this.positionIterator.hasNext()) {
-					this.nextPosition = this.positionIterator.next();
-					this.ete = this.iris.getCapabilities().getEstimatedDuration(
-							lastPosition, nextPosition, this.globe).getSeconds();
-					this.ate = 0d;
-				}
-			}
-			double slice = ((double) this.getDownlinkPeriod() / 1000d);
-			this.ate += slice;
-			if (this.ate > this.ete) this.ate = this.ete;
-			double ratio = this.ate / this.ete;
-			currentPosition = Position.interpolate(ratio, lastPosition, nextPosition);
-			this.iris.moveTo(currentPosition);
-		}
-		
-		return currentPosition;
-	}
-	
-	/**
-	 * Arms the aircraft via this simulated datalink.
-	 * 
-	 * @see Datalink#armAircraft()
-	 */
-	@Override
-	public void armAircraft() {
-		this.isArmed = true;
-	}
-	
-	/**
-	 * Disarms the aircraft via this simulated datalink.
-	 * 
-	 * @see Datalink#disarmAircraft()
-	 */
-	@Override
-	public void disarmAircraft() {
-		this.isArmed = false;
-	}
-	
-	/**
-	 * Indicates whether or not the aircraft connected via this simulated
-	 * datalink is armed.
-	 * 
-	 * @return true if the aircraft is armed, false otherwise
-	 * 
-	 * @see Datalink#isAircraftArmed()
-	 */
-	@Override
-	public boolean isAircraftArmed() {
-		return this.isArmed;
-	}
-	
-	/**
-	 * Uploads a flight path to the aircraft connected via this simulated
-	 * datalink.
-	 * 
-	 * @param flightPath the flight path to be uploaded
-	 * 
-	 * @see Datalink#uploadFlightPath(Path)
-	 */
-	@Override
-	public void uploadFlightPath(Path flightPath) {
-		this.flightPath = flightPath;
-		this.positionIterator = this.flightPath.getPositions().iterator();
-		if (this.positionIterator.hasNext()) {
-			this.homePosition = this.positionIterator.next();
-			this.lastPosition = this.homePosition;
-			this.nextPosition = this.homePosition;
-			this.iris.moveTo(this.homePosition);
-		}
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Enables the aircraft safety via this simulated datalink.
-	 * 
-	 * @see Datalink#enableAircraftSafety()
-	 */
-	@Override
-	public void enableAircraftSafety() {
-		this.isAircraftSafetyEnabled = true;
-	}
-	
-	/**
-	 * Disables the aircraft safety via this simulated datalink.
-	 * 
-	 * @see Datalink#disableAircraftSafety()
-	 */
-	@Override
-	public void disableAircraftSafety() {
-		this.isAircraftSafetyEnabled = false;
-	}
-	
-	/**
-	 * Indicates whether or not the aircraft safety is enabled for the aircraft
-	 * connected via this simulated datalink.
-	 * 
-	 * @return true if the aircraft safety is enabled, false otherwise
-	 * 
-	 * @see Datalink#isAircraftSafetyEnabled()
-	 */
-	@Override
-	public boolean isAircraftSafetyEnabled() {
-		return this.isAircraftSafetyEnabled;
-	}
-	
-	/**
-	 * Initiates a take-off for the aircraft connected via this simulated
-	 * datalink.
-	 * 
-	 * @see Datalink#takeOff()
-	 */
-	@Override
-	public void takeOff() {
-		this.setAircraftMode("AUTO");
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.isAirborne = true;
-	}
-	
-	/**
-	 * Initiates a landing for the aircraft connected via this simulated
-	 * datalink.
-	 * 
-	 * @see Datalink#land()
-	 */
-	@Override
-	public void land() {
-		this.setAircraftMode("LAND");
-		this.nextPosition = this.iris.getReferencePosition();
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.isAirborne = false;
-	}
-	
-	/**
-	 * Initiates a return to and landing at the launch position for the
-	 * aircraft connected via this simulated datalink.
-	 * 
-	 * @see Datalink#returnToLaunch()
-	 */
-	@Override
-	public void returnToLaunch() {
-		this.setAircraftMode("RTL");
-		this.nextPosition = this.homePosition;
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.isAirborne = false;
 	}
 	
 	/**
@@ -368,6 +244,255 @@ public class SimulatedDatalink extends Datalink {
 	@Override
 	public Angle getAircraftYaw() {
 		return Angle.ZERO;
+	}
+	
+	/**
+	 * Gets the aircraft position via this simulated datalink.
+	 * 
+	 * @return the aircraft position obtained via this simulated datalink
+	 * 
+	 * @see Datalink#getAircraftPosition()
+	 */
+	@Override
+	public Position getAircraftPosition() {
+		Position currentPosition = this.iris.getReferencePosition();
+		
+		if ((null != this.flightPath) && this.isAirborne) {
+			if (this.ate >= this.ete) {
+				this.lastPosition = this.nextPosition;
+				if (this.positionIterator.hasNext()) {
+					this.positionIndex++;
+					this.nextPosition = this.positionIterator.next();
+					this.ete = this.iris.getCapabilities().getEstimatedDuration(
+							lastPosition, nextPosition, this.globe).getSeconds();
+					this.ate = 0d;
+				}
+			}
+			double slice = ((double) this.getDownlinkPeriod() / 1000d);
+			this.ate += slice;
+			if (this.ate > this.ete) this.ate = this.ete;
+			double ratio = this.ate / this.ete;
+			currentPosition = Position.interpolate(ratio, lastPosition, nextPosition);
+			this.iris.moveTo(currentPosition);
+		}
+		
+		return currentPosition;
+	}
+	
+	/**
+	 * Gets an aircraft track point via this simulated datalink.
+	 * 
+	 * @return an aircraft track point obtained via this simulated datalink
+	 * 
+	 * @see Datalink#getAircraftTrackPoint()
+	 */
+	@Override
+	public AircraftTrackPoint getAircraftTrackPoint() {
+		AircraftTrackPoint trackPoint = new AircraftTrackPoint(this.getAircraftPosition());
+		trackPoint.setPitch(this.getAircraftPitch());
+		trackPoint.setBank(this.getAircraftBank());
+		trackPoint.setHeading(this.getAircraftHeading());
+		trackPoint.setAto(ZonedDateTime.now());
+		return trackPoint;
+	}
+	
+	/**
+	 * Enables the aircraft safety via this simulated datalink.
+	 * 
+	 * @see Datalink#enableAircraftSafety()
+	 */
+	@Override
+	public void enableAircraftSafety() {
+		this.isAircraftSafetyEnabled = true;
+	}
+	
+	/**
+	 * Disables the aircraft safety via this simulated datalink.
+	 * 
+	 * @see Datalink#disableAircraftSafety()
+	 */
+	@Override
+	public void disableAircraftSafety() {
+		this.isAircraftSafetyEnabled = false;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft safety is enabled for the aircraft
+	 * connected via this simulated datalink.
+	 * 
+	 * @return true if the aircraft safety is enabled, false otherwise
+	 * 
+	 * @see Datalink#isAircraftSafetyEnabled()
+	 */
+	@Override
+	public boolean isAircraftSafetyEnabled() {
+		return this.isAircraftSafetyEnabled;
+	}
+	
+	/**
+	 * Arms the aircraft via this simulated datalink.
+	 * 
+	 * @see Datalink#armAircraft()
+	 */
+	@Override
+	public void armAircraft() {
+		this.isArmed = true;
+	}
+	
+	/**
+	 * Disarms the aircraft via this simulated datalink.
+	 * 
+	 * @see Datalink#disarmAircraft()
+	 */
+	@Override
+	public void disarmAircraft() {
+		this.isArmed = false;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft connected via this simulated
+	 * datalink is armed.
+	 * 
+	 * @return true if the aircraft is armed, false otherwise
+	 * 
+	 * @see Datalink#isAircraftArmed()
+	 */
+	@Override
+	public boolean isAircraftArmed() {
+		return this.isArmed;
+	}
+	
+	/**
+	 * Uploads a mission flight path to the aircraft connected via this
+	 * simulated datalink.
+	 * 
+	 * @param path the mission flight path to be uploaded
+	 *
+	 * @see Datalink#uploadMission(Path)
+	 */
+	@Override
+	public void uploadMission(Path flightPath) {
+		this.flightPath = flightPath;
+		this.ate = 0d;
+		this.ete = 0d;
+		this.positionIndex = 0;
+		this.positionIterator = this.flightPath.getPositions().iterator();
+		if (this.positionIterator.hasNext()) {
+			this.homePosition = this.positionIterator.next();
+			this.lastPosition = this.homePosition;
+			this.nextPosition = this.homePosition;
+			this.iris.moveTo(this.homePosition);
+		}
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Downloads a mission flight path from the aircraft connected via this
+	 * simulated datalink.
+	 * 
+	 * @return the downloaded mission flight path
+	 * 
+	 * @see Datalink#downloadMission()
+	 */
+	@Override
+	public Path downloadMission() {
+		return this.flightPath;
+	}
+	
+	/**
+	 * Gets the next position of the mission flight path from the aircraft
+	 * connected via this datalink.
+	 * 
+	 * @return the next position of the mission flight path
+	 * 
+	 * @see Datalink#getNextMissionPosition()
+	 */
+	@Override
+	public Position getNextMissionPosition() {
+		return this.nextPosition;
+	}
+	
+	/**
+	 * Gets the index of the next position of the mission flight path from
+	 * the aircraft connected via this simulated datalink.
+	 * 
+	 * @return the index of the next position of the mission flight path
+	 * 
+	 * @see Datalink#getNextMissionPositionIndex()
+	 */
+	@Override
+	public int getNextMissionPositionIndex() {
+		return this.positionIndex;
+	}
+	
+	/**
+	 * Initiates a take-off for the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @see Datalink#takeOff()
+	 */
+	@Override
+	public void takeOff() {
+		this.setAircraftMode(SimulatedDatalink.MODE_AUTO);
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		this.isAirborne = true;
+	}
+	
+	/**
+	 * Initiates a landing for the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @see Datalink#land()
+	 */
+	@Override
+	public void land() {
+		this.setAircraftMode(SimulatedDatalink.MODE_LAND);
+		this.nextPosition = this.iris.getReferencePosition();
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		this.isAirborne = false;
+	}
+	
+	/**
+	 * Initiates a return to and landing at the launch position for the
+	 * aircraft connected via this simulated datalink.
+	 * 
+	 * @see Datalink#returnToLaunch()
+	 */
+	@Override
+	public void returnToLaunch() {
+		this.setAircraftMode(SimulatedDatalink.MODE_RTL);
+		this.nextPosition = this.homePosition;
+		try {
+			Thread.sleep(5000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		this.isAirborne = false;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft connected via this simulated
+	 * datalink is airborne.
+	 * 
+	 * @return true if the aircraft is airborne, false otherwise
+	 * 
+	 * @see Datalink#isAirborne()
+	 */
+	@Override
+	public boolean isAirborne() {
+		return this.isAirborne;
 	}
 	
 	/**
