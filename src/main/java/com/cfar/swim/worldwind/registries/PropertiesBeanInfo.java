@@ -85,7 +85,7 @@ public abstract class PropertiesBeanInfo extends SimpleBeanInfo {
 	 * 
 	 * @return the property descriptor of the property
 	 * 
-	 * @throws IntrospectionException
+	 * @throws IntrospectionException if the property is not found
 	 */
 	public PropertyDescriptor createPropertyDescriptor(
 			String propertyName,
