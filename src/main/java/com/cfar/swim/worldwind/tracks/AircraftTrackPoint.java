@@ -226,7 +226,7 @@ public class AircraftTrackPoint extends BasicMarker implements TrackPoint {
 	 * 
 	 * @return the elevation of this aircraft track point
 	 * 
-	 * @see TrackPoint#geElevation()
+	 * @see TrackPoint#getElevation()
 	 */
 	@Override
 	public double getElevation() {

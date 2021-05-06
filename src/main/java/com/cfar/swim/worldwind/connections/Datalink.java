@@ -212,9 +212,9 @@ public abstract class Datalink implements Connection {
 	 * Uploads a mission flight path to the aircraft connected via this
 	 * datalink.
 	 * 
-	 * @param path the mission flight path to be uploaded
+	 * @param flightPath the mission flight path to be uploaded
 	 */
-	public abstract void uploadMission(Path path);
+	public abstract void uploadMission(Path flightPath);
 	
 	/**
 	 * Downloads a mission flight path from the aircraft connected via this

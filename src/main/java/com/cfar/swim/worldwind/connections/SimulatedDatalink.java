@@ -366,7 +366,7 @@ public class SimulatedDatalink extends Datalink {
 	 * Uploads a mission flight path to the aircraft connected via this
 	 * simulated datalink.
 	 * 
-	 * @param path the mission flight path to be uploaded
+	 * @param flightPath the mission flight path to be uploaded
 	 *
 	 * @see Datalink#uploadMission(Path)
 	 */

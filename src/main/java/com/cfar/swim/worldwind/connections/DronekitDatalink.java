@@ -476,17 +476,17 @@ public class DronekitDatalink extends Datalink {
 	 * Uploads a mission flight path to the aircraft connected via this
 	 * dronekit datalink.
 	 * 
-	 * @param path the mission flight path to be uploaded
+	 * @param flightPath the mission flight path to be uploaded
 	 * 
 	 * @see Datalink#uploadMission(Path)
 	 */
 	@Override
-	public void uploadMission(Path path) {
+	public void uploadMission(Path flightPath) {
 		if (this.isConnected()) {
 			NullStreamObserver nso = new NullStreamObserver();
 			// TODO: refactor dronekit interface: setMission()
 			StreamObserver<com.cfar.swim.droneconnect.Position> pso = this.stub.setPath(nso);
-			for (Position position : path.getPositions()) {
+			for (Position position : flightPath.getPositions()) {
 				com.cfar.swim.droneconnect.Position pos = com.cfar.swim.droneconnect.Position
 						.newBuilder()
 						.setLat(position.getLatitude().getDegrees())
