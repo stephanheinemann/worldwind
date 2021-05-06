@@ -620,9 +620,10 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	public boolean embed(Obstacle obstacle) {
 		boolean embedded = false;
 		
-		if (obstacle instanceof ObstacleCylinder) {
+		// TODO: review intersection tests (GJK library)
+		/*if (obstacle instanceof ObstacleCylinder) {
 			embedded = this.embed((ObstacleCylinder) obstacle);
-		} else if (null != this.globe) {
+		} else*/ if (null != this.globe) {
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
