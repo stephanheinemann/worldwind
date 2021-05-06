@@ -35,12 +35,12 @@ import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
+import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.Neighborhood;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 
 import gov.nasa.worldwind.geom.Position;

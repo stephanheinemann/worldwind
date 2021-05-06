@@ -27,57 +27,26 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
+package com.cfar.swim.worldwind.planners;
 
-import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.Properties;
+import java.util.EventListener;
+
+import com.cfar.swim.worldwind.planning.Trajectory;
 
 /**
- * Describes planner properties applicable to all planners.
+ * Describes a plan revision listener that will be invoked by its planner
+ * whenever a plan has been revised.
  * 
  * @author Stephan Heinemann
- *
+ * 
  */
-public interface PlannerProperties extends Properties<Planner> {
+public interface PlanRevisionListener extends EventListener {
 
 	/**
-	 * Gets the cost policy of this planner properties bean.
+	 * Notifies this plan revision listener about a revised plan.
 	 * 
-	 * @return the cost policy of this planner properties bean
+	 * @param trajectory the revised trajectory
 	 */
-	public CostPolicy getCostPolicy();
-	
-	/**
-	 * Sets the cost policy of this planner properties bean.
-	 * 
-	 * @param costPolicy the cost policy to be set
-	 */
-	public void setCostPolicy(CostPolicy costPolicy);
-	
-	/**
-	 * Gets the risk policy of this planner properties bean.
-	 * 
-	 * @return the risk policy of this planner properties bean
-	 */
-	public RiskPolicy getRiskPolicy();
-	
-	/**
-	 * Sets the risk policy of this planner properties bean.
-	 * 
-	 * @param riskPolicy the risk policy to be set
-	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
-	
-	/**
-	 * Clones this planner properties bean.
-	 * 
-	 * @return a clone of this planner properties bean
-	 * 
-	 * @see Properties#clone()
-	 */
-	@Override
-	public PlannerProperties clone();
+	public void revisePlan(Trajectory trajectory);
 	
 }

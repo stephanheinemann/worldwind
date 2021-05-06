@@ -46,10 +46,10 @@ import com.cfar.swim.droneconnect.Status;
 import com.cfar.swim.droneconnect.TakeoffToAltitude;
 import com.cfar.swim.droneconnect.Time;
 import com.cfar.swim.droneconnect.TimedPosition;
-import com.cfar.swim.worldwind.planning.AircraftTrackPoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
+import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;

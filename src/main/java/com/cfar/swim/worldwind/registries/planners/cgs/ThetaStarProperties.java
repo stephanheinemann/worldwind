@@ -27,57 +27,35 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
+package com.cfar.swim.worldwind.registries.planners.cgs;
 
-import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.Properties;
 
 /**
- * Describes planner properties applicable to all planners.
+ * Realizes the properties bean of a Theta* planner.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface PlannerProperties extends Properties<Planner> {
+public class ThetaStarProperties extends ForwardAStarProperties {
 
 	/**
-	 * Gets the cost policy of this planner properties bean.
-	 * 
-	 * @return the cost policy of this planner properties bean
+	 * Constructs a new Theta* planner properties bean.
 	 */
-	public CostPolicy getCostPolicy();
+	public ThetaStarProperties() {
+		super();
+	}
 	
 	/**
-	 * Sets the cost policy of this planner properties bean.
+	 * Constructs a new Theta* planner properties bean with
+	 * specified cost and risk policy property values.
 	 * 
-	 * @param costPolicy the cost policy to be set
+	 * @param costPolicy the cost policy of this Theta* planner properties bean
+	 * @param riskPolicy the risk policy of this Theta* planner properties bean
 	 */
-	public void setCostPolicy(CostPolicy costPolicy);
-	
-	/**
-	 * Gets the risk policy of this planner properties bean.
-	 * 
-	 * @return the risk policy of this planner properties bean
-	 */
-	public RiskPolicy getRiskPolicy();
-	
-	/**
-	 * Sets the risk policy of this planner properties bean.
-	 * 
-	 * @param riskPolicy the risk policy to be set
-	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
-	
-	/**
-	 * Clones this planner properties bean.
-	 * 
-	 * @return a clone of this planner properties bean
-	 * 
-	 * @see Properties#clone()
-	 */
-	@Override
-	public PlannerProperties clone();
+	public ThetaStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		super(costPolicy, riskPolicy);
+	}
 	
 }

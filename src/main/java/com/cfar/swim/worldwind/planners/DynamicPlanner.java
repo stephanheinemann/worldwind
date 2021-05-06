@@ -27,57 +27,50 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
-
-import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.Properties;
+package com.cfar.swim.worldwind.planners;
 
 /**
- * Describes planner properties applicable to all planners.
+ * Describes a dynamic planner which repairs changing costs while planning.
+ * A dynamic planner only revises invalid parts of the plan being computed
+ * and avoids the revision of the entire plan as much as possible.
  * 
  * @author Stephan Heinemann
- *
+ * 
  */
-public interface PlannerProperties extends Properties<Planner> {
+public interface DynamicPlanner extends Planner, DynamicObstacleListener {
 
-	/**
-	 * Gets the cost policy of this planner properties bean.
-	 * 
-	 * @return the cost policy of this planner properties bean
-	 */
-	public CostPolicy getCostPolicy();
+	// TODO: merge with and check for PRM/RTT interface
 	
 	/**
-	 * Sets the cost policy of this planner properties bean.
-	 * 
-	 * @param costPolicy the cost policy to be set
+	 * Terminates this dynamic planner.
 	 */
-	public void setCostPolicy(CostPolicy costPolicy);
+	public void terminate();
 	
 	/**
-	 * Gets the risk policy of this planner properties bean.
-	 * 
-	 * @return the risk policy of this planner properties bean
+	 * Recycles this dynamic planner.
 	 */
-	public RiskPolicy getRiskPolicy();
+	public void recycle();
 	
 	/**
-	 * Sets the risk policy of this planner properties bean.
+	 * Indicates whether or not this dynamic planner has terminated.
 	 * 
-	 * @param riskPolicy the risk policy to be set
+	 * @return true if this dynamic planner has terminated, false otherwise
 	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
+	public boolean hasTerminated();
 	
 	/**
-	 * Clones this planner properties bean.
+	 * Gets the significant change threshold of this dynamic planner.
 	 * 
-	 * @return a clone of this planner properties bean
-	 * 
-	 * @see Properties#clone()
+	 * @return the significant change threshold of this dynamic planner
 	 */
-	@Override
-	public PlannerProperties clone();
+	public double getSignificantChange();
+	
+	/**
+	 * Sets the significant change threshold of this dynamic planner.
+	 * 
+	 * @param significantChange the significant change threshold of this
+	 *                          dynamic planner
+	 */
+	public void setSignificantChange(double significantChange);
 	
 }

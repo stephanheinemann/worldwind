@@ -27,57 +27,74 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
+package com.cfar.swim.worldwind.registries.planners.cgs;
 
-import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.Properties;
+import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
 
 /**
- * Describes planner properties applicable to all planners.
+ * Realizes the properties bean of a forward A* planner.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface PlannerProperties extends Properties<Planner> {
+public class ForwardAStarProperties extends AbstractPlannerProperties {
 
 	/**
-	 * Gets the cost policy of this planner properties bean.
-	 * 
-	 * @return the cost policy of this planner properties bean
+	 * Constructs a new forward A* planner properties bean.
 	 */
-	public CostPolicy getCostPolicy();
+	public ForwardAStarProperties() {
+		super();
+	}
+
+	/**
+	 * Constructs a new forward A* planner properties bean with
+	 * specified cost and risk policy property values.
+	 * 
+	 * @param costPolicy the cost policy of this forward A* planner properties bean
+	 * @param riskPolicy the risk policy of this forward A* planner properties bean
+	 */
+	public ForwardAStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		super(costPolicy, riskPolicy);
+	}
 	
 	/**
-	 * Sets the cost policy of this planner properties bean.
+	 * Determines whether or not this forward A* planner properties bean equals
+	 * another forward A* planner properties bean based on their aggregated
+	 * properties.
 	 * 
-	 * @param costPolicy the cost policy to be set
-	 */
-	public void setCostPolicy(CostPolicy costPolicy);
-	
-	/**
-	 * Gets the risk policy of this planner properties bean.
+	 * @param o the other forward A* planner properties bean
 	 * 
-	 * @return the risk policy of this planner properties bean
-	 */
-	public RiskPolicy getRiskPolicy();
-	
-	/**
-	 * Sets the risk policy of this planner properties bean.
+	 * @return true, if the aggregated properties of this forward A* planner
+	 *         properties bean equal the aggregated properties of the other
+	 *         forward A* planner properties bean, false otherwise
 	 * 
-	 * @param riskPolicy the risk policy to be set
-	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
-	
-	/**
-	 * Clones this planner properties bean.
-	 * 
-	 * @return a clone of this planner properties bean
-	 * 
-	 * @see Properties#clone()
+	 * @see AbstractPlannerProperties#equals(Object)
 	 */
 	@Override
-	public PlannerProperties clone();
+	public boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals) {
+			equals = (this.getClass() == o.getClass());
+		}
+		
+		return equals;
+	}
 	
+	/**
+	 * Gets the hash code of this forward A* planner properties bean based on
+	 * its aggregated properties.
+	 * 
+	 * @return the hash code of this forward A* planner properties bean based
+	 *         on its aggregated properties
+	 * 
+	 * @see AbstractPlannerProperties#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return super.hashCode();
+	}
+
 }

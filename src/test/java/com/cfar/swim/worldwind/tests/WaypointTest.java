@@ -35,9 +35,9 @@ import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
-import com.cfar.swim.worldwind.ai.adstar.ADStarWaypoint;
-import com.cfar.swim.worldwind.ai.arastar.ARAStarWaypoint;
-import com.cfar.swim.worldwind.ai.astar.AStarWaypoint;
+import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarWaypoint;
+import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarWaypoint;
+import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;

@@ -32,12 +32,12 @@ package com.cfar.swim.worldwind.registries.environments;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
+import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.environments.PlanningContinuum;
+import com.cfar.swim.worldwind.environments.PlanningGrid;
+import com.cfar.swim.worldwind.environments.PlanningRoadmap;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
-import com.cfar.swim.worldwind.planning.Environment;
-import com.cfar.swim.worldwind.planning.PlanningContinuum;
-import com.cfar.swim.worldwind.planning.PlanningGrid;
-import com.cfar.swim.worldwind.planning.PlanningRoadmap;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;

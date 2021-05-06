@@ -27,57 +27,37 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
+package com.cfar.swim.worldwind.planners;
 
-import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.Properties;
+import com.cfar.swim.worldwind.session.ObstacleManager;
 
 /**
- * Describes planner properties applicable to all planners.
+ * Describes a dynamic obstacle listener.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface PlannerProperties extends Properties<Planner> {
+public interface DynamicObstacleListener {
 
 	/**
-	 * Gets the cost policy of this planner properties bean.
-	 * 
-	 * @return the cost policy of this planner properties bean
+	 * Notifies this dynamic obstacle listener about a pending obstacle change.
 	 */
-	public CostPolicy getCostPolicy();
+	public void notifyPendingObstacleChange();
 	
 	/**
-	 * Sets the cost policy of this planner properties bean.
+	 * Sets the obstacle manager of this dynamic obstacle listener.
 	 * 
-	 * @param costPolicy the cost policy to be set
+	 * @param obstacleManager the obstacle manager to be set
 	 */
-	public void setCostPolicy(CostPolicy costPolicy);
+	public void setObstacleManager(ObstacleManager obstacleManager);
 	
 	/**
-	 * Gets the risk policy of this planner properties bean.
+	 * Determines whether or not this dynamic obstacle listener has an obstacle
+	 * manager.
 	 * 
-	 * @return the risk policy of this planner properties bean
+	 * @return true if this dynamic obstacle listener has an obstacle manager,
+	 *         false otherwise
 	 */
-	public RiskPolicy getRiskPolicy();
-	
-	/**
-	 * Sets the risk policy of this planner properties bean.
-	 * 
-	 * @param riskPolicy the risk policy to be set
-	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
-	
-	/**
-	 * Clones this planner properties bean.
-	 * 
-	 * @return a clone of this planner properties bean
-	 * 
-	 * @see Properties#clone()
-	 */
-	@Override
-	public PlannerProperties clone();
+	public boolean hasObstacleManager();
 	
 }

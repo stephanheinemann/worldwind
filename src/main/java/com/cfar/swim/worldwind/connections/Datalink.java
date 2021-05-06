@@ -35,11 +35,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.cfar.swim.worldwind.planning.AircraftTrack;
-import com.cfar.swim.worldwind.planning.AircraftTrackPoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DatalinkProperties;
+import com.cfar.swim.worldwind.tracks.AircraftTrack;
+import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;

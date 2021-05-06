@@ -34,9 +34,9 @@ import java.util.Iterator;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
-import com.cfar.swim.worldwind.planning.AircraftTrackPoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;

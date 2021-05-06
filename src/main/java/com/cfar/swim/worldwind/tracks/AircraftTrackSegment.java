@@ -27,57 +27,39 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
+package com.cfar.swim.worldwind.tracks;
 
-import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.Properties;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import gov.nasa.worldwind.tracks.TrackPoint;
+import gov.nasa.worldwind.tracks.TrackSegment;
 
 /**
- * Describes planner properties applicable to all planners.
+ * Realized a track segment of aircraft track points obtained via a datalink
+ * downlink.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface PlannerProperties extends Properties<Planner> {
+public class AircraftTrackSegment extends ArrayList<AircraftTrackPoint> implements TrackSegment {
 
-	/**
-	 * Gets the cost policy of this planner properties bean.
-	 * 
-	 * @return the cost policy of this planner properties bean
-	 */
-	public CostPolicy getCostPolicy();
+	/** the default serial version identifier */
+	private static final long serialVersionUID = 1L;
 	
 	/**
-	 * Sets the cost policy of this planner properties bean.
+	 * Gets the track points of this aircraft track segment.
 	 * 
-	 * @param costPolicy the cost policy to be set
-	 */
-	public void setCostPolicy(CostPolicy costPolicy);
-	
-	/**
-	 * Gets the risk policy of this planner properties bean.
+	 * @return the track points of this aircraft track segment
 	 * 
-	 * @return the risk policy of this planner properties bean
-	 */
-	public RiskPolicy getRiskPolicy();
-	
-	/**
-	 * Sets the risk policy of this planner properties bean.
-	 * 
-	 * @param riskPolicy the risk policy to be set
-	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
-	
-	/**
-	 * Clones this planner properties bean.
-	 * 
-	 * @return a clone of this planner properties bean
-	 * 
-	 * @see Properties#clone()
+	 * @see TrackSegment#getPoints()
 	 */
 	@Override
-	public PlannerProperties clone();
+	public List<TrackPoint> getPoints() {
+		return this.stream()
+				.map(atp -> (TrackPoint) atp)
+				.collect(Collectors.toUnmodifiableList());
+	}
 	
 }

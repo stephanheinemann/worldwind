@@ -27,57 +27,59 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
+package com.cfar.swim.worldwind.registries.planners.cgs;
 
-import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.Properties;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
- * Describes planner properties applicable to all planners.
- * 
- * @author Stephan Heinemann
- *
- */
-public interface PlannerProperties extends Properties<Planner> {
-
-	/**
-	 * Gets the cost policy of this planner properties bean.
-	 * 
-	 * @return the cost policy of this planner properties bean
-	 */
-	public CostPolicy getCostPolicy();
+* Realizes an AD* properties bean information customizing the descriptors for
+* each property.
+* 
+* @author Stephan Heinemann
+*
+*/
+public class ADStarPropertiesBeanInfo extends ARAStarPropertiesBeanInfo {
 	
 	/**
-	 * Sets the cost policy of this planner properties bean.
-	 * 
-	 * @param costPolicy the cost policy to be set
+	 * Constructs an AD* properties bean information.
 	 */
-	public void setCostPolicy(CostPolicy costPolicy);
+	public ADStarPropertiesBeanInfo() {
+		super(ADStarProperties.class);
+	}
 	
 	/**
-	 * Gets the risk policy of this planner properties bean.
+	 * Customizes the property descriptors for each property of an AD*
+	 * properties bean.
 	 * 
-	 * @return the risk policy of this planner properties bean
-	 */
-	public RiskPolicy getRiskPolicy();
-	
-	/**
-	 * Sets the risk policy of this planner properties bean.
+	 * @return the array of customized property descriptors
 	 * 
-	 * @param riskPolicy the risk policy to be set
-	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
-	
-	/**
-	 * Clones this planner properties bean.
-	 * 
-	 * @return a clone of this planner properties bean
-	 * 
-	 * @see Properties#clone()
+	 * @see java.beans.SimpleBeanInfo#getPropertyDescriptors()
 	 */
 	@Override
-	public PlannerProperties clone();
+	public PropertyDescriptor[] getPropertyDescriptors() {
+		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
+		
+		try {
+			PropertyDescriptor significantChange = this.createPropertyDescriptor(
+					"significantChange",
+					this.dictionary.getString("property.planner.ads.significantChange.name"),
+					this.dictionary.getString("property.planner.ads.significantChange.description"),
+					this.dictionary.getString("property.planner.category.dynamic"));
+		
+			PropertyDescriptor[] adsDescriptors = new PropertyDescriptor[] {
+					significantChange};
+			descriptors = Stream.concat(
+					Arrays.stream(descriptors), Arrays.stream(adsDescriptors))
+					.toArray(PropertyDescriptor[]::new);
+		
+		} catch (IntrospectionException e) {
+			e.printStackTrace();
+		}
+		
+		return descriptors;
+	}
 	
 }

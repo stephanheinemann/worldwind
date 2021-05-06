@@ -27,57 +27,12 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners;
+package com.cfar.swim.worldwind.planners.cgs.thetastar;
 
-import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.Properties;
-
-/**
- * Describes planner properties applicable to all planners.
- * 
- * @author Stephan Heinemann
- *
- */
-public interface PlannerProperties extends Properties<Planner> {
-
-	/**
-	 * Gets the cost policy of this planner properties bean.
-	 * 
-	 * @return the cost policy of this planner properties bean
-	 */
-	public CostPolicy getCostPolicy();
-	
-	/**
-	 * Sets the cost policy of this planner properties bean.
-	 * 
-	 * @param costPolicy the cost policy to be set
-	 */
-	public void setCostPolicy(CostPolicy costPolicy);
-	
-	/**
-	 * Gets the risk policy of this planner properties bean.
-	 * 
-	 * @return the risk policy of this planner properties bean
-	 */
-	public RiskPolicy getRiskPolicy();
-	
-	/**
-	 * Sets the risk policy of this planner properties bean.
-	 * 
-	 * @param riskPolicy the risk policy to be set
-	 */
-	public void setRiskPolicy(RiskPolicy riskPolicy);
-	
-	/**
-	 * Clones this planner properties bean.
-	 * 
-	 * @return a clone of this planner properties bean
-	 * 
-	 * @see Properties#clone()
-	 */
-	@Override
-	public PlannerProperties clone();
-	
-}
+// TODO: Use ObstacleBox extends airspace box implements Obstacle to model
+// altitude restrictions (min. altitudes, IFR, VFR altitudes). ThetaStar should
+// plan vertically up and down through the costly airspace (CPDLC for landings)
+// and perform string pulling at level. A desired altitude could be modeled as
+// lowest cost altitude. Overlapping positive and negative cost airspaces could
+// better indicate suitable landing and descent areas. Track airspaces could be
+// useful too. PRM would require an IFR/VFR roadmap.

@@ -39,13 +39,13 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.Neighborhood;
+import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.google.common.collect.Iterables;
 

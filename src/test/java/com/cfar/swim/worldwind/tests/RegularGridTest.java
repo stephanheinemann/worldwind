@@ -45,18 +45,18 @@ import javax.xml.bind.JAXBException;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
-import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
-import com.cfar.swim.worldwind.ai.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
 import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
+import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
+import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
