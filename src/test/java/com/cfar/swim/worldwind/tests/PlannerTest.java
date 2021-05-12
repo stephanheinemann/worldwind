@@ -54,8 +54,17 @@ import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.render.Path;
 
+/**
+ * Performs planner tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class PlannerTest {
 
+	/**
+	 * Tests a forward A* planner.
+	 */
 	@Test
 	@SuppressWarnings("unchecked")
 	public void forwardAStarTest() {

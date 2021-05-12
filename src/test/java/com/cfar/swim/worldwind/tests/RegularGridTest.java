@@ -82,6 +82,12 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.paint.Color;
 
+/**
+ * Performs regular grid tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class RegularGridTest {
 	
 	static Model model;

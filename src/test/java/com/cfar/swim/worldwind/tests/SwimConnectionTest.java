@@ -36,8 +36,17 @@ import org.junit.Test;
 
 import com.cfar.swim.worldwind.connections.SimulatedSwimConnection;
 
+/**
+ * Performs SWIM connection tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class SwimConnectionTest {
 
+	/**
+	 * Tests simulated SWIM connections.
+	 */
 	@Test
 	public void testSimulatedConnection() {
 		SimulatedSwimConnection ssc = new SimulatedSwimConnection();

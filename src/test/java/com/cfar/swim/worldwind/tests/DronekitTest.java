@@ -46,8 +46,19 @@ import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 
+/**
+ * Performs dronekit datalink tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class DronekitTest {
 
+	/**
+	 * Tests the dronekit datalink connection.
+	 * 
+	 * @throws InterruptedException if the datalink thread gets interrupted unexpectedly
+	 */
 	@Ignore
 	@Test
 	public void testConnection() throws InterruptedException {

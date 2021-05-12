@@ -33,13 +33,16 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
-
+/**
+ * Performs SWIM Updater test.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class UpdaterTest {
 
 	@Test
 	public void test() {
-		
 		//IwxxmUpdater iwxxmUpdater = new IwxxmUpdater(new RegularGrid());
 		assertTrue(true);
 	}

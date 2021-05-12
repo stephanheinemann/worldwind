@@ -43,7 +43,7 @@ import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes waypoint tests.
+ * Performs waypoint tests.
  * 
  * @author Stephan Heinemann
  */

@@ -48,8 +48,17 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.render.Path;
 
+/**
+ * Performs aircraft tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class AircraftTest {
 
+	/**
+	 * Tests aircraft capabilities.
+	 */
 	@Test
 	public void testCapabilities() {
 		Earth earth = new Earth();

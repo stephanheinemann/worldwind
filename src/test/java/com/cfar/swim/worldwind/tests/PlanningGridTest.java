@@ -47,8 +47,17 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 
+/**
+ * Performs planning grid tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class PlanningGridTest {
 
+	/**
+	 * Tests planning grid structures.
+	 */
 	@Test
 	public void testStructure() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
@@ -99,6 +108,9 @@ public class PlanningGridTest {
         assertEquals(true, planningGrid.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
 	}
 	
+	/**
+	 * Tests planning grid costs.
+	 */
 	@Test
 	public void testCosts() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};

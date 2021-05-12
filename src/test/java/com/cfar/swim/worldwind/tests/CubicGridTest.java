@@ -42,8 +42,17 @@ import gov.nasa.worldwind.geom.Intersection;
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Vec4;
 
+/**
+ * Performs cubic grid tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class CubicGridTest {
 	
+	/**
+	 * Tests cubic grid structures.
+	 */
 	@Test
 	public void testStructure() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
@@ -76,6 +85,9 @@ public class CubicGridTest {
         assertEquals(1, cubicGrid.getAll().size());
 	}
 	
+	/**
+	 * Tests cubic grid normalizers.
+	 */
 	@Test
 	public void testNormalizer() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
@@ -105,6 +117,9 @@ public class CubicGridTest {
         }
 	}
 	
+	/**
+	 * Tests cubic grid intersections.
+	 */
 	@Test
 	public void testIntersections() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
