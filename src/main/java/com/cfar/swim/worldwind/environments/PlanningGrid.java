@@ -575,39 +575,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	}
 	
 	/**
-	 * Embeds an obstacle cylinder with an associated cost interval into this
-	 * planning grid.
-	 * 
-	 * @param obstacle the obstacle cylinder to be embedded
-	 * 
-	 * @return true if an embedding took place, false otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 */
-	public boolean embed(ObstacleCylinder obstacle) {
-		boolean embedded = false;
-		
-		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle) && this.intersectsCylinder(obstacle.getExtent(this.globe))) {
-				this.addCostInterval(obstacle.getCostInterval());
-				this.obstacles.add(obstacle);
-				
-				for (PlanningGrid child : this.getChildren()) {
-					if (child.embed(obstacle)) {
-						this.addAffectedChild(obstacle, child);
-					}
-				}
-				
-				embedded = true;
-			}
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-		
-		return embedded;
-	}
-	
-	/**
 	 * Embeds an obstacle into this planning grid.
 	 * 
 	 * @param obstacle the obstacle to be embedded
@@ -620,10 +587,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	public boolean embed(Obstacle obstacle) {
 		boolean embedded = false;
 		
-		// TODO: review intersection tests (GJK library)
-		/*if (obstacle instanceof ObstacleCylinder) {
-			embedded = this.embed((ObstacleCylinder) obstacle);
-		} else*/ if (null != this.globe) {
+		if (null != this.globe) {
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
@@ -642,13 +606,6 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		
 		return embedded;
 	}
-	
-	// TODO: embed all relevant kinds of (airspace, aircraft) rigid shapes
-	// TODO: think about dynamically changing the resolution and embedded shapes
-	// TODO: embedding should be a recursive operation starting at the root grid cell
-	// TODO: only if parent grid is affected, propagation to children will occur
-	// TODO: performance can be substantially improved by only considering relevant children for propagation
-	// TODO: maximum obstacle radius/extension can limit possible children.
 	
 	/**
 	 * Unembeds an obstacle from this planning grid.
