@@ -79,6 +79,11 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the identifier of a planning continuum environment specification */
 	public static final String ENVIRONMENT_PLANNING_CONTINUUM_ID = "Planning Continuum";
 	
+	/** the description of a planning continuum environment specification */
+	public static final String ENVIRONMENT_PLANNING_CONTINUUM_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.environment.continuum.description");
+	
 	/** the identifier of a forward A* planner specification */
 	public static final String PLANNER_FAS_ID = "Forward A*";
 	
@@ -110,6 +115,15 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	public static final String PLANNER_ADS_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
 			.getString("specification.planner.ads.description");
+	
+	/** the identifier of an RRT planner */
+    public static final String PLANNER_RRT_ID = "RRT";
+    
+    /** the description of an RRT planner specification */
+	public static final String PLANNER_RRT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.rrt.description");
+	
 	
 	/** the identifier of a dronekit datalink specification */
 	public static final String CONNECTION_DATALINK_DRONEKIT_ID = "Dronekit Datalink";

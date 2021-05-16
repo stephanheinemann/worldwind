@@ -29,11 +29,76 @@
  */
 package com.cfar.swim.worldwind.registries.environments;
 
+import java.util.Objects;
+
 /**
  * Realizes the properties bean of a planning continuum environment.
  * 
+ * @author Manuel Rosa
+ * @author Henrique Ferreira
  * @author Stephan Heinemann
  *
  */
 public class PlanningContinuumProperties extends EnvironmentProperties {
+	
+	/** the resolution of this planning continuum properties bean */
+    private double resolution = 2d;
+
+    /**
+     * Gets the resolution of this planning continuum properties bean.
+     * 
+     * @return the resolution of this planning continuum properties bean
+     */
+    public double getResolution() {
+            return resolution;
+    }
+
+    /**
+     * Sets the resolution of this planning continuum properties bean.
+     * 
+     * @param resolution the resolution to be set
+     */
+    public void setResolution(double resolution) {
+            this.resolution = resolution;
+    }
+    
+    /**
+	 * Determines whether or not this planning continuum properties bean equals
+	 * another planning continuum properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other planning continuum properties bean
+	 * 
+	 * @return true, if the aggregated properties of this planning continuum
+	 *         properties bean equal the aggregated properties of the other
+	 *         planning continuum properties bean, false otherwise
+	 * 
+	 * @see EnvironmentProperties#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals && (o instanceof PlanningContinuumProperties)) {
+			PlanningContinuumProperties pcp = (PlanningContinuumProperties) o;
+			equals = (this.resolution == pcp.resolution);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this planning continuum properties bean based on
+	 * its aggregated properties.
+	 * 
+	 * @return the hash code of this planning continuum properties bean based
+	 *         on its aggregated properties
+	 * 
+	 * @see EnvironmentProperties#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(super.hashCode(), this.resolution);
+	}
+	
 }

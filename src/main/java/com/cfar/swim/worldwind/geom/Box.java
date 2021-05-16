@@ -41,6 +41,7 @@ import com.bulletphysics.linearmath.Transform;
 import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
+import com.jogamp.opengl.GL2;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Cylinder;
@@ -52,7 +53,9 @@ import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.TransformationMatrix;
 import gov.nasa.worldwind.geom.Vec4;
+import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.util.Logging;
+import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
  * Realizes a geometric box that allows for convenient containment and
@@ -112,6 +115,16 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * the local transformation matrix of this box
 	 */
 	protected Matrix toLocalOrigin = null;
+	
+	/**
+	 * the drawing color of this box
+	 */
+	private float[] color = {1.0f, 1.0f, 1.0f, 1.0f};
+	
+	/**
+	 * the visibility state of this box
+	 */
+	protected boolean visible = true;
 	
 	/**
 	 * {@inheritDoc}
@@ -491,6 +504,18 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
+	 * Transforms a box vector into a Cartesian world model vector using the
+	 * first corner of this box as origin.
+	 * 
+	 * @param boxPoint the box vector
+	 * 
+	 * @return the box world model vector
+	 */
+	public Vec4 transformBoxOriginToModel(Vec4 boxPoint) {
+		return boxPoint.transformBy4(this.toLocalOrigin.getInverse());
+	}
+	
+	/**
 	 * Transforms a Cartesian world model vector into a box vector using the
 	 * center of this box as origin.
 	 * 
@@ -834,6 +859,74 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 		return solver.collide(
 				boxShape, boxTransform, cylinderShape, cylinderTransform,
 				(float) Precision.EPSILON, results);
+	}
+	
+	/**
+	 * Sets the drawing color of this box.
+	 * 
+	 * @param red the red color component between 0.0 and 1.0
+	 * @param green the green color component between 0.0 and 1.0
+	 * @param blue the blue color component between 0.0 and 1.0
+	 * @param alpha the alpha component between 0.0 and 1.0
+	 */
+	public void setColor(float red, float green, float blue, float alpha) {
+		this.color[0] = red;
+		this.color[1] = green;
+		this.color[2] = blue;
+		this.color[3] = alpha;
+	}
+	
+	/**
+	 * Sets the visibility state of this box.
+	 * 
+	 * @param visible true if this box is visible, false otherwise
+	 */
+	public void setVisible(boolean visible) {
+		this.visible = visible;
+	}
+	
+	/**
+	 * Renders this box using a drawing context.
+	 * 
+	 * @param dc the drawing context
+	 * 
+	 * @see gov.nasa.worldwind.geom.Box#render(DrawContext)
+	 */
+	@Override
+	public void render(DrawContext dc) {
+		if (this.visible) {
+			super.render(dc);
+		}
+	}
+	
+	/**
+	 * Draws this box using a drawing context.
+	 * 
+	 * @see gov.nasa.worldwind.geom.Box
+	 */
+	@Override
+	protected void drawBox(DrawContext dc, Vec4 a, Vec4 b, Vec4 c, Vec4 d) {
+		Vec4 e = a.add3(r);
+		Vec4 f = d.add3(r);
+		GL2 gl = dc.getGL().getGL2();
+
+		dc.getView().pushReferenceCenter(dc, bottomCenter);
+		OGLStackHandler ogsh = new OGLStackHandler();
+		ogsh.pushModelview(gl);
+		try {
+			gl.glColor4f(this.color[0], this.color[1], this.color[2], this.color[3]);
+			this.drawOutline(dc, a, b, c, d);
+			gl.glTranslated(r.x, r.y, r.z);
+			this.drawOutline(dc, a, b, c, d);
+			gl.glPopMatrix();
+			gl.glPushMatrix();
+			this.drawOutline(dc, a, e, f, d);
+			gl.glTranslated(s.x, s.y, s.z);
+			this.drawOutline(dc, a, e, f, d);
+		} finally {
+			ogsh.pop(gl);
+			dc.getView().popReferenceCenter(dc);
+		}
 	}
 	
 }

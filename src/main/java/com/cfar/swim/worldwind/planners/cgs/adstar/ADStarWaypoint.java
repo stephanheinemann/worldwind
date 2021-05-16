@@ -38,7 +38,8 @@ import gov.nasa.worldwind.geom.Position;
 
 /**
  * Realizes an AD* waypoint of a trajectory featuring estimates for costs and
- * time. AD* waypoints are used by AD* planners. 
+ * time as well as consistency information. AD* waypoints are used by AD*
+ * planners. 
  * 
  * @author Stephan Heinemann
  *

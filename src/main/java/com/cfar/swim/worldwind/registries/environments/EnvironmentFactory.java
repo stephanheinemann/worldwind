@@ -147,8 +147,12 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 				// TODO: implement
 				environment = new PlanningRoadmap();
 			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID)) {
-				// TODO: implement
-				environment = new PlanningContinuum();
+				PlanningContinuumProperties properties = (PlanningContinuumProperties) this.specification.getProperties();
+				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
+				Box envBox = new Box(bb);
+				environment = new PlanningContinuum(envBox, properties.getResolution());
+				environment.setThreshold(0d);
+				environment.setGlobe(this.scenario.getGlobe());
 			}
 		}
 		

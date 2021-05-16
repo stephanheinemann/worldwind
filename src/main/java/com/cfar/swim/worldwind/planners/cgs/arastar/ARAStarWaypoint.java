@@ -35,7 +35,8 @@ import gov.nasa.worldwind.geom.Position;
 
 /**
  * Realizes an ARA* waypoint of a trajectory featuring estimates for costs and
- * time. ARA* waypoints are used by ARA* planners. 
+ * time as well as inflation information. ARA* waypoints are used by ARA*
+ * planners. 
  * 
  * @author Stephan Heinemann
  *

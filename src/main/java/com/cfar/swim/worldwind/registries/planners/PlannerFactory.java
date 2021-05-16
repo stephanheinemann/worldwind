@@ -37,12 +37,14 @@ import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ForwardAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ThetaStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.session.Scenario;
 
 /**
@@ -162,6 +164,15 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((ADStarPlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 				((ADStarPlanner) planner).setSignificantChange(properties.getSignificantChange());
 				((ADStarPlanner) planner).setObstacleManager(this.scenario);
+			} else if (this.specification.getId().equals(Specification.PLANNER_RRT_ID)) {
+				RRTreeProperties properties = (RRTreeProperties) this.specification.getProperties();
+				// TODO: simplify constructor - review RRT planner
+				planner = new RRTreePlanner(this.scenario.getAircraft(), this.scenario.getEnvironment(),
+						properties.getEpsilon(), properties.getBias(), properties.getMaxIterations(),
+						properties.getStrategy(), properties.getExtension());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+				((RRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
 			}
 			// TODO: implement more planners
 		}

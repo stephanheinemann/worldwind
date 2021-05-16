@@ -62,6 +62,7 @@ import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ForwardAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ThetaStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.Configuration;
@@ -180,7 +181,7 @@ public class Session implements Identifiable {
 		this.environmentRegistry.clearSpecifications();
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_GRID_ID, Specification.ENVIRONMENT_PLANNING_GRID_DESCRIPTION, new PlanningGridProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
-		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID, Specification.ENVIRONMENT_PLANNING_CONTINUUM_DESCRIPTION, new PlanningContinuumProperties()));
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		
 		// planners
@@ -189,6 +190,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, Specification.PLANNER_TS_DESCRIPTION, new ThetaStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, Specification.PLANNER_ARAS_DESCRIPTION, new ARAStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADS_ID, Specification.PLANNER_ADS_DESCRIPTION, new ADStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRT_ID, Specification.PLANNER_RRT_DESCRIPTION, new RRTreeProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		// datalinks
