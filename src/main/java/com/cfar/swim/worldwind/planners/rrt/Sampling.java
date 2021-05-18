@@ -30,8 +30,8 @@
 package com.cfar.swim.worldwind.planners.rrt;
 
 /**
- * Enumerates the possible sampling techniques to create the next sample for a
- * RRT planner.
+ * Enumerates the possible sampling distributions to create the next sample for
+ * a RRT planner.
  * 
  * @author Manuel Rosa
  *
@@ -45,7 +45,7 @@ public enum Sampling {
 	UNIFORM,
 	
 	/**
-	 * Samples a pseudo-random point from an Gaussian distribution over the
+	 * Samples a pseudo-random point from a Gaussian distribution over the
 	 * entire space delimited by the environment
 	 */
 	GAUSSIAN,
@@ -53,7 +53,7 @@ public enum Sampling {
 	/**
 	 * Samples a pseudo-random point from an uniform distribution over the
 	 * intersection of the environment and an ellipsoid with foci at the start
-	 * and goal positions and a particular distance
+	 * and goal positions and a given major ellipsoid diameter
 	 */
 	ELLIPSOIDAL;
 

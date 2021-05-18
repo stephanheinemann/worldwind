@@ -30,9 +30,11 @@
 package com.cfar.swim.worldwind.geom;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.cfar.swim.worldwind.geom.precision.Precision;
+import com.google.common.base.Objects;
 import com.jogamp.opengl.GL2;
 
 import gov.nasa.worldwind.geom.Extent;
@@ -48,10 +50,11 @@ import gov.nasa.worldwind.util.OGLStackHandler;
  * 
  * @author Stephan Heinemann
  *
- * @hidden Line is a final class and cannot be extended
  */
 public class LineSegment /* extends Line */ implements Renderable {
 
+	// NOTE: Line is a final class and cannot be extended
+	
 	/** the line of this line segment */
 	private Line line;
 	
@@ -226,6 +229,7 @@ public class LineSegment /* extends Line */ implements Renderable {
 			intersections = Stream.concat(
 					Arrays.stream(extent.intersect(this.getLine())),
 					Arrays.stream(extent.intersect(this.getInverse().getLine())))
+			.collect(Collectors.toSet())
 			.toArray(Intersection[]::new);
 		} else if ((null != i1) && (null == i2)) {
 			intersections = i1;
@@ -383,6 +387,45 @@ public class LineSegment /* extends Line */ implements Renderable {
 		gl.glVertex3d(this.first.x, this.first.y, this.first.z);
 		gl.glVertex3d(this.second.x, this.second.y, this.second.z);
 		gl.glEnd();
+	}
+	
+	/**
+	 * Determines whether or not this line segment equals another line segment
+	 * based on their end positions.
+	 * 
+	 * @param o the other line segment
+	 * 
+	 * @return true if the end positions of this line segment equal the end
+	 *         positions of the other line segment (regardless of order),
+	 *         false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = false;
+
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (o instanceof LineSegment)) {
+			LineSegment segment = (LineSegment) o;
+			equals = this.isEndpoint(segment.getFirst())
+					&& this.isEndpoint(segment.getSecond());
+		}
+
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this line segment based on its end positions.
+	 * 
+	 * @return the hash code of this line segment based on its end positions
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hashCode(this.getFirst(), this.getSecond());
 	}
 	
 }

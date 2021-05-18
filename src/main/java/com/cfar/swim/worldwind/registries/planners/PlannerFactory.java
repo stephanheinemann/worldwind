@@ -166,12 +166,15 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((ADStarPlanner) planner).setObstacleManager(this.scenario);
 			} else if (this.specification.getId().equals(Specification.PLANNER_RRT_ID)) {
 				RRTreeProperties properties = (RRTreeProperties) this.specification.getProperties();
-				// TODO: simplify constructor - review RRT planner
-				planner = new RRTreePlanner(this.scenario.getAircraft(), this.scenario.getEnvironment(),
-						properties.getEpsilon(), properties.getBias(), properties.getMaxIterations(),
-						properties.getStrategy(), properties.getExtension());
+				planner = new RRTreePlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
+				((RRTreePlanner) planner).setSampling(properties.getSampling());
+				((RRTreePlanner) planner).setStrategy(properties.getStrategy());
+				((RRTreePlanner) planner).setExtension(properties.getExtension());
+				((RRTreePlanner) planner).setMaxIterations(properties.getMaxIterations());
+				((RRTreePlanner) planner).setEpsilon(properties.getEpsilon());
+				((RRTreePlanner) planner).setBias(properties.getBias());
 				((RRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
 			}
 			// TODO: implement more planners

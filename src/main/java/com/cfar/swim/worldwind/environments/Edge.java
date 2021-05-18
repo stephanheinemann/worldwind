@@ -51,7 +51,6 @@ import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
-import com.google.common.base.Objects;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -77,9 +76,10 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	private double activeCost;
 	
 	/**
-	 * Constructs a new edge based on two end positions.
+	 * Constructs a new edge within a planning continuum based on two end
+	 * positions.
 	 * 
-	 * @param continuum the planning continuum of this edge
+	 * @param continuum the planning continuum containing this edge
 	 * @param first the first end position of this edge
 	 * @param second the second end position of this edge
 	 */
@@ -516,43 +516,6 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 */
 	protected void updateVisibility() {
 		this.setVisible(this.activeCost > this.getThreshold());
-	}
-
-	/**
-	 * Determines whether or not this edge equals another edge based on their
-	 * end positions.
-	 * 
-	 * @param o the other edge
-	 * 
-	 * @return true if the end positions of this edge equal the end positions
-	 *         of the other edge (regardless of order), false otherwise
-	 * 
-	 * @see Object#equals(Object)
-	 */
-	@Override
-	public final boolean equals(Object o) {
-		boolean equals = false;
-
-		if (this == o) {
-			equals = true;
-		} else if ((null != o) && (o instanceof Edge)) {
-			Edge edge = (Edge) o;
-			equals = this.isEndpoint(edge.getFirst()) && this.isEndpoint(edge.getSecond());
-		}
-
-		return equals;
-	}
-	
-	/**
-	 * Gets the hash code of this edge based on its end positions.
-	 * 
-	 * @return the hash code of this edge based on its end positions
-	 * 
-	 * @see Object#hashCode()
-	 */
-	@Override
-	public final int hashCode() {
-		return Objects.hashCode(this.getFirst(), this.getSecond());
 	}
 	
 }

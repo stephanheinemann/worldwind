@@ -157,7 +157,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	/**
 	 * Sets the start A* waypoint of this forward A* planner.
 	 * 
-	 * @param start the start waypoint of this forward A* planner
+	 * @param start the start A* waypoint of this forward A* planner
 	 */
 	protected void setStart(AStarWaypoint start) {
 		this.start = start;

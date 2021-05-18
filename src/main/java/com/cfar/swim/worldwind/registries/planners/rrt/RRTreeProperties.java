@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.registries.planners.rrt;
 import java.util.Objects;
 
 import com.cfar.swim.worldwind.planners.rrt.Extension;
+import com.cfar.swim.worldwind.planners.rrt.Sampling;
 import com.cfar.swim.worldwind.planners.rrt.Strategy;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
@@ -45,13 +46,16 @@ import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
  */
 public class RRTreeProperties extends AbstractPlannerProperties {
 	
-	/** the expansion strategy for the RRT planner */
+	/** the sampling distribution of the RRT planner */
+	private Sampling sampling = Sampling.UNIFORM;
+	
+	/** the expansion strategy of the RRT planner */
 	private Strategy strategy = Strategy.EXTEND;
 	
-	/** the extension technique for the RRT planner */
+	/** the extension technique of the RRT planner */
 	private Extension extension = Extension.LINEAR;
 	
-	/** the maximum number of sampling iterations */
+	/** the maximum number of sampling iterations of the RRT planner */
 	private int maxIterations = 3_000;
 	
 	/** the maximum extension distance to a waypoint in the tree */
@@ -60,7 +64,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	/** the sampling bias towards the goal */
 	private int bias = 5;
 	
-	/** the distance defining the goal region */
+	/** the radius of the sphere defining the goal region */
 	private double goalThreshold = 1d;
 	
 	/**
@@ -85,13 +89,15 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	
 	/**
 	 * Constructs a new basic RRT planner properties bean with specified cost
-	 * and risk policy property values as well as specified expansion strategy,
-	 * extension technique, maximum number of iterations, maximum distance for
-	 * extensions, and goal bias.
+	 * and risk policy property values as well as specified sampling
+	 * distribution, expansion strategy, extension technique, maximum number of
+	 * iterations, maximum distance for extensions, and goal bias.
 	 * 
 	 * @param costPolicy    the cost policy of this basic RRT planner
 	 *                      properties bean
 	 * @param riskPolicy    the risk policy of this basic RRT planner
+	 *                      properties bean
+	 * @param sampling      the sampling distribution of this basic RRT planner
 	 *                      properties bean
 	 * @param strategy      the expansion strategy of this basic RRT planner
 	 *                      properties bean
@@ -103,13 +109,14 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 *                      tree of this basic RRT planner properties bean
 	 * @param bias          the sampling bias towards the goal of this basic
 	 *                      RRT planner properties bean
-	 * @param goalThreshold the distance defining the goal region of this basic
-	 *                      RRT planner properties bean 
+	 * @param goalThreshold the radius of the sphere defining the goal region
+	 *                      of this basic RRT planner properties bean 
 	 */
 	public RRTreeProperties(CostPolicy costPolicy, RiskPolicy riskPolicy,
-			Strategy strategy, Extension extension, int maxIterations,
-			double epsilon, int bias, double goalThreshold) {
+			Sampling sampling, Strategy strategy, Extension extension,
+			int maxIterations, double epsilon, int bias, double goalThreshold) {
 		super(costPolicy, riskPolicy);
+		this.setSampling(sampling);
 		this.setStrategy(strategy);
 		this.setExtension(extension);
 		this.setMaxIterations(maxIterations);
@@ -119,12 +126,30 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	}
 	
 	/**
+	 * Gets the sampling distribution of this RRT planner properties bean.
+	 * 
+	 * @return the sampling distribution of this RRT planner properties bean
+	 */
+	public Sampling getSampling() {
+		return this.sampling;
+	}
+	
+	/**
+	 * Sets the sampling distribution of this RRT planner properties bean.
+	 * 
+	 * @param sampling the sampling distribution to be set
+	 */
+	public void setSampling(Sampling sampling) {
+		this.sampling = sampling;
+	}
+	
+	/**
 	 * Gets the expansion strategy of this RRT planner properties bean.
 	 * 
 	 * @return the expansion strategy of this RRT planner properties bean
 	 */
 	public Strategy getStrategy() {
-		return strategy;
+		return this.strategy;
 	}
 	
 	/**
@@ -142,7 +167,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 * @return the extension technique of this RRT planner properties bean
 	 */
 	public Extension getExtension() {
-		return extension;
+		return this.extension;
 	}
 	
 	/**
@@ -162,7 +187,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 *         properties bean
 	 */
 	public int getMaxIterations() {
-		return maxIterations;
+		return this.maxIterations;
 	}
 	
 	/**
@@ -183,7 +208,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 *         bean
 	 */
 	public double getEpsilon() {
-		return epsilon;
+		return this.epsilon;
 	}
 	
 	/**
@@ -204,11 +229,12 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 *         properties bean
 	 */
 	public int getBias() {
-		return bias;
+		return this.bias;
 	}
 	
 	/**
-	 * Sets the sampling bias towards goal of this RRT planner properties bean.
+	 * Sets the sampling bias towards the goal of this RRT planner properties
+	 * bean.
 	 * 
 	 * @param bias the sampling bias to be set
 	 */
@@ -217,21 +243,22 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	}
 	
 	/**
-	 * Gets the distance defining the goal region of this RRT planner
-	 * properties bean.
+	 * Gets the the radius of the sphere defining the goal region of this RRT
+	 * planner properties bean.
 	 * 
-	 * @return the distance defining the goal region of this RRT planner
-	 *         properties bean
+	 * @return the radius of the sphere defining the goal region of this RRT
+	 *         planner properties bean
 	 */
 	public double getGoalThreshold() {
-		return goalThreshold;
+		return this.goalThreshold;
 	}
 	
 	/**
-	 * Sets the distance defining the goal region of this RRT planner
-	 * properties bean.
+	 * Sets the radius of the sphere defining the goal region of this RRT
+	 * planner properties bean.
 	 * 
-	 * @param goalThreshold the distance defining the goal region to be set
+	 * @param goalThreshold the radius of the sphere defining the goal region
+	 *                      to be set
 	 */
 	public void setGoalThreshold(double goalThreshold) {
 		this.goalThreshold = goalThreshold;

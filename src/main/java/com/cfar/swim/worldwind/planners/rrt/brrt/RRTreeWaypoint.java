@@ -73,29 +73,4 @@ public class RRTreeWaypoint extends Waypoint {
 		this.parent = parent;
 	}
 	
-	/**
-	 * Gets the estimated current cost (g-value) of this RRT waypoint.
-	 * 
-	 * @return the estimated current cost (g-value) of this RRT waypoint
-	 * 
-	 * @see Waypoint#getCost()
-	 */
-	public double getG() {
-		return super.getCost();
-	}
-	
-	/**
-	 * Sets the estimated current cost (g-value) of this RRT waypoint.
-	 * 
-	 * @param g the estimated current cost (g-value) of this RRT waypoint
-	 * 
-	 * @see Waypoint#setCost(double)
-	 */
-	public void setG(double g) {
-		if (0d > g) {
-			throw new IllegalArgumentException("g is less than 0");
-		}
-		super.setCost(g);
-	}
-	
 }

@@ -98,7 +98,7 @@ public class PlanningContinuum extends Box implements Environment {
 	//private HashSet<TerrainObstacle> terrainObstacles = new HashSet<TerrainObstacle>();
 
 	/** the list of already sampled waypoints */
-	private List<Waypoint> waypoints = new ArrayList<Waypoint>();
+	private List<? extends Waypoint> waypoints = new ArrayList<Waypoint>();
 
 	/** the list of edges in this environment */
 	private List<Edge> edges = new ArrayList<Edge>();
@@ -373,39 +373,58 @@ public class PlanningContinuum extends Box implements Environment {
 	*/
 
 	/**
-	 * Gets the list of already sampled waypoints
+	 * Gets the previously sampled waypoints of this planning continuum.
 	 * 
-	 * @return the waypoints the list of waypoints
+	 * @return the previously sampled waypoints of this planning continuum
 	 */
-	public List<? extends Waypoint> getWaypointList() {
+	public List<? extends Waypoint> getWaypoints() {
+		// environments do not know waypoints but positions only
+		// TODO: an environment contains sampled positions that can be waypoints of a trajectory
+		// Set<? extends Position> getWaypointPositions()
+		// pull up to Environment?
+		// TODO: shall the internal structure be exposed and modifiable?
+		// consider add, remove, clear, sort...
 		return waypoints;
 	}
 
 	/**
-	 * Sets the list of already sampled waypoints.
+	 * Sets the previously sampled waypoints of this planning continuum.
 	 * 
-	 * @param waypoints the list of waypoints to set
+	 * @param waypoints the previously sampled waypoints to be set
 	 */
-	public void setWaypointList(List<Waypoint> waypointList) {
-		this.waypoints = waypointList;
+	public void setWaypoints(List<? extends Waypoint> waypoints) {
+		// environments do not know waypoints but positions only
+		// TODO: an environment contains sampled positions that can be waypoints of a trajectory
+		// void setWaypointPositions(Set<? extends Position> positions)
+		// pull up to Environment?
+		// TODO: shall the internal structure be exposed and modifiable?
+		// consider add, remove, clear, sort...
+		this.waypoints = waypoints;
 	}
 
 	/**
-	 * Gets the list of edges in this environment.
+	 * Gets the previously sampled edges of this planning continuum.
 	 * 
-	 * @return the edges the list of edges
+	 * @return the previously sampled edges of this planning continuum
 	 */
-	public List<? extends Edge> getEdgeList() {
-		return edges;
+	public List<? extends Edge> getEdges() {
+		// TODO: pull up to Environment?
+		// TODO: shall the internal structure be exposed and modifiable?
+		// consider add, remove, clear, sort...
+		// TODO: ? extends Edge -> hierarchical refinement of edge?
+		return this.edges;
 	}
 
 	/**
-	 * Sets the list of edges in this environment.
+	 * Sets the previously sampled edges of this planning continuum.
 	 * 
-	 * @param edges the list of edges to set
+	 * @param edges the previously sampled edges to be set
 	 */
-	public void setEdgeList(List<Edge> edgeList) {
-		this.edges = edgeList;
+	public void setEdges(List<Edge> edges) {
+		// TODO: pull up to Environment?
+		// TODO: shall the internal structure be exposed and modifiable?
+		// consider add, remove, clear, sort...
+		this.edges = edges;
 	}
 
 	/**
@@ -416,19 +435,19 @@ public class PlanningContinuum extends Box implements Environment {
 	protected void refreshEdgeList() {
 		List<Edge> validEdges = new ArrayList<Edge>();
 
-		for (Edge edge : this.getEdgeList()) {
+		for (Edge edge : this.getEdges()) {
 			Waypoint waypoint1 = (Waypoint) edge.getFirstPosition();
-			if (!this.getWaypointList().contains(waypoint1))
+			if (!this.getWaypoints().contains(waypoint1))
 				continue;
 
 			Waypoint waypoint2 = (Waypoint) edge.getSecondPosition();
-			if (!this.getWaypointList().contains(waypoint2))
+			if (!this.getWaypoints().contains(waypoint2))
 				continue;
 
 			validEdges.add(edge);
 		}
 
-		this.setEdgeList(validEdges);
+		this.setEdges(validEdges);
 	}
 
 	/**
@@ -453,7 +472,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 * 
 	 * @return the correspondent waypoint in the list, if present, null otherwise
 	 */
-	public Optional<Waypoint> getWaypoint(Position position1) {
+	public Optional<? extends Waypoint> getWaypoint(Position position1) {
 
 		return this.waypoints.stream().filter(s -> s.equals(position1)).findFirst();
 	}
@@ -643,7 +662,7 @@ public class PlanningContinuum extends Box implements Environment {
 		Set<Position> neighbors = new HashSet<Position>();
 
 		if (null != this.globe) {
-			neighbors = this.getEdgeList().stream().filter(s -> s.isEndPosition(position))
+			neighbors = this.getEdges().stream().filter(s -> s.isEndPosition(position))
 					.map(s -> s.getOtherPosition(position)).collect(Collectors.toSet());
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -867,7 +886,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 * @return the set of affected edges
 	 */
 	public Set<Edge> findAffectedEdges(Obstacle obstacle) {
-		return this.getEdgeList().stream().filter(e ->  e.intersects(obstacle.getExtent(this.getGlobe())))
+		return this.getEdges().stream().filter(e ->  e.intersects(obstacle.getExtent(this.getGlobe())))
 				.collect(Collectors.toSet());
 	}
 
@@ -877,7 +896,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 * @param obstacle the obstacle to be embedded
 	 */
 	public void embedEdges(Obstacle obstacle) {
-		for (Edge edge : this.getEdgeList()) {
+		for (Edge edge : this.getEdges()) {
 			if (edge.intersects(obstacle.getExtent(this.globe))) {
 				edge.addCostInterval(obstacle.getCostInterval());
 			}
@@ -1203,12 +1222,13 @@ public class PlanningContinuum extends Box implements Environment {
 		free = environment - obstacle;
 		return free;
 	}
-
+	
 	/**
-	 * Samples a position from a continuous space defined in the current
-	 * environment.
+	 * Samples a random position from within this planning continuum using a
+	 * uniform distribution.
 	 * 
-	 * @return position in globe coordinates inside the environment
+	 * @return the sampled position from within this planning continuum using
+	 *         the uniform distribution in globe coordinates
 	 */
 	public Position sampleRandomPosition() {
 		Vec4[] corners = this.getCorners();
@@ -1233,12 +1253,13 @@ public class PlanningContinuum extends Box implements Environment {
 
 		return position;
 	}
-
+	
 	/**
-	 * Samples a random position utilizing a gaussian distribution from a continuous
-	 * space defined in the current environment.
+	 * Samples a random position from within this planning continuum using a
+	 * Gaussian (normal) distribution.
 	 * 
-	 * @return position in globe coordinates inside the environment
+	 * @return the sampled waypoint from within this planning continuum using
+	 *         the Gaussian (normal) distribution in globe coordinates
 	 */
 	public Position sampleRandomGaussianPosition() {
 		Vec4[] corners = this.getCorners();
@@ -1272,26 +1293,28 @@ public class PlanningContinuum extends Box implements Environment {
 
 		return position;
 	}
-
+	
 	/**
-	 * Samples a pseudo-random position from the intersection of the continuous
-	 * space defined in the current environment and an ellipsoid defined by its two
-	 * foci points and the maximum distance.
+	 * Samples a random position from within the intersection of this planning
+	 * continuum and an ellipsoid defined by two foci positions and the length
+	 * of its major axis diameter.
 	 * 
-	 * @param focusA the focus pointA in world coordinates
-	 * @param focusB the focus pointA in world coordinates
-	 * @param distance double the length for the major axis of the ellipsoid
+	 * @param focusA the focus A in globe coordinates
+	 * @param focusB the focus B in globe coordinates
+	 * @param diameter the length of the major axis diameter
 	 * 
-	 * @throws IllegalStateException if distance between foci is larger than bound
+	 * @return the sampled position from within the intersection of this
+	 *         planning continuum and the ellipsoid
 	 * 
-	 * @return the pseudo-random sampled position
+	 * @throws IllegalArgumentException if the distance between the foci is
+	 *         greater than the length of the major axis
 	 */
-	public Position samplePositionEllipsoid(Position focusA, Position focusB, double distance) {
+	public Position sampleRandomEllipsoidPosition(Position focusA, Position focusB, double diameter) {
 		// Test if the box is more restrictive than the ellipsoid "diameter"
-		if (distance > this.getDiameter())
+		if (diameter > this.getDiameter())
 			return sampleRandomPosition();
-		if (distance < this.getDistance(focusA, focusB)) {
-			throw new IllegalStateException("Distance between foci larger than bound");
+		if (diameter < this.getDistance(focusA, focusB)) {
+			throw new IllegalArgumentException("Distance between foci larger than bound");
 		}
 
 		Position positionRand;
@@ -1300,7 +1323,7 @@ public class PlanningContinuum extends Box implements Environment {
 		Position positionM = CoordinateTransformations.middlePosition(focusA, focusB, getGlobe());
 
 		// Ellipsoid parameters
-		double a = distance / 2d;
+		double a = diameter / 2d;
 		double c = this.getDistance(focusA, focusB) / 2d;
 		double b = Math.sqrt(a * a - c * c);
 		do {
@@ -1413,20 +1436,23 @@ public class PlanningContinuum extends Box implements Environment {
 	}
 
 	/**
-	 * Finds the k-nearest waypoints to the given position.
+	 * Finds the k-nearest sampled positions for a the given position in this
+	 * planning continuum.
 	 * 
-	 * @param position the position in global coordinates
-	 * @param kNear number of waypoints to return
+	 * @param position the position to query in globe coordinates
+	 * @param kNear the number of sampled positions to be found
 	 * 
-	 * @return list of k-nearest waypoints sorted by increasing distance
+	 * @return the k-nearest sampled position for the given position in this
+	 *         planning continuum sorted by increasing distance
 	 */
 	public List<? extends Position> findNearest(Position position, int kNear) {
-
-		return this.getWaypointList().stream()
-				.sorted((p1, p2) -> Double.compare(this.getNormalizedDistance(p1, position),
+		// TODO: environment stores positions, not waypoints
+		return this.getWaypoints().stream()
+				.sorted((p1, p2) -> Double.compare(
+						this.getNormalizedDistance(p1, position),
 						this.getNormalizedDistance(p2, position)))
-				.filter(p -> !p.equals(position)).limit(kNear).collect(Collectors.toList());
-
+				.filter(p -> !p.equals(position))
+				.limit(kNear).collect(Collectors.toList());
 	}
 
 	/**
@@ -1439,7 +1465,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 */
 	public List<? extends Position> findNearestDist(Position position, double maxDist) {
 
-		return this.getWaypointList().stream()
+		return this.getWaypoints().stream()
 				.sorted((p1, p2) -> Double.compare(this.getNormalizedDistance(p1, position),
 						this.getNormalizedDistance(p2, position)))
 				.filter(p -> this.getDistance(p, position) <= maxDist && !p.equals(position))
@@ -1454,7 +1480,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 */
 	public void sortNearest(Position position) {
 
-		this.setWaypointList(this.getWaypointList().stream().sorted((p1, p2) -> Double
+		this.setWaypoints(this.getWaypoints().stream().sorted((p1, p2) -> Double
 				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
 				.collect(Collectors.toList()));
 
@@ -1491,12 +1517,11 @@ public class PlanningContinuum extends Box implements Environment {
 	@Override
 	public void render(DrawContext dc) {
 		if (this.visible) {
-			//super.render(dc);
-			// TODO: CME observed here
+			super.render(dc);
+			// TODO: CME observed here (include edges in environment layer?)
 			for (Edge edge : this.edges) {
 				edge.render(dc);
 			}
-			super.render(dc);
 		}
 	}
 

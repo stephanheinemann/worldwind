@@ -65,10 +65,10 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
-			PropertyDescriptor maxIterations = this.createPropertyDescriptor(
-					"maxIterations",
-					this.dictionary.getString("property.planner.rrt.maxIterations.name"),
-					this.dictionary.getString("property.planner.rrt.maxIterations.description"),
+			PropertyDescriptor sampling = this.createPropertyDescriptor(
+					"sampling",
+					this.dictionary.getString("property.planner.rrt.sampling.name"),
+					this.dictionary.getString("property.planner.rrt.sampling.description"),
 					this.dictionary.getString("property.planner.category.sampling"));
 			PropertyDescriptor strategy = this.createPropertyDescriptor(
 					"strategy",
@@ -79,6 +79,11 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 					"extension",
 					this.dictionary.getString("property.planner.rrt.extension.name"),
 					this.dictionary.getString("property.planner.rrt.extension.description"),
+					this.dictionary.getString("property.planner.category.sampling"));
+			PropertyDescriptor maxIterations = this.createPropertyDescriptor(
+					"maxIterations",
+					this.dictionary.getString("property.planner.rrt.maxIterations.name"),
+					this.dictionary.getString("property.planner.rrt.maxIterations.description"),
 					this.dictionary.getString("property.planner.category.sampling"));
 			PropertyDescriptor epsilon = this.createPropertyDescriptor(
 					"epsilon",
@@ -97,9 +102,10 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 					this.dictionary.getString("property.planner.category.sampling"));
 			
 			PropertyDescriptor[] adsDescriptors = new PropertyDescriptor[] {
-					maxIterations,
+					sampling,
 					strategy,
 					extension,
+					maxIterations,
 					epsilon,
 					bias,
 					goalThreshold};
