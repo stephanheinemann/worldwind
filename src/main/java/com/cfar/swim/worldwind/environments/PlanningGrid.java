@@ -75,7 +75,7 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  * @author Stephan Heinemann
  *
  */
-public class PlanningGrid extends CubicGrid implements Environment {
+public class PlanningGrid extends CubicGrid implements DynamicEnvironment, MultiResolutionEnvironment {
 	
 	/** the base cost of this planning grid */
 	private static final double BASE_COST = 1d;
@@ -100,6 +100,9 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	
 	/** the affected children of obstacle embeddings */
 	private HashMap<Obstacle, List<PlanningGrid>> affectedChildren = new HashMap<Obstacle, List<PlanningGrid>>();
+	
+	/** the structural change listeners of this planning grid */
+	private Set<StructuralChangeListener> listeners = new HashSet<StructuralChangeListener>();
 	
 	/**
 	 * Constructs a planning grid based on a geometric cube without any
@@ -525,7 +528,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @param obstacle the embedded obstacle
 	 * 
-	 * @see Environment#refresh(Obstacle)
+	 * @see DynamicEnvironment#refresh(Obstacle)
 	 */
 	@Override
 	public void refresh(Obstacle obstacle) {
@@ -581,7 +584,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return true if the obstacle has been embedded, false otherwise
 	 * 
-	 * @see Environment#embed(Obstacle)
+	 * @see DynamicEnvironmentt#embed(Obstacle)
 	 */
 	@Override
 	public boolean embed(Obstacle obstacle) {
@@ -614,7 +617,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return true if the obstacle has been unembedded, false otherwise
 	 * 
-	 * @see Environment#unembed(Obstacle)
+	 * @see DynamicEnvironment#unembed(Obstacle)
 	 */
 	@Override
 	public boolean unembed(Obstacle obstacle) {
@@ -640,7 +643,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	/**
 	 * Unembeds all obstacles from this planning grid.
 	 * 
-	 * @see Environment#unembedAll()
+	 * @see DynamicEnvironment#unembedAll()
 	 */
 	@Override
 	public void unembedAll() {
@@ -667,7 +670,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return true if the obstacle is embedded in this planning grid,
 	 *         false otherwise
 	 * 
-	 * @see Environment#isEmbedded(Obstacle)
+	 * @see DynamicEnvironment#isEmbedded(Obstacle)
 	 */
 	@Override
 	public boolean isEmbedded(Obstacle obstacle) {
@@ -698,7 +701,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return the children of this planning grid that are affected by an
 	 *         obstacle embedding
 	 * 
-	 * @see Environment#getAffectedChildren(Obstacle)
+	 * @see DynamicEnvironment#getAffectedChildren(Obstacle)
 	 */
 	@Override
 	public Set<? extends PlanningGrid> getAffectedChildren(Obstacle obstacle) {
@@ -719,7 +722,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return the waypoint positions of this planning grid that are affected
 	 *         by an obstacle embedding
 	 * 
-	 * @see Environment#getAffectedWaypointPositions(Obstacle)
+	 * @see DynamicEnvironment#getAffectedWaypointPositions(Obstacle)
 	 */
 	@Override
 	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle) {
@@ -743,7 +746,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * @return the waypoint positions of this planning grid that are affected by
 	 *         obstacle embeddings
 	 * 
-	 * @see Environment#getAffectedWaypointPositions(Set)
+	 * @see DynamicEnvironment#getAffectedWaypointPositions(Set)
 	 */
 	@Override
 	public Set<Position> getAffectedWaypointPositions(Set<Obstacle> obstacles) {
@@ -865,7 +868,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return true if this planning grid is refined, false otherwise
 	 * 
-	 * @see Environment#isRefined()
+	 * @see MultiResolutionEnvironment#isRefined()
 	 */
 	@Override
 	public boolean isRefined() {
@@ -877,7 +880,7 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @return the refinements of this planning grid
 	 * 
-	 * @see Environment#getRefinements()
+	 * @see MultiResolutionEnvironment#getRefinements()
 	 */
 	@Override
 	public Set<? extends PlanningGrid> getRefinements() {
@@ -890,21 +893,30 @@ public class PlanningGrid extends CubicGrid implements Environment {
 	 * 
 	 * @param density the refinement density
 	 * 
-	 * @see Environment#refine(int)
+	 * @see MultiResolutionEnvironment#refine(int)
 	 */
 	@Override
 	public void refine(int density) {
 		this.addChildren(density);
+		for (PlanningGrid grid : this.getChildren()) {
+			for (StructuralChangeListener listener : this.listeners) {
+				grid.addStructuralChangeListener(listener);
+			}
+		}
+		this.notifyStructuralChangeListeners();
 	}
 	
 	/**
 	 * Coarsens, that is, removes the children of this planning grid.
 	 *
-	 * @see Environment#coarsen
+	 * @see MultiResolutionEnvironment#coarsen
 	 */
 	@Override
 	public void coarsen() {
-		this.removeChildren();
+		if (this.hasParent()) {
+			this.removeChildren();
+			this.notifyStructuralChangeListeners();
+		}
 	}
 	
 	/**
@@ -1418,6 +1430,48 @@ public class PlanningGrid extends CubicGrid implements Environment {
 		}
 		
 		return legCost;
+	}
+	
+	/**
+	 * Adds a structural change listener to this planning grid.
+	 * 
+	 * @param listener the structural change listener to be added
+	 * 
+	 * @see MultiResolutionEnvironment#addStructuralChangeListener(StructuralChangeListener)
+	 */
+	@Override
+	public void addStructuralChangeListener(StructuralChangeListener listener) {
+		this.listeners.add(listener);
+		for (PlanningGrid grid : this.getChildren()) {
+			grid.addStructuralChangeListener(listener);
+		}
+	}
+	
+	/**
+	 * Removes a structural change listener from this planning grid.
+	 * 
+	 * @param listener the structural change listener to be removed
+	 * 
+	 * @see MultiResolutionEnvironment#removeStructuralChangeListener(StructuralChangeListener)
+	 */
+	@Override
+	public void removeStructuralChangeListener(StructuralChangeListener listener) {
+		this.listeners.remove(listener);
+		for (PlanningGrid grid : this.getChildren()) {
+			grid.removeStructuralChangeListener(listener);
+		}
+	}
+	
+	/**
+	 * Notifies the structural change listeners of this planning grid.
+	 * 
+	 * @see MultiResolutionEnvironment#notifyStructuralChangeListeners()
+	 */
+	@Override
+	public void notifyStructuralChangeListeners() {
+		for (StructuralChangeListener listener : this.listeners) {
+			listener.notifyStructuralChange();
+		}
 	}
 	
 }

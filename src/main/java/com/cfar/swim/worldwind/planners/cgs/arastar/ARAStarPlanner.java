@@ -804,7 +804,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @return true if the this ARA* planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see FactoryProduct#matches(Specification)
+	 * @see AbstractPlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {

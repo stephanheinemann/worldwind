@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.environments.DynamicEnvironment;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.DynamicPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
@@ -351,7 +352,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 			Set<ADStarWaypoint> affectedWaypoints = new HashSet<>();
 			for (Obstacle obstacle : this.dynamicObstacles) {
 				affectedWaypoints.addAll(
-						this.getEnvironment()
+						((DynamicEnvironment) this.getEnvironment())
 						.getAffectedWaypointPositions(obstacle)
 						.stream()
 						.map(position -> this.createWaypoint(position))
@@ -829,7 +830,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * @return true if the this AD* planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see FactoryProduct#matches(Specification)
+	 * @see AbstractPlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {

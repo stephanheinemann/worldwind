@@ -288,6 +288,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 					&& (this.extension == rrtp.extension)
 					&& (this.goalThreshold == rrtp.goalThreshold)
 					&& (this.maxIterations == rrtp.maxIterations)
+					&& (this.sampling == rrtp.sampling)
 					&& (this.strategy == rrtp.strategy);
 		} else {
 			equals = false;
@@ -314,6 +315,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 				this.extension,
 				this.goalThreshold,
 				this.maxIterations,
+				this.sampling,
 				this.strategy);
 	}
 	

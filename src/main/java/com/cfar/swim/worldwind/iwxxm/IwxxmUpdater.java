@@ -51,6 +51,7 @@ import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
 import com.cfar.swim.worldwind.data.DataActivationListener;
 import com.cfar.swim.worldwind.data.IwxxmData;
 import com.cfar.swim.worldwind.data.OmData;
+import com.cfar.swim.worldwind.environments.DynamicEnvironment;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostMap;
@@ -189,7 +190,9 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 						}
 					}
 					
-					this.env.embed(intersectionObstacle);
+					if (this.env instanceof DynamicEnvironment) {
+						((DynamicEnvironment) this.env).embed(intersectionObstacle);
+					}
 					this.addSigmetObstacle(sigmetReference, intersectionObstacle);
 					this.idReferences.put(sigmet.getId(), sigmetReference);
 					this.renderableLayer.addRenderable(intersectionObstacle);
@@ -275,11 +278,18 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			
 				this.renderableLayer.addRenderable(current);
 				this.renderableLayer.addRenderables(interpolants);
-				this.env.embed((ObstacleCylinder) current);
+				
+				if (this.env instanceof DynamicEnvironment) {
+					((DynamicEnvironment) this.env).embed((ObstacleCylinder) current);
+				}
+				
 				this.addSigmetObstacle(sigmetReference, (ObstacleCylinder) current);
 				
 				for (ObstacleCylinder interpolant : interpolants) {
-					this.env.embed(interpolant);
+					if (this.env instanceof DynamicEnvironment) {
+						((DynamicEnvironment) this.env).embed(interpolant);
+					}
+					
 					this.addSigmetObstacle(sigmetReference, interpolant);
 					
 					interpolant.setDepiction(
@@ -293,7 +303,11 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 		
 		if (null != current) {
 			this.renderableLayer.addRenderable(current);
-			this.env.embed((ObstacleCylinder) current);
+			
+			if (this.env instanceof DynamicEnvironment) {
+				((DynamicEnvironment) this.env).embed((ObstacleCylinder) current);
+			}
+			
 			this.addSigmetObstacle(sigmetReference, (ObstacleCylinder) current);
 			this.idReferences.put(sigmet.getId(), sigmetReference);
 		}
@@ -336,7 +350,9 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			List<Obstacle> obstacles = this.sigmetObstacles.get(sigmetReference);
 			for (Obstacle obstacle : obstacles) {
 				obstacle.enable();
-				this.env.refresh(obstacle);
+				if (this.env instanceof DynamicEnvironment) {
+					((DynamicEnvironment) this.env).refresh(obstacle);
+				}
 			}
 		}
 	}
@@ -348,7 +364,9 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 			List<Obstacle> obstacles = this.sigmetObstacles.get(sigmetReference);
 			for (Obstacle obstacle : obstacles) {
 				obstacle.disable();
-				this.env.refresh(obstacle);
+				if (this.env instanceof DynamicEnvironment) {
+					((DynamicEnvironment) this.env).refresh(obstacle);
+				}
 			}
 		}
 	}

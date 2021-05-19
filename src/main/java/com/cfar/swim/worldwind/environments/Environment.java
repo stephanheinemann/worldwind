@@ -38,7 +38,6 @@ import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
@@ -54,6 +53,12 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public interface Environment extends TimedRenderable, ThresholdRenderable {
 	
+	// TODO: aggregate property time intervals for air density (temperature, pressure, humidity)
+	// TODO: create a new AirDataInterval class which aggregates AirData class
+	// TODO: AirData, Surface/GroundData extends EnvironmentData
+	// TODO: environment would have to store air/ground property intervals
+	// TODO: data could be made available via WXXM and IWXXM
+	
 	/**
 	 * Gets the globe of this environment.
 	 * 
@@ -67,12 +72,6 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @param globe the globe of this environment
 	 */
 	public void setGlobe(Globe globe);
-	
-	// TODO: aggregate property time intervals for air density (temperature, pressure, humidity)
-	// TODO: create a new AirDataInterval class which aggregates AirData class
-	// TODO: AirData, Surface/GroundData extends EnvironmentData
-	// TODO: environment would have to store air/ground property intervals
-	// TODO: data could be made available via WXXM and IWXXM
 	
 	/**
 	 * Determines whether or not this environment contains a position.
@@ -160,102 +159,6 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @return true if the two positions are neighbors, false otherwise
 	 */
 	public boolean areNeighbors(Position position, Position neighbor);
-	
-	/**
-	 * Determines whether or not this environment is refined.
-	 * 
-	 * @return true if this environment is refined, false otherwise
-	 */
-	public boolean isRefined();
-	
-	/**
-	 * Gets the refinements of this environment.
-	 * 
-	 * @return the refinements of this environment
-	 */
-	public Set<? extends Environment> getRefinements();
-	
-	/**
-	 * Refines this environment with a refinement density.
-	 * 
-	 * @param density the refinement density
-	 */
-	public void refine(int density);
-	
-	/**
-	 * Coarsens this environment.
-	 */
-	public void coarsen();
-	
-	/**
-	 * Embeds an obstacle into this environment.
-	 * 
-	 * @param obstacle the obstacle to be embedded
-	 * 
-	 * @return true if the obstacle has been embedded, false otherwise
-	 */
-	public boolean embed(Obstacle obstacle);
-	
-	/**
-	 * Umembeds an obstacle from this environment.
-	 * 
-	 * @param obstacle the obstacle to be unembedded
-	 * 
-	 * @return true if the obstacle has been unembedded, false otherwise
-	 */
-	public boolean unembed(Obstacle obstacle);
-	
-	/**
-	 * Unembeds all obstacles from this environment.
-	 */
-	public void unembedAll();
-	
-	/**
-	 * Determines whether or not an obstacle is embedded in this environment.
-	 * 
-	 * @param obstacle the obstacle
-	 * 
-	 * @return true if the obstacle is embedded in this environment,
-	 *         false otherwise
-	 */
-	public boolean isEmbedded(Obstacle obstacle);
-	
-	/**
-	 * Updates this environment for an embedded obstacle.
-	 * 
-	 * @param obstacle the embedded obstacle
-	 */
-	public void refresh(Obstacle obstacle);
-	
-	/**
-	 * Gets the children of this environment that are affected by an obstacle
-	 * embedding.
-	 *  
-	 * @param obstacle the embedded obstacle
-	 * @return the children of this environment that are affected by an
-	 *         obstacle embedding
-	 */
-	public Set<? extends Environment> getAffectedChildren(Obstacle obstacle);
-	
-	/**
-	 * Gets the waypoint positions of this environment that are affected by an
-	 * obstacle embedding.
-	 * 
-	 * @param obstacle the embedded obstacle
-	 * @return the waypoint positions of this environment that are affected by
-	 *         an obstacle embedding
-	 */
-	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle);
-	
-	/**
-	 * Gets the waypoint positions of this environment that are affected by
-	 * obstacle embeddings.
-	 * 
-	 * @param obstacles the embedded obstacles
-	 * @return the waypoint positions of this environment that are affected by
-	 *         obstacle embeddings
-	 */
-	public Set<Position> getAffectedWaypointPositions(Set<Obstacle> obstacles);
 	
 	/**
 	 * Gets the distance between two positions in this environment.

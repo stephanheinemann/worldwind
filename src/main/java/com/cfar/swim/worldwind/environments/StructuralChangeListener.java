@@ -27,51 +27,20 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planners;
+package com.cfar.swim.worldwind.environments;
 
 /**
- * Describes a dynamic planner which repairs changing costs while planning.
- * A dynamic planner only revises invalid parts of the plan being computed
- * and avoids the revision of the entire plan as much as possible.
+ * Describes an environment structural change listener.
  * 
  * @author Stephan Heinemann
- * 
+ *
  */
-public interface DynamicPlanner extends Planner, DynamicObstacleListener {
+public interface StructuralChangeListener {
 
-	// TODO: merge with and check for PRM/RTT interface
-	// TODO: consider LifeLongPlanner interface
-	
 	/**
-	 * Terminates this dynamic planner.
+	 * Notifies this structural change listener about a structural environment
+	 * change.
 	 */
-	public void terminate();
-	
-	/**
-	 * Recycles this dynamic planner.
-	 */
-	public void recycle();
-	
-	/**
-	 * Indicates whether or not this dynamic planner has terminated.
-	 * 
-	 * @return true if this dynamic planner has terminated, false otherwise
-	 */
-	public boolean hasTerminated();
-	
-	/**
-	 * Gets the significant change threshold of this dynamic planner.
-	 * 
-	 * @return the significant change threshold of this dynamic planner
-	 */
-	public double getSignificantChange();
-	
-	/**
-	 * Sets the significant change threshold of this dynamic planner.
-	 * 
-	 * @param significantChange the significant change threshold of this
-	 *                          dynamic planner
-	 */
-	public void setSignificantChange(double significantChange);
+	public void notifyStructuralChange();
 	
 }

@@ -46,7 +46,7 @@ import gov.nasa.worldwind.render.DrawContext;
 
 // TODO: a planning roadmap could be fed by AIXM data to establish valid VFR/IFR routes
 // TODO: there could be a geometric roadmap base class (similar to planning grid)
-public class PlanningRoadmap implements Environment {
+public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvironment {
 
 	@Override
 	public ZonedDateTime getTime() {
@@ -121,7 +121,7 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public Set<? extends Environment> getRefinements() {
+	public Set<? extends MultiResolutionEnvironment> getRefinements() {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -262,7 +262,7 @@ public class PlanningRoadmap implements Environment {
 	}
 
 	@Override
-	public Set<? extends Environment> getAffectedChildren(Obstacle obstacle) {
+	public Set<? extends DynamicEnvironment> getAffectedChildren(Obstacle obstacle) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -283,6 +283,24 @@ public class PlanningRoadmap implements Environment {
 	public double getBaseCost() {
 		// TODO Auto-generated method stub
 		return 0;
+	}
+
+	@Override
+	public void addStructuralChangeListener(StructuralChangeListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void removeStructuralChangeListener(StructuralChangeListener listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void notifyStructuralChangeListeners() {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

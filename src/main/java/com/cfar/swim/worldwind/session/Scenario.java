@@ -49,7 +49,10 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.SimulatedDatalink;
 import com.cfar.swim.worldwind.connections.SimulatedSwimConnection;
 import com.cfar.swim.worldwind.connections.SwimConnection;
+import com.cfar.swim.worldwind.environments.DynamicEnvironment;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.environments.MultiResolutionEnvironment;
+import com.cfar.swim.worldwind.environments.StructuralChangeListener;
 import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
@@ -74,7 +77,7 @@ import gov.nasa.worldwind.globes.Globe;
  * @author Stephan Heinemann
  *
  */
-public class Scenario implements Identifiable, Enableable, ObstacleManager {
+public class Scenario implements Identifiable, Enableable, StructuralChangeListener, ObstacleManager {
 	
 	/** the default scenario identifier */
 	public static final String DEFAULT_SCENARIO_ID = "Default Scenario";
@@ -167,6 +170,7 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
 		this.environment.setThreshold(0d);
 		this.environment.setGlobe(this.globe);
+		((PlanningGrid) this.environment).addStructuralChangeListener(this);
 		this.aircraft = null;
 		this.waypoints = new ArrayList<Waypoint>();
 		this.setPlanner(new ThetaStarPlanner(this.aircraft, this.environment));
@@ -661,11 +665,22 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 			this.environment.setGlobe(this.globe);
 			this.environment.setTime(this.time);
 			this.environment.setThreshold(this.threshold);
-			this.environment.unembedAll();
-			for (Obstacle obstacle : this.obstacles) {
-				if (obstacle.isEnabled()) {
-					this.environment.embed(obstacle);
+			
+			// embed obstacles into dynamic environments
+			if (this.environment instanceof DynamicEnvironment) {
+				((DynamicEnvironment) this.environment).unembedAll();
+				for (Obstacle obstacle : this.obstacles) {
+					if (obstacle.isEnabled()) {
+						((DynamicEnvironment) this.environment)
+						.embed(obstacle);
+					}
 				}
+			}
+			
+			// be notified about structural changes of multi-resolution environments
+			if (this.environment instanceof MultiResolutionEnvironment) {
+				((MultiResolutionEnvironment) this.environment)
+				.addStructuralChangeListener(this);
 			}
 		
 			this.pcs.firePropertyChange("environment", null, this.environment);
@@ -679,6 +694,16 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	 */
 	public synchronized void notifyEnvironmentChange() {
 		this.pcs.firePropertyChange("environment", null, this.environment);
+	}
+	
+	/**
+	 * Notifies this scenario about a structural environment change.
+	 * 
+	 * @see StructuralChangeListener#notifyStructuralChange()
+	 */
+	@Override
+	public synchronized void notifyStructuralChange() {
+		this.notifyEnvironmentChange();
 	}
 	
 	/**
@@ -1032,8 +1057,11 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 				obstacle.setThreshold(this.threshold);
 				this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 				
-				if (obstacle.isEnabled() && this.environment.embed(obstacle)) {
-					this.pcs.firePropertyChange("environment", null, this.environment);
+				if (this.environment instanceof DynamicEnvironment) {
+					if (obstacle.isEnabled()
+							&& ((DynamicEnvironment) this.environment).embed(obstacle)) {
+						this.pcs.firePropertyChange("environment", null, this.environment);
+					}
 				}
 			}
 		} else {
@@ -1053,8 +1081,10 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 			if (this.obstacles.remove(obstacle)) {
 				this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 				
-				if (this.environment.unembed(obstacle)) {
-					this.pcs.firePropertyChange("environment", null, this.environment);
+				if (this.environment instanceof DynamicEnvironment) {
+					if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
+						this.pcs.firePropertyChange("environment", null, this.environment);
+					}
 				}
 			}
 		} else {
@@ -1077,8 +1107,11 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 			if (obstacle.getCostInterval().getId().equals(costIntervalId)) {
 				obstaclesIterator.remove();
 				removed = true;
-				if (this.environment.unembed(obstacle)) {
-					unembedded = true;
+				
+				if (this.environment instanceof DynamicEnvironment) {
+					if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
+						unembedded = true;
+					}
 				}
 			}
 		}
@@ -1098,8 +1131,11 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	public synchronized void clearObstacles() {
 		this.obstacles.clear();
 		this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
-		this.environment.unembedAll();
-		this.pcs.firePropertyChange("environment", null, this.environment);
+		
+		if (this.environment instanceof DynamicEnvironment) {
+			((DynamicEnvironment) this.environment).unembedAll();
+			this.pcs.firePropertyChange("environment", null, this.environment);
+		}
 	}
 	
 	/**
@@ -1116,8 +1152,11 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 				obstacle.setThreshold(this.threshold);
 				this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 			}
-			if (this.environment.embed(obstacle)) {
-				this.pcs.firePropertyChange("environment", null, this.environment);
+			
+			if (this.environment instanceof DynamicEnvironment) {
+				if (((DynamicEnvironment) this.environment).embed(obstacle)) {
+					this.pcs.firePropertyChange("environment", null, this.environment);
+				}
 			}
 		} else {
 			throw new IllegalArgumentException();
@@ -1133,8 +1172,10 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 	 */
 	public synchronized void unembedObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
-			if (this.environment.unembed(obstacle)) {
-				this.pcs.firePropertyChange("environment", null, this.environment);
+			if (this.environment instanceof DynamicEnvironment) {
+				if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
+					this.pcs.firePropertyChange("environment", null, this.environment);
+				}
 			}
 		} else {
 			throw new IllegalArgumentException();
@@ -1154,8 +1195,11 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 			if (obstacle.getCostInterval().getId().equals(costIntervalId)) {
 				obstacle.enable();
 				enabled = true;
-				if (this.environment.embed(obstacle)) {
-					embedded = true;
+				
+				if (this.environment instanceof DynamicEnvironment) {
+					if (((DynamicEnvironment) this.environment).embed(obstacle)) {
+						embedded = true;
+					}
 				}
 			}
 		}
@@ -1182,8 +1226,11 @@ public class Scenario implements Identifiable, Enableable, ObstacleManager {
 			if (obstacle.getCostInterval().getId().equals(costIntervalId)) {
 				obstacle.disable();
 				disabled = true;
-				if (this.environment.unembed(obstacle)) {
-					unembedded = true;
+				
+				if (this.environment instanceof DynamicEnvironment) {
+					if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
+						unembedded = true;
+					}
 				}
 			}
 		}

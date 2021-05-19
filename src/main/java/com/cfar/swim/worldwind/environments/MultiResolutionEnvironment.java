@@ -27,51 +27,62 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planners;
+package com.cfar.swim.worldwind.environments;
+
+import java.util.Set;
 
 /**
- * Describes a dynamic planner which repairs changing costs while planning.
- * A dynamic planner only revises invalid parts of the plan being computed
- * and avoids the revision of the entire plan as much as possible.
+ * Describes a multi-resolution environment featuring multiple resolutions.
  * 
  * @author Stephan Heinemann
- * 
+ *
  */
-public interface DynamicPlanner extends Planner, DynamicObstacleListener {
-
-	// TODO: merge with and check for PRM/RTT interface
-	// TODO: consider LifeLongPlanner interface
+public interface MultiResolutionEnvironment extends Environment {
 	
 	/**
-	 * Terminates this dynamic planner.
-	 */
-	public void terminate();
-	
-	/**
-	 * Recycles this dynamic planner.
-	 */
-	public void recycle();
-	
-	/**
-	 * Indicates whether or not this dynamic planner has terminated.
+	 * Determines whether or not this multi-resolution environment is refined.
 	 * 
-	 * @return true if this dynamic planner has terminated, false otherwise
+	 * @return true if this multi-resolution environment is refined,
+	 *         false otherwise
 	 */
-	public boolean hasTerminated();
+	public boolean isRefined();
 	
 	/**
-	 * Gets the significant change threshold of this dynamic planner.
+	 * Gets the refinements of this multi-resolution environment.
 	 * 
-	 * @return the significant change threshold of this dynamic planner
+	 * @return the refinements of this multi-resolution environment
 	 */
-	public double getSignificantChange();
+	public Set<? extends MultiResolutionEnvironment> getRefinements();
 	
 	/**
-	 * Sets the significant change threshold of this dynamic planner.
+	 * Refines this multi-resolution environment with a refinement density.
 	 * 
-	 * @param significantChange the significant change threshold of this
-	 *                          dynamic planner
+	 * @param density the refinement density
 	 */
-	public void setSignificantChange(double significantChange);
+	public void refine(int density);
+	
+	/**
+	 * Coarsens this multi-resolution environment.
+	 */
+	public void coarsen();
+	
+	/**
+	 * Adds a structural change listener to this multi-resolution environment.
+	 * 
+	 * @param listener the structural change listener to be added
+	 */
+	public void addStructuralChangeListener(StructuralChangeListener listener);
+	
+	/**
+	 * Removes a structural change listener from this multi-resolution environment.
+	 * 
+	 * @param listener the structural change listener to be removed
+	 */
+	public void removeStructuralChangeListener(StructuralChangeListener listener);
+	
+	/**
+	 * Notifies the structural change listeners of this multi-resolution environment.
+	 */
+	public void notifyStructuralChangeListeners();
 	
 }

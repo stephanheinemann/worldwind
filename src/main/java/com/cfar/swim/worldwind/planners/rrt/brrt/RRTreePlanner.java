@@ -40,7 +40,6 @@ import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
-import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.geom.CoordinateTransformations;
@@ -52,9 +51,14 @@ import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.Strategy;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 
 import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Quaternion;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -65,7 +69,7 @@ import gov.nasa.worldwind.render.Path;
  * is the departure position and it is grown until the goal is reached.
  * 
  * @author Manuel Rosa
- *
+ * @author Stephan Heinemann
  */
 public class RRTreePlanner extends AbstractPlanner {
 	
@@ -82,7 +86,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	private int maxIterations = 3_000;
 	
 	/** the maximum extension distance to a waypoint in the tree of this RRT planner */
-	private double epsilon = this.getEnvironment().getDiameter() / 20;
+	private double epsilon = this.getEnvironment().getDiameter() / 20d;
 	
 	/** the sampling bias towards goal of this RRT planner */
 	private int bias = 5;
@@ -350,27 +354,6 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Gets the previously sampled edges of this RRT planner.
-	 * 
-	 * @return the previously sampled edges of this RRT planner
-	 */
-	@SuppressWarnings("unchecked")
-	protected List<Edge> getEdges() {
-		// TODO: expose internal structure?
-		return (List<Edge>) this.getEnvironment().getEdges();
-	}
-
-	/**
-	 * Sets the previously sampled edges of this RRT planner.
-	 * 
-	 * @param edges the previously sampled edges to be set
-	 */
-	protected void setEdges(List<Edge> edgeList) {
-		// TODO: expose internal structure?
-		this.getEnvironment().setEdges(edgeList);
-	}
-	
-	/**
 	 * Gets the current plan produced by this RRT planner
 	 *
 	 * @return the current plan produced by this RRT planner
@@ -385,7 +368,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected void clearExpendables() {
 		// TODO: separate method required? overridden and extended?
 		this.getWaypoints().clear();
-		this.getEdges().clear();
+		this.getEnvironment().clearEdges();
 		this.getPlan().clear();
 	}
 	
@@ -505,7 +488,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		
 		// create a new waypoint in the tree by extending from near to sampled
 		// and set the extension status accordingly
-		if (this.createExtension(waypoint, nearWaypoint)) {
+		if (this.createExtension(nearWaypoint, waypoint)) {
 			extension = this.getNewestWaypoint();
 			this.addVertex(extension);
 			this.addEdge(extension);
@@ -524,109 +507,148 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Creates a new waypoint by extending a sampled waypoint in the direction of
-	 * the nearest waypoint following certain restrictions.
+	 * Creates an extension to the tree by growing from a connected tree
+	 * waypoint towards a non-connected sampled waypoint observing capability
+	 * constraints if applicable.
 	 * 
-	 * @param waypoint the waypoint to be reached
-	 * @param nearWaypoint the waypoint to be extended
+	 * @param treeWaypoint the tree waypoint to be extended
+	 * @param sampledWaypoint the sampled waypoint to be reached
 	 * 
-	 * @return true if it was possible to extend in the desired direction (false
-	 *         otherwise)
+	 * @return true if an extension waypoint could be created, false otherwise
 	 */
-	protected boolean createExtension(RRTreeWaypoint waypoint, RRTreeWaypoint nearWaypoint) {
+	protected boolean createExtension(
+			RRTreeWaypoint treeWaypoint, RRTreeWaypoint sampledWaypoint) {
 		boolean success = true;
-
-		// Extend nearest waypoint in the direction of waypoint
-		Position positionNew;
+		
+		// extend tree according to extension technique
+		Position position = null;
 		switch (this.getExtension()) {
 		case FEASIBLE:
-			positionNew = this.growPositionFeasible(waypoint, nearWaypoint);
+			position = this.growFeasiblePosition(treeWaypoint, sampledWaypoint);
+			break;
 		case LINEAR:
 		default:
-			positionNew = this.growPosition(waypoint, nearWaypoint);
+			position = this.growPosition(treeWaypoint, sampledWaypoint);
 		}
-		RRTreeWaypoint newWaypoint = this.createWaypoint(positionNew);
-		newWaypoint.setParent(nearWaypoint);
-
-		// Check if path is feasible for the aircraft
-		ZonedDateTime eto = null;
+		RRTreeWaypoint extension = this.createWaypoint(position);
+		extension.setParent(treeWaypoint);
+		
 		try {
-			eto = this.computeTime(nearWaypoint, newWaypoint);
+			// check extension feasibility according to aircraft capabilities
+			extension.setEto(this.computeTime(treeWaypoint, extension));
+			this.setNewestWaypoint(extension);
+			
+			// TODO: integrate NASA terrain and jBullet for conflict checks
+			// TODO: review terrain obstacles required
+			// check extension conflict with environment (terrain)
+			if (this.getEnvironment().checkConflict(extension, getAircraft())) {
+				success = false;
+			}
+			// check edge conflict with environment (terrain)
+			else if (this.getEnvironment().checkConflict(
+					treeWaypoint, extension, getAircraft())) {
+				success = false;
+			}
 		} catch (IllegalArgumentException e) {
-			System.err.println("Caught IllegalArgumentException: " + e.getMessage());
-			return false;
-		}
-
-		newWaypoint.setEto(eto);
-		this.setNewestWaypoint(newWaypoint);
-
-		// Check if the new waypoint is in conflict with the environment
-		if (this.getEnvironment().checkConflict(newWaypoint, getAircraft())) {
+			e.printStackTrace();
 			success = false;
 		}
-		// Check if the edge between waypoints is in conflict
-		else if (this.getEnvironment().checkConflict(nearWaypoint, newWaypoint, getAircraft())) {
-			success = false;
-		}
-
+		
 		return success;
 	}
-
+	
 	/**
-	 * Grows the tree in the direction of the waypoint from the nearest waypoint.
+	 * Grows the tree by one position from a source within the tree towards a
+	 * destination position applying a linear extension technique.
 	 * 
-	 * @param position the goal position to which the tree is grown
-	 * @param positionNear the source position from which the tree is grown
+	 * @param source the source position from which the tree is grown
+	 * @param destination the goal position to which the tree is grown
 	 * 
-	 * @return the new position resulting from the controlled growth of the tree
+	 * @return the extension position
 	 */
-	protected Position growPosition(Position position, Position positionNear) {
-		Position positionNew;
-
-		Vec4 point1 = super.getEnvironment().getGlobe().computePointFromPosition(positionNear);
-		Vec4 point2 = super.getEnvironment().getGlobe().computePointFromPosition(position);
-
-		double dist = point1.distanceTo3(point2);
-
-		if (dist < epsilon) {
-			positionNew = position;
+	protected Position growPosition(Position source, Position destination) {
+		Position position = null;
+		
+		Vec4 point1 = this.getEnvironment().getGlobe().computePointFromPosition(source);
+		Vec4 point2 = this.getEnvironment().getGlobe().computePointFromPosition(destination);
+		
+		double distance = point1.distanceTo3(point2);
+		
+		if (distance <= this.epsilon) {
+			// distance is within maximum distance epsilon
+			position = destination;
 		} else {
-			double x, y, z, dx, dy, dz, dist2, epsilon2, ddz;
-			dx = point2.x - point1.x;
-			dy = point2.y - point1.y;
-			dz = point2.z - point1.z;
-
-			ddz = dz / dist * epsilon;
-			epsilon2 = Math.sqrt(epsilon * epsilon - ddz * ddz);
-			dist2 = point1.distanceTo2(point2);
-
-			x = point1.x + dx / dist2 * epsilon2;
-			y = point1.y + dy / dist2 * epsilon2;
-			z = point1.z + ddz;
-
-			Vec4 pointNew = new Vec4(x, y, z);
-			positionNew = super.getEnvironment().getGlobe().computePositionFromPoint(pointNew);
+			// shorten distance to maximum distance epsilon
+			Vec4 dp = point2.subtract3(point1);
+			Vec4 edp = dp.normalize3().multiply3(this.epsilon);
+			Vec4 point = point1.add3(edp);
+			position = super.getEnvironment().getGlobe().computePositionFromPoint(point);
 		}
 
-		return positionNew;
+		return position;
 	}
-
+	
 	/**
-	 * Grows the tree in the direction of the waypoint from the nearest waypoint
-	 * considering the aircraft capabilities to only produce feasible paths.
+	 * Grows the tree by one position from a source within the tree towards a
+	 * destination position applying a feasible extension technique considering
+	 * aircraft capabilities.
 	 * 
-	 * @param position the goal position to which the tree is grown
-	 * @param positionNear the source position from which the tree is grown
+	 * @param source the source position from which the tree is grown
+	 * @param destination the goal position to which the tree is grown
 	 * 
-	 * @return the new position resulting from the controlled growth of the tree
+	 * @return the extension position
 	 */
-	protected Position growPositionFeasible(Position position, Position positionNear) {
+	protected Position growFeasiblePosition(Position source, Position destination) {
+		Position position = null;
+		
+		Aircraft aircraft = this.getAircraft();
+		Globe globe = this.getEnvironment().getGlobe();
+		
+		Vec4 point1 = globe.computePointFromPosition(source);
+		Vec4 point2 = globe.computePointFromPosition(destination);
+		Vec4 normal = globe.computeSurfaceNormalAtPoint(point1);
+		Vec4 climb = point2.subtract3(point1);
+		double distance = climb.getLength3();
+		
+		// climb or descent angle
+		Angle angle = Angle.POS90.subtract(normal.angleBetween3(climb));
+		
+		// climb angle at maximum rate of climb (not maximum angle)
+		Angle maxClimbAngle = Angle.fromRadians(Math.asin(
+				aircraft.getCapabilities().getMaximumRateOfClimb() /
+				aircraft.getCapabilities().getMaximumRateOfClimbSpeed()))
+				.multiply(1).subtractDegrees(1d);
+		
+		// descent angle at maximum rate of descent (not maximum angle)
+		Angle maxDescentAngle = Angle.fromRadians(Math.asin(
+				aircraft.getCapabilities().getMaximumRateOfDescent() /
+				aircraft.getCapabilities().getMaximumRateOfDescentSpeed()))
+				.multiply(-1).addDegrees(1d);
+		
+		// restrict climb or descent angle according to aircraft capabilities
+		if ((0 < angle.compareTo(maxClimbAngle)) ||
+				(0 > angle.compareTo(maxDescentAngle))) {
+			// rotate climb or descent vector to perform shuttle climb or descent
+			Angle rotationAngle = Angle.POS90.subtract(maxClimbAngle);
+			Plane rotationPlane = Plane.fromPoints(point1, point2, point1.add3(normal));
+			Vec4 rotationAxis = rotationPlane.getNormal();
+			Quaternion rotation = Quaternion.fromAxisAngle(rotationAngle, rotationAxis);
+			distance = (this.epsilon < distance) ? this.epsilon : distance;
+			climb = normal.transformBy3(rotation).normalize3().multiply3(distance);
+			position = globe.computePositionFromPoint(point1.add3(climb));
+		} else {
+			// climb or descent angle is within limits
+			position = this.growPosition(source, destination);
+		}
+		
+		return position;
+		/*
 		Position positionNew;
 		Aircraft acft = this.getAircraft();
 		Globe globe = this.getEnvironment().getGlobe();
 
 		// Transform position to ENU coordinates
-		Vec4 pointENU = CoordinateTransformations.llh2enu(positionNear, position, globe);
+		Vec4 pointENU = CoordinateTransformations.llh2enu(source, destination, globe);
 
 		// Calculate azimuth and elevation
 		double e = pointENU.x, n = pointENU.y, u = pointENU.z;
@@ -639,7 +661,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		Angle minEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfDescent() /
 				acft.getCapabilities().getMaximumRateOfDescentSpeed())).multiply(-1);
 
-		double distance = this.getEnvironment().getDistance(positionNear, position);
+		double distance = this.getEnvironment().getDistance(source, destination);
 
 		// Non-feasible region
 		if (ele.compareTo(maxEle) == 1 || ele.compareTo(minEle) == -1) {
@@ -654,16 +676,17 @@ public class RRTreePlanner extends AbstractPlanner {
 			pointENU = new Vec4(e, n, u);
 
 			// Transform from ENU to standard ECEF
-			positionNew = CoordinateTransformations.enu2llh(positionNear, pointENU, globe);
+			positionNew = CoordinateTransformations.enu2llh(source, pointENU, globe);
 		}
 		// Feasible Region
 		else {
-			positionNew = this.growPosition(position, positionNear);
+			positionNew = this.growPosition(source, destination);
 		}
 
 		return positionNew;
+		*/
 	}
-
+	
 	/**
 	 * Computes the estimated time over(eto) an waypoint using the eto of the
 	 * previous waypoint and the aircraft capabilities.
@@ -688,6 +711,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @param waypointNew the expanded waypoint
 	 */
 	protected void addVertex(RRTreeWaypoint waypointNew) {
+		// TODO: hide exposed waypoints structure
 		if (getWaypoints().contains(waypointNew))
 			this.getWaypoints().remove(waypointNew);
 		this.getWaypoints().add(waypointNew);
@@ -700,43 +724,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @param waypoint the expanded waypoint
 	 */
 	protected void addEdge(RRTreeWaypoint waypoint) {
-		this.addEdge(waypoint, waypoint.getParent());
-	}
-
-	/**
-	 * Adds an edge (with set cost intervals) between the expanded waypoint and its
-	 * parent to the list of edges.
-	 * 
-	 * @param waypoint the expanded waypoint
-	 * @param parent the parent of the expanded waypoint
-	 */
-	protected void addEdge(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
-		Vec4 source = this.getEnvironment().getGlobe().computePointFromPosition(parent);
-		Vec4 target = this.getEnvironment().getGlobe().computePointFromPosition(waypoint);
-
-		if(source.equals(target))
-			return;
-
-		Edge edge = new Edge(this.getEnvironment(), parent, waypoint);
-		//edge.setCostIntervals(this.getEnvironment().embedIntervalTree(edge));
-		this.getEdges().add(edge);
-
-	}
-
-	/**
-	 * Removes an edge from the list of edges.
-	 * 
-	 * @param waypoint the waypoint whose edge (to its parent) is to be removed
-	 */
-	protected void removeEdge(RRTreeWaypoint waypoint) {
-		this.removeEdge(waypoint, waypoint.getParent());
-	}
-
-	protected void removeEdge(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
-		List<Edge> edgeList = this.getEdges();
-		Edge edge = new Edge(this.getEnvironment(), parent, waypoint);
-
-		edgeList.removeIf(e -> e.equals(edge));
+		this.getEnvironment().addEdge(waypoint, waypoint.getParent());
 	}
 
 	/**
@@ -775,10 +763,10 @@ public class RRTreePlanner extends AbstractPlanner {
 			if (this.getEnvironment().checkConflict(waypoint, parent, getAircraft()))
 				g = Double.POSITIVE_INFINITY;
 			else {
-				this.addEdge(waypoint, parent);
+				this.getEnvironment().addEdge(waypoint, parent);
 				g += this.getEnvironment().getStepCost(parent, waypoint, parent.getEto(),
 						waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
-				this.removeEdge(waypoint, parent);
+				this.getEnvironment().removeEdge(waypoint, parent);
 			}
 		}
 
@@ -864,6 +852,8 @@ public class RRTreePlanner extends AbstractPlanner {
 			default:
 				sample = this.sampleBiased();
 			}
+			
+			System.out.println("sample = " + sample);
 			
 			switch (this.getStrategy()) {
 			case CONNECT:
@@ -1037,6 +1027,37 @@ public class RRTreePlanner extends AbstractPlanner {
 		double a = angle.sin(), b = a, c = 1;
 
 		return Math.sqrt(a * x * x + b * y * y + c * z * z);
+	}
+	
+	/**
+	 * Determines whether or not this RRT planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this RRT planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see AbstractPlanner#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof RRTreeProperties)) {
+			RRTreeProperties rrtp = (RRTreeProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(rrtp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(rrtp.getRiskPolicy()))
+					&& (this.getBias() == rrtp.getBias())
+					&& (this.getEpsilon() == rrtp.getEpsilon())
+					&& (this.getExtension() == rrtp.getExtension())
+					&& (this.getGoalThreshold() == rrtp.getGoalThreshold())
+					&& (this.getMaxIterations() == rrtp.getMaxIterations())
+					&& (this.getSampling() == rrtp.getSampling())
+					&& (this.getStrategy() == rrtp.getStrategy())
+					&& (specification.getId().equals(Specification.PLANNER_RRT_ID));
+		}
+		
+		return matches;
 	}
 
 }

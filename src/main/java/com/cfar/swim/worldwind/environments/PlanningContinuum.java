@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.stream.Collectors;
 
 import com.binarydreamers.trees.Interval;
@@ -73,8 +74,9 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  * 
  * @author Manuel Rosa
  * @author Henrique Ferreira
+ * @author Stephan Heinemann
  */
-public class PlanningContinuum extends Box implements Environment {
+public class PlanningContinuum extends Box implements DynamicEnvironment, MultiResolutionEnvironment {
 
 	// TODO: review and cleanup
 	
@@ -99,9 +101,11 @@ public class PlanningContinuum extends Box implements Environment {
 
 	/** the list of already sampled waypoints */
 	private List<? extends Waypoint> waypoints = new ArrayList<Waypoint>();
-
+	
+	// TODO: too expensive, synchronize edges access instead?
+	// TODO: Set versus list
 	/** the list of edges in this environment */
-	private List<Edge> edges = new ArrayList<Edge>();
+	private Set<Edge> edges = new CopyOnWriteArraySet<Edge>();
 
 	/** the current accumulated active cost of this sampling environment */
 	private double activeCost = 1d;
@@ -111,6 +115,9 @@ public class PlanningContinuum extends Box implements Environment {
 
 	/** the resolution of this sampling environment */
 	private double resolution = 1d;
+	
+	/** the structural change listeners of this planning continuum */
+	private Set<StructuralChangeListener> listeners = new HashSet<StructuralChangeListener>();
 
 	/**
 	 * Constructs a sampling environment based on a geometric box.
@@ -407,7 +414,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 * 
 	 * @return the previously sampled edges of this planning continuum
 	 */
-	public List<? extends Edge> getEdges() {
+	private Set<? extends Edge> getEdges() {
 		// TODO: pull up to Environment?
 		// TODO: shall the internal structure be exposed and modifiable?
 		// consider add, remove, clear, sort...
@@ -420,11 +427,66 @@ public class PlanningContinuum extends Box implements Environment {
 	 * 
 	 * @param edges the previously sampled edges to be set
 	 */
-	public void setEdges(List<Edge> edges) {
+	private void setEdges(Set<Edge> edges) {
 		// TODO: pull up to Environment?
 		// TODO: shall the internal structure be exposed and modifiable?
 		// consider add, remove, clear, sort...
 		this.edges = edges;
+		this.notifyStructuralChangeListeners();
+	}
+	
+	/**
+	 * Adds an edge to this planning continuum.
+	 * 
+	 * @param edge the edge to be added
+	 */
+	public void addEdge(Edge edge) {
+		if (this.edges.add(edge)) {
+			this.notifyStructuralChangeListeners();
+		}
+	}
+	
+	/**
+	 * Adds an edge to this planning continuum.
+	 * 
+	 * @param first the first end position of the edge
+	 * @param second the second end position of the edge
+	 */
+	public void addEdge(Position first, Position second) {
+		if (!first.equals(second) && this.edges.add(new Edge(this, first, second))) {
+			this.notifyStructuralChangeListeners();
+		}
+	}
+	
+	/**
+	 * Removes an edge from this planning continuum.
+	 * 
+	 * @param edge the edge to be removed
+	 */
+	public void removeEdge(Edge edge) {
+		if (this.edges.remove(edge)) {
+			this.notifyStructuralChangeListeners();
+		}
+	}
+	
+	/**
+	 * Removes an edge from this planning continuum.
+	 * 
+	 * @param first the first end position of the edge
+	 * @param second the second end position of the edge
+	 */
+	public void removeEdge(Position first, Position second) {
+		if (!first.equals(second) && this.edges.remove(new Edge(this, first, second))) {
+			this.notifyStructuralChangeListeners();
+		}
+	}
+	
+	/**
+	 * Removes all edges of this planning continuum.
+	 */
+	public void clearEdges() {
+		this.edges.clear();
+		this.notifyStructuralChangeListeners();
 	}
 
 	/**
@@ -432,8 +494,8 @@ public class PlanningContinuum extends Box implements Environment {
 	 * of waypoints, i.e. removes edges that contain waypoints (at least 1) which
 	 * are no longer in the waypoint list.
 	 */
-	protected void refreshEdgeList() {
-		List<Edge> validEdges = new ArrayList<Edge>();
+	protected void refreshEdges() {
+		Set<Edge> validEdges = new HashSet<Edge>();
 
 		for (Edge edge : this.getEdges()) {
 			Waypoint waypoint1 = (Waypoint) edge.getFirstPosition();
@@ -527,7 +589,9 @@ public class PlanningContinuum extends Box implements Environment {
 	 * 
 	 * @return true if this sampling environment is refined, false otherwise
 	 * 
+	 * @see MultiResolutionEnvironment#isRefined()
 	 */
+	@Override
 	public boolean isRefined() {
 		// TODO: review maximum resolution
 		return this.getResolution() <= 0.01;
@@ -538,7 +602,9 @@ public class PlanningContinuum extends Box implements Environment {
 	 *
 	 * @return the refinements of this sampling environment
 	 *
+	 * @see MultiResolutionEnvironment#getRefinements()
 	 */
+	@Override
 	public Set<PlanningContinuum> getRefinements() {
 		// TODO: Review
 		return new HashSet<PlanningContinuum>();
@@ -550,7 +616,9 @@ public class PlanningContinuum extends Box implements Environment {
 	 * 
 	 * @param density the refinement density
 	 * 
+	 * @see MultiResolutionEnvironment#refine(int)
 	 */
+	@Override
 	public void refine(int percentage) {
 		// TODO: Review
 		this.setResolution(this.getResolution() * (1 - percentage / 100d));
@@ -559,7 +627,9 @@ public class PlanningContinuum extends Box implements Environment {
 	/**
 	 * Coarsens, that is, removes the children of this sampling environment.
 	 *
+	 * @see MultiResolutionEnvironment#coarsen()
 	 */
+	@Override
 	public void coarsen() {
 		// TODO: Review
 		this.setResolution(this.getResolution() * 1.5);
@@ -910,7 +980,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 * 
 	 * @return true if the obstacle has been embedded, false otherwise
 	 * 
-	 * @see Environment#embed(Obstacle)
+	 * @see DynamicEnvironment#embed(Obstacle)
 	 */
 	@Override
 	public boolean embed(Obstacle obstacle) {
@@ -938,7 +1008,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 * 
 	 * @return true if the obstacle has been unembedded, false otherwise
 	 * 
-	 * @see Environment#unembed(Obstacle)
+	 * @see DynamicEnvironment#unembed(Obstacle)
 	 */
 	@Override
 	public boolean unembed(Obstacle obstacle) {
@@ -959,7 +1029,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 * 
 	 * @param obstacle the embedded obstacle
 	 * 
-	 * @see Environment#refresh(Obstacle)
+	 * @see DynamicEnvironment#refresh(Obstacle)
 	 */
 	@Override
 	public void refresh(Obstacle obstacle) {
@@ -971,7 +1041,7 @@ public class PlanningContinuum extends Box implements Environment {
 	/**
 	 * Unembeds all obstacles from this sampling environment.
 	 * 
-	 * @see Environment#unembedAll()
+	 * @see DynamicEnvironment#unembedAll()
 	 */
 	@Override
 	public void unembedAll() {
@@ -992,7 +1062,7 @@ public class PlanningContinuum extends Box implements Environment {
 	 * @return true if the obstacle is embedded in this sampling environment, false
 	 *         otherwise
 	 * 
-	 * @see Environment#isEmbedded(Obstacle)
+	 * @see DynamicEnvironment#isEmbedded(Obstacle)
 	 */
 	@Override
 	public boolean isEmbedded(Obstacle obstacle) {
@@ -1090,7 +1160,6 @@ public class PlanningContinuum extends Box implements Environment {
 		this.updateActiveCost();
 		this.updateAppearance();
 		this.updateVisibility();
-		//this.updateEdges();
 	}
 
 	/**
@@ -1125,15 +1194,6 @@ public class PlanningContinuum extends Box implements Environment {
 		this.setVisible(this.activeCost > this.thresholdCost);
 		for (Edge edge : this.edges) {
 			edge.updateVisibility();
-		}
-	}
-	
-	/**
-	 * Updates the edges of this planning continuum.
-	 */
-	protected void updateEdges() {
-		for (Edge edge : this.edges) {
-			edge.update();
 		}
 	}
 	
@@ -1418,7 +1478,8 @@ public class PlanningContinuum extends Box implements Environment {
 		dist2 = point1.distanceTo2(point2);
 		theta = Math.atan2(dz, dist2);
 		phi = Math.atan2(dy, dx);
-
+		
+		// TODO: resolution is not necessary using single line segment intersection
 		double resolution = this.getResolution(); // meters in globe surface
 		for (int p = 1; dist > resolution; p = p * 2) {
 			for (int k = 0; k < p; k++) {
@@ -1487,7 +1548,7 @@ public class PlanningContinuum extends Box implements Environment {
 	}
 
 	@Override
-	public Set<? extends Environment> getAffectedChildren(Obstacle obstacle) {
+	public Set<? extends PlanningContinuum> getAffectedChildren(Obstacle obstacle) {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -1503,7 +1564,14 @@ public class PlanningContinuum extends Box implements Environment {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
+	/**
+	 * Gets the base cost of a normalized step in this planning continuum.
+	 * 
+	 * @return the base cost of a normalized step in this planning continuum
+	 * 
+	 * @see Environment#getBaseCost()
+	 */
 	@Override
 	public double getBaseCost() {
 		return PlanningContinuum.BASE_COST;
@@ -1518,10 +1586,45 @@ public class PlanningContinuum extends Box implements Environment {
 	public void render(DrawContext dc) {
 		if (this.visible) {
 			super.render(dc);
-			// TODO: CME observed here (include edges in environment layer?)
 			for (Edge edge : this.edges) {
 				edge.render(dc);
 			}
+		}
+	}
+
+	/**
+	 * Adds a structural change listener to this planning continuum.
+	 * 
+	 * @param listener the structural change listener to be added
+	 * 
+	 * @see MultiResolutionEnvironment#addStructuralChangeListener(StructuralChangeListener)
+	 */
+	@Override
+	public void addStructuralChangeListener(StructuralChangeListener listener) {
+		this.listeners.add(listener);
+	}
+	
+	/**
+	 * Removes a structural change listener from this planning continuum.
+	 * 
+	 * @param listener the structural change listener to be removed
+	 * 
+	 * @see MultiResolutionEnvironment#removeStructuralChangeListener(StructuralChangeListener)
+	 */
+	@Override
+	public void removeStructuralChangeListener(StructuralChangeListener listener) {
+		this.listeners.remove(listener);
+	}
+	
+	/**
+	 * Notifies the structural change listeners of this planning continuum.
+	 * 
+	 * @see MultiResolutionEnvironment#notifyStructuralChangeListeners()
+	 */
+	@Override
+	public void notifyStructuralChangeListeners() {
+		for (StructuralChangeListener listener : this.listeners) {
+			listener.notifyStructuralChange();
 		}
 	}
 
