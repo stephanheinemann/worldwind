@@ -185,7 +185,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return the newest RRT waypoint added to the tree
 	 */
 	public RRTreeWaypoint getNewestWaypoint() {
-		return newestWaypoint;
+		return this.newestWaypoint;
 	}
 	
 	/**
@@ -258,7 +258,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return the maximum number of sampling iterations of this RRT planner
 	 */
 	public int getMaxIterations() {
-		return maxIterations;
+		return this.maxIterations;
 	}
 	
 	/**
@@ -278,7 +278,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return the maximum extension distance of this RRT planner
 	 */
 	public double getEpsilon() {
-		return epsilon;
+		return this.epsilon;
 	}
 	
 	/**
@@ -297,7 +297,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return the sampling bias towards the goal of this RRT planner
 	 */
 	public int getBias() {
-		return bias;
+		return this.bias;
 	}
 	
 	/**
@@ -317,7 +317,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 *         planner
 	 */
 	public double getGoalThreshold() {
-		return goalThreshold;
+		return this.goalThreshold;
 	}
 
 	/**
@@ -329,28 +329,6 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	public void setGoalThreshold(double goalThreshold) {
 		this.goalThreshold = goalThreshold;
-	}
-	
-	/**
-	 * Gets the previously sampled waypoints of this RRT planner.
-	 * 
-	 * @return the previously sampled waypoints of this RRT planner
-	 */
-	@SuppressWarnings("unchecked")
-	protected List<RRTreeWaypoint> getWaypoints() {
-		// TODO: expose internal structure?
-		return (List<RRTreeWaypoint>) this.getEnvironment().getWaypoints();
-	}
-
-	/**
-	 * Sets the previously sampled waypoints of this RRT planner.
-	 * 
-	 * @param waypoints the previously sampled waypoints to be set
-	 */
-	@SuppressWarnings("unchecked")
-	protected void setWaypoints(List<? extends Waypoint> waypoints) {
-		// TODO: expose internal structure?
-		this.getEnvironment().setWaypoints((List<Waypoint>) waypoints);
 	}
 	
 	/**
@@ -367,7 +345,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected void clearExpendables() {
 		// TODO: separate method required? overridden and extended?
-		this.getWaypoints().clear();
+		this.getEnvironment().clearVertices();
 		this.getEnvironment().clearEdges();
 		this.getPlan().clear();
 	}
@@ -490,9 +468,9 @@ public class RRTreePlanner extends AbstractPlanner {
 		// and set the extension status accordingly
 		if (this.createExtension(nearWaypoint, waypoint)) {
 			extension = this.getNewestWaypoint();
-			this.addVertex(extension);
-			this.addEdge(extension);
-			extension.setCost(this.computeCost(extension));
+			this.getEnvironment().addVertex(extension);
+			this.getEnvironment().addEdge(extension, extension.getParent());
+			this.computeCost(extension.getParent(), extension);
 			
 			if (extension.equals(waypoint)) {
 				status = Status.REACHED;
@@ -535,7 +513,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		
 		try {
 			// check extension feasibility according to aircraft capabilities
-			extension.setEto(this.computeTime(treeWaypoint, extension));
+			this.computeEto(treeWaypoint, extension);
 			this.setNewestWaypoint(extension);
 			
 			// TODO: integrate NASA terrain and jBullet for conflict checks
@@ -642,104 +620,37 @@ public class RRTreePlanner extends AbstractPlanner {
 		}
 		
 		return position;
-		/*
-		Position positionNew;
-		Aircraft acft = this.getAircraft();
-		Globe globe = this.getEnvironment().getGlobe();
-
-		// Transform position to ENU coordinates
-		Vec4 pointENU = CoordinateTransformations.llh2enu(source, destination, globe);
-
-		// Calculate azimuth and elevation
-		double e = pointENU.x, n = pointENU.y, u = pointENU.z;
-		Angle azi = Angle.fromRadians(Math.atan2(e, n));
-		Angle ele = Angle.fromRadians(Math.atan2(u, Math.sqrt(n * n + e * e)));
-
-		// Get angles defining feasibility region
-		Angle maxEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfClimb() /
-				acft.getCapabilities().getMaximumRateOfClimbSpeed())).multiply(1);
-		Angle minEle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfDescent() /
-				acft.getCapabilities().getMaximumRateOfDescentSpeed())).multiply(-1);
-
-		double distance = this.getEnvironment().getDistance(source, destination);
-
-		// Non-feasible region
-		if (ele.compareTo(maxEle) == 1 || ele.compareTo(minEle) == -1) {
-			// Saturate elevation and distance to maximum values
-			ele = ele.compareTo(maxEle) == 1 ? maxEle : minEle;
-			distance = distance > epsilon ? epsilon : distance;
-
-			// Calculate maximum feasible point in ENU
-			u = distance * Math.sin(ele.radians);
-			e = distance * Math.cos(ele.radians) * Math.sin(azi.radians);
-			n = distance * Math.cos(ele.radians) * Math.cos(azi.radians);
-			pointENU = new Vec4(e, n, u);
-
-			// Transform from ENU to standard ECEF
-			positionNew = CoordinateTransformations.enu2llh(source, pointENU, globe);
-		}
-		// Feasible Region
-		else {
-			positionNew = this.growPosition(source, destination);
-		}
-
-		return positionNew;
-		*/
 	}
 	
 	/**
-	 * Computes the estimated time over(eto) an waypoint using the eto of the
-	 * previous waypoint and the aircraft capabilities.
+	 * Computes the estimated time over a target waypoint when traveled to from
+	 * a source waypoint considering the applicable aircraft capabilities.
 	 * 
-	 * @param source the previous waypoint with known eto
-	 * @param target the following waypoint with eto to be calculated
-	 * 
-	 * @return the eto for the following waypoint
+	 * @param source the source waypoint with known ETO
+	 * @param target the target waypoint with unknown ETO
 	 */
-	protected ZonedDateTime computeTime(RRTreeWaypoint source, RRTreeWaypoint target) {
+	protected void computeEto(RRTreeWaypoint source, RRTreeWaypoint target) {
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
-
-		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
-		return end;
+		
+		target.setEto(capabilities.getEstimatedTime(leg, globe, source.getEto()));
 	}
-
+	
 	/**
-	 * Adds the expanded waypoint to the list of waypoints.
+	 * Computes the estimated cost of a target waypoint when traveled to from
+	 * a source waypoint considering the operational cost and risk policies.
 	 * 
-	 * @param waypointNew the expanded waypoint
+	 * @param source the source waypoint with known cost
+	 * @param target the target waypoint with unknown cost
 	 */
-	protected void addVertex(RRTreeWaypoint waypointNew) {
-		// TODO: hide exposed waypoints structure
-		if (getWaypoints().contains(waypointNew))
-			this.getWaypoints().remove(waypointNew);
-		this.getWaypoints().add(waypointNew);
-	}
-
-	/**
-	 * Adds an edge (with set cost intervals) between the expanded waypoint and its
-	 * parent to the list of edges.
-	 * 
-	 * @param waypoint the expanded waypoint
-	 */
-	protected void addEdge(RRTreeWaypoint waypoint) {
-		this.getEnvironment().addEdge(waypoint, waypoint.getParent());
-	}
-
-	/**
-	 * Computes the estimated cost of a specified RRT waypoint.
-	 * 
-	 * @param waypoint the specified RRT waypoint in globe coordinates
-	 * 
-	 * @return g the estimated cost (g-value)
-	 */
-	protected double computeCost(RRTreeWaypoint waypoint) {
-		double g = waypoint.getParent().getCost();
-		g += this.getEnvironment().getStepCost(waypoint.getParent(), waypoint, waypoint.getParent().getEto(),
-				waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
-
-		return g;
+	protected void computeCost(RRTreeWaypoint source, RRTreeWaypoint target) {
+		double cost = source.getCost();
+		cost += this.getEnvironment().getStepCost(
+				source, target,
+				source.getEto(), target.getEto(),
+				this.getCostPolicy(), this.getRiskPolicy());
+		target.setCost(cost);
 	}
 
 	/**
@@ -753,6 +664,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return g the estimated cost (g-value)
 	 */
+	/*
 	protected double computeCost(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
 		double g = parent.getCost();
 
@@ -772,6 +684,7 @@ public class RRTreePlanner extends AbstractPlanner {
 
 		return g;
 	}
+	*/
 
 	/**
 	 * Check whether the waypoint is the goal or within the goal region
@@ -825,7 +738,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setEto(etd);
 		this.getStart().setCost(0d);
-		this.addVertex(getStart());
+		this.getEnvironment().addVertex(getStart());
 		this.setNewestWaypoint(getStart());
 
 		this.setGoal(this.createWaypoint(destination));
@@ -866,7 +779,7 @@ public class RRTreePlanner extends AbstractPlanner {
 			}
 			if (status) {
 				if (this.isInGoalRegion()) {
-					this.getGoal().setCost(this.computeCost(getNewestWaypoint()));
+					this.getGoal().setCost(this.getNewestWaypoint().getCost());
 					this.computePath();
 					return true;
 				}
@@ -979,23 +892,6 @@ public class RRTreePlanner extends AbstractPlanner {
 		}
 
 		return supports;
-	}
-
-	/**
-	 * Finds the k-nearest waypoints to the given position considering a particular
-	 * metric.
-	 * 
-	 * @param position the position in global coordinates
-	 * @param kNear number of waypoints to return
-	 * 
-	 * @return list of k-nearest waypoints sorted by increasing distance
-	 */
-	// TODO: Function needed for implementation not yet developed
-	protected List<? extends Position> findNearestMetric(Position position, int kNear) {
-
-		return this.getWaypoints().stream().sorted((p1, p2) -> Double
-				.compare(this.getDistanceMetric(p1, position), this.getDistanceMetric(p2, position)))
-				.limit(kNear).collect(Collectors.toList());
 	}
 
 	/**

@@ -41,6 +41,7 @@ import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import com.binarydreamers.trees.Interval;
@@ -51,7 +52,6 @@ import com.cfar.swim.worldwind.geom.CoordinateTransformations;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.planning.WeightedCostInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
@@ -99,11 +99,11 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	/** the terrain obstacles embedded into this sampling environment */
 	//private HashSet<TerrainObstacle> terrainObstacles = new HashSet<TerrainObstacle>();
 
+	// TODO: too expensive, synchronize vertices access instead?
 	/** the list of already sampled waypoints */
-	private List<? extends Waypoint> waypoints = new ArrayList<Waypoint>();
+	private Set<Position> vertices = new CopyOnWriteArraySet<Position>();
 	
 	// TODO: too expensive, synchronize edges access instead?
-	// TODO: Set versus list
 	/** the list of edges in this environment */
 	private Set<Edge> edges = new CopyOnWriteArraySet<Edge>();
 
@@ -378,61 +378,30 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 		this.terrainObstacles = terrainObstacles;
 	}
 	*/
-
+	
 	/**
-	 * Gets the previously sampled waypoints of this planning continuum.
+	 * Adds a vertex to this planning continuum.
 	 * 
-	 * @return the previously sampled waypoints of this planning continuum
+	 * @param vertex the vertex to be added
 	 */
-	public List<? extends Waypoint> getWaypoints() {
-		// environments do not know waypoints but positions only
-		// TODO: an environment contains sampled positions that can be waypoints of a trajectory
-		// Set<? extends Position> getWaypointPositions()
-		// pull up to Environment?
-		// TODO: shall the internal structure be exposed and modifiable?
-		// consider add, remove, clear, sort...
-		return waypoints;
+	public void addVertex(Position vertex) {
+		this.vertices.add(vertex);
 	}
-
+	
 	/**
-	 * Sets the previously sampled waypoints of this planning continuum.
+	 * Removes a vertex from this planning continuum.
 	 * 
-	 * @param waypoints the previously sampled waypoints to be set
+	 * @param vertex the vertex to be removed
 	 */
-	public void setWaypoints(List<? extends Waypoint> waypoints) {
-		// environments do not know waypoints but positions only
-		// TODO: an environment contains sampled positions that can be waypoints of a trajectory
-		// void setWaypointPositions(Set<? extends Position> positions)
-		// pull up to Environment?
-		// TODO: shall the internal structure be exposed and modifiable?
-		// consider add, remove, clear, sort...
-		this.waypoints = waypoints;
+	public void removeVertex(Position vertex) {
+		this.vertices.remove(vertex);
 	}
-
+	
 	/**
-	 * Gets the previously sampled edges of this planning continuum.
-	 * 
-	 * @return the previously sampled edges of this planning continuum
+	 * Clears the vertices of this planning continuum.
 	 */
-	private Set<? extends Edge> getEdges() {
-		// TODO: pull up to Environment?
-		// TODO: shall the internal structure be exposed and modifiable?
-		// consider add, remove, clear, sort...
-		// TODO: ? extends Edge -> hierarchical refinement of edge?
-		return this.edges;
-	}
-
-	/**
-	 * Sets the previously sampled edges of this planning continuum.
-	 * 
-	 * @param edges the previously sampled edges to be set
-	 */
-	private void setEdges(Set<Edge> edges) {
-		// TODO: pull up to Environment?
-		// TODO: shall the internal structure be exposed and modifiable?
-		// consider add, remove, clear, sort...
-		this.edges = edges;
-		this.notifyStructuralChangeListeners();
+	public void clearVertices() {
+		this.vertices.clear();
 	}
 	
 	/**
@@ -497,19 +466,16 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	protected void refreshEdges() {
 		Set<Edge> validEdges = new HashSet<Edge>();
 
-		for (Edge edge : this.getEdges()) {
-			Waypoint waypoint1 = (Waypoint) edge.getFirstPosition();
-			if (!this.getWaypoints().contains(waypoint1))
+		for (Edge edge : this.edges) {
+			if (!this.vertices.contains(edge.getFirstPosition()))
 				continue;
-
-			Waypoint waypoint2 = (Waypoint) edge.getSecondPosition();
-			if (!this.getWaypoints().contains(waypoint2))
+			if (!this.vertices.contains(edge.getSecondPosition()))
 				continue;
-
 			validEdges.add(edge);
 		}
-
-		this.setEdges(validEdges);
+		
+		this.clearEdges();
+		this.edges.addAll(validEdges);
 	}
 
 	/**
@@ -534,9 +500,9 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 * 
 	 * @return the correspondent waypoint in the list, if present, null otherwise
 	 */
-	public Optional<? extends Waypoint> getWaypoint(Position position1) {
+	public Optional<? extends Position> getWaypoint(Position position1) {
 
-		return this.waypoints.stream().filter(s -> s.equals(position1)).findFirst();
+		return this.vertices.stream().filter(s -> s.equals(position1)).findFirst();
 	}
 
 	/**
@@ -649,7 +615,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	@Override
 	public boolean isWaypointPosition(Position position) {
 		if (null != this.globe) {
-			return waypoints.contains(position);
+			return this.vertices.contains(position);
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
@@ -732,7 +698,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 		Set<Position> neighbors = new HashSet<Position>();
 
 		if (null != this.globe) {
-			neighbors = this.getEdges().stream().filter(s -> s.isEndPosition(position))
+			neighbors = this.edges.stream().filter(s -> s.isEndPosition(position))
 					.map(s -> s.getOtherPosition(position)).collect(Collectors.toSet());
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -956,7 +922,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 * @return the set of affected edges
 	 */
 	public Set<Edge> findAffectedEdges(Obstacle obstacle) {
-		return this.getEdges().stream().filter(e ->  e.intersects(obstacle.getExtent(this.getGlobe())))
+		return this.edges.stream().filter(e ->  e.intersects(obstacle.getExtent(this.getGlobe())))
 				.collect(Collectors.toSet());
 	}
 
@@ -966,7 +932,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 * @param obstacle the obstacle to be embedded
 	 */
 	public void embedEdges(Obstacle obstacle) {
-		for (Edge edge : this.getEdges()) {
+		for (Edge edge : this.edges) {
 			if (edge.intersects(obstacle.getExtent(this.globe))) {
 				edge.addCostInterval(obstacle.getCostInterval());
 			}
@@ -1508,7 +1474,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 */
 	public List<? extends Position> findNearest(Position position, int kNear) {
 		// TODO: environment stores positions, not waypoints
-		return this.getWaypoints().stream()
+		return this.vertices.stream()
 				.sorted((p1, p2) -> Double.compare(
 						this.getNormalizedDistance(p1, position),
 						this.getNormalizedDistance(p2, position)))
@@ -1526,12 +1492,29 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 */
 	public List<? extends Position> findNearestDist(Position position, double maxDist) {
 
-		return this.getWaypoints().stream()
+		return this.vertices.stream()
 				.sorted((p1, p2) -> Double.compare(this.getNormalizedDistance(p1, position),
 						this.getNormalizedDistance(p2, position)))
 				.filter(p -> this.getDistance(p, position) <= maxDist && !p.equals(position))
 				.collect(Collectors.toList());
 
+	}
+	
+	/**
+	 * Finds the k-nearest waypoints to the given position considering a
+	 * particular metric.
+	 * 
+	 * @param position the position in global coordinates
+	 * @param kNear number of waypoints to return
+	 * @param metric the metric to be applied
+	 * 
+	 * @return list of k-nearest waypoints sorted by increasing distance
+	 */
+	protected List<? extends Position> findNearestMetric(Position position, int kNear, BiFunction<Position, Position, Double> metric) {
+
+		return this.vertices.stream().sorted((p1, p2) -> Double
+				.compare(metric.apply(p1, position), metric.apply(p2, position)))
+				.limit(kNear).collect(Collectors.toList());
 	}
 
 	/**
@@ -1540,10 +1523,12 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 * @param position the position in global coordinates
 	 */
 	public void sortNearest(Position position) {
-
-		this.setWaypoints(this.getWaypoints().stream().sorted((p1, p2) -> Double
-				.compare(this.getNormalizedDistance(p1, position), this.getNormalizedDistance(p2, position)))
-				.collect(Collectors.toList()));
+		// TODO: return SortedSet instead? required method?
+		this.vertices = this.vertices.stream().sorted((p1, p2) ->
+		Double.compare(
+				this.getNormalizedDistance(p1, position),
+				this.getNormalizedDistance(p2, position)))
+				.collect(Collectors.toSet());
 
 	}
 

@@ -40,6 +40,7 @@ import java.util.Set;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
+import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.AnytimePlanner;
 import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;

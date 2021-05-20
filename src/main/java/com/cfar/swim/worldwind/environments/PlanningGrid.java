@@ -584,7 +584,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * 
 	 * @return true if the obstacle has been embedded, false otherwise
 	 * 
-	 * @see DynamicEnvironmentt#embed(Obstacle)
+	 * @see DynamicEnvironment#embed(Obstacle)
 	 */
 	@Override
 	public boolean embed(Obstacle obstacle) {
