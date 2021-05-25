@@ -42,7 +42,6 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
-import com.cfar.swim.worldwind.geom.CoordinateTransformations;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.rrt.Extension;
@@ -62,6 +61,7 @@ import gov.nasa.worldwind.geom.Quaternion;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
+import gov.nasa.worldwind.util.Logging;
 
 /**
  * Realizes a basic RRT planner that plans a trajectory of an aircraft in an
@@ -351,13 +351,39 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Connects a plan from the newest sampled RRT waypoint backwards to the
+	 * starting RRT waypoint.
+	 */
+	protected void connectPlan() {
+		this.connectPlan(getNewestWaypoint());
+	}
+	
+	/**
+	 * Connects a plan from a RRT waypoint backwards to the starting RRT
+	 * waypoint.
+	 * 
+	 * @param waypoint the RRT waypoint of a computed plan
+	 */
+	protected void connectPlan(RRTreeWaypoint waypoint) {
+		this.plan.clear();
+		waypoint.setTtg(Duration.ZERO);
+		waypoint.setDtg(0d);
+		this.plan.addFirst(waypoint.clone());
+		while (waypoint.getParent() != null) {
+			waypoint = waypoint.getParent();
+			waypoint.setTtg(Duration.between(waypoint.getEto(), plan.getFirst().getEto()));
+			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, plan.getFirst()));
+			this.plan.addFirst(waypoint.clone());
+		}
+	}
+	
+	/**
 	 * Creates a trajectory of the computed plan of this RRT planner.
 	 * 
 	 * @return the trajectory of the computed plan of this RRT planner
 	 */
 	@SuppressWarnings("unchecked")
 	protected Trajectory createTrajectory() {
-		// TODO: TTG, DTG attributes?
 		return new Trajectory(
 				Collections.unmodifiableList((List<Waypoint>) this.plan.clone()));
 	}
@@ -365,26 +391,38 @@ public class RRTreePlanner extends AbstractPlanner {
 	/**
 	 * Creates a trajectory from a particular plan.
 	 * 
-	 * @param the plan from which the trajectory is created
+	 * @param plan the plan from which the trajectory is created
 	 * 
 	 * @return the trajectory of the plan
 	 */
 	@SuppressWarnings("unchecked")
 	protected Trajectory createTrajectory(LinkedList<Waypoint> plan) {
-		// TODO: TTG, DTG attributes?
 		return new Trajectory(
 				Collections.unmodifiableList((List<Waypoint>) plan.clone()));
 	}
 	
 	/**
-	 * Samples a random waypoint from within the environment using a uniform
-	 * distribution.
+	 * Samples a waypoint from within the environment using the sampling
+	 * distribution of this RRT planner.
 	 * 
-	 * @return the sampled waypoint from within the environment using the
-	 *         uniform distribution
+	 * @return the sampled waypoint
 	 */
-	protected RRTreeWaypoint sampleRandom() {
-		return this.createWaypoint(this.getEnvironment().sampleRandomPosition());
+	protected RRTreeWaypoint sample() {
+		RRTreeWaypoint sample = null;
+		
+		switch (this.getSampling()) {
+		case ELLIPSOIDAL:
+			sample = this.sampleEllipsoid();
+			break;
+		case GAUSSIAN:
+			sample = this.sampleGaussian();
+			break;
+		case UNIFORM:
+		default:
+			sample = this.sampleRandom();
+		}
+		
+		return sample;
 	}
 	
 	/**
@@ -396,7 +434,18 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected RRTreeWaypoint sampleBiased() {
 		int random = new Random().nextInt(100 - 1) + 1;
-		return (random <= this.bias) ? this.getGoal() : this.sampleRandom();
+		return (random <= this.bias) ? this.getGoal() : this.sample();
+	}
+	
+	/**
+	 * Samples a random waypoint from within the environment using a uniform
+	 * distribution.
+	 * 
+	 * @return the sampled waypoint from within the environment using the
+	 *         uniform distribution
+	 */
+	protected RRTreeWaypoint sampleRandom() {
+		return this.createWaypoint(this.getEnvironment().sampleRandomPosition());
 	}
 	
 	/**
@@ -413,8 +462,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	
 	/**
 	 * Samples a random position from within the intersection of the
-	 * environment and an ellipsoid defined by the start and goal as its foci
-	 * and the environment diameter as its major axis diameter.
+	 * environment and an ellipsoid defined by the start and goal as its foci.
 	 * 
 	 * @return the sampled waypoint from within the intersection of the
 	 *         environment and the ellipsoid
@@ -422,7 +470,29 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected RRTreeWaypoint sampleEllipsoid() {
 		return this.createWaypoint(
 				this.getEnvironment().sampleRandomEllipsoidPosition(
-				this.start, this.goal, this.getEnvironment().getDiameter()));
+						this.start, this.goal));
+	}
+	
+	/**
+	 * Creates a sampling shape in the environment of this RRT planner.
+	 */
+	protected void createSamplingShape() {
+		switch(this.getSampling()) {
+		case ELLIPSOIDAL:
+			this.getEnvironment().setEllipsoidShape(this.getStart(), this.getGoal());
+			break;
+		case GAUSSIAN:
+		case UNIFORM:
+		default:
+			this.getEnvironment().setBoxShape();
+		}
+	}
+	
+	/**
+	 * Disposes a sampling shape in the environment of this RRT planner.
+	 */
+	protected void disposeSamplingShape() {
+		this.getEnvironment().setSamplingShape(null);
 	}
 	
 	/**
@@ -459,10 +529,8 @@ public class RRTreePlanner extends AbstractPlanner {
 		nearWaypoint = (RRTreeWaypoint) this.getEnvironment()
 				.findNearest(waypoint, 1).get(0);
 		
-		// TODO: review the use of other metrics to guide the search instead of
-		// just distance, e.g., nodes with 5m separation in altitude should be
-		// "farther" than nodes with 5m horizontal separation
-		//nearWaypoint = (RRTreeWaypoint) this.findNearestMetric(waypoint, 1).get(0);
+		// TODO: consider performance metrics instead
+		//this.getEnvironment().findNearest(waypoint, 1, metric);
 		
 		// create a new waypoint in the tree by extending from near to sampled
 		// and set the extension status accordingly
@@ -652,81 +720,34 @@ public class RRTreePlanner extends AbstractPlanner {
 				this.getCostPolicy(), this.getRiskPolicy());
 		target.setCost(cost);
 	}
-
+	
 	/**
-	 * Computes the estimated cost of a specified RRT waypoint through a specific
-	 * parent. If there is no edge containing both positions, a new temporary edge
-	 * is created. If the created edge is in conflict with terrain obstacles the
-	 * cost is set to Infinity.
+	 * Determines whether or not the newest sampled waypoint is located within
+	 * the goal region.
 	 * 
-	 * @param waypoint the specified RRT waypoint in globe coordinates
-	 * @param parent the specific RRT waypoint to be considered as parent
-	 * 
-	 * @return g the estimated cost (g-value)
-	 */
-	/*
-	protected double computeCost(RRTreeWaypoint waypoint, RRTreeWaypoint parent) {
-		double g = parent.getCost();
-
-		if (this.getEnvironment().getEdge(parent, waypoint).isPresent())
-			g += this.getEnvironment().getStepCost(parent, waypoint, parent.getEto(),
-					waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
-		else {
-			if (this.getEnvironment().checkConflict(waypoint, parent, getAircraft()))
-				g = Double.POSITIVE_INFINITY;
-			else {
-				this.getEnvironment().addEdge(waypoint, parent);
-				g += this.getEnvironment().getStepCost(parent, waypoint, parent.getEto(),
-						waypoint.getEto(), this.getCostPolicy(), this.getRiskPolicy());
-				this.getEnvironment().removeEdge(waypoint, parent);
-			}
-		}
-
-		return g;
-	}
-	*/
-
-	/**
-	 * Check whether the waypoint is the goal or within the goal region
-	 * 
-	 * @param waypoint the RRTree Waypoint to be compared (default=this.waypointNew)
-	 * 
-	 * @return true if the new waypoint is within the goal region
+	 * @return true if the new newest sampled waypoint is located within the
+	 *         goal region, false otherwise
 	 */
 	protected boolean isInGoalRegion() {
 		return this.isInGoalRegion(this.getNewestWaypoint());
 	}
-
-	protected boolean isInGoalRegion(Position position) {
-		return this.getEnvironment().getDistance(position, this.getGoal()) < this.getGoalThreshold();
-	}
-
+	
 	/**
-	 * Computes the path from the current waypoint to the starting waypoint
+	 * Determines whether or not a position is located within the goal region.
 	 * 
-	 * @param waypoint the last RRTree Waypoint in the path
-	 *            (default=this.waypointNew)
+	 * @param position the position in global coordinates
+	 * 
+	 * @return true if the position is located within the goal region,
+	 *         false otherwise
 	 */
-	protected void computePath() {
-		this.computePath(getNewestWaypoint());
+	protected boolean isInGoalRegion(Position position) {
+		return this.getGoalThreshold() >= this.getEnvironment()
+				.getDistance(position, this.getGoal());
 	}
-
-	protected void computePath(RRTreeWaypoint waypoint) {
-		plan.clear();
-		waypoint.setTtg(Duration.ZERO);
-		waypoint.setDtg(0d);
-		plan.addFirst(waypoint.clone());
-		while (waypoint.getParent() != null) {
-			waypoint = waypoint.getParent();
-			waypoint.setTtg(Duration.between(waypoint.getEto(), plan.getFirst().getEto()));
-			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, plan.getFirst()));
-			plan.addFirst(waypoint.clone());
-		}
-	}
-
+	
 	/**
-	 * Initializes the planner to plan from an origin to a destination at a
-	 * specified estimated time of departure.
+	 * Initializes this RRT planner to plan from an origin to a destination at
+	 * a specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
@@ -738,57 +759,58 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setEto(etd);
 		this.getStart().setCost(0d);
-		this.getEnvironment().addVertex(getStart());
-		this.setNewestWaypoint(getStart());
+		this.getEnvironment().addVertex(this.getStart());
+		this.setNewestWaypoint(this.getStart());
 
 		this.setGoal(this.createWaypoint(destination));
 	}
-
+	
 	/**
-	 * Computes a plan by growing a tree until the goal is reached
+	 * Computes a RRT plan by growing a tree until the goal region is reached.
 	 * 
-	 * @return true if the goal was reached, false otherwise
+	 * @return true if the goal region was reached, false otherwise
 	 */
 	protected boolean compute() {
-		boolean status = false;
-		for (int i = 0; i < maxIterations; i++) {
+		this.createSamplingShape();
+		
+		for (int i = 0; i < this.maxIterations; i++) {
+			// sample a new waypoint
+			RRTreeWaypoint sample = this.sampleBiased();
 			
-			RRTreeWaypoint sample;
-			switch (this.getSampling()) {
-			case ELLIPSOIDAL:
-				sample = this.sampleEllipsoid();
-				break;
-			case GAUSSIAN:
-				sample = this.sampleGaussian();
-				break;
-			case UNIFORM:
-			default:
-				sample = this.sampleBiased();
-			}
-			
-			System.out.println("sample = " + sample);
-			
+			// connect sample according to strategy
+			boolean notTrapped = false;
 			switch (this.getStrategy()) {
 			case CONNECT:
-				status = this.connectRRT(sample) != Status.TRAPPED;
+				notTrapped = (Status.TRAPPED != this.connectRRT(sample));
 				break;
 			case EXTEND:
 			default:
-				status = this.extendRRT(sample) != Status.TRAPPED;
+				notTrapped = (Status.TRAPPED != this.extendRRT(sample));
 				break;
 			}
-			if (status) {
+			
+			if (notTrapped) {
 				if (this.isInGoalRegion()) {
+					// TODO: connect newest to goal instead?
+					// feasibility issues
 					this.getGoal().setCost(this.getNewestWaypoint().getCost());
-					this.computePath();
+					/*
+					this.getGoal().setParent(this.getNewestWaypoint());
+					this.getEnvironment().addVertex(this.getGoal());
+					this.getEnvironment().addEdge(this.getNewestWaypoint(), this.getGoal());
+					*/
+					this.connectPlan();
 					return true;
 				}
 			}
 		}
-		System.out.println("No path found after " + maxIterations + " iterations.");
+		
+		this.disposeSamplingShape();
+		
+		Logging.logger().info("no trajectory found after " + this.maxIterations + " iterations");
 		return false;
 	}
-
+	
 	/**
 	 * Plans a trajectory from an origin to a destination at a specified estimated
 	 * time of departure.
@@ -809,10 +831,10 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.compute();
 		Trajectory trajectory = this.createTrajectory();
 		this.revisePlan(trajectory);
-
+		
 		return trajectory;
 	}
-
+	
 	/**
 	 * Plans a trajectory from an origin to a destination along waypoints at a
 	 * specified estimated time of departure.
@@ -829,16 +851,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-
 		LinkedList<Waypoint> plan = new LinkedList<>();
 		Waypoint currentOrigin = new Waypoint(origin);
 		ZonedDateTime currentEtd = etd;
-
+		
 		// collect intermediate destinations
 		ArrayList<Waypoint> destinations = waypoints.stream().map(Waypoint::new)
 				.collect(Collectors.toCollection(ArrayList::new));
 		destinations.add(new Waypoint(destination));
-
+		
 		// plan and concatenate partial trajectories
 		for (Waypoint currentDestination : destinations) {
 			if (!(currentOrigin.equals(currentDestination))) {
@@ -846,18 +867,18 @@ public class RRTreePlanner extends AbstractPlanner {
 				this.initialize(currentOrigin, currentDestination, currentEtd);
 				this.compute();
 				Trajectory part = this.createTrajectory();
-
+				
 				// append partial trajectory to plan
 				if ((!plan.isEmpty()) && (!part.isEmpty())) {	
 					// TODO: review (connection within goal region?)
 					part = part.withoutFirst();
 				}
-
+				
 				for (Waypoint waypoint : part.getWaypoints()) {
 					plan.add(waypoint);
 				}
-				// TODO: NPE observed here
-				if (plan.peekLast().equals(currentOrigin)) {
+				
+				if (plan.isEmpty() || plan.peekLast().equals(currentOrigin)) {
 					// if no plan could be found, return an empty trajectory
 					Trajectory trajectory = new Trajectory();
 					this.revisePlan(trajectory);
@@ -868,14 +889,15 @@ public class RRTreePlanner extends AbstractPlanner {
 				}
 			}
 		}
+		
 		Trajectory trajectory = this.createTrajectory(plan);
 		this.revisePlan(trajectory);
-
 		return trajectory;
 	}
-
+	
 	/**
-	 * Indicates whether or not this RRT planner supports a specified environment.
+	 * Determines whether or not this RRT planner supports a specified
+	 * environment.
 	 * 
 	 * @param environment the environment
 	 * 
@@ -886,43 +908,12 @@ public class RRTreePlanner extends AbstractPlanner {
 	@Override
 	public boolean supports(Environment environment) {
 		boolean supports = super.supports(environment);
-
+		
 		if (supports) {
 			supports = (environment instanceof PlanningContinuum);
 		}
-
+		
 		return supports;
-	}
-
-	/**
-	 * Gets the distance between two positions with a particular metric. It
-	 * considers the aircraft define for this planner and its capabilities to
-	 * evaluate the possibility/cost of movement in each direction.
-	 * 
-	 * @param reference the reference position where the aircraft is
-	 * @param position the position to be considered as next for the aircraft
-	 * 
-	 * @return the weighted distance between the two positions
-	 */
-	// TODO: Function needed for implementation not yet developed
-	protected double getDistanceMetric(Position reference, Position position) {
-		Aircraft acft = this.getAircraft();
-
-		Vec4 pointENU = CoordinateTransformations.llh2enu(reference, position, this.getEnvironment().getGlobe());
-		double x = pointENU.x, y = pointENU.y, z = pointENU.z;
-
-		// Get angles defining feasibility region
-		Angle angle;
-		if (z > 0)
-			angle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfClimb() /
-					acft.getCapabilities().getMaximumRateOfClimbSpeed())).multiply(1);
-		else
-			angle = Angle.fromRadians(Math.asin(acft.getCapabilities().getMaximumRateOfDescent() /
-					acft.getCapabilities().getMaximumRateOfDescentSpeed())).multiply(-1);
-
-		double a = angle.sin(), b = a, c = 1;
-
-		return Math.sqrt(a * x * x + b * y * y + c * z * z);
 	}
 	
 	/**
@@ -955,5 +946,5 @@ public class RRTreePlanner extends AbstractPlanner {
 		
 		return matches;
 	}
-
+	
 }

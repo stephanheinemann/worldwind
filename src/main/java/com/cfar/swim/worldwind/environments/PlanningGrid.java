@@ -374,7 +374,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 */
 	@Override
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		return this.costIntervals.searchInterval(new CostInterval(null, this.time));
+		return this.costIntervals.searchInterval(new CostInterval(null, time));
 	}
 	
 	/**

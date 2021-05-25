@@ -48,7 +48,6 @@ import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.geom.Box;
-import com.cfar.swim.worldwind.geom.CoordinateTransformations;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
@@ -61,11 +60,18 @@ import com.cfar.swim.worldwind.render.TimedRenderable;
 //import com.cfar.swim.worldwind.render.airspaces.TerrainBox;
 
 import gov.nasa.worldwind.avlist.AVKey;
+import gov.nasa.worldwind.geom.Angle;
+import gov.nasa.worldwind.geom.PolarPoint;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Quaternion;
 import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.DrawContext;
+import gov.nasa.worldwind.render.Ellipsoid;
+import gov.nasa.worldwind.render.Material;
+import gov.nasa.worldwind.render.RigidShape;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
@@ -106,6 +112,9 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	// TODO: too expensive, synchronize edges access instead?
 	/** the list of edges in this environment */
 	private Set<Edge> edges = new CopyOnWriteArraySet<Edge>();
+	
+	/** the sampling shape within this planning continuum */
+	private RigidShape samplingShape = null;
 
 	/** the current accumulated active cost of this sampling environment */
 	private double activeCost = 1d;
@@ -194,7 +203,84 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	public Globe getGlobe() {
 		return this.globe;
 	}
-
+	
+	/**
+	 * Gets the sampling shape within this planning continuum.
+	 * 
+	 * @return the sampling shape within this planning continuum
+	 */
+	public RigidShape getSamplingShape() {
+		return this.samplingShape;
+	}
+	
+	/**
+	 * Sets the sampling shape within this planning continuum.
+	 * 
+	 * @param samplingShape the sampling shape to be set
+	 */
+	public void setSamplingShape(RigidShape samplingShape) {
+		this.samplingShape = samplingShape;
+	}
+	
+	/**
+	 * Determines whether or not this planning continuum has a sampling shape.
+	 * 
+	 * @return true if this planning planning continuum has a sampling shape,
+	 *         false otherwise
+	 */
+	public boolean hasSamplingShape() {
+		return (null != this.samplingShape);
+	}
+	
+	/**
+	 * Sets a box sampling shape within this planning continuum.
+	 */
+	public void setBoxShape() {
+		// TODO: derive box sampling shape
+		this.setSamplingShape(null);
+	}
+	
+	/**
+	 * Sets an ellipsoid sampling shape within this planning continuum.
+	 * 
+	 * @param focusA the focus A of the ellipsoid in globe coordinates
+	 * @param focusB the focus B of the ellipsoid in globe coordinates
+	 */
+	public void setEllipsoidShape(Position focusA, Position focusB) {
+		Vec4 va = this.getGlobe().computePointFromPosition(focusA);
+		Vec4 vb = this.getGlobe().computePointFromPosition(focusB);
+		Vec4 vc = vb.subtract3(va);
+		Vec4 center = va.add3(vc.divide3(2d));
+		Position cp = this.getGlobe().computePositionFromPoint(center);
+		
+		// extend minor diameter by 10% focus distance
+		double diameter = this.getDistance(focusA, focusB);
+		diameter += 0.1d * diameter;
+		
+		// ellipsoid radii
+		double a = diameter / 2d; // minor radius
+		double c = vc.divide3(2d).getLength3(); // foci (vertical) radius
+		double b = Math.sqrt((a * a) + (c * c)); // major radius
+		
+		Angle azimuth = Position.greatCircleAzimuth(focusA, focusB);
+		Vec4 normal = this.getGlobe().computeSurfaceNormalAtPoint(center);
+		Angle pitch = normal.angleBetween3(vc).subtract(Angle.POS90);
+		if (0 < focusA.getLatitude().compareTo(focusB.getLatitude())) {
+			pitch = pitch.multiply(-1d);
+		}
+		
+		// ellipsoid shape and attributes
+		Ellipsoid samplingEllipsoid = new Ellipsoid(cp, b, c, a,
+				azimuth, pitch, Angle.ZERO);
+					
+		BasicShapeAttributes attributes = new BasicShapeAttributes();
+		attributes.setDrawOutline(false);
+		attributes.setInteriorMaterial(Material.LIGHT_GRAY);
+		attributes.setInteriorOpacity(0.2d);
+		samplingEllipsoid.setAttributes(attributes);
+		this.setSamplingShape(samplingEllipsoid);
+	}
+	
 	/**
 	 * Adds a cost interval to this sampling environment.
 	 * 
@@ -225,8 +311,6 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 * 
 	 */
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		// return this.costIntervals.searchInterval(new CostInterval(null, this.time));
-		// //BUG?
 		return this.costIntervals.searchInterval(new CostInterval(null, time));
 	}
 
@@ -267,7 +351,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 *         specified time span
 	 */
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = 1d; // simple cost of normalized distance
+		double cost = this.getBaseCost(); // simple cost of normalized distance
 
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
@@ -405,6 +489,19 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	}
 	
 	/**
+	 * Finds a particular vertex of this planning continuum.
+	 * 
+	 * @param vertex the vertex to be found
+	 * 
+	 * @return the vertex of this planning continuum if found
+	 */
+	public Optional<? extends Position> findVertex(Position vertex) {
+		return this.vertices.stream()
+				.filter(s -> s.equals(vertex))
+				.findFirst();
+	}
+	
+	/**
 	 * Adds an edge to this planning continuum.
 	 * 
 	 * @param edge the edge to be added
@@ -477,32 +574,20 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 		this.clearEdges();
 		this.edges.addAll(validEdges);
 	}
-
+	
 	/**
-	 * Gets the edge from the list of edges in this environment which has both given
-	 * positions.
+	 * Finds a particular edge of this planning continuum.
 	 * 
-	 * @param position1 one of the positions to be checked
-	 * @param position2 the other position to be checked
+	 * @param end1 one end position of the edge to be found
+	 * @param end2 another end position of the edge to be found
 	 * 
-	 * @return the edge containing both positions, if present, null otherwise
+	 * @return the edge of this planning continuum if found
 	 */
-	public Optional<Edge> getEdge(Position position1, Position position2) {
-
-		return this.edges.stream().filter(s -> s.isEndPosition(position1) && s.isEndPosition(position2)).findFirst();
-	}
-
-	/**
-	 * Gets the waypoint from the list of waypoints in this environment which
-	 * corresponds to the given position
-	 * 
-	 * @param position1 the position to be checked
-	 * 
-	 * @return the correspondent waypoint in the list, if present, null otherwise
-	 */
-	public Optional<? extends Position> getWaypoint(Position position1) {
-
-		return this.vertices.stream().filter(s -> s.equals(position1)).findFirst();
+	public Optional<Edge> findEdge(Position end1, Position end2) {
+		return this.edges.stream()
+				.filter(s -> s.isEndPosition(end1)
+						&& s.isEndPosition(end2))
+				.findFirst();
 	}
 
 	/**
@@ -580,7 +665,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	 * Refines, that is, adds children with a specified density to this planning
 	 * grid.
 	 * 
-	 * @param density the refinement density
+	 * @param percentage the refinement percentage
 	 * 
 	 * @see MultiResolutionEnvironment#refine(int)
 	 */
@@ -799,7 +884,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 
 		Edge edge = null;
-		Optional<Edge> optEdge = this.getEdge(origin, destination);
+		Optional<Edge> optEdge = this.findEdge(origin, destination);
 
 		if (!optEdge.isPresent()) {
 			throw new IllegalStateException("no edge containing both positions");
@@ -1186,25 +1271,6 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	}
 
 	/**
-	 * Gets the interval tree that is defined for a specified line.
-	 * 
-	 * @param line the line to be checked
-	 * 
-	 * @return the interval tree with all cost intervals
-	 */
-	public IntervalTree<ChronoZonedDateTime<?>> embedIntervalTree(Edge edge) {
-		IntervalTree<ChronoZonedDateTime<?>> intervalTree = new IntervalTree<ChronoZonedDateTime<?>>(
-				CostInterval.comparator);
-
-		for (Obstacle obstacle : this.getObstacles()) {
-			if (edge.intersects(obstacle.getExtent(this.getGlobe()))) {
-				intervalTree.add(obstacle.getCostInterval());
-			}
-		}
-		return intervalTree;
-	}
-
-	/**
 	 * Creates a bounding box with a defined radius surrounding a given position.
 	 * 
 	 * @param position the position to be considered
@@ -1322,57 +1388,65 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	
 	/**
 	 * Samples a random position from within the intersection of this planning
-	 * continuum and an ellipsoid defined by two foci positions and the length
-	 * of its major axis diameter.
+	 * continuum and an ellipsoid defined by two foci positions.
 	 * 
-	 * @param focusA the focus A in globe coordinates
-	 * @param focusB the focus B in globe coordinates
-	 * @param diameter the length of the major axis diameter
+	 * @param focusA the focus A of the ellipsoid in globe coordinates
+	 * @param focusB the focus B of the ellipsoid in globe coordinates
 	 * 
 	 * @return the sampled position from within the intersection of this
 	 *         planning continuum and the ellipsoid
-	 * 
-	 * @throws IllegalArgumentException if the distance between the foci is
-	 *         greater than the length of the major axis
 	 */
-	public Position sampleRandomEllipsoidPosition(Position focusA, Position focusB, double diameter) {
-		// Test if the box is more restrictive than the ellipsoid "diameter"
-		if (diameter > this.getDiameter())
-			return sampleRandomPosition();
-		if (diameter < this.getDistance(focusA, focusB)) {
-			throw new IllegalArgumentException("Distance between foci larger than bound");
-		}
-
-		Position positionRand;
-
-		// Middle Position from focusA and focusB
-		Position positionM = CoordinateTransformations.middlePosition(focusA, focusB, getGlobe());
-
-		// Ellipsoid parameters
-		double a = diameter / 2d;
-		double c = this.getDistance(focusA, focusB) / 2d;
-		double b = Math.sqrt(a * a - c * c);
-		do {
-			// Sample random point inside a unit sphere
-			double r = 0d + new Random().nextDouble() * 1d;
-			r = Math.sqrt(r); // to ensure uniform distribution in ellipsis since area is proportional to r^2
-			double theta = 0d + new Random().nextDouble() * Math.PI;
-			double phi = 0d + new Random().nextDouble() * 2 * Math.PI;
-			Vec4 pointRand = CoordinateTransformations.polar2cartesian(phi, theta, r);
-			// Transform from sphere to ellipsoid
-			pointRand = new Vec4(pointRand.x * b, pointRand.y * a, pointRand.z * b);
-
-			// Translation and rotation from local frame to global
-			Vec4 aerB = CoordinateTransformations.llh2aer(positionM, focusB, getGlobe()), enuRand;
-			double angleZ = Math.PI / 2 - aerB.x, angleX = aerB.y;
-			enuRand = CoordinateTransformations.rotationZ(pointRand, -angleZ);
-			enuRand = CoordinateTransformations.rotationX(enuRand, -angleX);
-			positionRand = CoordinateTransformations.enu2llh(positionM, enuRand, getGlobe());
-			// Check if point is inside box
+	public Position sampleRandomEllipsoidPosition(
+			Position focusA, Position focusB) {
+		Position sample = null;
+		
+		// extend minor diameter by 10% focus distance
+		double diameter = this.getDistance(focusA, focusB)
+				+ (0.1d * this.getDistance(focusA, focusB));
+		
+		// sample entire continuum if more restrictive
+		if (diameter > this.getDiameter()) {
+			sample = sampleRandomPosition();
+		} else {
+			// ellipsoid axis and center
+			Vec4 va = this.getGlobe().computePointFromPosition(focusA);
+			Vec4 vb = this.getGlobe().computePointFromPosition(focusB);
+			Vec4 vc = vb.subtract3(va);
+			Vec4 center = va.add3(vc.divide3(2d));
 			
-		} while (!this.contains(positionRand));
-
-		return positionRand;
+			// ellipsoid radii
+			double a = diameter / 2d; // minor radius
+			double c = vc.divide3(2d).getLength3(); // foci (vertical) radius
+			double b = Math.sqrt((a * a) + (c * c)); // major radius
+			
+			// ellipsoid alignment
+			Vec4 normal = this.getGlobe().computeSurfaceNormalAtPoint(center);
+			Angle pitch = normal.angleBetween3(vc).subtract(Angle.POS90);
+			if (0 < focusA.getLatitude().compareTo(focusB.getLatitude())) {
+				pitch = pitch.multiply(-1d);
+			}
+			
+			do {
+				// sample unit sphere and extend to ellipsoid
+				double latitude = (new Random().nextDouble() * 2d * Math.PI);
+				double longitude = (new Random().nextDouble() * 2d * Math.PI);
+				double radius = Math.sqrt(new Random().nextDouble());
+				PolarPoint rup = PolarPoint.fromRadians(latitude, longitude, radius);
+				Vec4 ruc = rup.toCartesian();
+				Vec4 rc = new Vec4(ruc.x * a, ruc.y * b, ruc.z * c);
+				
+				// transform sample into ellipsoid
+				Vec4[] alignmentAxis = new Vec4[] {Vec4.ZERO};
+				Angle alignmentAngle = Vec4.axisAngle(vc, Vec4.UNIT_Y, alignmentAxis);
+				Quaternion alignmentRotation = Quaternion.fromAxisAngle(alignmentAngle, alignmentAxis[0]);
+				rc = rc.transformBy3(alignmentRotation);
+				sample = this.getGlobe().computePositionFromPoint(center.add3(rc));
+			
+				// continue until sample is within intersection
+			} while (!this.contains(sample));
+		}
+		
+		return sample;
 	}
 
 	/**
@@ -1463,58 +1537,66 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	}
 
 	/**
-	 * Finds the k-nearest sampled positions for a the given position in this
+	 * Finds the k-nearest sampled positions for a given position in this
 	 * planning continuum.
 	 * 
 	 * @param position the position to query in globe coordinates
-	 * @param kNear the number of sampled positions to be found
+	 * @param k the number of sampled positions to be found
 	 * 
-	 * @return the k-nearest sampled position for the given position in this
+	 * @return the k-nearest sampled positions for the given position in this
 	 *         planning continuum sorted by increasing distance
 	 */
-	public List<? extends Position> findNearest(Position position, int kNear) {
-		// TODO: environment stores positions, not waypoints
+	public List<? extends Position> findNearest(Position position, int k) {
 		return this.vertices.stream()
 				.sorted((p1, p2) -> Double.compare(
 						this.getNormalizedDistance(p1, position),
 						this.getNormalizedDistance(p2, position)))
 				.filter(p -> !p.equals(position))
-				.limit(kNear).collect(Collectors.toList());
-	}
-
-	/**
-	 * Finds the waypoints nearer than the given distance to the given position.
-	 * 
-	 * @param position the position in global coordinates
-	 * @param maxDist the maximum distance to consider
-	 * 
-	 * @return list of nearest waypoints sorted by increasing distance
-	 */
-	public List<? extends Position> findNearestDist(Position position, double maxDist) {
-
-		return this.vertices.stream()
-				.sorted((p1, p2) -> Double.compare(this.getNormalizedDistance(p1, position),
-						this.getNormalizedDistance(p2, position)))
-				.filter(p -> this.getDistance(p, position) <= maxDist && !p.equals(position))
+				.limit(k)
 				.collect(Collectors.toList());
-
 	}
 	
 	/**
-	 * Finds the k-nearest waypoints to the given position considering a
-	 * particular metric.
+	 * Finds the k-nearest sampled positions for a given position in this
+	 * planning continuum using a particular distance metric.
 	 * 
 	 * @param position the position in global coordinates
-	 * @param kNear number of waypoints to return
-	 * @param metric the metric to be applied
+	 * @param k the number of sampled positions to be found
+	 * @param metric the distance metric to be applied
 	 * 
-	 * @return list of k-nearest waypoints sorted by increasing distance
+	 * @return the k-nearest sampled positions for the given position in this
+	 *         planning continuum using the distance metric, sorted by
+	 *         increasing distance
 	 */
-	protected List<? extends Position> findNearestMetric(Position position, int kNear, BiFunction<Position, Position, Double> metric) {
-
-		return this.vertices.stream().sorted((p1, p2) -> Double
-				.compare(metric.apply(p1, position), metric.apply(p2, position)))
-				.limit(kNear).collect(Collectors.toList());
+	protected List<? extends Position> findNearest(Position position, int k,
+			BiFunction<Position, Position, Double> metric) {
+		return this.vertices.stream()
+				.sorted((p1, p2) -> Double.compare(
+						metric.apply(p1, position),
+						metric.apply(p2, position)))
+				.filter(p -> !p.equals(position))
+				.limit(k)
+				.collect(Collectors.toList());
+	}
+	
+	/**
+	 * Finds the sampled positions nearer than a certain distance from a given
+	 * position in this planning continuum.
+	 * 
+	 * @param position the position in global coordinates
+	 * @param distance the maximum distance from the position
+	 * 
+	 * @return the sampled positions nearer than the distance from the position
+	 *         sorted by increasing distance
+	 */
+	public List<? extends Position> findNearest(Position position, double distance) {
+		return this.vertices.stream()
+				.sorted((p1, p2) -> Double.compare(
+						this.getNormalizedDistance(p1, position),
+						this.getNormalizedDistance(p2, position)))
+				.filter(p -> (this.getDistance(p, position) <= distance)
+						&& !p.equals(position))
+				.collect(Collectors.toList());
 	}
 
 	/**
@@ -1571,6 +1653,9 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	public void render(DrawContext dc) {
 		if (this.visible) {
 			super.render(dc);
+			if (this.hasSamplingShape()) {
+				this.samplingShape.render(dc);
+			}
 			for (Edge edge : this.edges) {
 				edge.render(dc);
 			}

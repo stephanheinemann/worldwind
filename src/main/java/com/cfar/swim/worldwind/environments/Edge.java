@@ -64,7 +64,14 @@ import gov.nasa.worldwind.geom.Position;
  *
  */
 public class Edge extends LineSegment implements TimedRenderable, ThresholdRenderable {
-
+	
+	// TODO: Consider edges to be dynamic, multi-resolution environments itself
+	// bounded by the sphere with its center at the center of the line segment
+	// and its radius half the segment length. Each Edge (Sphere) has a parent
+	// which is a planning continuum with either a Sphere (intermediate) or Box
+	// (top level) shape. Alternatively all continuums could be ellipsoids with
+	// the line segment end points at their foci.
+	
 	/** the continuum of this edge */
 	private PlanningContinuum continuum = null;
 
