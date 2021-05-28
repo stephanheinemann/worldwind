@@ -109,9 +109,9 @@ public class CubicGrid extends RegularGrid {
 	}
 	
 	/**
-	 * Gets the normalizer of this cubic grid.
+	 * Gets the distance normalizer of this cubic grid.
 	 * 
-	 * @return the normalizer of this cubic grid
+	 * @return the distance normalizer of this cubic grid
 	 */
 	public double getNormalizer() {
 		return this.normalizer;

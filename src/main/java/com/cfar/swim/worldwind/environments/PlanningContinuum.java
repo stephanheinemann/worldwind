@@ -119,7 +119,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	private double thresholdCost = 0d;
 	
 	/** the resolution of this planning continuum */
-	private double resolution = Double.POSITIVE_INFINITY;
+	private double resolution = 50d;
 	
 	/** the structural change listeners of this planning continuum */
 	private Set<StructuralChangeListener> listeners = new HashSet<StructuralChangeListener>();
@@ -188,10 +188,9 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	@Override
 	public boolean isInsideGlobe(Position position) {
 		if (this.hasGlobe()) {
-			Vec4 point = this.getGlobe().computePointFromPosition(position);
 			double elevation = this.getGlobe()
 					.getElevation(position.latitude, position.longitude);
-			return !(this.getGlobe().isPointAboveElevation(point, elevation));
+			return position.elevation < elevation;
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
@@ -366,7 +365,19 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 */
 	@Override
 	public double getNormalizedDistance(Position position1, Position position2) {
-		return this.getDistance(position1, position2) / this.getDiameter();
+		return this.getDistance(position1, position2) / this.getNormalizer();
+	}
+	
+	/**
+	 * Gets the distance normalizer of this planning continuum.
+	 * 
+	 * @return the distance normalizer of this planning continuum
+	 * 
+	 * @see Environment#getNormalizer()
+	 */
+	@Override
+	public double getNormalizer() {
+		return this.getDiameter();
 	}
 	
 	/**
@@ -381,7 +392,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 */
 	@Override
 	public double toDistance(double normalizedDistance) {
-		return normalizedDistance * this.getDiameter();
+		return normalizedDistance * this.getNormalizer();
 	}
 	
 	/**
@@ -396,7 +407,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 */
 	@Override
 	public double toNormalizedDistance(double distance) {
-		return distance / this.getDiameter();
+		return distance / this.getNormalizer();
 	}
 	
 	/**
@@ -766,7 +777,8 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	/**
 	 * Gets the resolution of this planning continuum.
 	 * 
-	 * @return the resolution of this planning continuum
+	 * @return the resolution of this planning continuum in meters,
+	 *         0 if infinite
 	 * 
 	 * @see MultiResolutionEnvironment#getResolution()
 	 */
@@ -778,15 +790,16 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	/**
 	 * Sets the resolution of this planning continuum.
 	 * 
-	 * @param resolution the resolution to be set
+	 * @param resolution the resolution to be set in meters
 	 * 
-	 * @throws IllegalArgumentException if the resolution less than 1
+	 * @throws IllegalArgumentException if the resolution is less than 0 or
+	 *         greater than the diameter of this planning continuum
 	 * 
 	 * @see MultiResolutionEnvironment#setResolution(double)
 	 */
 	@Override
 	public void setResolution(double resolution) {
-		if (1d > resolution) {
+		if (0d > resolution || this.getDiameter() < resolution) {
 			throw new IllegalArgumentException("invalid resolution");
 		} else {
 			this.resolution = resolution;
@@ -806,8 +819,8 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	public void refine(int factor) {
 		if (1 > factor) {
 			throw new IllegalArgumentException("invalid refinement factor");
-		} else  if (Double.POSITIVE_INFINITY > this.resolution) {
-			this.resolution *= factor;
+		} else {
+			this.resolution /= factor;
 		}
 	}
 	
@@ -824,14 +837,11 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	public void coarsen(int factor) {
 		if (1 > factor) {
 			throw new IllegalArgumentException("invalid coarsening factor");
-		} else if (Double.POSITIVE_INFINITY == this.resolution) {
-			this.resolution = Double.MAX_VALUE / factor;
 		} else {
-			this.resolution = this.resolution / factor;
-		}
-		
-		if (1d > this.resolution) {
-			this.resolution = 1d;
+			this.resolution *= factor;
+			if (this.getDiameter() < this.resolution) {
+				this.resolution = this.getDiameter();
+			}
 		}
 	}
 	
@@ -844,7 +854,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 */
 	@Override
 	public boolean isRefined() {
-		return (1d < this.resolution);
+		return (this.getDiameter() > this.resolution);
 	}
 	
 	/**
@@ -1369,14 +1379,15 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		boolean collidesTerrain = true;
 		
 		if (!this.isInsideGlobe(origin) && !this.isInsideGlobe(destination)) {
-			// TODO: check reasonable default resolution
-			HighResolutionTerrain terrain = new HighResolutionTerrain(this.getGlobe(), 50d);
+			HighResolutionTerrain terrain = new HighResolutionTerrain(
+					this.getGlobe(), this.getResolution());
 			// TODO: check position altitudes (ASL versus AGL)
+			// TODO: include safe height and distance
 			collidesTerrain = (null != terrain.intersect(origin, destination));
 		}
 		
 		return collidesTerrain;
-	} 
+	}
 	
 	/**
 	 * Updates this planning continuum.

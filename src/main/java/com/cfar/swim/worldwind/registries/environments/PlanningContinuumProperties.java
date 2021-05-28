@@ -42,7 +42,7 @@ import java.util.Objects;
 public class PlanningContinuumProperties extends EnvironmentProperties {
 	
 	/** the resolution of this planning continuum properties bean */
-    private double resolution = Double.POSITIVE_INFINITY;
+    private double resolution = 50d;
 
     /**
      * Gets the resolution of this planning continuum properties bean.

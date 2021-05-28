@@ -183,10 +183,9 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	@Override
 	public boolean isInsideGlobe(Position position) {
 		if (this.hasGlobe()) {
-			Vec4 point = this.getGlobe().computePointFromPosition(position);
 			double elevation = this.getGlobe()
 					.getElevation(position.latitude, position.longitude);
-			return !(this.getGlobe().isPointAboveElevation(point, elevation));
+			return position.elevation < elevation;
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
@@ -1348,7 +1347,7 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	 */
 	@Override
 	public double toDistance(double normalizedDistance) {
-		return normalizedDistance * this.getDiameter();
+		return normalizedDistance * this.getNormalizer();
 	}
 	
 	/**
@@ -1362,7 +1361,7 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	 */
 	@Override
 	public double toNormalizedDistance(double distance) {
-		return distance / this.getDiameter();
+		return distance / this.getNormalizer();
 	}
 	
 	/**

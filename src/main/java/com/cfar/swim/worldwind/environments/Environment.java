@@ -184,6 +184,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getNormalizedDistance(Position position1, Position position2);
 	
 	/**
+	 * Gets the distance normalizer of this environment.
+	 * 
+	 * @return the distance normalizer of this environment
+	 */
+	public double getNormalizer();
+	
+	/**
 	 * Converts a normalized distance to a distance within this environment.
 	 * 
 	 * @param normalizedDistance the normalized distance

@@ -318,4 +318,10 @@ public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvir
 		
 	}
 
+	@Override
+	public double getNormalizer() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
 }
