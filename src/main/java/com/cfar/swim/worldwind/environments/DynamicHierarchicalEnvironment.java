@@ -29,48 +29,27 @@
  */
 package com.cfar.swim.worldwind.environments;
 
+import java.util.Set;
+
+import com.cfar.swim.worldwind.render.Obstacle;
+
 /**
- * Describes a multi-resolution environment featuring multiple resolutions.
+ * Describes a dynamic hierarchical environment that features both dynamic and
+ * hierarchical environment aspects.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface MultiResolutionEnvironment extends Environment {
-	
+public interface DynamicHierarchicalEnvironment extends DynamicEnvironment, HierarchicalEnvironment {
+
 	/**
-	 * Gets the resolution of this multi-resolution environment.
-	 * 
-	 * @return the resolution of this multi-resolution environment
+	 * Gets the children of this dynamic hierarchical environment that are
+	 * affected by an obstacle embedding.
+	 *  
+	 * @param obstacle the embedded obstacle
+	 * @return the children of this dynamic hierarchical environment that are
+	 *         affected by an obstacle embedding
 	 */
-	public double getResolution();
-	
-	/**
-	 * Sets the resolution of this multi-resolution environment.
-	 * 
-	 * @param resolution the resolution to be set
-	 */
-	public void setResolution(double resolution);
-	
-	/**
-	 * Refines this multi-resolution environment by a refinement factor.
-	 * 
-	 * @param factor the refinement factor
-	 */
-	public void refine(int factor);
-	
-	/**
-	 * Coarsens this multi-resolution environment by a coarsening factor.
-	 * 
-	 * @param factor the coarsening factor
-	 */
-	public void coarsen(int factor);
-	
-	/**
-	 * Determines whether or not this multi-resolution environment is refined.
-	 * 
-	 * @return true if this multi-resolution environment is refined,
-	 *         false otherwise
-	 */
-	public boolean isRefined();
+	public Set<? extends DynamicHierarchicalEnvironment> getAffectedChildren(Obstacle obstacle);
 	
 }

@@ -74,6 +74,24 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public void setGlobe(Globe globe);
 	
 	/**
+	 * Determines whether or not this environment has a globe.
+	 * 
+	 * @return true if this environment has a globe, false otherwise
+	 */
+	public boolean hasGlobe();
+	
+	/**
+	 * Determines whether or not a position is inside the globe of this
+	 * environment.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is inside the globe of this environment
+	 *         false otherwise
+	 */
+	public boolean isInsideGlobe(Position position);
+	
+	/**
 	 * Determines whether or not this environment contains a position.
 	 * 
 	 * @param position the position in globe coordinates
@@ -113,7 +131,8 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @return true if the position is adjacent to the waypoint position in
 	 *         this environment, false otherwise
 	 */
-	public boolean isAdjacentWaypointPosition(Position position, Position waypointPosition);
+	public boolean isAdjacentWaypointPosition(
+			Position position, Position waypointPosition);
 	
 	/**
 	 * Gets the center position of this environment in globe coordinates.
@@ -121,24 +140,6 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @return the center position of this environment in globe coordinates
 	 */
 	public Position getCenterPosition();
-	
-	/**
-	 * Gets the neighbors of this environment.
-	 * 
-	 * @return the neighbors of this environment
-	 */
-	public Set<? extends Environment> getNeighbors();
-	
-	/**
-	 * Determines whether or not this environment is a neighbor of another
-	 * environment.
-	 * 
-	 * @param neighbor the potential neighbor
-	 * 
-	 * @return true if this environment is a neighbor of the other environment,
-	 *         false otherwise
-	 */
-	public boolean areNeighbors(Environment neighbor);
 	
 	/**
 	 * Gets the neighbor positions of a position in this environment.
@@ -153,8 +154,9 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * Determines whether or not two positions are neighbors in this
 	 * environment.
 	 * 
-	 * @param position the position
-	 * @param neighbor the potential neighbor of the position
+	 * @param position the position in globe coordinates
+	 * @param neighbor the potential neighbor of the position in globe
+	 *                 coordinates
 	 * 
 	 * @return true if the two positions are neighbors, false otherwise
 	 */
@@ -163,8 +165,8 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	/**
 	 * Gets the distance between two positions in this environment.
 	 * 
-	 * @param position1 the first position
-	 * @param position2 the second position
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coordinates
 	 * 
 	 * @return the distance between the two positions in this environment
 	 */
@@ -173,13 +175,31 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	/**
 	 * Gets the normalized distance between two positions in this environment.
 	 * 
-	 * @param position1 the first position
-	 * @param position2 the second position
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coorindates
 	 * 
 	 * @return the normalized distance between the two positions in this
 	 *         environment
 	 */
 	public double getNormalizedDistance(Position position1, Position position2);
+	
+	/**
+	 * Converts a normalized distance to a distance within this environment.
+	 * 
+	 * @param normalizedDistance the normalized distance
+	 * 
+	 * @return the distance
+	 */
+	public double toDistance(double normalizedDistance);
+	
+	/**
+	 * Converts a distance to a normalized distance within this environment.
+	 * 
+	 * @param distance the distance
+	 * 
+	 * @return the normalized distance
+	 */
+	public double toNormalizedDistance(double distance);
 	
 	/**
 	 * Adds a cost interval to this environment.
@@ -196,7 +216,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public void removeCostInterval(CostInterval costInterval);
 	
 	/**
-	 * Gets all (overlapping) cost intervals at a specified time instant.
+	 * Gets the (overlapping) cost intervals at a specified time instant.
 	 * 
 	 * @param time the time instant
 	 * 
@@ -205,7 +225,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time);
 	
 	/**
-	 * Gets all (overlapping) cost intervals within a specified time span.
+	 * Gets the (overlapping) cost intervals within a specified time span.
 	 * 
 	 * @param start the start time of the time span
 	 * @param end the end time of the time span
@@ -220,7 +240,18 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @return the base cost of a normalized step in this environment
 	 */
 	public double getBaseCost();
-
+	
+	/**
+	 * Gets the accumulated cost of this environment at a specified time
+	 * instant.
+	 * 
+	 * @param time the time instant
+	 * 
+	 * @return the accumulated cost of this environment at the specified
+	 *         time instant
+	 */
+	public double getCost(ZonedDateTime time);
+	
 	/**
 	 * Gets the accumulated cost of this environment within a specified time
 	 * span.
@@ -268,25 +299,6 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 */
 	public double getLegCost(
 			Position origin, Position destination,
-			ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy);
-	
-	/**
-	 * Gets the leg cost from the center of this environment to the center of
-	 * another environment between a start and an end time given a cost
-	 * policy and risk policy.
-	 * 
-	 * @param destination the destination environment
-	 * @param start the start time
-	 * @param end the end time
-	 * @param costPolicy the cost policy
-	 * @param riskPolicy the risk policy
-	 * 
-	 * @return the leg cost from the center of this environment to the center
-	 *         of the destination environment
-	 */
-	public double getLegCost(
-			Environment destination,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy);
 	

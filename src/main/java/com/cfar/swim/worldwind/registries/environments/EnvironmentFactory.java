@@ -151,9 +151,10 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 				PlanningContinuumProperties properties = (PlanningContinuumProperties) this.specification.getProperties();
 				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
 				Box envBox = new Box(bb);
-				environment = new PlanningContinuum(envBox, properties.getResolution());
+				environment = new PlanningContinuum(envBox);
 				environment.setThreshold(0d);
 				environment.setGlobe(this.scenario.getGlobe());
+				((PlanningContinuum) environment).setResolution(properties.getResolution());
 				((PlanningContinuum) environment).addStructuralChangeListener(this.scenario); 
 			}
 		}

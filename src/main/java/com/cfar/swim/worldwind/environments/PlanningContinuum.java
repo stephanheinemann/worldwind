@@ -34,6 +34,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -46,7 +47,6 @@ import java.util.stream.Collectors;
 
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
-import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
@@ -64,7 +64,6 @@ import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.PolarPoint;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Quaternion;
-import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
@@ -72,66 +71,63 @@ import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Ellipsoid;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.RigidShape;
+import gov.nasa.worldwind.terrain.HighResolutionTerrain;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
- * Realizes a sampling environment that implements an environment and can be
- * used for sampled based motion planning.
+ * Realizes a planning continuum that can be sampled by sampling based motion
+ * planning algorithms.
  * 
  * @author Manuel Rosa
  * @author Henrique Ferreira
  * @author Stephan Heinemann
  */
-public class PlanningContinuum extends Box implements DynamicEnvironment, MultiResolutionEnvironment {
-
-	// TODO: review and cleanup
+public class PlanningContinuum extends Box
+implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment, SamplingEnvironment {
 	
 	/** the base cost of this planning continuum */
 	private static final double BASE_COST = 1d;
 	
-	/** the globe of this sampling environment */
+	/** the globe of this planning continuum */
 	private Globe globe = null;
-
-	/** the cost interval tree encoding temporal costs */
-	private IntervalTree<ChronoZonedDateTime<?>> costIntervals = new IntervalTree<ChronoZonedDateTime<?>>(
-			CostInterval.comparator);
-
-	/** the current time of this sampling environment */
+	
+	/** the current time of this planning continuum */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
-
-	/** the obstacles embedded into this sampling environment */
+	
+	/** the obstacles embedded into this planning continuum */
 	private HashSet<Obstacle> obstacles = new HashSet<Obstacle>();
-
-	/** the terrain obstacles embedded into this sampling environment */
-	//private HashSet<TerrainObstacle> terrainObstacles = new HashSet<TerrainObstacle>();
-
+	
 	// TODO: too expensive, synchronize vertices access instead?
-	/** the list of already sampled waypoints */
+	/** the vertices (sampled positions) of this planning continuum */
 	private Set<Position> vertices = new CopyOnWriteArraySet<Position>();
 	
 	// TODO: too expensive, synchronize edges access instead?
-	/** the list of edges in this environment */
+	/** the edges (sampled straight legs) of this planning continuum */
 	private Set<Edge> edges = new CopyOnWriteArraySet<Edge>();
 	
 	/** the sampling shape within this planning continuum */
 	private RigidShape samplingShape = null;
-
-	/** the current accumulated active cost of this sampling environment */
+	
+	/** the cost interval tree encoding temporal costs of this planning continuum */
+	private IntervalTree<ChronoZonedDateTime<?>> costIntervals =
+			new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
+	
+	/** the current accumulated active cost of this planning continuum */
 	private double activeCost = 1d;
-
-	/** the threshold cost of this sampling environment */
+	
+	/** the threshold cost of this planning continuum */
 	private double thresholdCost = 0d;
-
-	/** the resolution of this sampling environment */
-	private double resolution = 1d;
+	
+	/** the resolution of this planning continuum */
+	private double resolution = Double.POSITIVE_INFINITY;
 	
 	/** the structural change listeners of this planning continuum */
 	private Set<StructuralChangeListener> listeners = new HashSet<StructuralChangeListener>();
-
+	
 	/**
-	 * Constructs a sampling environment based on a geometric box.
+	 * Constructs a new planning continuum based on a geometric box.
 	 * 
-	 * @param box the geometric box
+	 * @param box the geometric box delimiting this planning continuum
 	 * 
 	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
 	 */
@@ -139,51 +135,11 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 		super(box);
 		this.update();
 	}
-
+	
 	/**
-	 * Constructs a sampling environment based on a geometric box and a given
-	 * resolution.
+	 * Sets the globe of this planning continuum.
 	 * 
-	 * @param box the geometric box
-	 * @param resolution the resolution of this sampling environment
-	 * 
-	 * @see Box#Box(gov.nasa.worldwind.geom.Box)
-	 */
-	public PlanningContinuum(Box box, double resolution) {
-		super(box);
-		this.resolution = resolution;
-		this.update();
-	}
-
-	/**
-	 * Gets the threshold cost of this sampling environment.
-	 * 
-	 * @return the threshold cost of this sampling environment
-	 * 
-	 * @see ThresholdRenderable#setThreshold(double)
-	 */
-	@Override
-	public double getThreshold() {
-		return this.thresholdCost;
-	}
-
-	/**
-	 * Sets the threshold cost of this sampling environment.
-	 * 
-	 * @param thresholdCost the threshold cost of this sampling environment
-	 * 
-	 * @see ThresholdRenderable#setThreshold(double)
-	 */
-	@Override
-	public void setThreshold(double thresholdCost) {
-		this.thresholdCost = thresholdCost;
-		this.updateVisibility();
-	}
-
-	/**
-	 * Sets the globe of this sampling environment.
-	 * 
-	 * @param globe the globe of this sampling environment
+	 * @param globe the globe to be set
 	 * 
 	 * @see Environment#setGlobe(Globe)
 	 */
@@ -191,9 +147,9 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	public void setGlobe(Globe globe) {
 		this.globe = globe;
 	}
-
+	
 	/**
-	 * Gets the globe of this sampling environment.
+	 * Gets the globe of this planning continuum.
 	 * 
 	 * @return the globe of this sampling environment
 	 * 
@@ -202,6 +158,980 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	@Override
 	public Globe getGlobe() {
 		return this.globe;
+	}
+	
+	/**
+	 * Determines whether or not this planning continuum has a globe.
+	 * 
+	 * @return true if this planning continuum has a globe, false otherwise
+	 * 
+	 * @see Environment#hasGlobe()
+	 */
+	@Override
+	public boolean hasGlobe() {
+		return (null != this.globe);
+	}
+	
+	/**
+	 * Determines whether or not a position is inside the globe of this
+	 * planning continuum.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is inside the globe of this planning
+	 *         continuum, false otherwise
+	 * 
+	 * @throws IllegalStateException if this planning continuum has no globe
+	 * 
+	 * @see Environment#isInsideGlobe(Position)
+	 */
+	@Override
+	public boolean isInsideGlobe(Position position) {
+		if (this.hasGlobe()) {
+			Vec4 point = this.getGlobe().computePointFromPosition(position);
+			double elevation = this.getGlobe()
+					.getElevation(position.latitude, position.longitude);
+			return !(this.getGlobe().isPointAboveElevation(point, elevation));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
+	/**
+	 * Determines whether or not this planning continuum contains a position.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if this planning continuum contains the position,
+	 *         false otherwise
+	 * 
+	 * @throws IllegalStateException if this planning continuum has no globe
+	 * 
+	 * @see Environment#contains(Position)
+	 * @see Box#contains(Vec4)
+	 */
+	@Override
+	public boolean contains(Position position) {
+		if (this.hasGlobe()) {
+			return super.contains(this.globe.computePointFromPosition(position));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
+	/**
+	 * Determines whether or not a position is a waypoint position in this
+	 * planning continuum.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is a waypoint position in this planning
+	 *         continuum, false otherwise
+	 * 
+	 * @see Environment#isWaypointPosition(Position)
+	 */
+	@Override
+	public boolean isWaypointPosition(Position position) {
+		return this.vertices.contains(position);
+	}
+	
+	/**
+	 * Gets the adjacent waypoint positions of a position in this planning
+	 * continuum.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the adjacent waypoint positions of the position in this planning
+	 *         continuum, or the waypoint position itself
+	 * 
+	 * @see Environment#getAdjacentWaypointPositions(Position)
+	 */
+	@Override
+	public Set<Position> getAdjacentWaypointPositions(Position position) {
+		return this.edges.stream()
+			.filter(e -> e.isEndPosition(position))
+			.map(e -> e.getOtherPosition(position))
+			.collect(Collectors.toSet());
+	}
+	
+	/**
+	 * Determines whether or not a position is adjacent to a waypoint position
+	 * in this planning continuum.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param waypointPosition the waypoint position in globe coordinates
+	 * 
+	 * @return true if the position is adjacent to the waypoint position in
+	 *         this planning continuum, false otherwise
+	 * 
+	 * @see Environment#isAdjacentWaypointPosition(Position, Position)
+	 */
+	@Override
+	public boolean isAdjacentWaypointPosition(
+			Position position, Position waypointPosition) {
+		return this.getAdjacentWaypointPositions(position)
+				.contains(waypointPosition);
+	}
+	
+	/**
+	 * Gets the center position of this planning continuum in globe coordinates.
+	 * 
+	 * @return the center position of this planning continuum in globe
+	 *          coordinates
+	 * 
+	 * @throws IllegalStateException if this planning continuum has no globe
+	 * 
+	 * @see Environment#getCenterPosition()
+	 * @see Box#getCenter()
+	 */
+	@Override
+	public Position getCenterPosition() {
+		if (this.hasGlobe()) {
+			return this.globe.computePositionFromPoint(this.getCenter());
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
+	/**
+	 * Gets the neighbors of a position in this planning continuum.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the neighbors of the position in this planning continuum
+	 * 
+	 * @see Environment#getNeighbors(Position)
+	 */
+	@Override
+	public Set<Position> getNeighbors(Position position) {
+		return this.edges.stream()
+				.filter(s -> s.isEndPosition(position))
+				.map(s -> s.getOtherPosition(position))
+				.collect(Collectors.toSet());
+	}
+
+	/**
+	 * Determines whether or not two positions are neighbors in this planning
+	 * continuum.
+	 * 
+	 * @param position the position in globe coordinates
+	 * @param neighbor the potential neighbor of the position in globe
+	 *                 coordinates
+	 * 
+	 * @return true if the two positions are neighbors, false otherwise
+	 * 
+	 * @see Environment#areNeighbors(Position, Position)
+	 */
+	public boolean areNeighbors(Position position, Position neighbor) {
+		return this.getNeighbors(position).contains(neighbor);
+	}
+	
+	/**
+	 * Gets the distance between two positions in this planning continuum.
+	 * 
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coordinates
+	 * 
+	 * @return the distance between the two positions in this planning
+	 *         continuum
+	 * 
+	 * @throws IllegalStateException if this planning continuum has no globe
+	 * 
+	 * @see Environment#getDistance(Position, Position)
+	 */
+	@Override
+	public double getDistance(Position position1, Position position2) {
+		if (this.hasGlobe()) {
+			ArrayList<Position> positions = new ArrayList<Position>();
+			positions.add(position1);
+			positions.add(position2);
+			LengthMeasurer measurer = new LengthMeasurer(positions);
+			measurer.setPathType(AVKey.LINEAR);
+			measurer.setFollowTerrain(false);
+			return measurer.getLength(this.getGlobe());
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+
+	/**
+	 * Gets the normalized distance between two positions in this planning
+	 * continuum.
+	 * 
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coordinates
+	 * 
+	 * @return the normalized distance between the two positions in this
+	 *         planning continuum
+	 */
+	@Override
+	public double getNormalizedDistance(Position position1, Position position2) {
+		return this.getDistance(position1, position2) / this.getDiameter();
+	}
+	
+	/**
+	 * Converts a normalized distance to a distance within this planning
+	 * continuum.
+	 * 
+	 * @param normalizedDistance the normalized distance
+	 * 
+	 * @return the distance
+	 * 
+	 * @see Environment#toDistance(double)
+	 */
+	@Override
+	public double toDistance(double normalizedDistance) {
+		return normalizedDistance * this.getDiameter();
+	}
+	
+	/**
+	 * Converts a distance to a normalized distance within this planning
+	 * continuum.
+	 * 
+	 * @param distance the distance
+	 * 
+	 * @return the normalized distance
+	 * 
+	 * @see Environment#toNormalizedDistance(double)
+	 */
+	@Override
+	public double toNormalizedDistance(double distance) {
+		return distance / this.getDiameter();
+	}
+	
+	/**
+	 * Adds a cost interval to this planning continuum.
+	 * 
+	 * @param costInterval the cost interval to be added
+	 * 
+	 * @see Environment#addCostInterval(CostInterval)
+	 */
+	@Override
+	public void addCostInterval(CostInterval costInterval) {
+		this.costIntervals.add(costInterval);
+		this.update();
+	}
+
+	/**
+	 * Removes a cost interval from this planning continuum.
+	 * 
+	 * @param costInterval the cost interval to be removed
+	 * 
+	 * @see Environment#removeCostInterval(CostInterval)
+	 */
+	@Override
+	public void removeCostInterval(CostInterval costInterval) {
+		this.costIntervals.remove(costInterval);
+		this.update();
+	}
+
+	/**
+	 * Gets the (overlapping) cost intervals at a specified time instant.
+	 * 
+	 * @param time the time instant
+	 * 
+	 * @return the cost intervals at the specified time instant
+	 * 
+	 * @see Environment#getCostIntervals(ZonedDateTime)
+	 */
+	@Override
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
+		return this.costIntervals.searchInterval(new CostInterval(null, time));
+	}
+
+	/**
+	 * Gets the (overlapping) cost intervals within a specified time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the cost intervals within the specified time interval
+	 * 
+	 * @see Environment#getCostIntervals(ZonedDateTime, ZonedDateTime)
+	 */
+	@Override
+	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
+		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
+	}
+	
+	/**
+	 * Gets the base cost of a normalized step in this planning continuum.
+	 * 
+	 * @return the base cost of a normalized step in this planning continuum
+	 * 
+	 * @see Environment#getBaseCost()
+	 */
+	@Override
+	public double getBaseCost() {
+		return PlanningContinuum.BASE_COST;
+	}
+	
+	/**
+	 * Gets the accumulated cost of this planning continuum at a specified time
+	 * instant.
+	 * 
+	 * @param time the time instant
+	 * 
+	 * @return the accumulated cost of this planning continuum at the specified
+	 *         time instant
+	 * 
+	 * @see Environment#getCost(ZonedDateTime)
+	 */
+	@Override
+	public double getCost(ZonedDateTime time) {
+		return this.getCost(time, time);
+	}
+	
+	/**
+	 * Gets the accumulated cost of this planning continuum within a specified
+	 * time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the accumulated cost of this planning continuum within the
+	 *         specified time span
+	 * 
+	 * @see Environment#getCost(ZonedDateTime, ZonedDateTime)
+	 */
+	@Override
+	public double getCost(ZonedDateTime start, ZonedDateTime end) {
+		double cost = this.getBaseCost(); // simple cost of normalized distance
+
+		Set<String> costIntervalIds = new HashSet<String>();
+		// add all (weighted) cost of the cell
+		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
+		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
+			if (interval instanceof CostInterval) {
+				CostInterval costInterval = (CostInterval) interval;
+
+				// only add costs of different overlapping cost intervals
+				if (!costIntervalIds.contains(costInterval.getId())) {
+					costIntervalIds.add(costInterval.getId());
+
+					// TODO: implement a proper weighted cost calculation normalized from 0 to 100
+					// TODO: the weight is affected by severity (reporting method) and currency
+					// (reporting time)
+
+					if ((interval instanceof WeightedCostInterval)) {
+						cost += ((WeightedCostInterval) interval).getWeightedCost();
+					} else {
+						cost += costInterval.getCost();
+					}
+				}
+			}
+		}
+
+		return cost;
+	}
+	
+	/**
+	 * Gets the step cost from an origin to a destination position within this
+	 * planning continuum between a start and an end time given a cost policy
+	 * and risk policy.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
+	 * 
+	 * @return the step cost from the origin to the destination position
+	 * 
+	 * @throws IllegalStateException if no edge exists connecting both positions
+	 * 
+	 * @see Environment#getStepCost(Position, Position, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
+	 */
+	@Override
+	public double getStepCost(
+			Position origin, Position destination,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		
+		double stepCost = 0d;
+		Optional<Edge> edge = this.findEdge(origin, destination);
+		
+		if (edge.isPresent()) {
+			double distance = this.getNormalizedDistance(origin, destination);
+			double cost = edge.get().calculateCost(start, end, costPolicy, riskPolicy);
+			stepCost = distance * cost;
+		} else {
+			throw new IllegalStateException("no edge containing both positions");
+		}
+		
+		return stepCost;
+	}
+	
+	/**
+	 * Gets the leg cost from an origin to a destination position within this
+	 * planning continuum between a start and an end time given a cost policy
+	 * and risk policy.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
+	 * 
+	 * @return the leg cost from the origin to the destination position
+	 * 
+	 * @see Environment#getLegCost(Position, Position, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
+	 */
+	@Override
+	public double getLegCost(
+			Position origin, Position destination,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		
+		Edge leg = new Edge(this, origin, destination);
+		double distance = this.getNormalizedDistance(origin, destination);
+		double cost = leg.calculateCost(start, end, costPolicy, riskPolicy);
+		
+		return distance * cost;
+	}
+	
+	/**
+	 * Embeds an obstacle into this planning continuum.
+	 * 
+	 * @param obstacle the obstacle to be embedded
+	 * 
+	 * @return true if the obstacle has been embedded, false otherwise
+	 * 
+	 * @throws IllegalStateException if this planning continuum has no globe
+	 * 
+	 * @see DynamicEnvironment#embed(Obstacle)
+	 */
+	@Override
+	public boolean embed(Obstacle obstacle) {
+		boolean embedded = false;
+		
+		if (this.hasGlobe()) {
+			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
+				this.addCostInterval(obstacle.getCostInterval());
+				this.obstacles.add(obstacle);
+				this.embedEdges(obstacle);
+				embedded = true;
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+		
+		return embedded;
+	}
+	
+	/**
+	 * Unembeds an obstacle from this planning continuum.
+	 * 
+	 * @param obstacle the obstacle to be unembedded
+	 * 
+	 * @return true if the obstacle has been unembedded, false otherwise
+	 * 
+	 * @see DynamicEnvironment#unembed(Obstacle)
+	 */
+	@Override
+	public boolean unembed(Obstacle obstacle) {
+		boolean unembedded = false;
+		
+		if (this.isEmbedded(obstacle)) {
+			this.removeCostInterval(obstacle.getCostInterval());
+			this.obstacles.remove(obstacle);
+			unembedded = true;
+		}
+		
+		return unembedded;
+	}
+	
+	/**
+	 * Unembeds all obstacles from this planning continuum.
+	 * 
+	 * @see DynamicEnvironment#unembedAll()
+	 */
+	@Override
+	public void unembedAll() {
+		Iterator<Obstacle> obstaclesIterator = this.obstacles.iterator();
+		while (obstaclesIterator.hasNext()) {
+			Obstacle obstacle = obstaclesIterator.next();
+			this.removeCostInterval(obstacle.getCostInterval());
+			obstaclesIterator.remove();
+		}
+	}
+	
+	/**
+	 * Determines whether or not an obstacle is embedded in this planning
+	 * continuum.
+	 * 
+	 * @param obstacle the obstacle
+	 * 
+	 * @return true if the obstacle is embedded in this planning continuum,
+	 *         false otherwise
+	 * 
+	 * @see DynamicEnvironment#isEmbedded(Obstacle)
+	 */
+	@Override
+	public boolean isEmbedded(Obstacle obstacle) {
+		return this.obstacles.contains(obstacle);
+	}
+	
+	/**
+	 * Updates this planning continuum for an embedded obstacle.
+	 * 
+	 * @param obstacle the embedded obstacle
+	 * 
+	 * @see DynamicEnvironment#refresh(Obstacle)
+	 */
+	@Override
+	public void refresh(Obstacle obstacle) {
+		if (this.obstacles.contains(obstacle)) {
+			this.update();
+		}
+	}
+	
+	/**
+	 * Gets the waypoint positions of this planning continuum that are
+	 * affected by an obstacle embedding.
+	 * 
+	 * @param obstacle the embedded obstacle
+	 * @return the waypoint positions of this planning continuum that are
+	 *         affected by the obstacle embedding
+	 */
+	@Override
+	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle) {
+		Set<Position> affectedWaypointPositions = new HashSet<Position>();
+		
+		for (Edge edge : this.findAffectedEdges(obstacle)) {
+			affectedWaypointPositions.add(edge.getFirstPosition());
+			affectedWaypointPositions.add(edge.getSecondPosition());
+		}
+		
+		return affectedWaypointPositions;
+	}
+	
+	/**
+	 * Gets the waypoint positions of this planning continuum that are
+	 * affected by obstacle embeddings.
+	 * 
+	 * @param obstacles the embedded obstacles
+	 * @return the waypoint positions of this planning continuum that are
+	 *         affected by the obstacle embeddings
+	 */
+	@Override
+	public Set<Position> getAffectedWaypointPositions(Set<Obstacle> obstacles) {
+		Set<Position> affectedWaypointPositions = new HashSet<Position>();
+		
+		for (Obstacle obstacle : obstacles) {
+			affectedWaypointPositions.addAll(this.getAffectedWaypointPositions(obstacle));
+		}
+		
+		return affectedWaypointPositions;
+	}
+	
+	/**
+	 * Adds a structural change listener to this planning continuum.
+	 * 
+	 * @param listener the structural change listener to be added
+	 * 
+	 * @see StructuredEnvironment#addStructuralChangeListener(StructuralChangeListener)
+	 */
+	@Override
+	public void addStructuralChangeListener(StructuralChangeListener listener) {
+		this.listeners.add(listener);
+	}
+	
+	/**
+	 * Removes a structural change listener from this planning continuum.
+	 * 
+	 * @param listener the structural change listener to be removed
+	 * 
+	 * @see StructuredEnvironment#removeStructuralChangeListener(StructuralChangeListener)
+	 */
+	@Override
+	public void removeStructuralChangeListener(StructuralChangeListener listener) {
+		this.listeners.remove(listener);
+	}
+	
+	/**
+	 * Notifies the structural change listeners of this planning continuum.
+	 * 
+	 * @see StructuredEnvironment#notifyStructuralChangeListeners()
+	 */
+	@Override
+	public void notifyStructuralChangeListeners() {
+		for (StructuralChangeListener listener : this.listeners) {
+			listener.notifyStructuralChange();
+		}
+	}
+	
+	/**
+	 * Gets the resolution of this planning continuum.
+	 * 
+	 * @return the resolution of this planning continuum
+	 * 
+	 * @see MultiResolutionEnvironment#getResolution()
+	 */
+	@Override
+	public double getResolution() {
+		return this.resolution;
+	}
+	
+	/**
+	 * Sets the resolution of this planning continuum.
+	 * 
+	 * @param resolution the resolution to be set
+	 * 
+	 * @throws IllegalArgumentException if the resolution less than 1
+	 * 
+	 * @see MultiResolutionEnvironment#setResolution(double)
+	 */
+	@Override
+	public void setResolution(double resolution) {
+		if (1d > resolution) {
+			throw new IllegalArgumentException("invalid resolution");
+		} else {
+			this.resolution = resolution;
+		}
+	}
+	
+	/**
+	 * Refines this planning continuum by a refinement factor.
+	 * 
+	 * @param factor the refinement factor
+	 * 
+	 * @throws IllegalArgumentException if the refinement factor is not positive
+	 * 
+	 * @see MultiResolutionEnvironment#refine(int)
+	 */
+	@Override
+	public void refine(int factor) {
+		if (1 > factor) {
+			throw new IllegalArgumentException("invalid refinement factor");
+		} else  if (Double.POSITIVE_INFINITY > this.resolution) {
+			this.resolution *= factor;
+		}
+	}
+	
+	/**
+	 * Coarsens this planning continuum by a coarsening factor.
+	 * 
+	 * @param factor the coarsening factor
+	 * 
+	 * @throws IllegalArgumentException if the coarsening factor is not positive
+	 * 
+	 * @see MultiResolutionEnvironment#coarsen(int)
+	 */
+	@Override
+	public void coarsen(int factor) {
+		if (1 > factor) {
+			throw new IllegalArgumentException("invalid coarsening factor");
+		} else if (Double.POSITIVE_INFINITY == this.resolution) {
+			this.resolution = Double.MAX_VALUE / factor;
+		} else {
+			this.resolution = this.resolution / factor;
+		}
+		
+		if (1d > this.resolution) {
+			this.resolution = 1d;
+		}
+	}
+	
+	/**
+	 * Determines whether or not this planning continuum is refined.
+	 * 
+	 * @return true if this planning continuum is refined, false otherwise
+	 * 
+	 * @see MultiResolutionEnvironment#isRefined()
+	 */
+	@Override
+	public boolean isRefined() {
+		return (1d < this.resolution);
+	}
+	
+	/**
+	 * Samples a random position from within this planning continuum using a
+	 * uniform distribution.
+	 * 
+	 * @return the sampled position from within this planning continuum using
+	 *         the uniform distribution in globe coordinates
+	 * 
+	 * @see SamplingEnvironment#sampleRandomPosition()
+	 */
+	@Override
+	public Position sampleRandomPosition() {
+		Vec4[] corners = this.getCorners();
+		
+		// point within the box frame with all minimum coordinates
+		Vec4 minimum = this.transformModelToBoxOrigin(corners[0]);
+		// point within the box frame with all maximum coordinates
+		Vec4 maximum = this.transformModelToBoxOrigin(corners[6]);
+		
+		double x, y, z;
+		
+		x = minimum.x + (new Random().nextDouble() * (maximum.x - minimum.x));
+		y = minimum.y + (new Random().nextDouble() * (maximum.y - minimum.y));
+		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));
+		
+		Vec4 point = new Vec4(x, y, z);
+		
+		// transform point from box frame to earth frame
+		point = this.transformBoxOriginToModel(point);
+		return this.getGlobe().computePositionFromPoint(point);
+	}
+	
+	/**
+	 * Samples a random position from within this planning continuum using a
+	 * Gaussian (normal) distribution.
+	 * 
+	 * @return the sampled position from within this planning continuum using
+	 *         the Gaussian (normal) distribution in globe coordinates
+	 * 
+	 * @see SamplingEnvironment#sampleRandomGaussianPosition()
+	 */
+	@Override
+	public Position sampleRandomGaussianPosition() {
+		Vec4[] corners = this.getCorners();
+		
+		// point within the box frame with all minimum coordinates
+		Vec4 minimum = this.transformModelToBoxOrigin(corners[0]);
+		// point within the box frame with all maximum coordinates
+		Vec4 maximum = this.transformModelToBoxOrigin(corners[6]);
+		
+		double xMean, yMean, zMean, xSD, ySD, zSD, x, y, z;
+		
+		Random r = new Random();
+		
+		xMean = (minimum.x + maximum.x) / 2;
+		yMean = (minimum.y + maximum.y) / 2;
+		zMean = (minimum.z + maximum.z) / 2;
+		
+		xSD = (maximum.x - xMean) / 2;
+		ySD = (maximum.y - yMean) / 2;
+		zSD = (maximum.z - zMean) / 2;
+		x = r.nextGaussian() * xSD + xMean;
+		y = r.nextGaussian() * ySD + yMean;
+		z = r.nextGaussian() * zSD + zMean;
+		
+		Vec4 point = new Vec4(x, y, z);
+		
+		// transform point from box frame to earth frame
+		point = this.transformBoxOriginToModel(point);
+		return this.getGlobe().computePositionFromPoint(point);
+	}
+	
+	/**
+	 * Samples a random position from within the intersection of this planning
+	 * continuum and a default sized ellipsoid defined by two foci positions.
+	 * 
+	 * @param focusA the focus A of the ellipsoid in globe coordinates
+	 * @param focusB the focus B of the ellipsoid in globe coordinates
+	 * 
+	 * @return the sampled position from within the intersection of this
+	 *         planning continuum and the ellipsoid
+	 * 
+	 * @see SamplingEnvironment#sampleRandomEllipsoidPosition(Position, Position)
+	 */
+	@Override
+	public Position sampleRandomEllipsoidPosition(
+			Position focusA, Position focusB) {
+		
+		// extend minor diameter by 10% focus distance
+		double diameter = this.getDistance(focusA, focusB)
+				+ (0.1d * this.getDistance(focusA, focusB));
+		
+		// ellipsoid axis
+		Vec4 va = this.getGlobe().computePointFromPosition(focusA);
+		Vec4 vb = this.getGlobe().computePointFromPosition(focusB);
+		Vec4 vc = vb.subtract3(va);
+		
+		// ellipsoid radii
+		double a = diameter / 2d; // minor radius
+		double c = vc.divide3(2d).getLength3(); // foci (vertical) radius
+		double b = Math.sqrt((a * a) + (c * c)); // major radius
+		
+		return this.sampleRandomEllipsoidPosition(focusA, focusB, a, b);
+	}
+	
+	/**
+	 * Samples a random position from within the intersection of this 
+	 * planning continuum and an ellipsoid defined by two foci positions
+	 * and two ellipsoid radii.
+	 * 
+	 * @param focusA the focus A of the ellipsoid in globe coordinates
+	 * @param focusB the focus B of the ellipsoid in globe coordinates
+	 * @param a the minor ellipsoid radius
+	 * @param b the major ellipsoid radius
+	 * 
+	 * @return the sampled position from within the intersection of this
+	 *         planning continuum and the ellipsoid
+	 * 
+	 * @see SamplingEnvironment#sampleRandomEllipsoidPosition(Position, Position, double, double)
+	 */
+	@Override
+	public Position sampleRandomEllipsoidPosition(
+			Position focusA, Position focusB, double a, double b) {
+		Position sample = null;
+		
+		// sample entire continuum if more restrictive
+		if (a > this.getDiameter()) {
+			sample = sampleRandomPosition();
+		} else {
+			// ellipsoid axis and center
+			Vec4 va = this.getGlobe().computePointFromPosition(focusA);
+			Vec4 vb = this.getGlobe().computePointFromPosition(focusB);
+			Vec4 vc = vb.subtract3(va);
+			Vec4 center = va.add3(vc.divide3(2d));
+			
+			// ellipsoid radii
+			double c = vc.divide3(2d).getLength3(); // foci (vertical) radius
+			
+			do {
+				// sample unit sphere and extend to ellipsoid
+				double latitude = (new Random().nextDouble() * 2d * Math.PI);
+				double longitude = (new Random().nextDouble() * 2d * Math.PI);
+				double radius = Math.sqrt(new Random().nextDouble());
+				PolarPoint rup = PolarPoint.fromRadians(latitude, longitude, radius);
+				Vec4 ruc = rup.toCartesian();
+				Vec4 rc = new Vec4(ruc.x * a, ruc.y * b, ruc.z * c);
+				
+				// transform sample into ellipsoid
+				Vec4[] alignmentAxis = new Vec4[] {Vec4.ZERO};
+				Angle alignmentAngle = Vec4.axisAngle(vc, Vec4.UNIT_Y, alignmentAxis);
+				Quaternion alignmentRotation = Quaternion.fromAxisAngle(alignmentAngle, alignmentAxis[0]);
+				rc = rc.transformBy3(alignmentRotation);
+				sample = this.getGlobe().computePositionFromPoint(center.add3(rc));
+			
+				// continue until sample is within intersection
+			} while (!this.contains(sample));
+		}
+		
+		return sample;
+	}
+	
+	/**
+	 * Finds the k-nearest sampled positions for a given position in this
+	 * planning continuum.
+	 * 
+	 * @param position the position to query in globe coordinates
+	 * @param k the maximum number of sampled positions to be found
+	 * 
+	 * @return the k-nearest sampled positions for the given position in this
+	 *         planning continuum sorted by increasing distance
+	 * 
+	 * @see SamplingEnvironment#findNearest(Position, int)
+	 */
+	@Override
+	public Set<? extends Position> findNearest(Position position, int k) {
+		return this.vertices.stream()
+				.sorted((p1, p2) -> Double.compare(
+						this.getNormalizedDistance(p1, position),
+						this.getNormalizedDistance(p2, position)))
+				.filter(p -> !p.equals(position))
+				.limit(k)
+				.collect(Collectors.toSet());
+	}
+	
+	/**
+	 * Finds the k-nearest sampled positions closer than a certain distance
+	 * from a given position in this planning continuum.
+	 * 
+	 * @param position the position in global coordinates
+	 * @param k the maximum number of sampled positions to be found
+	 * @param distance the maximum distance from the position
+	 * 
+	 * @return the k-nearest sampled positions closer than the distance from
+	 *         the position in this planning continuum sorted by increasing
+	 *         distance
+	 * 
+	 * @see SamplingEnvironment#findNearest(Position, int, double)
+	 */
+	@Override
+	public Set<? extends Position> findNearest(
+			Position position, int k, double distance) {
+		return this.vertices.stream()
+				.sorted((p1, p2) -> Double.compare(
+						this.getNormalizedDistance(p1, position),
+						this.getNormalizedDistance(p2, position)))
+				.filter(p -> (this.getDistance(p, position) <= distance)
+						&& !p.equals(position))
+				.limit(k)
+				.collect(Collectors.toSet());
+	}
+	
+	/**
+	 * Finds the k-nearest sampled positions for a given position in this
+	 * planning continuum using a particular distance metric.
+	 * 
+	 * @param position the position in global coordinates
+	 * @param k the number of sampled positions to be found
+	 * @param metric the distance metric to be applied
+	 * 
+	 * @return the k-nearest sampled positions for the given position in this
+	 *         planning continuum using the distance metric, sorted by
+	 *         increasing distance
+	 * 
+	 * @see SamplingEnvironment#findNearest(Position, int, BiFunction)
+	 */
+	@Override
+	public Set<? extends Position> findNearest(
+			Position position, int k,
+			BiFunction<Position, Position, Double> metric) {
+		return this.vertices.stream()
+				.sorted((p1, p2) -> Double.compare(
+						metric.apply(p1, position),
+						metric.apply(p2, position)))
+				.filter(p -> !p.equals(position))
+				.limit(k)
+				.collect(Collectors.toSet());
+	}
+	
+	/**
+	 * Gets the current time of this planning continuum.
+	 * 
+	 * @return the current time of this planning continuum
+	 * 
+	 * @see TimedRenderable#getTime()
+	 */
+	@Override
+	public ZonedDateTime getTime() {
+		return this.time;
+	}
+	
+	/**
+	 * Sets the current time of this planning continuum.
+	 * 
+	 * @param time the current time of this planning continuum
+	 * 
+	 * @see TimedRenderable#setTime(ZonedDateTime)
+	 */
+	@Override
+	public void setTime(ZonedDateTime time) {
+		this.time = time;
+		this.update();
+	}
+	
+	/**
+	 * Gets the threshold cost of this planning continuum.
+	 * 
+	 * @return the threshold cost of this planning continuum
+	 * 
+	 * @see ThresholdRenderable#setThreshold(double)
+	 */
+	@Override
+	public double getThreshold() {
+		return this.thresholdCost;
+	}
+	
+	/**
+	 * Sets the threshold cost of this planning continuum.
+	 * 
+	 * @param thresholdCost the threshold cost of this planning continuum
+	 * 
+	 * @see ThresholdRenderable#setThreshold(double)
+	 */
+	@Override
+	public void setThreshold(double thresholdCost) {
+		this.thresholdCost = thresholdCost;
+		this.updateVisibility();
 	}
 	
 	/**
@@ -241,7 +1171,8 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	}
 	
 	/**
-	 * Sets an ellipsoid sampling shape within this planning continuum.
+	 * Sets an default sized ellipsoid sampling shape within this planning
+	 * continuum.
 	 * 
 	 * @param focusA the focus A of the ellipsoid in globe coordinates
 	 * @param focusB the focus B of the ellipsoid in globe coordinates
@@ -282,186 +1213,13 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	}
 	
 	/**
-	 * Adds a cost interval to this sampling environment.
+	 * Gets the obstacles of this planning continuum.
 	 * 
-	 * @param costInterval the cost interval to be added
+	 * @return the obstacles of this planning continuum
 	 */
-	public void addCostInterval(CostInterval costInterval) {
-		this.costIntervals.add(costInterval);
-		this.update();
+	protected Set<Obstacle> getObstacles() {
+		return Collections.unmodifiableSet(this.obstacles);
 	}
-
-	/**
-	 * Removes a cost interval from this sampling environment.
-	 * 
-	 * @param costInterval the cost interval to be removed
-	 * 
-	 */
-	public void removeCostInterval(CostInterval costInterval) {
-		this.costIntervals.remove(costInterval);
-		this.update();
-	}
-
-	/**
-	 * Gets all cost intervals that are active at a specified time instant.
-	 * 
-	 * @param time the time instant
-	 * 
-	 * @return all cost intervals that are active at the specified time instant
-	 * 
-	 */
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime time) {
-		return this.costIntervals.searchInterval(new CostInterval(null, time));
-	}
-
-	/**
-	 * Gets all cost intervals that are active during a specified time interval.
-	 * 
-	 * @param start the start time of the time interval
-	 * @param end the end time of the time interval
-	 * 
-	 * @return all cost intervals that are active during the specified time interval
-	 * 
-	 */
-	public List<Interval<ChronoZonedDateTime<?>>> getCostIntervals(ZonedDateTime start, ZonedDateTime end) {
-		return this.costIntervals.searchInterval(new CostInterval(null, start, end));
-	}
-
-	/**
-	 * Gets the accumulated cost of this sampling environment at specified time
-	 * instant.
-	 * 
-	 * @param time the time instant
-	 * 
-	 * @return the accumulated cost of this sampling environment at the specified
-	 *         time instant
-	 */
-	public double getCost(ZonedDateTime time) {
-		return this.getCost(time, time);
-	}
-
-	/**
-	 * Gets the accumulated cost of this sampling environment within a specified
-	 * time span.
-	 * 
-	 * @param start the start time of the time span
-	 * @param end the end time of the time span
-	 * 
-	 * @return the accumulated cost of this sampling environment within the
-	 *         specified time span
-	 */
-	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = this.getBaseCost(); // simple cost of normalized distance
-
-		Set<String> costIntervalIds = new HashSet<String>();
-		// add all (weighted) cost of the cell
-		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
-		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
-			if (interval instanceof CostInterval) {
-				CostInterval costInterval = (CostInterval) interval;
-
-				// only add costs of different overlapping cost intervals
-				if (!costIntervalIds.contains(costInterval.getId())) {
-					costIntervalIds.add(costInterval.getId());
-
-					// TODO: implement a proper weighted cost calculation normalized from 0 to 100
-					// TODO: the weight is affected by severity (reporting method) and currency
-					// (reporting time)
-
-					if ((interval instanceof WeightedCostInterval)) {
-						cost += ((WeightedCostInterval) interval).getWeightedCost();
-					} else {
-						cost += costInterval.getCost();
-					}
-				}
-			}
-		}
-
-		return cost;
-	}
-
-	/**
-	 * Gets the current time of this sampling environment.
-	 * 
-	 * @return the current time of this sampling environment
-	 * 
-	 * @see TimedRenderable#getTime()
-	 */
-	@Override
-	public ZonedDateTime getTime() {
-		return this.time;
-	}
-
-	/**
-	 * Sets the current time of this sampling environment.
-	 * 
-	 * @param time the current time of this sampling environment
-	 * 
-	 * @see TimedRenderable#setTime(ZonedDateTime)
-	 */
-	@Override
-	public void setTime(ZonedDateTime time) {
-		this.time = time;
-		this.update();
-	}
-
-	/**
-	 * Gets the obstacles of this sampling environment.
-	 * 
-	 * @return the obstacles
-	 */
-	public HashSet<Obstacle> getObstacles() {
-		return obstacles;
-	}
-
-	/**
-	 * Sets the obstacles of this sampling environment.
-	 * 
-	 * @param obstacles the obstacles to set
-	 */
-	public void setObstacles(HashSet<Obstacle> obstacles) {
-		this.obstacles = obstacles;
-	}
-
-	/**
-	 * Gets the resolution of this sampling environment
-	 * 
-	 * @return the resolution of this sampling environment
-	 */
-	public double getResolution() {
-		return resolution;
-	}
-
-	/**
-	 * Sets the resolution of this sampling environment
-	 * 
-	 * @param resolution the resolution to set
-	 */
-	public void setResolution(double resolution) {
-		this.resolution = resolution;
-	}
-
-	/**
-	 * Gets the terrain obstacles of this sampling environment.
-	 * 
-	 * @return the terrain obstacles
-	 */
-	/*
-	public HashSet<TerrainObstacle> getTerrainObstacles() {
-		return terrainObstacles;
-	}
-	*/
-
-	/**
-	 * Sets the terrain obstacles of this sampling environment.
-	 * 
-	 * @param terrainObstacles the terrain obstacles to set
-	 */
-	/*
-	public void setTerrainObstacles(HashSet<TerrainObstacle> terrainObstacles) {
-		this.terrainObstacles = terrainObstacles;
-	}
-	*/
 	
 	/**
 	 * Adds a vertex to this planning continuum.
@@ -548,31 +1306,11 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	}
 	
 	/**
-	 * Removes all edges of this planning continuum.
+	 * Removes all edges from this planning continuum.
 	 */
 	public void clearEdges() {
 		this.edges.clear();
 		this.notifyStructuralChangeListeners();
-	}
-
-	/**
-	 * Updates the list of edges in this environment to be in accordance to the list
-	 * of waypoints, i.e. removes edges that contain waypoints (at least 1) which
-	 * are no longer in the waypoint list.
-	 */
-	protected void refreshEdges() {
-		Set<Edge> validEdges = new HashSet<Edge>();
-
-		for (Edge edge : this.edges) {
-			if (!this.vertices.contains(edge.getFirstPosition()))
-				continue;
-			if (!this.vertices.contains(edge.getSecondPosition()))
-				continue;
-			validEdges.add(edge);
-		}
-		
-		this.clearEdges();
-		this.edges.addAll(validEdges);
 	}
 	
 	/**
@@ -589,430 +1327,24 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 						&& s.isEndPosition(end2))
 				.findFirst();
 	}
-
+	
 	/**
-	 * Indicates whether or not this sampling environment contains a position.
+	 * Finds the edges of this planning continuum that are affected by an
+	 * obstacle embedding.
 	 * 
-	 * @param position the position in globe coordinates
+	 * @param obstacle the embedded obstacle
 	 * 
-	 * @return true if this sampling environment contains the position, false
-	 *         otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see Environment#contains(Position)
-	 * @see Box#contains(Vec4)
-	 */
-	@Override
-	public boolean contains(Position position) {
-		if (null != this.globe) {
-			return super.contains(this.globe.computePointFromPosition(position));
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * Gets the center position in globe coordinates of this sampling environment.
-	 * 
-	 * @return the center position in globe coordinates of this sampling environment
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see Box#getCenter()
-	 */
-	@Override
-	public Position getCenterPosition() {
-		Position centerPosition = null;
-
-		if (null != this.globe) {
-			centerPosition = this.globe.computePositionFromPoint(this.getCenter());
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return centerPosition;
-	}
-
-	/**
-	 * Indicates whether or not this sampling environment is refined, that is, has
-	 * children.
-	 * 
-	 * @return true if this sampling environment is refined, false otherwise
-	 * 
-	 * @see MultiResolutionEnvironment#isRefined()
-	 */
-	@Override
-	public boolean isRefined() {
-		// TODO: review maximum resolution
-		return this.getResolution() <= 0.01;
-	}
-
-	/**
-	 * Gets the refinements, that is, children of this sampling environment.
-	 *
-	 * @return the refinements of this sampling environment
-	 *
-	 * @see MultiResolutionEnvironment#getRefinements()
-	 */
-	@Override
-	public Set<PlanningContinuum> getRefinements() {
-		// TODO: Review
-		return new HashSet<PlanningContinuum>();
-	}
-
-	/**
-	 * Refines, that is, adds children with a specified density to this planning
-	 * grid.
-	 * 
-	 * @param percentage the refinement percentage
-	 * 
-	 * @see MultiResolutionEnvironment#refine(int)
-	 */
-	@Override
-	public void refine(int percentage) {
-		// TODO: Review
-		this.setResolution(this.getResolution() * (1 - percentage / 100d));
-	}
-
-	/**
-	 * Coarsens, that is, removes the children of this sampling environment.
-	 *
-	 * @see MultiResolutionEnvironment#coarsen()
-	 */
-	@Override
-	public void coarsen() {
-		// TODO: Review
-		this.setResolution(this.getResolution() * 1.5);
-	}
-
-	/**
-	 * Indicates whether or not a position is a waypoint in this sampling
-	 * environment.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return true if the position is a waypoint in this sampling environment,
-	 *         false otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 */
-	@Override
-	public boolean isWaypointPosition(Position position) {
-		if (null != this.globe) {
-			return this.vertices.contains(position);
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * Gets the adjacent waypoints of a position in this sampling environment.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return the adjacent waypoints of the position in this sampling environment,
-	 *         or the waypoint position itself
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 */
-	@Override
-	public Set<Position> getAdjacentWaypointPositions(Position position) {
-		// TODO: How to define limit to classify an waypoint as adjacent?
-		// Changed to an empty set. Choosing the nearest one can be problematic
-		// (for getStepCost) if the two positions are not connected by an edge.
-		return new HashSet<Position>();
-		// int kNear = 1;
-		// if (null != this.globe) {
-		// return new HashSet<Position>(this.findNearest(position, kNear));
-		// } else {
-		// throw new IllegalStateException("globe is not set");
-		// }
-	}
-
-	/**
-	 * Indicates whether or not a position is adjacent to a waypoint in this
-	 * sampling environment.
-	 * 
-	 * @param position the position in globe coordinates
-	 * @param waypoint the waypoint in globe coordinates
-	 * 
-	 * @return true if the position is adjacent to the waypoint in this planning
-	 *         grid, false otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 */
-	@Override
-	public boolean isAdjacentWaypointPosition(Position position, Position waypoint) {
-		if (null != this.globe) {
-			return this.getAdjacentWaypointPositions(position).contains(waypoint);
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * @see Environment#getNeighbors()
-	 */
-	@Override
-	public Set<? extends Environment> getNeighbors() {
-		// TODO: Review how to define neighborhood of sampling continuum environments
-		return new HashSet<Environment>();
-	}
-
-	/**
-	 * @see Environment#areNeighbors(Environment)
-	 */
-	@Override
-	public boolean areNeighbors(Environment neighbor) {
-		// TODO: Define based on getNeibors()
-		return false;
-	}
-
-	/**
-	 * Gets the neighbors of a position in this sampling environment. A full
-	 * recursive search is performed considering non-parent cells only.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @return the neighbors of the position in this sampling environment
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 */
-	public Set<Position> getNeighbors(Position position) {
-		Set<Position> neighbors = new HashSet<Position>();
-
-		if (null != this.globe) {
-			neighbors = this.edges.stream().filter(s -> s.isEndPosition(position))
-					.map(s -> s.getOtherPosition(position)).collect(Collectors.toSet());
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return neighbors;
-	}
-
-	/**
-	 * Indicates whether or not two positions are neighbors in this sampling
-	 * environment.
-	 * 
-	 * @param position the position
-	 * @param neighbor the potential neighbor of the position
-	 * 
-	 * @return true if the two positions are neighbors, false otherwise
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 */
-	public boolean areNeighbors(Position position, Position neighbor) {
-		if (null != this.globe) {
-			return this.getNeighbors(position).contains(neighbor);
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * Gets the distance between two positions in this sampling environment.
-	 * 
-	 * @param position1 the first position
-	 * @param position2 the second position
-	 * 
-	 * @return the distance between the two positions in this sampling environment
-	 * 
-	 * @throws IllegalStateException if the globe is not set
-	 * 
-	 * @see Environment#getDistance(Position, Position)
-	 */
-	@Override
-	public double getDistance(Position position1, Position position2) {
-		if (null != this.globe) {
-			ArrayList<Position> positions = new ArrayList<Position>();
-			positions.add(position1);
-			positions.add(position2);
-			LengthMeasurer measurer = new LengthMeasurer(positions);
-			measurer.setPathType(AVKey.LINEAR);
-			measurer.setFollowTerrain(false);
-			return measurer.getLength(this.globe);
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-	}
-
-	/**
-	 * Gets the normalized distance between two positions in this sampling
-	 * environment.
-	 * 
-	 * @param position1 the first position
-	 * @param position2 the second position
-	 * 
-	 * @return the normalized distance between the two positions in this sampling
-	 *         environment
-	 */
-	@Override
-	public double getNormalizedDistance(Position position1, Position position2) {
-		return this.getDistance(position1, position2) / this.getDiameter();
-	}
-
-	/**
-	 * Gets the true distance between two positions in this sampling environment.
-	 * 
-	 * @param normDist the normalized distance between two positions
-	 * 
-	 * @return the distance between the two positions in this sampling environment
-	 */
-	public double getDistance(double normDist) {
-		return normDist * this.getDiameter();
-	}
-
-	/**
-	 * Gets the step cost from an origin to a destination position within this
-	 * sampling environment between a start and an end time given a cost policy and
-	 * risk policy.
-	 * 
-	 * @param origin the origin position in globe coordinates
-	 * @param destination the destination position in globe coordinates
-	 * @param start the start time
-	 * @param end the end time
-	 * @param costPolicy the cost policy
-	 * @param riskPolicy the risk policy
-	 * 
-	 * @return the step cost from the origin to the destination position
-	 * 
-	 * @throws IllegalStateException if there is no edge connecting both positions
-	 */
-	public double getStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-
-		Edge edge = null;
-		Optional<Edge> optEdge = this.findEdge(origin, destination);
-
-		if (!optEdge.isPresent()) {
-			throw new IllegalStateException("no edge containing both positions");
-		} else {
-			edge = optEdge.get();
-		}
-
-		double stepCost = 0d, distance, cost;
-
-		distance = this.getNormalizedDistance(origin, destination);
-
-		cost = edge.calculateCost(start, end, costPolicy, riskPolicy);
-		stepCost = distance * cost;
-
-		return stepCost;
-	}
-
-	/**
-	 * Gets the desirability step cost from an origin to a destination position
-	 * within this sampling environment between a start and an end time given a cost
-	 * policy and risk policy. This function is meant to be used for FADPRM Edges
-	 * which include desirability and lambda values.
-	 * 
-	 * @param origin the origin position in globe coordinates
-	 * @param destination the destination position in globe coordinates
-	 * @param start the start time
-	 * @param end the end time
-	 * @param costPolicy the cost policy
-	 * @param riskPolicy the risk policy
-	 * 
-	 * @return the step cost from the origin to the destination position
-	 * 
-	 * @throws IllegalStateException if there is no edge connecting both positions
-	 */
-	/*
-	public double getDesirabilityStepCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-
-		DesirabilityEdge edge = null;
-		Optional<Edge> optEdge = this.getEdge(origin, destination);
-
-		if (!optEdge.isPresent())
-			throw new IllegalStateException("no edge containing both positions");
-		else
-			edge = (DesirabilityEdge) optEdge.get();
-
-		double stepCost = 0d, distance, cost;
-
-		distance = this.getNormalizedDistance(origin, destination);
-
-		cost = edge.calculateCost(start, end, costPolicy, riskPolicy);
-		cost = distance * cost;
-
-		double desirability = edge.getDesirability();
-		double lambda = edge.getLambda();
-		double costMultiplier = 2 * lambda + (1-lambda)/desirability -1;
-		stepCost = cost * costMultiplier;
-
-		return stepCost;
-	}
-	*/
-
-	/**
-	 * @see Environment#getLegCost(Position, Position, ZonedDateTime, ZonedDateTime,
-	 *      CostPolicy, RiskPolicy)
-	 */
-	@Override
-	public double getLegCost(Position origin, Position destination, ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/**
-	 * @see Environment#getLegCost(Environment, ZonedDateTime, ZonedDateTime,
-	 *      CostPolicy, RiskPolicy)
-	 */
-	@Override
-	public double getLegCost(Environment destination, ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
-			RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	/**
-	 * Gets the set of different obstacles containing the difference between the
-	 * current obstacle set and a previous obstacle set received as input.
-	 * 
-	 * @param oldObstacles the set of old obstacles
-	 * 
-	 * @return the set of different obstacles
-	 */
-	@SuppressWarnings("unchecked")
-	public HashSet<Obstacle> getDiffObstacles(HashSet<Obstacle> oldObstacles) {
-		// Get obstacles currently present in this environment
-		HashSet<Obstacle> newObstacles = (HashSet<Obstacle>) this.getObstacles().clone();
-
-		// Compute which obstacles were removed
-		HashSet<Obstacle> removedObstacles = new HashSet<Obstacle>(oldObstacles);
-		removedObstacles.removeAll(newObstacles);
-
-		// Compute which obstacles were added
-		HashSet<Obstacle> addedObstacles = new HashSet<Obstacle>(newObstacles);
-		addedObstacles.removeAll(oldObstacles);
-
-		// Compute which obstacles are different than before
-		HashSet<Obstacle> diffObstacles = new HashSet<Obstacle>();
-		diffObstacles.addAll(removedObstacles);
-		diffObstacles.addAll(addedObstacles);
-
-		return diffObstacles;
-	}
-
-	/**
-	 * Finds all the edges in the edge list which are affected by the given
-	 * obstacle.
-	 * 
-	 * @param obstacle the obstacle to be considered for intersection
-	 * 
-	 * @return the set of affected edges
+	 * @return the edges of this planning continuum that are affected by the
+	 *         obstacle embedding
 	 */
 	public Set<Edge> findAffectedEdges(Obstacle obstacle) {
-		return this.edges.stream().filter(e ->  e.intersects(obstacle.getExtent(this.getGlobe())))
+		return this.edges.stream()
+				.filter(e ->  e.intersects(obstacle.getExtent(this.getGlobe())))
 				.collect(Collectors.toSet());
 	}
-
+	
 	/**
-	 * Embeds an obstacle into the affected edges.
+	 * Embeds an obstacle into the affected edges of this planning continuum.
 	 * 
 	 * @param obstacle the obstacle to be embedded
 	 */
@@ -1023,187 +1355,28 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 			}
 		}
 	}
-
+	
 	/**
-	 * Embeds an obstacle into this sampling environment.
+	 * Determines whether or not a straight leg of two positions collides with
+	 * terrain of the globe of this planning continuum.
 	 * 
-	 * @param obstacle the obstacle to be embedded
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
 	 * 
-	 * @return true if the obstacle has been embedded, false otherwise
-	 * 
-	 * @see DynamicEnvironment#embed(Obstacle)
+	 * @return true if the straight leg collides with terrain, false otherwise
 	 */
-	@Override
-	public boolean embed(Obstacle obstacle) {
-		boolean embedded = false;
-
-		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
-				this.addCostInterval(obstacle.getCostInterval());
-				this.obstacles.add(obstacle);
-				this.embedEdges(obstacle);
-
-				embedded = true;
-			}
-		} else {
-			throw new IllegalStateException("globe is not set");
+	public boolean collidesTerrain(Position origin, Position destination) {
+		boolean collidesTerrain = true;
+		
+		if (!this.isInsideGlobe(origin) && !this.isInsideGlobe(destination)) {
+			HighResolutionTerrain terrain = new HighResolutionTerrain(this.getGlobe(), null);
+			// TODO: check position altitudes (ASL versus AGL)
+			collidesTerrain = (null == terrain.intersect(origin, destination));
 		}
-
-		return embedded;
-	}
-
-	/**
-	 * Unembeds an obstacle from this sampling environment.
-	 * 
-	 * @param obstacle the obstacle to be unembedded
-	 * 
-	 * @return true if the obstacle has been unembedded, false otherwise
-	 * 
-	 * @see DynamicEnvironment#unembed(Obstacle)
-	 */
-	@Override
-	public boolean unembed(Obstacle obstacle) {
-		boolean unembedded = false;
-
-		if (this.isEmbedded(obstacle)) {
-			this.removeCostInterval(obstacle.getCostInterval());
-			this.obstacles.remove(obstacle);
-
-			unembedded = true;
-		}
-
-		return unembedded;
-	}
-
-	/**
-	 * Updates this sampling environment for an embedded obstacle.
-	 * 
-	 * @param obstacle the embedded obstacle
-	 * 
-	 * @see DynamicEnvironment#refresh(Obstacle)
-	 */
-	@Override
-	public void refresh(Obstacle obstacle) {
-		if (this.obstacles.contains(obstacle)) {
-			this.update();
-		}
-	}
-
-	/**
-	 * Unembeds all obstacles from this sampling environment.
-	 * 
-	 * @see DynamicEnvironment#unembedAll()
-	 */
-	@Override
-	public void unembedAll() {
-		Iterator<Obstacle> obstaclesIterator = this.obstacles.iterator();
-		while (obstaclesIterator.hasNext()) {
-			Obstacle obstacle = obstaclesIterator.next();
-			this.removeCostInterval(obstacle.getCostInterval());
-			obstaclesIterator.remove();
-		}
-	}
-
-	/**
-	 * Indicates whether or not an obstacle is embedded in this sampling
-	 * environment.
-	 * 
-	 * @param obstacle the obstacle
-	 * 
-	 * @return true if the obstacle is embedded in this sampling environment, false
-	 *         otherwise
-	 * 
-	 * @see DynamicEnvironment#isEmbedded(Obstacle)
-	 */
-	@Override
-	public boolean isEmbedded(Obstacle obstacle) {
-		return this.obstacles.contains(obstacle);
-	}
-
-	/**
-	 * Embeds a terrain obstacle into this sampling environment.
-	 * 
-	 * @param obstacle the terrain obstacle to be embedded
-	 * 
-	 * @return true if the obstacle has been embedded, false otherwise
-	 */
-	/*
-	public boolean embed(TerrainObstacle obstacle) {
-		boolean embedded = false;
-
-		if (null != this.globe) {
-			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
-				this.terrainObstacles.add(obstacle);
-
-				embedded = true;
-			}
-		} else {
-			throw new IllegalStateException("globe is not set");
-		}
-
-		return embedded;
-	}
-	*/
-
-	/**
-	 * Unembeds a terrain obstacle from this sampling environment.
-	 * 
-	 * @param obstacle the obstacle to be unembedded
-	 * 
-	 * @return true if the obstacle has been unembedded, false otherwise
-	 */
-	/*
-	public boolean unembed(TerrainObstacle obstacle) {
-		boolean unembedded = false;
-
-		if (this.isEmbedded(obstacle)) {
-
-			this.terrainObstacles.remove(obstacle);
-
-			unembedded = true;
-		}
-
-		return unembedded;
-	}
-	*/
-
-	/**
-	 * Updates this sampling environment for an embedded terrain obstacle.
-	 * 
-	 * @param obstacle the embedded obstacle
-	 */
-	/*
-	public void refresh(TerrainObstacle obstacle) {
-		if (this.terrainObstacles.contains(obstacle)) {
-			this.update();
-		}
-	}
-	*/
-
-	/**
-	 * Unembeds all terrain obstacles from this sampling environment.
-	 */
-	/*
-	public void unembedTerrainAll() {
-		this.terrainObstacles.clear();
-	}
-	*/
-
-	/**
-	 * Indicates whether or not a terrain obstacle is embedded in this sampling
-	 * environment.
-	 * 
-	 * @param obstacle the obstacle
-	 * 
-	 * @return true if the obstacle is embedded in this sampling environment, false
-	 *         otherwise
-	 */
-	/*
-	public boolean isEmbedded(TerrainObstacle obstacle) {
-		return this.terrainObstacles.contains(obstacle);
-	}
-	*/
-
+		
+		return collidesTerrain;
+	} 
+	
 	/**
 	 * Updates this planning continuum.
 	 */
@@ -1212,7 +1385,7 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 		this.updateAppearance();
 		this.updateVisibility();
 	}
-
+	
 	/**
 	 * Updates the accumulated active cost of this planning continuum.
 	 */
@@ -1249,402 +1422,6 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 	}
 	
 	/**
-	 * Gets the interval tree that is defined for a specified position.
-	 * 
-	 * @param position the position to be checked
-	 * 
-	 * @return the interval tree with all cost intervals
-	 */
-	public IntervalTree<ChronoZonedDateTime<?>> getIntervalTree(Position position) {
-		IntervalTree<ChronoZonedDateTime<?>> intervalTree = new IntervalTree<ChronoZonedDateTime<?>>(
-				CostInterval.comparator);
-
-		if (null != this.globe) {
-			for (Obstacle obstacle : obstacles) {
-				if (this.intersects(obstacle.getExtent(this.globe))) {
-					intervalTree.add(obstacle.getCostInterval());
-				}
-			}
-		}
-
-		return intervalTree;
-	}
-
-	/**
-	 * Creates a bounding box with a defined radius surrounding a given position.
-	 * 
-	 * @param position the position to be considered
-	 * @param radius the radius for the bounding box
-	 * 
-	 * @return the bounding box surrounding the position
-	 */
-	public Box createBoundingBox(Position position, double radius) {
-		Vec4 point = this.getGlobe().computePointFromPosition(position);
-		List<Vec4> corners = new ArrayList<Vec4>();
-
-		corners.add(point.add3(-radius, +radius, -radius));
-		corners.add(point.add3(+radius, +radius, -radius));
-		corners.add(point.add3(+radius, -radius, -radius));
-		corners.add(point.add3(+radius, -radius, +radius));
-		corners.add(point.add3(-radius, -radius, +radius));
-		corners.add(point.add3(-radius, +radius, +radius));
-
-		return new Box(gov.nasa.worldwind.geom.Box.computeBoundingBox(corners));
-	}
-
-	/**
-	 * Computes the free volume of the environment, that is, the portion that is not
-	 * covered by the terrain obstacles.
-	 * 
-	 * @return free, the volume of the free space
-	 */
-	public double computeFreeVolume() {
-		double environment, obstacle = 0, free;
-
-		environment = this.getRLength() * this.getSLength() * this.getTLength();
-		/*
-		for (TerrainObstacle terrain : this.getTerrainObstacles()) {
-			if (terrain instanceof TerrainBox) {
-				TerrainBox box = (TerrainBox) terrain;
-				obstacle += box.getBox(this.globe).getRLength() * box.getBox(this.globe).getSLength()
-						* box.getBox(this.globe).getTLength();
-			}
-		}
-		*/
-		free = environment - obstacle;
-		return free;
-	}
-	
-	/**
-	 * Samples a random position from within this planning continuum using a
-	 * uniform distribution.
-	 * 
-	 * @return the sampled position from within this planning continuum using
-	 *         the uniform distribution in globe coordinates
-	 */
-	public Position sampleRandomPosition() {
-		Vec4[] corners = this.getCorners();
-
-		// Point in box frame with all minimum coordinates
-		Vec4 minimum = this.transformModelToBoxOrigin(corners[0]);
-		// Point in box frame with all maximum coordinates
-		Vec4 maximum = this.transformModelToBoxOrigin(corners[6]);
-
-		double x, y, z;
-
-		x = minimum.x + (new Random().nextDouble() * (maximum.x - minimum.x));
-		y = minimum.y + (new Random().nextDouble() * (maximum.y - minimum.y));
-		z = minimum.z + (new Random().nextDouble() * (maximum.z - minimum.z));
-
-		Vec4 point = new Vec4(x, y, z);
-
-		// Transform point from box frame to earth frame
-		point = this.transformBoxOriginToModel(point);
-
-		Position position = this.getGlobe().computePositionFromPoint(point);
-
-		return position;
-	}
-	
-	/**
-	 * Samples a random position from within this planning continuum using a
-	 * Gaussian (normal) distribution.
-	 * 
-	 * @return the sampled waypoint from within this planning continuum using
-	 *         the Gaussian (normal) distribution in globe coordinates
-	 */
-	public Position sampleRandomGaussianPosition() {
-		Vec4[] corners = this.getCorners();
-
-		// Point in box frame with all minimum coordinates
-		Vec4 minimum = this.transformModelToBoxOrigin(corners[0]);
-		// Point in box frame with all maximum coordinates
-		Vec4 maximum = this.transformModelToBoxOrigin(corners[6]);
-
-		double xMean, yMean, zMean, xSD, ySD, zSD, x, y, z;
-
-		Random r = new Random();
-
-		xMean = (minimum.x + maximum.x) / 2;
-		yMean = (minimum.y + maximum.y) / 2;
-		zMean = (minimum.z + maximum.z) / 2;
-
-		xSD = (maximum.x - xMean) / 2;
-		ySD = (maximum.y - yMean) / 2;
-		zSD = (maximum.z - zMean) / 2;
-		x = r.nextGaussian() * xSD + xMean;
-		y = r.nextGaussian() * ySD + yMean;
-		z = r.nextGaussian() * zSD + zMean;
-
-		Vec4 point = new Vec4(x, y, z);
-
-		// Transform point from box frame to earth frame
-		point = this.transformBoxOriginToModel(point);
-
-		Position position = this.getGlobe().computePositionFromPoint(point);
-
-		return position;
-	}
-	
-	/**
-	 * Samples a random position from within the intersection of this planning
-	 * continuum and an ellipsoid defined by two foci positions.
-	 * 
-	 * @param focusA the focus A of the ellipsoid in globe coordinates
-	 * @param focusB the focus B of the ellipsoid in globe coordinates
-	 * 
-	 * @return the sampled position from within the intersection of this
-	 *         planning continuum and the ellipsoid
-	 */
-	public Position sampleRandomEllipsoidPosition(
-			Position focusA, Position focusB) {
-		Position sample = null;
-		
-		// extend minor diameter by 10% focus distance
-		double diameter = this.getDistance(focusA, focusB)
-				+ (0.1d * this.getDistance(focusA, focusB));
-		
-		// sample entire continuum if more restrictive
-		if (diameter > this.getDiameter()) {
-			sample = sampleRandomPosition();
-		} else {
-			// ellipsoid axis and center
-			Vec4 va = this.getGlobe().computePointFromPosition(focusA);
-			Vec4 vb = this.getGlobe().computePointFromPosition(focusB);
-			Vec4 vc = vb.subtract3(va);
-			Vec4 center = va.add3(vc.divide3(2d));
-			
-			// ellipsoid radii
-			double a = diameter / 2d; // minor radius
-			double c = vc.divide3(2d).getLength3(); // foci (vertical) radius
-			double b = Math.sqrt((a * a) + (c * c)); // major radius
-			
-			// ellipsoid alignment
-			Vec4 normal = this.getGlobe().computeSurfaceNormalAtPoint(center);
-			Angle pitch = normal.angleBetween3(vc).subtract(Angle.POS90);
-			if (0 < focusA.getLatitude().compareTo(focusB.getLatitude())) {
-				pitch = pitch.multiply(-1d);
-			}
-			
-			do {
-				// sample unit sphere and extend to ellipsoid
-				double latitude = (new Random().nextDouble() * 2d * Math.PI);
-				double longitude = (new Random().nextDouble() * 2d * Math.PI);
-				double radius = Math.sqrt(new Random().nextDouble());
-				PolarPoint rup = PolarPoint.fromRadians(latitude, longitude, radius);
-				Vec4 ruc = rup.toCartesian();
-				Vec4 rc = new Vec4(ruc.x * a, ruc.y * b, ruc.z * c);
-				
-				// transform sample into ellipsoid
-				Vec4[] alignmentAxis = new Vec4[] {Vec4.ZERO};
-				Angle alignmentAngle = Vec4.axisAngle(vc, Vec4.UNIT_Y, alignmentAxis);
-				Quaternion alignmentRotation = Quaternion.fromAxisAngle(alignmentAngle, alignmentAxis[0]);
-				rc = rc.transformBy3(alignmentRotation);
-				sample = this.getGlobe().computePositionFromPoint(center.add3(rc));
-			
-				// continue until sample is within intersection
-			} while (!this.contains(sample));
-		}
-		
-		return sample;
-	}
-
-	/**
-	 * Checks whether the given position is inside the given globe.
-	 * 
-	 * @param globe the globe
-	 * @param position the position in global coordinates
-	 * 
-	 * @return true if the position is inside the globe and false otherwise
-	 */
-	public boolean isInsideGlobe(Globe globe, Position position) {
-		Vec4 point = this.getGlobe().computePointFromPosition(position);
-		return !globe.isPointAboveElevation(point, globe.getElevation(position.latitude, position.longitude));
-	}
-
-	/**
-	 * Checks if a position is in conflict with untraversable obstacles in the
-	 * environment.
-	 * 
-	 * @param position the position in global coordinates
-	 * @param aircraft the aircraft to be considered
-	 * 
-	 * @return boolean value true if there is a conflict
-	 */
-	public boolean checkConflict(Position position, Aircraft aircraft) {
-
-		// Check if position is inside the globe
-		if (this.isInsideGlobe(this.getGlobe(), position))
-			return true;
-
-		// Create sphere around the position of the aircraft with its radius of action
-		Sphere sphere = new Sphere(getGlobe().computePointFromPosition(position), aircraft.getRadius());
-
-		// Check conflict between terrain obstacles and aircraft sphere of action
-		/*
-		HashSet<TerrainObstacle> terrainSet = this.getTerrainObstacles();
-		for (TerrainObstacle terrain : terrainSet) {
-			// Check if obstacle contains the waypoint
-			if (sphere.intersects(terrain.getFrustum(getGlobe()))) {
-				return true;
-			}
-		}
-		*/
-		return false;
-	}
-
-	/**
-	 * Checks if a straight leg between the positions is in conflict with
-	 * untraversable obstacles in the environment.
-	 * 
-	 * @param position1 the first position in global coordinates
-	 * @param position2 the second waypoint in global coordinates
-	 * @param aircraft the aircraft to be considered
-	 * 
-	 * @return boolean value true if there is a conflict
-	 */
-	public boolean checkConflict(Position position1, Position position2, Aircraft aircraft) {
-		Vec4 point1 = this.getGlobe().computePointFromPosition(position1);
-		Vec4 point2 = this.getGlobe().computePointFromPosition(position2);
-		Vec4 aux;
-
-		double x, y, z, dx, dy, dz, dist, dist2, theta, phi;
-
-		dx = point2.x - point1.x;
-		dy = point2.y - point1.y;
-		dz = point2.z - point1.z;
-
-		dist = point1.distanceTo3(point2);
-		dist2 = point1.distanceTo2(point2);
-		theta = Math.atan2(dz, dist2);
-		phi = Math.atan2(dy, dx);
-		
-		// TODO: resolution is not necessary using single line segment intersection
-		double resolution = this.getResolution(); // meters in globe surface
-		for (int p = 1; dist > resolution; p = p * 2) {
-			for (int k = 0; k < p; k++) {
-				x = point1.x + (1 / 2 + k) * dist * Math.cos(theta) * Math.cos(phi);
-				y = point1.y + (1 / 2 + k) * dist * Math.cos(theta) * Math.sin(phi);
-				z = point1.z + (1 / 2 + k) * dist * Math.sin(theta);
-				aux = new Vec4(x, y, z);
-				if (this.checkConflict(this.getGlobe().computePositionFromPoint(aux), aircraft))
-					return true;
-			}
-			dist = dist / 2;
-		}
-
-		return false;
-	}
-
-	/**
-	 * Finds the k-nearest sampled positions for a given position in this
-	 * planning continuum.
-	 * 
-	 * @param position the position to query in globe coordinates
-	 * @param k the number of sampled positions to be found
-	 * 
-	 * @return the k-nearest sampled positions for the given position in this
-	 *         planning continuum sorted by increasing distance
-	 */
-	public List<? extends Position> findNearest(Position position, int k) {
-		return this.vertices.stream()
-				.sorted((p1, p2) -> Double.compare(
-						this.getNormalizedDistance(p1, position),
-						this.getNormalizedDistance(p2, position)))
-				.filter(p -> !p.equals(position))
-				.limit(k)
-				.collect(Collectors.toList());
-	}
-	
-	/**
-	 * Finds the k-nearest sampled positions for a given position in this
-	 * planning continuum using a particular distance metric.
-	 * 
-	 * @param position the position in global coordinates
-	 * @param k the number of sampled positions to be found
-	 * @param metric the distance metric to be applied
-	 * 
-	 * @return the k-nearest sampled positions for the given position in this
-	 *         planning continuum using the distance metric, sorted by
-	 *         increasing distance
-	 */
-	protected List<? extends Position> findNearest(Position position, int k,
-			BiFunction<Position, Position, Double> metric) {
-		return this.vertices.stream()
-				.sorted((p1, p2) -> Double.compare(
-						metric.apply(p1, position),
-						metric.apply(p2, position)))
-				.filter(p -> !p.equals(position))
-				.limit(k)
-				.collect(Collectors.toList());
-	}
-	
-	/**
-	 * Finds the sampled positions nearer than a certain distance from a given
-	 * position in this planning continuum.
-	 * 
-	 * @param position the position in global coordinates
-	 * @param distance the maximum distance from the position
-	 * 
-	 * @return the sampled positions nearer than the distance from the position
-	 *         sorted by increasing distance
-	 */
-	public List<? extends Position> findNearest(Position position, double distance) {
-		return this.vertices.stream()
-				.sorted((p1, p2) -> Double.compare(
-						this.getNormalizedDistance(p1, position),
-						this.getNormalizedDistance(p2, position)))
-				.filter(p -> (this.getDistance(p, position) <= distance)
-						&& !p.equals(position))
-				.collect(Collectors.toList());
-	}
-
-	/**
-	 * Sorts a list of elements by increasing distance to a given position.
-	 * 
-	 * @param position the position in global coordinates
-	 */
-	public void sortNearest(Position position) {
-		// TODO: return SortedSet instead? required method?
-		this.vertices = this.vertices.stream().sorted((p1, p2) ->
-		Double.compare(
-				this.getNormalizedDistance(p1, position),
-				this.getNormalizedDistance(p2, position)))
-				.collect(Collectors.toSet());
-
-	}
-
-	@Override
-	public Set<? extends PlanningContinuum> getAffectedChildren(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public Set<Position> getAffectedWaypointPositions(Set<Obstacle> obstacles) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
-	/**
-	 * Gets the base cost of a normalized step in this planning continuum.
-	 * 
-	 * @return the base cost of a normalized step in this planning continuum
-	 * 
-	 * @see Environment#getBaseCost()
-	 */
-	@Override
-	public double getBaseCost() {
-		return PlanningContinuum.BASE_COST;
-	}
-	
-	/**
 	 * Renders this planning continuum using a drawing context.
 	 * 
 	 * @param dc the drawing context
@@ -1661,41 +1438,5 @@ public class PlanningContinuum extends Box implements DynamicEnvironment, MultiR
 			}
 		}
 	}
-
-	/**
-	 * Adds a structural change listener to this planning continuum.
-	 * 
-	 * @param listener the structural change listener to be added
-	 * 
-	 * @see MultiResolutionEnvironment#addStructuralChangeListener(StructuralChangeListener)
-	 */
-	@Override
-	public void addStructuralChangeListener(StructuralChangeListener listener) {
-		this.listeners.add(listener);
-	}
 	
-	/**
-	 * Removes a structural change listener from this planning continuum.
-	 * 
-	 * @param listener the structural change listener to be removed
-	 * 
-	 * @see MultiResolutionEnvironment#removeStructuralChangeListener(StructuralChangeListener)
-	 */
-	@Override
-	public void removeStructuralChangeListener(StructuralChangeListener listener) {
-		this.listeners.remove(listener);
-	}
-	
-	/**
-	 * Notifies the structural change listeners of this planning continuum.
-	 * 
-	 * @see MultiResolutionEnvironment#notifyStructuralChangeListeners()
-	 */
-	@Override
-	public void notifyStructuralChangeListeners() {
-		for (StructuralChangeListener listener : this.listeners) {
-			listener.notifyStructuralChange();
-		}
-	}
-
 }

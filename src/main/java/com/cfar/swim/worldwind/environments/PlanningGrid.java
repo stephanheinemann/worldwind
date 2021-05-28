@@ -75,7 +75,8 @@ import gov.nasa.worldwind.util.measure.LengthMeasurer;
  * @author Stephan Heinemann
  *
  */
-public class PlanningGrid extends CubicGrid implements DynamicEnvironment, MultiResolutionEnvironment {
+public class PlanningGrid extends CubicGrid
+implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	
 	/** the base cost of this planning grid */
 	private static final double BASE_COST = 1d;
@@ -155,6 +156,43 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	}
 	
 	/**
+	 * Determines whether or not this planning grid has a globe.
+	 * 
+	 * @return true if this planning grid has a globe, false otherwise
+	 * 
+	 * @see Environment#hasGlobe()
+	 */
+	@Override
+	public boolean hasGlobe() {
+		return (null != this.globe);
+	}
+	
+	/**
+	 * Determines whether or not a position is inside the globe of this
+	 * planning grid.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return true if the position is inside the globe of this planning grid,
+	 *         false otherwise
+	 * 
+	 * @throws IllegalStateException if this planning grid has no globe
+	 * 
+	 * @see Environment#isInsideGlobe(Position)
+	 */
+	@Override
+	public boolean isInsideGlobe(Position position) {
+		if (this.hasGlobe()) {
+			Vec4 point = this.getGlobe().computePointFromPosition(position);
+			double elevation = this.getGlobe()
+					.getElevation(position.latitude, position.longitude);
+			return !(this.getGlobe().isPointAboveElevation(point, elevation));
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
+	/**
 	 * Determines whether or not this planning grid contains a position.
 	 * 
 	 * @param position the position in globe coordinates
@@ -169,7 +207,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 */
 	@Override
 	public boolean contains(Position position) {
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			return super.contains(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -190,7 +228,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	public Position[] getCornerPositions() {
 		Position[] cornerPositions = null;
 		
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			cornerPositions = new Position[8];
 			Vec4[] corners = this.getCorners();
 			for (int index = 0; index < 8; index++) {
@@ -219,7 +257,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	public boolean isCorner(Position position) {
 		boolean isCorner = false;
 		
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			isCorner = this.isCorner(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -241,7 +279,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	public Position getCenterPosition() {
 		Position centerPosition = null;
 		
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			centerPosition = this.globe.computePositionFromPoint(this.getCenter());
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -266,7 +304,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	public boolean isCenter(Position position) {
 		boolean isCenter = false;
 		
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			isCenter = this.isCenter(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -291,7 +329,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	public Position[] getNeighborCorners(Position position) {
 		Position[] neighborCorners = null;
 		
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			neighborCorners = new Position[3];
 			Vec4[] corners = this.getNeighborCorners(globe.computePointFromPosition(position));
 			
@@ -413,7 +451,10 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * 
 	 * @return the accumulated cost of this planning grid at the specified
 	 *         time instant
+	 * 
+	 * @see Environment#getCost(ZonedDateTime)
 	 */
+	@Override
 	public double getCost(ZonedDateTime time) {
 		return this.getCost(time, time);
 	}
@@ -590,7 +631,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	public boolean embed(Obstacle obstacle) {
 		boolean embedded = false;
 		
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
@@ -701,7 +742,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * @return the children of this planning grid that are affected by an
 	 *         obstacle embedding
 	 * 
-	 * @see DynamicEnvironment#getAffectedChildren(Obstacle)
+	 * @see DynamicHierarchicalEnvironment#getAffectedChildren(Obstacle)
 	 */
 	@Override
 	public Set<? extends PlanningGrid> getAffectedChildren(Obstacle obstacle) {
@@ -811,6 +852,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * 
 	 * @return the children of this planning grid
 	 * 
+	 * @see HierarchicalEnvironment#getChildren()
 	 * @see CubicGrid#getChildren()
 	 */
 	@SuppressWarnings("unchecked")
@@ -842,6 +884,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * @return the parent of this planning grid if present,
 	 *         null otherwise
 	 * 
+	 * @see HierarchicalEnvironment#getParent()
 	 * @see CubicGrid#getParent()
 	 */
 	@Override
@@ -854,6 +897,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * 
 	 * @return all planning grids associated with this planning grid
 	 * 
+	 * @see HierarchicalEnvironment#getAll()
 	 * @see CubicGrid#getAll()
 	 */
 	@SuppressWarnings("unchecked")
@@ -876,46 +920,87 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	}
 	
 	/**
-	 * Gets the refinements, that is, children of this planning grid.
+	 * Gets the resolution of this planning grid.
 	 * 
-	 * @return the refinements of this planning grid
+	 * @return the resolution of this planning grid
 	 * 
-	 * @see MultiResolutionEnvironment#getRefinements()
+	 * @see MultiResolutionEnvironment#getResolution()
 	 */
 	@Override
-	public Set<? extends PlanningGrid> getRefinements() {
-		return this.getChildren();
+	public double getResolution() {
+		double resolution = 1d;
+		
+		if (this.hasChildren()) {
+			resolution = Math.cbrt(this.getChildren().size());
+		}
+		
+		return resolution;
 	}
 	
 	/**
-	 * Refines, that is, adds children with a specified density to this
-	 * planning grid.
+	 * Sets the resolution of this planning grid.
 	 * 
-	 * @param density the refinement density
+	 * @param resolution the resolution to be set
+	 * 
+	 * @throws IllegalArgumentException if the resolution is not positive
+	 * 
+	 * @see MultiResolutionEnvironment#setResolution(double)
+	 */
+	@Override
+	public void setResolution(double resolution) {
+		if (1d > resolution) {
+			throw new IllegalArgumentException("invalid resolution");
+		} else {
+			this.removeChildren();
+			if (1d < resolution) {
+				this.addChildren((int) Math.ceil(resolution));
+				for (PlanningGrid grid : this.getChildren()) {
+					for (StructuralChangeListener listener : this.listeners) {
+						grid.addStructuralChangeListener(listener);
+					}
+				}
+			}
+			this.notifyStructuralChangeListeners();
+		}
+	}
+	
+	/**
+	 * Refines this planning grid by a refinement factor, that is, adds
+	 * children to this planning grid.
+	 * 
+	 * @param factor the refinement factor
+	 * 
+	 * @throws IllegalArgumentException if the refinement factor is less than 2
 	 * 
 	 * @see MultiResolutionEnvironment#refine(int)
 	 */
 	@Override
-	public void refine(int density) {
-		this.addChildren(density);
-		for (PlanningGrid grid : this.getChildren()) {
-			for (StructuralChangeListener listener : this.listeners) {
-				grid.addStructuralChangeListener(listener);
-			}
+	public void refine(int factor) {
+		if (2 > factor) {
+			throw new IllegalArgumentException("invalid refinement factor");
+		} else {
+			int resolution = (int) this.getResolution() * factor;
+			this.setResolution(resolution);
 		}
-		this.notifyStructuralChangeListeners();
 	}
 	
 	/**
-	 * Coarsens, that is, removes the children of this planning grid.
+	 * Coarsens this planning grid by a coarsening factor, that is, removes
+	 * children from this planning grid.
 	 *
+	 * @param factor the coarsening factor
+	 * 
+	 * @throws IllegalArgumentException if the coarsening factor is less than 2
+	 * 
 	 * @see MultiResolutionEnvironment#coarsen
 	 */
 	@Override
-	public void coarsen() {
-		if (this.hasParent()) {
-			this.removeChildren();
-			this.notifyStructuralChangeListeners();
+	public void coarsen(int factor) {
+		if (2 > factor) {
+			throw new IllegalArgumentException("invalid coarsening factor");
+		} else if (this.hasParent()) {
+			int resolution = (int) this.getResolution() / factor;
+			this.setResolution(resolution);
 		}
 	}
 	
@@ -951,7 +1036,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	public Set<? extends PlanningGrid> lookupCells(Position position) {
 		Set<PlanningGrid> cells = null;
 		
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			cells = (Set<PlanningGrid>) super.lookupCells(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -1012,7 +1097,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * @see CubicGrid#getIntersectionVectors(Vec4, Vec4)
 	 */
 	public Iterable<? extends Position> getIntersectedPositions(Position origin, Position destination) {
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			return
 				super.getIntersectionVectors(
 					this.globe.computePointFromPosition(origin),
@@ -1041,7 +1126,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 */
 	@Override
 	public boolean isWaypointPosition(Position position) {
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			return super.isWaypointVector(this.globe.computePointFromPosition(position));
 		} else {
 			throw new IllegalStateException("globe is not set");
@@ -1064,7 +1149,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 */
 	@Override
 	public Set<Position> getAdjacentWaypointPositions(Position position) {
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			Set<Vec4> waypointVectors = super.getAdjacentWaypointVectors(this.globe.computePointFromPosition(position));
 			return waypointVectors
 					.stream()
@@ -1092,7 +1177,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 */
 	@Override
 	public boolean isAdjacentWaypointPosition(Position position, Position waypointPosition) {
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			return super.isAdjacentWaypointVector(
 					this.globe.computePointFromPosition(position),
 					this.globe.computePointFromPosition(waypointPosition));
@@ -1108,7 +1193,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * @return the non-parent neighbors of this planning grid
 	 * 
 	 * @see CubicGrid#getNeighbors()
-	 * @see Environment#getNeighbors()
+	 * @see HierarchicalEnvironment#getNeighbors()
 	 */
 	@SuppressWarnings("unchecked")
 	@Override
@@ -1126,6 +1211,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * 
 	 * @return the neighbors of this planning grid
 	 * 
+	 * @see HierarchicalEnvironment#getNeighbors()
 	 * @see CubicGrid#getNeighbors(int)
 	 */
 	@SuppressWarnings("unchecked")
@@ -1136,17 +1222,18 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	
 	/**
 	 * Determines whether or not this planning grid is a neighbor of another
-	 * environment.
+	 * hierarchical environment.
 	 * 
-	 * @param neighbor the potential neighbor
+	 * @param neighbor the potential neighbor of this planning grid
 	 * 
 	 * @return true if this planning grid is a neighbor of the other
-	 *         environment, false otherwise
+	 *         hierarchical environment, false otherwise
 	 * 
+	 * @see HierarchicalEnvironment#areNeighbors(HierarchicalEnvironment)
 	 * @see RegularGrid#areNeighbors(RegularGrid)
 	 */
 	@Override
-	public boolean areNeighbors(Environment neighbor) {
+	public boolean areNeighbors(HierarchicalEnvironment neighbor) {
 		return this.getNeighbors().contains(neighbor);
 	}
 	
@@ -1170,7 +1257,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 		// TODO: coordinate transformations might be too expensive for planning
 		// TODO: planning could be based on Vec4 with a final transformation of the route
 		
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			Set<Vec4> neighborVectors = super.getNeighbors(this.globe.computePointFromPosition(position));
 			for (Vec4 neighbor : neighborVectors) {
 				neighbors.add(this.globe.computePositionFromPoint(neighbor));
@@ -1198,7 +1285,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 */
 	@Override
 	public boolean areNeighbors(Position position, Position neighbor) {
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			return super.areNeighbors(
 					this.globe.computePointFromPosition(position),
 					this.globe.computePointFromPosition(neighbor));
@@ -1210,25 +1297,25 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	/**
 	 * Gets the distance between two positions in this planning grid.
 	 * 
-	 * @param position1 the first position
-	 * @param position2 the second position
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coordinates
 	 * 
 	 * @return the distance between the two positions in this planning grid
 	 * 
-	 * @throws IllegalStateException if the globe is not set
+	 * @throws IllegalStateException if this planning grid has no globe
 	 * 
 	 * @see Environment#getDistance(Position, Position)
 	 */
 	@Override
 	public double getDistance(Position position1, Position position2) {
-		if (null != this.globe) {
+		if (this.hasGlobe()) {
 			ArrayList<Position> positions = new ArrayList<Position>();
 			positions.add(position1);
 			positions.add(position2);
 			LengthMeasurer measurer = new LengthMeasurer(positions);
 			measurer.setPathType(AVKey.LINEAR);
 			measurer.setFollowTerrain(false);
-			return measurer.getLength(this.globe);
+			return measurer.getLength(this.getGlobe());
 		} else {
 			throw new IllegalStateException("globe is not set");
 		}
@@ -1237,15 +1324,45 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	/**
 	 * Gets the normalized distance between two positions in this planning grid.
 	 * 
-	 * @param position1 the first position
-	 * @param position2 the second position
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coordintates
 	 * 
 	 * @return the normalized distance between the two positions in this
 	 *         planning grid
+	 * 
+	 * @see Environment#getNormalizedDistance(Position, Position)
 	 */
 	@Override
 	public double getNormalizedDistance(Position position1, Position position2) {
 		return this.getDistance(position1, position2) / this.getNormalizer();
+	}
+	
+	/**
+	 * Converts a normalized distance to a distance within this planning grid.
+	 * 
+	 * @param normalizedDistance the normalized distance
+	 * 
+	 * @return the distance
+	 * 
+	 * @see Environment#toDistance(double)
+	 */
+	@Override
+	public double toDistance(double normalizedDistance) {
+		return normalizedDistance * this.getDiameter();
+	}
+	
+	/**
+	 * Converts a distance to a normalized distance within this planning grid.
+	 * 
+	 * @param distance the distance
+	 * 
+	 * @return the normalized distance
+	 * 
+	 * @see Environment#toNormalizedDistance(double)
+	 */
+	@Override
+	public double toNormalizedDistance(double distance) {
+		return distance / this.getDiameter();
 	}
 	
 	/**
@@ -1385,11 +1502,11 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * @return the leg cost from the center of this environment to the center
 	 *         of the destination environment
 	 * 
-	 * @see Environment#getLegCost(Environment, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
+	 * @see HierarchicalEnvironment#getLegCost(HierarchicalEnvironment, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
 	 */
 	@Override
 	public double getLegCost(
-			Environment destination,
+			HierarchicalEnvironment destination,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		
@@ -1437,7 +1554,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * 
 	 * @param listener the structural change listener to be added
 	 * 
-	 * @see MultiResolutionEnvironment#addStructuralChangeListener(StructuralChangeListener)
+	 * @see StructuredEnvironment#addStructuralChangeListener(StructuralChangeListener)
 	 */
 	@Override
 	public void addStructuralChangeListener(StructuralChangeListener listener) {
@@ -1452,7 +1569,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	 * 
 	 * @param listener the structural change listener to be removed
 	 * 
-	 * @see MultiResolutionEnvironment#removeStructuralChangeListener(StructuralChangeListener)
+	 * @see StructuredEnvironment#removeStructuralChangeListener(StructuralChangeListener)
 	 */
 	@Override
 	public void removeStructuralChangeListener(StructuralChangeListener listener) {
@@ -1465,7 +1582,7 @@ public class PlanningGrid extends CubicGrid implements DynamicEnvironment, Multi
 	/**
 	 * Notifies the structural change listeners of this planning grid.
 	 * 
-	 * @see MultiResolutionEnvironment#notifyStructuralChangeListeners()
+	 * @see StructuredEnvironment#notifyStructuralChangeListeners()
 	 */
 	@Override
 	public void notifyStructuralChangeListeners() {

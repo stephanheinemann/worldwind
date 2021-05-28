@@ -85,16 +85,6 @@ public interface DynamicEnvironment extends Environment {
 	public void refresh(Obstacle obstacle);
 	
 	/**
-	 * Gets the children of this dynamic environment that are affected by an
-	 * obstacle embedding.
-	 *  
-	 * @param obstacle the embedded obstacle
-	 * @return the children of this environment that are affected by an
-	 *         obstacle embedding
-	 */
-	public Set<? extends DynamicEnvironment> getAffectedChildren(Obstacle obstacle);
-	
-	/**
 	 * Gets the waypoint positions of this dynamic environment that are
 	 * affected by an obstacle embedding.
 	 * 

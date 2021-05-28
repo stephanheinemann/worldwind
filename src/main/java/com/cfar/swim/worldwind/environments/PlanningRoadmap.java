@@ -46,7 +46,7 @@ import gov.nasa.worldwind.render.DrawContext;
 
 // TODO: a planning roadmap could be fed by AIXM data to establish valid VFR/IFR routes
 // TODO: there could be a geometric roadmap base class (similar to planning grid)
-public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvironment {
+public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvironment, StructuredEnvironment {
 
 	@Override
 	public ZonedDateTime getTime() {
@@ -97,18 +97,6 @@ public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvir
 	}
 
 	@Override
-	public Set<? extends Environment> getNeighbors() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public boolean areNeighbors(Environment neighbor) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public Set<Position> getNeighbors(Position position) {
 		// TODO Auto-generated method stub
 		return null;
@@ -118,12 +106,6 @@ public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvir
 	public boolean areNeighbors(Position position, Position neighbor) {
 		// TODO Auto-generated method stub
 		return false;
-	}
-
-	@Override
-	public Set<? extends MultiResolutionEnvironment> getRefinements() {
-		// TODO Auto-generated method stub
-		return null;
 	}
 
 	@Override
@@ -171,15 +153,6 @@ public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvir
 	@Override
 	public double getLegCost(
 			Position position, Position neighbor, 
-			ZonedDateTime start, ZonedDateTime end,
-			CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	@Override
-	public double getLegCost(
-			Environment neighbor,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		// TODO Auto-generated method stub
@@ -262,12 +235,6 @@ public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvir
 	}
 
 	@Override
-	public Set<? extends DynamicEnvironment> getAffectedChildren(Obstacle obstacle) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle) {
 		// TODO Auto-generated method stub
 		return null;
@@ -299,6 +266,54 @@ public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvir
 
 	@Override
 	public void notifyStructuralChangeListeners() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean hasGlobe() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public boolean isInsideGlobe(Position position) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public double toDistance(double normalizedDistance) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double toNormalizedDistance(double distance) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getCost(ZonedDateTime time) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public double getResolution() {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	@Override
+	public void setResolution(double resolution) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void coarsen(int factor) {
 		// TODO Auto-generated method stub
 		
 	}

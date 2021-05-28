@@ -51,9 +51,9 @@ import com.cfar.swim.worldwind.connections.SimulatedSwimConnection;
 import com.cfar.swim.worldwind.connections.SwimConnection;
 import com.cfar.swim.worldwind.environments.DynamicEnvironment;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.environments.MultiResolutionEnvironment;
-import com.cfar.swim.worldwind.environments.StructuralChangeListener;
 import com.cfar.swim.worldwind.environments.PlanningGrid;
+import com.cfar.swim.worldwind.environments.StructuralChangeListener;
+import com.cfar.swim.worldwind.environments.StructuredEnvironment;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
@@ -677,9 +677,9 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 				}
 			}
 			
-			// be notified about structural changes of multi-resolution environments
-			if (this.environment instanceof MultiResolutionEnvironment) {
-				((MultiResolutionEnvironment) this.environment)
+			// be notified about structural changes of structured environments
+			if (this.environment instanceof StructuredEnvironment) {
+				((StructuredEnvironment) this.environment)
 				.addStructuralChangeListener(this);
 			}
 		

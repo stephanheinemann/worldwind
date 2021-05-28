@@ -527,7 +527,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		
 		// find the waypoint in the tree nearest to the sampled one
 		nearWaypoint = (RRTreeWaypoint) this.getEnvironment()
-				.findNearest(waypoint, 1).get(0);
+				.findNearest(waypoint, 1).iterator().next();
 		
 		// TODO: consider performance metrics instead
 		//this.getEnvironment().findNearest(waypoint, 1, metric);
@@ -585,16 +585,11 @@ public class RRTreePlanner extends AbstractPlanner {
 			this.setNewestWaypoint(extension);
 			
 			// TODO: integrate NASA terrain and jBullet for conflict checks
-			// TODO: review terrain obstacles required
-			// check extension conflict with environment (terrain)
-			if (this.getEnvironment().checkConflict(extension, getAircraft())) {
-				success = false;
-			}
-			// check edge conflict with environment (terrain)
-			else if (this.getEnvironment().checkConflict(
-					treeWaypoint, extension, getAircraft())) {
-				success = false;
-			}
+			// TODO: review terrain (man-made) obstacles required
+			// TODO: consider safe altitude
+			// check extension and edge conflict with environment (terrain)
+			success = !this.getEnvironment().collidesTerrain(treeWaypoint, extension);
+			
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 			success = false;

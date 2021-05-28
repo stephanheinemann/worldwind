@@ -74,7 +74,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	
 	/** the continuum of this edge */
 	private PlanningContinuum continuum = null;
-
+	
 	/** the cost interval tree encoding temporal costs of this edge */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals =
 			new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);

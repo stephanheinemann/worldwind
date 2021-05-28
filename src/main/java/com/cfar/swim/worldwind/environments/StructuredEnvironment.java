@@ -30,47 +30,31 @@
 package com.cfar.swim.worldwind.environments;
 
 /**
- * Describes a multi-resolution environment featuring multiple resolutions.
+ * Describes a structured environment featuring a possibly changing internal
+ * structure.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface MultiResolutionEnvironment extends Environment {
+public interface StructuredEnvironment extends Environment {
+
+	/**
+	 * Adds a structural change listener to this structured environment.
+	 * 
+	 * @param listener the structural change listener to be added
+	 */
+	public void addStructuralChangeListener(StructuralChangeListener listener);
 	
 	/**
-	 * Gets the resolution of this multi-resolution environment.
+	 * Removes a structural change listener from this structured environment.
 	 * 
-	 * @return the resolution of this multi-resolution environment
+	 * @param listener the structural change listener to be removed
 	 */
-	public double getResolution();
+	public void removeStructuralChangeListener(StructuralChangeListener listener);
 	
 	/**
-	 * Sets the resolution of this multi-resolution environment.
-	 * 
-	 * @param resolution the resolution to be set
+	 * Notifies the structural change listeners of this structured environment.
 	 */
-	public void setResolution(double resolution);
-	
-	/**
-	 * Refines this multi-resolution environment by a refinement factor.
-	 * 
-	 * @param factor the refinement factor
-	 */
-	public void refine(int factor);
-	
-	/**
-	 * Coarsens this multi-resolution environment by a coarsening factor.
-	 * 
-	 * @param factor the coarsening factor
-	 */
-	public void coarsen(int factor);
-	
-	/**
-	 * Determines whether or not this multi-resolution environment is refined.
-	 * 
-	 * @return true if this multi-resolution environment is refined,
-	 *         false otherwise
-	 */
-	public boolean isRefined();
+	public void notifyStructuralChangeListeners();
 	
 }
