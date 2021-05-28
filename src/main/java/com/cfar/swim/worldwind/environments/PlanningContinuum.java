@@ -1369,9 +1369,10 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		boolean collidesTerrain = true;
 		
 		if (!this.isInsideGlobe(origin) && !this.isInsideGlobe(destination)) {
-			HighResolutionTerrain terrain = new HighResolutionTerrain(this.getGlobe(), null);
+			// TODO: check reasonable default resolution
+			HighResolutionTerrain terrain = new HighResolutionTerrain(this.getGlobe(), 50d);
 			// TODO: check position altitudes (ASL versus AGL)
-			collidesTerrain = (null == terrain.intersect(origin, destination));
+			collidesTerrain = (null != terrain.intersect(origin, destination));
 		}
 		
 		return collidesTerrain;
