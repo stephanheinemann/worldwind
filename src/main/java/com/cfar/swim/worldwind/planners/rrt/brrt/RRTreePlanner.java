@@ -585,10 +585,13 @@ public class RRTreePlanner extends AbstractPlanner {
 			this.setNewestWaypoint(extension);
 			
 			// TODO: integrate NASA terrain and jBullet for conflict checks
-			// TODO: review terrain (man-made) obstacles required
-			// TODO: consider safe altitude
+			// TODO: review if terrain (man-made) obstacles are required
+			// TODO: consider safe altitude and distance (except take-off and landing?)
+			// TODO: consider waypoint actions (take-off, land, hold) and delays
 			// check extension and edge conflict with environment (terrain)
-			success = !this.getEnvironment().collidesTerrain(treeWaypoint, extension);
+			if (!this.getStart().equals(treeWaypoint) && !this.isInGoalRegion(extension)) {
+				success = !this.getEnvironment().collidesTerrain(treeWaypoint, extension);
+			}
 			
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
