@@ -66,6 +66,7 @@ import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.terrain.HighResolutionTerrain;
 import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
@@ -1486,7 +1487,33 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 		
 		return legCost;
 	}
-
+	
+	/**
+	 * Determines whether or not a straight leg of two positions collides with
+	 * terrain of the globe of this planning grid.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * 
+	 * @return true if the straight leg collides with terrain, false otherwise
+	 * 
+	 * @see Environment#collidesTerrain(Position, Position)
+	 */
+	@Override
+	public boolean collidesTerrain(Position origin, Position destination) {
+		boolean collidesTerrain = true;
+		
+		if (!this.isInsideGlobe(origin) && !this.isInsideGlobe(destination)) {
+			HighResolutionTerrain terrain = new HighResolutionTerrain(
+					this.getGlobe(), this.getResolution());
+			// TODO: check position altitudes (ASL versus AGL)
+			// TODO: include safe height and distance
+			collidesTerrain = (null != terrain.intersect(origin, destination));
+		}
+		
+		return collidesTerrain;
+	}
+	
 	/**
 	 * Gets the leg cost from the center of this planning grid to the center
 	 * of another environment between a start and an end time given a

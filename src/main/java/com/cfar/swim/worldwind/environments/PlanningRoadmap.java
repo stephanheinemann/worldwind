@@ -324,4 +324,10 @@ public class PlanningRoadmap implements DynamicEnvironment, MultiResolutionEnvir
 		return 0;
 	}
 
+	@Override
+	public boolean collidesTerrain(Position origin, Position destination) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
 }

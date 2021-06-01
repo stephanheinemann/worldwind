@@ -41,6 +41,7 @@ import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
+import com.cfar.swim.worldwind.aircraft.CapabilitiesException;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
@@ -593,8 +594,8 @@ public class RRTreePlanner extends AbstractPlanner {
 				this.setNewestWaypoint(endWaypoint);
 			}
 			
-		} catch (IllegalArgumentException e) {
-			e.printStackTrace();
+		} catch (CapabilitiesException ce) {
+			Logging.logger().info(ce.getMessage());
 		}
 		
 		return extension;
@@ -775,23 +776,21 @@ public class RRTreePlanner extends AbstractPlanner {
 			RRTreeWaypoint sample = this.sampleBiased();
 			
 			// connect to or extend towards sample according to strategy
-			boolean notTrapped = false;
+			Status status;
 			switch (this.getStrategy()) {
 			case CONNECT:
-				notTrapped = (Status.TRAPPED != this.connectRRT(sample));
+				status = this.connectRRT(sample);
 				break;
 			case EXTEND:
 			default:
-				notTrapped = (Status.TRAPPED != this.extendRRT(sample));
-				break;
+				status = this.extendRRT(sample);
 			}
 			
-			if (notTrapped) {
-				if (this.isInGoalRegion()) {
-					this.setGoal(this.getNewestWaypoint());
-					this.connectPlan();
-					return true;
-				}
+			// check goal region
+			if ((Status.TRAPPED != status) && this.isInGoalRegion()) {
+				this.setGoal(this.getNewestWaypoint());
+				this.connectPlan();
+				return true;
 			}
 		}
 		

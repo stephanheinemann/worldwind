@@ -29,12 +29,12 @@
  */
 package com.cfar.swim.worldwind.planners.rrt.rrtstar;
 
-import java.util.Optional;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.environments.Edge;
+import com.cfar.swim.worldwind.aircraft.CapabilitiesException;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
 
@@ -81,7 +81,6 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	protected double probeCost(RRTreeWaypoint source, RRTreeWaypoint target) {
 		double cost = source.getCost();
 		
-		// TODO: include terrain into step and leg costs?
 		if (this.getEnvironment().collidesTerrain(source, target)) {
 			cost = Double.POSITIVE_INFINITY;
 		} else {
@@ -122,13 +121,21 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 				if (position.equals(target)) {
 					double cost = this.probeCost(source, target);
 					if (cost < minCost) {
-						minCost = cost;
-						this.getEnvironment().removeEdge(parent, target);
-						parent = source;
-						target.setParent(parent);
-						this.getEnvironment().addEdge(parent, target);
-						target.setCost(minCost);
-						// TODO: compute target ETO and cost (feasibility!)
+						try {
+							// compute ETO and check extension feasibility
+							// according to aircraft capabilities
+							this.computeEto(source, target);
+							
+							// establish improved parent
+							this.getEnvironment().removeEdge(parent, target);
+							target.setParent(source);
+							this.getEnvironment().addEdge(source, target);
+							this.computeCost(source, target);
+							minCost = target.getCost();
+							parent = source;
+						} catch (CapabilitiesException ce) {
+							Logging.logger().info(ce.getMessage());
+						}
 					}
 				}
 			}
@@ -151,6 +158,7 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 				switch (this.getExtension()) {
 				case FEASIBLE:
 					position = this.growFeasiblePosition(source, target);
+					break;
 				case LINEAR:
 				default:
 					position = this.growPosition(source, target);
@@ -160,12 +168,20 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 				if (position.equals(target)) {
 					double cost = probeCost(source, target);
 					if (cost < target.getCost()) {
-						this.getEnvironment().removeEdge(target.getParent(), target);
-						target.setParent(source);
-						this.getEnvironment().addEdge(source, target);
-						// TODO: compute target ETO and cost (feasibility!)
-						target.setCost(cost);
-						this.propagateChanges(target);
+						try {
+							// compute ETO and check extension feasibility
+							// according to aircraft capabilities
+							this.computeEto(source, target);
+							
+							// re-wire dependent tree
+							this.getEnvironment().removeEdge(target.getParent(), target);
+							target.setParent(source);
+							this.getEnvironment().addEdge(source, target);
+							this.computeCost(source, target);
+							this.propagateChanges(target);
+						} catch (CapabilitiesException ce) {
+							Logging.logger().info(ce.getMessage());
+						}
 					}
 				}
 			}
@@ -204,19 +220,24 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 			// sample a new waypoint
 			RRTreeWaypoint sample = this.sampleBiased();
 			
-			// connect to or extends towards sample according to strategy
-			// TODO: extension strategies (extend versus connect)?
-			RRTreeWaypoint nearestWaypoint = (RRTreeWaypoint)
-					this.getEnvironment()
-					.findNearest(sample, 1).iterator().next();
-			Optional<Edge> extension =
-					this.createExtension(nearestWaypoint, sample);
+			// connect to or extend towards sample according to strategy
+			Status status;
+			switch (this.getStrategy()) {
+			case CONNECT:
+				status = this.connectRRT(sample);
+				break;
+			case EXTEND:
+			default:
+				status = this.extendRRT(sample);
+			}
 			
-			if (extension.isPresent()) {
+			// improve and check goal region
+			if (Status.TRAPPED != status) {
 				RRTreeWaypoint endWaypoint = this.getNewestWaypoint();
 				Set<RRTreeWaypoint> nearestWaypoints = (Set<RRTreeWaypoint>)
 						this.getEnvironment().findNearest(endWaypoint,
 								this.getEnvironment().getOptimalNumNearest());
+								//this.getEnvironment().getNumVertices());
 				this.improveParent(nearestWaypoints, endWaypoint);
 				this.rewireTree(endWaypoint, nearestWaypoints);
 				

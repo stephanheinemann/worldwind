@@ -670,7 +670,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
-		// TODO: catch IllegalArgumentException (incapable) and exit
+		// TODO: catch CapabilitiesException (incapable) and exit
 		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
 		
 		double cost = this.getEnvironment().getStepCost(

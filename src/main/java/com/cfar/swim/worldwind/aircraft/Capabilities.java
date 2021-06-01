@@ -51,6 +51,8 @@ import gov.nasa.worldwind.render.Path;
 public class Capabilities {
 
 	// all capabilities are stored in SI units
+	// TODO: maximum rate of turn
+	// TODO: ensure maximum angles correspond to maximum speeds and rates
 	
 	/** the maximum angle of climb speed of this capabilities bean in m/s */
 	private double maximumAngleOfClimbSpeed = 0d; // m/s
@@ -425,7 +427,7 @@ public class Capabilities {
 				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.getSeconds();
 				
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
-					throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
+					throw new CapabilitiesException("incapable of traveling directly from " + start + " to " + goal);
 				}
 			}
 			
@@ -454,7 +456,7 @@ public class Capabilities {
 				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.getSeconds();
 				
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
-					throw new IllegalArgumentException("incapable of traveling directly from " + start + " to " + goal);
+					throw new CapabilitiesException("incapable of traveling directly from " + start + " to " + goal);
 				}
 			}
 			

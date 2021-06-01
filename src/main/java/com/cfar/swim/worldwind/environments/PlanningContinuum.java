@@ -560,7 +560,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		
-		double stepCost = 0d;
+		double stepCost = Double.POSITIVE_INFINITY;
 		Optional<Edge> edge = this.findEdge(origin, destination);
 		
 		if (edge.isPresent()) {
@@ -596,11 +596,40 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		
+		double legCost = Double.POSITIVE_INFINITY;
+		
 		Edge leg = new Edge(this, origin, destination);
 		double distance = this.getNormalizedDistance(origin, destination);
 		double cost = leg.calculateCost(start, end, costPolicy, riskPolicy);
+		legCost = distance * cost;
+			
+		return legCost;
+	}
+	
+	/**
+	 * Determines whether or not a straight leg of two positions collides with
+	 * terrain of the globe of this planning continuum.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * 
+	 * @return true if the straight leg collides with terrain, false otherwise
+	 * 
+	 * @see Environment#collidesTerrain(Position, Position)
+	 */
+	@Override
+	public boolean collidesTerrain(Position origin, Position destination) {
+		boolean collidesTerrain = true;
 		
-		return distance * cost;
+		if (!this.isInsideGlobe(origin) && !this.isInsideGlobe(destination)) {
+			HighResolutionTerrain terrain = new HighResolutionTerrain(
+					this.getGlobe(), this.getResolution());
+			// TODO: check position altitudes (ASL versus AGL)
+			// TODO: include safe height and distance
+			collidesTerrain = (null != terrain.intersect(origin, destination));
+		}
+		
+		return collidesTerrain;
 	}
 	
 	/**
@@ -1477,29 +1506,6 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 				edge.addCostInterval(obstacle.getCostInterval());
 			}
 		}
-	}
-	
-	/**
-	 * Determines whether or not a straight leg of two positions collides with
-	 * terrain of the globe of this planning continuum.
-	 * 
-	 * @param origin the origin position in globe coordinates
-	 * @param destination the destination position in globe coordinates
-	 * 
-	 * @return true if the straight leg collides with terrain, false otherwise
-	 */
-	public boolean collidesTerrain(Position origin, Position destination) {
-		boolean collidesTerrain = true;
-		
-		if (!this.isInsideGlobe(origin) && !this.isInsideGlobe(destination)) {
-			HighResolutionTerrain terrain = new HighResolutionTerrain(
-					this.getGlobe(), this.getResolution());
-			// TODO: check position altitudes (ASL versus AGL)
-			// TODO: include safe height and distance
-			collidesTerrain = (null != terrain.intersect(origin, destination));
-		}
-		
-		return collidesTerrain;
 	}
 	
 	/**

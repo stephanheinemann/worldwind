@@ -309,4 +309,15 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy);
 	
+	/**
+	 * Determines whether or not a straight leg of two positions collides with
+	 * terrain of the globe of this environment.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * 
+	 * @return true if the straight leg collides with terrain, false otherwise
+	 */
+	public boolean collidesTerrain(Position origin, Position destination);
+	
 }
