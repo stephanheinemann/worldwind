@@ -49,7 +49,7 @@ public interface SamplingEnvironment extends Environment {
 	 * @return the sampled position from within this sampling environment using
 	 *         the uniform distribution in globe coordinates
 	 */
-	public Position sampleRandomPosition();
+	public Position sampleRandomUniformPosition();
 	
 	/**
 	 * Samples a random position from within this sampling environment using a
@@ -88,6 +88,15 @@ public interface SamplingEnvironment extends Environment {
 	 */
 	public Position sampleRandomEllipsoidPosition(
 			Position focusA, Position focusB, double a, double b);
+	
+	/**
+	 * Gets the optimal number of sampled neighbors to be considered for a
+	 * connection to a new sample in this sampling environment.
+	 * 
+	 * @return the optimal number of sampled neighbors to be considered for a
+	 *         connection to a new sample in this sampling environment
+	 */
+	public int getOptimalNumNearest();
 	
 	/**
 	 * Finds the k-nearest sampled positions for a given position in this

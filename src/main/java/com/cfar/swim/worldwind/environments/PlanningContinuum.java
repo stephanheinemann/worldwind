@@ -864,10 +864,10 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 * @return the sampled position from within this planning continuum using
 	 *         the uniform distribution in globe coordinates
 	 * 
-	 * @see SamplingEnvironment#sampleRandomPosition()
+	 * @see SamplingEnvironment#sampleRandomUniformPosition()
 	 */
 	@Override
-	public Position sampleRandomPosition() {
+	public Position sampleRandomUniformPosition() {
 		Vec4[] corners = this.getCorners();
 		
 		// point within the box frame with all minimum coordinates
@@ -983,7 +983,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		
 		// sample entire continuum if more restrictive
 		if (a > this.getDiameter()) {
-			sample = sampleRandomPosition();
+			sample = sampleRandomUniformPosition();
 		} else {
 			// ellipsoid axis and center
 			Vec4 va = this.getGlobe().computePointFromPosition(focusA);
@@ -1015,6 +1015,20 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		}
 		
 		return sample;
+	}
+	
+	/**
+	 * Gets the optimal number of sampled neighbors to be considered for a
+	 * connection to a new sample in this planning continuum.
+	 * 
+	 * @return the optimal number of sampled neighbors to be considered for a
+	 *         connection to a new sample in this planning continuum
+	 * 
+	 * @see SamplingEnvironment#getOptimalNumNearest()
+	 */
+	@Override
+	public int getOptimalNumNearest() {
+		return (int) Math.round(2 * Math.E * Math.log(this.vertices.size()));
 	}
 	
 	/**
@@ -1176,8 +1190,54 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 * Sets a box sampling shape within this planning continuum.
 	 */
 	public void setBoxShape() {
-		// TODO: derive box sampling shape
-		this.setSamplingShape(null);
+		Position cp = this.getCenterPosition();
+		double a = 0d, b = 0d, c = 0d;
+		Angle azimuth = Angle.ZERO;
+		
+		// determine vertical axis
+		Vec4 normal = this.getGlobe().computeSurfaceNormalAtPoint(this.getCenter());
+		double rns = normal.angleBetween3(this.getRAxis()).sin();
+		double sns = normal.angleBetween3(this.getSAxis()).sin();
+		double tns = normal.angleBetween3(this.getTAxis()).sin();
+		
+		// box orientation
+		if (rns < Double.min(sns, tns)) {
+			// r-axis is vertical
+			a = this.getSLength() / 2d;
+			b = this.getRLength() / 2d;
+			c = this.getTLength() / 2d;
+			Vec4 sv = this.getCenter().add3(this.getSAxis());
+			Position sp = this.getGlobe().computePositionFromPoint(sv);
+			azimuth = Position.greatCircleAzimuth(cp, sp);
+		} else if (sns < Double.min(rns, tns)) {
+			// s-axis is vertical
+			a = this.getRLength() / 2d;
+			b = this.getSLength() / 2d;
+			c = this.getTLength() / 2d;
+			Vec4 rv = this.getCenter().add3(this.getRAxis());
+			Position rp = this.getGlobe().computePositionFromPoint(rv);
+			azimuth = Position.greatCircleAzimuth(cp, rp);
+		} else if (tns < Double.min(rns, sns)) {
+			// t-axis is vertical
+			a = this.getRLength() / 2d;
+			b = this.getTLength() / 2d;
+			c = this.getSLength() / 2d;
+			Vec4 rv = this.getCenter().add3(this.getRAxis());
+			Position rp = this.getGlobe().computePositionFromPoint(rv);
+			azimuth = Position.greatCircleAzimuth(cp, rp);
+		}
+		
+		// box shape and attributes
+		gov.nasa.worldwind.render.Box samplingBox =
+				new gov.nasa.worldwind.render.Box(cp, a, b, c,
+				azimuth, Angle.ZERO, Angle.ZERO);
+					
+		BasicShapeAttributes attributes = new BasicShapeAttributes();
+		attributes.setDrawOutline(false);
+		attributes.setInteriorMaterial(Material.LIGHT_GRAY);
+		attributes.setInteriorOpacity(0.2d);
+		samplingBox.setAttributes(attributes);
+		this.setSamplingShape(samplingBox);
 	}
 	
 	/**
@@ -1203,6 +1263,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		double c = vc.divide3(2d).getLength3(); // foci (vertical) radius
 		double b = Math.sqrt((a * a) + (c * c)); // major radius
 		
+		// ellipsoid orientation
 		Angle azimuth = Position.greatCircleAzimuth(focusA, focusB);
 		Vec4 normal = this.getGlobe().computeSurfaceNormalAtPoint(center);
 		Angle pitch = normal.angleBetween3(vc).subtract(Angle.POS90);
@@ -1241,19 +1302,36 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
-	 * Removes a vertex from this planning continuum.
+	 * Removes a vertex from this planning continuum while implicitly removing
+	 * the referencing edges to maintain structural integrity.
 	 * 
 	 * @param vertex the vertex to be removed
 	 */
 	public void removeVertex(Position vertex) {
 		this.vertices.remove(vertex);
+		// implicitly remove edges to maintain structural integrity
+		this.edges.removeAll(this.edges.stream()
+				.filter(e -> e.isEndPosition(vertex))
+				.collect(Collectors.toSet()));
 	}
 	
 	/**
-	 * Clears the vertices of this planning continuum.
+	 * Clears the vertices of this planning continuum while implicitly removing
+	 * all edges to maintain structural integrity.
 	 */
 	public void clearVertices() {
 		this.vertices.clear();
+		// implicitly clear edges to maintain structural integrity
+		this.clearEdges();
+	}
+	
+	/**
+	 * Gets the number of vertices of this planning continuum.
+	 * 
+	 * @return the number of vertices of this planning continuum
+	 */
+	public int getNumVertices() {
+		return this.vertices.size();
 	}
 	
 	/**
@@ -1270,24 +1348,41 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
-	 * Adds an edge to this planning continuum.
+	 * Gets an iterable for the vertices of this planning continuum.
+	 * 
+	 * @return an iterable for the vertices of this planning continuum
+	 */
+	public Iterable<Position> getVertexIterable() {
+		return this.vertices;
+	}
+	
+	/**
+	 * Adds an edge to this planning continuum while implicitly adding the end
+	 * positions as vertices if necessary to maintain structural integrity.
 	 * 
 	 * @param edge the edge to be added
 	 */
 	public void addEdge(Edge edge) {
 		if (this.edges.add(edge)) {
+			// implicitly add vertices to maintain structural integrity
+			this.addVertex(edge.getFirstPosition());
+			this.addVertex(edge.getSecondPosition());
 			this.notifyStructuralChangeListeners();
 		}
 	}
 	
 	/**
-	 * Adds an edge to this planning continuum.
+	 * Adds an edge to this planning continuum while implicitly adding the end
+	 * positions as vertices if necessary to maintain structural integrity.
 	 * 
 	 * @param first the first end position of the edge
 	 * @param second the second end position of the edge
 	 */
 	public void addEdge(Position first, Position second) {
 		if (!first.equals(second) && this.edges.add(new Edge(this, first, second))) {
+			// implicitly add vertices to maintain structural integrity
+			this.addVertex(first);
+			this.addVertex(second);
 			this.notifyStructuralChangeListeners();
 		}
 	}
@@ -1324,6 +1419,15 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
+	 * Gets the number of edges of this planning continuum.
+	 * 
+	 * @return the number of edges of this planning continuum
+	 */
+	public int getNumEdges() {
+		return this.edges.size();
+	}
+	
+	/**
 	 * Finds a particular edge of this planning continuum.
 	 * 
 	 * @param end1 one end position of the edge to be found
@@ -1336,6 +1440,15 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 				.filter(s -> s.isEndPosition(end1)
 						&& s.isEndPosition(end2))
 				.findFirst();
+	}
+	
+	/**
+	 * Gets an iterable for the edges of this planning continuum.
+	 * 
+	 * @return an iterable for the edges of this planning continuum
+	 */
+	public Iterable<Edge> getEdgeIterable() {
+		return this.edges;
 	}
 	
 	/**
@@ -1358,7 +1471,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 * 
 	 * @param obstacle the obstacle to be embedded
 	 */
-	public void embedEdges(Obstacle obstacle) {
+	protected void embedEdges(Obstacle obstacle) {
 		for (Edge edge : this.edges) {
 			if (edge.intersects(obstacle.getExtent(this.globe))) {
 				edge.addCostInterval(obstacle.getCostInterval());

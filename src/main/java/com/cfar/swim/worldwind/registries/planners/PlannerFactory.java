@@ -38,6 +38,7 @@ import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
+import com.cfar.swim.worldwind.planners.rrt.rrtstar.RRTreeStarPlanner;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
@@ -176,6 +177,18 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((RRTreePlanner) planner).setEpsilon(properties.getEpsilon());
 				((RRTreePlanner) planner).setBias(properties.getBias());
 				((RRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
+			} else if (this.specification.getId().equals(Specification.PLANNER_RRTS_ID)) {
+				RRTreeProperties properties = (RRTreeProperties) this.specification.getProperties();
+				planner = new RRTreeStarPlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+				((RRTreeStarPlanner) planner).setSampling(properties.getSampling());
+				((RRTreeStarPlanner) planner).setStrategy(properties.getStrategy());
+				((RRTreeStarPlanner) planner).setExtension(properties.getExtension());
+				((RRTreeStarPlanner) planner).setMaxIterations(properties.getMaxIterations());
+				((RRTreeStarPlanner) planner).setEpsilon(properties.getEpsilon());
+				((RRTreeStarPlanner) planner).setBias(properties.getBias());
+				((RRTreeStarPlanner) planner).setGoalThreshold(properties.getGoalThreshold());
 			}
 			// TODO: implement more planners
 		}

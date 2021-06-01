@@ -35,11 +35,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Random;
 import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
+import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
@@ -128,7 +130,6 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	@Override
 	public PlanningContinuum getEnvironment() {
-		// TODO: necessary? pull-up or implement common environment methods
 		return (PlanningContinuum) super.getEnvironment();
 	}
 	
@@ -344,9 +345,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * Clears the planning data structures of this RRT planner.
 	 */
 	protected void clearExpendables() {
-		// TODO: separate method required? overridden and extended?
 		this.getEnvironment().clearVertices();
-		this.getEnvironment().clearEdges();
 		this.getPlan().clear();
 	}
 	
@@ -369,7 +368,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		waypoint.setTtg(Duration.ZERO);
 		waypoint.setDtg(0d);
 		this.plan.addFirst(waypoint.clone());
-		while (waypoint.getParent() != null) {
+		while (waypoint.hasParent()) {
 			waypoint = waypoint.getParent();
 			waypoint.setTtg(Duration.between(waypoint.getEto(), plan.getFirst().getEto()));
 			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, plan.getFirst()));
@@ -419,7 +418,7 @@ public class RRTreePlanner extends AbstractPlanner {
 			break;
 		case UNIFORM:
 		default:
-			sample = this.sampleRandom();
+			sample = this.sampleUniform();
 		}
 		
 		return sample;
@@ -444,8 +443,9 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return the sampled waypoint from within the environment using the
 	 *         uniform distribution
 	 */
-	protected RRTreeWaypoint sampleRandom() {
-		return this.createWaypoint(this.getEnvironment().sampleRandomPosition());
+	protected RRTreeWaypoint sampleUniform() {
+		return this.createWaypoint(
+				this.getEnvironment().sampleRandomUniformPosition());
 	}
 	
 	/**
@@ -523,24 +523,19 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected Status extendRRT(RRTreeWaypoint waypoint) {
 		Status status = Status.TRAPPED;
-		RRTreeWaypoint nearWaypoint, extension = null;
 		
 		// find the waypoint in the tree nearest to the sampled one
-		nearWaypoint = (RRTreeWaypoint) this.getEnvironment()
+		RRTreeWaypoint nearestWaypoint = (RRTreeWaypoint) this.getEnvironment()
 				.findNearest(waypoint, 1).iterator().next();
 		
 		// TODO: consider performance metrics instead
 		//this.getEnvironment().findNearest(waypoint, 1, metric);
 		
-		// create a new waypoint in the tree by extending from near to sampled
-		// and set the extension status accordingly
-		if (this.createExtension(nearWaypoint, waypoint)) {
-			extension = this.getNewestWaypoint();
-			this.getEnvironment().addVertex(extension);
-			this.getEnvironment().addEdge(extension, extension.getParent());
-			this.computeCost(extension.getParent(), extension);
-			
-			if (extension.equals(waypoint)) {
+		// create a new edge in the tree by extending from nearest to sampled
+		Optional<Edge> extension = this.createExtension(nearestWaypoint, waypoint);
+		
+		if (extension.isPresent()) {
+			if (extension.get().getSecondPosition().equals(waypoint)) {
 				status = Status.REACHED;
 			} else {
 				status = Status.ADVANCED;
@@ -560,11 +555,11 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @param treeWaypoint the tree waypoint to be extended
 	 * @param sampledWaypoint the sampled waypoint to be reached
 	 * 
-	 * @return true if an extension waypoint could be created, false otherwise
+	 * @return the extension if it could be created
 	 */
-	protected boolean createExtension(
+	protected Optional<Edge> createExtension(
 			RRTreeWaypoint treeWaypoint, RRTreeWaypoint sampledWaypoint) {
-		boolean success = true;
+		Optional<Edge> extension = Optional.empty();
 		
 		// extend tree according to extension technique
 		Position position = null;
@@ -576,29 +571,33 @@ public class RRTreePlanner extends AbstractPlanner {
 		default:
 			position = this.growPosition(treeWaypoint, sampledWaypoint);
 		}
-		RRTreeWaypoint extension = this.createWaypoint(position);
-		extension.setParent(treeWaypoint);
+		
+		RRTreeWaypoint endWaypoint = this.createWaypoint(position);
+		endWaypoint.setParent(treeWaypoint);
 		
 		try {
 			// check extension feasibility according to aircraft capabilities
-			this.computeEto(treeWaypoint, extension);
-			this.setNewestWaypoint(extension);
+			this.computeEto(treeWaypoint, endWaypoint);
 			
 			// TODO: integrate NASA terrain and jBullet for conflict checks
-			// TODO: review if terrain (man-made) obstacles are required
+			// TODO: review if dedicated terrain (man-made) obstacles are required
 			// TODO: consider safe altitude and distance (except take-off and landing?)
 			// TODO: consider waypoint actions (take-off, land, hold) and delays
 			// check extension and edge conflict with environment (terrain)
-			if (!this.getStart().equals(treeWaypoint) && !this.isInGoalRegion(extension)) {
-				success = !this.getEnvironment().collidesTerrain(treeWaypoint, extension);
+			if (this.getStart().equals(treeWaypoint) || this.isInGoalRegion(endWaypoint) ||
+					!(this.getEnvironment().collidesTerrain(treeWaypoint, endWaypoint))) {
+				Edge edge = new Edge(this.getEnvironment(), treeWaypoint, endWaypoint);
+				this.getEnvironment().addEdge(edge);
+				extension = Optional.of(edge);
+				this.computeCost(treeWaypoint, endWaypoint);
+				this.setNewestWaypoint(endWaypoint);
 			}
 			
 		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
-			success = false;
 		}
 		
-		return success;
+		return extension;
 	}
 	
 	/**
@@ -775,7 +774,7 @@ public class RRTreePlanner extends AbstractPlanner {
 			// sample a new waypoint
 			RRTreeWaypoint sample = this.sampleBiased();
 			
-			// connect sample according to strategy
+			// connect to or extend towards sample according to strategy
 			boolean notTrapped = false;
 			switch (this.getStrategy()) {
 			case CONNECT:
@@ -789,14 +788,7 @@ public class RRTreePlanner extends AbstractPlanner {
 			
 			if (notTrapped) {
 				if (this.isInGoalRegion()) {
-					// TODO: connect newest to goal instead?
-					// feasibility issues
-					this.getGoal().setCost(this.getNewestWaypoint().getCost());
-					/*
-					this.getGoal().setParent(this.getNewestWaypoint());
-					this.getEnvironment().addVertex(this.getGoal());
-					this.getEnvironment().addEdge(this.getNewestWaypoint(), this.getGoal());
-					*/
+					this.setGoal(this.getNewestWaypoint());
 					this.connectPlan();
 					return true;
 				}
@@ -805,7 +797,7 @@ public class RRTreePlanner extends AbstractPlanner {
 		
 		this.disposeSamplingShape();
 		
-		Logging.logger().info("no trajectory found after " + this.maxIterations + " iterations");
+		Logging.logger().info("no trajectory found after " + this.getMaxIterations() + " iterations");
 		return false;
 	}
 	

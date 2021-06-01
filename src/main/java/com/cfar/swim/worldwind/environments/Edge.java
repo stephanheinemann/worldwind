@@ -53,6 +53,7 @@ import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Vec4;
 
 /**
  * Realizes an edge of a roadmap or tree within a continuum based on two
@@ -75,6 +76,12 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	/** the continuum of this edge */
 	private PlanningContinuum continuum = null;
 	
+	/** the first end position of this edge */
+	private Position first = null;
+	
+	/** the second end position of this edge */
+	private Position second = null;
+	
 	/** the cost interval tree encoding temporal costs of this edge */
 	private IntervalTree<ChronoZonedDateTime<?>> costIntervals =
 			new IntervalTree<ChronoZonedDateTime<?>>(CostInterval.comparator);
@@ -94,6 +101,8 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 		super(continuum.getGlobe().computePointFromPosition(first),
 				continuum.getGlobe().computePointFromPosition(second));
 		this.continuum = continuum;
+		this.first = first;
+		this.second = second;
 		this.initCostIntervals();
 	}
 
@@ -103,7 +112,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 * @return the first end position of this edge
 	 */
 	public Position getFirstPosition() {
-		return this.continuum.getGlobe().computePositionFromPoint(this.getFirst());
+		return this.first;
 	}
 
 	/**
@@ -113,16 +122,31 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 */
 	public void setFirstPosition(Position first) {
 		this.setFirst(this.continuum.getGlobe().computePointFromPosition(first));
+		this.first = first;
 		this.initCostIntervals();
 	}
-
+	
+	/**
+	 * Sets the first end point of this edge.
+	 * 
+	 * @param first the first end point to be set
+	 * 
+	 * @see LineSegment#setFirst(Vec4)
+	 */
+	@Override
+	public void setFirst(Vec4 first) {
+		super.setFirst(first);
+		this.setFirstPosition(
+				this.continuum.getGlobe().computePositionFromPoint(first));
+	}
+	
 	/**
 	 * Gets the second end position of this edge.
 	 * 
 	 * @return the second end position of this edge
 	 */
 	public Position getSecondPosition() {
-		return this.continuum.getGlobe().computePositionFromPoint(this.getSecond());
+		return this.second;
 	}
 
 	/**
@@ -132,7 +156,22 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 */
 	public void setSecondPosition(Position second) {
 		this.setSecond(this.continuum.getGlobe().computePointFromPosition(second));
+		this.second = second;
 		this.initCostIntervals();
+	}
+	
+	/**
+	 * Sets the second end point of this edge.
+	 * 
+	 * @param second the second end point to be set
+	 * 
+	 * @see LineSegment#setSecond(Vec4)
+	 */
+	@Override
+	public void setSecond(Vec4 second) {
+		super.setSecond(second);
+		this.setSecondPosition(
+				this.continuum.getGlobe().computePositionFromPoint(second));
 	}
 	
 	/**
@@ -143,8 +182,13 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 * @return the other end position of this edge, null otherwise
 	 */
 	public Position getOtherPosition(Position position) {
-		return this.continuum.getGlobe().computePositionFromPoint(
-				this.getOther(this.continuum.getGlobe().computePointFromPosition(position)));
+		if (this.first.equals(position)) {
+			return this.second;
+		} else if (this.second.equals(position)) {
+			return this.first;
+		} else {
+			return null;
+		}
 	}
 	
 	/**
@@ -156,7 +200,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 *         false otherwise
 	 */
 	public boolean isEndPosition(Position position) {
-		return this.isEndpoint(this.continuum.getGlobe().computePointFromPosition(position));
+		return this.first.equals(position) || this.second.equals(position);
 	}
 	
 	/**

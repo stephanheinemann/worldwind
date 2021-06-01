@@ -191,6 +191,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, Specification.PLANNER_ARAS_DESCRIPTION, new ARAStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADS_ID, Specification.PLANNER_ADS_DESCRIPTION, new ADStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRT_ID, Specification.PLANNER_RRT_DESCRIPTION, new RRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRTS_ID, Specification.PLANNER_RRTS_DESCRIPTION, new RRTreeProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		// datalinks
