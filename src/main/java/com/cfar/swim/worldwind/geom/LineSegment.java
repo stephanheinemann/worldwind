@@ -30,11 +30,11 @@
 package com.cfar.swim.worldwind.geom;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.cfar.swim.worldwind.geom.precision.Precision;
-import com.google.common.base.Objects;
 import com.jogamp.opengl.GL2;
 
 import gov.nasa.worldwind.geom.Extent;
@@ -425,7 +425,7 @@ public class LineSegment /* extends Line */ implements Renderable {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hashCode(this.getFirst(), this.getSecond());
+		return Objects.hash(this.getFirst(), this.getSecond());
 	}
 	
 }
