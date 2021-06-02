@@ -37,6 +37,9 @@ import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
@@ -197,9 +200,22 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 		for (Position position : this.getEnvironment().getVertexIterable()) {
 			RRTreeWaypoint target = (RRTreeWaypoint) position;
 			if (target.hasParent() && target.getParent().equals(source)) {
-				this.computeCost(source, target);
 				// TODO: IAE - edge not present?, SOE - termination / cycles?
+				/*
+				 * NOTE: ETO changes may negatively affect dependent costs.
+				 * There is no guarantee for increased overall optimality in
+				 * the space-time continuum. Even if propagation continues only
+				 * if the entire subtree is improved, it does not guarantee
+				 * improved trajectories for consecutive samples at future ETOs.
+				 * An improved parent (local improvement) does not necessarily
+				 * lead to a global improvement based on different ETOs. A
+				 * subtree improvement may lead to a global regression based
+				 * on different ETOs. A subtree regression may lead to a global
+				 * improvement based o different ETOs. Can this algorithm be
+				 * implemented without frequent roll-backs?
+				 */
 				this.computeEto(source, target);
+				this.computeCost(source, target);
 				this.propagateChanges(target);
 			}
 		}
@@ -258,6 +274,37 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 		}
 		
 		return this.getGoal().hasParent();
+	}
+	
+	/**
+	 * Determines whether or not this RRT* planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this RRT* planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see RRTreePlanner#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof RRTreeProperties)) {
+			RRTreeProperties rrtp = (RRTreeProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(rrtp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(rrtp.getRiskPolicy()))
+					&& (this.getBias() == rrtp.getBias())
+					&& (this.getEpsilon() == rrtp.getEpsilon())
+					&& (this.getExtension() == rrtp.getExtension())
+					&& (this.getGoalThreshold() == rrtp.getGoalThreshold())
+					&& (this.getMaxIterations() == rrtp.getMaxIterations())
+					&& (this.getSampling() == rrtp.getSampling())
+					&& (this.getStrategy() == rrtp.getStrategy())
+					&& (specification.getId().equals(Specification.PLANNER_RRTS_ID));
+		}
+		
+		return matches;
 	}
 	
 }
