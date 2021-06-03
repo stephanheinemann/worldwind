@@ -476,9 +476,16 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * @param significantChange the significant change threshold to be set
 	 * 
 	 * @see DynamicPlanner#setSignificantChange(double)
+	 * 
+	 * @throws IllegalArgumentException if significant change threshold is
+	 *                                  invalid
 	 */
 	public void setSignificantChange(double significantChange) {
-		this.significantChange = significantChange;
+		if ((0d <= significantChange) && (1d >= significantChange)) {
+			this.significantChange = significantChange;
+		} else {
+			throw new IllegalArgumentException("significant change is invalid");
+		}
 	}
 	
 	/**

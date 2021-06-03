@@ -53,6 +53,15 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 	}
 	
 	/**
+	 * Constructs a RRT properties bean information.
+	 * 
+	 * @param beanClass the properties bean class of the properties bean
+	 */
+	public RRTreePropertiesBeanInfo(Class<? extends RRTreeProperties> beanClass) {
+		super(beanClass);
+	}
+	
+	/**
 	 * Customizes the property descriptors for each property of a RRT
 	 * properties bean.
 	 * 

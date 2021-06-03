@@ -38,6 +38,7 @@ import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
+import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.rrtstar.RRTreeStarPlanner;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -45,6 +46,7 @@ import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ForwardAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ThetaStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.session.Scenario;
 
@@ -189,6 +191,22 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((RRTreeStarPlanner) planner).setEpsilon(properties.getEpsilon());
 				((RRTreeStarPlanner) planner).setBias(properties.getBias());
 				((RRTreeStarPlanner) planner).setGoalThreshold(properties.getGoalThreshold());
+			} else if (this.specification.getId().equals(Specification.PLANNER_HRRT_ID)) {
+				HRRTreeProperties properties = (HRRTreeProperties) this.specification.getProperties();
+				planner = new HRRTreePlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+				((HRRTreePlanner) planner).setSampling(properties.getSampling());
+				((HRRTreePlanner) planner).setStrategy(properties.getStrategy());
+				((HRRTreePlanner) planner).setExtension(properties.getExtension());
+				((HRRTreePlanner) planner).setMaxIterations(properties.getMaxIterations());
+				((HRRTreePlanner) planner).setEpsilon(properties.getEpsilon());
+				((HRRTreePlanner) planner).setBias(properties.getBias());
+				((HRRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
+				((HRRTreePlanner) planner).setHeuristic(properties.getHeuristic());
+				((HRRTreePlanner) planner).setVariant(properties.getVariant());
+				((HRRTreePlanner) planner).setNeighborLimit(properties.getNeighborLimit());
+				((HRRTreePlanner) planner).setProbabilityFloor(properties.getProbabilityFloor());
 			}
 			// TODO: implement more planners
 		}

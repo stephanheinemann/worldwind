@@ -86,16 +86,16 @@ public class RRTreePlanner extends AbstractPlanner {
 	private Extension extension = Extension.LINEAR;
 	
 	/** the maximum number of sampling iterations of this RRT planner */
-	private int maxIterations = 3_000;
+	private int maxIterations = 3_000; // [1, Integer.MAX_VALUE]
 	
 	/** the maximum extension distance to a waypoint in the tree of this RRT planner */
-	private double epsilon = this.getEnvironment().getDiameter() / 20d;
+	private double epsilon = this.getEnvironment().getDiameter() / 20d; // (0, Double.MAX_VALUE]
 	
 	/** the sampling bias towards goal of this RRT planner */
-	private int bias = 5;
+	private int bias = 5; // [0, 100]
 	
 	/** the radius of the sphere defining the goal region of this RRT planner */
-	private double goalThreshold = 5d;
+	private double goalThreshold = 5d; // (0, Double.MAX_Value]
 	
 	/** the start RRT waypoint of this RRT planner */
 	private RRTreeWaypoint start = null;
@@ -268,9 +268,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * RRT planner.
 	 * 
 	 * @param maxIterations the maximum number of sampling iterations to be set
+	 * 
+	 * @throws IllegalArgumentException if maximum iterations is invalid
 	 */
 	public void setMaxIterations(int maxIterations) {
-		this.maxIterations = maxIterations;
+		if ((0 < maxIterations) && (Integer.MAX_VALUE >= maxIterations)) {
+			this.maxIterations = maxIterations;
+		} else {
+			throw new IllegalArgumentException("maximum iterations is invalid");
+		}
 	}
 	
 	/**
@@ -288,9 +294,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * RRT planner.
 	 * 
 	 * @param epsilon the maximum extension distance to be set
+	 * 
+	 * @throws IllegalArgumentException if epsilon is invalid
 	 */
 	public void setEpsilon(double epsilon) {
-		this.epsilon = epsilon;
+		if ((0d < epsilon) && (Double.MAX_VALUE >= epsilon)) {
+			this.epsilon = epsilon;
+		} else {
+			throw new IllegalArgumentException("epsilon is invalid");
+		}
 	}
 
 	/**
@@ -306,9 +318,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * Sets the sampling bias towards the goal of this RRT planner.
 	 * 
 	 * @param bias the sampling bias to be set
+	 * 
+	 * @throws IllegalArgumentException if bias is invalid
 	 */
 	public void setBias(int bias) {
-		this.bias = bias;
+		if ((0d <= bias) && (100d >= bias)) {
+			this.bias = bias;
+		} else {
+			throw new IllegalArgumentException("bias is invalid");
+		}
 	}
 	
 	/**
@@ -328,9 +346,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @param goalThreshold the radius of the sphere defining the goal region
 	 *                      to be set
+	 * 
+	 * @throws IllegalArgumentException if goal threshold is invalid
 	 */
 	public void setGoalThreshold(double goalThreshold) {
-		this.goalThreshold = goalThreshold;
+		if ((0d <= goalThreshold) && (Double.MAX_VALUE >= goalThreshold)) {
+			this.goalThreshold = goalThreshold;
+		} else {
+			throw new IllegalArgumentException("goal threshold is invalid");
+		}
 	}
 	
 	/**
@@ -776,7 +800,7 @@ public class RRTreePlanner extends AbstractPlanner {
 			RRTreeWaypoint sample = this.sampleBiased();
 			
 			// connect to or extend towards sample according to strategy
-			Status status;
+			Status status = Status.TRAPPED;
 			switch (this.getStrategy()) {
 			case CONNECT:
 				status = this.connectRRT(sample);

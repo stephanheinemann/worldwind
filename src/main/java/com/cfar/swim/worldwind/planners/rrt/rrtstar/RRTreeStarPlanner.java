@@ -34,6 +34,7 @@ import java.util.Set;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.CapabilitiesException;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
@@ -284,7 +285,7 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 * @return true if the this RRT* planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see RRTreePlanner#matches(Specification)
+	 * @see AbstractPlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
