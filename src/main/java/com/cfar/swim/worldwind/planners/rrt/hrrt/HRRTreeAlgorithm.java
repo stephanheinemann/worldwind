@@ -30,13 +30,13 @@
 package com.cfar.swim.worldwind.planners.rrt.hrrt;
 
 /**
- * Enumerates the possible heuristics to guide the search for a heuristic RRT
- * planner.
+ * Enumerates the possible heuristic algorithms to guide the search for a
+ * heuristic RRT planner.
  * 
  * @author Manuel Rosa
  *
  */
-public enum Heuristic {
+public enum HRRTreeAlgorithm {
 	
 	/**
 	 * heuristically-guided RRT algorithm: tests if the nearest neighbor

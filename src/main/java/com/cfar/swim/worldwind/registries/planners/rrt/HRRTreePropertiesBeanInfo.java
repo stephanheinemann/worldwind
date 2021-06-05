@@ -63,10 +63,10 @@ public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
-			PropertyDescriptor heuristic = this.createPropertyDescriptor(
-					"heuristic",
-					this.dictionary.getString("property.planner.hrrt.heuristic.name"),
-					this.dictionary.getString("property.planner.hrrt.heuristic.description"),
+			PropertyDescriptor algorithm = this.createPropertyDescriptor(
+					"algorithm",
+					this.dictionary.getString("property.planner.hrrt.algorithm.name"),
+					this.dictionary.getString("property.planner.hrrt.algorithm.description"),
 					this.dictionary.getString("property.planner.category.heuristic"));
 			PropertyDescriptor variant = this.createPropertyDescriptor(
 					"variant",
@@ -78,17 +78,17 @@ public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 					this.dictionary.getString("property.planner.hrrt.neighborLimit.name"),
 					this.dictionary.getString("property.planner.hrrt.neighborLimit.description"),
 					this.dictionary.getString("property.planner.category.heuristic"));
-			PropertyDescriptor probabilityFloor = this.createPropertyDescriptor(
-					"probabilityFloor",
-					this.dictionary.getString("property.planner.hrrt.probabilityFloor.name"),
-					this.dictionary.getString("property.planner.hrrt.probabilityFloor.description"),
+			PropertyDescriptor qualityBound = this.createPropertyDescriptor(
+					"qualityBound",
+					this.dictionary.getString("property.planner.hrrt.qualityBound.name"),
+					this.dictionary.getString("property.planner.hrrt.qualityBound.description"),
 					this.dictionary.getString("property.planner.category.heuristic"));
 		
 			PropertyDescriptor[] adsDescriptors = new PropertyDescriptor[] {
-					heuristic,
+					algorithm,
 					variant,
 					neighborLimit,
-					probabilityFloor};
+					qualityBound};
 			descriptors = Stream.concat(
 					Arrays.stream(descriptors), Arrays.stream(adsDescriptors))
 					.toArray(PropertyDescriptor[]::new);

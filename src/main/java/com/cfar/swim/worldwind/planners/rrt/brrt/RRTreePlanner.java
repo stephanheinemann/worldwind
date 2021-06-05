@@ -565,8 +565,6 @@ public class RRTreePlanner extends AbstractPlanner {
 			} else {
 				status = Status.ADVANCED;
 			}
-		} else {
-			status = Status.TRAPPED;
 		}
 		
 		return status;

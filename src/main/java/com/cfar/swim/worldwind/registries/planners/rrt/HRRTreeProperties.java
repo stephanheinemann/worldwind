@@ -31,8 +31,8 @@ package com.cfar.swim.worldwind.registries.planners.rrt;
 
 import java.util.Objects;
 
-import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeVariant;
-import com.cfar.swim.worldwind.planners.rrt.hrrt.Heuristic;
+import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeAlgorithm;
+import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeQualityVariant;
 
 /**
  * Realizes the properties bean of a heuristic RRT planner.
@@ -42,23 +42,24 @@ import com.cfar.swim.worldwind.planners.rrt.hrrt.Heuristic;
  */
 public class HRRTreeProperties extends RRTreeProperties {
 	
-	/** the heuristic applied by the hRRT planner */
-	private Heuristic heuristic = Heuristic.BkRRT;
+	/** the heuristic algorithm applied by the hRRT planner */
+	private HRRTreeAlgorithm algorithm = HRRTreeAlgorithm.BkRRT;
 	
-	/** the implementation variant of the hRRT planner */
-	private HRRTreeVariant variant = HRRTreeVariant.ENHANCED;
+	/** the quality assessment variant applied by the hRRT planner */
+	private HRRTreeQualityVariant variant = HRRTreeQualityVariant.ENHANCED;
 	
-	/**
-	 * the limit of neighbors to consider as parents for a sample of the hRRT
-	 * planner
-	 */
+	/** the limit of neighbors to consider for extension by the hRRT planner */
+	//@Min(1)
+	//@Max(Integer.MAX_VALUE)
 	private int neighborLimit = 5; // [1, Integer.MAX_VALUE]
 	
 	/**
 	 * the probability floor value of the hRRT planner to ensure the search is
 	 * not overly biased against exploration
 	 */
-	private double probabilityFloor = 0.1d; // [0, 1]
+	//@Min(0)
+	//@Max(1)
+	private double qualityBound = 0.1d; // [0, 1]
 	
 	/**
 	 * Constructs a new hRRT planner properties bean.
@@ -68,38 +69,38 @@ public class HRRTreeProperties extends RRTreeProperties {
 	}
 	
 	/**
-	 * Gets the heuristic of this hRRT planner properties bean.
+	 * Gets the heuristic algorithm of this hRRT planner properties bean.
 	 * 
-	 * @return the heuristic of this hRRT planner properties bean
+	 * @return the heuristic algorithm of this hRRT planner properties bean
 	 */
-	public Heuristic getHeuristic() {
-		return this.heuristic;
+	public HRRTreeAlgorithm getAlgorithm() {
+		return this.algorithm;
 	}
 	
 	/**
-	 * Sets the heuristic of this hRRT planner properties bean.
+	 * Sets the heuristic algorithm of this hRRT planner properties bean.
 	 * 
-	 * @param heuristic the heuristic to be set
+	 * @param algorithm the heuristic algorithm to be set
 	 */
-	public void setHeuristic(Heuristic heuristic) {
-		this.heuristic = heuristic;
+	public void setAlgorithm(HRRTreeAlgorithm algorithm) {
+		this.algorithm = algorithm;
 	}
 	
 	/**
-	 * Gets the implementation variant of this hRRT planner properties bean.
+	 * Gets the quality assessment variant of this hRRT planner properties bean.
 	 * 
-	 * @return the implementation variant of this hRRT planner properties bean
+	 * @return the quality assessment variant of this hRRT planner properties bean
 	 */
-	public HRRTreeVariant getVariant() {
+	public HRRTreeQualityVariant getVariant() {
 		return this.variant;
 	}
 	
 	/**
-	 * Sets the implementation variant of this hRRT planner properties bean.
+	 * Sets the quality assessment variant of this hRRT planner properties bean.
 	 * 
-	 * @param variant the implementation variant to be set
+	 * @param variant the quality assessment variant to be set
 	 */
-	public void setVariant(HRRTreeVariant variant) {
+	public void setVariant(HRRTreeQualityVariant variant) {
 		this.variant = variant;
 	}
 	
@@ -117,7 +118,7 @@ public class HRRTreeProperties extends RRTreeProperties {
 	 * 
 	 * @param neighborLimit the limit of neighbors to be set
 	 * 
-	 * @throws IllegalArgumentException exception if neighbor limit is invalid
+	 * @throws IllegalArgumentException exception if the neighbor limit is invalid
 	 */
 	public void setNeighborLimit(int neighborLimit) {
 		if ((0 < neighborLimit) && (Integer.MAX_VALUE >= neighborLimit)) {
@@ -128,24 +129,24 @@ public class HRRTreeProperties extends RRTreeProperties {
 	}
 	
 	/**
-	 * Gets the probability floor of this hRRT planner properties bean.
+	 * Gets the quality (probability) bound of this hRRT planner properties bean.
 	 * 
-	 * @return the probability floor of this hRRT planner properties bean
+	 * @return the quality (probability) bound of this hRRT planner properties bean
 	 */
-	public double getProbabilityFloor() {
-		return probabilityFloor;
+	public double getQualityBound() {
+		return qualityBound;
 	}
 	
 	/**
-	 * Sets the probability floor of this hRRT planner properties bean.
+	 * Sets the quality (probability) bound of this hRRT planner properties bean.
 	 * 
-	 * @param probabilityFloor the probability floor to be set
+	 * @param qualityBound the quality (probability) bound to be set
 	 * 
-	 * @throws IllegalArgumentException if probability floor is invalid
+	 * @throws IllegalArgumentException if the quality (probability) bound is invalid
 	 */
-	public void setProbabilityFloor(double probabilityFloor) {
-		if ((0d <= probabilityFloor) && (1d >= probabilityFloor)) {
-			this.probabilityFloor = probabilityFloor;
+	public void setQualityBound(double qualityBound) {
+		if ((0d <= qualityBound) && (1d >= qualityBound)) {
+			this.qualityBound = qualityBound;
 		} else {
 			throw new IllegalArgumentException("probability floor is invalid");
 		}
@@ -170,10 +171,10 @@ public class HRRTreeProperties extends RRTreeProperties {
 		
 		if (equals) {
 			HRRTreeProperties hrrtp = (HRRTreeProperties) o;
-			equals = (this.heuristic == hrrtp.heuristic)
+			equals = (this.algorithm == hrrtp.algorithm)
 					&& (this.variant == hrrtp.variant)
 					&& (this.neighborLimit == hrrtp.neighborLimit)
-					&& (this.probabilityFloor == hrrtp.probabilityFloor);
+					&& (this.qualityBound == hrrtp.qualityBound);
 		} else {
 			equals = false;
 		}
@@ -194,10 +195,10 @@ public class HRRTreeProperties extends RRTreeProperties {
 	public int hashCode() {
 		return Objects.hash(
 				super.hashCode(),
-				this.heuristic,
+				this.algorithm,
 				this.variant,
 				this.neighborLimit,
-				this.probabilityFloor);
+				this.qualityBound);
 	}
 	
 }

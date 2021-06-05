@@ -30,9 +30,9 @@
 package com.cfar.swim.worldwind.planners.rrt.hrrt;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
 import java.util.Optional;
+import java.util.PriorityQueue;
 import java.util.Random;
 import java.util.Set;
 
@@ -51,9 +51,9 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
 
 /**
- * Realizes an heuristic RRT planner that considers the cost of waypoints
- * during sampling and the expanding steps of a basic RRT planner in order to
- * direct the path to a more optimal solution.
+ * Realizes a heuristic RRT planner that considers the estimated cost of
+ * waypoints during sampling and the expanding steps of a basic RRT planner in
+ * order to direct the path to a more optimal solution.
  * 
  * @author Manuel Rosa
  * @author Stephan Heinemann
@@ -62,34 +62,16 @@ import gov.nasa.worldwind.util.Logging;
 public class HRRTreePlanner extends RRTreePlanner {
 	
 	/** the heuristic algorithm of this hRRT planner */
-	private Heuristic heuristic = Heuristic.BkRRT;
+	private HRRTreeAlgorithm algorithm = HRRTreeAlgorithm.BkRRT;
 	
-	/**
-	 * the variant of this hRRT planner affecting its quality and probability
-	 * calculations
-	 */
-	private HRRTreeVariant variant = HRRTreeVariant.ENHANCED;
+	/** the quality assessment function of this hRRT planner */
+	private HRRTreeQuality quality = new HRRTreeQuality();
 	
-	/**
-	 * limit of sampled neighbors to consider by this hRRT planner for a
-	 * quality test of a new sample
-	 */
+	/** the nearest waypoint to extend from in the tree of this hRRT planner */
+	private HRRTreeWaypoint nearestWaypoint = null;
+	
+	/** the limit of neighbors to consider for extension by this hRRT planner */
 	private int neighborLimit = 5; // [1, Integer.MAX_VALUE]
-	
-	/**
-	 * the probability floor value of this hRRT planner to ensure the search is
-	 * not overly biased against exploration
-	 */
-	private double probabilityFloor = 0.1d; // [0, 1]
-	
-	/** the nearest waypoint in the tree of this hRRT planner */
-	private HRRTreeWaypoint waypointNear = null;
-	
-	/** the estimated total cost of the optimal path from start to goal */
-	private double optimalCostEstimate;
-	
-	/** the maximum cost of all vertices already considered */
-	private double maximumCost;
 	
 	/**
 	 * Constructs a heuristic RRT planner for a specified aircraft and
@@ -160,77 +142,73 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * 
 	 * @return the heuristic algorithm of this hRRT planner
 	 */
-	public Heuristic getHeuristic() {
-		return this.heuristic;
+	public HRRTreeAlgorithm getAlgorithm() {
+		return this.algorithm;
 	}
 	
 	/**
 	 * Sets the heuristic algorithm of this hRRT planner.
 	 * 
-	 * @param heuristic the heuristic algorithm to be set
+	 * @param algorithm the heuristic algorithm to be set
 	 */
-	public void setHeuristic(Heuristic heuristic) {
-		this.heuristic = heuristic;
+	public void setAlgorithm(HRRTreeAlgorithm algorithm) {
+		this.algorithm = algorithm;
 	}
 	
 	/**
-	 * Gets the applied implementation variant of this hRRT planner.
+	 * Gets the quality assessment function of this hRRT planner.
 	 * 
-	 * @return the applied implementation variant of this hRRT planner
+	 * @return the quality assessment function of this hRRT planner
 	 */
-	public HRRTreeVariant getVariant() {
-		return this.variant;
+	protected HRRTreeQuality getQuality() {
+		return this.quality;
 	}
 	
 	/**
-	 * Sets the applied implementation variant of this hRRT planner.
+	 * Sets the quality assessment function of this hRRT planner.
 	 * 
-	 * @param variant the implementation variant to be set
+	 * @param quality the quality assessment function of this hRRT planner
 	 */
-	public void setVariant(HRRTreeVariant variant) {
-		this.variant = variant;
+	protected void setQuality(HRRTreeQuality quality) {
+		this.quality = quality;
 	}
 	
 	/**
-	 * Determines whether or not the original implementation variant is being
-	 * applied by this hRRT planner.
+	 * Gets the applied quality assessment variant of this hRRT planner.
 	 * 
-	 * @return true if the original implementation variant is being applied by
-	 *         this hRRT planner, false otherwise
+	 * @return the applied quality assessment variant of this hRRT planner
 	 */
-	public boolean isOriginal() {
-		return HRRTreeVariant.ORIGINAL == this.getVariant();
+	public HRRTreeQualityVariant getVariant() {
+		return this.getQuality().getVariant();
 	}
 	
 	/**
-	 * Determines whether or not the enhance implementation variant is being
-	 * applied by this hRRT planner.
+	 * Sets the applied quality assessment variant of this hRRT planner.
 	 * 
-	 * @return true if the enhanced implementation variant is being applied by
-	 *         this hRRT planner, false otherwise
+	 * @param variant the applied assessment variant to be set
 	 */
-	public boolean isEnhanced() {
-		return HRRTreeVariant.ENHANCED == this.getVariant();
+	public void setVariant(HRRTreeQualityVariant variant) {
+		this.getQuality().setVariant(variant);
 	}
 	
 	/**
-	 * Gets limit of sampled neighbors to consider for a quality test of a new
-	 * sample by this hRRT planner.
+	 * Gets the limit of neighbors to consider for extension by this hRRT
+	 * planner.
 	 * 
-	 * @return the limit of sampled neighbors to consider for a quality test of
-	 *         a new sample by this hRRT planner
+	 * @return the limit neighbors to consider for extension by this hRRT
+	 *         planner
 	 */
 	public int getNeighborLimit() {
 		return this.neighborLimit;
 	}
 	
 	/**
-	 * Sets the limit of neighbors to consider for a quality test of a new
-	 * sample by this hRRT planner.
+	 * Sets the limit of neighbors to consider for extension by this hRRT
+	 * planner.
 	 * 
 	 * @param neighborLimit the limit of neighbors to be set
 	 * 
-	 * @throws IllegalArgumentException exception if neighbor limit is invalid
+	 * @throws IllegalArgumentException if neighbor limit is invalid
 	 */
 	public void setNeighborLimit(int neighborLimit) {
 		if ((0 < neighborLimit) && (Integer.MAX_VALUE >= neighborLimit)) {
@@ -241,339 +219,225 @@ public class HRRTreePlanner extends RRTreePlanner {
 	}
 	
 	/**
-	 * Gets the probability floor for the acceptance of a new sample by this
-	 * hRRT planner.
+	 * Gets the quality (probability) bound of the quality assessment function
+	 * of this hRRT planner.
 	 * 
-	 * @return the probability floor for the acceptance of a new sample by this
-	 *         hRRT planner
+	 * @return the quality (probability) bound of the quality assessment
+	 *         function of this hRRT planner
 	 */
-	public double getProbabilityFloor() {
-		return this.probabilityFloor;
+	public double getQualityBound() {
+		return this.getQuality().getQualityBound();
 	}
 	
 	/**
-	 * Sets the probability floor for the acceptance of a new sample by this
-	 * hRRT planner.
+	 * Sets the quality (probability) bound of the quality assessment function
+	 * of this hRRT planner.
 	 * 
-	 * @param probabilityFloor the probability floor to be set
-	 * 
-	 * @throws IllegalArgumentException if probability floor is invalid
+	 * @param qualityBound the quality (probability) bound to be set
 	 */
-	public void setProbabilityFloor(double probabilityFloor) {
-		if ((0d <= probabilityFloor) && (1d >= probabilityFloor)) {
-			this.probabilityFloor = probabilityFloor;
-		} else {
-			throw new IllegalArgumentException("probability floor is invalid");
-		}
+	public void setQualityBound(double qualityBound) {
+		this.getQuality().setQualityBound(qualityBound);
 	}
 	
 	/**
-	 * Gets the estimated total cost of the optimal path from start to goal.
+	 * Gets the nearest (quality) hRRT waypoint to extend from in the tree.
 	 * 
-	 * @return the estimated total cost of the optimal path from start to goal
+	 * @return the nearest (quality) hRRT waypoint to extend from in the tree
 	 */
-	protected double getOptimalCostEstimate() {
-		return this.optimalCostEstimate;
+	protected HRRTreeWaypoint getNearestWaypoint() {
+		return this.nearestWaypoint;
 	}
 	
 	/**
-	 * Sets the estimated total cost of the optimal path from start to goal.
+	 * Sets the nearest (quality) hRRT waypoint to extend from in the tree.
 	 * 
-	 * @param optimalCostEstimate the estimated total cost of the optimal path
-	 *                            from start to goal to be set
+	 * @param nearestWaypoint the nearest (quality) hRRT waypoint to be set
 	 */
-	protected void setOptimalCostEstimate(double optimalCostEstimate) {
-		this.optimalCostEstimate = optimalCostEstimate;
+	protected void setNearestWaypoint(HRRTreeWaypoint nearestWaypoint) {
+		this.nearestWaypoint = nearestWaypoint;
 	}
 	
 	/**
-	 * Gets the maximum cost of all vertices already considered.
+	 * Selects a sampled waypoint whose nearest neighbor's quality assessment
+	 * satisfies a random quality threshold. 
 	 * 
-	 * @return the maximum cost of all vertices already considered
-	 */
-	protected double getMaximumCost() {
-		return this.maximumCost;
-	}
-	
-	/**
-	 * Sets the maximum cost of all vertices already considered.
-	 * 
-	 * @param maximumCost the maximum cost of all vertices already considered
-	 *                    to be set
-	 */
-	protected void setMaximumCost(double maximumCost) {
-		this.maximumCost = maximumCost;
-	}
-	
-	// TODO: review from here...
-	
-	/**
-	 * Gets the nearest RRT waypoint added to the tree.
-	 * 
-	 * @return the waypointNear the nearest waypoint added to the tree
-	 */
-	public HRRTreeWaypoint getWaypointNear() {
-		return this.waypointNear;
-	}
-
-	/**
-	 * Sets the nearest RRT waypoint added to the tree.
-	 * 
-	 * @param waypointNear the nearest waypoint added to the tree
-	 */
-	public void setWaypointNear(HRRTreeWaypoint waypointNear) {
-		this.waypointNear = waypointNear;
-	}
-
-	/**
-	 * Computes the quality of a certain waypoint given its cost.
-	 * 
-	 * @param cost the cost (f-value) of the waypoint
-	 * 
-	 * @return the quality of the waypoint [0,1]
-	 */
-	protected double computeQuality(double cost) {
-		double relativeCost = 0d;
-		double diff = cost - optimalCostEstimate;
-		double quality;
-
-		if (Math.abs(diff) < 0.00001) // prevent numerical imprecision
-			return 1;
-
-		// original implementation of HRRT
-		if (this.isOriginal()) {
-			relativeCost = (cost - optimalCostEstimate) / (maximumCost - optimalCostEstimate);
-			quality = 1 - relativeCost;
-		}
-		// enhanced implementation of HRRT
-		else {
-			if (cost > optimalCostEstimate)
-				relativeCost = Math.exp(-optimalCostEstimate / (cost - optimalCostEstimate));
-			else
-				relativeCost = 0d; // limit case of exponential
-
-			quality = 1 - relativeCost;
-			quality = (quality > probabilityFloor) ? quality : probabilityFloor;
-		}
-
-		return quality;
-
-	}
-
-	/**
-	 * Selects the waypoint from the environment space according to quality
-	 * parameters.
-	 * 
-	 * @return the selected waypoint
+	 * @return the sampled waypoint whose nearest neighbor's quality assessment
+	 *         satisfies a random quality threshold
 	 */
 	protected HRRTreeWaypoint selectWaypoint() {
-		HRRTreeWaypoint sample = null, waypointNear = null;
-
-		Random r = new Random();
-		double quality = -1.0, rand = 0;
-
-		while (rand > quality) {
+		HRRTreeWaypoint sample = null, nearest = null;
+		
+		Random random = new Random();
+		double quality = 0d, threshold = 1d;
+		
+		while (threshold > quality) {
 			sample = (HRRTreeWaypoint) super.sampleBiased();
-			waypointNear = (HRRTreeWaypoint) this.getEnvironment().findNearest(sample, 1).iterator().next();
-
-			quality = computeQuality(waypointNear.getF());
-			if (this.isOriginal())
-				quality = (quality < probabilityFloor) ? quality : probabilityFloor; // Minimum(qual,floor)
-
-			rand = r.nextDouble();
+			nearest = (HRRTreeWaypoint) this.getEnvironment().findNearest(sample, 1).iterator().next();
+			quality = this.getQuality().get(nearest);
+			threshold = random.nextDouble();
 		}
-
-		this.waypointNear = waypointNear;
+		
+		this.setNearestWaypoint(nearest);
 		return sample;
 	}
-
+	
 	/**
-	 * Selects a good waypoint according to a quality parameter by repeatedly
-	 * sampling a random waypoint from the environment space and iteratively testing
-	 * the k-nearest waypoints sorted by decreasing quality
+	 * Selects a sampled waypoint for which one of its k-nearest neighbors's
+	 * quality assessment satisfies a random quality threshold. The k-nearest
+	 * neighbors are considered according to their quality priority order.
 	 * 
-	 * @param neighborLimit the number of number of neighborLimit to test
-	 * 
-	 * @return the selected waypoint
+	 * @return the sampled waypoint for which one of its k-nearest neighbor's
+	 *         quality assessment satisfies a random quality threshold
 	 */
 	@SuppressWarnings("unchecked")
-	protected HRRTreeWaypoint selectWaypointIK(int neighborLimit) {
+	protected HRRTreeWaypoint selectWaypointIk() {
 		HRRTreeWaypoint sample = null;
-		// TODO: priority queue according to configurable compareTo
-		ArrayList<HRRTreeWaypoint> neighborsList = new ArrayList<HRRTreeWaypoint>();
+		PriorityQueue<HRRTreeWaypoint> neighbors = new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.quality));
 		
-		Random r = new Random();
-		double quality, rand;
-
+		Random random = new Random();
+		
 		while (true) {
 			sample = (HRRTreeWaypoint) super.sampleBiased();
-			neighborsList.clear();
-			neighborsList.addAll((Set<HRRTreeWaypoint>) this.getEnvironment().findNearest(sample, neighborLimit));
-			neighborsList = this.sortByQuality(neighborsList);
-
-			for (HRRTreeWaypoint neighbor : neighborsList) {
-				quality = computeQuality(neighbor.getF());
-				if (this.isOriginal())
-					quality = (quality < probabilityFloor) ? quality : probabilityFloor; // Minimum(qual,floor)
-
-				rand = r.nextDouble();
-				if (rand < quality) {
-					this.waypointNear = neighbor;
+			neighbors.clear();
+			neighbors.addAll((Set<HRRTreeWaypoint>) this.getEnvironment().findNearest(sample, this.getNeighborLimit()));
+			
+			for (HRRTreeWaypoint neighbor : neighbors) {
+				double quality = this.getQuality().get(neighbor);
+				double threshold = random.nextDouble();
+				if (threshold < quality) {
+					this.setNearestWaypoint(neighbor);
 					return sample;
 				}
 			}
 		}
-
 	}
-
+	
 	/**
-	 * Selects a good waypoint according to a quality parameter by repeatedly
-	 * sampling a random waypoint from the environment space and testing the best of
-	 * the k-nearest waypoints
+	 * Selects a sampled waypoint for which the best of its k-nearest
+	 * neighbor's quality assessment satisfies a random quality threshold.
 	 * 
-	 * @param neighborLimit the number of number of neighborLimit to test
-	 * 
-	 * @return the selected waypoint
+	 * @return the sampled waypoint for which the best of its k-nearest
+	 *         neighbor's quality assessment satisfies a random quality
+	 *         threshold
 	 */
 	@SuppressWarnings("unchecked")
-	protected HRRTreeWaypoint selectWaypointBK(int neighborLimit) {
-		HRRTreeWaypoint sample = null, waypointNear = null;
-		// TODO: priority queue according to configurable compareTo
-		ArrayList<HRRTreeWaypoint> neighborsList = new ArrayList<HRRTreeWaypoint>();
-
-		Random r = new Random();
-		double quality = -1.0, rand = 0;
+	protected HRRTreeWaypoint selectWaypointBk() {
+		HRRTreeWaypoint sample = null, nearest = null;
+		PriorityQueue<HRRTreeWaypoint> neighbors = new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.quality));
 		
-		while (rand > quality) {
+		Random random = new Random();
+		double quality = 0d, threshold = 1d;
+		
+		while (threshold > quality) {
 			sample = (HRRTreeWaypoint) super.sampleBiased();
-			neighborsList.clear();
-			neighborsList.addAll((Set<HRRTreeWaypoint>) this.getEnvironment().findNearest(sample, neighborLimit));
-			neighborsList = this.sortByQuality(neighborsList);
-			waypointNear = neighborsList.get(0);
-
-			quality = computeQuality(waypointNear.getF());
-			if (this.isOriginal())
-				quality = (quality < probabilityFloor) ? quality : probabilityFloor; // Minimum(qual,floor)
-
-			rand = r.nextDouble();
+			neighbors.clear();
+			neighbors.addAll((Set<HRRTreeWaypoint>) this.getEnvironment().findNearest(sample, this.getNeighborLimit()));
+			nearest = neighbors.poll();
+			quality = this.getQuality().get(nearest);
+			threshold = random.nextDouble();
 		}
-		//System.out.println("Cost = "+waypointNear.getG()+" TotalCost = "+waypointNear.getF()+" Quality = "+computeQuality(waypointNear.getF())+"\tWpt = "+waypointNear.toString());
-
-		this.waypointNear = waypointNear;
+		
+		this.setNearestWaypoint(nearest);
 		return sample;
 	}
-
+	
 	/**
-	 * Sorts a list of waypoints by decreasing quality.
+	 * Attempts to connect the tree to a given waypoint by repeatedly extending
+	 * towards it until it has been reached or the tree branch is trapped.
 	 * 
-	 * @param waypointList the list to be sorted
+	 * @param waypoint the waypoint to connect the tree to
 	 * 
-	 * @return the sorted list of waypoints
-	 */
-	protected ArrayList<HRRTreeWaypoint> sortByQuality(ArrayList<HRRTreeWaypoint> waypointList) {
-		// without variant quality is inversely proportional to total cost of node
-		if (this.isOriginal())
-			Collections.sort(waypointList, (a, b) -> a.getF() < b.getF() ? -1 : a.getF() == b.getF() ? 0 : 1);
-		// with variant quality may not be proportional to f if it was saturated
-		else
-			Collections.sort(waypointList, (a, b) -> computeQuality(a.getF()) > computeQuality(b.getF()) ? -1
-					: computeQuality(a.getF()) == computeQuality(b.getF()) ? 0 : 1);
-
-		return waypointList;
-	}
-
-	/**
-	 * Connects the tree in the direction of the given waypoint until it is reached
-	 * or the tree is trapped. Repeatedly calls extendRRT and returns the status
-	 * according to the last result of the extension
-	 * 
-	 * @param waypoint the waypoint set as the goal for extension
-	 * @return status the status resulting from the last extend
-	 * 
-	 * @see RRTreePlanner#connectRRT(RRTreeWaypoint waypoint)
+	 * @return the status of the last extension towards the waypoint
 	 */
 	@Override
 	protected Status connectRRT(RRTreeWaypoint waypoint) {
 		Status status = Status.ADVANCED;
-
+		
 		while (status == Status.ADVANCED && !this.isInGoalRegion(this.getNewestWaypoint())) {
 			status = this.extendRRT(waypoint);
-			this.setWaypointNear((HRRTreeWaypoint) this.getNewestWaypoint());
+			this.setNearestWaypoint((HRRTreeWaypoint) this.getNewestWaypoint());
 		}
-
+		
 		return status;
 	}
-
+	
 	/**
-	 * Extends the tree in the direction of the given waypoint and returns the
-	 * status according to the result of the extension.
+	 * Extends the tree in the direction of a given waypoint.
 	 * 
-	 * @param waypoint the waypoint set as the goal for extension
-	 * @return status the status resulting from the extension
+	 * @param waypoint the waypoint to extend the tree towards
 	 * 
-	 * @see RRTreePlanner#extendRRT(RRTreeWaypoint waypoint)
+	 * @return the status of the extension towards the waypoint
 	 */
 	@Override
 	protected Status extendRRT(RRTreeWaypoint waypoint) {
-		Status status;
-		RRTreeWaypoint waypointNear = this.getWaypointNear();
-		HRRTreeWaypoint waypointNew;
-
-		// Create a new node by extension from near to sampled
-		Optional<Edge> extension = this.createExtension(waypointNear, waypoint);
+		Status status = Status.TRAPPED;
 		
-
-		// Set status variable by checking if extension was possible
+		// create a new edge in the tree by extending from nearest to sampled
+		Optional<Edge> extension = this.createExtension(this.getNearestWaypoint(), waypoint);
+		
 		if (extension.isPresent()) {
-			waypointNew = (HRRTreeWaypoint) this.getNewestWaypoint();
-			this.getEnvironment().addEdge(waypointNew.getParent(), waypointNew);
-
-			// TODO: integrate H into overridden create extension
-			waypointNew.setH(this.computeHeuristic(waypointNew, this.getGoal()));
-
-			maximumCost = (maximumCost > waypointNew.getF()) ? maximumCost : waypointNew.getF();
-
-			if (waypointNew.getPrecisionPosition().equals(waypoint.getPrecisionPosition())) {
+			HRRTreeWaypoint newestWaypoint = (HRRTreeWaypoint) this.getNewestWaypoint();
+			double maximumCost = Math.max(quality.getMaximumCost(), newestWaypoint.getF());
+			this.quality.setMaximumCost(maximumCost);
+			
+			if (newestWaypoint.equals(waypoint)) {
 				status = Status.REACHED;
 			} else {
 				status = Status.ADVANCED;
 			}
-		} else {
-			status = Status.TRAPPED;
 		}
-
+		
 		return status;
 	}
-
+	
 	/**
-	 * Initializes the planner to plan from an origin to a destination at a
-	 * specified estimated time of departure.
+	 * Creates an extension to the tree by growing from a connected tree
+	 * waypoint towards a non-connected sampled waypoint observing capability
+	 * constraints if applicable.
+	 * 
+	 * @param treeWaypoint the tree waypoint to be extended
+	 * @param sampledWaypoint the sampled waypoint to be reached
+	 * 
+	 * @return the extension if it could be created
+	 */
+	@Override
+	protected Optional<Edge> createExtension(
+			RRTreeWaypoint treeWaypoint, RRTreeWaypoint sampledWaypoint) {
+		Optional<Edge> extension = super.createExtension(treeWaypoint, sampledWaypoint);
+		
+		if (extension.isPresent()) {
+			HRRTreeWaypoint newestWaypoint = (HRRTreeWaypoint) this.getNewestWaypoint();
+			newestWaypoint.setH(this.computeHeuristic(newestWaypoint, this.getGoal()));
+		}
+		
+		return extension;
+	}
+	
+	/**
+	 * Initializes this hRRT planner to plan from an origin to a destination at
+	 * a specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
-	 * 
-	 * @see RRTreePlanner#initialize(Position origin, Position destination,
-	 *      ZonedDateTime etd)
 	 */
 	@Override
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		this.clearExpendables();
-
+		
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0d);
-
-		HRRTreeWaypoint start = this.createWaypoint(origin);
-		start.setEto(etd);
-		start.setG(0d);
-		start.setH(this.computeHeuristic(start, this.getGoal()));
-
-		this.setStart(start);
-		this.getEnvironment().addVertex(start);
-		this.setNewestWaypoint(start);
-
-		this.setOptimalCostEstimate(start.getF());
-		this.setMaximumCost(this.getOptimalCostEstimate());
+		
+		this.setStart(this.createWaypoint(origin));
+		this.getStart().setEto(etd);
+		this.getStart().setG(0d);
+		this.getStart().setH(this.computeHeuristic(this.getStart(), this.getGoal()));
+		
+		this.getEnvironment().addVertex(this.getStart());
+		this.setNewestWaypoint(this.getStart());
+		
+		this.getQuality().setOptimalCost(this.getStart().getF());
+		this.getQuality().setMaximumCost(this.getStart().getF());
 	}
 	
 	/**
@@ -590,12 +454,12 @@ public class HRRTreePlanner extends RRTreePlanner {
 			Status status = Status.TRAPPED;
 			
 			// select a new sample
-			switch (this.getHeuristic()) {
+			switch (this.getAlgorithm()) {
 			case BkRRT:
-				sample = this.selectWaypointBK(this.getNeighborLimit());
+				sample = this.selectWaypointBk();
 				break;
 			case IkRRT:
-				sample = this.selectWaypointIK(this.getNeighborLimit());
+				sample = this.selectWaypointIk();
 				break;
 			case hRRT:
 			default:
@@ -651,10 +515,10 @@ public class HRRTreePlanner extends RRTreePlanner {
 					&& (this.getMaxIterations() == hrrtp.getMaxIterations())
 					&& (this.getSampling() == hrrtp.getSampling())
 					&& (this.getStrategy() == hrrtp.getStrategy())
-					&& (this.getHeuristic() == hrrtp.getHeuristic())
+					&& (this.getAlgorithm() == hrrtp.getAlgorithm())
 					&& (this.getVariant() == hrrtp.getVariant())
 					&& (this.getNeighborLimit() == hrrtp.getNeighborLimit())
-					&& (this.getProbabilityFloor() == hrrtp.getProbabilityFloor())
+					&& (this.getQualityBound() == hrrtp.getQualityBound())
 					&& (specification.getId().equals(Specification.PLANNER_HRRT_ID));
 		}
 		

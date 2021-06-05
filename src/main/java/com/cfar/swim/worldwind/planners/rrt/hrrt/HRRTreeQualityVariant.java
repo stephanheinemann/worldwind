@@ -30,12 +30,13 @@
 package com.cfar.swim.worldwind.planners.rrt.hrrt;
 
 /**
- * Enumerates the supported variants of heuristic RRT.
+ * Enumerates the supported quality assessment variants of a heuristic RRT.
  * 
+ * @author Manuel Rosa
  * @author Stephan Heinemann
  *
  */
-public enum HRRTreeVariant {
+public enum HRRTreeQualityVariant {
 
 	/**
 	 * the original hRRT variant where the quality assessment of a vertex is

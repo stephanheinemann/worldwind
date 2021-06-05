@@ -203,10 +203,10 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((HRRTreePlanner) planner).setEpsilon(properties.getEpsilon());
 				((HRRTreePlanner) planner).setBias(properties.getBias());
 				((HRRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
-				((HRRTreePlanner) planner).setHeuristic(properties.getHeuristic());
+				((HRRTreePlanner) planner).setAlgorithm(properties.getAlgorithm());
 				((HRRTreePlanner) planner).setVariant(properties.getVariant());
 				((HRRTreePlanner) planner).setNeighborLimit(properties.getNeighborLimit());
-				((HRRTreePlanner) planner).setProbabilityFloor(properties.getProbabilityFloor());
+				((HRRTreePlanner) planner).setQualityBound(properties.getQualityBound());
 			}
 			// TODO: implement more planners
 		}

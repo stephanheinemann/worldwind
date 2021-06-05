@@ -54,6 +54,8 @@ public class HRRTreeWaypoint extends RRTreeWaypoint {
 	 */
 	public HRRTreeWaypoint(Position position) {
 		super(position);
+		this.setG(Double.POSITIVE_INFINITY);
+		this.setH(Double.POSITIVE_INFINITY);
 	}
 	
 	/**
@@ -69,6 +71,8 @@ public class HRRTreeWaypoint extends RRTreeWaypoint {
 	 * Sets the estimated current cost (g-value) of this hRRT waypoint.
 	 * 
 	 * @param g the estimated current cost (g-value) of this hRRT waypoint
+	 * 
+	 * @throws IllegalArgumentException if g is less than 0
 	 */
 	public void setG(double g) {
 		if (0d > g) {
@@ -90,6 +94,8 @@ public class HRRTreeWaypoint extends RRTreeWaypoint {
 	 * Sets the estimated remaining cost (h-value) of this hRRT waypoint.
 	 * 
 	 * @param h the estimated remaining cost (h-value) of this hRRT waypoint
+	 * 
+	 * @throws IllegalArgumentException if h is less than 0
 	 */
 	public void setH(double h) {
 		if (0d > h) {
