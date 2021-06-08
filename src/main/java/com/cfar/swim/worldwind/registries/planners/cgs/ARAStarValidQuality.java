@@ -27,46 +27,38 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.util;
+package com.cfar.swim.worldwind.registries.planners.cgs;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
+import static java.lang.annotation.ElementType.ANNOTATION_TYPE;
+import static java.lang.annotation.ElementType.TYPE;
+import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import gov.nasa.worldwind.Configuration;
+import java.lang.annotation.Documented;
+import java.lang.annotation.Retention;
+import java.lang.annotation.Target;
+
+import javax.validation.Constraint;
+import javax.validation.Payload;
 
 /**
- * Realizes a resource bundle loader.
+ * Describes a valid quality constraint of an ARA* planner properties bean.
  * 
  * @author Stephan Heinemann
  *
  */
-public final class ResourceBundleLoader {
-
-	/** the locale configuration key of this resource bundle loader */
-	public static final String LOCALE_KEY = "com.cfar.swim.worldwind.avkey.Locale";
+@Constraint(validatedBy = { ARAStarQualityValidator.class })
+@Documented
+@Retention(RUNTIME)
+@Target({ TYPE, ANNOTATION_TYPE })
+public @interface ARAStarValidQuality {
 	
-	/** the dictionary bundle */
-	public static final String DICTIONARY_BUNDLE = "com.cfar.swim.worldwind.dictionaries.Dictionary";
+	/** @return the default quality constraint violation message */
+	String message() default "{property.planner.aras.quality.invalid}";
 	
-	/**
-	 * Gets the dictionary bundle for the configured locale.
-	 * 
-	 * @return the dictionary bundle for the configured locale
-	 */
-	public static ResourceBundle getDictionaryBundle() {
-		Locale locale = new Locale(Configuration.getStringValue(ResourceBundleLoader.LOCALE_KEY));
-		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
-	}
+	/** @return the default quality constraint groups */
+	Class<?>[] groups() default {};
 	
-	/**
-	 * Gets the dictionary bundle for a specified locale.
-	 * 
-	 * @param locale the dictionary locale
-	 * 
-	 * @return the dictionary bundle for the specified locale
-	 */
-	public static ResourceBundle getDictionaryBundle(Locale locale) {
-		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
-	}
+	/** @return the default quality constraint payload */
+	Class<? extends Payload>[] payload() default {};
 	
 }

@@ -31,6 +31,11 @@ package com.cfar.swim.worldwind.registries.connections;
 
 import java.util.Objects;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 /**
  * Realizes the properties bean of a simulation SWIM connection.
  * 
@@ -55,12 +60,18 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	private String resourceDirectory;
 	
 	/** the update period of this simulated SWIM connection properties bean */
+	@Min(value = 1, message = "{property.connection.swim.simulated.updatePeriod.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.connection.swim.simulated.updatePeriod.max}")
 	private long updatePeriod; // ms
 	
 	/** the update probability of this simulated SWIM connection properties bean */
+	@DecimalMin(value = "0", message = "{property.connection.swim.simulated.updateProbability.min}")
+	@DecimalMax(value = "1", message = "{property.connection.swim.simulated.updateProbability.max}")
 	private float updateProbability;
 	
 	/** the update quantity of this simulated SWIM connection properties bean */
+	@Min(value = 0, message = "{property.connection.swim.simulated.updateQuantity.min}")
+	@Max(value = Integer.MAX_VALUE, message = "{property.connection.swim.simulated.updateQuantity.max}")
 	private int updateQuantity;
 	
 	/**

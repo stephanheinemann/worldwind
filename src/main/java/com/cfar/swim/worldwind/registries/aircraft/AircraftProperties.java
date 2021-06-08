@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.registries.aircraft;
 
 import java.util.Objects;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.registries.Properties;
@@ -47,51 +50,83 @@ public abstract class AircraftProperties implements Properties<Aircraft> {
 	private CombatIdentification combatIdentification;
 	
 	/** the separation radius of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.separationRadius.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.separationRadius.max}")
 	private double separationRadius;
 	
 	/** the maximum angle of climb speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.maximumAngleOfClimbSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.maximumAngleOfClimbSpeed.max}")
 	private double maximumAngleOfClimbSpeed;
 	
 	/** the maximum rate of climb speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.maximumRateOfClimbSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.maximumRateOfClimbSpeed.max}")
 	private double maximumRateOfClimbSpeed;
 	
 	/** the cruise climb speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.cruiseClimbSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.cruiseClimbSpeed.max}")
 	private double cruiseClimbSpeed;
 	
 	/** the cruise speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.cruiseSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.cruiseSpeed.max}")
 	private double cruiseSpeed;
 	
 	/** the cruise descent speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.cruiseDescentSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.cruiseDescentSpeed.max}")
 	private double cruiseDescentSpeed;
 	
 	/** the approach speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.approachSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.approachSpeed.max}")
 	private double approachSpeed;
 	
 	/** the maximum glide speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.maximumGlideSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.maximumGlideSpeed.max}")
 	private double maximumGlideSpeed;
 	
 	/** the maximum rate of descent speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.maximumRateOfDescentSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.maximumRateOfDescentSpeed.max}")
 	private double maximumRateOfDescentSpeed;
 	
 	/** the maximum speed of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.maximumSpeed.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.maximumSpeed.max}")
 	private double maximumSpeed;
 	
 	/** the maximum rate of climb of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.maximumRateOfClimb.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.maximumRateOfClimb.max}")
 	private double maximumRateOfClimb;
 	
 	/** the maximum cruise rate of climb of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.cruiseRateOfClimb.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.cruiseRateOfClimb.max}")
 	private double cruiseRateOfClimb;
 	
 	/** the cruise rate of descent of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.cruiseRateOfDescent.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.cruiseRateOfDescent.max}")
 	private double cruiseRateOfDescent;
 	
 	/** the approach rate of descent of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.approachRateOfDescent.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.approachRateOfDescent.max}")
 	private double approachRateOfDescent;
 	
 	/** the maximum rate of descent of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.maximumRateOfDescent.min}")
+	@DecimalMax(value = "100000", message = "{property.aircraft.maximumRateOfDescent.max}")
 	private double maximumRateOfDescent;
 	
 	/** the maximum angle of climb of this aircraft properties bean */
+	@DecimalMin(value = "0", message = "{property.aircraft.maximumAngleOfClimb.min}")
+	@DecimalMax(value = "90", message = "{property.aircraft.maximumAngleOfClimb.max}")
 	private double maximumAngleOfClimb;
 	
 	/**

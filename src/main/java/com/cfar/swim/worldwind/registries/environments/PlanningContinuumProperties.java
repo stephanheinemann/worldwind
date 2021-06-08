@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.registries.environments;
 
 import java.util.Objects;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+
 /**
  * Realizes the properties bean of a planning continuum environment.
  * 
@@ -42,6 +45,8 @@ import java.util.Objects;
 public class PlanningContinuumProperties extends EnvironmentProperties {
 	
 	/** the resolution of this planning continuum properties bean */
+	@DecimalMin(value = "0", message = "{property.environment.continuum.resolution.min}")
+	@DecimalMax(value = "100000", message = "{property.environment.continuum.resolution.max}")
     private double resolution = 50d;
 
     /**

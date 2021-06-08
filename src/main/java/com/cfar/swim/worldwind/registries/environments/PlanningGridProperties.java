@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.registries.environments;
 
 import java.util.Objects;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 /**
  * Realizes the properties bean of a planning grid environment.
  * 
@@ -40,6 +43,8 @@ import java.util.Objects;
 public class PlanningGridProperties extends EnvironmentProperties {
 
 	/** the longest axis division of this planning grid properties bean */
+	@Min(value = 1, message = "{property.environment.grid.division.min}")
+	@Max(value = Integer.MAX_VALUE, message = "{property.environment.grid.division.max}")
 	private int division;
 	
 	/**

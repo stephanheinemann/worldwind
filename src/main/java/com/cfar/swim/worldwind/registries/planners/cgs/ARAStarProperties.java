@@ -41,6 +41,7 @@ import com.cfar.swim.worldwind.registries.planners.AnytimePlannerProperties;
  * @author Stephan Heinemann
  *
  */
+@ARAStarValidQuality
 public class ARAStarProperties extends ForwardAStarProperties implements AnytimePlannerProperties {
 	
 	/** the initial inflation factor applied to the heuristic function */
@@ -119,18 +120,11 @@ public class ARAStarProperties extends ForwardAStarProperties implements Anytime
 	 * @param initialInflation the minimum quality (initial inflation) of this
 	 *                         ARA* properties bean
 	 * 
-	 * @throws IllegalArgumentException if the initial inflation is invalid
-	 * 
 	 * @see AnytimePlannerProperties#setMinimumQuality(double)
 	 */
 	@Override
 	public void setMinimumQuality(double initialInflation) {
-		if ((1d <= initialInflation) &&
-				(initialInflation >= this.finalInflation)) {
-			this.initialInflation = initialInflation;
-		} else {
-			throw new IllegalArgumentException("initial inflation is invalid");
-		}
+		this.initialInflation = initialInflation;
 	}
 	
 	/**
@@ -153,17 +147,11 @@ public class ARAStarProperties extends ForwardAStarProperties implements Anytime
 	 * @param finalInflation the maximum quality (final inflation) of this
 	 *                       ARA* properties bean
 	 * 
-	 * @throws IllegalArgumentException if the final inflation is invalid
-	 * 
 	 * @see AnytimePlannerProperties#setMaximumQuality(double)
 	 */
 	@Override
 	public void setMaximumQuality(double finalInflation) {
-		if ((1d <= finalInflation) && (this.initialInflation >= finalInflation)) {
-			this.finalInflation = finalInflation;
-		} else {
-			throw new IllegalArgumentException("final deflation is invalid");
-		}
+		this.finalInflation = finalInflation;
 	}
 	
 	/**
@@ -187,17 +175,11 @@ public class ARAStarProperties extends ForwardAStarProperties implements Anytime
 	 * @param deflationAmount the quality improvement (deflation amount) of
 	 *                        this ARA* properties bean
 	 * 
-	 * @throws IllegalArgumentException if the deflation amount is invalid
-	 * 
 	 * @see AnytimePlannerProperties#setQualityImprovement(double)
 	 */
 	@Override
 	public void setQualityImprovement(double deflationAmount) {
-		if (0d < deflationAmount) {
-			this.deflationAmount = deflationAmount;
-		} else {
-			throw new IllegalArgumentException("deflation amount is invalid");
-		}
+		this.deflationAmount = deflationAmount;
 	}
 	
 	/**

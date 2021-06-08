@@ -40,6 +40,7 @@ import com.cfar.swim.worldwind.registries.Properties;
  * @author Stephan Heinemann
  *
  */
+@EnvironmentValidBoundaries
 public abstract class EnvironmentProperties implements Properties<Environment> {
 
 	/** the floor of this environment properties bean */

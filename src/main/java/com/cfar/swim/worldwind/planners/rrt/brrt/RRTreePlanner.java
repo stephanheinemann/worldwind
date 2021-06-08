@@ -298,7 +298,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @throws IllegalArgumentException if epsilon is invalid
 	 */
 	public void setEpsilon(double epsilon) {
-		if ((0d < epsilon) && (Double.MAX_VALUE >= epsilon)) {
+		if ((1d < epsilon) && (Double.MAX_VALUE >= epsilon)) {
 			this.epsilon = epsilon;
 		} else {
 			throw new IllegalArgumentException("epsilon is invalid");

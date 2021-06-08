@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.registries.connections;
 
 import java.util.Objects;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.registries.Properties;
 
@@ -44,6 +47,8 @@ import com.cfar.swim.worldwind.registries.Properties;
 public abstract class DatalinkProperties implements Properties<Datalink> {
 	
 	/** the downlink period of this datalink properties bean */
+	@Min(value = 1, message = "{property.connection.datalink.downlinkPeriod.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.connection.datalink.downlinkPeriod.max}")
 	private long downlinkPeriod = 1000; // ms
 	
 	/**

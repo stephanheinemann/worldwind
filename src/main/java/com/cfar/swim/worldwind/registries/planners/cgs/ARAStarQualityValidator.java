@@ -27,46 +27,34 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.util;
+package com.cfar.swim.worldwind.registries.planners.cgs;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
-
-import gov.nasa.worldwind.Configuration;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
 /**
- * Realizes a resource bundle loader.
+ * Realizes an ARA* properties bean quality validator.
  * 
  * @author Stephan Heinemann
  *
  */
-public final class ResourceBundleLoader {
+public class ARAStarQualityValidator implements ConstraintValidator<ARAStarValidQuality, ARAStarProperties> {
 
-	/** the locale configuration key of this resource bundle loader */
-	public static final String LOCALE_KEY = "com.cfar.swim.worldwind.avkey.Locale";
-	
-	/** the dictionary bundle */
-	public static final String DICTIONARY_BUNDLE = "com.cfar.swim.worldwind.dictionaries.Dictionary";
-	
 	/**
-	 * Gets the dictionary bundle for the configured locale.
+	 * Determines whether or not the quality properties of an ARA* properties
+	 * bean are valid.
 	 * 
-	 * @return the dictionary bundle for the configured locale
+	 * @param value the ARA* properties bean
+	 * @param context the constraint validator context
+	 * 
+	 * @return true if the quality properties of the ARA* properties bean are
+	 *         valid, false otherwise
 	 */
-	public static ResourceBundle getDictionaryBundle() {
-		Locale locale = new Locale(Configuration.getStringValue(ResourceBundleLoader.LOCALE_KEY));
-		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
-	}
-	
-	/**
-	 * Gets the dictionary bundle for a specified locale.
-	 * 
-	 * @param locale the dictionary locale
-	 * 
-	 * @return the dictionary bundle for the specified locale
-	 */
-	public static ResourceBundle getDictionaryBundle(Locale locale) {
-		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
+	@Override
+	public boolean isValid(ARAStarProperties value, ConstraintValidatorContext context) {
+		return (1d <= value.getMinimumQuality())
+				&& (value.getMinimumQuality() >= value.getMaximumQuality())
+				&& (0d < value.getQualityImprovement());
 	}
 	
 }

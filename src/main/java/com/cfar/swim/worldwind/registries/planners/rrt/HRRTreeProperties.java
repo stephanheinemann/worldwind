@@ -31,6 +31,11 @@ package com.cfar.swim.worldwind.registries.planners.rrt;
 
 import java.util.Objects;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeAlgorithm;
 import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeQualityVariant;
 
@@ -49,17 +54,17 @@ public class HRRTreeProperties extends RRTreeProperties {
 	private HRRTreeQualityVariant variant = HRRTreeQualityVariant.ENHANCED;
 	
 	/** the limit of neighbors to consider for extension by the hRRT planner */
-	//@Min(1)
-	//@Max(Integer.MAX_VALUE)
-	private int neighborLimit = 5; // [1, Integer.MAX_VALUE]
+	@Min(value = 1, message = "{property.planner.hrrt.neighborLimit.min}")
+	@Max(value = Integer.MAX_VALUE, message = "{property.planner.hrrt.neighborLimit.max}")
+	private int neighborLimit = 5;
 	
 	/**
 	 * the probability floor value of the hRRT planner to ensure the search is
 	 * not overly biased against exploration
 	 */
-	//@Min(0)
-	//@Max(1)
-	private double qualityBound = 0.1d; // [0, 1]
+	@DecimalMin(value = "0", message = "{property.planner.hrrt.qualityBound.min}")
+	@DecimalMax(value = "1", message = "{property.planner.hrrt.qualityBound.max}")
+	private double qualityBound = 0.1d;
 	
 	/**
 	 * Constructs a new hRRT planner properties bean.
@@ -117,15 +122,9 @@ public class HRRTreeProperties extends RRTreeProperties {
 	 * Sets the limit of neighbors of this hRRT planner properties bean.
 	 * 
 	 * @param neighborLimit the limit of neighbors to be set
-	 * 
-	 * @throws IllegalArgumentException exception if the neighbor limit is invalid
 	 */
 	public void setNeighborLimit(int neighborLimit) {
-		if ((0 < neighborLimit) && (Integer.MAX_VALUE >= neighborLimit)) {
-			this.neighborLimit = neighborLimit;
-		} else {
-			throw new IllegalArgumentException("neighbor limit is invalid");
-		}
+		this.neighborLimit = neighborLimit;
 	}
 	
 	/**
@@ -141,15 +140,9 @@ public class HRRTreeProperties extends RRTreeProperties {
 	 * Sets the quality (probability) bound of this hRRT planner properties bean.
 	 * 
 	 * @param qualityBound the quality (probability) bound to be set
-	 * 
-	 * @throws IllegalArgumentException if the quality (probability) bound is invalid
 	 */
 	public void setQualityBound(double qualityBound) {
-		if ((0d <= qualityBound) && (1d >= qualityBound)) {
-			this.qualityBound = qualityBound;
-		} else {
-			throw new IllegalArgumentException("probability floor is invalid");
-		}
+		this.qualityBound = qualityBound;
 	}
 	
 	/**

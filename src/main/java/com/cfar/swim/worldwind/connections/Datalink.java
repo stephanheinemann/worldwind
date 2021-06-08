@@ -286,9 +286,15 @@ public abstract class Datalink implements Connection {
 	 * Sets the downlink (monitoring) period of this datalink.
 	 * 
 	 * @param downlinkPeriod the downlink period to be set in milliseconds
+	 * 
+	 * @throws IllegalArgumentException if the downlink period is invalid
 	 */
 	public void setDownlinkPeriod(long downlinkPeriod) {
-		this.downlinkPeriod = downlinkPeriod;
+		if (1 <= downlinkPeriod) {
+			this.downlinkPeriod = downlinkPeriod;
+		} else {
+			throw new IllegalArgumentException("downlink period is invalid");
+		}
 	}
 	
 	/**

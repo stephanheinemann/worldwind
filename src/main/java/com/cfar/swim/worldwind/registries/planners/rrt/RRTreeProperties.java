@@ -31,6 +31,11 @@ package com.cfar.swim.worldwind.registries.planners.rrt;
 
 import java.util.Objects;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 import com.cfar.swim.worldwind.planners.rrt.Extension;
 import com.cfar.swim.worldwind.planners.rrt.Sampling;
 import com.cfar.swim.worldwind.planners.rrt.Strategy;
@@ -56,16 +61,24 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	private Extension extension = Extension.LINEAR;
 	
 	/** the maximum number of sampling iterations of the RRT planner */
-	private int maxIterations = 3_000; // [1, Integer.MAX_VALUE]
+	@Min(value = 1, message = "{property.planner.rrt.maxIterations.min}")
+	@Max(value = Integer.MAX_VALUE, message = "{property.planner.rrt.maxIterations.max}")
+	private int maxIterations = 3_000;
 	
 	/** the maximum extension distance to a waypoint in the tree */
-	private double epsilon = 25d; // (0, Double.MAX_VALUE]
+	@DecimalMin(value = "1", message = "{property.planner.rrt.epsilon.min}")
+	@DecimalMax(value = "100000", message = "{property.planner.rrt.epsilon.max}")
+	private double epsilon = 25d;
 	
 	/** the sampling bias towards the goal */
-	private int bias = 5; // [0, 100]
+	@Min(value = 0, message = "{property.planner.rrt.bias.min}")
+	@Max(value = 100, message = "{property.planner.rrt.bias.max}")
+	private int bias = 5;
 	
 	/** the radius of the sphere defining the goal region */
-	private double goalThreshold = 1d; // (0, Double.MAX_Value]
+	@DecimalMin(value = "0", message = "{property.planner.rrt.goalThreshold.min}")
+	@DecimalMax(value = "100000", message = "{property.planner.rrt.goalThreshold.max}")
+	private double goalThreshold = 1d;
 	
 	/**
 	 * Constructs a new basic RRT planner properties bean.
@@ -195,15 +208,9 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 * RRT planner properties bean.
 	 * 
 	 * @param maxIterations the maximum number of sampling iterations to be set
-	 * 
-	 * @throws IllegalArgumentException if maximum iterations is invalid
 	 */
 	public void setMaxIterations(int maxIterations) {
-		if ((0 < maxIterations) && (Integer.MAX_VALUE >= maxIterations)) {
-			this.maxIterations = maxIterations;
-		} else {
-			throw new IllegalArgumentException("maximum iterations is invalid");
-		}
+		this.maxIterations = maxIterations;
 	}
 	
 	/**
@@ -222,15 +229,9 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 * RRT planner properties bean.
 	 * 
 	 * @param epsilon the maximum extension distance to be set
-	 * 
-	 * @throws IllegalArgumentException if epsilon is invalid
 	 */
 	public void setEpsilon(double epsilon) {
-		if ((0d < epsilon) && (Double.MAX_VALUE >= epsilon)) {
-			this.epsilon = epsilon;
-		} else {
-			throw new IllegalArgumentException("epsilon is invalid");
-		}
+		this.epsilon = epsilon;
 	}
 	
 	/**
@@ -249,15 +250,9 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 * bean.
 	 * 
 	 * @param bias the sampling bias to be set
-	 * 
-	 * @throws IllegalArgumentException if bias is invalid
 	 */
 	public void setBias(int bias) {
-		if ((0d <= bias) && (100d >= bias)) {
-			this.bias = bias;
-		} else {
-			throw new IllegalArgumentException("bias is invalid");
-		}
+		this.bias = bias;
 	}
 	
 	/**
@@ -277,15 +272,9 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	 * 
 	 * @param goalThreshold the radius of the sphere defining the goal region
 	 *                      to be set
-	 * 
-	 * @throws IllegalArgumentException if goal threshold is invalid
 	 */
 	public void setGoalThreshold(double goalThreshold) {
-		if ((0d <= goalThreshold) && (Double.MAX_VALUE >= goalThreshold)) {
-			this.goalThreshold = goalThreshold;
-		} else {
-			throw new IllegalArgumentException("goal threshold is invalid");
-		}
+		this.goalThreshold = goalThreshold;
 	}
 	
 	/**

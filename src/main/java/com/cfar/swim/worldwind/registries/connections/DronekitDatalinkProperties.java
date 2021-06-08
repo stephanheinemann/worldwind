@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.registries.connections;
 
 import java.util.Objects;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 /**
  * Realizes the properties bean of a dronekit datalink.
  * 
@@ -49,6 +52,8 @@ public class DronekitDatalinkProperties extends DatalinkProperties {
 	private String host;
 	
 	/** the remote port of this dronekit datalink properties bean */
+	@Min(value = 1024, message = "{property.connection.datalink.dronekit.port.min}")
+	@Max(value = 65535, message = "{property.connection.datalink.dronekit.port.max}")
 	private int port;
 	
 	/**

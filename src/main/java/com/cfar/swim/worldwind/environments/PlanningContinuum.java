@@ -828,7 +828,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 */
 	@Override
 	public void setResolution(double resolution) {
-		if (0d > resolution || this.getDiameter() < resolution) {
+		if (0d >= resolution || this.getDiameter() < resolution) {
 			throw new IllegalArgumentException("invalid resolution");
 		} else {
 			this.resolution = resolution;

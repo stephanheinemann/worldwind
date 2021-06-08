@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.registries.planners.cgs;
 
 import java.util.Objects;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.planners.AnytimePlannerProperties;
@@ -46,6 +49,8 @@ public class ADStarProperties extends ARAStarProperties
 	implements AnytimePlannerProperties, DynamicPlannerProperties {
 
 	/** the significant change threshold of this AD* planner properties bean */
+	@DecimalMin(value = "0", message = "{property.planner.ads.significantChange.min}")
+	@DecimalMax(value = "1", message = "{property.planner.ads.significantChange.max}")
 	private double significantChange;
 	
 	/**
@@ -132,18 +137,11 @@ public class ADStarProperties extends ARAStarProperties
 	 * 
 	 * @param significantChange the significant change threshold to be set
 	 * 
-	 * @throws IllegalArgumentException if the significant change threshold
-	 *         is invalid
-	 * 
 	 * @see DynamicPlannerProperties#setSignificantChange(double)
 	 */
 	@Override
 	public void setSignificantChange(double significantChange) {
-		if ((0d <= significantChange) && (1d >= significantChange)) {
-			this.significantChange = significantChange;
-		} else {
-			throw new IllegalArgumentException("significant change is invalid");
-		}
+		this.significantChange = significantChange;
 	}
 	
 	/**

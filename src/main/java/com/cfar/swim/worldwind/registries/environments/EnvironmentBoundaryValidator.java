@@ -27,46 +27,33 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.util;
+package com.cfar.swim.worldwind.registries.environments;
 
-import java.util.Locale;
-import java.util.ResourceBundle;
-
-import gov.nasa.worldwind.Configuration;
+import javax.validation.ConstraintValidator;
+import javax.validation.ConstraintValidatorContext;
 
 /**
- * Realizes a resource bundle loader.
+ * Realizes an environment properties bean boundary validator.
  * 
  * @author Stephan Heinemann
  *
  */
-public final class ResourceBundleLoader {
+public class EnvironmentBoundaryValidator
+		implements ConstraintValidator<EnvironmentValidBoundaries, EnvironmentProperties> {
 
-	/** the locale configuration key of this resource bundle loader */
-	public static final String LOCALE_KEY = "com.cfar.swim.worldwind.avkey.Locale";
-	
-	/** the dictionary bundle */
-	public static final String DICTIONARY_BUNDLE = "com.cfar.swim.worldwind.dictionaries.Dictionary";
-	
 	/**
-	 * Gets the dictionary bundle for the configured locale.
+	 * Determines whether or not the boundary properties of an environment
+	 * properties bean are valid.
 	 * 
-	 * @return the dictionary bundle for the configured locale
+	 * @param value the environment properties bean
+	 * @param context the constraint validator context
+	 * 
+	 * @return true if the boundary properties of the environment properties
+	 *         bean are valid, false otherwise
 	 */
-	public static ResourceBundle getDictionaryBundle() {
-		Locale locale = new Locale(Configuration.getStringValue(ResourceBundleLoader.LOCALE_KEY));
-		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
+	@Override
+	public boolean isValid(EnvironmentProperties value, ConstraintValidatorContext context) {
+		return (value.getFloor() < value.getCeiling());
 	}
-	
-	/**
-	 * Gets the dictionary bundle for a specified locale.
-	 * 
-	 * @param locale the dictionary locale
-	 * 
-	 * @return the dictionary bundle for the specified locale
-	 */
-	public static ResourceBundle getDictionaryBundle(Locale locale) {
-		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
-	}
-	
+
 }
