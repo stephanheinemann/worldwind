@@ -35,32 +35,23 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Realizes a hRRT properties bean information customizing the descriptors for
- * each property.
- * 
- * @author Manuel Rosa
- *
- */
-public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
+* Realizes an ARRT properties bean information customizing the descriptors for
+* each property.
+* 
+* @author Manuel Rosa
+*
+*/
+public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 	
 	/**
-	 * Constructs a hRRT properties bean information.
+	 * Constructs an ARRT properties bean information.
 	 */
-	public HRRTreePropertiesBeanInfo() {
-		super(HRRTreeProperties.class);
+	public ARRTreePropertiesBeanInfo() {
+		super(ARRTreeProperties.class);
 	}
 	
 	/**
-	 * Constructs a hRRT properties bean information.
-	 * 
-	 * @param beanClass the properties bean class of the properties bean
-	 */
-	public HRRTreePropertiesBeanInfo(Class<? extends RRTreeProperties> beanClass) {
-		super(beanClass);
-	}
-	
-	/**
-	 * Customizes the property descriptors for each property of a hRRT
+	 * Customizes the property descriptors for each property of an ARRT
 	 * properties bean.
 	 * 
 	 * @return the array of customized property descriptors
@@ -72,34 +63,34 @@ public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
-			PropertyDescriptor algorithm = this.createPropertyDescriptor(
-					"algorithm",
-					this.dictionary.getString("property.planner.hrrt.algorithm.name"),
-					this.dictionary.getString("property.planner.hrrt.algorithm.description"),
-					this.dictionary.getString("property.planner.category.heuristic"));
-			PropertyDescriptor variant = this.createPropertyDescriptor(
-					"variant",
-					this.dictionary.getString("property.planner.hrrt.variant.name"),
-					this.dictionary.getString("property.planner.hrrt.variant.description"),
-					this.dictionary.getString("property.planner.category.heuristic"));
 			PropertyDescriptor neighborLimit = this.createPropertyDescriptor(
 					"neighborLimit",
-					this.dictionary.getString("property.planner.hrrt.neighborLimit.name"),
-					this.dictionary.getString("property.planner.hrrt.neighborLimit.description"),
+					this.dictionary.getString("property.planner.arrt.neighborLimit.name"),
+					this.dictionary.getString("property.planner.arrt.neighborLimit.description"),
 					this.dictionary.getString("property.planner.category.heuristic"));
-			PropertyDescriptor qualityBound = this.createPropertyDescriptor(
-					"qualityBound",
-					this.dictionary.getString("property.planner.hrrt.qualityBound.name"),
-					this.dictionary.getString("property.planner.hrrt.qualityBound.description"),
-					this.dictionary.getString("property.planner.category.heuristic"));
+			PropertyDescriptor initialCostBias = this.createPropertyDescriptor(
+					"minimumQuality",
+					this.dictionary.getString("property.planner.arrt.minimumQuality.name"),
+					this.dictionary.getString("property.planner.arrt.minimumQuality.description"),
+					this.dictionary.getString("property.planner.category.anytime"));
+			PropertyDescriptor finalCostBias = this.createPropertyDescriptor(
+					"maximumQuality",
+					this.dictionary.getString("property.planner.arrt.maximumQuality.name"),
+					this.dictionary.getString("property.planner.arrt.maximumQuality.description"),
+					this.dictionary.getString("property.planner.category.anytime"));
+			PropertyDescriptor improvementFactor = this.createPropertyDescriptor(
+					"qualityImprovement",
+					this.dictionary.getString("property.planner.arrt.qualityImprovement.name"),
+					this.dictionary.getString("property.planner.arrt.qualityImprovement.description"),
+					this.dictionary.getString("property.planner.category.anytime"));
 		
-			PropertyDescriptor[] adsDescriptors = new PropertyDescriptor[] {
-					algorithm,
-					variant,
+			PropertyDescriptor[] arrtDescriptors = new PropertyDescriptor[] {
 					neighborLimit,
-					qualityBound};
+					initialCostBias,
+					finalCostBias,
+					improvementFactor};
 			descriptors = Stream.concat(
-					Arrays.stream(descriptors), Arrays.stream(adsDescriptors))
+					Arrays.stream(descriptors), Arrays.stream(arrtDescriptors))
 					.toArray(PropertyDescriptor[]::new);
 		
 		} catch (IntrospectionException e) {

@@ -38,6 +38,8 @@ import javax.validation.constraints.Min;
 
 import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeAlgorithm;
 import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeQualityVariant;
+import com.cfar.swim.worldwind.planning.CostPolicy;
+import com.cfar.swim.worldwind.planning.RiskPolicy;
 
 /**
  * Realizes the properties bean of a heuristic RRT planner.
@@ -59,8 +61,8 @@ public class HRRTreeProperties extends RRTreeProperties {
 	private int neighborLimit = 5;
 	
 	/**
-	 * the probability floor value of the hRRT planner to ensure the search is
-	 * not overly biased against exploration
+	 * the quality (probability) bound of the hRRT planner to ensure the search
+	 * is not overly biased against exploration
 	 */
 	@DecimalMin(value = "0", message = "{property.planner.hrrt.qualityBound.min}")
 	@DecimalMax(value = "1", message = "{property.planner.hrrt.qualityBound.max}")
@@ -71,6 +73,17 @@ public class HRRTreeProperties extends RRTreeProperties {
 	 */
 	public HRRTreeProperties() {
 		super();
+	}
+	
+	/**
+	 * Constructs a new hRRT planner properties bean with specified cost
+	 * and risk policy property values.
+	 * 
+	 * @param costPolicy the cost policy of this hRRT planner properties bean
+	 * @param riskPolicy the risk policy of this hRRT planner properties bean
+	 */
+	public HRRTreeProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		super(costPolicy, riskPolicy);
 	}
 	
 	/**
@@ -115,7 +128,7 @@ public class HRRTreeProperties extends RRTreeProperties {
 	 * @return the limit of neighbors of this hRRT planner properties bean
 	 */
 	public int getNeighborLimit() {
-		return neighborLimit;
+		return this.neighborLimit;
 	}
 	
 	/**
@@ -133,7 +146,7 @@ public class HRRTreeProperties extends RRTreeProperties {
 	 * @return the quality (probability) bound of this hRRT planner properties bean
 	 */
 	public double getQualityBound() {
-		return qualityBound;
+		return this.qualityBound;
 	}
 	
 	/**

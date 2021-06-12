@@ -140,6 +140,14 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			.getDictionaryBundle()
 			.getString("specification.planner.hrrt.description");
 	
+	/** the identifier of an ARRT planner */
+	public static final String PLANNER_ARRT_ID = "ARRT";
+	
+	/** the description of an ARRT planner specification */
+	public static final String PLANNER_ARRT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.arrt.description");
+	
 	/** the identifier of a dronekit datalink specification */
 	public static final String CONNECTION_DATALINK_DRONEKIT_ID = "Dronekit Datalink";
 	

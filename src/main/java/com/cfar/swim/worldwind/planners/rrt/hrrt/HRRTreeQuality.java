@@ -49,10 +49,10 @@ public class HRRTreeQuality implements ToDoubleFunction<HRRTreeWaypoint> {
 	private HRRTreeQualityVariant variant = HRRTreeQualityVariant.ENHANCED;
 	
 	/** the optimal cost of this hRRT quality assessment function */
-	private double optimalCost;
+	private double optimalCost = Double.POSITIVE_INFINITY;
 	
 	/** the maximum cost of this hRRT quality assessment function */
-	private double maximumCost;
+	private double maximumCost = Double.POSITIVE_INFINITY;
 	
 	/** the quality bound of this hRRT quality assessment function */
 	private double qualityBound = 0.1d; // [0, 1]
@@ -175,37 +175,7 @@ public class HRRTreeQuality implements ToDoubleFunction<HRRTreeWaypoint> {
 	 */
 	@Override
 	public double applyAsDouble(HRRTreeWaypoint waypoint) {
-		double relativeCost = 0d;
-		double diff = waypoint.getF() - this.optimalCost;
-		double quality = 0d;
-		
-		// prevent numerical imprecision
-		if (Math.abs(diff) < PrecisionDouble.EPSILON)
-			return 0d; // 1d
-		
-		if (this.isOriginal()) {
-			// original implementation of HRRT
-			relativeCost = (waypoint.getF() - this.optimalCost)
-					/ (this.maximumCost - this.optimalCost);
-			
-			quality = 1d - relativeCost;
-			quality = (quality < this.qualityBound) ? quality : this.qualityBound;
-		} else {
-			// enhanced implementation of HRRT
-			if (waypoint.getF() > this.optimalCost) {
-				// exp(-x): higher than optimal cost gives higher relative cost
-				// exp(-x): increases substantially beyond 20% cost overhead
-				relativeCost = Math.exp(-this.optimalCost
-						/ (waypoint.getF() - this.optimalCost));
-			} else {
-				relativeCost = 0d; // limit case of exponential
-			}
-			
-			quality = 1d - relativeCost;
-			quality = (quality > this.qualityBound) ? quality : this.qualityBound;
-		}
-		
-		return 1d - quality;
+		return  1d - this.get(waypoint);
 	}
 	
 	/**
@@ -217,7 +187,36 @@ public class HRRTreeQuality implements ToDoubleFunction<HRRTreeWaypoint> {
 	 *         [0: lowest quality, 1: highest quality]
 	 */
 	public double get(HRRTreeWaypoint waypoint) {
-		return  1d - this.applyAsDouble(waypoint);
+		double relativeCost = 0d;
+		double diff = waypoint.getF() - this.optimalCost;
+		double quality = 1d;
+		
+		// prevent numerical imprecision
+		if (Math.abs(diff) > PrecisionDouble.EPSILON) {
+			if (this.isOriginal()) {
+				// original implementation of HRRT
+				relativeCost = (waypoint.getF() - this.optimalCost)
+						/ (this.maximumCost - this.optimalCost);
+				
+				quality -= relativeCost;
+				quality = (quality < this.qualityBound) ? quality : this.qualityBound;
+			} else {
+				// enhanced implementation of HRRT
+				if (waypoint.getF() > this.optimalCost) {
+					// exp(-x): higher than optimal cost gives higher relative cost
+					// exp(-x): increases substantially beyond 20% cost overhead
+					relativeCost = Math.exp(-this.optimalCost
+							/ (waypoint.getF() - this.optimalCost));
+				} else {
+					relativeCost = 0d; // limit case of exponential
+				}
+				
+				quality -= relativeCost;
+				quality = (quality > this.qualityBound) ? quality : this.qualityBound;
+			}
+		}
+		
+		return quality;
 	}
 	
 }

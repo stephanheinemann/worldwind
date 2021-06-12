@@ -379,7 +379,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * starting RRT waypoint.
 	 */
 	protected void connectPlan() {
-		this.connectPlan(getNewestWaypoint());
+		this.connectPlan(this.getNewestWaypoint());
 	}
 	
 	/**
@@ -395,8 +395,8 @@ public class RRTreePlanner extends AbstractPlanner {
 		this.plan.addFirst(waypoint.clone());
 		while (waypoint.hasParent()) {
 			waypoint = waypoint.getParent();
-			waypoint.setTtg(Duration.between(waypoint.getEto(), plan.getFirst().getEto()));
-			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, plan.getFirst()));
+			waypoint.setTtg(Duration.between(waypoint.getEto(), this.plan.getFirst().getEto()));
+			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, this.plan.getFirst()));
 			this.plan.addFirst(waypoint.clone());
 		}
 	}
@@ -793,7 +793,8 @@ public class RRTreePlanner extends AbstractPlanner {
 	protected boolean compute() {
 		this.createSamplingShape();
 		
-		for (int i = 0; i < this.maxIterations; i++) {
+		int iteration = 0;
+		while ((!this.isInGoalRegion()) && (this.getMaxIterations() > iteration)) {
 			// sample a new waypoint
 			RRTreeWaypoint sample = this.sampleBiased();
 			
@@ -810,16 +811,21 @@ public class RRTreePlanner extends AbstractPlanner {
 			
 			// check goal region
 			if ((Status.TRAPPED != status) && this.isInGoalRegion()) {
+				// avoid feasibility issues connecting to newest sample only
 				this.setGoal(this.getNewestWaypoint());
 				this.connectPlan();
-				return true;
 			}
+		
+			iteration++;
 		}
 		
 		this.disposeSamplingShape();
 		
-		Logging.logger().info("no trajectory found after " + this.getMaxIterations() + " iterations");
-		return false;
+		if (!this.isInGoalRegion()) {
+			Logging.logger().info("no trajectory found after " + this.getMaxIterations() + " iterations");
+		}
+		
+		return this.isInGoalRegion();
 	}
 	
 	/**

@@ -232,13 +232,13 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	@Override
 	protected boolean compute() {
 		this.createSamplingShape();
-
+		
 		for (int i = 0; i < this.getMaxIterations(); i++) {
 			// sample a new waypoint
 			RRTreeWaypoint sample = this.sampleBiased();
 			
 			// connect to or extend towards sample according to strategy
-			Status status;
+			Status status = Status.TRAPPED;
 			switch (this.getStrategy()) {
 			case CONNECT:
 				status = this.connectRRT(sample);
@@ -260,8 +260,13 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 				
 				if (this.isInGoalRegion()
 						&& (endWaypoint.getCost() < this.getGoal().getCost())) {
-					this.setGoal(endWaypoint);
-					this.connectPlan(this.getGoal());
+					// update goal for cost comparison
+					this.getGoal().setParent(endWaypoint);
+					this.getGoal().setEto(endWaypoint.getEto());
+					this.getGoal().setCost(endWaypoint.getCost());
+					
+					// avoid feasibility issues connecting to newest sample only
+					this.connectPlan();
 					this.revisePlan(this.createTrajectory());
 				}
 			}

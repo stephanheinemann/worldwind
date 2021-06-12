@@ -112,6 +112,18 @@ public class HRRTreePlanner extends RRTreePlanner {
 	}
 	
 	/**
+	 * Gets the newest hRRT waypoint added to the tree.
+	 * 
+	 * @return the newest hRRT waypoint added to the tree
+	 * 
+	 * @see RRTreePlanner#getNewestWaypoint()
+	 */
+	@Override
+	public HRRTreeWaypoint getNewestWaypoint() {
+		return (HRRTreeWaypoint) super.getNewestWaypoint();
+	}
+	
+	/**
 	 * Creates a hRRT waypoint at a specified position.
 	 * 
 	 * @param position the position
@@ -353,9 +365,9 @@ public class HRRTreePlanner extends RRTreePlanner {
 	protected Status connectRRT(RRTreeWaypoint waypoint) {
 		Status status = Status.ADVANCED;
 		
-		while (status == Status.ADVANCED && !this.isInGoalRegion(this.getNewestWaypoint())) {
+		while ((Status.ADVANCED == status) && (!this.isInGoalRegion(this.getNewestWaypoint()))) {
 			status = this.extendRRT(waypoint);
-			this.setNearestWaypoint((HRRTreeWaypoint) this.getNewestWaypoint());
+			this.setNearestWaypoint(this.getNewestWaypoint());
 		}
 		
 		return status;
@@ -376,11 +388,11 @@ public class HRRTreePlanner extends RRTreePlanner {
 		Optional<Edge> extension = this.createExtension(this.getNearestWaypoint(), waypoint);
 		
 		if (extension.isPresent()) {
-			HRRTreeWaypoint newestWaypoint = (HRRTreeWaypoint) this.getNewestWaypoint();
-			double maximumCost = Math.max(quality.getMaximumCost(), newestWaypoint.getF());
-			this.quality.setMaximumCost(maximumCost);
+			this.getQuality().setMaximumCost(Math.max(
+					this.getQuality().getMaximumCost(),
+					this.getNewestWaypoint().getF()));
 			
-			if (newestWaypoint.equals(waypoint)) {
+			if (this.getNewestWaypoint().equals(waypoint)) {
 				status = Status.REACHED;
 			} else {
 				status = Status.ADVANCED;
@@ -406,8 +418,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 		Optional<Edge> extension = super.createExtension(treeWaypoint, sampledWaypoint);
 		
 		if (extension.isPresent()) {
-			HRRTreeWaypoint newestWaypoint = (HRRTreeWaypoint) this.getNewestWaypoint();
-			newestWaypoint.setH(this.computeHeuristic(newestWaypoint, this.getGoal()));
+			this.getNewestWaypoint().setH(this.computeHeuristic(
+					this.getNewestWaypoint(), this.getGoal()));
 		}
 		
 		return extension;
@@ -449,11 +461,11 @@ public class HRRTreePlanner extends RRTreePlanner {
 	protected boolean compute() {
 		this.createSamplingShape();
 		
-		for (int i = 0; i < this.getMaxIterations(); i++) {
-			HRRTreeWaypoint sample = null;
-			Status status = Status.TRAPPED;
+		int iteration = 0;
+		while ((!this.isInGoalRegion()) && (this.getMaxIterations() > iteration)) {
 			
 			// select a new sample
+			HRRTreeWaypoint sample = null;
 			switch (this.getAlgorithm()) {
 			case BkRRT:
 				sample = this.selectWaypointBk();
@@ -467,6 +479,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 			}
 			
 			// connect to or extend towards sample according to strategy
+			Status status = Status.TRAPPED;
 			switch (this.getStrategy()) {
 			case CONNECT:
 				status = this.connectRRT(sample);
@@ -478,16 +491,21 @@ public class HRRTreePlanner extends RRTreePlanner {
 			
 			// check goal region
 			if ((Status.TRAPPED != status) && this.isInGoalRegion()) {
+				// avoid feasibility issues connecting to newest sample only
 				this.setGoal(this.getNewestWaypoint());
 				this.connectPlan();
-				return true;
 			}
+			
+			iteration++;
 		}
 		
 		this.disposeSamplingShape();
 		
-		Logging.logger().info("no trajectory found after " + this.getMaxIterations() + " iterations");
-		return false;
+		if (!this.isInGoalRegion()) {
+			Logging.logger().info("no trajectory found after " + this.getMaxIterations() + " iterations");
+		}
+		
+		return this.isInGoalRegion();
 	}
 	
 	/**
