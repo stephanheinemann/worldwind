@@ -30,25 +30,25 @@
 package com.cfar.swim.worldwind.planners.rrt.arrt;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.function.ToDoubleFunction;
-import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.AnytimePlanner;
 import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.planning.Trajectory;
-import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.planners.rrt.ARRTreeProperties;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
@@ -56,23 +56,16 @@ import gov.nasa.worldwind.util.Logging;
 /**
  * Realizes an anytime RRT planner that plans a trajectory of an aircraft in an
  * environment considering a local cost and risk policy. The planner provides
- * various solutions depending on the deliberating time it is given and it
- * continuously improves the cost of each solution by a given factor.
+ * continuously improving solutions as long as deliberation time is available.
  * 
  * @author Manuel Rosa
  * @author Stephan Heinemann
  *
  */
 public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
-
-	// least distance (distance bias) to least cost (cost bias)
-	// sampling: q_target :- h(q_start, q_target) + h(q_target, q_goal) < cost bound
-	// selection: k-nearest: priority order (1 - improvement factor) cost bound,  distance bias -= dd, cost bias += dc
-	// expansion: fast attempts versus large sets
-	// sample attempts for target could increase with increasing cost bias (function of cost bias)
 	
 	/** the limit of neighbors to consider for extension  */
-	private int neighborLimit = 5; // [1, Integer.MAX_VALUE]
+	private int neighborLimit = 5;
 	
 	/** the initial relative weight of costs to calculate the cost of a waypoint */
 	private double initialCostBias = 0d;
@@ -119,11 +112,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * Gets the start ARRT waypoint of this ARRT planner.
 	 * 
 	 * @return the start ARRT waypoint of this ARRT planner
-	 * 
-	 * @see RRTreePlanner#getStart()
 	 */
 	@Override
-	public ARRTreeWaypoint getStart() {
+	protected ARRTreeWaypoint getStart() {
 		return (ARRTreeWaypoint) super.getStart();
 	}
 	
@@ -131,11 +122,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * Gets the goal ARRT waypoint of this ARRT planner.
 	 * 
 	 * @return the goal ARRT waypoint of this ARRT planner
-	 * 
-	 * @see RRTreePlanner#getGoal()
 	 */
 	@Override
-	public ARRTreeWaypoint getGoal() {
+	protected ARRTreeWaypoint getGoal() {
 		return (ARRTreeWaypoint) super.getGoal();
 	}
 	
@@ -143,18 +132,16 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * Gets the newest ARRT waypoint added to the tree.
 	 * 
 	 * @return the newest ARRT waypoint added to the tree
-	 * 
-	 * @see RRTreePlanner#getNewestWaypoint()
 	 */
 	@Override
-	public ARRTreeWaypoint getNewestWaypoint() {
+	protected ARRTreeWaypoint getNewestWaypoint() {
 		return (ARRTreeWaypoint) super.getNewestWaypoint();
 	}
 	
 	/**
 	 * Creates an ARRT waypoint at a specified position.
 	 * 
-	 * @param position the position
+	 * @param position the position in globe coordinates
 	 * 
 	 * @return the ARRT waypoint at the specified position
 	 */
@@ -257,6 +244,29 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	}
 	
 	/**
+	 * Determines whether or not this ARRT planner has achieved the maximum
+	 * quality. The maximum quality has been achieved if the computed
+	 * trajectory does not satisfy the cost bound while the cost bias has
+	 * reached its maximum.
+	 * 
+	 * @return true if this ARRT planner has achieved the maximum quality,
+	 *         false otherwise
+	 * 
+	 * @see AnytimePlanner#hasMaximumQuality()
+	 */
+	@Override
+	public boolean hasMaximumQuality() {
+		boolean hasMaximumQuality = false;
+		
+		if (this.hasGoal()) {
+			hasMaximumQuality = (this.getCostBound() < this.getGoal().getCost())
+				&& (this.getCostBias() >= this.getMaximumQuality());
+		}
+		
+		return hasMaximumQuality;
+	}
+	
+	/**
 	 * Gets the quality improvement of this ARRT planner.
 	 * 
 	 * @return the quality improvement of this ARRT planner
@@ -323,21 +333,34 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	}
 	
 	/**
-	 * Gets the step used to modify the distance and cost biases.
+	 * Gets the step used to shift the distance and cost biases.
 	 * 
-	 * @return the step used to modify the distance and cost biases
+	 * @return the step used to shift the distance and cost biases
 	 */
 	protected double getStep() {
 		return this.step;
 	}
 	
 	/**
-	 * Sets the step used to modify the distance and cost biases.
+	 * Sets the step used to shift the distance and cost biases.
 	 * 
-	 * @param step the step used to modify the distance and cost biases
+	 * @param step the step used to shift the distance and cost biases
 	 */
 	protected void setStep(double step) {
 		this.step = step;
+	}
+	
+	/**
+	 * Updates the cost and distance biases applied by this ARRT planner.
+	 * Shifts the bias from distance to cost by a single step.
+	 */
+	protected void updateBiases() {
+		double costBias = this.getCostBias() + step;
+		costBias = (costBias > this.getMaximumQuality()) ? this.getMaximumQuality() : costBias;
+		costBias = (costBias < this.getMinimumQuality()) ? this.getMinimumQuality() : costBias;
+		
+		this.setCostBias(costBias);
+		this.setDistanceBias(1d - costBias);
 	}
 	
 	/**
@@ -356,6 +379,16 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected void setCostBound(double costBound) {
 		this.costBound = costBound;
+	}
+	
+	/**
+	 * Updates the cost bound of trajectories planned by this ARRT planner.
+	 * Tightens (decreases) the cost of the last found trajectory by the
+	 * quality improvement factor to determine the updated cost bound.
+	 */
+	protected void updateCostBound() {
+		this.setCostBound((1d - this.getQualityImprovement())
+				* this.getGoal().getCost());
 	}
 	
 	/**
@@ -514,7 +547,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			Optional<Edge> extension = this.createExtension(neighbor, target);
 			
 			if (extension.isPresent()) {
-				if (this.getNewestWaypoint().getF() < this.getCostBound()) {
+				// ensure all extensions satisfy the current cost bound
+				if (this.getNewestWaypoint().getF() <= this.getCostBound()) {
 					if (this.getNewestWaypoint().equals(target)) {
 						return Status.REACHED;
 					} else {
@@ -554,124 +588,13 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		return extension;
 	}
 	
-	// TODO: review from here...
-	
 	/**
-	 * Checks whether or not the current solution can be considered as having the
-	 * maximum improvement possible.
-	 * 
-	 * @param costOld the old cost
-	 * 
-	 * @return true if improvements reached a maximum, false otherwise
-	 */
-	protected boolean isImproved(double costOld) {
-		return this.isImproved(costOld, getGoal().getCost());
-	}
-	
-	protected boolean isImproved(double costOld, double costNew) {
-		double costDiff = (costOld - costNew) / costOld;
-		return costDiff <= getQualityImprovement() && getCostBias() >= getMaximumQuality();
-	}
-
-	/**
-	 * Updates the cost value bounding the next solution to be generated.
-	 */
-	protected void updateCostBound() {
-		this.setCostBound((1 - improvementFactor) * getGoal().getCost());
-	}
-	
-	/**
-	 * Updates the relative weights of distances and costs with default step.
-	 */
-	protected void updateWeights() {
-		this.updateWeights(getStep());
-	}
-
-	/**
-	 * Updates the relative weights of distances and costs with a certain value.
-	 * 
-	 * @param step the bias shift step
-	 */
-	// TODO: priority order should be encoded in the key of waypoints making
-	// explicit sorting unnecessary
-	protected void updateWeights(double step) {
-		double costBias = this.getCostBias() + step;
-		costBias = costBias > this.getMaximumQuality() ? this.getMaximumQuality() : costBias;
-		costBias = costBias < this.getMinimumQuality() ? this.getMinimumQuality() : costBias;
-
-		this.setCostBias(costBias);
-		this.setDistanceBias(1 - costBias);
-	}
-	
-	// TODO: review anytime backup options
-	// TODO: there is no real tree and backups can be done as private class
-	// TODO: the applicable inflation factor and key method should be stored in a ARRTWaypoint
-	
-	/**
-	 * Saves the current data in the planner and environment to an anytime tree.
-	 * 
-	 * @param tree the tree where to save the current data
-	 */
-	@SuppressWarnings("unchecked")
-	protected void saveToTree(ARRTree tree) {
-		//tree.setWaypointList((ArrayList<RRTreeWaypoint>) ((ArrayList<RRTreeWaypoint>) this.getWaypointList()).clone());
-		ArrayList<RRTreeWaypoint> waypoints = new ArrayList<RRTreeWaypoint>();
-		for (Position position : this.getEnvironment().getVertexIterable()) {
-			waypoints.add((RRTreeWaypoint) position);
-		}
-		tree.setWaypointList(waypoints);
-		
-		//tree.setEdgeList((ArrayList<Edge>) ((ArrayList<Edge>) this.getEnvironment().getEdgeIterable()()).clone());
-		ArrayList<Edge> edges = new ArrayList<Edge>();
-		for (Edge edge : this.getEnvironment().getEdgeIterable()) {
-			edges.add(edge);
-		}
-		tree.setEdgeList(edges);
-				
-		tree.setPlan((LinkedList<Waypoint>) ((LinkedList<Waypoint>) this.getPlan()).clone());
-		tree.setDistBias(this.getDistanceBias());
-		tree.setCostBias(this.getCostBias());
-		tree.setCostBound(this.getCostBound());
-	}
-
-	/**
-	 * Loads the data from an anytime tree to the current planner.
-	 * 
-	 * @param tree the tree from where to load the data
-	 */
-	protected void loadFromTree(ARRTree tree) {
-		// TODO: adding vertices explicitly is not required
-		
-		//this.setWaypointList(tree.getWaypointList());
-		for (RRTreeWaypoint waypoint : tree.getWaypointList()) {
-			this.getEnvironment().addVertex(waypoint);
-		}
-		
-		//this.setEdgeList(tree.getEdgeList());
-		for (Edge edge : tree.getEdgeList()) {
-			this.getEnvironment().addEdge(edge);
-		}
-		
-		//this.setPlan(tree.getPlan());
-		for (Waypoint waypoint : tree.getPlan()) {
-			this.getPlan().add(waypoint);
-		}
-		
-		this.setDistanceBias(tree.getDistBias());
-		this.setCostBias(tree.getCostBias());
-		this.setCostBound(tree.getCostBound());
-	}
-	
-	/**
-	 * Initializes the planner to plan from an origin to a destination at a
-	 * specified estimated time of departure.
+	 * Initializes this ARRT planner to plan from an origin to a destination at
+	 * a specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
-	 * 
-	 * @see RRTreePlanner#initialize(Position origin, Position destination,
-	 *      ZonedDateTime etd)
 	 */
 	@Override
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
@@ -679,6 +602,10 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		
 		this.getGoal().setH(0d);
 		this.getStart().setH(this.computeHeuristic(getStart(), getGoal()));
+		
+		this.setCostBias(this.getMinimumQuality());
+		this.setDistanceBias(1d - this.getCostBias());
+		this.setCostBound(Double.POSITIVE_INFINITY);
 	}
 	
 	/**
@@ -703,6 +630,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 					// update goal for cost bound calculation
 					this.getGoal().setEto(this.getNewestWaypoint().getEto());
 					this.getGoal().setCost(this.getNewestWaypoint().getCost());
+					this.getGoal().setParent(this.getNewestWaypoint().getParent());
 					// avoid feasibility issues connecting to newest sample only
 					this.connectPlan();
 				}
@@ -723,6 +651,51 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	}
 	
 	/**
+	 * Improves an ARRT plan incrementally.
+	 * 
+	 * @param partIndex the index of the plan part to be improved
+	 * 
+	 */
+	protected void improve(int partIndex) {
+		this.getEnvironment().clearVertices();
+		this.getEnvironment().addVertex(this.getStart());
+		this.setNewestWaypoint(this.getStart());
+		
+		if (this.compute()) {
+			this.revisePlan(this.createTrajectory());
+			this.updateCostBound();
+		}
+		
+		this.updateBiases();
+	}
+	
+	/**
+	 * Elaborates an ARRT plan.
+	 * 
+	 * @param partIndex the index of the plan part to be elaborated
+	 */
+	protected void elaborate(int partIndex) {
+		while (!this.hasMaximumQuality()) {
+			this.improve(partIndex);
+		}
+	}
+	
+	/**
+	 * Plans a part of a trajectory. Improves the planned part incrementally
+	 * until a maximum quality has been achieved.
+	 * 
+	 * @param partIndex the index of the part
+	 * 
+	 * @return the planned part of a trajectory
+	 */
+	@Override
+	protected Trajectory planPart(int partIndex) {
+		super.planPart(partIndex);
+		this.elaborate(partIndex);
+		return this.createTrajectory();
+	}
+	
+	/**
 	 * Plans a trajectory from an origin to a destination at a specified estimated
 	 * time of departure.
 	 * 
@@ -738,55 +711,11 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initialize(origin, destination, etd);
-
-		// TODO: part of initialize?
-		this.setCostBias(this.getMinimumQuality());
-		this.setDistanceBias(1 - this.getCostBias());
-		this.setCostBound(Double.POSITIVE_INFINITY);
-
-		Trajectory trajectory = new Trajectory();
-
-		// Anytime variables
-		boolean newPlan;
-		double costOld = Double.POSITIVE_INFINITY;
-
-		// Auxiliary Trees
-		ARRTree treeR = new ARRTree(), treeT = new ARRTree();
-		treeT.setCostBias(this.getMinimumQuality());
-		treeT.setDistBias(1 - this.getCostBias());
-		treeT.setCostBound(Double.POSITIVE_INFINITY);
-
-		do {
-			this.clearExpendables();
-			this.getEnvironment().addVertex(getStart());
-			this.setNewestWaypoint(getStart());
-
-			costOld = this.getGoal().getCost();
-			newPlan = this.compute();
-
-			this.saveToTree(treeT);
-
-			if (newPlan) {
-				trajectory = this.createTrajectory();
-				this.revisePlan(trajectory);
-
-				treeR.clone(treeT);
-
-				this.updateWeights();
-				this.updateCostBound();
-				treeT.setBiases(this.getDistanceBias(), this.getCostBias());
-				treeT.setCostBound(this.getCostBound());
-
-			} else {
-				this.updateWeights();
-				treeT.setBiases(this.getDistanceBias(), this.getCostBias());
-			}
-
-		} while ((!isImproved(costOld)));
-
+		Trajectory trajectory = this.planPart(0);
+		this.revisePlan(trajectory);
 		return trajectory;
 	}
-
+	
 	/**
 	 * Plans a trajectory from an origin to a destination along waypoints at a
 	 * specified estimated time of departure.
@@ -796,117 +725,48 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @param waypoints the waypoints in globe coordinates
 	 * @param etd the estimated time of departure
 	 * 
-	 * @return the planned trajectory from the origin to the destination along the
-	 *         waypoints with the estimated time of departure
+	 * @return the planned trajectory from the origin to the destination along
+	 *         the waypoints with the estimated time of departure
 	 * 
 	 * @see RRTreePlanner#plan(Position, Position, List, ZonedDateTime)
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-
-		// Multiple-waypoint-plan variables
-		LinkedList<Waypoint> plan = new LinkedList<>();
-		Waypoint currentOrigin, currentDestination;
-		ZonedDateTime currentEtd;
-		Trajectory trajectory;
-
-		// collect intermediate destinations
-		ArrayList<Waypoint> destinations = waypoints.stream().map(Waypoint::new)
-				.collect(Collectors.toCollection(ArrayList::new));
-		destinations.add(new Waypoint(destination));
-
-		// Auxiliary Trees
-		ARRTree[] treeR = new ARRTree[destinations.size()], treeT = new ARRTree[destinations.size()];
-		for (int i = 0; i < destinations.size(); i++) {
-			treeR[i] = new ARRTree();
-			treeT[i] = new ARRTree();
-			treeT[i].setCostBias(this.getMinimumQuality());
-			treeT[i].setDistBias(1 - this.getCostBias());
-			treeT[i].setCostBound(Double.POSITIVE_INFINITY);
-		}
-
-		// Anytime variables
-		Trajectory part;
-		boolean newPlan, newPart, allImproved = false;
-		double costOld = Double.POSITIVE_INFINITY, costNew = Double.POSITIVE_INFINITY;
-
-		this.setCostBias(this.getMinimumQuality());
-		this.setDistanceBias(1 - this.getCostBias());
-
-		// Create new trajectories until all paths are considered improved
-		while (!allImproved) {
-			System.out.println("Outer loop");
-			// reset boolean values
-			allImproved = true;
-			newPlan = false;
-
-			currentOrigin = new Waypoint(origin);
-			currentEtd = etd;
-			plan.clear();
-
-			// plan and concatenate partial trajectories
-			for (int i = 0; i < destinations.size(); i++) {
-				this.loadFromTree(treeT[i]);
-				if (treeR[i].getPlan().isEmpty())
-					costOld = Double.POSITIVE_INFINITY;
-				else
-					costOld = treeR[i].getPlan().peekLast().getCost();
-
-				currentDestination = destinations.get(i);
-				this.initialize(currentOrigin, currentDestination, currentEtd);
-
-				newPart = this.compute();
-
-				this.saveToTree(treeT[i]);
-
-				if (newPart) {
-					treeR[i].clone(treeT[i]);
-
-					this.updateWeights();
-					this.updateCostBound();
-					treeT[i].setBiases(this.getDistanceBias(), this.getCostBias());
-					treeT[i].setCostBound(this.getCostBound());
-
-				} else {
-					this.updateWeights();
-					treeT[i].setBiases(this.getDistanceBias(), this.getCostBias());
-				}
-
-				// newPlan must be true when at least one segment has a new plan
-				newPlan = newPlan || newPart;
-
-				// allImporved is true only when all segments are improved
-				// TODO: NPE observed here (empty plan)
-				costNew = treeR[i].getPlan().peekLast().getCost();
-				allImproved = allImproved && this.isImproved(costOld, costNew);
-
-				part = this.createTrajectory(treeR[i].getPlan());
-				// append partial trajectory to plan
-				if ((!plan.isEmpty()) && (!part.isEmpty())) {
-					//part.pollFirst();
-					part.withoutFirst();
-				}
-				for (Waypoint waypoint : part.getWaypoints()) {
-					plan.add(waypoint);
-				}
-
-				// set current origin from last waypoint in plan to be used in next iteration
-				currentOrigin = plan.peekLast();
-				currentEtd = currentOrigin.getEto();
-			}
-
-			// if the plan was modified
-			if (newPlan) {
-				// create trajectory from plan
-				trajectory = this.createTrajectory(plan);
-				this.revisePlan(trajectory);
-			}
-		}
-
-		trajectory = this.createTrajectory(plan);
-		this.revisePlan(trajectory);
-		return trajectory;
-
+		return super.plan(origin, destination, waypoints, etd);
 	}
-
+	
+	/**
+	 * Determines whether or not this ARRT planner matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this ARRT planner matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see AbstractPlanner#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = false;
+		
+		if ((null != specification) && (specification.getProperties() instanceof ARRTreeProperties)) {
+			ARRTreeProperties arrtp = (ARRTreeProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(arrtp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(arrtp.getRiskPolicy()))
+					&& (this.getBias() == arrtp.getBias())
+					&& (this.getEpsilon() == arrtp.getEpsilon())
+					&& (this.getExtension() == arrtp.getExtension())
+					&& (this.getGoalThreshold() == arrtp.getGoalThreshold())
+					&& (this.getMaxIterations() == arrtp.getMaxIterations())
+					&& (this.getSampling() == arrtp.getSampling())
+					&& (this.getStrategy() == arrtp.getStrategy())
+					&& (this.getMaximumQuality() == arrtp.getMaximumQuality())
+					&& (this.getMinimumQuality() == arrtp.getMaximumQuality())
+					&& (this.getNeighborLimit() == arrtp.getNeighborLimit())
+					&& (this.getQualityImprovement() == arrtp.getQualityImprovement())
+					&& (specification.getId().equals(Specification.PLANNER_ARRT_ID));
+		}
+		
+		return matches;
+	}
 }

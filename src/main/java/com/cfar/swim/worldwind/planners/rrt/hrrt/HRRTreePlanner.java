@@ -91,11 +91,9 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * Gets the start hRRT waypoint of this hRRT planner.
 	 * 
 	 * @return the start hRRT waypoint of this hRRT planner
-	 * 
-	 * @see RRTreePlanner#getStart()
 	 */
 	@Override
-	public HRRTreeWaypoint getStart() {
+	protected HRRTreeWaypoint getStart() {
 		return (HRRTreeWaypoint) super.getStart();
 	}
 	
@@ -103,11 +101,9 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * Gets the goal hRRT waypoint of this hRRT planner.
 	 * 
 	 * @return the goal hRRT waypoint of this hRRT planner
-	 * 
-	 * @see RRTreePlanner#getGoal()
 	 */
 	@Override
-	public HRRTreeWaypoint getGoal() {
+	protected HRRTreeWaypoint getGoal() {
 		return (HRRTreeWaypoint) super.getGoal();
 	}
 	
@@ -115,18 +111,16 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * Gets the newest hRRT waypoint added to the tree.
 	 * 
 	 * @return the newest hRRT waypoint added to the tree
-	 * 
-	 * @see RRTreePlanner#getNewestWaypoint()
 	 */
 	@Override
-	public HRRTreeWaypoint getNewestWaypoint() {
+	protected HRRTreeWaypoint getNewestWaypoint() {
 		return (HRRTreeWaypoint) super.getNewestWaypoint();
 	}
 	
 	/**
 	 * Creates a hRRT waypoint at a specified position.
 	 * 
-	 * @param position the position
+	 * @param position the position in globe coordinates
 	 * 
 	 * @return the hRRT waypoint at the specified position
 	 */
@@ -522,7 +516,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
-		if (matches && (specification.getProperties() instanceof HRRTreeProperties)) {
+		if ((null != specification) && (specification.getProperties() instanceof HRRTreeProperties)) {
 			HRRTreeProperties hrrtp = (HRRTreeProperties) specification.getProperties();
 			matches = (this.getCostPolicy().equals(hrrtp.getCostPolicy()))
 					&& (this.getRiskPolicy().equals(hrrtp.getRiskPolicy()))

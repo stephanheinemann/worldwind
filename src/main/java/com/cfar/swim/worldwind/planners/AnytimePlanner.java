@@ -77,6 +77,15 @@ public interface AnytimePlanner extends Planner {
 	public void setMaximumQuality(double maxQuality);
 	
 	/**
+	 * Determines whether or not this anytime planner has achieved the maximum
+	 * quality.
+	 * 
+	 * @return true if this anytime planner has achieved the maximum quality,
+	 *         false otherwise
+	 */
+	public boolean hasMaximumQuality();
+	
+	/**
 	 * Gets the required quality improvement between consecutively issued plans
 	 * employed by this anytime planner.
 	 * 

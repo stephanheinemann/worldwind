@@ -340,7 +340,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 				double partInflation = this.getInflation();
 				this.setInflation(this.getMaximumQuality());
 				this.restore(partIndex -1);
-				this.planPart(this.getStart(), this.getGoal(), null, partIndex - 1);
+				this.planPart(partIndex - 1);
 				// TODO: what if no plan could be found
 				partStart.setEto(this.getGoal().getEto());
 				partStart.setParent(this.getGoal().getParent());
@@ -383,7 +383,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
 				}
-				super.planPart(this.getStart(), this.getGoal(), partStart.getEto(), partIndex);
+				super.planPart(partIndex);
 			}
 		}
 	}
@@ -564,7 +564,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	@Override
 	protected void elaborate(int partIndex) {
 		// proceed to next part only if fully deflated and not in need of repair
-		while ((!this.isDeflated() || this.needsRepair()) && !this.hasTerminated()) {
+		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
 			this.repair(partIndex);
 			this.improve(partIndex);
 		}
@@ -573,32 +573,22 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	}
 	
 	/**
-	 * Plans a part of a trajectory from an origin to a destination at a
-	 * specified estimated time of departure. If origin is the goal of the
-	 * current plan, then the resulting plan will be the trajectory from
-	 * the start of the current plan to the specified destination. Repairs
-	 * and improves an existing trajectory incrementally if required.
+	 * Plans a part of a trajectory. Repairs and improves the planned part
+	 * incrementally if required until a maximum quality has been achieved.
 	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param etd the estimated time of departure
 	 * @param partIndex the index of the part
 	 * 
-	 * @return the planned trajectory from origin at the estimated time of
-	 *         departure or the start leading to origin in the current plan to
-	 *         the destination
-	 * 
-	 * @see ARAStarPlanner#planPart(Position, Position, ZonedDateTime, int)
-	 */
+	 * @return the planned part of a trajectory
+	 */ 
 	@Override
-	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
+	protected Trajectory planPart(int partIndex) {
 		if (this.hasBackup(partIndex)) {
 			// repair and improve existing plan after dynamic changes
 			this.elaborate(partIndex);
 			return this.createTrajectory();
 		} else {
 			// plan from scratch
-			return super.planPart(origin, destination, etd, partIndex);
+			return super.planPart(partIndex);
 		}
 	}
 	
@@ -622,7 +612,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 		this.initialize(origin, destination, etd);
 		
 		while (!this.hasTerminated()) {
-			trajectory = this.planPart(origin, destination, etd, 0);
+			trajectory = this.planPart(0);
 			this.revisePlan(trajectory);
 			// wait for termination or dynamic changes
 			this.suspend();

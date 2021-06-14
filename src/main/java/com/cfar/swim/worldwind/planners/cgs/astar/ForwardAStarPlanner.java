@@ -752,22 +752,14 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Plans a part of a trajectory from an origin to a destination at a
-	 * specified estimated time of departure. If origin is the goal of the
-	 * current plan, then the resulting plan will be the trajectory from
-	 * the start of the current plan to the specified destination.
+	 * Plans a part of a trajectory.
 	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param etd the estimated time of departure
 	 * @param partIndex the index of the part
 	 * 
-	 * @return the planned trajectory from origin at the estimated time of
-	 *         departure or the start leading to origin in the current plan to
-	 *         the destination
+	 * @return the planned part of a trajectory
 	 * 
 	 */
-	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
+	protected Trajectory planPart(int partIndex) {
 		this.compute();
 		return this.createTrajectory();
 	}
@@ -788,7 +780,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initialize(origin, destination, etd);
-		Trajectory trajectory = this.planPart(origin, destination, etd, 0);
+		Trajectory trajectory = this.planPart(0);
 		this.revisePlan(trajectory);
 		return trajectory;
 	}
@@ -829,6 +821,9 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				 * becomes the start waypoint of the next part and the basis
 				 * for any subsequent plan revisions. A possible repair of one
 				 * part requires the re-computation of all subsequent parts.
+				 * This cost-greedy solution does not necessarily result in
+				 * optimality with respect to the overall cost of the computed
+				 * multi-part plan.
 				 * 
 				 * https://github.com/stephanheinemann/worldwind/issues/24
 				 */
@@ -842,7 +837,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				if (currentOrigin.hasParent()) {
 					this.getStart().setParent(currentOrigin.getParent());
 				}
-				this.planPart(currentOrigin, currentDestination, currentEtd, partIndex);
+				this.planPart(partIndex);
 				
 				if ((!this.hasWaypoints()) || (!this.getLastWaypoint().equals(currentDestination))) {
 					// if no plan could be found, return an empty trajectory

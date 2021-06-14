@@ -227,11 +227,6 @@ public class Trajectory extends Path implements Depictable {
 		return Iterables.getLast(this.getWaypoints(), null);
 	}
 	
-	public Trajectory withoutFirst() {
-		// TODO: review RRT planner (and remove)
-		return new Trajectory(Iterables.skip(this.getWaypoints(), 1));
-	}
-	
 	/**
 	 * Gets the depiction of this trajectory.
 	 * 

@@ -137,7 +137,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	/**
 	 * Creates a RRT waypoint at a specified position.
 	 * 
-	 * @param position the position
+	 * @param position the position in globe coordinates
 	 * 
 	 * @return the RRT waypoint at the specified position
 	 */
@@ -150,7 +150,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the start RRT waypoint of this RRT planner
 	 */
-	public RRTreeWaypoint getStart() {
+	protected RRTreeWaypoint getStart() {
 		return this.start;
 	}
 
@@ -159,8 +159,17 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @param start the start RRT waypoint of this RRT planner
 	 */
-	public void setStart(RRTreeWaypoint start) {
+	protected void setStart(RRTreeWaypoint start) {
 		this.start = start;
+	}
+	
+	/**
+	 * Determines whether or not this RRT planner has a start waypoint.
+	 * 
+	 * @return true if this RRT planner has a start waypoint, false otherwise
+	 */
+	protected boolean hasStart() {
+		return (null != this.start);
 	}
 
 	/**
@@ -168,7 +177,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the goal RRT waypoint of this RRT planner
 	 */
-	public RRTreeWaypoint getGoal() {
+	protected RRTreeWaypoint getGoal() {
 		return this.goal;
 	}
 
@@ -177,8 +186,17 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @param goal the goal RRT waypoint of this RRT planner
 	 */
-	public void setGoal(RRTreeWaypoint goal) {
+	protected void setGoal(RRTreeWaypoint goal) {
 		this.goal = goal;
+	}
+	
+	/**
+	 * Determines whether or not this RRT planner has a goal waypoint.
+	 * 
+	 * @return true if this RRT planner has a goal waypoint, false otherwise
+	 */
+	protected boolean hasGoal() {
+		return (null != this.goal);
 	}
 	
 	/**
@@ -186,7 +204,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the newest RRT waypoint added to the tree
 	 */
-	public RRTreeWaypoint getNewestWaypoint() {
+	protected RRTreeWaypoint getNewestWaypoint() {
 		return this.newestWaypoint;
 	}
 	
@@ -195,7 +213,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @param newestWaypoint the newest RRT waypoint added to the tree
 	 */
-	public void setNewestWaypoint(RRTreeWaypoint newestWaypoint) {
+	protected void setNewestWaypoint(RRTreeWaypoint newestWaypoint) {
 		this.newestWaypoint = newestWaypoint;
 	}
 	
@@ -358,12 +376,55 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Gets the current plan produced by this RRT planner
-	 *
-	 * @return the current plan produced by this RRT planner
+	 * Gets the first waypoint of the current plan.
+	 * 
+	 * @return the first waypoint of the current plan
 	 */
-	protected List<Waypoint> getPlan() {
-		return this.plan;
+	protected Waypoint getFirstWaypoint() {
+		return this.plan.getFirst();
+	}
+	
+	/**
+	 * Gets the last waypoint of the current plan.
+	 * 
+	 * @return the last waypoint of the current plan
+	 */
+	protected Waypoint getLastWaypoint() {
+		return this.plan.getLast();
+	}
+	
+	/**
+	 * Adds a first waypoint to the current plan.
+	 * 
+	 * @param waypoint the first waypoint to be added to the current plan
+	 */
+	protected void addFirstWaypoint(Waypoint waypoint) {
+		this.plan.addFirst(waypoint);
+	}
+	
+	/**
+	 * Clears the waypoints of the current plan.
+	 */
+	protected void clearWaypoints() {
+		this.plan.clear();
+	}
+	
+	/**
+	 * Determines whether or not the current plan has waypoints.
+	 * 
+	 * @return true if the current plan has waypoints, false otherwise
+	 */
+	protected boolean hasWaypoints() {
+		return !this.plan.isEmpty();
+	}
+	
+	/**
+	 * Gets the waypoints of the current plan.
+	 * 
+	 * @return the waypoints of the current plan
+	 */
+	protected List<Waypoint> getWaypoints() {
+		return Collections.unmodifiableList(this.plan);
 	}
 	
 	/**
@@ -371,7 +432,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected void clearExpendables() {
 		this.getEnvironment().clearVertices();
-		this.getPlan().clear();
+		this.clearWaypoints();
 	}
 	
 	/**
@@ -389,15 +450,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @param waypoint the RRT waypoint of a computed plan
 	 */
 	protected void connectPlan(RRTreeWaypoint waypoint) {
-		this.plan.clear();
+		this.clearWaypoints();
 		waypoint.setTtg(Duration.ZERO);
 		waypoint.setDtg(0d);
-		this.plan.addFirst(waypoint.clone());
+		this.addFirstWaypoint(waypoint.clone());
 		while (waypoint.hasParent()) {
 			waypoint = waypoint.getParent();
-			waypoint.setTtg(Duration.between(waypoint.getEto(), this.plan.getFirst().getEto()));
-			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, this.plan.getFirst()));
-			this.plan.addFirst(waypoint.clone());
+			waypoint.setTtg(Duration.between(waypoint.getEto(), this.getFirstWaypoint().getEto()));
+			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, this.getFirstWaypoint()));
+			this.addFirstWaypoint(waypoint.clone());
 		}
 	}
 	
@@ -408,21 +469,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	@SuppressWarnings("unchecked")
 	protected Trajectory createTrajectory() {
-		return new Trajectory(
-				Collections.unmodifiableList((List<Waypoint>) this.plan.clone()));
-	}
-	
-	/**
-	 * Creates a trajectory from a particular plan.
-	 * 
-	 * @param plan the plan from which the trajectory is created
-	 * 
-	 * @return the trajectory of the plan
-	 */
-	@SuppressWarnings("unchecked")
-	protected Trajectory createTrajectory(LinkedList<Waypoint> plan) {
-		return new Trajectory(
-				Collections.unmodifiableList((List<Waypoint>) plan.clone()));
+		return new Trajectory(Collections.unmodifiableList((List<Waypoint>) this.plan.clone()));
 	}
 	
 	/**
@@ -829,6 +876,18 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Plans a part of a trajectory.
+	 * 
+	 * @param partIndex the index of the part
+	 * 
+	 * @return the planned part of a trajectory
+	 */
+	protected Trajectory planPart(int partIndex) {
+		this.compute();
+		return this.createTrajectory();
+	}
+	
+	/**
 	 * Plans a trajectory from an origin to a destination at a specified estimated
 	 * time of departure.
 	 * 
@@ -843,12 +902,9 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-		// TODO: consecutive planning attempts may lead to empty trajectories (bug)
 		this.initialize(origin, destination, etd);
-		this.compute();
-		Trajectory trajectory = this.createTrajectory();
+		Trajectory trajectory = this.planPart(0);
 		this.revisePlan(trajectory);
-		
 		return trajectory;
 	}
 	
@@ -861,55 +917,65 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @param waypoints the waypoints in globe coordinates
 	 * @param etd the estimated time of departure
 	 * 
-	 * @return the planned trajectory from the origin to the destination along the
-	 *         waypoints with the estimated time of departure
+	 * @return the planned trajectory from the the origin to the destination
+	 *         along the waypoints with the estimated time of departure
 	 * 
 	 * @see Planner#plan(Position, Position, List, ZonedDateTime)
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		LinkedList<Waypoint> plan = new LinkedList<>();
-		Waypoint currentOrigin = new Waypoint(origin);
+		RRTreeWaypoint currentOrigin = this.createWaypoint(origin);
 		ZonedDateTime currentEtd = etd;
 		
 		// collect intermediate destinations
-		ArrayList<Waypoint> destinations = waypoints.stream().map(Waypoint::new)
+		ArrayList<RRTreeWaypoint> destinations = waypoints.stream()
+				.map(w -> this.createWaypoint(w))
 				.collect(Collectors.toCollection(ArrayList::new));
-		destinations.add(new Waypoint(destination));
+		destinations.add(this.createWaypoint(destination));
 		
 		// plan and concatenate partial trajectories
-		for (Waypoint currentDestination : destinations) {
+		for (int partIndex = 0; partIndex < destinations.size(); partIndex++) {
+			RRTreeWaypoint currentDestination = destinations.get(partIndex);
 			if (!(currentOrigin.equals(currentDestination))) {
+				
+				/* 
+				 * Each part of a multi-part plan has to be computed completely
+				 * in order to finalize the ETO of the goal waypoint which
+				 * becomes the start waypoint of the next part and the basis
+				 * for any subsequent plan revisions. A possible repair of one
+				 * part requires the re-computation of all subsequent parts.
+				 * This cost-greedy solution does not necessarily result in
+				 * optimality with respect to the overall cost of the computed
+				 * multi-part plan.
+				 * 
+				 * https://github.com/stephanheinemann/worldwind/issues/24
+				 */
+				
 				// plan partial trajectory
 				this.initialize(currentOrigin, currentDestination, currentEtd);
-				this.compute();
-				Trajectory part = this.createTrajectory();
 				
-				// append partial trajectory to plan
-				if ((!plan.isEmpty()) && (!part.isEmpty())) {	
-					// TODO: review (connection within goal region?)
-					part = part.withoutFirst();
+				// connect part to previous part via goal parent for trajectory
+				// generation
+				if (currentOrigin.hasParent()) {
+					this.getStart().setParent(currentOrigin.getParent());
 				}
+				this.planPart(partIndex);
 				
-				for (Waypoint waypoint : part.getWaypoints()) {
-					plan.add(waypoint);
-				}
-				
-				if (plan.isEmpty() || plan.peekLast().equals(currentOrigin)) {
-					// if no plan could be found, return an empty trajectory
-					Trajectory trajectory = new Trajectory();
-					this.revisePlan(trajectory);
-					return trajectory;
-				} else {
-					currentOrigin = plan.peekLast();
+				if (this.hasWaypoints()) {
+					// revise growing trajectory for each part
+					this.revisePlan(this.createTrajectory());
+					currentOrigin = this.getGoal();
 					currentEtd = currentOrigin.getEto();
+				} else {
+					// if no plan could be found, return an empty trajectory
+					Trajectory empty = new Trajectory();
+					this.revisePlan(empty);
+					return empty;
 				}
 			}
 		}
 		
-		Trajectory trajectory = this.createTrajectory(plan);
-		this.revisePlan(trajectory);
-		return trajectory;
+		return this.createTrajectory();
 	}
 	
 	/**

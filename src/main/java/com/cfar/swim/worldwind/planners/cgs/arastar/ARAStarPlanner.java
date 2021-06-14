@@ -158,6 +158,20 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	}
 	
 	/**
+	 * Determines whether or not this ARA* planner has achieved the maximum
+	 * quality.
+	 * 
+	 * @return true if this ARA* planner has achieved the maximum quality,
+	 *         false otherwise
+	 * 
+	 * @see AnytimePlanner#hasMaximumQuality()
+	 */
+	@Override
+	public boolean hasMaximumQuality() {
+		return this.isDeflated();
+	}
+	
+	/**
 	 * Gets the quality improvement (deflation amount) of this ARA* planner.
 	 * 
 	 * @return the quality improvement (deflation amount) of this ARA* planner
@@ -541,32 +555,22 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @param partIndex the index of the plan part to be elaborated
 	 */
 	protected void elaborate(int partIndex) {
-		while (!this.isDeflated()) {
+		while (!this.hasMaximumQuality()) {
 			this.improve(partIndex);
 		}
 	}
 	
 	/**
-	 * Plans a part of a trajectory from an origin to a destination at a
-	 * specified estimated time of departure. If origin is the goal of the
-	 * current plan, then the resulting plan will be the trajectory from
-	 * the start of the current plan to the specified destination. Improves
-	 * the computed trajectory incrementally.
+	 * Plans a part of a trajectory. Improves the planned part incrementally
+	 * until a maximum quality has been achieved.
 	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param etd the estimated time of departure
 	 * @param partIndex the index of the part
 	 * 
-	 * @return the planned trajectory from origin at the estimated time of
-	 *         departure or the start leading to origin in the current plan to
-	 *         the destination
-	 * 
-	 * @see ForwardAStarPlanner#planPart(Position, Position, ZonedDateTime, int)
+	 * @return the planned part of a trajectory
 	 */
 	@Override
-	protected Trajectory planPart(Position origin, Position destination, ZonedDateTime etd, int partIndex) {
-		super.planPart(origin, destination, etd, partIndex);
+	protected Trajectory planPart(int partIndex) {
+		super.planPart(partIndex);
 		this.elaborate(partIndex);
 		return this.createTrajectory();
 	}
@@ -588,7 +592,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		this.initBackups(1);
 		this.initialize(origin, destination, etd);
-		Trajectory trajectory = this.planPart(origin, destination, etd, 0);
+		Trajectory trajectory = this.planPart(0);
 		this.revisePlan(trajectory);
 		return trajectory;
 	}
