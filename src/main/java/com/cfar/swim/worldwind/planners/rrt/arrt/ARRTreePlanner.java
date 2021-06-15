@@ -64,34 +64,31 @@ import gov.nasa.worldwind.util.Logging;
  */
 public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	
-	/** the limit of neighbors to consider for extension  */
+	/** the limit of neighbors to consider for extension by this ARRT planner */
 	private int neighborLimit = 5;
 	
-	/** the initial relative weight of costs to calculate the cost of a waypoint */
+	/** the initial cost bias of this ARRT planner */
 	private double initialCostBias = 0d;
 	
-	/** the final relative weight of costs to calculate the cost of a waypoint */
+	/** the final cost bias of this ARRT planner */
 	private double finalCostBias = 1d;
 	
-	/** the improvement factor for the cost of each new generated solution */
+	/** the cost improvement of consecutive plans of this ARRT planner */
 	private double improvementFactor = 0.05d;
 	
-	/** the relative weight of distances to calculate the cost of a waypoint */
+	/** the current distance bias (initially high) of this ARRT planner */
 	private double distanceBias = 1d;
 	
-	/** the relative weight of costs to calculate the cost of a waypoint */
+	/** the current cost bias (initially low) of this ARRT planner */
 	private double costBias = 0d;
 	
-	/** the step used to modify the relative weights of distances and costs */
-	// TODO: separate attribute (improvement factor not sufficient)?
-	// TODO: should be defined proportionally to improvementFactor/initialBias
-	private double step = 0.2d; // step =(finalCostBias -initialCostBias)/4
+	/** the step used by this ARRT planner to shift from distance to cost bias */
+	private double step = 0.1d;
 	
-	/** the cost value bounding any new solution to be generated */
+	/** the current cost bound to be satisfied by plans of this ARRT planner */
 	private double costBound = Double.POSITIVE_INFINITY;
 	
-	/** the maximum number of sampling attempts per iteration of uniform sampling */
-	// TODO: review calculation depending on cost bound
+	/** the current maximum number of sampling attempts of this ARRT planner */
 	private int maxSamplingAttempts = 50;
 	
 	/**
@@ -105,7 +102,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	public ARRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		// TODO: review default setup
 	}
 	
 	/**
@@ -203,8 +199,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	public void setMinimumQuality(double initialCostBias) {
 		if ((0d <= initialCostBias) && (this.getMaximumQuality() >= initialCostBias)) {
 			this.initialCostBias = initialCostBias;
-			// TODO: review step calculation
-			this.step = (this.finalCostBias - this.initialCostBias) / 4d;
+			this.step = (this.finalCostBias - this.initialCostBias) / 10d;
 		} else {
 			throw new IllegalArgumentException("initial cost bias is invalid");
 		}
@@ -236,8 +231,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	public void setMaximumQuality(double finalCostBias) {
 		if ((this.getMinimumQuality() <= finalCostBias) && (1d >= finalCostBias)) {
 			this.finalCostBias = finalCostBias;
-			// TODO: review step calculation
-			this.step = (this.finalCostBias - this.initialCostBias) / 4d;
+			this.step = (this.finalCostBias - this.initialCostBias) / 10d;
 		} else {
 			throw new IllegalArgumentException("final cost bias is invalid");
 		}
@@ -355,12 +349,23 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * Shifts the bias from distance to cost by a single step.
 	 */
 	protected void updateBiases() {
-		double costBias = this.getCostBias() + step;
-		costBias = (costBias > this.getMaximumQuality()) ? this.getMaximumQuality() : costBias;
-		costBias = (costBias < this.getMinimumQuality()) ? this.getMinimumQuality() : costBias;
+		// delta cost bias
+		double dq = this.getMaximumQuality() - this.getMinimumQuality();
+		// optimal cost fraction
+		double fc = this.getStart().getH() / this.getCostBound();
 		
-		this.setCostBias(costBias);
-		this.setDistanceBias(1d - costBias);
+		// adjust cost bias to current cost bound
+		double minCostBias = fc * dq;
+		if (this.getCostBias() < minCostBias) {
+			this.setCostBias(minCostBias);
+		} else {
+			double costBias = this.getCostBias() + this.getStep();
+			costBias = (costBias > this.getMaximumQuality()) ? this.getMaximumQuality() : costBias;
+			costBias = (costBias < this.getMinimumQuality()) ? this.getMinimumQuality() : costBias;
+			this.setCostBias(costBias);
+		}
+		
+		this.setDistanceBias(1d - this.getCostBias());
 	}
 	
 	/**
@@ -387,8 +392,14 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * quality improvement factor to determine the updated cost bound.
 	 */
 	protected void updateCostBound() {
-		this.setCostBound((1d - this.getQualityImprovement())
-				* this.getGoal().getCost());
+		double costBound = (1d - this.getQualityImprovement())
+				* this.getGoal().getCost();
+		
+		if (this.getStart().getH() > costBound) {
+			this.setCostBound(this.getStart().getH());
+		} else {
+			this.setCostBound(costBound);
+		}
 	}
 	
 	/**
@@ -510,7 +521,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			// TODO: increase sampling attempts with lower cost bound
 			while ((this.getCostBound() < sample.getP())
 					&& (this.getMaxSamplingAttempts() > sampleAttempt)) {
-				// TODO: sampling space could be further constrained according to cost bound
+				// TODO: sampling space could be further constrained
+				// according to cost bound
 				sample = (ARRTreeWaypoint) this.sample();
 				sample.setH(this.computeHeuristic(sample, this.getGoal()));
 				sample.setP(this.computeCompositeHeuristic(sample));
@@ -543,7 +555,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 				this.getEnvironment().findNearest(target, this.getNeighborLimit()));
 		
 		for (ARRTreeWaypoint neighbor : neighbors) {
-			// TODO: several extensions (connect versus extend)?
+			// TODO: single versus several extensions towards lower cost bound
 			Optional<Edge> extension = this.createExtension(neighbor, target);
 			
 			if (extension.isPresent()) {
@@ -654,7 +666,6 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * Improves an ARRT plan incrementally.
 	 * 
 	 * @param partIndex the index of the plan part to be improved
-	 * 
 	 */
 	protected void improve(int partIndex) {
 		this.getEnvironment().clearVertices();
@@ -769,4 +780,5 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		
 		return matches;
 	}
+	
 }
