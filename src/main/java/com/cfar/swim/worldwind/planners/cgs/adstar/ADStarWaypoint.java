@@ -248,7 +248,9 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	 * AD* waypoints are equal, then ties are broken in favor of higher
 	 * estimated current costs (g-values) or under-consistent costs (v-values),
 	 * and earlier ETOs. If the other waypoint is not an AD* waypoint, then the
-	 * natural order of general waypoints applies.
+	 * natural order of general waypoints applies. Note that this
+	 * implementation is *not* consistent with equals and, therefore, sorted
+	 * sets cannot be used with waypoints.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 

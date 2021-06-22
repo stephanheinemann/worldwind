@@ -1260,6 +1260,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 */
 	@Override
 	public synchronized void submitObstacleChange(Set<Obstacle> obstacles) {
+		// TODO: removing obstacles (negative cost interval)
 		this.pendingObstacles.addAll(obstacles);
 		this.pendingObstacles.removeAll(this.obstacles);
 		// only notify dynamic obstacle listener about new obstacles
@@ -1278,6 +1279,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 */
 	@Override
 	public synchronized Set<Obstacle> commitObstacleChange() {
+		// TODO: removing obstacles (negative cost interval)
 		Set<Obstacle> committedObstacles = new HashSet<Obstacle>();
 		for (Obstacle obstacle : this.pendingObstacles) {
 			if (!this.getObstacles().contains(obstacle)) {

@@ -54,7 +54,9 @@ import gov.nasa.worldwind.geom.Position;
 
 /**
  * Realizes an Anytime Replanning A* planner (ARA*) that plans a trajectory of
- * an aircraft in an environment considering a local cost and risk policy.
+ * an aircraft in an environment considering a local cost and risk policy. The
+ * planner continuously improves and revises plans according to the desired
+ * quality as long as deliberation time is available.
  * 
  * @author Stephan Heinemann
  *

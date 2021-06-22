@@ -195,7 +195,8 @@ public class AStarWaypoint extends Waypoint {
 	 * A* waypoints are equal, then ties are broken in favor of higher
 	 * estimated current costs (g-values) and earlier ETOs. If the other
 	 * waypoint is not an A* waypoint, then the natural order of general
-	 * waypoints applies.
+	 * waypoints applies. Note that this implementation is *not* consistent
+	 * with equals and, therefore, sorted sets cannot be used with waypoints.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 

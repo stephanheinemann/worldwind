@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.planners.rrt.brrt;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -42,6 +43,7 @@ import java.util.stream.Collectors;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.aircraft.CapabilitiesException;
+import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
@@ -69,7 +71,7 @@ import gov.nasa.worldwind.util.Logging;
 /**
  * Realizes a basic RRT planner that plans a trajectory of an aircraft in an
  * environment considering a local cost and risk policy. The origin of the tree
- * is the departure position and it is grown until the goal is reached.
+ * is the departure position and it is grown until the goal region is reached.
  * 
  * @author Manuel Rosa
  * @author Stephan Heinemann
@@ -403,6 +405,24 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Adds a last waypoint to the current plan.
+	 * 
+	 * @param waypoint the last waypoint to be added to the current plan
+	 */
+	protected void addLastWaypoint(Waypoint waypoint) {
+		this.plan.addLast(waypoint);
+	}
+	
+	/**
+	 * Adds all waypoints to the current plan.
+	 * 
+	 * @param waypoints the waypoints to be added to the current plan
+	 */
+	protected void addAllWaypoints(Collection<Waypoint> waypoints) {
+		this.plan.addAll(waypoints);
+	}
+	
+	/**
 	 * Clears the waypoints of the current plan.
 	 */
 	protected void clearWaypoints() {
@@ -451,14 +471,10 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected void connectPlan(RRTreeWaypoint waypoint) {
 		this.clearWaypoints();
-		waypoint.setTtg(Duration.ZERO);
-		waypoint.setDtg(0d);
-		this.addFirstWaypoint(waypoint.clone());
-		while (waypoint.hasParent()) {
+		// only connect plan from reached goal featuring ETO
+		while ((null != waypoint) && (waypoint.hasEto())) {
+			this.addFirstWaypoint(waypoint);
 			waypoint = waypoint.getParent();
-			waypoint.setTtg(Duration.between(waypoint.getEto(), this.getFirstWaypoint().getEto()));
-			waypoint.setDtg(this.getEnvironment().getDistance(waypoint, this.getFirstWaypoint()));
-			this.addFirstWaypoint(waypoint.clone());
 		}
 	}
 	
@@ -467,9 +483,24 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the trajectory of the computed plan of this RRT planner
 	 */
-	@SuppressWarnings("unchecked")
 	protected Trajectory createTrajectory() {
-		return new Trajectory(Collections.unmodifiableList((List<Waypoint>) this.plan.clone()));
+		LinkedList<RRTreeWaypoint> waypoints = new LinkedList<>();
+		
+		this.plan.descendingIterator()
+			.forEachRemaining(waypoint -> {
+				RRTreeWaypoint current = (RRTreeWaypoint) waypoint.clone();
+				if (waypoints.isEmpty()) {
+					current.setTtg(Duration.ZERO);
+					current.setDtg(0d);
+				} else {
+					// TODO: consider time and distance to next versus to goal waypoint
+					current.setTtg(Duration.between(current.getEto(), waypoints.getFirst().getEto()));
+					current.setDtg(this.getEnvironment().getDistance(current, waypoints.getFirst()));
+				}
+				waypoints.addFirst(current);
+			});
+		
+		return new Trajectory(Collections.unmodifiableList(waypoints));
 	}
 	
 	/**
@@ -643,28 +674,34 @@ public class RRTreePlanner extends AbstractPlanner {
 		}
 		
 		RRTreeWaypoint endWaypoint = this.createWaypoint(position);
-		endWaypoint.setParent(treeWaypoint);
 		
-		try {
-			// check extension feasibility according to aircraft capabilities
-			this.computeEto(treeWaypoint, endWaypoint);
-			
-			// TODO: integrate NASA terrain and jBullet for conflict checks
-			// TODO: review if dedicated terrain (man-made) obstacles are required
-			// TODO: consider safe altitude and distance (except take-off and landing?)
-			// TODO: consider waypoint actions (take-off, land, hold) and delays
-			// check extension and edge conflict with environment (terrain)
-			if (this.getStart().equals(treeWaypoint) || this.isInGoalRegion(endWaypoint) ||
-					!(this.getEnvironment().collidesTerrain(treeWaypoint, endWaypoint))) {
-				Edge edge = new Edge(this.getEnvironment(), treeWaypoint, endWaypoint);
-				this.getEnvironment().addEdge(edge);
-				extension = Optional.of(edge);
-				this.computeCost(treeWaypoint, endWaypoint);
-				this.setNewestWaypoint(endWaypoint);
+		// enforce tree structure by avoiding cycles
+		if (this.getEnvironment().findVertex(endWaypoint).isEmpty()) {
+			try {
+				// check extension feasibility according to aircraft capabilities
+				this.computeEto(treeWaypoint, endWaypoint);
+				
+				// TODO: integrate NASA terrain and jBullet for conflict checks
+				// TODO: review if dedicated terrain (man-made) obstacles are required
+				// TODO: consider safe altitude and distance (except take-off and landing?)
+				// TODO: consider waypoint actions (take-off, land, hold) and delays
+				// check extension and edge conflict with environment (terrain)
+				if (this.getStart().equals(treeWaypoint)
+						|| this.isInGoalRegion(endWaypoint)
+						|| !(this.getEnvironment().collidesTerrain(
+								treeWaypoint, endWaypoint))) {
+					treeWaypoint.addChild(endWaypoint);
+					endWaypoint.setParent(treeWaypoint);
+					DirectedEdge edge = new DirectedEdge(
+							this.getEnvironment(), treeWaypoint, endWaypoint);
+					this.getEnvironment().addEdge(edge);
+					extension = Optional.of(edge);
+					this.computeCost(treeWaypoint, endWaypoint);
+					this.setNewestWaypoint(endWaypoint);
+				}
+			} catch (CapabilitiesException ce) {
+				Logging.logger().info(ce.getMessage());
 			}
-			
-		} catch (CapabilitiesException ce) {
-			Logging.logger().info(ce.getMessage());
 		}
 		
 		return extension;
@@ -888,15 +925,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Plans a trajectory from an origin to a destination at a specified estimated
-	 * time of departure.
+	 * Plans a trajectory from an origin to a destination at a specified
+	 * estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
 	 * 
-	 * @return the planned trajectory from the origin to the destination with the
-	 *         estimated time of departure
+	 * @return the planned trajectory from the origin to the destination with
+	 *         the estimated time of departure
 	 * 
 	 * @see Planner#plan(Position, Position, ZonedDateTime)
 	 */

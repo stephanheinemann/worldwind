@@ -38,13 +38,15 @@ import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
-import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.DynamicEnvironment;
+import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.DynamicPlanner;
+import com.cfar.swim.worldwind.planners.LifelongPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
+import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -59,11 +61,14 @@ import gov.nasa.worldwind.render.Path;
 /**
  * Realizes an Anytime Dynamic A* planner (AD*) that plans a trajectory of
  * an aircraft in an environment considering a local cost and risk policy.
+ * The planner can cope with partial environment knowledge efficiently
+ * improving, repairing and revising plans accordingly.
  * 
  * @author Stephan Heinemann
  *
  */
-public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
+public class ADStarPlanner extends ARAStarPlanner
+implements DynamicPlanner, LifelongPlanner {
 	
 	/** indicates whether or or not this AD* planner has terminated */
 	private boolean terminated = false;
@@ -267,6 +272,33 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	}
 	
 	/**
+	 * Finds the waypoints that are affected by the dynamic obstacles of this
+	 * AD* planner.
+	 * 
+	 * @return the waypoints that are affected by the dynamic obstacles of this
+	 *         AD* planner
+	 */
+	protected Set<ADStarWaypoint> findAffectedWaypoints() {
+		Set<ADStarWaypoint> affectedWaypoints = new HashSet<>();
+		
+		for (Obstacle obstacle : this.dynamicObstacles) {
+			affectedWaypoints.addAll(
+					((DynamicEnvironment) this.getEnvironment())
+					.getAffectedWaypointPositions(obstacle).stream()
+					.map(position -> this.createWaypoint(position))
+					.filter(waypoint -> waypoint.hasEto() && waypoint.hasParent())
+					.filter(waypoint -> obstacle.getCostInterval().intersects(
+							new TimeInterval(
+									waypoint.getParent().getEto(),
+									waypoint.getEto())))
+					.collect(Collectors.toSet()));
+		}
+		this.dynamicObstacles.clear();
+		
+		return affectedWaypoints;
+	}
+	
+	/**
 	 * Repairs the estimated cost of a specified target AD* waypoint when
 	 * reached via a specified source AD* waypoint.
 	 * 
@@ -349,20 +381,6 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 				this.restore(partIndex);
 			}
 			
-			// determine waypoints affected by obstacles
-			Set<ADStarWaypoint> affectedWaypoints = new HashSet<>();
-			for (Obstacle obstacle : this.dynamicObstacles) {
-				affectedWaypoints.addAll(
-						((DynamicEnvironment) this.getEnvironment())
-						.getAffectedWaypointPositions(obstacle)
-						.stream()
-						.map(position -> this.createWaypoint(position))
-						.filter(waypoint -> waypoint.hasEto())
-						.filter(waypoint -> obstacle.getCostInterval().contains(waypoint.getEto()))
-						.collect(Collectors.toSet()));
-			}
-			this.dynamicObstacles.clear();
-			
 			// TODO: consider departure slots to avoid planning from scratch
 			// TODO: consider early arrivals with holding / loitering
 			if (this.getStart().getEto().equals(partStart.getEto())) {
@@ -370,8 +388,9 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
 				}
+				
 				// repair affected waypoints for current part
-				for (ADStarWaypoint target : affectedWaypoints) {
+				for (ADStarWaypoint target : this.findAffectedWaypoints()) {
 					if (!this.getStart().equals(target)) {
 						this.repair(target);
 						this.updateSets(target);
@@ -430,7 +449,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	/**
 	 * Terminates this AD* planner.
 	 * 
-	 * @see DynamicPlanner#terminate()
+	 * @see LifelongPlanner#terminate()
 	 */
 	@Override
 	public synchronized void terminate() {
@@ -441,8 +460,9 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	/**
 	 * Recycles this AD* planner.
 	 * 
-	 * @see DynamicPlanner#recycle()
+	 * @see LifelongPlanner#recycle()
 	 */
+	@Override
 	public synchronized void recycle() {
 		this.terminated = false;
 	}
@@ -452,7 +472,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * 
 	 * @return true if this AD* planner has terminated, false otherwise
 	 * 
-	 * @see DynamicPlanner#hasTerminated()
+	 * @see LifelongPlanner#hasTerminated()
 	 */
 	@Override
 	public synchronized boolean hasTerminated() {
@@ -466,6 +486,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * 
 	 * @see DynamicPlanner#getSignificantChange()
 	 */
+	@Override
 	public double getSignificantChange() {
 		return this.significantChange;
 	}
@@ -480,6 +501,7 @@ public class ADStarPlanner extends ARAStarPlanner implements DynamicPlanner {
 	 * @throws IllegalArgumentException if significant change threshold is
 	 *                                  invalid
 	 */
+	@Override
 	public void setSignificantChange(double significantChange) {
 		if ((0d <= significantChange) && (1d >= significantChange)) {
 			this.significantChange = significantChange;

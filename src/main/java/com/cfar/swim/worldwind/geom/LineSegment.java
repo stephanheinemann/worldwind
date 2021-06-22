@@ -402,12 +402,12 @@ public class LineSegment /* extends Line */ implements Renderable {
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public final boolean equals(Object o) {
+	public boolean equals(Object o) {
 		boolean equals = false;
 
 		if (this == o) {
 			equals = true;
-		} else if ((null != o) && (o instanceof LineSegment)) {
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
 			LineSegment segment = (LineSegment) o;
 			equals = this.isEndpoint(segment.getFirst())
 					&& this.isEndpoint(segment.getSecond());
@@ -424,7 +424,7 @@ public class LineSegment /* extends Line */ implements Renderable {
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public final int hashCode() {
+	public int hashCode() {
 		return Objects.hash(this.getFirst(), this.getSecond());
 	}
 	

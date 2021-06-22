@@ -1402,6 +1402,7 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 		// cells are of different size (different level in the hierarchy)
 		double distance = this.getNormalizedDistance(origin, destination);
 		
+		// TODO: consider environment air-data intervals
 		// compute cost of each adjacent cell
 		for (PlanningGrid segmentCell : segmentCells) {
 			// add all (weighted) cost of the cell

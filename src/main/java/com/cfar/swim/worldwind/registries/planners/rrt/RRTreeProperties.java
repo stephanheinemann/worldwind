@@ -47,6 +47,7 @@ import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
  * Realizes the properties bean of a basic RRT planner.
  * 
  * @author Manuel Rosa
+ * @author Stephan Heinemann
  *
  */
 public class RRTreeProperties extends AbstractPlannerProperties {

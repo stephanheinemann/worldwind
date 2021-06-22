@@ -38,26 +38,6 @@ package com.cfar.swim.worldwind.planners;
  * 
  */
 public interface DynamicPlanner extends Planner, DynamicObstacleListener {
-
-	// TODO: merge with and check for PRM/RTT interface
-	// TODO: consider LifeLongPlanner interface
-	
-	/**
-	 * Terminates this dynamic planner.
-	 */
-	public void terminate();
-	
-	/**
-	 * Recycles this dynamic planner.
-	 */
-	public void recycle();
-	
-	/**
-	 * Indicates whether or not this dynamic planner has terminated.
-	 * 
-	 * @return true if this dynamic planner has terminated, false otherwise
-	 */
-	public boolean hasTerminated();
 	
 	/**
 	 * Gets the significant change threshold of this dynamic planner.

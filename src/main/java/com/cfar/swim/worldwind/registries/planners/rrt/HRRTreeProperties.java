@@ -45,6 +45,7 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  * Realizes the properties bean of a heuristic RRT planner.
  * 
  * @author Manuel Rosa
+ * @author Stephan Heinemann
  *
  */
 public class HRRTreeProperties extends RRTreeProperties {

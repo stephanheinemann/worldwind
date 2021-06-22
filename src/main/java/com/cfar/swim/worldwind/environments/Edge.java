@@ -56,8 +56,8 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
- * Realizes an edge of a roadmap or tree within a continuum based on two
- * sampled positions featuring temporal costs.
+ * Realizes an edge of a roadmap or tree within a planning continuum based on
+ * two sampled positions featuring temporal costs.
  * 
  * @author Henrique Ferreira
  * @author Manuel Rosa
@@ -73,7 +73,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	// (top level) shape. Alternatively all continuums could be ellipsoids with
 	// the line segment end points at their foci.
 	
-	/** the continuum of this edge */
+	/** the planning continuum of this edge */
 	private PlanningContinuum continuum = null;
 	
 	/** the first end position of this edge */

@@ -27,70 +27,56 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planners.rrt.arrt;
-
-import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeWaypoint;
+package com.cfar.swim.worldwind.environments;
 
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes an ARRT waypoint of a trajectory planned by ARRT planners.
+ * Realizes a directed edge within a planning continuum based on two sampled
+ * positions featuring temporal costs.
  * 
  * @author Stephan Heinemann
  *
  */
-public class ARRTreeWaypoint extends HRRTreeWaypoint {
-	
-	/** the estimated path cost (composite heuristic) via this ARRT waypoint */
-	private double p = Double.POSITIVE_INFINITY;
-	
+public class DirectedEdge extends Edge {
+
 	/**
-	 * Constructs an ARRT waypoint at a specified position.
+	 * Constructs a new directed edge within a planning continuum based on two
+	 * end positions.
 	 * 
-	 * @param position the position in globe coordinates
+	 * @param continuum the planning continuum containing this directed edge
+	 * @param first the first end position of this directed edge
+	 * @param second the second end position of this directed edge
 	 * 
-	 * @see HRRTreeWaypoint#HRRTreeWaypoint(Position)
+	 * @see Edge#Edge(PlanningContinuum, Position, Position)
 	 */
-	public ARRTreeWaypoint(Position position) {
-		super(position);
+	public DirectedEdge(PlanningContinuum continuum, Position first, Position second) {
+		super(continuum, first, second);
 	}
 	
 	/**
-	 * Gets the parent ARRT waypoint of this ARRT waypoint.
+	 * Determines whether or not this directed edge equals another directed
+	 * edge based on their end positions.
 	 * 
-	 * @return the parent ARRT waypoint of this ARRT waypoint
+	 * @param o the other directed edge
 	 * 
-	 * @see HRRTreeWaypoint#getParent()
+	 * @return true if the end positions of this directed edge equal the end
+	 *         positions of the other directed edge (with regard to order),
+	 *         false otherwise
+	 * 
+	 * @see Edge#equals(Object)
 	 */
 	@Override
-	public ARRTreeWaypoint getParent() {
-		return (ARRTreeWaypoint) super.getParent();
-	}
-	
-	/**
-	 * Gets the estimated path cost (composite heuristic) via this ARRT
-	 * waypoint.
-	 * 
-	 * @return the estimated path cost (composite heuristic) via this ARRT
-	 *         waypoint 
-	 */
-	public double getP() {
-		return this.p;
-	}
-	
-	/**
-	 * Sets the estimated path cost (composite heuristic) via this ARRT
-	 * waypoint.
-	 * 
-	 * @param p the estimated path cost (composite heuristic) to be set
-	 * 
-	 * @throws IllegalArgumentException if p is less than 0
-	 */
-	public void setP(double p) {
-		if (0d > p) {
-			throw new IllegalArgumentException("p is less than 0");
+	public boolean equals(Object o) {
+		boolean equals = super.equals(o);
+
+		if (equals) {
+			DirectedEdge de = (DirectedEdge) o;
+			equals = this.getFirstPosition().equals((de.getFirstPosition()))
+					&& this.getSecondPosition().equals((de.getSecondPosition()));
 		}
-		this.p = p;
+
+		return equals;
 	}
 	
 }

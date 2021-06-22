@@ -34,6 +34,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -54,10 +55,8 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.WeightedCostInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
-//import com.cfar.swim.worldwind.render.TerrainObstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
-//import com.cfar.swim.worldwind.render.airspaces.TerrainBox;
 
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Angle;
@@ -565,6 +564,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		
 		if (edge.isPresent()) {
 			double distance = this.getNormalizedDistance(origin, destination);
+			// TODO: consider environment air-data intervals
 			double cost = edge.get().calculateCost(start, end, costPolicy, riskPolicy);
 			stepCost = distance * cost;
 		} else {
@@ -626,6 +626,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 					this.getGlobe(), this.getResolution());
 			// TODO: check position altitudes (ASL versus AGL)
 			// TODO: include safe height and distance
+			// TODO: include buildings (man-made obstacles)
 			collidesTerrain = (null != terrain.intersect(origin, destination));
 		}
 		
@@ -651,7 +652,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 			if (!this.isEmbedded(obstacle) && this.intersects(obstacle.getExtent(this.globe))) {
 				this.addCostInterval(obstacle.getCostInterval());
 				this.obstacles.add(obstacle);
-				this.embedEdges(obstacle);
+				this.attachToEdges(obstacle);
 				embedded = true;
 			}
 		} else {
@@ -677,6 +678,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		if (this.isEmbedded(obstacle)) {
 			this.removeCostInterval(obstacle.getCostInterval());
 			this.obstacles.remove(obstacle);
+			this.detachFromEdges(obstacle);
 			unembedded = true;
 		}
 		
@@ -694,6 +696,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		while (obstaclesIterator.hasNext()) {
 			Obstacle obstacle = obstaclesIterator.next();
 			this.removeCostInterval(obstacle.getCostInterval());
+			this.detachFromEdges(obstacle);
 			obstaclesIterator.remove();
 		}
 	}
@@ -1339,7 +1342,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	public void removeVertex(Position vertex) {
 		this.vertices.remove(vertex);
 		// implicitly remove edges to maintain structural integrity
-		this.edges.removeAll(this.edges.stream()
+		this.removeEdges(this.edges.stream()
 				.filter(e -> e.isEndPosition(vertex))
 				.collect(Collectors.toSet()));
 	}
@@ -1377,11 +1380,11 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
-	 * Gets an iterable for the vertices of this planning continuum.
+	 * Gets the vertices of this planning continuum.
 	 * 
-	 * @return an iterable for the vertices of this planning continuum
+	 * @return the vertices of this planning continuum
 	 */
-	public Iterable<Position> getVertexIterable() {
+	public Iterable<Position> getVertices() {
 		return this.vertices;
 	}
 	
@@ -1440,6 +1443,17 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
+	 * Removes edges from this planning continuum.
+	 * 
+	 * @param edges the edges to be removed
+	 */
+	public void removeEdges(Collection<Edge> edges) {
+		if (this.edges.removeAll(edges)) {
+			this.notifyStructuralChangeListeners();
+		}
+	}
+	
+	/**
 	 * Removes all edges from this planning continuum.
 	 */
 	public void clearEdges() {
@@ -1472,11 +1486,11 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
-	 * Gets an iterable for the edges of this planning continuum.
+	 * Gets the edges of this planning continuum.
 	 * 
-	 * @return an iterable for the edges of this planning continuum
+	 * @return the edges of this planning continuum
 	 */
-	public Iterable<Edge> getEdgeIterable() {
+	public Iterable<Edge> getEdges() {
 		return this.edges;
 	}
 	
@@ -1496,14 +1510,27 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
-	 * Embeds an obstacle into the affected edges of this planning continuum.
+	 * Attaches an obstacle to the affected edges of this planning continuum.
 	 * 
-	 * @param obstacle the obstacle to be embedded
+	 * @param obstacle the obstacle to be attached
 	 */
-	protected void embedEdges(Obstacle obstacle) {
+	protected void attachToEdges(Obstacle obstacle) {
 		for (Edge edge : this.edges) {
-			if (edge.intersects(obstacle.getExtent(this.globe))) {
+			if (edge.intersects(obstacle.getExtent(this.getGlobe()))) {
 				edge.addCostInterval(obstacle.getCostInterval());
+			}
+		}
+	}
+	
+	/**
+	 * Detaches an obstacle from the affected edges of this planning continuum.
+	 * 
+	 * @param obstacle the obstacle to be detached
+	 */
+	protected void detachFromEdges(Obstacle obstacle) {
+		for (Edge edge : this.edges) {
+			if (edge.intersects(obstacle.getExtent(this.getGlobe()))) {
+				edge.removeCostInterval(obstacle.getCostInterval());
 			}
 		}
 	}

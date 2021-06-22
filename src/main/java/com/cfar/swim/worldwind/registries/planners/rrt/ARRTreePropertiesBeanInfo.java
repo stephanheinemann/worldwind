@@ -39,6 +39,7 @@ import java.util.stream.Stream;
 * each property.
 * 
 * @author Manuel Rosa
+* @author Stephan Heinemann
 *
 */
 public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {

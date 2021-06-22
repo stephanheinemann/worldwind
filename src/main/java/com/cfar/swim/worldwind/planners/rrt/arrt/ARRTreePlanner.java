@@ -55,8 +55,9 @@ import gov.nasa.worldwind.util.Logging;
 
 /**
  * Realizes an anytime RRT planner that plans a trajectory of an aircraft in an
- * environment considering a local cost and risk policy. The planner provides
- * continuously improving solutions as long as deliberation time is available.
+ * environment considering a local cost and risk policy. The planner
+ * continuously improves and revises plans according to a desired quality as
+ * long as deliberation time is available.
  * 
  * @author Manuel Rosa
  * @author Stephan Heinemann
@@ -560,15 +561,21 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			
 			if (extension.isPresent()) {
 				// ensure all extensions satisfy the current cost bound
-				if (this.getNewestWaypoint().getF() <= this.getCostBound()) {
-					if (this.getNewestWaypoint().equals(target)) {
+				ARRTreeWaypoint newest = this.getNewestWaypoint();
+				if (newest.getF() <= this.getCostBound()) {
+					if (newest.equals(target)) {
 						return Status.REACHED;
 					} else {
 						return Status.ADVANCED;
 					}
 				} else {
 					// remove too expensive vertex and associated edge
-					this.getEnvironment().removeVertex(this.getNewestWaypoint());
+					if (newest.hasParent()) {
+						newest.getParent().removeChild(newest);
+						newest.setParent(null);
+					}
+					this.getEnvironment().removeVertex(newest);
+					this.setNewestWaypoint(this.getStart());
 				}
 			}
 		}

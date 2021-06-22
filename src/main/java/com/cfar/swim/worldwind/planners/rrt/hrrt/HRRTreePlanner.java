@@ -51,9 +51,11 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
 
 /**
- * Realizes a heuristic RRT planner that considers the estimated cost of
- * waypoints during sampling and the expanding steps of a basic RRT planner in
- * order to direct the path to a more optimal solution.
+ * Realizes a heuristic RRT planner that plans a trajectory of an aircraft in
+ * an environment considering a local cost and risk policy. The planner
+ * considers the estimated cost of waypoints during the sampling and expanding
+ * steps of a basic RRT planner in order to direct the path to a more optimal
+ * solution.
  * 
  * @author Manuel Rosa
  * @author Stephan Heinemann

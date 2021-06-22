@@ -41,9 +41,10 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.planners.AnytimePlannerProperties;
 
 /**
- * Realizes the properties bean of an ARRT planner.
+ * Realizes the properties bean of an anytime RRT planner.
  * 
  * @author Manuel Rosa
+ * @author Stephan Heinemann
  *
  */
 @ARRTreeValidQuality

@@ -198,7 +198,7 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 * @param source the source waypoint with changes to be propagated
 	 */
 	protected void propagateChanges(RRTreeWaypoint source) {
-		for (Position position : this.getEnvironment().getVertexIterable()) {
+		for (Position position : this.getEnvironment().getVertices()) {
 			RRTreeWaypoint target = (RRTreeWaypoint) position;
 			if (target.hasParent() && target.getParent().equals(source)) {
 				// TODO: IAE - edge not present?, SOE - termination / cycles?

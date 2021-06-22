@@ -615,10 +615,9 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 					current.setTtg(Duration.ZERO);
 					current.setDtg(0d);
 				} else {
-					// TODO: this is not good enough and environment air-data intervals are required
 					// TODO: consider time and distance to next versus to goal waypoint
-					waypoints.getFirst().setTtg(Duration.between(current.getEto(), waypoints.getFirst().getEto()));
-					waypoints.getFirst().setDtg(this.getEnvironment().getDistance(current, waypoints.getFirst()));
+					current.setTtg(Duration.between(current.getEto(), waypoints.getFirst().getEto()));
+					current.setDtg(this.getEnvironment().getDistance(current, waypoints.getFirst()));
 				}
 				waypoints.addFirst(current);
 			});

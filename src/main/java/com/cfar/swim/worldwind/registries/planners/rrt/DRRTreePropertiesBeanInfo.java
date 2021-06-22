@@ -35,33 +35,24 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Realizes a hRRT properties bean information customizing the descriptors for
+ * Realizes a DRRT properties bean information customizing the descriptors for
  * each property.
  * 
  * @author Manuel Rosa
  * @author Stephan Heinemann
  *
  */
-public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
-	
+public class DRRTreePropertiesBeanInfo extends HRRTreePropertiesBeanInfo {
+
 	/**
-	 * Constructs a hRRT properties bean information.
+	 * Constructs a DRRT properties bean information.
 	 */
-	public HRRTreePropertiesBeanInfo() {
-		super(HRRTreeProperties.class);
+	public DRRTreePropertiesBeanInfo() {
+		super(DRRTreeProperties.class);
 	}
 	
 	/**
-	 * Constructs a hRRT properties bean information.
-	 * 
-	 * @param beanClass the properties bean class of the properties bean
-	 */
-	public HRRTreePropertiesBeanInfo(Class<? extends RRTreeProperties> beanClass) {
-		super(beanClass);
-	}
-	
-	/**
-	 * Customizes the property descriptors for each property of a hRRT
+	 * Customizes the property descriptors for each property of a DRRT
 	 * properties bean.
 	 * 
 	 * @return the array of customized property descriptors
@@ -73,34 +64,15 @@ public class HRRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
-			PropertyDescriptor algorithm = this.createPropertyDescriptor(
-					"algorithm",
-					this.dictionary.getString("property.planner.hrrt.algorithm.name"),
-					this.dictionary.getString("property.planner.hrrt.algorithm.description"),
-					this.dictionary.getString("property.planner.category.heuristic"));
-			PropertyDescriptor variant = this.createPropertyDescriptor(
-					"variant",
-					this.dictionary.getString("property.planner.hrrt.variant.name"),
-					this.dictionary.getString("property.planner.hrrt.variant.description"),
-					this.dictionary.getString("property.planner.category.heuristic"));
-			PropertyDescriptor neighborLimit = this.createPropertyDescriptor(
-					"neighborLimit",
-					this.dictionary.getString("property.planner.hrrt.neighborLimit.name"),
-					this.dictionary.getString("property.planner.hrrt.neighborLimit.description"),
-					this.dictionary.getString("property.planner.category.heuristic"));
-			PropertyDescriptor qualityBound = this.createPropertyDescriptor(
-					"qualityBound",
-					this.dictionary.getString("property.planner.hrrt.qualityBound.name"),
-					this.dictionary.getString("property.planner.hrrt.qualityBound.description"),
-					this.dictionary.getString("property.planner.category.heuristic"));
+			PropertyDescriptor significantChange = this.createPropertyDescriptor(
+					"significantChange",
+					this.dictionary.getString("property.planner.drrt.significantChange.name"),
+					this.dictionary.getString("property.planner.drrt.significantChange.description"),
+					this.dictionary.getString("property.planner.category.dynamic"));
 		
-			PropertyDescriptor[] hrrtDescriptors = new PropertyDescriptor[] {
-					algorithm,
-					variant,
-					neighborLimit,
-					qualityBound};
+			PropertyDescriptor[] drrtDescriptors = new PropertyDescriptor[] { significantChange };
 			descriptors = Stream.concat(
-					Arrays.stream(descriptors), Arrays.stream(hrrtDescriptors))
+					Arrays.stream(descriptors), Arrays.stream(drrtDescriptors))
 					.toArray(PropertyDescriptor[]::new);
 		
 		} catch (IntrospectionException e) {

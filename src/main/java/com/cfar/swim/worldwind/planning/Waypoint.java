@@ -335,6 +335,8 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	/**
 	 * Compares this waypoint to another waypoint based on their actual time
 	 * over (primary), estimated time over (secondary), position (tertiary).
+	 * Note that this implementation is *not* consistent with equals and,
+	 * therefore, sorted sets cannot be used with waypoints.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 

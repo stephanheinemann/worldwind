@@ -59,6 +59,18 @@ public class HRRTreeWaypoint extends RRTreeWaypoint {
 	}
 	
 	/**
+	 * Gets the parent hRRT waypoint of this hRRT waypoint.
+	 * 
+	 * @return the parent hRRT waypoint of this hRRT waypoint
+	 * 
+	 * @see RRTreeWaypoint#getParent()
+	 */
+	@Override
+	public HRRTreeWaypoint getParent() {
+		return (HRRTreeWaypoint) super.getParent();
+	}
+	
+	/**
 	 * Gets the estimated current cost (g-value) of this hRRT waypoint.
 	 * 
 	 * @return the estimated current cost (g-value) of this hRRT waypoint
@@ -128,7 +140,8 @@ public class HRRTreeWaypoint extends RRTreeWaypoint {
 	 * hRRT waypoints are equal, then ties are broken in favor of higher
 	 * estimated current costs (g-values) and earlier ETOs. If the other
 	 * waypoint is not an hRRT waypoint, then the natural order of general
-	 * waypoints applies.
+	 * waypoints applies. Note that this implementation is *not* consistent
+	 * with equals and, therefore, sorted sets cannot be used with waypoints.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 
@@ -143,14 +156,14 @@ public class HRRTreeWaypoint extends RRTreeWaypoint {
 		int compareTo = 0;
 		
 		if (waypoint instanceof HRRTreeWaypoint) {
-			HRRTreeWaypoint asw = (HRRTreeWaypoint) waypoint;
-			compareTo = Double.valueOf(this.getKey()).compareTo(asw.getKey());
+			HRRTreeWaypoint hrrtw = (HRRTreeWaypoint) waypoint;
+			compareTo = Double.valueOf(this.getKey()).compareTo(hrrtw.getKey());
 			if (0 == compareTo) {
 				// break ties in favor of higher G-values
-				compareTo = Double.valueOf(asw.getG()).compareTo(this.getG());
+				compareTo = Double.valueOf(hrrtw.getG()).compareTo(this.getG());
 				if ((0 == compareTo) && (this.hasEto())) {
 					// break ties in favor of lower ETOs
-					compareTo = this.getEto().compareTo(asw.getEto());
+					compareTo = this.getEto().compareTo(hrrtw.getEto());
 				}
 			}
 		} else {

@@ -29,6 +29,9 @@
  */
 package com.cfar.swim.worldwind.planners.rrt.brrt;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;
@@ -37,12 +40,16 @@ import gov.nasa.worldwind.geom.Position;
  * Realizes a RRT waypoint of a trajectory planned by RRT planners.
  * 
  * @author Manuel Rosa
+ * @author Stephan Heinemann
  *
  */
 public class RRTreeWaypoint extends Waypoint {
 
 	/** the parent RRT waypoint of this RRT waypoint in a trajectory */
 	private RRTreeWaypoint parent = null;
+	
+	/** the children RRT waypoints of this RRT waypoint in a tree */
+	private Set<RRTreeWaypoint> children = new HashSet<RRTreeWaypoint>();
 
 	/**
 	 * Constructs a RRT waypoint at a specified position.
@@ -80,6 +87,49 @@ public class RRTreeWaypoint extends Waypoint {
 	 */
 	public boolean hasParent() {
 		return (null != this.parent);
+	}
+	
+	/**
+	 * Adds a child to this RRT waypoint.
+	 * 
+	 * @param child the child to be added to this RRT waypoint
+	 */
+	public void addChild(RRTreeWaypoint child) {
+		this.children.add(child);
+	}
+	
+	/**
+	 * Removes a child from this RRT waypoint.
+	 * 
+	 * @param child the child to be removed from this RRT waypoint
+	 */
+	public void removeChild(RRTreeWaypoint child) {
+		this.children.remove(child);
+	}
+	
+	/**
+	 * Clears all children of this RRT waypoint.
+	 */
+	public void clearChildren() {
+		this.children.clear();
+	}
+	
+	/**
+	 * Determines whether or not this RRT waypoint has children.
+	 * 
+	 * @return true if this RRT waypoint has children, false otherwise
+	 */
+	public boolean hasChildren() {
+		return (0 < this.children.size());
+	}
+	
+	/**
+	 * Gets the children of this RRT waypoint.
+	 * 
+	 * @return the children of this RRT waypoint.
+	 */
+	public Iterable<RRTreeWaypoint> getChidren() {
+		return this.children;
 	}
 	
 }

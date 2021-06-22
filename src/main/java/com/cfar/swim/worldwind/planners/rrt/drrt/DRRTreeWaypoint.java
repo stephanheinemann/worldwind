@@ -27,70 +27,72 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planners.rrt.arrt;
+package com.cfar.swim.worldwind.planners.rrt.drrt;
 
 import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeWaypoint;
 
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes an ARRT waypoint of a trajectory planned by ARRT planners.
+ * Realizes a DRRT waypoint of a trajectory planned by DRRT planners.
  * 
+ * @author Manuel Rosa
  * @author Stephan Heinemann
  *
  */
-public class ARRTreeWaypoint extends HRRTreeWaypoint {
+public class DRRTreeWaypoint extends HRRTreeWaypoint {
 	
-	/** the estimated path cost (composite heuristic) via this ARRT waypoint */
-	private double p = Double.POSITIVE_INFINITY;
+	/** determines whether or not this DRRT waypoint is valid */
+	private boolean isValid = true;
 	
 	/**
-	 * Constructs an ARRT waypoint at a specified position.
+	 * Constructs a DRRT waypoint at a specified position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
 	 * @see HRRTreeWaypoint#HRRTreeWaypoint(Position)
 	 */
-	public ARRTreeWaypoint(Position position) {
+	public DRRTreeWaypoint(Position position) {
 		super(position);
 	}
 	
 	/**
-	 * Gets the parent ARRT waypoint of this ARRT waypoint.
+	 * Gets the parent DRRT waypoint of this DRRT waypoint.
 	 * 
-	 * @return the parent ARRT waypoint of this ARRT waypoint
+	 * @return the parent DRRT waypoint of this DRRT waypoint
 	 * 
 	 * @see HRRTreeWaypoint#getParent()
 	 */
 	@Override
-	public ARRTreeWaypoint getParent() {
-		return (ARRTreeWaypoint) super.getParent();
+	public DRRTreeWaypoint getParent() {
+		return (DRRTreeWaypoint) super.getParent();
 	}
 	
 	/**
-	 * Gets the estimated path cost (composite heuristic) via this ARRT
-	 * waypoint.
+	 * Determines whether or not this DRRT waypoint is valid.
 	 * 
-	 * @return the estimated path cost (composite heuristic) via this ARRT
-	 *         waypoint 
+	 * @return true if this DRRT waypoint is valid, false otherwise
 	 */
-	public double getP() {
-		return this.p;
+	public boolean isValid() {
+		return this.isValid;
 	}
 	
 	/**
-	 * Sets the estimated path cost (composite heuristic) via this ARRT
-	 * waypoint.
+	 * Determines whether or not this DRRT waypoint is invalid.
 	 * 
-	 * @param p the estimated path cost (composite heuristic) to be set
-	 * 
-	 * @throws IllegalArgumentException if p is less than 0
+	 * @return true if this DRRT waypoint is invalid, false otherwise
 	 */
-	public void setP(double p) {
-		if (0d > p) {
-			throw new IllegalArgumentException("p is less than 0");
-		}
-		this.p = p;
+	public boolean isInvalid() {
+		return !this.isValid;
+	}
+	
+	/**
+	 * Sets the validity of this waypoint in the current environment.
+	 * 
+	 * @param isValid the validity of this waypoint to set
+	 */
+	public void setValid(boolean isValid) {
+		this.isValid = isValid;
 	}
 	
 }

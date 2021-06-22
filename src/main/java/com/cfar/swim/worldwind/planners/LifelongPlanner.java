@@ -27,70 +27,32 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planners.rrt.arrt;
-
-import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreeWaypoint;
-
-import gov.nasa.worldwind.geom.Position;
+package com.cfar.swim.worldwind.planners;
 
 /**
- * Realizes an ARRT waypoint of a trajectory planned by ARRT planners.
+ * Describes a lifelong planner which continues to plan until terminated
+ * explicitly.
  * 
  * @author Stephan Heinemann
  *
  */
-public class ARRTreeWaypoint extends HRRTreeWaypoint {
-	
-	/** the estimated path cost (composite heuristic) via this ARRT waypoint */
-	private double p = Double.POSITIVE_INFINITY;
+public interface LifelongPlanner extends Planner {
+
+	/**
+	 * Terminates this lifelong planner.
+	 */
+	public void terminate();
 	
 	/**
-	 * Constructs an ARRT waypoint at a specified position.
-	 * 
-	 * @param position the position in globe coordinates
-	 * 
-	 * @see HRRTreeWaypoint#HRRTreeWaypoint(Position)
+	 * Recycles this lifelong planner.
 	 */
-	public ARRTreeWaypoint(Position position) {
-		super(position);
-	}
+	public void recycle();
 	
 	/**
-	 * Gets the parent ARRT waypoint of this ARRT waypoint.
+	 * Indicates whether or not this lifelong planner has terminated.
 	 * 
-	 * @return the parent ARRT waypoint of this ARRT waypoint
-	 * 
-	 * @see HRRTreeWaypoint#getParent()
+	 * @return true if this lifelong planner has terminated, false otherwise
 	 */
-	@Override
-	public ARRTreeWaypoint getParent() {
-		return (ARRTreeWaypoint) super.getParent();
-	}
-	
-	/**
-	 * Gets the estimated path cost (composite heuristic) via this ARRT
-	 * waypoint.
-	 * 
-	 * @return the estimated path cost (composite heuristic) via this ARRT
-	 *         waypoint 
-	 */
-	public double getP() {
-		return this.p;
-	}
-	
-	/**
-	 * Sets the estimated path cost (composite heuristic) via this ARRT
-	 * waypoint.
-	 * 
-	 * @param p the estimated path cost (composite heuristic) to be set
-	 * 
-	 * @throws IllegalArgumentException if p is less than 0
-	 */
-	public void setP(double p) {
-		if (0d > p) {
-			throw new IllegalArgumentException("p is less than 0");
-		}
-		this.p = p;
-	}
+	public boolean hasTerminated();
 	
 }

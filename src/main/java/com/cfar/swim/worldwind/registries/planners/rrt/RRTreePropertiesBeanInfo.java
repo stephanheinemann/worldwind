@@ -41,6 +41,7 @@ import com.cfar.swim.worldwind.registries.planners.AbstractPlannerPropertiesBean
  * each property.
  * 
  * @author Manuel Rosa
+ * @author Stephan Heinemann
  *
  */
 public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo {
@@ -110,7 +111,7 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 					this.dictionary.getString("property.planner.rrt.goalThreshold.description"),
 					this.dictionary.getString("property.planner.category.sampling"));
 			
-			PropertyDescriptor[] adsDescriptors = new PropertyDescriptor[] {
+			PropertyDescriptor[] rrtDescriptors = new PropertyDescriptor[] {
 					sampling,
 					strategy,
 					extension,
@@ -119,7 +120,7 @@ public class RRTreePropertiesBeanInfo extends AbstractPlannerPropertiesBeanInfo 
 					bias,
 					goalThreshold};
 			descriptors = Stream.concat(
-					Arrays.stream(descriptors), Arrays.stream(adsDescriptors))
+					Arrays.stream(descriptors), Arrays.stream(rrtDescriptors))
 					.toArray(PropertyDescriptor[]::new);
 		
 		} catch (IntrospectionException e) {

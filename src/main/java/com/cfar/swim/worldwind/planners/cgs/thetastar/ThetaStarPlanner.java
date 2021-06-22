@@ -46,7 +46,10 @@ import gov.nasa.worldwind.render.Path;
 
 /**
  * Realizes a Theta* planner that plans a trajectory of an aircraft
- * in an environment considering a local cost and risk policy.
+ * in an environment considering a local cost and risk policy. Being an
+ * any-angle planner, the planner removes some restrictions imposed by the
+ * discrete environment by pulling strings and avoiding unnecessary heading
+ * changes.
  * 
  * @author Stephan Heinemann
  *
