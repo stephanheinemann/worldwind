@@ -62,6 +62,7 @@ import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ForwardAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ThetaStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.ADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.ARRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.DRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
@@ -198,6 +199,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_HRRT_ID, Specification.PLANNER_HRRT_DESCRIPTION, new HRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARRT_ID, Specification.PLANNER_ARRT_DESCRIPTION, new ARRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DRRT_ID, Specification.PLANNER_DRRT_DESCRIPTION, new DRRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, Specification.PLANNER_ADRRT_DESCRIPTION, new ADRRTreeProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		// datalinks

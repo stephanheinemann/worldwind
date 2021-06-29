@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planners.rrt.drrt;
+package com.cfar.swim.worldwind.planners.rrt.adrrt;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -42,114 +42,115 @@ import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
+import com.cfar.swim.worldwind.planners.AnytimePlanner;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.DynamicPlanner;
 import com.cfar.swim.worldwind.planners.LifelongPlanner;
+import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
-import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreePlanner;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.registries.planners.rrt.DRRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.ADRRTreeProperties;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.session.ObstacleManager;
 
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes a dynamic RRT planner that plans a trajectory of an aircraft in an
- * environment considering a local cost and risk policy. The planner can cope
- * with partial environment knowledge efficiently repairing and revising plans
- * accordingly.
+ * Realizes an anytime dynamic RRT planner that plans a trajectory of an
+ * aircraft in an environment considering a local cost and risk policy. The
+ * planner can cope with partial environment knowledge efficiently repairing,
+ * improving and revising plans according to a desired quality as long as
+ * deliberation time is available.
  * 
- * @author Manuel Rosa
  * @author Stephan Heinemann
  *
  */
-public class DRRTreePlanner extends HRRTreePlanner
-implements DynamicPlanner, LifelongPlanner {
+public class ADRRTreePlanner extends ARRTreePlanner
+implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 	
-	/** indicates whether or or not this DRRT planner has terminated */
+	/** indicates whether or or not this ADRRT planner has terminated */
 	private boolean terminated = false;
 	
-	/** the obstacle manager of this DRRT planner */
+	/** the obstacle manager of this ADRRT planner */
 	private ObstacleManager obstacleManager = null;
 	
-	/** the dynamic obstacles of an obstacle commitment by this DRRT planner */
+	/** the dynamic obstacles of an obstacle commitment by this ADRRT planner */
 	private Set<Obstacle> dynamicObstacles = new HashSet<>();
 	
-	/** the significant change threshold of this DRRT planner */
+	/** the significant change threshold of this ADRRT planner */
 	private double significantChange = 0.5d;
 	
-	/** the actual change of this DRRT planner */
+	/** the actual change of this ADRRT planner */
 	private double change = 0d;
 	
 	/**
-	 * Constructs a dynamic RRT planner for a specified aircraft and environment
-	 * using default local cost and risk policies.
+	 * Constructs an anytime dynamic RRT planner for a specified aircraft and
+	 * environment using default local cost and risk policies.
 	 * 
 	 * @param aircraft the aircraft
 	 * @param environment the environment
 	 * 
-	 * @see HRRTreePlanner#HRRTreePlanner(Aircraft, Environment)
+	 * @see ARRTreePlanner#ARRTreePlanner(Aircraft, Environment)
 	 */
-	public DRRTreePlanner(Aircraft aircraft, Environment environment) {
+	public ADRRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 	}
 	
 	/**
-	 * Gets the start DRRT waypoint of this DRRT planner.
+	 * Gets the start ADRRT waypoint of this ADRRT planner.
 	 * 
-	 * @return the start DRRT waypoint of this DRRT planner
+	 * @return the start ADRRT waypoint of this ADRRT planner
 	 */
 	@Override
-	protected DRRTreeWaypoint getStart() {
-		return (DRRTreeWaypoint) super.getStart();
-	}
-
-	/**
-	 * Gets the goal DRRT waypoint of this DRRT planner.
-	 * 
-	 * @return the goal DRRT waypoint of this DRRT planner
-	 */
-	@Override
-	protected DRRTreeWaypoint getGoal() {
-		return (DRRTreeWaypoint) super.getGoal();
+	protected ADRRTreeWaypoint getStart() {
+		return (ADRRTreeWaypoint) super.getStart();
 	}
 	
 	/**
-	 * Gets the newest DRRT waypoint added to the tree.
+	 * Gets the goal ADRRT waypoint of this ADRRT planner.
 	 * 
-	 * @return the newest DRRT waypoint added to the tree
+	 * @return the goal ADRRT waypoint of this ADRRT planner
 	 */
 	@Override
-	protected DRRTreeWaypoint getNewestWaypoint() {
-		return (DRRTreeWaypoint) super.getNewestWaypoint();
+	protected ADRRTreeWaypoint getGoal() {
+		return (ADRRTreeWaypoint) super.getGoal();
 	}
 	
 	/**
-	 * Creates a DRRT waypoint at a specified position.
+	 * Gets the newest ADRRT waypoint added to the tree.
+	 * 
+	 * @return the newest ADRRT waypoint added to the tree
+	 */
+	@Override
+	protected ADRRTreeWaypoint getNewestWaypoint() {
+		return (ADRRTreeWaypoint) super.getNewestWaypoint();
+	}
+	
+	/**
+	 * Creates an ADRRT waypoint at a specified position.
 	 * 
 	 * @param position the position in globe coordinates
 	 * 
-	 * @return the DRRT waypoint at the specified position
+	 * @return the ADRRT waypoint at the specified position
 	 */
 	@Override
-	protected DRRTreeWaypoint createWaypoint(Position position) {
-		return new DRRTreeWaypoint(position);
+	protected ADRRTreeWaypoint createWaypoint(Position position) {
+		return new ADRRTreeWaypoint(position);
 	}
 	
 	/**
-	 * Clears the dynamic obstacles of this DRRT planner.
+	 * Clears the dynamic obstacles of this ADRRT planner.
 	 */
 	protected void clearDynamicObstacles() {
 		this.dynamicObstacles.clear();
 	}
 	
 	/**
-	 * Adds dynamic obstacles to this DRRT planner.
+	 * Adds dynamic obstacles to this ADRRT planner.
 	 * 
 	 * @param dyamicObstacles the dynamic obstacles to be added
 	 */
@@ -158,32 +159,32 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Gets the dynamic obstacles of this DRRT planner.
+	 * Gets the dynamic obstacles of this ADRRT planner.
 	 * 
-	 * @return the dynamic obstacles of this DRRT planner
+	 * @return the dynamic obstacles of this ADRRT planner
 	 */
 	protected Iterable<Obstacle> getDynamicObstacles() {
 		return this.dynamicObstacles;
 	}
 	
 	/**
-	 * Determines whether or not this DRRT planner has dynamic obstacles.
+	 * Determines whether or not this ADRRT planner has dynamic obstacles.
 	 * 
-	 * @return true if this DRRT planner has dynamic obstacles, false otherwise
+	 * @return true if this ADRRT planner has dynamic obstacles, false otherwise
 	 */
 	protected boolean hasDynamicObstacles() {
 		return !this.dynamicObstacles.isEmpty();
 	}
 	
 	/**
-	 * Initializes this DRRT planner to plan from an origin to a destination at
+	 * Initializes this ADRRT planner to plan from an origin to a destination at
 	 * a specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
 	 * 
-	 * @see HRRTreePlanner#initialize(Position, Position, ZonedDateTime)
+	 * @see ARRTreePlanner#initialize(Position, Position, ZonedDateTime)
 	 */
 	@Override
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
@@ -192,38 +193,12 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Updates the quality (maximum cost) of this DRRT planner in accordance
-	 * with the dependent branches of a root.
-	 * 
-	 * @param root the root of dependent branches
-	 */
-	protected void updateQuality(DRRTreeWaypoint root) {
-		if (root.hasChildren()) {
-			for (RRTreeWaypoint child : root.getChidren()) {
-				this.updateQuality((DRRTreeWaypoint) child);
-			}
-		} else {
-			this.getQuality().setMaximumCost(Math.max(
-				this.getQuality().getMaximumCost(),
-				root.getF()));
-		}
-	}
-	
-	/**
-	 * Updates the quality (maximum cost) of this DRRT planner.
-	 */
-	protected void updateQuality() {
-		this.getQuality().setMaximumCost(this.getStart().getF());
-		this.updateQuality(this.getStart());
-	}
-	
-	/**
-	 * Trims the generated tree by this DRRT planner from an invalid root
+	 * Trims the generated tree by this ADRRT planner from an invalid root
 	 * and its dependent branches retaining only its valid portions.
 	 * 
 	 * @param root the invalid root of a branch to be trimmed
 	 */
-	protected void trim(DRRTreeWaypoint root) {
+	protected void trim(ADRRTreeWaypoint root) {
 		if (this.getStart().equals(root)) {
 			// purge the entire tree
 			this.clearExpendables();
@@ -235,7 +210,7 @@ implements DynamicPlanner, LifelongPlanner {
 			// trim all sub-branches of the invalid vertex
 			if (root.hasChildren()) {
 				for (RRTreeWaypoint child : root.getChidren()) {
-					this.trim((DRRTreeWaypoint) child);
+					this.trim((ADRRTreeWaypoint) child);
 				}
 				root.clearChildren();
 			}
@@ -248,7 +223,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Trims the tree generated by this DRRT planner from any invalid vertices
+	 * Trims the tree generated by this ADRRT planner from any invalid vertices
 	 * and their dependent branches retaining only its valid portions.
 	 */
 	protected void trim() {
@@ -257,9 +232,9 @@ implements DynamicPlanner, LifelongPlanner {
 			this.getEnvironment().findAffectedEdges(obstacle).stream()
 			.filter(edge -> obstacle.getCostInterval()
 					.intersects(new TimeInterval(
-						((DRRTreeWaypoint) edge.getFirstPosition()).getEto(),
-						((DRRTreeWaypoint) edge.getSecondPosition()).getEto())))
-			.map(edge -> (DRRTreeWaypoint) edge.getSecondPosition())
+						((ADRRTreeWaypoint) edge.getFirstPosition()).getEto(),
+						((ADRRTreeWaypoint) edge.getSecondPosition()).getEto())))
+			.map(edge -> (ADRRTreeWaypoint) edge.getSecondPosition())
 			.forEachOrdered(waypoint -> this.trim(waypoint));
 		}
 		
@@ -269,26 +244,25 @@ implements DynamicPlanner, LifelongPlanner {
 		}
 		
 		this.clearDynamicObstacles();
-		this.updateQuality();
 		this.setNewestWaypoint(this.getStart());
 	}
 	
 	/**
-	 * Determines whether or not the plan of this DRRT planner is valid.
+	 * Determines whether or not the plan of this ADRRT planner is valid.
 	 * 
-	 * @return true if the plan of this DRRT planner is valid, false otherwise
+	 * @return true if the plan of this ADRRT planner is valid, false otherwise
 	 */
 	protected boolean hasValidPlan() {
 		return this.hasWaypoints()
 				&& (0 == this.getWaypoints().stream()
-				.filter(waypoint -> ((DRRTreeWaypoint) waypoint).isInvalid())
+				.filter(waypoint -> ((ADRRTreeWaypoint) waypoint).isInvalid())
 				.count());
 	}
 	
 	/**
-	 * Determines whether or not a DRRT plan needs a potential repair.
+	 * Determines whether or not an ADRRT plan needs a potential repair.
 	 * 
-	 * @return true if the DRRT plan needs a potential repair, false otherwise
+	 * @return true if the ADRRT plan needs a potential repair, false otherwise
 	 */
 	protected boolean needsRepair() {
 		if (this.hasObstacleManager() && this.obstacleManager.hasObstacleChange()) {
@@ -301,13 +275,13 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Repairs a DRRT plan in case of dynamic changes.
+	 * Repairs an ADRRT plan in case of dynamic changes.
 	 * 
 	 * @param partIndex the index of the part to be repaired
 	 */
 	protected void repair(int partIndex) {
 		if (this.needsRepair()) {
-			DRRTreeWaypoint partStart = (DRRTreeWaypoint) this.getStart().clone();
+			ADRRTreeWaypoint partStart = (ADRRTreeWaypoint) this.getStart().clone();
 			
 			// repair previous parts before current part
 			if (this.hasDynamicObstacles(partIndex - 1)) {
@@ -333,7 +307,11 @@ implements DynamicPlanner, LifelongPlanner {
 				// trim and re-grow tree if plan is affected
 				this.trim();
 				if (!this.hasValidPlan()) {
-					this.compute();
+					this.setCostBound(Double.POSITIVE_INFINITY);
+					if (this.compute()) {
+						this.revisePlan(this.createTrajectory());
+						this.updateCostBound();
+					}
 				}
 			} else {
 				// plan current part from scratch if start ETO has changed
@@ -347,14 +325,15 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Elaborates a DRRT plan.
+	 * Elaborates an ADRRT plan.
 	 * 
 	 * @param partIndex the index of the plan to be elaborated
 	 */
 	protected void elaborate(int partIndex) {
-		// proceed to next part only if not in need of repair
-		while (this.needsRepair() && !this.hasTerminated()) {
+		// proceed to next part only if fully improved and not in need of repair
+		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
 			this.repair(partIndex);
+			this.improve(partIndex);
 		}
 	}
 	
@@ -394,7 +373,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return the planned trajectory from the origin to the destination with
 	 *         the estimated time of departure
 	 * 
-	 * @see HRRTreePlanner#plan(Position, Position, ZonedDateTime)
+	 * @see ARRTreePlanner#plan(Position, Position, ZonedDateTime)
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
@@ -424,7 +403,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return the planned trajectory from the origin to the destination along
 	 *         the waypoints with the estimated time of departure
 	 * 
-	 * @see HRRTreePlanner#plan(Position, Position, List, ZonedDateTime)
+	 * @see ARRTreePlanner#plan(Position, Position, List, ZonedDateTime)
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
@@ -448,7 +427,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Suspends this DRRT planner until termination or context changes occur.
+	 * Suspends this ADRRT planner until termination or context changes occur.
 	 */
 	protected synchronized void suspend() {
 		try {
@@ -459,7 +438,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Notifies this DRRT planner about a pending obstacle change.
+	 * Notifies this ADRRT planner about a pending obstacle change.
 	 *
 	 * @see DynamicObstacleListener#notifyPendingObstacleChange()
 	 */
@@ -469,7 +448,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Sets the obstacle manager of this DRRT planner.
+	 * Sets the obstacle manager of this ADRRT planner.
 	 * 
 	 * @param obstacleManager the obstacle manager to be set
 	 * 
@@ -481,9 +460,9 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Determines whether or not this DRRT planner has an obstacle manager.
+	 * Determines whether or not this ADRRT planner has an obstacle manager.
 	 * 
-	 * @return true if this DRRT planner has an obstacle manager,
+	 * @return true if this ADRRT planner has an obstacle manager,
 	 *         false otherwise
 	 * 
 	 * @see DynamicObstacleListener#hasObstacleManager()
@@ -494,7 +473,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Terminates this DRRT planner.
+	 * Terminates this ADRRT planner.
 	 * 
 	 * @see LifelongPlanner#terminate()
 	 */
@@ -505,7 +484,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Recycles this DRRT planner.
+	 * Recycles this ADRRT planner.
 	 * 
 	 * @see LifelongPlanner#recycle()
 	 */
@@ -515,9 +494,9 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Indicates whether or not this DRRT planner has terminated.
+	 * Indicates whether or not this ADRRT planner has terminated.
 	 * 
-	 * @return true if this DRRT planner has terminated, false otherwise
+	 * @return true if this ADRRT planner has terminated, false otherwise
 	 * 
 	 * @see LifelongPlanner#hasTerminated()
 	 */
@@ -527,9 +506,9 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Gets the significant change threshold of this DRRT planner.
+	 * Gets the significant change threshold of this ADRRT planner.
 	 * 
-	 * @return the significant change threshold of this DRRT planner.
+	 * @return the significant change threshold of this ADRRT planner.
 	 * 
 	 * @see DynamicPlanner#getSignificantChange()
 	 */
@@ -539,7 +518,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Sets the significant change threshold of this DRRT planner.
+	 * Sets the significant change threshold of this ADRRT planner.
 	 * 
 	 * @param significantChange the significant change threshold to be set
 	 * 
@@ -558,10 +537,10 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Determines whether or or not this DRRT planner has a significant dynamic
-	 * change.
+	 * Determines whether or or not this ADRRT planner has a significant
+	 * dynamic change.
 	 * 
-	 * @return true if this DRRT planner has a significant dynamic change,
+	 * @return true if this ADRRT planner has a significant dynamic change,
 	 *         false otherwise
 	 */
 	protected boolean hasSignificantChange() {
@@ -575,7 +554,7 @@ implements DynamicPlanner, LifelongPlanner {
 		int wc = this.getWaypoints().size();
 		// the amount of invalid waypoints in the current plan
 		long ic = this.getWaypoints().stream()
-			.filter(waypoint -> ((DRRTreeWaypoint) waypoint).isInvalid())
+			.filter(waypoint -> ((ADRRTreeWaypoint) waypoint).isInvalid())
 			.count();
 		// the ratio of invalid to all waypoints in the current plan
 		if (0 != wc) {
@@ -590,38 +569,49 @@ implements DynamicPlanner, LifelongPlanner {
 	 * Handles a significant change for this ADRRT planner.
 	 */
 	protected void handleSignificantChange() {
-		// purge entire tree
-		this.trim(this.getStart());
+		// TODO: purge entire tree or adjust distance and coast biases 
+		// this.trim(this.getStart());
+		this.setDistanceBias(1d);
+		this.setCostBias(0d);
 	}
 	
-	/** the backups of this DRRT planner */
+	/** the backups of this ADRRT planner */
 	protected final ArrayList<Backup> backups = new ArrayList<>();
 	
 	/**
-	 * Realizes a backup of this DRRT planner.
+	 * Realizes a backup of this ADRRT planner.
 	 * 
 	 * @author Stephan Heinemann
 	 * 
 	 */
 	protected class Backup {
 		
-		/** the start waypoint of this DRRT backup */
-		public DRRTreeWaypoint start = null;
+		/** the start waypoint of this ADRRT backup */
+		public ADRRTreeWaypoint start = null;
 		
-		/** the goal waypoint of this DRRT backup */
-		public DRRTreeWaypoint goal = null;
+		/** the goal waypoint of this ADRRT backup */
+		public ADRRTreeWaypoint goal = null;
 		
-		/** the edges of this DRRT backup */
+		/** the edges of this ADRRT backup */
 		public Set<DirectedEdge> edges = new HashSet<>();
 		
-		/** the dynamic obstacles of this DRRT backup */
+		/** the distance bias of this ADRRT backup */
+		public double distanceBias = 1d;
+		
+		/** the cost bias of this ADRRT backup */
+		public double costBias = 0d;
+		
+		/** the cost bound of this ADRRT backup */
+		public double costBound = Double.POSITIVE_INFINITY;
+		
+		/** the dynamic obstacles of this ADRRT backup */
 		public Set<Obstacle> dynamicObstacles = new HashSet<>();
 		
-		/** the plan waypoints of this DRRT backup */
+		/** the plan waypoints of this ADRRT backup */
 		public List<Waypoint> plan = new LinkedList<Waypoint>();
 		
 		/**
-		 * Clears this DRRT backup.
+		 * Clears this ADRRT backup.
 		 */
 		public void clear() {
 			this.start = null;
@@ -632,9 +622,9 @@ implements DynamicPlanner, LifelongPlanner {
 		}
 		
 		/**
-		 * Determines whether or not this DRRT backup is empty.
+		 * Determines whether or not this ADRRT backup is empty.
 		 * 
-		 * @return true if this DRRT backup is empty, false otherwise
+		 * @return true if this ADRRT backup is empty, false otherwise
 		 */
 		public boolean isEmpty() {
 			return (null == this.start) && (null == this.goal)
@@ -645,9 +635,9 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Initializes a number backups for this DRRT planner.
+	 * Initializes a number backups for this ADRRT planner.
 	 * 
-	 * @param size the number of backups for this DRRT planner
+	 * @param size the number of backups for this ADRRT planner
 	 */
 	protected void initBackups(int size) {
 		this.backups.clear();
@@ -657,7 +647,8 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Determines whether or not a backup of this DRRT planner can be performed.
+	 * Determines whether or not a backup of this ADRRT planner can be
+	 * performed.
 	 * 
 	 * @param backupIndex the index of the backup
 	 * 
@@ -668,18 +659,18 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Determines whether or not this DRRT planner has a backup.
+	 * Determines whether or not this ADRRT planner has a backup.
 	 * 
 	 * @param backupIndex the index of the backup
 	 * 
-	 * @return true if this DRRT planner has a backup, false otherwise
+	 * @return true if this ADRRT planner has a backup, false otherwise
 	 */
 	protected boolean hasBackup(int backupIndex) {
 		return this.canBackup(backupIndex) && (!this.backups.get(backupIndex).isEmpty());
 	}
 	
 	/**
-	 * Backs up this DRRT planner for dynamic repair.
+	 * Backs up this ADRRT planner for dynamic repair.
 	 * 
 	 * @param backupIndex the index of the backup
 	 * 
@@ -696,6 +687,9 @@ implements DynamicPlanner, LifelongPlanner {
 			for (Edge edge : this.getEnvironment().getEdges()) {
 				backup.edges.add((DirectedEdge) edge);
 			}
+			backup.distanceBias = this.getDistanceBias();
+			backup.costBias = this.getCostBias();
+			backup.costBound = this.getCostBound();
 			backup.dynamicObstacles.addAll(this.dynamicObstacles);
 			backup.plan.addAll(this.getWaypoints());
 			backedup = true;
@@ -705,7 +699,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Restores this DRRT planner for dynamic repair.
+	 * Restores this ADRRT planner for dynamic repair.
 	 * 
 	 * @param backupIndex the index of the backup
 	 * 
@@ -718,15 +712,13 @@ implements DynamicPlanner, LifelongPlanner {
 			Backup backup = this.backups.get(backupIndex);
 			this.clearExpendables();
 			this.setStart(backup.start);
-			this.getQuality().setOptimalCost(this.getStart().getF());
 			this.setGoal(backup.goal);
-			double maxCost = this.getStart().getF();
 			for (Edge edge : backup.edges) {
 				this.getEnvironment().addEdge(edge);
-				maxCost = Math.max(maxCost,
-						((DRRTreeWaypoint) edge.getSecondPosition()).getF());
 			}
-			this.getQuality().setMaximumCost(maxCost);
+			this.setDistanceBias(backup.distanceBias);
+			this.setCostBias(backup.costBias);
+			this.setCostBound(backup.costBound);
 			this.clearDynamicObstacles();
 			this.addDynamicObstacles(backup.dynamicObstacles);
 			this.addAllWaypoints(backup.plan);
@@ -737,7 +729,7 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Shares dynamic obstacles among all existing DRRT backups for dynamic repair.
+	 * Shares dynamic obstacles among all existing ADRRT backups for dynamic repair.
 	 * 
 	 * @param dynamicObstacles the dynamic obstacles to be shared
 	 */
@@ -751,11 +743,11 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Determines whether or not a DRRT backup has dynamic obstacles.
+	 * Determines whether or not an ADRRT backup has dynamic obstacles.
 	 * 
 	 * @param backupIndex the index of the backup
 	 * 
-	 * @return true if the DRRT backup has dynamic obstacles, false otherwise
+	 * @return true if the ADRRT backup has dynamic obstacles, false otherwise
 	 */
 	protected boolean hasDynamicObstacles(int backupIndex) {
 		boolean hasDynamicObstacles = false;
@@ -769,11 +761,11 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Determines whether or not this DRRT planner matches a specification.
+	 * Determines whether or not this ADRRT planner matches a specification.
 	 * 
 	 * @param specification the specification to be matched
 	 * 
-	 * @return true if the this DRRT planner matches the specification,
+	 * @return true if the this ADRRT planner matches the specification,
 	 *         false otherwise
 	 * 
 	 * @see AbstractPlanner#matches(Specification)
@@ -782,23 +774,23 @@ implements DynamicPlanner, LifelongPlanner {
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
-		if ((null != specification) && (specification.getProperties() instanceof DRRTreeProperties)) {
-			DRRTreeProperties drrtp = (DRRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(drrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(drrtp.getRiskPolicy()))
-					&& (this.getBias() == drrtp.getBias())
-					&& (this.getEpsilon() == drrtp.getEpsilon())
-					&& (this.getExtension() == drrtp.getExtension())
-					&& (this.getGoalThreshold() == drrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == drrtp.getMaxIterations())
-					&& (this.getSampling() == drrtp.getSampling())
-					&& (this.getStrategy() == drrtp.getStrategy())
-					&& (this.getAlgorithm() == drrtp.getAlgorithm())
-					&& (this.getVariant() == drrtp.getVariant())
-					&& (this.getNeighborLimit() == drrtp.getNeighborLimit())
-					&& (this.getQualityBound() == drrtp.getQualityBound())
-					&& (this.getSignificantChange() == drrtp.getSignificantChange())
-					&& (specification.getId().equals(Specification.PLANNER_DRRT_ID));
+		if ((null != specification) && (specification.getProperties() instanceof ADRRTreeProperties)) {
+			ADRRTreeProperties adrrtp = (ADRRTreeProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(adrrtp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(adrrtp.getRiskPolicy()))
+					&& (this.getBias() == adrrtp.getBias())
+					&& (this.getEpsilon() == adrrtp.getEpsilon())
+					&& (this.getExtension() == adrrtp.getExtension())
+					&& (this.getGoalThreshold() == adrrtp.getGoalThreshold())
+					&& (this.getMaxIterations() == adrrtp.getMaxIterations())
+					&& (this.getSampling() == adrrtp.getSampling())
+					&& (this.getStrategy() == adrrtp.getStrategy())
+					&& (this.getMaximumQuality() == adrrtp.getMaximumQuality())
+					&& (this.getMinimumQuality() == adrrtp.getMaximumQuality())
+					&& (this.getNeighborLimit() == adrrtp.getNeighborLimit())
+					&& (this.getQualityImprovement() == adrrtp.getQualityImprovement())
+					&& (this.getSignificantChange() == adrrtp.getSignificantChange())
+					&& (specification.getId().equals(Specification.PLANNER_ADRRT_ID));
 		}
 		
 		return matches;

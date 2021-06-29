@@ -35,33 +35,23 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
-* Realizes an ARRT properties bean information customizing the descriptors for
-* each property.
-* 
-* @author Manuel Rosa
-* @author Stephan Heinemann
-*
-*/
-public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
-	
+ * Realizes an ADRRT properties bean information customizing the descriptors for
+ * each property.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public class ADRRTreePropertiesBeanInfo extends ARRTreePropertiesBeanInfo {
+
 	/**
-	 * Constructs an ARRT properties bean information.
+	 * Constructs an ADRRT properties bean information.
 	 */
-	public ARRTreePropertiesBeanInfo() {
-		super(ARRTreeProperties.class);
+	public ADRRTreePropertiesBeanInfo() {
+		super(ADRRTreeProperties.class);
 	}
 	
 	/**
-	 * Constructs an ARRT properties bean information.
-	 * 
-	 * @param beanClass the properties bean class of the properties bean
-	 */
-	public ARRTreePropertiesBeanInfo(Class<? extends ARRTreeProperties> beanClass) {
-		super(beanClass);
-	}
-	
-	/**
-	 * Customizes the property descriptors for each property of an ARRT
+	 * Customizes the property descriptors for each property of an ADRRT
 	 * properties bean.
 	 * 
 	 * @return the array of customized property descriptors
@@ -73,34 +63,15 @@ public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
-			PropertyDescriptor neighborLimit = this.createPropertyDescriptor(
-					"neighborLimit",
-					this.dictionary.getString("property.planner.arrt.neighborLimit.name"),
-					this.dictionary.getString("property.planner.arrt.neighborLimit.description"),
-					this.dictionary.getString("property.planner.category.heuristic"));
-			PropertyDescriptor initialCostBias = this.createPropertyDescriptor(
-					"minimumQuality",
-					this.dictionary.getString("property.planner.arrt.minimumQuality.name"),
-					this.dictionary.getString("property.planner.arrt.minimumQuality.description"),
-					this.dictionary.getString("property.planner.category.anytime"));
-			PropertyDescriptor finalCostBias = this.createPropertyDescriptor(
-					"maximumQuality",
-					this.dictionary.getString("property.planner.arrt.maximumQuality.name"),
-					this.dictionary.getString("property.planner.arrt.maximumQuality.description"),
-					this.dictionary.getString("property.planner.category.anytime"));
-			PropertyDescriptor improvementFactor = this.createPropertyDescriptor(
-					"qualityImprovement",
-					this.dictionary.getString("property.planner.arrt.qualityImprovement.name"),
-					this.dictionary.getString("property.planner.arrt.qualityImprovement.description"),
-					this.dictionary.getString("property.planner.category.anytime"));
+			PropertyDescriptor significantChange = this.createPropertyDescriptor(
+					"significantChange",
+					this.dictionary.getString("property.planner.adrrt.significantChange.name"),
+					this.dictionary.getString("property.planner.adrrt.significantChange.description"),
+					this.dictionary.getString("property.planner.category.dynamic"));
 		
-			PropertyDescriptor[] arrtDescriptors = new PropertyDescriptor[] {
-					neighborLimit,
-					initialCostBias,
-					finalCostBias,
-					improvementFactor};
+			PropertyDescriptor[] adrrtDescriptors = new PropertyDescriptor[] { significantChange };
 			descriptors = Stream.concat(
-					Arrays.stream(descriptors), Arrays.stream(arrtDescriptors))
+					Arrays.stream(descriptors), Arrays.stream(adrrtDescriptors))
 					.toArray(PropertyDescriptor[]::new);
 		
 		} catch (IntrospectionException e) {
@@ -109,5 +80,4 @@ public class ARRTreePropertiesBeanInfo extends RRTreePropertiesBeanInfo {
 		
 		return descriptors;
 	}
-	
 }

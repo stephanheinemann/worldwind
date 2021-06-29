@@ -675,16 +675,18 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @param partIndex the index of the plan part to be improved
 	 */
 	protected void improve(int partIndex) {
-		this.getEnvironment().clearVertices();
-		this.getEnvironment().addVertex(this.getStart());
-		this.setNewestWaypoint(this.getStart());
-		
-		if (this.compute()) {
-			this.revisePlan(this.createTrajectory());
-			this.updateCostBound();
+		if (!this.hasMaximumQuality()) {
+			this.getEnvironment().clearVertices();
+			this.getEnvironment().addVertex(this.getStart());
+			this.setNewestWaypoint(this.getStart());
+			
+			if (this.compute()) {
+				this.revisePlan(this.createTrajectory());
+				this.updateCostBound();
+			}
+			
+			this.updateBiases();
 		}
-		
-		this.updateBiases();
 	}
 	
 	/**

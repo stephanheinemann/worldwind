@@ -37,6 +37,7 @@ import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
+import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.drrt.DRRTreePlanner;
@@ -48,6 +49,7 @@ import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ForwardAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ThetaStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.ADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.ARRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.DRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
@@ -245,6 +247,24 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((DRRTreePlanner) planner).setQualityBound(properties.getQualityBound());
 				((DRRTreePlanner) planner).setSignificantChange(properties.getSignificantChange());
 				((DRRTreePlanner) planner).setObstacleManager(this.scenario);
+			} else if (this.specification.getId().equals(Specification.PLANNER_ADRRT_ID)) {
+				ADRRTreeProperties properties = (ADRRTreeProperties) this.specification.getProperties();
+				planner = new ADRRTreePlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+				((ADRRTreePlanner) planner).setSampling(properties.getSampling());
+				((ADRRTreePlanner) planner).setStrategy(properties.getStrategy());
+				((ADRRTreePlanner) planner).setExtension(properties.getExtension());
+				((ADRRTreePlanner) planner).setMaxIterations(properties.getMaxIterations());
+				((ADRRTreePlanner) planner).setEpsilon(properties.getEpsilon());
+				((ADRRTreePlanner) planner).setBias(properties.getBias());
+				((ADRRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
+				((ADRRTreePlanner) planner).setNeighborLimit(properties.getNeighborLimit());
+				((ADRRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+				((ADRRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+				((ADRRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+				((ADRRTreePlanner) planner).setSignificantChange(properties.getSignificantChange());
+				((ADRRTreePlanner) planner).setObstacleManager(this.scenario);
 			}
 			// TODO: implement more planners
 		}

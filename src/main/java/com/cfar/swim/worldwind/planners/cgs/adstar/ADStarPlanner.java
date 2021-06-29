@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.planners.cgs.adstar;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -241,6 +242,56 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
+	 * Clears the dynamic obstacles of this AD* planner.
+	 */
+	protected void clearDynamicObstacles() {
+		this.dynamicObstacles.clear();
+	}
+	
+	/**
+	 * Adds dynamic obstacles to this AD* planner.
+	 * 
+	 * @param dyamicObstacles the dynamic obstacles to be added
+	 */
+	protected void addDynamicObstacles(Collection<Obstacle> dyamicObstacles) {
+		this.dynamicObstacles.addAll(dyamicObstacles);
+	}
+	
+	/**
+	 * Gets the dynamic obstacles of this AD* planner.
+	 * 
+	 * @return the dynamic obstacles of this AD* planner
+	 */
+	protected Iterable<Obstacle> getDynamicObstacles() {
+		return this.dynamicObstacles;
+	}
+	
+	/**
+	 * Determines whether or not this AD* planner has dynamic obstacles.
+	 * 
+	 * @return true if this AD* planner has dynamic obstacles, false otherwise
+	 */
+	protected boolean hasDynamicObstacles() {
+		return !this.dynamicObstacles.isEmpty();
+	}
+	
+	/**
+	 * Initializes this AD* planner to plan from an origin to a destination at
+	 * a specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @see ARAStarPlanner#initialize(Position, Position, ZonedDateTime)
+	 */
+	@Override
+	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
+		super.initialize(origin, destination, etd);
+		this.clearDynamicObstacles();
+	}
+	
+	/**
 	 * Updates the planner waypoint sets for an updated AD* waypoint.
 	 * 
 	 * @param waypoint the updated AD* waypoint
@@ -281,7 +332,7 @@ implements DynamicPlanner, LifelongPlanner {
 	protected Set<ADStarWaypoint> findAffectedWaypoints() {
 		Set<ADStarWaypoint> affectedWaypoints = new HashSet<>();
 		
-		for (Obstacle obstacle : this.dynamicObstacles) {
+		for (Obstacle obstacle : this.getDynamicObstacles()) {
 			affectedWaypoints.addAll(
 					((DynamicEnvironment) this.getEnvironment())
 					.getAffectedWaypointPositions(obstacle).stream()
@@ -293,7 +344,7 @@ implements DynamicPlanner, LifelongPlanner {
 									waypoint.getEto())))
 					.collect(Collectors.toSet()));
 		}
-		this.dynamicObstacles.clear();
+		this.clearDynamicObstacles();
 		
 		return affectedWaypoints;
 	}
@@ -350,11 +401,11 @@ implements DynamicPlanner, LifelongPlanner {
 	protected boolean needsRepair() {
 		if (this.hasObstacleManager() && this.obstacleManager.hasObstacleChange()) {
 			Set<Obstacle> dynamicObstacles = this.obstacleManager.commitObstacleChange();
-			this.dynamicObstacles.addAll(dynamicObstacles);
-			this.share(dynamicObstacles);
+			this.addDynamicObstacles(dynamicObstacles);
+			this.shareDynamicObstacles(dynamicObstacles);
 		}
 		
-		return !this.dynamicObstacles.isEmpty();
+		return this.hasDynamicObstacles();
 	}
 	
 	/**
@@ -803,8 +854,9 @@ implements DynamicPlanner, LifelongPlanner {
 		
 		if (restored) {
 			Backup backup = (Backup) this.backups.get(backupIndex);
-			this.dynamicObstacles.clear();
-			restored = this.dynamicObstacles.addAll(backup.dynamicObstacles);
+			this.clearDynamicObstacles();
+			this.addDynamicObstacles(backup.dynamicObstacles);
+			restored = true;
 		}
 		
 		return restored;
@@ -815,7 +867,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * 
 	 * @param dynamicObstacles the dynamic obstacles to be shared
 	 */
-	protected void share(Set<Obstacle> dynamicObstacles) {
+	protected void shareDynamicObstacles(Set<Obstacle> dynamicObstacles) {
 		for (int backupIndex = 0; backupIndex < backups.size(); backupIndex++) {
 			if (this.hasBackup(backupIndex)) {
 				Backup backup = (Backup) this.backups.get(backupIndex);
