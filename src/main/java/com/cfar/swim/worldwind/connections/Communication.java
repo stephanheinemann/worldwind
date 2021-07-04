@@ -27,36 +27,44 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners.cgs;
-
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
+package com.cfar.swim.worldwind.connections;
 
 /**
- * Realizes the properties bean of a forward A* planner.
+ * Abstracts a communication via a connection.
  * 
  * @author Stephan Heinemann
  *
+ * @param <C> the connection class of this communication
  */
-public class ForwardAStarProperties extends AbstractPlannerProperties {
+public abstract class Communication<C extends Connection> {
 
+	/** the connection of this communication */
+	private final C connection;
+	
 	/**
-	 * Constructs a new forward A* planner properties bean.
-	 */
-	public ForwardAStarProperties() {
-		super();
-	}
-
-	/**
-	 * Constructs a new forward A* planner properties bean with
-	 * specified cost and risk policy property values.
+	 * Constructs a new communication based on a connection.
 	 * 
-	 * @param costPolicy the cost policy of this forward A* planner properties bean
-	 * @param riskPolicy the risk policy of this forward A* planner properties bean
+	 * @param connection the connection of this communication
 	 */
-	public ForwardAStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		super(costPolicy, riskPolicy);
+	public Communication(C connection) {
+		if (null == connection ) {
+			throw new IllegalArgumentException();
+		}
+		this.connection = connection;
 	}
+	
+	/**
+	 * Gets the connection of this communication.
+	 * 
+	 * @return the connection of this communication
+	 */
+	protected C getConnection() {
+		return this.connection;
+	}
+	
+	/**
+	 * Performs this communication via its connection.
+	 */
+	public abstract void perform();
 	
 }

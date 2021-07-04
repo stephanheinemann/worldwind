@@ -157,10 +157,10 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 		
 		if (this == o) {
 			equals = true;
-		} else if ((null != o) && (o instanceof AbstractPlannerProperties)) {
-			AbstractPlannerProperties fasp = (AbstractPlannerProperties) o;
-			equals = (this.costPolicy.equals(fasp.costPolicy))
-					&& (this.riskPolicy.equals(fasp.riskPolicy));
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			AbstractPlannerProperties app = (AbstractPlannerProperties) o;
+			equals = (this.costPolicy.equals(app.costPolicy))
+					&& (this.riskPolicy.equals(app.riskPolicy));
 		}
 		
 		return equals;

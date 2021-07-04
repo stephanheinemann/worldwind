@@ -114,10 +114,10 @@ public class DronekitDatalinkProperties extends DatalinkProperties {
 	 * @see DatalinkProperties#equals(Object)
 	 */
 	@Override
-	public final boolean equals(Object o) {
+	public boolean equals(Object o) {
 		boolean equals = super.equals(o);
 		
-		if (equals && (o instanceof DronekitDatalinkProperties)) {
+		if (equals) {
 			DronekitDatalinkProperties ddlp = (DronekitDatalinkProperties) o;
 			equals = (this.host.equals(ddlp.host) && (this.port == ddlp.port));
 		}

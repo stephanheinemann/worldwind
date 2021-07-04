@@ -104,7 +104,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 	public SimulatedSwimConnection() {
 		this.resourceDirectory = SimulatedSwimConnectionProperties.SWIM_RESOURCE_DIRECTORY;
 		this.updatePeriod = SimulatedSwimConnectionProperties.SWIM_UPDATE_PERIOD;
-		this.updateProbability = SimulatedSwimConnectionProperties.SWIM_UPDATE_PERIOD;
+		this.updateProbability = SimulatedSwimConnectionProperties.SWIM_UPDATE_PROBABILITY;
 		this.updateQuantity = SimulatedSwimConnectionProperties.SWIM_UPDATE_QUANTITY;
 		this.executor = null;
 	}
@@ -263,7 +263,9 @@ public class SimulatedSwimConnection extends SwimConnection {
 					Set<Path> iwxxmFiles = Files.list(iwxxmDirectory).collect(Collectors.toSet());
 					for (Path iwxxmFile : iwxxmFiles) {
 						int updates = 0;
-						if ((Math.random() <= updateProbability) && (updates < updateQuantity)) {
+						if ((0f != updateProbability)
+								&& (Math.random() <= updateProbability)
+								&& (updates < updateQuantity)) {
 							updates++;
 							Set<Obstacle>obstacles = loader.load(new InputSource(Files.newInputStream(iwxxmFile)));
 							if (null != obstacles) {

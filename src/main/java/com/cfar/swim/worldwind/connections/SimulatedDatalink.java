@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Iterator;
 
@@ -36,6 +37,7 @@ import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -99,11 +101,14 @@ public class SimulatedDatalink extends Datalink {
 	/** the index of the next position in the planned flight path */
 	private int positionIndex = 0;
 	
-	/** the estimated time on a leg of the planned flight path */
-	private double ete = 0d;
+	/** the last reporting time of this simulated datalink */
+	private ZonedDateTime reportingTime = ZonedDateTime.now();
 	
-	/** the actual time on a leg of the planned flight path */
-	private double ate = 0d;
+	/** the estimated time over the next position in the planned flight path */
+	private ZonedDateTime eto = ZonedDateTime.now();
+	
+	/** the estimated time enroute on the current leg in the planned flight path */
+	private Duration ete = Duration.ZERO;
 	
 	/** indicates whether or not the source of this simulated datalink is airborne */
 	private boolean isAirborne = false;
@@ -122,6 +127,12 @@ public class SimulatedDatalink extends Datalink {
 	
 	/** the aircraft mode of this simulated datalink source */
 	private String aircraftMode = SimulatedDatalink.MODE_UNKNOWN;
+	
+	/** the maximum aircraft track error of this simulated datalink source */
+	private AircraftTrackError maxTrackError = AircraftTrackError.ZERO;
+	
+	/** the error probability of this simulated datalink source */
+	private float errorProbability = 0f;
 	
 	/**
 	 * Constructs a new simulated datatlink.
@@ -162,6 +173,8 @@ public class SimulatedDatalink extends Datalink {
 		return this.isConnected;
 	}
 	
+	// TODO: check isConnected for entire logic!
+	
 	/**
 	 * Gets the aircraft status via this simulated datalink.
 	 * 
@@ -170,7 +183,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAircraftStatus()
 	 */
 	@Override
-	public String getAircraftStatus() {
+	public synchronized String getAircraftStatus() {
 		return this.aircraftStatus;
 	}
 	
@@ -182,7 +195,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAircraftMode()
 	 */
 	@Override
-	public String getAircraftMode() {
+	public synchronized String getAircraftMode() {
 		return this.aircraftMode;
 	}
 	
@@ -194,7 +207,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAircraftMode()
 	 */
 	@Override
-	public void setAircraftMode(String aircraftMode) {
+	public synchronized void setAircraftMode(String aircraftMode) {
 		this.aircraftMode = aircraftMode;
 	}
 	
@@ -206,7 +219,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAircraftHeading()
 	 */
 	@Override
-	public Angle getAircraftHeading() {
+	public synchronized Angle getAircraftHeading() {
 		return Position.linearAzimuth(this.iris.getReferencePosition(), this.nextPosition);
 	}
 	
@@ -254,25 +267,47 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAircraftPosition()
 	 */
 	@Override
-	public Position getAircraftPosition() {
+	public synchronized Position getAircraftPosition() {
 		Position currentPosition = this.iris.getReferencePosition();
+		this.reportingTime = ZonedDateTime.now();
 		
 		if ((null != this.flightPath) && this.isAirborne) {
-			if (this.ate >= this.ete) {
+			// progress mission
+			while (!this.reportingTime.isBefore(this.eto) || (-1 == this.positionIndex)) {
 				this.lastPosition = this.nextPosition;
 				if (this.positionIterator.hasNext()) {
 					this.positionIndex++;
 					this.nextPosition = this.positionIterator.next();
 					this.ete = this.iris.getCapabilities().getEstimatedDuration(
-							lastPosition, nextPosition, this.globe).getSeconds();
-					this.ate = 0d;
+							lastPosition, nextPosition, this.globe);
+					
+					if (0 == this.positionIndex) {
+						// updated mission
+						this.eto = this.reportingTime.plus(ete);
+					} else {
+						// existing mission
+						this.eto = this.eto.plus(ete);
+					}
+				} else {
+					break;
 				}
 			}
-			double slice = ((double) this.getDownlinkPeriod() / 1000d);
-			this.ate += slice;
-			if (this.ate > this.ete) this.ate = this.ete;
-			double ratio = this.ate / this.ete;
-			currentPosition = Position.interpolate(ratio, lastPosition, nextPosition);
+			
+			// determine current position
+			Duration ttg = Duration.between(this.reportingTime, this.eto);
+			if (!ttg.isNegative()) {
+				double ratio = ((double) ttg.toSeconds()) / ((double) this.ete.toSeconds());
+				currentPosition = Position.interpolate(ratio, this.nextPosition, this.lastPosition);
+			}
+			
+			// TODO: introduce probabilistic errors
+			double xte = this.getMaxTrackError().getCrossTrackError() *
+					Math.random() * this.getErrorProbablilty();
+			currentPosition = new Position(
+					currentPosition.latitude,
+					currentPosition.longitude,
+					currentPosition.elevation + xte);
+			
 			this.iris.moveTo(currentPosition);
 		}
 		
@@ -287,12 +322,12 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAircraftTrackPoint()
 	 */
 	@Override
-	public AircraftTrackPoint getAircraftTrackPoint() {
+	public synchronized AircraftTrackPoint getAircraftTrackPoint() {
 		AircraftTrackPoint trackPoint = new AircraftTrackPoint(this.getAircraftPosition());
 		trackPoint.setPitch(this.getAircraftPitch());
 		trackPoint.setBank(this.getAircraftBank());
 		trackPoint.setHeading(this.getAircraftHeading());
-		trackPoint.setAto(ZonedDateTime.now());
+		trackPoint.setAto(this.reportingTime);
 		return trackPoint;
 	}
 	
@@ -302,7 +337,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#enableAircraftSafety()
 	 */
 	@Override
-	public void enableAircraftSafety() {
+	public synchronized void enableAircraftSafety() {
 		this.isAircraftSafetyEnabled = true;
 	}
 	
@@ -312,7 +347,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#disableAircraftSafety()
 	 */
 	@Override
-	public void disableAircraftSafety() {
+	public synchronized void disableAircraftSafety() {
 		this.isAircraftSafetyEnabled = false;
 	}
 	
@@ -325,7 +360,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#isAircraftSafetyEnabled()
 	 */
 	@Override
-	public boolean isAircraftSafetyEnabled() {
+	public synchronized boolean isAircraftSafetyEnabled() {
 		return this.isAircraftSafetyEnabled;
 	}
 	
@@ -335,7 +370,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#armAircraft()
 	 */
 	@Override
-	public void armAircraft() {
+	public synchronized void armAircraft() {
 		this.isArmed = true;
 	}
 	
@@ -345,7 +380,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#disarmAircraft()
 	 */
 	@Override
-	public void disarmAircraft() {
+	public synchronized void disarmAircraft() {
 		this.isArmed = false;
 	}
 	
@@ -358,7 +393,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#isAircraftArmed()
 	 */
 	@Override
-	public boolean isAircraftArmed() {
+	public synchronized boolean isAircraftArmed() {
 		return this.isArmed;
 	}
 	
@@ -371,18 +406,27 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#uploadMission(Path)
 	 */
 	@Override
-	public void uploadMission(Path flightPath) {
-		this.flightPath = flightPath;
-		this.ate = 0d;
-		this.ete = 0d;
-		this.positionIndex = 0;
-		this.positionIterator = this.flightPath.getPositions().iterator();
-		if (this.positionIterator.hasNext()) {
-			this.homePosition = this.positionIterator.next();
-			this.lastPosition = this.homePosition;
-			this.nextPosition = this.homePosition;
-			this.iris.moveTo(this.homePosition);
+	public synchronized void uploadMission(Path flightPath) {
+		if (!this.isAirborne) {
+			// upload mission before flight
+			this.flightPath = flightPath;
+			this.positionIndex = 0;
+			this.positionIterator = this.flightPath.getPositions().iterator();
+			if (this.positionIterator.hasNext()) {
+				this.homePosition = this.positionIterator.next();
+				this.lastPosition = this.homePosition;
+				this.nextPosition = this.homePosition;
+				this.iris.moveTo(this.homePosition);
+			}
+		} else {
+			// upload mission during flight
+			this.lastPosition = this.getAircraftPosition();
+			this.nextPosition = this.lastPosition;
+			this.flightPath = flightPath;
+			this.positionIndex = -1;
+			this.positionIterator = this.flightPath.getPositions().iterator();
 		}
+		
 		try {
 			Thread.sleep(2000);
 		} catch (InterruptedException e) {
@@ -399,7 +443,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#downloadMission()
 	 */
 	@Override
-	public Path downloadMission() {
+	public synchronized Path downloadMission() {
 		return this.flightPath;
 	}
 	
@@ -412,7 +456,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getNextMissionPosition()
 	 */
 	@Override
-	public Position getNextMissionPosition() {
+	public synchronized Position getNextMissionPosition() {
 		return this.nextPosition;
 	}
 	
@@ -425,7 +469,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getNextMissionPositionIndex()
 	 */
 	@Override
-	public int getNextMissionPositionIndex() {
+	public synchronized int getNextMissionPositionIndex() {
 		return this.positionIndex;
 	}
 	
@@ -436,14 +480,18 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#takeOff()
 	 */
 	@Override
-	public void takeOff() {
-		this.setAircraftMode(SimulatedDatalink.MODE_AUTO);
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+	public synchronized void takeOff() {
+		if (!this.isAirborne()) {
+			this.setAircraftMode(SimulatedDatalink.MODE_AUTO);
+			this.eto = ZonedDateTime.now();
+			this.ete = Duration.ZERO;
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.isAirborne = true;
 		}
-		this.isAirborne = true;
 	}
 	
 	/**
@@ -453,15 +501,17 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#land()
 	 */
 	@Override
-	public void land() {
-		this.setAircraftMode(SimulatedDatalink.MODE_LAND);
-		this.nextPosition = this.iris.getReferencePosition();
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+	public synchronized void land() {
+		if (this.isAirborne) {
+			this.setAircraftMode(SimulatedDatalink.MODE_LAND);
+			this.nextPosition = this.iris.getReferencePosition();
+			try {
+				Thread.sleep(2000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.isAirborne = false;
 		}
-		this.isAirborne = false;
 	}
 	
 	/**
@@ -471,15 +521,17 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#returnToLaunch()
 	 */
 	@Override
-	public void returnToLaunch() {
-		this.setAircraftMode(SimulatedDatalink.MODE_RTL);
-		this.nextPosition = this.homePosition;
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+	public synchronized void returnToLaunch() {
+		if (this.isAirborne()) {
+			this.setAircraftMode(SimulatedDatalink.MODE_RTL);
+			this.nextPosition = this.homePosition;
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.isAirborne = false;
 		}
-		this.isAirborne = false;
 	}
 	
 	/**
@@ -491,8 +543,44 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#isAirborne()
 	 */
 	@Override
-	public boolean isAirborne() {
+	public synchronized boolean isAirborne() {
 		return this.isAirborne;
+	}
+	
+	/**
+	 * Gets the maximum track error of this simulated datalink.
+	 * 
+	 * @return the maximum track error of this simulated datalink
+	 */
+	public AircraftTrackError getMaxTrackError() {
+		return this.maxTrackError;
+	}
+	
+	/**
+	 * Sets the maximum track error of this simulated datalink.
+	 * 
+	 * @param maxTrackError the maximum track error to be set
+	 */
+	public void setMaxTrackError(AircraftTrackError maxTrackError) {
+		this.maxTrackError = maxTrackError;
+	}
+	
+	/**
+	 * Gets the error probability of this simulated datalink.
+	 * 
+	 * @return the error probability of this simulated datalink
+	 */
+	public float getErrorProbablilty() {
+		return this.errorProbability;
+	}
+	
+	/**
+	 * Sets the error probablity of this simulated datalink.
+	 * 
+	 * @param errorProbablity the error probablity to be set
+	 */
+	public void setErrorProbablity(float errorProbablity) {
+		this.errorProbability = errorProbablity;
 	}
 	
 	/**

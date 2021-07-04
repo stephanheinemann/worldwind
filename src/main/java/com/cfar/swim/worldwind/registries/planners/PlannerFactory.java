@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.registries.planners;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.time.Duration;
 
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
@@ -42,6 +43,7 @@ import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.drrt.DRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreePlanner;
+import com.cfar.swim.worldwind.planners.rrt.oadrrt.OADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.rrtstar.RRTreeStarPlanner;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -53,8 +55,12 @@ import com.cfar.swim.worldwind.registries.planners.rrt.ADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.ARRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.DRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.session.Scenario;
+import com.cfar.swim.worldwind.tracks.AircraftTrackError;
+
+import gov.nasa.worldwind.geom.Angle;
 
 /**
  * Realizes a planner factory to create planners according to
@@ -265,6 +271,31 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((ADRRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
 				((ADRRTreePlanner) planner).setSignificantChange(properties.getSignificantChange());
 				((ADRRTreePlanner) planner).setObstacleManager(this.scenario);
+			} else if (this.specification.getId().equals(Specification.PLANNER_OADRRT_ID)) {
+				OADRRTreeProperties properties = (OADRRTreeProperties) this.specification.getProperties();
+				planner = new OADRRTreePlanner(this.scenario.getAircraft(), this.scenario.getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+				((OADRRTreePlanner) planner).setSampling(properties.getSampling());
+				((OADRRTreePlanner) planner).setStrategy(properties.getStrategy());
+				((OADRRTreePlanner) planner).setExtension(properties.getExtension());
+				((OADRRTreePlanner) planner).setMaxIterations(properties.getMaxIterations());
+				((OADRRTreePlanner) planner).setEpsilon(properties.getEpsilon());
+				((OADRRTreePlanner) planner).setBias(properties.getBias());
+				((OADRRTreePlanner) planner).setGoalThreshold(properties.getGoalThreshold());
+				((OADRRTreePlanner) planner).setNeighborLimit(properties.getNeighborLimit());
+				((OADRRTreePlanner) planner).setMinimumQuality(properties.getMinimumQuality());
+				((OADRRTreePlanner) planner).setMaximumQuality(properties.getMaximumQuality());
+				((OADRRTreePlanner) planner).setQualityImprovement(properties.getQualityImprovement());
+				((OADRRTreePlanner) planner).setSignificantChange(properties.getSignificantChange());
+				((OADRRTreePlanner) planner).setObstacleManager(this.scenario);
+				((OADRRTreePlanner) planner).setDatalink(this.scenario.getDatalink());
+				AircraftTrackError maxTrackError = new AircraftTrackError();
+				maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
+				maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+				maxTrackError.setOpeningBearingError(Angle.POS90);
+				maxTrackError.setClosingBearingError(Angle.POS90);
+				((OADRRTreePlanner) planner).setMaxTrackError(maxTrackError);
 			}
 			// TODO: implement more planners
 		}

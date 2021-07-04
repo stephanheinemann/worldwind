@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -105,7 +106,16 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 		this.second = second;
 		this.initCostIntervals();
 	}
-
+	
+	/**
+	 * Gets the environment of this edge.
+	 * 
+	 * @return the environment of this edge
+	 */
+	public PlanningContinuum getEnvironment() {
+		return this.continuum;
+	}
+	
 	/**
 	 * Gets the first end position of this edge.
 	 * 
@@ -201,6 +211,51 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 */
 	public boolean isEndPosition(Position position) {
 		return this.first.equals(position) || this.second.equals(position);
+	}
+	
+	/**
+	 * Gets the position on this edge perpendicular to another cross edge
+	 * position.
+	 * 
+	 * @param position the cross edge position in globe coordinates
+	 * 
+	 * @return the position on this edge perpendicular to the other cross edge
+	 *         position, empty if the cross edge position is not adjacent to
+	 *         this edge
+	 */
+	public Optional<Position> getCrossEdgePosition(Position position) {
+		Optional<Position> nearest = Optional.empty();
+		
+		Vec4 pv = this.getEnvironment().getGlobe()
+				.computePointFromPosition(position);
+		Vec4 nv = this.getLine().nearestPointTo(pv);
+		
+		if (this.contains(nv)) {
+			nearest = Optional.of(this.getEnvironment().getGlobe()
+					.computePositionFromPoint(nv));
+		}
+		
+		return nearest;
+	}
+	
+	/**
+	 * Gets the distance of a cross edge position to this edge in meters.
+	 * 
+	 * @param position the cross edge position in globe coordinates
+	 * 
+	 * @return the cross edge distance of the position in meters, infinity if
+	 *         the cross edge position is not adjacent to this edge
+	 */
+	public double getCrossEdgeDistance(Position position) {
+		double crossEdgeDistance = Double.POSITIVE_INFINITY;
+		
+		Optional<Position> nearest = this.getCrossEdgePosition(position);
+		if (nearest.isPresent()) {
+			crossEdgeDistance = this.getEnvironment().getDistance(
+					nearest.get(), position);
+		}
+		
+		return crossEdgeDistance;
 	}
 	
 	/**

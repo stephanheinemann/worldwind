@@ -35,32 +35,23 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Realizes an ADRRT properties bean information customizing the descriptors
+ * Realizes an OADRRT properties bean information customizing the descriptors
  * for each property.
  * 
  * @author Stephan Heinemann
  *
  */
-public class ADRRTreePropertiesBeanInfo extends ARRTreePropertiesBeanInfo {
-
+public class OADRRTreePropertiesBeanInfo extends ADRRTreePropertiesBeanInfo {
+	
 	/**
-	 * Constructs an ADRRT properties bean information.
+	 * Constructs an OADRRT properties bean information.
 	 */
-	public ADRRTreePropertiesBeanInfo() {
-		super(ADRRTreeProperties.class);
+	public OADRRTreePropertiesBeanInfo() {
+		super(OADRRTreeProperties.class);
 	}
 	
 	/**
-	 * Constructs an ADRRT properties bean information.
-	 * 
-	 * @param beanClass the properties bean class of the properties bean
-	 */
-	public ADRRTreePropertiesBeanInfo(Class<? extends ADRRTreeProperties> beanClass) {
-		super(beanClass);
-	}
-	
-	/**
-	 * Customizes the property descriptors for each property of an ADRRT
+	 * Customizes the property descriptors for each property of an OADRRT
 	 * properties bean.
 	 * 
 	 * @return the array of customized property descriptors
@@ -72,15 +63,22 @@ public class ADRRTreePropertiesBeanInfo extends ARRTreePropertiesBeanInfo {
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
-			PropertyDescriptor significantChange = this.createPropertyDescriptor(
-					"significantChange",
-					this.dictionary.getString("property.planner.adrrt.significantChange.name"),
-					this.dictionary.getString("property.planner.adrrt.significantChange.description"),
-					this.dictionary.getString("property.planner.category.dynamic"));
-		
-			PropertyDescriptor[] adrrtDescriptors = new PropertyDescriptor[] { significantChange };
+			PropertyDescriptor maxCrossTrackError = this.createPropertyDescriptor(
+					"maxCrossTrackError",
+					this.dictionary.getString("property.planner.oadrrt.maxCrossTrackError.name"),
+					this.dictionary.getString("property.planner.oadrrt.maxCrossTrackError.description"),
+					this.dictionary.getString("property.planner.category.online"));
+			PropertyDescriptor maxTimingError = this.createPropertyDescriptor(
+					"maxTimingError",
+					this.dictionary.getString("property.planner.oadrrt.maxTimingError.name"),
+					this.dictionary.getString("property.planner.oadrrt.maxTimingError.description"),
+					this.dictionary.getString("property.planner.category.online"));
+			
+			PropertyDescriptor[] oadrrtDescriptors = new PropertyDescriptor[] {
+					maxCrossTrackError,
+					maxTimingError };
 			descriptors = Stream.concat(
-					Arrays.stream(descriptors), Arrays.stream(adrrtDescriptors))
+					Arrays.stream(descriptors), Arrays.stream(oadrrtDescriptors))
 					.toArray(PropertyDescriptor[]::new);
 		
 		} catch (IntrospectionException e) {
@@ -89,4 +87,5 @@ public class ADRRTreePropertiesBeanInfo extends ARRTreePropertiesBeanInfo {
 		
 		return descriptors;
 	}
+	
 }

@@ -295,7 +295,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	public boolean equals(Object o) {
 		boolean equals = super.equals(o);
 		
-		if (equals && (this.getClass() == o.getClass())) {
+		if (equals) {
 			RRTreeProperties rrtp = (RRTreeProperties) o;
 			equals = (this.bias == rrtp.bias)
 					&& (this.epsilon == rrtp.epsilon)

@@ -29,11 +29,16 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
+import java.time.Duration;
+
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DronekitDatalink;
 import com.cfar.swim.worldwind.connections.SimulatedDatalink;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.tracks.AircraftTrackError;
+
+import gov.nasa.worldwind.geom.Angle;
 
 
 /**
@@ -85,6 +90,13 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) this.specification.getProperties();
 			connection = new SimulatedDatalink();
 			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
+			AircraftTrackError maxTrackError = new AircraftTrackError();
+			maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
+			maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+			maxTrackError.setOpeningBearingError(Angle.POS90);
+			maxTrackError.setClosingBearingError(Angle.POS90);
+			((SimulatedDatalink) connection).setMaxTrackError(maxTrackError);
+			((SimulatedDatalink) connection).setErrorProbablity(properties.getErrorProbability());
 		} else if (this.specification.getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID)) {
 			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) this.specification.getProperties();
 			connection = new DronekitDatalink(properties.getHost(), properties.getPort());

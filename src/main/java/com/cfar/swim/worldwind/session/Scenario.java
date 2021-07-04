@@ -57,6 +57,7 @@ import com.cfar.swim.worldwind.environments.StructuredEnvironment;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
+import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -565,6 +566,9 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 			this.aircraft.setThreshold(threshold);
 		}
 		
+		// update planner aircraft
+		this.getPlanner().setAircraft(aircraft);
+		
 		this.pcs.firePropertyChange("aircraft", null, this.aircraft);
 	}
 	
@@ -682,6 +686,9 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 				((StructuredEnvironment) this.environment)
 				.addStructuralChangeListener(this);
 			}
+			
+			// update planner environment
+			this.getPlanner().setEnvironment(environment);
 		
 			this.pcs.firePropertyChange("environment", null, this.environment);
 		} else {
@@ -888,6 +895,11 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	public synchronized void setDatalink(Datalink datalink) {
 		if (null != datalink) {
 			this.datalink = datalink;
+			
+			// update online planner datalink
+			if (this.getPlanner() instanceof OnlinePlanner) {
+				((OnlinePlanner) this.getPlanner()).setDatalink(datalink);
+			}
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -959,7 +971,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @return true if this scenario has a computed trajectory, false otherwise
 	 */
 	public synchronized boolean hasTrajectory() {
-		return (null != this.trajectory.getWaypoints());
+		return (0 < this.trajectory.getWaypointsLength());
 	}
 	
 	/**

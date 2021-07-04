@@ -405,6 +405,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Removes the first waypoint of the current plan.
+	 * 
+	 * @return the removed first waypoint
+	 */
+	protected Waypoint removeFirstWaypoint() {
+		return this.plan.removeFirst();
+	}
+	
+	/**
 	 * Adds a last waypoint to the current plan.
 	 * 
 	 * @param waypoint the last waypoint to be added to the current plan

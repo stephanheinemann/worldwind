@@ -94,6 +94,18 @@ public abstract class AbstractPlanner implements Planner {
 	}
 	
 	/**
+	 * Sets the aircraft of this abstract planner.
+	 * 
+	 * @param aircraft the aircraft to be set
+	 * 
+	 * @see Planner#setAircraft(Aircraft)
+	 */
+	@Override
+	public void setAircraft(Aircraft aircraft) {
+		this.aircraft = aircraft;
+	}
+	
+	/**
 	 * Gets the environment of this abstract planner.
 	 * 
 	 * @return the environment of this abstract planner
@@ -103,6 +115,18 @@ public abstract class AbstractPlanner implements Planner {
 	@Override
 	public Environment getEnvironment() {
 		return this.environment;
+	}
+	
+	/**
+	 * Sets the environment of this abstract planner
+	 * 
+	 * @param environment the environment to be set
+	 * 
+	 * @see Planner#setEnvironment(Environment)
+	 */
+	@Override
+	public void setEnvironment(Environment environment) {
+		this.environment = environment;
 	}
 	
 	/**

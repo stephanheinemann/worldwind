@@ -105,7 +105,7 @@ public abstract class DatalinkProperties implements Properties<Datalink> {
 		
 		if (this == o) {
 			equals = true;
-		} else if ((null != o) && (o instanceof DatalinkProperties)) {
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
 			equals = (this.downlinkPeriod == ((DatalinkProperties) o).downlinkPeriod);
 		}
 			

@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners.rrt;
+package com.cfar.swim.worldwind.registries.connections;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -35,33 +35,24 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Realizes an ADRRT properties bean information customizing the descriptors
- * for each property.
+ * Realizes a simulated datalink properties bean information customizing the
+ * descriptors for each property.
  * 
  * @author Stephan Heinemann
  *
  */
-public class ADRRTreePropertiesBeanInfo extends ARRTreePropertiesBeanInfo {
-
+public class SimulatedDatalinkPropertiesBeanInfo extends DatalinkPropertiesBeanInfo {
+	
 	/**
-	 * Constructs an ADRRT properties bean information.
+	 * Constructs a simulated datalink properties bean information.
 	 */
-	public ADRRTreePropertiesBeanInfo() {
-		super(ADRRTreeProperties.class);
+	public SimulatedDatalinkPropertiesBeanInfo() {
+		super(SimulatedDatalinkProperties.class);
 	}
 	
 	/**
-	 * Constructs an ADRRT properties bean information.
-	 * 
-	 * @param beanClass the properties bean class of the properties bean
-	 */
-	public ADRRTreePropertiesBeanInfo(Class<? extends ADRRTreeProperties> beanClass) {
-		super(beanClass);
-	}
-	
-	/**
-	 * Customizes the property descriptors for each property of an ADRRT
-	 * properties bean.
+	 * Customizes the property descriptors for each property of a simulated
+	 * datalink properties bean.
 	 * 
 	 * @return the array of customized property descriptors
 	 * 
@@ -72,21 +63,36 @@ public class ADRRTreePropertiesBeanInfo extends ARRTreePropertiesBeanInfo {
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
-			PropertyDescriptor significantChange = this.createPropertyDescriptor(
-					"significantChange",
-					this.dictionary.getString("property.planner.adrrt.significantChange.name"),
-					this.dictionary.getString("property.planner.adrrt.significantChange.description"),
-					this.dictionary.getString("property.planner.category.dynamic"));
-		
-			PropertyDescriptor[] adrrtDescriptors = new PropertyDescriptor[] { significantChange };
+			PropertyDescriptor maxCrossTrackError = this.createPropertyDescriptor(
+					"maxCrossTrackError",
+					this.dictionary.getString("property.connection.datalink.simulated.maxCrossTrackError.name"),
+					this.dictionary.getString("property.connection.datalink.simulated.maxCrossTrackError.description"),
+					this.dictionary.getString("property.connection.datalink.category.error"));
+			PropertyDescriptor maxTimingError = this.createPropertyDescriptor(
+					"maxTimingError",
+					this.dictionary.getString("property.connection.datalink.simulated.maxTimingError.name"),
+					this.dictionary.getString("property.connection.datalink.simulated.maxTimingError.description"),
+					this.dictionary.getString("property.connection.datalink.category.error"));
+			PropertyDescriptor errorProbability = this.createPropertyDescriptor(
+					"errorProbability",
+					this.dictionary.getString("property.connection.datalink.simulated.errorProbability.name"),
+					this.dictionary.getString("property.connection.datalink.simulated.errorProbability.description"),
+					this.dictionary.getString("property.connection.datalink.category.error"));
+			
+			PropertyDescriptor[] sdlDescriptors = new PropertyDescriptor[] {
+					maxCrossTrackError,
+					maxTimingError,
+					errorProbability};
+			
 			descriptors = Stream.concat(
-					Arrays.stream(descriptors), Arrays.stream(adrrtDescriptors))
+					Arrays.stream(descriptors), Arrays.stream(sdlDescriptors))
 					.toArray(PropertyDescriptor[]::new);
-		
+			
 		} catch (IntrospectionException e) {
 			e.printStackTrace();
 		}
 		
 		return descriptors;
 	}
+	
 }

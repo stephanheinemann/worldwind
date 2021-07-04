@@ -29,7 +29,9 @@
  */
 package com.cfar.swim.worldwind.environments;
 
+import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Vec4;
 
 /**
  * Realizes a directed edge within a planning continuum based on two sampled
@@ -52,6 +54,52 @@ public class DirectedEdge extends Edge {
 	 */
 	public DirectedEdge(PlanningContinuum continuum, Position first, Position second) {
 		super(continuum, first, second);
+	}
+	
+	/**
+	 * Gets the opening bearing of a position in degrees in relation to this
+	 * directed edge.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the opening bearing of the position in degrees
+	 */
+	public Angle getOpeningBearing(Position position) {
+		Angle ob = Angle.ZERO;
+		
+		if (!this.getFirstPosition().equals(position)) {
+			DirectedEdge oe = new DirectedEdge(
+					this.getEnvironment(), this.getFirstPosition(), position);
+			Vec4 ov = oe.getSecond().subtract3(oe.getFirst());
+			Vec4 v =  this.getSecond().subtract3(this.getFirst());
+			
+			ob = v.angleBetween3(ov);
+		}
+		
+		return ob;
+	}
+	
+	/**
+	 * Gets the closing bearing of a position in degrees in relation to this
+	 * directed edge.
+	 * 
+	 * @param position the position in globe coordinates
+	 * 
+	 * @return the closing bearing of the position in degrees
+	 */
+	public Angle getClosingBearing(Position position) {
+		Angle cb = Angle.ZERO;
+		
+		if (!this.getSecondPosition().equals(position)) {
+			DirectedEdge ce = new DirectedEdge(
+					this.getEnvironment(), position, this.getSecondPosition());
+			Vec4 cv = ce.getSecond().subtract3(ce.getFirst());
+			Vec4 v =  this.getSecond().subtract3(this.getFirst());
+			
+			cb = v.angleBetween3(cv);
+		}
+		
+		return cb;
 	}
 	
 	/**

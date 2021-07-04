@@ -27,36 +27,49 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners.cgs;
-
-import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
+package com.cfar.swim.worldwind.registries.planners;
 
 /**
- * Realizes the properties bean of a forward A* planner.
+ * Describes the properties bean of an online planner.
  * 
  * @author Stephan Heinemann
- *
  */
-public class ForwardAStarProperties extends AbstractPlannerProperties {
-
+public interface OnlinePlannerProperties extends PlannerProperties {
+	
 	/**
-	 * Constructs a new forward A* planner properties bean.
-	 */
-	public ForwardAStarProperties() {
-		super();
-	}
-
-	/**
-	 * Constructs a new forward A* planner properties bean with
-	 * specified cost and risk policy property values.
+	 * Gets the maximum acceptable cross track error of this online planner
+	 * properties bean in meters.
 	 * 
-	 * @param costPolicy the cost policy of this forward A* planner properties bean
-	 * @param riskPolicy the risk policy of this forward A* planner properties bean
+	 * @return the maximum acceptable cross track error of this online planner
+	 *         properties bean in meters
 	 */
-	public ForwardAStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		super(costPolicy, riskPolicy);
-	}
+	public long getMaxCrossTrackError();
+	
+	/**
+	 * Sets the maximum acceptable cross track error of this online planner
+	 * properties bean in meters.
+	 * 
+	 * @param maxCrossTrackError the maximum acceptable cross track error to be
+	 *                           set in meters
+	 */
+	public void setMaxCrossTrackError(long maxCrossTrackError);
+	
+	/**
+	 * Gets the maximum acceptable timing error of this online planner
+	 * properties bean in seconds.
+	 * 
+	 * @return the maximum acceptable timing error of this online planner
+	 *         properties bean in seconds
+	 */
+	public long getMaxTimingError();
+	
+	/**
+	 * Sets the maximum acceptable timing error of this online planner
+	 * properties bean in seconds.
+	 * 
+	 * @param maxTimingError the maximum acceptable timing error to be set in
+	 *                       seconds
+	 */
+	public void setMaxTimingError(long maxTimingError);
 	
 }

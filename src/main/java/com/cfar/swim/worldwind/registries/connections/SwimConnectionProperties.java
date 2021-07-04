@@ -205,7 +205,7 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 		
 		if (this == o) {
 			equals = true;
-		} else if ((null != o) && (o instanceof SwimConnectionProperties)) {
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
 			SwimConnectionProperties scp = (SwimConnectionProperties) o;
 			equals = (this.subscribesAIXM == scp.subscribesAIXM)
 					&& (this.subscribesAMXM == scp.subscribesAMXM)

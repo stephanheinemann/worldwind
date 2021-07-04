@@ -58,11 +58,25 @@ public interface Planner extends FactoryProduct {
 	public Aircraft getAircraft();
 	
 	/**
+	 * Sets the aircraft of this planner.
+	 * 
+	 * @param aircraft the aircraft to be set
+	 */
+	public void setAircraft(Aircraft aircraft);
+	
+	/**
 	 * Gets the environment of this planner.
 	 * 
 	 * @return the environment of this planner
 	 */
 	public Environment getEnvironment();
+	
+	/**
+	 * Sets the environment of this planner
+	 * 
+	 * @param environment the environment to be set
+	 */
+	public void setEnvironment(Environment environment);
 	
 	/**
 	 * Gets the cost policy of this planner.

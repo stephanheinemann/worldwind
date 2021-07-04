@@ -171,10 +171,10 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	 * @see SwimConnectionProperties#equals(Object)
 	 */
 	@Override
-	public final boolean equals(Object o) {
+	public boolean equals(Object o) {
 		boolean equals = super.equals(o);
 		
-		if (equals && (o instanceof SimulatedSwimConnectionProperties)) {
+		if (equals) {
 			SimulatedSwimConnectionProperties sscp = (SimulatedSwimConnectionProperties) o;
 			equals = (this.resourceDirectory.equals(sscp.resourceDirectory))
 					&& (this.updatePeriod == sscp.updatePeriod)
