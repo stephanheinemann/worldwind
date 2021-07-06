@@ -333,6 +333,8 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 			this.repair(partIndex);
 			this.improve(partIndex);
 		}
+		// backup after elaboration
+		this.backup(partIndex);
 	}
 	
 	/**
@@ -727,13 +729,42 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Shares dynamic obstacles among all existing ADRRT backups for dynamic repair.
+	 * Determines whether or not an ADRRT backup has waypoints.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if the ADRRT backup has waypoints, false otherwise
+	 */
+	protected boolean hasWaypoints(int backupIndex) {
+		boolean hasWaypoints = false;
+		
+		if (this.hasBackup(backupIndex)) {
+			Backup backup = this.backups.get(backupIndex);
+			hasWaypoints = !backup.plan.isEmpty();
+		}
+		
+		return hasWaypoints;
+	}
+	
+	/**
+	 * Determines whether or not an ADRRT backup index is the last.
+	 * 
+	 * @param backupIndex the backup index
+	 * 
+	 * @return if the backup index is the last, false otherwise
+	 */
+	protected boolean isLastIndex(int backupIndex) {
+		return (this.backups.size() - 1) == backupIndex;
+	}
+	
+	/**
+	 * Shares dynamic obstacles among all relevant ADRRT backups for dynamic repair.
 	 * 
 	 * @param dynamicObstacles the dynamic obstacles to be shared
 	 */
 	protected void shareDynamicObstacles(Set<Obstacle> dynamicObstacles) {
 		for (int backupIndex = 0; backupIndex < backups.size(); backupIndex++) {
-			if (this.hasBackup(backupIndex)) {
+			if (this.hasWaypoints(backupIndex)) {
 				Backup backup = this.backups.get(backupIndex);
 				backup.dynamicObstacles.addAll(dynamicObstacles);
 			}

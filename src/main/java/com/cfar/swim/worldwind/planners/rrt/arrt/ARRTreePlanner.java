@@ -710,7 +710,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	protected Trajectory planPart(int partIndex) {
-		super.planPart(partIndex);
+		Trajectory trajectory = super.planPart(partIndex);
+		this.revisePlan(trajectory);
 		this.elaborate(partIndex);
 		return this.createTrajectory();
 	}

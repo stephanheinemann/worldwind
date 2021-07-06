@@ -56,7 +56,6 @@ import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 
 import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
 
 /**
@@ -83,7 +82,8 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	/** the datalink unplanned landing communication of this OADRRT planner */
 	private Communication<Datalink> unplannedLanding = null;
 	
-	// TODO: lost communication
+	/** the establish datalink communication of this OADRRT planner */
+	private Communication<Datalink> establishDatalink = null;
 	
 	/** the maximum acceptable aircraft track error of this OADRRT planner */
 	private AircraftTrackError maxTrackError = AircraftTrackError.ZERO;
@@ -105,6 +105,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			public void revisePlan(Trajectory trajectory) {
 				if (hasDatalink() && getDatalink().isConnected()) {
 					Logging.logger().info("uploading mission...");
+					// TODO: do not upload an empty trajectory
 					// only update mission if still relevant
 					//if (getStart().equals(getDatalink().getNextMissionPosition())) {
 						// TODO: timing issues if close to next mission position
@@ -181,6 +182,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 */
 	@Override
 	public void setMaxTrackError(AircraftTrackError maxTrackError) {
+		if (null == maxTrackError) {
+			throw new IllegalArgumentException();
+		}
 		this.maxTrackError = maxTrackError;
 	}
 	
@@ -195,9 +199,14 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 */
 	@Override
 	public boolean isOnTrack() {
-		boolean isOnTrack = false;
+		boolean isOnTrack = true;
 		
-		if (this.currentLeg.isPresent()) {
+		// TODO: ensure sufficient track points for on-track assessment
+		
+		if (this.currentLeg.isPresent()
+				&& this.hasDatalink() && this.getDatalink().isConnected()
+				&& this.getDatalink().isMonitoring()
+				&& this.getDatalink().isAirborne()) {
 			DirectedEdge leg = (DirectedEdge) this.currentLeg.get();
 			ADRRTreeWaypoint next = (ADRRTreeWaypoint) leg.getSecondPosition();
 			
@@ -219,7 +228,6 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			// ETO update
 			double dtg = this.getEnvironment().getDistance(lastPosition, next);
 			Duration ttg = Duration.ofSeconds((long) (dtg / gs));
-			// TODO: large TTG overflow?
 			Logging.logger().info("ttg = " + ttg);
 			ZonedDateTime eto = last.getAto().plus(ttg);
 			Duration deto = Duration.between(next.getEto(), eto).abs();
@@ -246,60 +254,119 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		if (root.hasParent()) {
 			ADRRTreeWaypoint parent = root.getParent();
 			parent.removeChild(root);
+			root.setParent(null);
 			while (parent.hasParent()) {
 				parent = parent.getParent();
 			}
 			this.trim(parent);
 		}
-		
-		root.setParent(null);
 	}
 	
 	/**
-	 * Progresses this OADRRT planner by rooting its generated tree at the next
+	 * Progresses an OADRRT plan by rooting its generated tree at the next
 	 * mission position.
+	 * 
+	 * @param partIndex the index of the part to be progressed
 	 */
-	protected void progress() {
-		if (this.hasStart() && this.hasDatalink() && this.getDatalink().isConnected()
+	protected void progress(int partIndex) {
+		if (this.hasStart()
+				&& this.hasDatalink() && this.getDatalink().isConnected()
 				&& this.getDatalink().isMonitoring()) {
-			// progress planner tree
-			while (!this.getStart().equals(new ADRRTreeWaypoint(this.getDatalink().getNextMissionPosition()))) {
-				// TODO: check empty plan?, perform backup after rooting?
-				ADRRTreeWaypoint previous = (ADRRTreeWaypoint) this.removeFirstWaypoint();
+			
+			if (this.hasWaypoints(partIndex - 1)) {
+				this.backup(partIndex);
+				this.restore(partIndex - 1);
+				this.progress(partIndex - 1);
+				this.backup(partIndex - 1);
+				this.restore(partIndex);
+			} else {
+				// TODO: make sure mission has been uploaded
+				// progress planner tree
+				while (!this.getStart().equals(new ADRRTreeWaypoint(this.getDatalink().getNextMissionPosition()))
+						&& this.hasWaypoints()) {
+					ADRRTreeWaypoint previous = (ADRRTreeWaypoint) this.removeFirstWaypoint();
+					if (this.hasWaypoints()) {
+						this.currentLeg = this.getEnvironment().findEdge(
+								previous, this.getFirstWaypoint());
+						this.root((ADRRTreeWaypoint) this.getFirstWaypoint());
+					}
+					// TODO: backup necessary?
+					// this.backup(partIndex);
+				}
 				
-				if (this.hasWaypoints()) {
-					this.currentLeg = this.getEnvironment().findEdge(
-							previous, this.getFirstWaypoint());
-					this.root((ADRRTreeWaypoint) this.getFirstWaypoint());
+				// check take-off and landing conditions
+				AircraftTrackPoint last = this.getDatalink().getAircraftTrack().getLastTrackPoint();
+				if (this.isLastIndex(partIndex)
+						&& this.getDatalink().isAirborne()
+						&& this.isInGoalRegion(last.getPosition())) {
+					// calculate landing window with full error margin
+					ZonedDateTime landingTime = this.getGoal().getEto();
+					TimeInterval landingWindow = new TimeInterval(
+							landingTime.minus(this.getMaxTrackError()
+									.getTimingError().getSeconds(), ChronoUnit.SECONDS),
+							landingTime.plus(this.getMaxTrackError()
+									.getTimingError().getSeconds(), ChronoUnit.SECONDS));
+					if (landingWindow.contains(last.getAto())) {
+						this.performLanding();
+					} else {
+						this.performUnplannedLanding();
+					}
+				} else if ((0 == partIndex)
+						&& !this.getDatalink().isAirborne()
+						&& this.hasWaypoints()) {
+					// calculate take-off window with reduced error margin
+					ZonedDateTime takeOffTime = this.getStart().getEto();
+					TimeInterval takeOffWindow = new TimeInterval(
+							takeOffTime.minus(this.getMaxTrackError()
+									.getTimingError().getSeconds() / 2, ChronoUnit.SECONDS),
+							takeOffTime.plus(this.getMaxTrackError()
+									.getTimingError().getSeconds() / 2, ChronoUnit.SECONDS));
+					if (takeOffWindow.contains(last.getAto())) {
+						this.performTakeOff();
+					}
 				}
 			}
-			
-			// check take-off and landing conditions
-			AircraftTrackPoint last = this.getDatalink().getAircraftTrack().getLastTrackPoint();
-			if (this.getDatalink().isAirborne() && this.isInGoalRegion(last.getPosition())) {
-				ZonedDateTime landingTime = this.getGoal().getEto();
-				TimeInterval landingWindow = new TimeInterval(
-						landingTime.minus(this.getMaxTrackError()
-								.getTimingError().getSeconds(), ChronoUnit.SECONDS),
-						landingTime.plus(this.getMaxTrackError()
-								.getTimingError().getSeconds(), ChronoUnit.SECONDS));
-				if (landingWindow.contains(last.getAto())) {
-					this.performLanding();
-				} else {
-					this.performUnplannedLanding();
+		} else if (!this.hasDatalink()
+				|| !this.getDatalink().isConnected()
+				|| !this.getDatalink().isMonitoring()) {
+			this.establishDatalink();
+		}
+	}
+	
+	/**
+	 * Elaborates an OADRRT plan.
+	 * 
+	 * @param partIndex the index of the plan to be elaborated
+	 */
+	@Override
+	protected void elaborate(int partIndex) {
+		// proceed to next part only if fully improved and not in need of repair
+		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
+			this.repair(partIndex);
+			this.progress(partIndex);
+			this.improve(partIndex);
+		}
+		// backup after elaboration
+		this.backup(partIndex);
+	}
+	
+	/**
+	 * Suspends this OADRRT planner until termination, context changes or
+	 * off-track situations occur.
+	 */
+	@Override
+	protected synchronized void suspend() {
+		try {
+			// wait for termination, dynamic changes, or off-track situations
+			while (!this.hasTerminated() && !this.needsRepair() /*&& this.isOnTrack()*/) {
+				this.progress(this.backups.size() - 1);
+				if (!this.isOnTrack()) {
+					Logging.logger().severe("we are off-track");
 				}
-			} else if (!this.getDatalink().isAirborne() && this.hasWaypoints()) {
-				ZonedDateTime takeOffTime = this.getStart().getEto();
-				TimeInterval takeOffWindow = new TimeInterval(
-						takeOffTime.minus(this.getMaxTrackError()
-								.getTimingError().getSeconds() / 2, ChronoUnit.SECONDS),
-						takeOffTime.plus(this.getMaxTrackError()
-								.getTimingError().getSeconds() / 2, ChronoUnit.SECONDS));
-				if (takeOffWindow.contains(last.getAto())) {
-					this.performTakeOff();
-				}
-			} 
-			
+				this.wait();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 	
@@ -340,50 +407,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	// TODO: revise plan if significantly off track (track or ATO)
 	// TODO: repair plan with respect to current track point (start with ATO or next with ETO)
 	// TODO: issue lost datalink connection warnings
-	
-	/**
-	 * Plans a trajectory from an origin to a destination at a specified
-	 * estimated time of departure.
-	 * 
-	 * @param origin the origin in globe coordinates
-	 * @param destination the destination in globe coordinates
-	 * @param etd the estimated time of departure
-	 * 
-	 * @return the planned trajectory from the origin to the destination with
-	 *         the estimated time of departure
-	 * 
-	 * @see ADRRTreePlanner#plan(Position, Position, ZonedDateTime)
-	 */
-	@Override
-	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
-		Trajectory trajectory = new Trajectory();
-		this.initBackups(1);
-		this.initialize(origin, destination, etd);
-		
-		while (!this.hasTerminated()) {
-			trajectory = this.planPart(0);
-			this.revisePlan(trajectory);
-			
-			//Logging.logger().info("taking off...");
-			//this.getDatalink().takeOff();
-			
-			// wait for termination or dynamic changes
-			while (!this.hasTerminated() && !this.needsRepair() /*&& this.isOnTrack()*/) {
-				this.progress();
-				if (!this.isOnTrack()) {
-					Logging.logger().severe("we are off-track");
-				}
-				this.suspend();
-			}
-		}
-		
-		// TODO: possibly adjust speed or track to recover plan
-		// TODO: trigger complete re-planning from present position off-track
-		// TODO: add off-track notification callback
-		// TODO: if not landed after termination: RTL versus LAND
-		
-		return trajectory;
-	}
+	// TODO: possibly adjust speed or track to recover plan
+	// TODO: trigger complete re-planning from present position off-track
+	// TODO: add off-track notification callback
+	// TODO: if not landed after termination: RTL versus LAND
 	
 	/**
 	 * Realizes a track change listener.
@@ -524,6 +551,19 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		return (null != this.unplannedLanding);
 	}
 	
+	// TODO: get/set establish datalink
+	
+	/**
+	 * Determines whether or not this OADRRT planner has an establish datalink
+	 * communication.
+	 * 
+	 * @return true if this OADRRT planner has an establish datalink
+	 *         communication, false otherwise
+	 */
+	public boolean hasEstablishDatalink() {
+		return (null != this.establishDatalink);
+	}
+	
 	/**
 	 * Performs a take-off via the datalink communication of this OADRRT
 	 * planner.
@@ -554,6 +594,15 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		}
 	}
 	
+	/**
+	 * Establishes the datalink communication of this OADRRT planner.
+	 */
+	private void establishDatalink() {
+		if (this.hasEstablishDatalink()) {
+			this.establishDatalink.perform();
+		}
+	}
+	
 	/*
 	 * An online planner can plan for any departure time (in the past as well as
 	 * in the future). If the current time and position of the aircraft matches
@@ -572,7 +621,6 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * The online planner should issue warnings if expected next waypoints
 	 * are not the ones the aircraft is navigating towards.
 	 */
-	
 	
 	/**
 	 * Determines whether or not this OADRRT planner matches a specification.

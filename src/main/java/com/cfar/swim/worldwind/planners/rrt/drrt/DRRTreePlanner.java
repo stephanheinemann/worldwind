@@ -356,6 +356,8 @@ implements DynamicPlanner, LifelongPlanner {
 		while (this.needsRepair() && !this.hasTerminated()) {
 			this.repair(partIndex);
 		}
+		// backup after elaboration
+		this.backup(partIndex);
 	}
 	
 	/**

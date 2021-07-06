@@ -408,26 +408,23 @@ public class Capabilities {
 		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
 		double height = goal.getElevation() - start.getElevation();
 		
-		if (new PrecisionDouble(height).equals(new PrecisionDouble(0d))) {
-			// horizontal movement
-			estimatedDuration = this.getEstimatedDuration(distance);
-		} else if (0 < height) {
-			// climb
+		if (this.cruiseRateOfClimb <= height) {
+			// climb for at least one second
 			// compute cruise climb duration
-			Duration climbDuration = Duration.ofSeconds((long) (height / this.cruiseRateOfClimb));
+			Duration climbDuration = Duration.ofMillis((long) (1000d * height / this.cruiseRateOfClimb));
 			// compute cruise slant distance in still air
-			double slantDistance = this.cruiseClimbSpeed * climbDuration.getSeconds();
+			double slantDistance = this.cruiseClimbSpeed * climbDuration.toMillis() / 1000d;
 			
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 				// compute minimum climb duration
-				climbDuration = Duration.ofSeconds((long) (height / this.maximumRateOfClimb));
+				climbDuration = Duration.ofMillis((long) (1000d * height / this.maximumRateOfClimb));
 				// compute minimum slant distance in still air
-				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.getSeconds();
+				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.toMillis() / 1000d;
 				
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
-					throw new CapabilitiesException("incapable of traveling directly from " + start + " to " + goal);
+					throw new CapabilitiesException("incapable to travel directly from " + start + " to " + goal);
 				}
 			}
 			
@@ -439,24 +436,25 @@ public class Capabilities {
 			double levelDistance = distance - climbDistance;
 			// compute complete estimated duration
 			estimatedDuration = climbDuration.plus(this.getEstimatedDuration(levelDistance));
-		} else {
-			// descent
+			
+		} else if (this.cruiseRateOfDescent <= Math.abs(height)) {
+			// descent for at least one second
 			height = Math.abs(height);
 			// compute cruise descent duration
-			Duration descentDuration = Duration.ofSeconds((long) (height / this.cruiseRateOfDescent));
+			Duration descentDuration = Duration.ofMillis((long) (1000d * height / this.cruiseRateOfDescent));
 			// compute cruise slant distance in still air
-			double slantDistance = this.cruiseDescentSpeed * descentDuration.getSeconds();
+			double slantDistance = this.cruiseDescentSpeed * descentDuration.toMillis() / 1000d;
 			
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 				// compute minimum descent duration
-				descentDuration = Duration.ofSeconds((long) (height / this.maximumRateOfDescent));
+				descentDuration = Duration.ofMillis((long) (1000d * height / this.maximumRateOfDescent));
 				// compute minimum slant distance in still air
-				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.getSeconds();
+				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.toMillis() / 1000d;
 				
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
-					throw new CapabilitiesException("incapable of traveling directly from " + start + " to " + goal);
+					throw new CapabilitiesException("incapable to travel directly from " + start + " to " + goal);
 				}
 			}
 			
@@ -468,6 +466,10 @@ public class Capabilities {
 			double levelDistance = distance - descentDistance;
 			// compute complete estimated duration
 			estimatedDuration = descentDuration.plus(this.getEstimatedDuration(levelDistance));
+			
+		} else {
+			// horizontal movement
+			estimatedDuration = this.getEstimatedDuration(distance);
 		}
 		
 		return estimatedDuration;
