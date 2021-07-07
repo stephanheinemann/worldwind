@@ -676,6 +676,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected void improve(int partIndex) {
 		if (!this.hasMaximumQuality()) {
+			// TODO: backup and recover current environment if compute
+			// unsuccessful, this way the extending AD planner always
+			// has a valid environment to repair
 			this.getEnvironment().clearVertices();
 			this.getEnvironment().addVertex(this.getStart());
 			this.setNewestWaypoint(this.getStart());

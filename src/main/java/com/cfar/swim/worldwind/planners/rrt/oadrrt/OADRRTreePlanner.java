@@ -110,7 +110,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 				if (hasDatalink() && getDatalink().isConnected()) {
 					Logging.logger().info("uploading mission...");
 					// only update mission if still relevant
-					if (!getStart().equals(new ADRRTreeWaypoint(getDatalink().getNextMissionPosition()))) {
+					if (!getStart().equals(createWaypoint(getDatalink().getNextMissionPosition()))) {
 						Logging.logger().warning("start is not the next mission position...");
 					}
 					// do not upload an empty trajectory
@@ -228,7 +228,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 				ADRRTreeWaypoint next = (ADRRTreeWaypoint) leg.getSecondPosition();
 				
 				// cross track check
-				ADRRTreeWaypoint lastPosition = new ADRRTreeWaypoint(last.getPosition());
+				ADRRTreeWaypoint lastPosition = this.createWaypoint(last.getPosition());
 				double ced = leg.getCrossEdgeDistance(lastPosition);
 				Angle ob = leg.getOpeningBearing(lastPosition);
 				Angle cb = leg.getClosingBearing(lastPosition);
@@ -242,9 +242,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 				// ETO update
 				double dtg = this.getEnvironment().getDistance(lastPosition, next);
 				Duration ttg = Duration.ofSeconds((long) (dtg / gs));
+				Logging.logger().info("dtg = " + dtg + ", ttg = " + ttg);
 				ZonedDateTime eto = last.getAto().plus(ttg);
 				Duration deto = Duration.between(next.getEto(), eto).abs();
-				Logging.logger().info("ttg = " + ttg + ", deto = " + deto);
+				Logging.logger().info("eto = " + eto + ", deto = " + deto);
 			
 				isOnTrack = (this.getMaxTrackError().getCrossTrackError() >= ced)
 						&& (0 <= this.getMaxTrackError().getOpeningBearingError().compareTo(ob))
@@ -292,8 +293,8 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Progresses an OADRRT plan by rooting its generated tree at the next
-	 * mission position.
+	 * Progresses the plan of this OADRRT planner by rooting its generated tree
+	 * at the next mission position.
 	 * 
 	 * @param partIndex the index of the part to be progressed
 	 */
@@ -311,7 +312,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			} else {
 				// TODO: make sure mission has been uploaded
 				// progress planner tree
-				while (!this.getStart().equals(new ADRRTreeWaypoint(this.getDatalink().getNextMissionPosition()))
+				while (!this.getStart().equals(this.createWaypoint(this.getDatalink().getNextMissionPosition()))
 						&& this.hasWaypoints()) {
 					ADRRTreeWaypoint previous = (ADRRTreeWaypoint) this.removeFirstWaypoint();
 					if (this.hasWaypoints()) {
@@ -361,6 +362,46 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
+	 * Re-plans an off-track aircraft of this OADRRT planner.
+	 * 
+	 * @param partIndex the of the plan to be re-planned
+	 */
+	protected void replan(int partIndex) {
+		ADRRTreeWaypoint partStart = (ADRRTreeWaypoint) this.getStart().clone();
+		
+		if (this.hasWaypoints(partIndex - 1)) {
+			this.backup(partIndex);
+			this.restore(partIndex - 1);
+			this.replan(partIndex - 1);
+			// TODO: what if no plan could be found
+			partStart.setEto(this.getGoal().getEto());
+			partStart.setParent(this.getGoal().getParent());
+			this.backup(partIndex - 1);
+			this.restore(partIndex);
+		} else {
+			// naively re-plan based on aircraft capabilities
+			AircraftTrackPoint trackPoint = this.getDatalink().getAircraftTrack().getLastTrackPoint();
+			ADRRTreeWaypoint offTrackWaypoint = this.createWaypoint(trackPoint.getPosition());
+			offTrackWaypoint.setEto(trackPoint.getAto());
+			this.computeEto(offTrackWaypoint, this.getStart());
+			this.currentLeg = Optional.of(new DirectedEdge(
+					this.getEnvironment(), offTrackWaypoint, this.getStart()));
+			this.initialize(this.getStart(), this.getGoal(), this.getStart().getEto());
+			this.planPart(partIndex);
+			partStart.setEto(this.getStart().getEto());
+		}
+		
+		if (!this.getStart().getEto().equals(partStart.getEto())) {
+			// plan current part from scratch if start ETO has changed
+			this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
+			if (partStart.hasParent()) {
+				this.getStart().setParent(partStart.getParent());
+			}
+			this.planPart(partIndex);
+		}
+	}
+	
+	/**
 	 * Elaborates an OADRRT plan.
 	 * 
 	 * @param partIndex the index of the plan to be elaborated
@@ -371,6 +412,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		// (1) re-planning from next mission or track point position
 		// based on static or dynamic performance
 		// (2) control adjusting speed to recover track
+		if (!this.isOnTrack()) {
+			this.offTrackCount = 0;
+			this.replan(partIndex);
+		}
 		
 		// proceed to next part only if fully improved and not in need of repair
 		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
