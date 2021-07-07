@@ -133,6 +133,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	@Override
 	public PlanningContinuum getEnvironment() {
+		// TODO: rename getContinuum (Edge.getContinuum) to avoid cast issues
 		return (PlanningContinuum) super.getEnvironment();
 	}
 	

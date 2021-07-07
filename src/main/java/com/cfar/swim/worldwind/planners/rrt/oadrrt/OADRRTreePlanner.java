@@ -52,6 +52,7 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
+import com.cfar.swim.worldwind.tracks.AircraftTrack;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 
@@ -91,6 +92,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	/** the track change listener of this OADRRT planner */
 	private final TrackChangeListener trackCl = new TrackChangeListener();
 	
+	/** the off-track counter of this OADRRT planner */
+	private int offTrackCount = 0;
+	
 	/**
 	 * Constructs a OADRRT planner for a specified aircraft and environment
 	 * using default local cost and risk policies.
@@ -105,12 +109,16 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			public void revisePlan(Trajectory trajectory) {
 				if (hasDatalink() && getDatalink().isConnected()) {
 					Logging.logger().info("uploading mission...");
-					// TODO: do not upload an empty trajectory
 					// only update mission if still relevant
-					//if (getStart().equals(getDatalink().getNextMissionPosition())) {
-						// TODO: timing issues if close to next mission position
+					if (!getStart().equals(new ADRRTreeWaypoint(getDatalink().getNextMissionPosition()))) {
+						Logging.logger().warning("start is not the next mission position...");
+					}
+					// do not upload an empty trajectory
+					if (!trajectory.isEmpty()) {
 						datalink.uploadMission(trajectory);
-					//}
+					} else {
+						Logging.logger().warning("not uploading an empty trajectory...");
+					}
 				}
 			}
 		});
@@ -201,42 +209,63 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	public boolean isOnTrack() {
 		boolean isOnTrack = true;
 		
-		// TODO: ensure sufficient track points for on-track assessment
-		
 		if (this.currentLeg.isPresent()
 				&& this.hasDatalink() && this.getDatalink().isConnected()
 				&& this.getDatalink().isMonitoring()
 				&& this.getDatalink().isAirborne()) {
-			DirectedEdge leg = (DirectedEdge) this.currentLeg.get();
-			ADRRTreeWaypoint next = (ADRRTreeWaypoint) leg.getSecondPosition();
 			
-			AircraftTrackPoint last = this.getDatalink().getAircraftTrack().getLastTrackPoint();
-			AircraftTrackPoint first = this.getDatalink().getAircraftTrack().getFirstTrackPoint();
+			AircraftTrack track = this.getDatalink().getAircraftTrack();
+			AircraftTrackPoint last = track.getLastTrackPoint();
+			AircraftTrackPoint first = track.getFirstTrackPoint();
 			
-			// cross track check
-			ADRRTreeWaypoint lastPosition = new ADRRTreeWaypoint(last.getPosition());
-			double ced = leg.getCrossEdgeDistance(lastPosition);
-			Angle ob = leg.getOpeningBearing(lastPosition);
-			Angle cb = leg.getClosingBearing(lastPosition);
-			Logging.logger().info("xtd = " + ced + ", ob = " + ob + ", cb = " + cb);
+			// ensure sufficient track points for on-track assessment
+			long maxAge = last.getMaxAge().toMillis();
+			long period = this.getDatalink().getDownlinkPeriod();
+			long maxTrackPoints = maxAge / period;
 			
-			// ground speed check
-			Duration dt = Duration.between(first.getAto(), last.getAto());
-			double s = this.getEnvironment().getDistance(first.getPosition(), last.getPosition());
-			double gs = s / dt.getSeconds();
+			if (track.size() >= (maxTrackPoints - 1)) {
+				DirectedEdge leg = (DirectedEdge) this.currentLeg.get();
+				ADRRTreeWaypoint next = (ADRRTreeWaypoint) leg.getSecondPosition();
+				
+				// cross track check
+				ADRRTreeWaypoint lastPosition = new ADRRTreeWaypoint(last.getPosition());
+				double ced = leg.getCrossEdgeDistance(lastPosition);
+				Angle ob = leg.getOpeningBearing(lastPosition);
+				Angle cb = leg.getClosingBearing(lastPosition);
+				Logging.logger().info("xtd = " + ced + ", ob = " + ob + ", cb = " + cb);
+				
+				// ground speed check
+				Duration dt = Duration.between(first.getAto(), last.getAto());
+				double s = this.getEnvironment().getDistance(first.getPosition(), last.getPosition());
+				double gs = s / dt.getSeconds();
+				
+				// ETO update
+				double dtg = this.getEnvironment().getDistance(lastPosition, next);
+				Duration ttg = Duration.ofSeconds((long) (dtg / gs));
+				ZonedDateTime eto = last.getAto().plus(ttg);
+				Duration deto = Duration.between(next.getEto(), eto).abs();
+				Logging.logger().info("ttg = " + ttg + ", deto = " + deto);
 			
-			// ETO update
-			double dtg = this.getEnvironment().getDistance(lastPosition, next);
-			Duration ttg = Duration.ofSeconds((long) (dtg / gs));
-			Logging.logger().info("ttg = " + ttg);
-			ZonedDateTime eto = last.getAto().plus(ttg);
-			Duration deto = Duration.between(next.getEto(), eto).abs();
-			Logging.logger().info("deto = " + deto);
-		
-			isOnTrack = (this.getMaxTrackError().getCrossTrackError() >= ced)
-					&& (0 <= this.getMaxTrackError().getOpeningBearingError().compareTo(ob))
-					&& (0 <= this.getMaxTrackError().getClosingBearingError().compareTo(cb))
-					&& (0 <= this.getMaxTrackError().getTimingError().compareTo(deto));
+				isOnTrack = (this.getMaxTrackError().getCrossTrackError() >= ced)
+						&& (0 <= this.getMaxTrackError().getOpeningBearingError().compareTo(ob))
+						&& (0 <= this.getMaxTrackError().getClosingBearingError().compareTo(cb))
+						&& (0 <= this.getMaxTrackError().getTimingError().compareTo(deto));
+				
+				// determine off-track situation based on all relevant track points
+				if (isOnTrack) {
+					this.offTrackCount = 0;
+				} else {
+					this.offTrackCount++;
+					if (maxTrackPoints > this.offTrackCount) {
+						isOnTrack = true;
+					} else {
+						Logging.logger().warning("the aircraft is off-track...");
+					}
+				}
+				
+			} else {
+				Logging.logger().info("insufficient track points = " + track.size());
+			}
 		}
 		
 		return isOnTrack;
@@ -290,8 +319,6 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 								previous, this.getFirstWaypoint());
 						this.root((ADRRTreeWaypoint) this.getFirstWaypoint());
 					}
-					// TODO: backup necessary?
-					// this.backup(partIndex);
 				}
 				
 				// check take-off and landing conditions
@@ -340,6 +367,11 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 */
 	@Override
 	protected void elaborate(int partIndex) {
+		// TODO: off-track elaboration: re-plan or control?
+		// (1) re-planning from next mission or track point position
+		// based on static or dynamic performance
+		// (2) control adjusting speed to recover track
+		
 		// proceed to next part only if fully improved and not in need of repair
 		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
 			this.repair(partIndex);
@@ -358,11 +390,8 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	protected synchronized void suspend() {
 		try {
 			// wait for termination, dynamic changes, or off-track situations
-			while (!this.hasTerminated() && !this.needsRepair() /*&& this.isOnTrack()*/) {
+			while (!this.hasTerminated() && !this.needsRepair() && this.isOnTrack()) {
 				this.progress(this.backups.size() - 1);
-				if (!this.isOnTrack()) {
-					Logging.logger().severe("we are off-track");
-				}
 				this.wait();
 			}
 		} catch (InterruptedException e) {
@@ -402,15 +431,6 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			this.getDatalink().addTrackChangeListener(this.trackCl);
 		}
 	}
-	
-	// TODO: follow datalink target and compare course and track as well as ETOs and ATOs
-	// TODO: revise plan if significantly off track (track or ATO)
-	// TODO: repair plan with respect to current track point (start with ATO or next with ETO)
-	// TODO: issue lost datalink connection warnings
-	// TODO: possibly adjust speed or track to recover plan
-	// TODO: trigger complete re-planning from present position off-track
-	// TODO: add off-track notification callback
-	// TODO: if not landed after termination: RTL versus LAND
 	
 	/**
 	 * Realizes a track change listener.
@@ -551,7 +571,30 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		return (null != this.unplannedLanding);
 	}
 	
-	// TODO: get/set establish datalink
+	/**
+	 * Gets the establish datalink communication of this OADRRT planner.
+	 * 
+	 * @return the establish datalink communication of this OADRRT planner
+	 *
+	 * @see OnlinePlanner#getEstablishDataLink()
+	 */
+	@Override
+	public Communication<Datalink> getEstablishDataLink() {
+		return this.establishDatalink;
+	}
+	
+	/**
+	 * Sets the establish datalink communication of this online planner.
+	 * 
+	 * @param establishDatalink the establish datalink communication of this
+	 *                          online planner
+	 *
+	 * @see OnlinePlanner#setEstablishDatalink(Communication)
+	 */
+	@Override
+	public void setEstablishDatalink(Communication<Datalink> establishDatalink) {
+		this.establishDatalink = establishDatalink;
+	}
 	
 	/**
 	 * Determines whether or not this OADRRT planner has an establish datalink
@@ -559,7 +602,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @return true if this OADRRT planner has an establish datalink
 	 *         communication, false otherwise
+	 *
+	 * @see OnlinePlanner#hasEstablishDatalink()
 	 */
+	@Override
 	public boolean hasEstablishDatalink() {
 		return (null != this.establishDatalink);
 	}
@@ -615,12 +661,23 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * aircraft is off track (exceeding maximum cross track or timing errors).
 	 * Should the online planner influence the aircraft performance in order
 	 * to maintain within the trajectory limits and avoid revisions?
+	 * Probably not, the online planner is not a low-level controller but
+	 * could communicate with one.
 	 * Once the aircraft has arrived a the time and point of destination
 	 * (within the track error limitations), the online planner should request
 	 * a landing clearance before initiating a landing via its datalink.
 	 * The online planner should issue warnings if expected next waypoints
 	 * are not the ones the aircraft is navigating towards.
 	 */
+	
+	// TODO: follow datalink target and compare course and track as well as ETOs and ATOs
+	// TODO: revise plan if significantly off track (track or ATO)
+	// TODO: repair plan with respect to current track point (start with ATO or next with ETO)
+	// TODO: issue lost datalink connection warnings
+	// TODO: possibly adjust speed or track to recover plan
+	// TODO: trigger complete re-planning from present position off-track
+	// TODO: add off-track notification callback
+	// TODO: if not landed after termination: RTL versus LAND
 	
 	/**
 	 * Determines whether or not this OADRRT planner matches a specification.

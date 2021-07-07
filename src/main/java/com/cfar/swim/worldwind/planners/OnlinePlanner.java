@@ -137,6 +137,30 @@ public interface OnlinePlanner extends Planner {
 	public boolean hasUnplannedLanding();
 	
 	/**
+	 * Gets the establish datalink communication of this online planner.
+	 * 
+	 * @return the establish datalink communication of this online planner
+	 */
+	public Communication<Datalink> getEstablishDataLink();
+	
+	/**
+	 * Sets the establish datalink communication of this online planner.
+	 * 
+	 * @param establishDatalink the establish datalink communication of this
+	 *                          online planner
+	 */
+	public void setEstablishDatalink(Communication<Datalink> establishDatalink);
+	
+	/**
+	 * Determines whether or not this online planner has an establish datalink
+	 * communication.
+	 * 
+	 * @return true if this online planner has an establish datalink
+	 *         communication, false otherwise
+	 */
+	public boolean hasEstablishDatalink();
+	
+	/**
 	 * Gets the maximum acceptable track error of this online planner to
 	 * consider the aircraft on track.
 	 * 

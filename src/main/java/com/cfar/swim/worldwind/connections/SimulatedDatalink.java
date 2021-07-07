@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.connections;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Iterator;
 
@@ -102,10 +103,10 @@ public class SimulatedDatalink extends Datalink {
 	private int positionIndex = 0;
 	
 	/** the last reporting time of this simulated datalink */
-	private ZonedDateTime reportingTime = ZonedDateTime.now();
+	private ZonedDateTime reportingTime = ZonedDateTime.now(ZoneId.of("UTC"));
 	
 	/** the estimated time over the next position in the planned flight path */
-	private ZonedDateTime eto = ZonedDateTime.now();
+	private ZonedDateTime eto = ZonedDateTime.now(ZoneId.of("UTC"));
 	
 	/** the estimated time enroute on the current leg in the planned flight path */
 	private Duration ete = Duration.ZERO;
@@ -269,7 +270,7 @@ public class SimulatedDatalink extends Datalink {
 	@Override
 	public synchronized Position getAircraftPosition() {
 		Position currentPosition = this.iris.getReferencePosition();
-		this.reportingTime = ZonedDateTime.now();
+		this.reportingTime = ZonedDateTime.now(ZoneId.of("UTC"));
 		
 		if ((null != this.flightPath) && this.isAirborne) {
 			// progress mission
@@ -483,7 +484,7 @@ public class SimulatedDatalink extends Datalink {
 	public synchronized void takeOff() {
 		if (!this.isAirborne()) {
 			this.setAircraftMode(SimulatedDatalink.MODE_AUTO);
-			this.eto = ZonedDateTime.now();
+			this.eto = ZonedDateTime.now(ZoneId.of("UTC"));
 			this.ete = Duration.ZERO;
 			try {
 				Thread.sleep(2000);
