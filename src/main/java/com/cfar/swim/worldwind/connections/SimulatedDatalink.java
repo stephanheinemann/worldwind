@@ -301,6 +301,14 @@ public class SimulatedDatalink extends Datalink {
 				currentPosition = Position.interpolate(ratio, this.nextPosition, this.lastPosition);
 			}
 			
+			// initiate return to land auto-land
+			if (this.lastPosition.equals(this.nextPosition)
+					&& this.lastPosition.equals(this.homePosition)
+					&& this.getAircraftMode().equals(SimulatedDatalink.MODE_RTL)) {
+				this.isAirborne = false;
+				this.setAircraftMode(SimulatedDatalink.MODE_UNKNOWN);
+			}
+			
 			// TODO: introduce probabilistic errors
 			double xte = this.getMaxTrackError().getCrossTrackError() *
 					Math.random() * this.getErrorProbablilty();
@@ -309,8 +317,14 @@ public class SimulatedDatalink extends Datalink {
 					currentPosition.longitude,
 					currentPosition.elevation + xte);
 			
-			this.iris.moveTo(currentPosition);
+		} else if (!this.isAirborne) {
+			double elevation = this.globe.getElevationModel()
+					.getElevation(currentPosition.latitude, currentPosition.longitude);
+			currentPosition = new Position(
+					currentPosition.latitude, currentPosition.longitude, elevation);
 		}
+		
+		this.iris.moveTo(currentPosition);
 		
 		return currentPosition;
 	}
@@ -525,13 +539,13 @@ public class SimulatedDatalink extends Datalink {
 	public synchronized void returnToLaunch() {
 		if (this.isAirborne()) {
 			this.setAircraftMode(SimulatedDatalink.MODE_RTL);
-			this.nextPosition = this.homePosition;
+			Path rtl = new Path(this.getAircraftPosition(), this.homePosition);
+			this.uploadMission(rtl);
 			try {
-				Thread.sleep(5000);
+				Thread.sleep(2000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			this.isAirborne = false;
 		}
 	}
 	
