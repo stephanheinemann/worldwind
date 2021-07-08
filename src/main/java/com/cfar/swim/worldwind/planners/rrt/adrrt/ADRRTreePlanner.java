@@ -30,16 +30,12 @@
 package com.cfar.swim.worldwind.planners.rrt.adrrt;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.environments.DirectedEdge;
-import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.AnytimePlanner;
@@ -50,7 +46,6 @@ import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.planning.Trajectory;
-import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.ADRRTreeProperties;
@@ -575,62 +570,38 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 		this.setCostBias(0d);
 	}
 	
-	/** the backups of this ADRRT planner */
-	protected final ArrayList<Backup> backups = new ArrayList<>();
-	
 	/**
 	 * Realizes a backup of this ADRRT planner.
 	 * 
 	 * @author Stephan Heinemann
 	 * 
 	 */
-	protected class Backup {
-		
-		/** the start waypoint of this ADRRT backup */
-		public ADRRTreeWaypoint start = null;
-		
-		/** the goal waypoint of this ADRRT backup */
-		public ADRRTreeWaypoint goal = null;
-		
-		/** the edges of this ADRRT backup */
-		public Set<DirectedEdge> edges = new HashSet<>();
-		
-		/** the distance bias of this ADRRT backup */
-		public double distanceBias = 1d;
-		
-		/** the cost bias of this ADRRT backup */
-		public double costBias = 0d;
-		
-		/** the cost bound of this ADRRT backup */
-		public double costBound = Double.POSITIVE_INFINITY;
+	protected class Backup extends ARRTreePlanner.Backup {
 		
 		/** the dynamic obstacles of this ADRRT backup */
 		public Set<Obstacle> dynamicObstacles = new HashSet<>();
 		
-		/** the plan waypoints of this ADRRT backup */
-		public List<Waypoint> plan = new LinkedList<Waypoint>();
-		
 		/**
 		 * Clears this ADRRT backup.
+		 * 
+		 * @see ARRTreePlanner.Backup#clear()
 		 */
+		@Override
 		public void clear() {
-			this.start = null;
-			this.goal = null;
-			this.edges.clear();
+			super.clear();
 			this.dynamicObstacles.clear();
-			this.plan.clear();
 		}
 		
 		/**
 		 * Determines whether or not this ADRRT backup is empty.
 		 * 
 		 * @return true if this ADRRT backup is empty, false otherwise
+		 * 
+		 * @see ARRTreePlanner.Backup#isEmpty()
 		 */
+		@Override
 		public boolean isEmpty() {
-			return (null == this.start) && (null == this.goal)
-					&& this.edges.isEmpty()
-					&& this.dynamicObstacles.isEmpty()
-					&& this.plan.isEmpty();
+			return super.isEmpty() && this.dynamicObstacles.isEmpty();
 		}
 	}
 	
@@ -639,34 +610,12 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 	 * 
 	 * @param size the number of backups for this ADRRT planner
 	 */
+	@Override
 	protected void initBackups(int size) {
 		this.backups.clear();
 		for (int backupIndex = 0; backupIndex < size; backupIndex++) {
 			this.backups.add(backupIndex, new Backup());
 		}
-	}
-	
-	/**
-	 * Determines whether or not a backup of this ADRRT planner can be
-	 * performed.
-	 * 
-	 * @param backupIndex the index of the backup
-	 * 
-	 * @return true if a backup can be performed, false otherwise
-	 */
-	protected boolean canBackup(int backupIndex) {
-		return (-1 < backupIndex) && (backupIndex < this.backups.size());
-	}
-	
-	/**
-	 * Determines whether or not this ADRRT planner has a backup.
-	 * 
-	 * @param backupIndex the index of the backup
-	 * 
-	 * @return true if this ADRRT planner has a backup, false otherwise
-	 */
-	protected boolean hasBackup(int backupIndex) {
-		return this.canBackup(backupIndex) && (!this.backups.get(backupIndex).isEmpty());
 	}
 	
 	/**
@@ -676,23 +625,13 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 	 * 
 	 * @return true if a backup has been performed, false otherwise
 	 */
+	@Override
 	protected boolean backup(int backupIndex) {
-		boolean backedup = false;
+		boolean backedup = super.backup(backupIndex);
 		
-		if (this.canBackup(backupIndex)) {
-			Backup backup = this.backups.get(backupIndex);
-			backup.clear();
-			backup.start = this.getStart();
-			backup.goal = this.getGoal();
-			for (Edge edge : this.getEnvironment().getEdges()) {
-				backup.edges.add((DirectedEdge) edge);
-			}
-			backup.distanceBias = this.getDistanceBias();
-			backup.costBias = this.getCostBias();
-			backup.costBound = this.getCostBound();
-			backup.dynamicObstacles.addAll(this.dynamicObstacles);
-			backup.plan.addAll(this.getWaypoints());
-			backedup = true;
+		if (backedup) {
+			Backup backup = (Backup) this.backups.get(backupIndex);
+			backedup = backup.dynamicObstacles.addAll(this.dynamicObstacles);
 		}
 		
 		return backedup;
@@ -705,56 +644,18 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 	 * 
 	 * @return true if a restore has been performed, false otherwise
 	 */
+	@Override
 	protected boolean restore(int backupIndex) {
-		boolean restored = false;
+		boolean restored = super.restore(backupIndex);
 		
-		if (this.hasBackup(backupIndex)) {
-			Backup backup = this.backups.get(backupIndex);
-			this.clearExpendables();
-			this.setStart(backup.start);
-			this.setGoal(backup.goal);
-			for (Edge edge : backup.edges) {
-				this.getEnvironment().addEdge(edge);
-			}
-			this.setDistanceBias(backup.distanceBias);
-			this.setCostBias(backup.costBias);
-			this.setCostBound(backup.costBound);
+		if (restored) {
+			Backup backup = (Backup) this.backups.get(backupIndex);
 			this.clearDynamicObstacles();
 			this.addDynamicObstacles(backup.dynamicObstacles);
-			this.addAllWaypoints(backup.plan);
 			restored = true;
 		}
 		
 		return restored;
-	}
-	
-	/**
-	 * Determines whether or not an ADRRT backup has waypoints.
-	 * 
-	 * @param backupIndex the index of the backup
-	 * 
-	 * @return true if the ADRRT backup has waypoints, false otherwise
-	 */
-	protected boolean hasWaypoints(int backupIndex) {
-		boolean hasWaypoints = false;
-		
-		if (this.hasBackup(backupIndex)) {
-			Backup backup = this.backups.get(backupIndex);
-			hasWaypoints = !backup.plan.isEmpty();
-		}
-		
-		return hasWaypoints;
-	}
-	
-	/**
-	 * Determines whether or not an ADRRT backup index is the last.
-	 * 
-	 * @param backupIndex the backup index
-	 * 
-	 * @return if the backup index is the last, false otherwise
-	 */
-	protected boolean isLastIndex(int backupIndex) {
-		return (this.backups.size() - 1) == backupIndex;
 	}
 	
 	/**
@@ -765,7 +666,7 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 	protected void shareDynamicObstacles(Set<Obstacle> dynamicObstacles) {
 		for (int backupIndex = 0; backupIndex < backups.size(); backupIndex++) {
 			if (this.hasWaypoints(backupIndex)) {
-				Backup backup = this.backups.get(backupIndex);
+				Backup backup = (Backup) this.backups.get(backupIndex);
 				backup.dynamicObstacles.addAll(dynamicObstacles);
 			}
 		}
@@ -782,7 +683,7 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 		boolean hasDynamicObstacles = false;
 		
 		if (this.hasBackup(backupIndex)) {
-			Backup backup = this.backups.get(backupIndex);
+			Backup backup = (Backup) this.backups.get(backupIndex);
 			hasDynamicObstacles = !backup.dynamicObstacles.isEmpty();
 		}
 		

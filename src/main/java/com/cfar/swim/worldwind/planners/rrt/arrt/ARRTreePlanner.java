@@ -30,7 +30,10 @@
 package com.cfar.swim.worldwind.planners.rrt.arrt;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.PriorityQueue;
@@ -38,6 +41,7 @@ import java.util.Set;
 import java.util.function.ToDoubleFunction;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
@@ -46,6 +50,7 @@ import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.ARRTreeProperties;
@@ -676,9 +681,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	protected void improve(int partIndex) {
 		if (!this.hasMaximumQuality()) {
-			// TODO: backup and recover current environment if compute
-			// unsuccessful, this way the extending AD planner always
-			// has a valid environment to repair
+			this.backup(partIndex);
 			this.getEnvironment().clearVertices();
 			this.getEnvironment().addVertex(this.getStart());
 			this.setNewestWaypoint(this.getStart());
@@ -686,6 +689,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			if (this.compute()) {
 				this.revisePlan(this.createTrajectory());
 				this.updateCostBound();
+			} else {
+				this.restore(partIndex);
 			}
 			
 			this.updateBiases();
@@ -734,6 +739,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		this.initBackups(1);
 		this.initialize(origin, destination, etd);
 		Trajectory trajectory = this.planPart(0);
 		this.revisePlan(trajectory);
@@ -756,7 +762,182 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+		this.initBackups(waypoints.size() + 1);
 		return super.plan(origin, destination, waypoints, etd);
+	}
+	
+	/** the backups of this ARRT planner */
+	protected final ArrayList<Backup> backups = new ArrayList<>();
+	
+	/**
+	 * Realizes a backup of this ARRT planner.
+	 * 
+	 * @author Stephan Heinemann
+	 * 
+	 */
+	protected class Backup {
+		
+		/** the start waypoint of this ARRT backup */
+		public ARRTreeWaypoint start = null;
+		
+		/** the goal waypoint of this ARRT backup */
+		public ARRTreeWaypoint goal = null;
+		
+		/** the edges of this ARRT backup */
+		public Set<DirectedEdge> edges = new HashSet<>();
+		
+		/** the distance bias of this ARRT backup */
+		public double distanceBias = 1d;
+		
+		/** the cost bias of this ARRT backup */
+		public double costBias = 0d;
+		
+		/** the cost bound of this ARRT backup */
+		public double costBound = Double.POSITIVE_INFINITY;
+		
+		/** the plan waypoints of this ARRT backup */
+		public List<Waypoint> plan = new LinkedList<Waypoint>();
+		
+		/**
+		 * Clears this ARRT backup.
+		 */
+		public void clear() {
+			this.start = null;
+			this.goal = null;
+			this.edges.clear();
+			this.plan.clear();
+		}
+		
+		/**
+		 * Determines whether or not this ARRT backup is empty.
+		 * 
+		 * @return true if this ARRT backup is empty, false otherwise
+		 */
+		public boolean isEmpty() {
+			return (null == this.start) && (null == this.goal)
+					&& this.edges.isEmpty()
+					&& this.plan.isEmpty();
+		}
+	}
+	
+	/**
+	 * Initializes a number backups for this ARRT planner.
+	 * 
+	 * @param size the number of backups for this ARRT planner
+	 */
+	protected void initBackups(int size) {
+		this.backups.clear();
+		for (int backupIndex = 0; backupIndex < size; backupIndex++) {
+			this.backups.add(backupIndex, new Backup());
+		}
+	}
+	
+	/**
+	 * Determines whether or not a backup of this ARRT planner can be
+	 * performed.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if a backup can be performed, false otherwise
+	 */
+	protected boolean canBackup(int backupIndex) {
+		return (-1 < backupIndex) && (backupIndex < this.backups.size());
+	}
+	
+	/**
+	 * Determines whether or not this ARRT planner has a backup.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if this ARRT planner has a backup, false otherwise
+	 */
+	protected boolean hasBackup(int backupIndex) {
+		return this.canBackup(backupIndex) && (!this.backups.get(backupIndex).isEmpty());
+	}
+	
+	/**
+	 * Backs up this ARRT planner for improvement.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if a backup has been performed, false otherwise
+	 */
+	protected boolean backup(int backupIndex) {
+		boolean backedup = false;
+		
+		if (this.canBackup(backupIndex)) {
+			Backup backup = this.backups.get(backupIndex);
+			backup.clear();
+			backup.start = this.getStart();
+			backup.goal = this.getGoal();
+			for (Edge edge : this.getEnvironment().getEdges()) {
+				backup.edges.add((DirectedEdge) edge);
+			}
+			backup.distanceBias = this.getDistanceBias();
+			backup.costBias = this.getCostBias();
+			backup.costBound = this.getCostBound();
+			backup.plan.addAll(this.getWaypoints());
+			backedup = true;
+		}
+		
+		return backedup;
+	}
+	
+	/**
+	 * Restores this ARRT planner for improvement.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if a restore has been performed, false otherwise
+	 */
+	protected boolean restore(int backupIndex) {
+		boolean restored = false;
+		
+		if (this.hasBackup(backupIndex)) {
+			Backup backup = this.backups.get(backupIndex);
+			this.clearExpendables();
+			this.setStart(backup.start);
+			this.setGoal(backup.goal);
+			for (Edge edge : backup.edges) {
+				this.getEnvironment().addEdge(edge);
+			}
+			this.setDistanceBias(backup.distanceBias);
+			this.setCostBias(backup.costBias);
+			this.setCostBound(backup.costBound);
+			this.addAllWaypoints(backup.plan);
+			restored = true;
+		}
+		
+		return restored;
+	}
+	
+	/**
+	 * Determines whether or not an ARRT backup has waypoints.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if the ARRT backup has waypoints, false otherwise
+	 */
+	protected boolean hasWaypoints(int backupIndex) {
+		boolean hasWaypoints = false;
+		
+		if (this.hasBackup(backupIndex)) {
+			Backup backup = this.backups.get(backupIndex);
+			hasWaypoints = !backup.plan.isEmpty();
+		}
+		
+		return hasWaypoints;
+	}
+	
+	/**
+	 * Determines whether or not an ARRT backup index is the last.
+	 * 
+	 * @param backupIndex the backup index
+	 * 
+	 * @return if the backup index is the last, false otherwise
+	 */
+	protected boolean isLastIndex(int backupIndex) {
+		return (this.backups.size() - 1) == backupIndex;
 	}
 	
 	/**
