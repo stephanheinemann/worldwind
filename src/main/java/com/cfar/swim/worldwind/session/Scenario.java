@@ -1306,7 +1306,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * 
 	 * @param obstacles the obstacles to be removed from this scenario
 	 *
-	 * @see ObstacleManager#sumbitRemoveObstacles(Set)
+	 * @see ObstacleManager#submitRemoveObstacles(Set)
 	 */
 	@Override
 	public synchronized void submitRemoveObstacles(Set<Obstacle> obstacles) {
