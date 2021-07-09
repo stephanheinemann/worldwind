@@ -67,8 +67,11 @@ import gov.nasa.worldwind.geom.Position;
 public class ADRRTreePlanner extends ARRTreePlanner
 implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 	
-	/** indicates whether or or not this ADRRT planner has terminated */
+	/** indicates whether or not this ADRRT planner has terminated */
 	private boolean terminated = false;
+	
+	/** indicates whether or not this ADRRT planning is listening */
+	private boolean isListening = false;
 	
 	/** the obstacle manager of this ADRRT planner */
 	private ObstacleManager obstacleManager = null;
@@ -299,13 +302,17 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 				
 				// trim and re-grow tree if plan is affected
 				this.trim();
+				// force improvement in case of dynamic removals
+				this.setCostBound(this.getGoal().getCost());
 				if (!this.hasValidPlan()) {
+					// an invalid plan has an infinite cost bound
 					this.setCostBound(Double.POSITIVE_INFINITY);
 					if (this.compute()) {
 						this.revisePlan(this.createTrajectory());
 						this.updateCostBound();
 					}
 				}
+				
 			} else {
 				// plan current part from scratch if start ETO has changed
 				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
@@ -376,12 +383,14 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 		this.initBackups(1);
 		this.initialize(origin, destination, etd);
 		
+		this.setListening(true);
 		while (!this.hasTerminated()) {
 			trajectory = this.planPart(0);
 			this.revisePlan(trajectory);
 			// wait for termination or dynamic changes
 			this.suspend();
 		}
+		this.setListening(false);
 		
 		return trajectory;
 	}
@@ -405,6 +414,7 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 		Trajectory trajectory = new Trajectory();
 		this.initBackups(waypoints.size() + 1);
 		
+		this.setListening(true);
 		while (!this.hasTerminated()) {
 			if (this.hasBackup(waypoints.size())) {
 				this.elaborate(waypoints.size());
@@ -417,6 +427,7 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 			// wait for termination or dynamic changes
 			this.suspend();
 		}
+		this.setListening(false);
 		
 		return trajectory;
 	}
@@ -430,6 +441,28 @@ implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Sets whether or not this ADRRT planner is listening.
+	 * 
+	 * @param isListening the listening state to be set
+	 */
+	protected synchronized void setListening(boolean isListening) {
+		this.isListening = isListening;
+	}
+	
+	/**
+	 * Determines whether or not this ADRRT planner is listening.
+	 * 
+	 * @return true if this ADRRT planning is listening,
+	 *         false otherwise
+	 *
+	 * @see DynamicObstacleListener#isListening()
+	 */
+	@Override
+	public synchronized boolean isListening() {
+		return this.isListening;
 	}
 	
 	/**

@@ -98,19 +98,13 @@ public class SwimConnectionPropertiesBeanInfo extends PropertiesBeanInfo {
 					this.dictionary.getString("property.connection.swim.subscribesAMXM.name"),
 					this.dictionary.getString("property.connection.swim.subscribesAIXM.description"),
 					this.dictionary.getString("property.connection.swim.category.topics"));
-			PropertyDescriptor autoCommit = this.createPropertyDescriptor(
-					"autoCommit",
-					this.dictionary.getString("property.connection.swim.autoCommit.name"),
-					this.dictionary.getString("property.connection.swim.autoCommit.description"),
-					this.dictionary.getString("property.connection.swim.category.injection"));
 			
 			descriptors = new PropertyDescriptor[] {
 					subscribesAIXM,
 					subscribesFIXM,
 					subscribesWXXM,
 					subscribesIWXXM,
-					subscribesAMXM,
-					autoCommit};
+					subscribesAMXM};
 		
 		} catch (IntrospectionException e) {
 			e.printStackTrace();

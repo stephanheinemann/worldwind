@@ -41,26 +41,56 @@ import com.cfar.swim.worldwind.render.Obstacle;
  *
  */
 public interface ObstacleManager {
-
-	/**
-	 * Submits an obstacle change (addition or removal) to this obstacle
-	 * manager.
-	 * 
-	 * @param obstacles the obstacles to be changed
-	 */
-	public void submitObstacleChange(Set<Obstacle> obstacles);
 	
 	/**
-	 * Commits an obstacle change (addition or removal) to this obstacle
-	 * manager.
+	 * Submits an obstacle addition to this obstacle manager. The obstacle
+	 * addition has to be committed before being effective.
+	 * 
+	 * @param obstacles the obstacles to be added to this obstacle manager
+	 */
+	public void submitAddObstacles(Set<Obstacle> obstacles);
+	
+	/**
+	 * Submits an obstacle removal to this obstacle manager. The obstacle
+	 * removal has to be committed before being effective.
+	 * 
+	 * @param obstacles the obstacles to be removed from this obstacle manager
+	 */
+	public void submitRemoveObstacles(Set<Obstacle> obstacles);
+	
+	/**
+	 * Submits an obstacle clearance to this obstacle manager. The obstacle
+	 * clearance has to be committed before being effective.
+	 */
+	public void submitClearObstacles();
+	
+	/**
+	 * Submits an obstacle enabling to this obstacle manager. The obstacle
+	 * enabling has to be committed before being effective.
+	 *
+	 * @param obstacles the obstacles to be enabled by this obstacle manager
+	 */
+	public void submitEnableObstacles(Set<Obstacle> obstacles);
+	
+	/**
+	 * Submits an obstacle disabling to this obstacle manager. The obstacle
+	 * disabling has to be committed before being effective.
+	 * 
+	 * @param obstacles the obstacles to be disables by this obstacle manager
+	 */
+	public void submitDisableObstacles(Set<Obstacle> obstacles);
+	
+	/**
+	 * Commits an obstacle change (addition, removal, enabling, disabling) to
+	 * this obstacle manager.
 	 * 
 	 * @return the obstacles that were changed
 	 */
 	public Set<Obstacle> commitObstacleChange();
 	
 	/**
-	 * Retracts an obstacle change (addition or removal) from this obstacle
-	 * manager.
+	 * Retracts an obstacle change (addition, removal, enabling, disabling)
+	 * from this obstacle manager.
 	 */
 	public void retractObstacleChange();
 	

@@ -59,22 +59,4 @@ public interface ObstacleProvider {
 	 */
 	public boolean hasObstacleManager();
 	
-	/**
-	 * Gets whether or not this obstacle provider automatically commits
-	 * obstacle changes.
-	 * 
-	 * @return true if this obstacle provider automatically commits obstacle
-	 *         changes, false otherwise
-	 */
-	public boolean getAutoCommit();
-	
-	/**
-	 * Sets whether or not this obstacle provider automatically commits
-	 * obstacle changes.
-	 * 
-	 * @param autoCommit true if this obstacle provider automatically commits
-	 *                   obstacle changes, false otherwise
-	 */
-	public void setAutoCommit(boolean autoCommit);
-	
 }

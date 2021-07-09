@@ -238,15 +238,21 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 				Duration dt = Duration.between(first.getAto(), last.getAto());
 				double s = this.getEnvironment().getDistance(first.getPosition(), last.getPosition());
 				double gs = s / dt.getSeconds();
+				Logging.logger().info("dt = " + dt + ", s = " + s + ", gs =" + gs);
 				
 				// ETO update
-				double dtg = this.getEnvironment().getDistance(lastPosition, next);
-				Duration ttg = Duration.ofSeconds((long) (dtg / gs));
-				Logging.logger().info("dtg = " + dtg + ", ttg = " + ttg);
-				ZonedDateTime eto = last.getAto().plus(ttg);
-				Duration deto = Duration.between(next.getEto(), eto).abs();
-				Logging.logger().info("eto = " + eto + ", deto = " + deto);
-			
+				Duration deto = Duration.ZERO;
+				if (0 != gs) {
+					double dtg = this.getEnvironment().getDistance(lastPosition, next);
+					Duration ttg = Duration.ofSeconds((long) (dtg / gs));
+					Logging.logger().info("dtg = " + dtg + ", ttg = " + ttg);
+					ZonedDateTime eto = last.getAto().plus(ttg);
+					deto = Duration.between(next.getEto(), eto).abs();
+					Logging.logger().info("eto = " + eto + ", deto = " + deto);
+				} else {
+					deto = this.maxTrackError.getTimingError().plusSeconds(1);
+				}
+				
 				isOnTrack = (this.getMaxTrackError().getCrossTrackError() >= ced)
 						&& (0 <= this.getMaxTrackError().getOpeningBearingError().compareTo(ob))
 						&& (0 <= this.getMaxTrackError().getClosingBearingError().compareTo(cb))

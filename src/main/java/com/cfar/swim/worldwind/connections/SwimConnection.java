@@ -52,9 +52,6 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	/** this obstacle manager of this SWIM connection */
 	private ObstacleManager obstacleManager = null;
 	
-	/** indicates whether or not this SWIM connection automatically commits obstacle changes */
-	private boolean autoCommit = false;
-	
 	/**
 	 * Connects this SWIM connection.
 	 */
@@ -143,33 +140,6 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	public synchronized boolean hasObstacleManager() {
 		return (null != this.obstacleManager);
 	}
-	/**
-	 * Gets whether or not this SWIM connection automatically commits obstacle
-	 * changes.
-	 * 
-	 * @return true if this SWIM connection automatically commits obstacle
-	 *         changes, false otherwise
-	 * 
-	 * @see ObstacleProvider#getAutoCommit()
-	 */
-	@Override
-	public synchronized boolean getAutoCommit() {
-		return this.autoCommit;
-	}
-	
-	/**
-	 * Sets whether or not this SWIM connection automatically commits obstacle
-	 * changes.
-	 * 
-	 * @param autoCommit true if this SWIM connection automatically commits
-	 *                   obstacle changes, false otherwise
-	 * 
-	 * @see ObstacleProvider#setAutoCommit(boolean)
-	 */
-	@Override
-	public synchronized void setAutoCommit(boolean autoCommit) {
-		this.autoCommit = autoCommit;
-	}
 	
 	/**
 	 * Determines whether or not this SWIM connection matches a specification.
@@ -191,8 +161,7 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 					&& (this.hasSubscribed(SwimData.AMXM) == scp.getSubscribesAMXM())
 					&& (this.hasSubscribed(SwimData.FIXM) == scp.getSubscribesFIXM())
 					&& (this.hasSubscribed(SwimData.IWXXM) == scp.getSubscribesIWXXM())
-					&& (this.hasSubscribed(SwimData.WXXM) == scp.getSubscribesWXXM())
-					&& (this.autoCommit == scp.getAutoCommit()));
+					&& (this.hasSubscribed(SwimData.WXXM) == scp.getSubscribesWXXM()));
 		}
 		
 		return matches;

@@ -131,8 +131,17 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	/** the obstacles of this scenario */
 	private HashSet<Obstacle> obstacles;
 	
-	/** the pending (uncommitted) obstacles of this scenario */
-	private HashSet<Obstacle> pendingObstacles;
+	/** the pending (uncommitted) added obstacles of this scenario */
+	private HashSet<Obstacle> pendingAddedObstacles;
+	
+	/** the pending (uncommitted) removed obstacles of this scenario */
+	private HashSet<Obstacle> pendingRemovedObstacles;
+	
+	/** the pending (uncommitted) enabled obstacles of this scenario */
+	private HashSet<Obstacle> pendingEnabledObstacles;
+	
+	/** the pending (uncommitted) disabled obstacles of this scenario */
+	private HashSet<Obstacle> pendingDisabledObstacles;
 	
 	/** the timer executor of this scenario */
 	private ScheduledExecutorService executor;
@@ -180,7 +189,10 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		this.getSwimConnection().setObstacleManager(this);
 		this.setTrajectory(new Trajectory());
 		this.obstacles = new HashSet<Obstacle>();
-		this.pendingObstacles = new HashSet<Obstacle>();
+		this.pendingAddedObstacles = new HashSet<Obstacle>();
+		this.pendingRemovedObstacles = new HashSet<Obstacle>();
+		this.pendingEnabledObstacles = new HashSet<Obstacle>();
+		this.pendingDisabledObstacles = new HashSet<Obstacle>();
 	}
 	
 	/**
@@ -1062,7 +1074,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * 
 	 * @throws IllegalArgumentException if obstacle is null
 	 */
-	public synchronized void addObstacle(Obstacle obstacle) {
+	protected synchronized void addObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
 			if (this.obstacles.add(obstacle)) {
 				obstacle.setTime(this.time);
@@ -1088,7 +1100,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * 
 	 * @throws IllegalArgumentException if obstacle is null
 	 */
-	public synchronized void removeObstacle(Obstacle obstacle) {
+	protected synchronized void removeObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
 			if (this.obstacles.remove(obstacle)) {
 				this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
@@ -1109,7 +1121,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * 
 	 * @param costIntervalId the cost interval identifier
 	 */
-	public synchronized void removeObstacles(String costIntervalId) {
+	protected synchronized void removeObstacles(String costIntervalId) {
 		boolean removed = false;
 		boolean unembedded = false;
 		
@@ -1140,7 +1152,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	/**
 	 * Removes all obstacles from this scenario.
 	 */
-	public synchronized void clearObstacles() {
+	protected synchronized void clearObstacles() {
 		this.obstacles.clear();
 		this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 		
@@ -1157,7 +1169,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * 
 	 * @throws IllegalArgumentException if obstacle is null
 	 */
-	public synchronized void embedObstacle(Obstacle obstacle) {
+	protected synchronized void embedObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
 			if (this.obstacles.add(obstacle)) {
 				obstacle.setTime(this.time);
@@ -1182,7 +1194,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * 
 	 * @throws IllegalArgumentException if obstacle is null
 	 */
-	public synchronized void unembedObstacle(Obstacle obstacle) {
+	protected synchronized void unembedObstacle(Obstacle obstacle) {
 		if (null != obstacle) {
 			if (this.environment instanceof DynamicEnvironment) {
 				if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
@@ -1199,7 +1211,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * 
 	 * @param costIntervalId the cost interval identifier
 	 */
-	public synchronized void enableObstacles(String costIntervalId) {
+	protected synchronized void enableObstacles(String costIntervalId) {
 		boolean enabled = false;
 		boolean embedded = false;
 		
@@ -1230,7 +1242,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * 
 	 * @param costIntervalId the cost interval identifier
 	 */
-	public synchronized void disableObstacles(String costIntervalId) {
+	protected synchronized void disableObstacles(String costIntervalId) {
 		boolean disabled = false;
 		boolean unembedded = false;
 		
@@ -1264,26 +1276,126 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Submits an obstacle change (addition or removal) to this scenario.
+	 * Submits an obstacle addition to this scenario. The obstacle addition
+	 * has to be committed before being effective. Commitment will take place
+	 * implicitly if this scenario is not hosting a dynamic planner.
 	 * 
-	 * @param obstacles the obstacles to be changed
-	 * 
-	 * @see ObstacleManager#submitObstacleChange(Set)
+	 * @param obstacles the obstacles to be added to this scenario
+	 *
+	 * @see ObstacleManager#submitAddObstacles(Set)
 	 */
 	@Override
-	public synchronized void submitObstacleChange(Set<Obstacle> obstacles) {
-		// TODO: removing obstacles (negative cost interval)
-		this.pendingObstacles.addAll(obstacles);
-		this.pendingObstacles.removeAll(this.obstacles);
-		// only notify dynamic obstacle listener about new obstacles
-		if ((!this.pendingObstacles.isEmpty())
-				&& this.getPlanner() instanceof DynamicObstacleListener) {
+	public synchronized void submitAddObstacles(Set<Obstacle> obstacles) {
+		this.pendingAddedObstacles.addAll(obstacles);
+		this.pendingAddedObstacles.removeAll(this.obstacles);
+		this.pendingRemovedObstacles.removeAll(this.pendingAddedObstacles);
+		// notify dynamic obstacle listener about added obstacles
+		if ((!this.pendingAddedObstacles.isEmpty())
+				&& (this.getPlanner() instanceof DynamicObstacleListener)
+				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		} else {
+			this.commitObstacleChange();
 		}
 	}
 	
 	/**
-	 * Commits an obstacle change (addition or removal) to this scenario.
+	 * Submits an obstacle removal to this scenario. The obstacle removal has
+	 * to be committed before being effective. Commitment will take place
+	 * implicitly if this scenario is not hosting a dynamic planner.
+	 * 
+	 * @param obstacles the obstacles to be removed from this scenario
+	 *
+	 * @see ObstacleManager#sumbitRemoveObstacles(Set)
+	 */
+	@Override
+	public synchronized void submitRemoveObstacles(Set<Obstacle> obstacles) {
+		this.pendingRemovedObstacles.addAll(obstacles);
+		this.pendingRemovedObstacles.retainAll(this.obstacles);
+		this.pendingAddedObstacles.removeAll(this.pendingRemovedObstacles);
+		// notify dynamic obstacle listener about removed obstacles
+		if ((!this.pendingRemovedObstacles.isEmpty())
+				&& (this.getPlanner() instanceof DynamicObstacleListener)
+				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
+			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		} else {
+			this.commitObstacleChange();
+		}
+	}
+	
+	/**
+	 * Submits an obstacle clearance to this scenario. The obstacle clearance
+	 * has to be committed before being effective. Commitment will take place
+	 * implicitly if this scenario is not hosting a dynamic planner.
+	 * 
+	 * @see ObstacleManager#submitClearObstacles()
+	 */
+	@Override
+	public synchronized void submitClearObstacles() {
+		this.pendingAddedObstacles.clear();
+		this.pendingRemovedObstacles.clear();
+		this.pendingRemovedObstacles.addAll(this.obstacles);
+		// notify dynamic obstacle listener about cleared obstacles
+		if ((!this.pendingRemovedObstacles.isEmpty())
+				&& (this.getPlanner() instanceof DynamicObstacleListener)
+				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
+			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		} else {
+			this.commitObstacleChange();
+		}
+	}
+	
+	/**
+	 * Submits an obstacle enabling to this obstacle manager. The obstacle
+	 * enabling has to be committed before being effective. Commitment will
+	 * take place implicitly if this scenario is not hosting a dynamic planner.
+	 *
+	 * @param obstacles the obstacles to be enabled by this obstacle manager
+	 *
+	 * @see ObstacleManager#submitEnableObstacles(Set)
+	 */
+	@Override
+	public synchronized void submitEnableObstacles(Set<Obstacle> obstacles) {
+		this.pendingEnabledObstacles.addAll(obstacles);
+		this.pendingEnabledObstacles.retainAll(this.obstacles);
+		this.pendingDisabledObstacles.removeAll(this.pendingEnabledObstacles);
+		// notify dynamic obstacle listener about enabled obstacles
+		if ((!this.pendingEnabledObstacles.isEmpty())
+				&& (this.getPlanner() instanceof DynamicObstacleListener)
+				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
+			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		} else {
+			this.commitObstacleChange();
+		}
+	}
+	
+	/**
+	 * Submits an obstacle disabling to this obstacle manager. The obstacle
+	 * disabling has to be committed before being effective. Commitment will
+	 * take place implicitly if this scenario is not hosting a dynamic planner.
+	 * 
+	 * @param obstacles the obstacles to be disables by this obstacle manager
+	 *
+	 * @see ObstacleManager#submitDisableObstacles(Set)
+	 */
+	@Override
+	public synchronized void submitDisableObstacles(Set<Obstacle> obstacles) {
+		this.pendingDisabledObstacles.addAll(obstacles);
+		this.pendingDisabledObstacles.retainAll(this.obstacles);
+		this.pendingEnabledObstacles.removeAll(this.pendingDisabledObstacles);
+		// notify dynamic obstacle listener about disabled obstacles
+		if ((!this.pendingDisabledObstacles.isEmpty())
+				&& (this.getPlanner() instanceof DynamicObstacleListener)
+				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
+			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		} else {
+			this.commitObstacleChange();
+		}
+	}
+	
+	/**
+	 * Commits an obstacle change (addition, removal, enabling, disabling) to
+	 * this scenario.
 	 * 
 	 * @return the obstacles that were changed
 	 * 
@@ -1291,26 +1403,52 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 */
 	@Override
 	public synchronized Set<Obstacle> commitObstacleChange() {
-		// TODO: removing obstacles (negative cost interval)
 		Set<Obstacle> committedObstacles = new HashSet<Obstacle>();
-		for (Obstacle obstacle : this.pendingObstacles) {
+		for (Obstacle obstacle : this.pendingAddedObstacles) {
 			if (!this.getObstacles().contains(obstacle)) {
 				this.addObstacle(obstacle);
 				committedObstacles.add(obstacle);
 			}
 		}
-		this.pendingObstacles.clear();
+		for (Obstacle obstacle : this.pendingRemovedObstacles) {
+			if (this.getObstacles().contains(obstacle)) {
+				this.removeObstacle(obstacle);
+				committedObstacles.add(obstacle);
+			}
+		}
+		for (Obstacle obstacle : this.pendingEnabledObstacles) {
+			if (this.getObstacles().contains(obstacle)) {
+				this.enableObstacles(obstacle.getCostInterval().getId());
+				committedObstacles.add(obstacle);
+			}
+		}
+		for (Obstacle obstacle : this.pendingDisabledObstacles) {
+			if (this.getObstacles().contains(obstacle)) {
+				this.disableObstacles(obstacle.getCostInterval().getId());
+				committedObstacles.add(obstacle);
+			}
+		}
+		
+		this.pendingAddedObstacles.clear();
+		this.pendingRemovedObstacles.clear();
+		this.pendingEnabledObstacles.clear();
+		this.pendingDisabledObstacles.clear();
+		
 		return committedObstacles;
 	}
 	
 	/**
-	 * Retracts an obstacle change (addition or removal) from this scenario.
+	 * Retracts an obstacle change (addition, removal, enabling, disabling)
+	 * from this scenario.
 	 * 
 	 * @see ObstacleManager#retractObstacleChange()
 	 */
 	@Override
 	public synchronized void retractObstacleChange() {
-		this.pendingObstacles.clear();
+		this.pendingAddedObstacles.clear();
+		this.pendingRemovedObstacles.clear();
+		this.pendingEnabledObstacles.clear();
+		this.pendingDisabledObstacles.clear();
 	}
 	
 	/**
@@ -1322,7 +1460,10 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 */
 	@Override
 	public synchronized boolean hasObstacleChange() {
-		return !this.pendingObstacles.isEmpty();
+		return (!this.pendingAddedObstacles.isEmpty())
+				|| (!this.pendingRemovedObstacles.isEmpty()
+				|| (!this.pendingEnabledObstacles.isEmpty())
+				|| (!this.pendingDisabledObstacles.isEmpty()));
 	}
 	
 	/**

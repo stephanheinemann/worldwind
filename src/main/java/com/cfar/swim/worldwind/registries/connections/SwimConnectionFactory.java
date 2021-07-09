@@ -100,7 +100,6 @@ public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 					connection.subscribe(SwimData.IWXXM);
 				if (properties.getSubscribesAMXM())
 					connection.subscribe(SwimData.AMXM);
-				connection.setAutoCommit(properties.getAutoCommit());
 			} else if (this.specification.getId().equals(Specification.CONNECTION_SWIM_LIVE_ID)) {
 				LiveSwimConnectionProperties properties = (LiveSwimConnectionProperties) this.specification.getProperties();
 				connection = new LiveSwimConnection();
@@ -115,7 +114,6 @@ public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 					connection.subscribe(SwimData.IWXXM);
 				if (properties.getSubscribesAMXM())
 					connection.subscribe(SwimData.AMXM);
-				connection.setAutoCommit(properties.getAutoCommit());
 			}
 		}
 		

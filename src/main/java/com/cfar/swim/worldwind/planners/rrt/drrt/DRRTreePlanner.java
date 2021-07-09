@@ -71,8 +71,11 @@ import gov.nasa.worldwind.geom.Position;
 public class DRRTreePlanner extends HRRTreePlanner
 implements DynamicPlanner, LifelongPlanner {
 	
-	/** indicates whether or or not this DRRT planner has terminated */
+	/** indicates whether or not this DRRT planner has terminated */
 	private boolean terminated = false;
+	
+	/** indicates whether or not this DRRT planning is listening */
+	private boolean isListening = false;
 	
 	/** the obstacle manager of this DRRT planner */
 	private ObstacleManager obstacleManager = null;
@@ -404,12 +407,14 @@ implements DynamicPlanner, LifelongPlanner {
 		this.initBackups(1);
 		this.initialize(origin, destination, etd);
 		
+		this.setListening(true);
 		while (!this.hasTerminated()) {
 			trajectory = this.planPart(0);
 			this.revisePlan(trajectory);
 			// wait for termination or dynamic changes
 			this.suspend();
 		}
+		this.setListening(false);
 		
 		return trajectory;
 	}
@@ -433,6 +438,7 @@ implements DynamicPlanner, LifelongPlanner {
 		Trajectory trajectory = new Trajectory();
 		this.initBackups(waypoints.size() + 1);
 		
+		this.setListening(true);
 		while (!this.hasTerminated()) {
 			if (this.hasBackup(waypoints.size())) {
 				this.elaborate(waypoints.size());
@@ -445,6 +451,7 @@ implements DynamicPlanner, LifelongPlanner {
 			// wait for termination or dynamic changes
 			this.suspend();
 		}
+		this.setListening(false);
 		
 		return trajectory;
 	}
@@ -458,6 +465,28 @@ implements DynamicPlanner, LifelongPlanner {
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * Sets whether or not this DRRT planner is listening.
+	 * 
+	 * @param isListening the listening state to be set
+	 */
+	protected synchronized void setListening(boolean isListening) {
+		this.isListening = isListening;
+	}
+	
+	/**
+	 * Determines whether or not this DRRT planner is listening.
+	 * 
+	 * @return true if this DRRT planning is listening,
+	 *         false otherwise
+	 *
+	 * @see DynamicObstacleListener#isListening()
+	 */
+	@Override
+	public synchronized boolean isListening() {
+		return this.isListening;
 	}
 	
 	/**

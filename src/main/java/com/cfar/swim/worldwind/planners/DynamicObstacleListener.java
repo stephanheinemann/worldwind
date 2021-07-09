@@ -38,7 +38,15 @@ import com.cfar.swim.worldwind.session.ObstacleManager;
  *
  */
 public interface DynamicObstacleListener {
-
+	
+	/**
+	 * Determines whether or not this dynamic obstacle listener is listening.
+	 * 
+	 * @return true if this dynamic obstacle listener is listening,
+	 *         false otherwise
+	 */
+	public boolean isListening();
+	
 	/**
 	 * Notifies this dynamic obstacle listener about a pending obstacle change.
 	 */

@@ -271,10 +271,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 							if (null != obstacles) {
 								// TODO: obstacle manager access should be atomic
 								if (hasObstacleManager()) {
-									getObstacleManager().submitObstacleChange(obstacles);
-									if (getAutoCommit()) {
-										getObstacleManager().commitObstacleChange();
-									}
+									getObstacleManager().submitAddObstacles(obstacles);
 								}
 							}
 						}
