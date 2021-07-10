@@ -418,6 +418,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		// (1) re-planning from next mission or track point position
 		// based on static or dynamic performance
 		// (2) control adjusting speed to recover track
+		// TODO: consider adding off-track notification callback
 		if (!this.isOnTrack()) {
 			this.offTrackCount = 0;
 			this.replan(partIndex);
@@ -699,36 +700,6 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			this.establishDatalink.perform();
 		}
 	}
-	
-	/*
-	 * An online planner can plan for any departure time (in the past as well as
-	 * in the future). If the current time and position of the aircraft matches
-	 * the time and point of departure, the online planner should request a
-	 * take-off clearance before initiating a take-off via its datalink.
-	 * While the aircraft is following the planned trajectory, and reaching
-	 * intermediate waypoints, the online planner has to remove irrelevant
-	 * parent waypoints and their dependents. The online planner has to revise
-	 * the plan if obstacles change the partially known environment, or if the
-	 * aircraft is off track (exceeding maximum cross track or timing errors).
-	 * Should the online planner influence the aircraft performance in order
-	 * to maintain within the trajectory limits and avoid revisions?
-	 * Probably not, the online planner is not a low-level controller but
-	 * could communicate with one.
-	 * Once the aircraft has arrived a the time and point of destination
-	 * (within the track error limitations), the online planner should request
-	 * a landing clearance before initiating a landing via its datalink.
-	 * The online planner should issue warnings if expected next waypoints
-	 * are not the ones the aircraft is navigating towards.
-	 */
-	
-	// TODO: follow datalink target and compare course and track as well as ETOs and ATOs
-	// TODO: revise plan if significantly off track (track or ATO)
-	// TODO: repair plan with respect to current track point (start with ATO or next with ETO)
-	// TODO: issue lost datalink connection warnings
-	// TODO: possibly adjust speed or track to recover plan
-	// TODO: trigger complete re-planning from present position off-track
-	// TODO: add off-track notification callback
-	// TODO: if not landed after termination: RTL versus LAND
 	
 	/**
 	 * Determines whether or not this OADRRT planner matches a specification.
