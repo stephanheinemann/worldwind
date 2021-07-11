@@ -735,12 +735,11 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	}
 	
 	/**
-	 * Gets the children of this planning grid that are affected by an obstacle
-	 * embedding.
+	 * Gets the children of this planning grid that are affected by an obstacle.
 	 *  
-	 * @param obstacle the embedded obstacle
-	 * @return the children of this planning grid that are affected by an
-	 *         obstacle embedding
+	 * @param obstacle the obstacle
+	 * @return the children of this planning grid that are affected by the
+	 *         obstacle
 	 * 
 	 * @see DynamicHierarchicalEnvironment#getAffectedChildren(Obstacle)
 	 */
@@ -748,8 +747,16 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	public Set<? extends PlanningGrid> getAffectedChildren(Obstacle obstacle) {
 		Set<PlanningGrid> affectedChildren = new HashSet<PlanningGrid>();
 		
-		if (this.affectedChildren.containsKey(obstacle)) {
-			affectedChildren.addAll(this.affectedChildren.get(obstacle));
+		if (this.hasGlobe()) {
+			if ((null != obstacle) && this.hasChildren()) {
+				for (PlanningGrid child : this.getChildren()) {
+					if (child.intersects(obstacle.getExtent(this.getGlobe()))) {
+						affectedChildren.add(child);
+					}
+				}
+			}
+		} else {
+			throw new IllegalStateException("globe is not set");
 		}
 		
 		return Collections.unmodifiableSet(affectedChildren);
@@ -757,11 +764,11 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	
 	/**
 	 * Gets the waypoint positions of this planning grid that are affected by
-	 * an obstacle embedding.
+	 * an obstacle.
 	 * 
-	 * @param obstacle the embedded obstacle
+	 * @param obstacle the obstacle
 	 * @return the waypoint positions of this planning grid that are affected
-	 *         by an obstacle embedding
+	 *         by the obstacle
 	 * 
 	 * @see DynamicEnvironment#getAffectedWaypointPositions(Obstacle)
 	 */
@@ -770,9 +777,18 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 		Set<Position> affectedWaypointPositions = new HashSet<Position>();
 		
 		if (null != obstacle) {
-			for (PlanningGrid affectedChild : this.getAffectedChildren(obstacle)) {
-				affectedWaypointPositions.addAll(Arrays.asList(affectedChild.getCornerPositions()));
-				affectedWaypointPositions.addAll(affectedChild.getAffectedWaypointPositions(obstacle));
+			if (this.hasChildren()) {
+				for (PlanningGrid affectedChild : this.getAffectedChildren(obstacle)) {
+					if (affectedChild.hasChildren()) {
+						affectedWaypointPositions.addAll(affectedChild.getAffectedWaypointPositions(obstacle));
+					} else {
+						affectedWaypointPositions.addAll(Arrays.asList(affectedChild.getCornerPositions()));
+					}
+				}
+			} else {
+				if (this.intersects(obstacle.getExtent(this.getGlobe()))) {
+					affectedWaypointPositions.addAll(Arrays.asList(this.getCornerPositions()));
+				}
 			}
 		}
 		
@@ -781,11 +797,11 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	
 	/**
 	 * Gets the waypoint positions of this planning grid that are affected by
-	 * obstacle embeddings.
+	 * obstacles.
 	 * 
-	 * @param obstacles the embedded obstacles
-	 * @return the waypoint positions of this planning grid that are affected by
-	 *         obstacle embeddings
+	 * @param obstacles the obstacles
+	 * @return the waypoint positions of this planning grid that are affected
+	 *         by the obstacles
 	 * 
 	 * @see DynamicEnvironment#getAffectedWaypointPositions(Set)
 	 */

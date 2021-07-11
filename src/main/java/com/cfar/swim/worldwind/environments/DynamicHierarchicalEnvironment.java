@@ -44,11 +44,11 @@ public interface DynamicHierarchicalEnvironment extends DynamicEnvironment, Hier
 
 	/**
 	 * Gets the children of this dynamic hierarchical environment that are
-	 * affected by an obstacle embedding.
+	 * affected by an obstacle.
 	 *  
-	 * @param obstacle the embedded obstacle
+	 * @param obstacle the obstacle
 	 * @return the children of this dynamic hierarchical environment that are
-	 *         affected by an obstacle embedding
+	 *         affected by the obstacle
 	 */
 	public Set<? extends DynamicHierarchicalEnvironment> getAffectedChildren(Obstacle obstacle);
 	

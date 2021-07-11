@@ -450,6 +450,10 @@ implements DynamicPlanner, LifelongPlanner {
 						this.updateSets(target);
 					}
 				}
+				
+				// force improvement in case of dynamic removals
+				//this.setInflation(this.getMaximumQuality() + this.getQualityImprovement());
+				
 			} else {
 				// plan current part from scratch if start ETO has changed
 				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());

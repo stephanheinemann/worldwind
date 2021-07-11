@@ -237,4 +237,16 @@ public class TimeInterval implements Interval<ChronoZonedDateTime<?>> {
 		return Objects.hash(this.start, this.end);
 	}
 	
+	/**
+	 * Gets the string representation of this time interval.
+	 * 
+	 * @return the string representation of this time interval
+	 *
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.getLower() + " -> " + this.getUpper();
+	}
+	
 }

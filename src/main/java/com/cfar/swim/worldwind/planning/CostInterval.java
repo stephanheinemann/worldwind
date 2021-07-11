@@ -273,4 +273,18 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 				this.cost);
 	}
 	
+	/**
+	 * Gets the string representation of this cost interval.
+	 * 
+	 * @return the string representation of this cost interval
+	 *
+	 * @see TimeInterval#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.getId() + ": "
+				+ super.toString() + ": " + this.getCost()
+				+ (this.isEnabled() ? " (E)" : " (D)");
+	}
+	
 }

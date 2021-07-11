@@ -86,21 +86,21 @@ public interface DynamicEnvironment extends Environment {
 	
 	/**
 	 * Gets the waypoint positions of this dynamic environment that are
-	 * affected by an obstacle embedding.
+	 * affected by an obstacle.
 	 * 
-	 * @param obstacle the embedded obstacle
+	 * @param obstacle the obstacle
 	 * @return the waypoint positions of this dynamic environment that are
-	 *         affected by an obstacle embedding
+	 *         affected by the obstacle
 	 */
 	public Set<Position> getAffectedWaypointPositions(Obstacle obstacle);
 	
 	/**
 	 * Gets the waypoint positions of this dynamic environment that are
-	 * affected by obstacle embeddings.
+	 * affected by obstacles.
 	 * 
-	 * @param obstacles the embedded obstacles
+	 * @param obstacles the obstacles
 	 * @return the waypoint positions of this dynamic environment that are
-	 *         affected by obstacle embeddings
+	 *         affected by the obstacles
 	 */
 	public Set<Position> getAffectedWaypointPositions(Set<Obstacle> obstacles);
 	

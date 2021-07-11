@@ -38,7 +38,6 @@ import java.util.Set;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
-import com.cfar.swim.worldwind.planners.AnytimePlanner;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.DynamicPlanner;
 import com.cfar.swim.worldwind.planners.LifelongPlanner;
@@ -65,7 +64,7 @@ import gov.nasa.worldwind.geom.Position;
  *
  */
 public class ADRRTreePlanner extends ARRTreePlanner
-implements AnytimePlanner, DynamicPlanner, LifelongPlanner {
+implements DynamicPlanner, LifelongPlanner {
 	
 	/** indicates whether or not this ADRRT planner has terminated */
 	private boolean terminated = false;
