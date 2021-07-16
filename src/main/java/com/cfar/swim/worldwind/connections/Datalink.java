@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.connections;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -58,6 +59,9 @@ public abstract class Datalink implements Connection {
 	
 	/** the downlink (monitoring) period of this datalink */
 	private long downlinkPeriod = 1000; // ms
+	
+	/** the cached mission of this datalink */
+	private Path mission = new Path();
 	
 	/** the track of the source of this datalink */
 	private AircraftTrack track = new AircraftTrack();
@@ -212,17 +216,72 @@ public abstract class Datalink implements Connection {
 	 * Uploads a mission flight path to the aircraft connected via this
 	 * datalink.
 	 * 
-	 * @param flightPath the mission flight path to be uploaded
+	 * @param mission the mission flight path to be uploaded
+	 * 
+	 * @throws IllegalArgumentException if the mission is null
 	 */
-	public abstract void uploadMission(Path flightPath);
+	public void uploadMission(Path mission) {
+		if (null == mission) {
+			throw new IllegalArgumentException();
+		}
+		this.mission = mission;
+	}
 	
 	/**
 	 * Downloads a mission flight path from the aircraft connected via this
 	 * datalink.
 	 * 
+	 * @param cached indicates whether or not the mission cache is used
+	 * 
 	 * @return the downloaded mission flight path
 	 */
-	public abstract Path downloadMission();
+	public Path downloadMission(boolean cached) {
+		return cached ? this.mission : new Path();
+	}
+	
+	/**
+	 * Determines whether or not a mission flight path has been uploaded.
+	 * 
+	 * @param cached indicates whether or not the mission cache is used
+	 * 
+	 * @return true if a mission flight path has been uploaded,
+	 *         false otherwise
+	 */
+	public boolean hasMission(boolean cached) {
+		return cached ? (null != this.mission.getPositions())
+				: (null != this.downloadMission(cached).getPositions());
+	}
+	
+	/**
+	 * Determines whether or not a mission flight path has been uploaded.
+	 * 
+	 * @param mission the mission flight path to be checked
+	 * @param cached indicates whether or not the mission cache is used
+	 * 
+	 * @return true if the mission flight path has been uploaded,
+	 *         false otherwise
+	 */
+	public boolean hasMission(Path mission, boolean cached) {
+		boolean hasMission = false;
+		Path downloaded = this.downloadMission(cached);
+		
+		if (null != mission) {
+			hasMission = true;
+			Iterator<? extends Position> dpi = downloaded.getPositions().iterator();
+			Iterator<? extends Position> ppi = mission.getPositions().iterator();
+			while (hasMission && dpi.hasNext() && ppi.hasNext()) {
+				if (!(new Position(dpi.next())).equals(new Position(ppi.next()))) {
+					hasMission = false;
+				}
+			}
+			if (!hasMission || dpi.hasNext() || ppi.hasNext()) {
+				hasMission = false;
+			}
+		
+		}
+		
+		return hasMission;
+	}
 	
 	/**
 	 * Gets the next position of the mission flight path from the aircraft

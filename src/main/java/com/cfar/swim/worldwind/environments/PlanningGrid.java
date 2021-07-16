@@ -619,6 +619,18 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	}
 	
 	/**
+	 * Gets the obstacles within this planning grid.
+	 * 
+	 * @return the obstacles within this planning grid
+	 *
+	 * @see Environment#getObstacles()
+	 */
+	@Override
+	public Iterable<Obstacle> getObstacles() {
+		return Collections.unmodifiableSet(this.obstacles);
+	}
+	
+	/**
 	 * Embeds an obstacle into this planning grid.
 	 * 
 	 * @param obstacle the obstacle to be embedded
@@ -1309,7 +1321,7 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-
+	
 	/**
 	 * Gets the distance between two positions in this planning grid.
 	 * 
@@ -1330,6 +1342,35 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 			positions.add(position2);
 			LengthMeasurer measurer = new LengthMeasurer(positions);
 			measurer.setPathType(AVKey.LINEAR);
+			measurer.setFollowTerrain(false);
+			return measurer.getLength(this.getGlobe());
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
+	/**
+	 * Gets the great circle distance between two positions in this planning
+	 * grid.
+	 * 
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coordinates
+	 * 
+	 * @return the great circle distance between the two positions in this
+	 *         planning grid
+	 * 
+	 * @throws IllegalStateException if this planning grid has no globe
+	 * 
+	 * @see Environment#getGreatCircleDistance(Position, Position)
+	 */
+	@Override
+	public double getGreatCircleDistance(Position position1, Position position2) {
+		if (this.hasGlobe()) {
+			ArrayList<Position> positions = new ArrayList<Position>();
+			positions.add(position1);
+			positions.add(position2);
+			LengthMeasurer measurer = new LengthMeasurer(positions);
+			measurer.setPathType(AVKey.GREAT_CIRCLE);
 			measurer.setFollowTerrain(false);
 			return measurer.getLength(this.getGlobe());
 		} else {

@@ -33,15 +33,20 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
 
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.render.Path;
+import gov.nasa.worldwind.util.Logging;
 
 /**
  * Abstracts a motion planner for an aircraft in an environment using cost
@@ -63,6 +68,9 @@ public abstract class AbstractPlanner implements Planner {
 	
 	/** the risk policy of this abstract planner */
 	private RiskPolicy riskPolicy = RiskPolicy.SAFETY;
+	
+	/** the computed plan of this abstact planner */
+	private final LinkedList<Waypoint> plan = new LinkedList<>();
 	
 	/** the plan revision listeners of this abstract planner */
 	private final List<PlanRevisionListener> planRevisionListeners = new LinkedList<>();
@@ -178,6 +186,63 @@ public abstract class AbstractPlanner implements Planner {
 	}
 	
 	/**
+	 * Computes the estimated time over a target waypoint when traveled to from
+	 * a source waypoint considering the applicable aircraft capabilities.
+	 * 
+	 * @param source the source waypoint with known ETO
+	 * @param target the target waypoint with unknown ETO
+	 */
+	protected void computeEto(Waypoint source, Waypoint target) {
+		Path leg = new Path(source, target);
+		Capabilities capabilities = this.getAircraft().getCapabilities();
+		Globe globe = this.getEnvironment().getGlobe();
+		target.setEto(capabilities.getEstimatedTime(leg, globe, source.getEto()));
+	}
+	
+	/**
+	 * Computes the estimated cost of a target waypoint when traveled to from
+	 * a source waypoint considering the operational cost and risk policies.
+	 * 
+	 * @param source the source waypoint with known cost
+	 * @param target the target waypoint with unknown cost
+	 */
+	protected void computeCost(Waypoint source, Waypoint target) {
+		double cost = source.getCost();
+		cost += this.getEnvironment().getStepCost(
+				source, target,
+				source.getEto(), target.getEto(),
+				this.getCostPolicy(), this.getRiskPolicy());
+		target.setCost(cost);
+	}
+	
+	/**
+	 * Clears the waypoints of the current plan of this abstact planner.
+	 */
+	protected void clearWaypoints() {
+		this.plan.clear();
+	}
+	
+	/**
+	 * Determines whether or not the current plan of this abstact planner has
+	 * waypoints.
+	 * 
+	 * @return true if the current plan of this abstact planner has waypoints,
+	 *         false otherwise
+	 */
+	protected boolean hasWaypoints() {
+		return !this.plan.isEmpty();
+	}
+	
+	/**
+	 * Gets the waypoints of the current plan of this abstact planner.
+	 * 
+	 * @return the waypoints of the current plan of this abstact planner
+	 */
+	protected LinkedList<Waypoint> getWaypoints() {
+		return this.plan;
+	}
+	
+	/**
 	 * Adds a plan revision listener to this abstract planner that will be
 	 * notified whenever a plan has been revised.
 	 * 
@@ -212,6 +277,7 @@ public abstract class AbstractPlanner implements Planner {
 	 */
 	protected void revisePlan(Trajectory trajectory) {
 		if (this.revisionsEnabled) {
+			Logging.logger().info("revising plan...");
 			for (PlanRevisionListener listener : this.planRevisionListeners) {
 				listener.revisePlan(trajectory);
 			}

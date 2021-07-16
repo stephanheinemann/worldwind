@@ -351,7 +351,36 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 			throw new IllegalStateException("globe is not set");
 		}
 	}
-
+	
+	/**
+	 * Gets the great circle distance between two positions in this planning
+	 * continuum.
+	 * 
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coordinates
+	 * 
+	 * @return the great circle distance between the two positions in this
+	 *         planning continuum
+	 * 
+	 * @throws IllegalStateException if this planning continuum has no globe
+	 * 
+	 * @see Environment#getGreatCircleDistance(Position, Position)
+	 */
+	@Override
+	public double getGreatCircleDistance(Position position1, Position position2) {
+		if (this.hasGlobe()) {
+			ArrayList<Position> positions = new ArrayList<Position>();
+			positions.add(position1);
+			positions.add(position2);
+			LengthMeasurer measurer = new LengthMeasurer(positions);
+			measurer.setPathType(AVKey.GREAT_CIRCLE);
+			measurer.setFollowTerrain(false);
+			return measurer.getLength(this.getGlobe());
+		} else {
+			throw new IllegalStateException("globe is not set");
+		}
+	}
+	
 	/**
 	 * Gets the normalized distance between two positions in this planning
 	 * continuum.
@@ -1320,11 +1349,14 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
-	 * Gets the obstacles of this planning continuum.
+	 * Gets the obstacles within this planning continuum.
 	 * 
-	 * @return the obstacles of this planning continuum
+	 * @return the obstacles within this planning continuum
+	 *
+	 * @see Environment#getObstacles()
 	 */
-	protected Set<Obstacle> getObstacles() {
+	@Override
+	public Iterable<Obstacle> getObstacles() {
 		return Collections.unmodifiableSet(this.obstacles);
 	}
 	

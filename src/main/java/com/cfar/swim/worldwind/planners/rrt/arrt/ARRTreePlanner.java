@@ -557,8 +557,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		// establish priority order according to selection cost
 		PriorityQueue<ARRTreeWaypoint> neighbors = new PriorityQueue<ARRTreeWaypoint>(
 				Comparator.comparingDouble(new CostSelector(target)));
-		neighbors.addAll((Set<ARRTreeWaypoint>)
-				this.getEnvironment().findNearest(target, this.getNeighborLimit()));
+		neighbors.addAll((Set<ARRTreeWaypoint>) this.getPlanningContinuum()
+				.findNearest(target, this.getNeighborLimit()));
 		
 		for (ARRTreeWaypoint neighbor : neighbors) {
 			// TODO: single versus several extensions towards lower cost bound
@@ -579,7 +579,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 						newest.getParent().removeChild(newest);
 						newest.setParent(null);
 					}
-					this.getEnvironment().removeVertex(newest);
+					this.getPlanningContinuum().removeVertex(newest);
 					this.setNewestWaypoint(this.getStart());
 				}
 			}
@@ -640,6 +640,11 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	protected boolean compute() {
+		if (this.getStart().equals(this.getGoal())) {
+			this.connectPlan(this.getStart());
+			return true;
+		}
+		
 		this.createSamplingShape();
 		
 		int iteration = 0;
@@ -682,8 +687,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	protected void improve(int partIndex) {
 		if (!this.hasMaximumQuality()) {
 			this.backup(partIndex);
-			this.getEnvironment().clearVertices();
-			this.getEnvironment().addVertex(this.getStart());
+			this.getPlanningContinuum().clearVertices();
+			this.getPlanningContinuum().addVertex(this.getStart());
 			this.setNewestWaypoint(this.getStart());
 			
 			if (this.compute()) {
@@ -870,7 +875,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			backup.clear();
 			backup.start = this.getStart();
 			backup.goal = this.getGoal();
-			for (Edge edge : this.getEnvironment().getEdges()) {
+			for (Edge edge : this.getPlanningContinuum().getEdges()) {
 				backup.edges.add((DirectedEdge) edge);
 			}
 			backup.distanceBias = this.getDistanceBias();
@@ -899,12 +904,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			this.setStart(backup.start);
 			this.setGoal(backup.goal);
 			for (Edge edge : backup.edges) {
-				this.getEnvironment().addEdge(edge);
+				this.getPlanningContinuum().addEdge(edge);
 			}
 			this.setDistanceBias(backup.distanceBias);
 			this.setCostBias(backup.costBias);
 			this.setCostBound(backup.costBound);
-			this.addAllWaypoints(backup.plan);
+			this.getWaypoints().addAll(backup.plan);
 			restored = true;
 		}
 		

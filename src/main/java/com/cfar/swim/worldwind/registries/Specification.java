@@ -116,6 +116,14 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			.getDictionaryBundle()
 			.getString("specification.planner.ads.description");
 	
+	/** the identifier of an OAD* planner specification */
+	public static final String PLANNER_OADS_ID = "OAD*";
+	
+	/** the description of an OAD* planner specification */
+	public static final String PLANNER_OADS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.oads.description");	
+	
 	/** the identifier of an RRT planner */
     public static final String PLANNER_RRT_ID = "RRT";
     

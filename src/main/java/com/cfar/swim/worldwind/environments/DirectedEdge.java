@@ -34,7 +34,7 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
- * Realizes a directed edge within a planning continuum based on two sampled
+ * Realizes a directed edge within a planning environment based on two sampled
  * positions featuring temporal costs.
  * 
  * @author Stephan Heinemann
@@ -43,17 +43,17 @@ import gov.nasa.worldwind.geom.Vec4;
 public class DirectedEdge extends Edge {
 
 	/**
-	 * Constructs a new directed edge within a planning continuum based on two
-	 * end positions.
+	 * Constructs a new directed edge within a planning environment based on
+	 * two end positions.
 	 * 
-	 * @param continuum the planning continuum containing this directed edge
+	 * @param environment the planning environment containing this directed edge
 	 * @param first the first end position of this directed edge
 	 * @param second the second end position of this directed edge
 	 * 
-	 * @see Edge#Edge(PlanningContinuum, Position, Position)
+	 * @see Edge#Edge(Environment, Position, Position)
 	 */
-	public DirectedEdge(PlanningContinuum continuum, Position first, Position second) {
-		super(continuum, first, second);
+	public DirectedEdge(Environment environment, Position first, Position second) {
+		super(environment, first, second);
 	}
 	
 	/**

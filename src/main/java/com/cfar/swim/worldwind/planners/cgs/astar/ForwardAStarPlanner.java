@@ -87,9 +87,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	/** the goal region */
 	private Set<PrecisionPosition> goalRegion;
 	
-	/** the computed plan */
-	protected LinkedList<AStarWaypoint> plan = new LinkedList<>();
-	
 	/**
 	 * Constructs a basic forward A* planner for a specified aircraft and
 	 * environment using default local cost and risk policies.
@@ -535,58 +532,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Gets the first A* waypoint of the current plan.
-	 * 
-	 * @return the first A* waypoint of the current plan
-	 */
-	protected AStarWaypoint getFirstWaypoint() {
-		return this.plan.getFirst();
-	}
-	
-	/**
-	 * Gets the last A* waypoint of the current plan.
-	 * 
-	 * @return the last A* waypoint of the current plan
-	 */
-	protected AStarWaypoint getLastWaypoint() {
-		return this.plan.getLast();
-	}
-	
-	/**
-	 * Adds a first A* waypoint to the current plan.
-	 * 
-	 * @param waypoint the first A* waypoint to be added to the current plan
-	 */
-	protected void addFirstWaypoint(AStarWaypoint waypoint) {
-		this.plan.addFirst(waypoint);
-	}
-	
-	/**
-	 * Clears the waypoints of the current plan.
-	 */
-	protected void clearWaypoints() {
-		this.plan.clear();
-	}
-	
-	/**
-	 * Determines whether or not the current plan has A* waypoints.
-	 * 
-	 * @return true if the current plan has A* waypoints, false otherwise
-	 */
-	protected boolean hasWaypoints() {
-		return !this.plan.isEmpty();
-	}
-	
-	/**
-	 * Gets the A* waypoints of the current plan.
-	 * 
-	 * @return the A* waypoints of the current plan
-	 */
-	protected List<AStarWaypoint> getWaypoints() {
-		return Collections.unmodifiableList(this.plan);
-	}
-	
-	/**
 	 * Connects a plan from a specified A* goal waypoint.
 	 * 
 	 * @param waypoint the last A* waypoint of a computed plan
@@ -595,7 +540,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.clearWaypoints();
 		// only connect plan from reached goal featuring ETO
 		while ((null != waypoint) && (waypoint.hasEto())) {
-			this.addFirstWaypoint(waypoint);
+			this.getWaypoints().addFirst(waypoint);
 			waypoint = waypoint.getParent();
 		}
 	}
@@ -608,9 +553,9 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	protected Trajectory createTrajectory() {
 		LinkedList<AStarWaypoint> waypoints = new LinkedList<>();
 		
-		this.plan.descendingIterator()
+		this.getWaypoints().descendingIterator()
 			.forEachRemaining(waypoint -> {
-				AStarWaypoint current = waypoint.clone();
+				AStarWaypoint current = (AStarWaypoint) waypoint.clone();
 				if (waypoints.isEmpty()) {
 					current.setTtg(Duration.ZERO);
 					current.setDtg(0d);
@@ -682,7 +627,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		boolean equalCost = (source.getG() + cost) == target.getG();
 		boolean improvedTime = (target.hasEto() && end.isBefore(target.getEto()));
 		
-		if (improvedCost || (equalCost && improvedTime)) {
+		// exceeded risk and parent needs to be known for dynamic repairs
+		boolean exceededRisk = (Double.POSITIVE_INFINITY == target.getG())
+				&& (Double.POSITIVE_INFINITY == cost);
+		
+		if (improvedCost || (equalCost && improvedTime) || exceededRisk) {
 			target.setParent(source);
 			target.setG(source.getG() + cost);
 			target.setEto(end);
@@ -732,6 +681,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * Computes an A* plan.
 	 */
 	protected void compute() {
+		if (this.getStart().equals(this.getGoal())) {
+			this.connectPlan(this.getStart());
+			return;
+		}
+		
 		while (this.canExpand()) {
 			AStarWaypoint source = this.pollExpandable();
 			
@@ -838,7 +792,8 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				}
 				this.planPart(partIndex);
 				
-				if ((!this.hasWaypoints()) || (!this.getLastWaypoint().equals(currentDestination))) {
+				if ((!this.hasWaypoints())
+						|| (!this.getWaypoints().getLast().equals(currentDestination))) {
 					// if no plan could be found, return an empty trajectory
 					Trajectory empty = new Trajectory();
 					this.revisePlan(empty);

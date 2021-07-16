@@ -68,6 +68,7 @@ import gov.nasa.worldwind.layers.Layer;
 import gov.nasa.worldwind.layers.RenderableLayer;
 import gov.nasa.worldwind.render.airspaces.Airspace;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525GraphicFactory;
+import gov.nasa.worldwind.util.Logging;
 import icao.iwxxm.SIGMETReportStatusType;
 import icao.iwxxm.SIGMETType;
 import net.opengis.om.OMObservationType;
@@ -215,7 +216,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 		}
 			
 		List<OMObservationType> observations = IwxxmData.getObservations(sigmet);
-		System.out.println("found " + observations.size() + " observations for " + sigmet.getId());
+		Logging.logger().info("found " + observations.size() + " observations for " + sigmet.getId());
 		List<Airspace> sigmetAirspaces = new ArrayList<Airspace>();
 		
 		for (OMObservationType observation : observations) {
@@ -329,7 +330,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 		}
 		LengthMeasurer measurer = new LengthMeasurer(positions);
 		double meters = measurer.getLength(model.getGlobe());
-		System.out.println("observation path length = " + meters);
+		Logging.logger().info("observation path length = " + meters);
 		*/
 	}
 	

@@ -31,6 +31,8 @@ package com.cfar.swim.worldwind.planning;
 
 import java.time.Duration;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.Objects;
 
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
@@ -281,6 +283,53 @@ public class Trajectory extends Path implements Depictable {
 				waypoint.render(dc);
 			}
 		}
+	}
+	
+	/**
+	 * Determines whether the waypoints of this trajectory equal the waypoints
+	 * of another one.
+	 * 
+	 * @param o the other trajectory
+	 * 
+	 * @return true if the waypoints of this trajectory equal the waypoints of
+	 *         the other trajectory, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			Trajectory ot = (Trajectory) o;
+			equals = true;
+			Iterator<? extends Waypoint> oti = ot.getWaypoints().iterator();
+			Iterator<? extends Waypoint> tti = this.getWaypoints().iterator();
+			while (equals && oti.hasNext() && tti.hasNext()) {
+				if (!oti.next().equals(tti.next())) {
+					equals = false;
+				}
+			}
+			if (!equals || oti.hasNext() || tti.hasNext()) {
+				equals = false;
+			}
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this trajectory based on its waypoints.
+	 * 
+	 * @return the hash code of this trajectory based on its waypoints
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.getWaypoints());
 	}
 	
 }

@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.planners;
 import com.cfar.swim.worldwind.connections.Communication;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
+import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
 
 /**
  * Describes an online planner featuring a datalink connection to communicate
@@ -146,8 +147,7 @@ public interface OnlinePlanner extends Planner {
 	/**
 	 * Sets the establish datalink communication of this online planner.
 	 * 
-	 * @param establishDatalink the establish datalink communication of this
-	 *                          online planner
+	 * @param establishDatalink the establish datalink communication to be set
 	 */
 	public void setEstablishDatalink(Communication<Datalink> establishDatalink);
 	
@@ -186,4 +186,77 @@ public interface OnlinePlanner extends Planner {
 	 */
 	public boolean isOnTrack();
 	
+	/**
+	 * Gets the maximum acceptable take-off error of this online planner to
+	 * consider the aircraft within the take-off regime.
+	 * 
+	 * @return the maximum acceptable take-off error of this online planner to
+	 *         consider the aircraft within the take-off regime
+	 */
+	public AircraftTrackPointError getMaxTakeOffError();
+	
+	/**
+	 * Sets the maximum acceptable take-off error of this online planner to
+	 * consider the aircraft within the take-off regime.
+	 * 
+	 * @param maxTakeOffError the maximum acceptable take-off error to be set
+	 */
+	public void setMaxTakeOffError(AircraftTrackPointError maxTakeOffError);
+	
+	/**
+	 * Determines whether or not the aircraft of this online planner is within
+	 * the take-off zone.
+	 * 
+	 * @return true if the aircraft of this online planner is within the
+	 *         take-off zone, false otherwise
+	 */
+	public boolean isInTakeOffZone();
+	
+	/**
+	 * Determines whether or not the aircraft of this online planner is within
+	 * the take-off window.
+	 * 
+	 * @return true if the aircraft of this online planner is within the
+	 *         take-off window, false otherwise
+	 */
+	public boolean isInTakeOffWindow();
+	
+	/**
+	 * Gets the maximum acceptable landing error of this online planner to
+	 * consider the aircraft within the landing regime.
+	 * 
+	 * @return the maximum acceptable landing error of this online planner to
+	 *         consider the aircraft within the landing regime
+	 */
+	public AircraftTrackPointError getMaxLandingError();
+	
+	/**
+	 * Sets the maximum acceptable landing error of this online planner to
+	 * consider the aircraft within the landing regime.
+	 * 
+	 * @param maxLandingError the maximum acceptable landing error to be set
+	 */
+	public void setMaxLandingError(AircraftTrackPointError maxLandingError);
+	
+	/**
+	 * Determines whether or not the aircraft of this online planner is within
+	 * the landing zone.
+	 * 
+	 * @return true if the aircraft of this online planner is within the
+	 *         landing zone, false otherwise
+	 */
+	public boolean isInLandingZone();
+	
+	/**
+	 * Determines whether or not the aircraft of this online planner is within
+	 * the landing window.
+	 * 
+	 * @return true if the aircraft of this online planner is within the
+	 *         landing window, false otherwise
+	 */
+	public boolean isInLandingWindow();
+	
+	// TODO: consider maximum departure, arrival (terminal), and approach errors
+	// TODO: in-flight alternates
+	// TODO: alternate and precautionary landing communications
 }

@@ -45,6 +45,7 @@ import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
+import gov.nasa.worldwind.util.Logging;
 
 /**
  * Performs dronekit datalink tests.
@@ -82,13 +83,13 @@ public class DronekitTest {
 		datalink.uploadMission(path);
 		
 		while(!datalink.getAircraftMode().equals(DronekitDatalink.MODE_AUTO)) {
-			System.out.println(datalink.getAircraftMode());
+			Logging.logger().info(datalink.getAircraftMode());
 			Thread.sleep(1000);
 		}
 		
 		// set mode
 		datalink.setAircraftMode(DronekitDatalink.MODE_STABILIZE);
-		System.out.println(datalink.getAircraftPosition());
+		Logging.logger().info(datalink.getAircraftPosition().toString());
 		
 		// set safety
 		datalink.disableAircraftSafety();

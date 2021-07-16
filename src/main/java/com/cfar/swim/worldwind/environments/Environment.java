@@ -38,6 +38,7 @@ import com.binarydreamers.trees.Interval;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
+import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ThresholdRenderable;
 import com.cfar.swim.worldwind.render.TimedRenderable;
 
@@ -173,6 +174,18 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getDistance(Position position1, Position position2);
 	
 	/**
+	 * Gets the great circle distance between two positions in this
+	 * environment.
+	 * 
+	 * @param position1 the first position in globe coordinates
+	 * @param position2 the second position in globe coordinates
+	 * 
+	 * @return the great circle distance between the two positions in this
+	 *         environment
+	 */
+	public double getGreatCircleDistance(Position position1, Position position2);
+	
+	/**
 	 * Gets the normalized distance between two positions in this environment.
 	 * 
 	 * @param position1 the first position in globe coordinates
@@ -207,6 +220,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * @return the normalized distance
 	 */
 	public double toNormalizedDistance(double distance);
+	
+	/**
+	 * Gets the diameter of this environment.
+	 * 
+	 * @return the diameter of this environment
+	 */
+	public double getDiameter();
 	
 	/**
 	 * Adds a cost interval to this environment.
@@ -308,6 +328,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 			Position origin, Position destination,
 			ZonedDateTime start, ZonedDateTime end,
 			CostPolicy costPolicy, RiskPolicy riskPolicy);
+	
+	/**
+	 * Gets the obstacles within this environment.
+	 * 
+	 * @return the obstacles within this environment
+	 */
+	public Iterable<Obstacle> getObstacles();
 	
 	/**
 	 * Determines whether or not a straight leg of two positions collides with

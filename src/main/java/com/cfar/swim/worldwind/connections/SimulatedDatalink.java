@@ -38,6 +38,7 @@ import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 
@@ -296,7 +297,7 @@ public class SimulatedDatalink extends Datalink {
 			
 			// determine current position
 			Duration ttg = Duration.between(this.reportingTime, this.eto);
-			if (!ttg.isNegative()) {
+			if (!ttg.isNegative() && !this.ete.isZero()) {
 				double ratio = ((double) ttg.toSeconds()) / ((double) this.ete.toSeconds());
 				currentPosition = Position.interpolate(ratio, this.nextPosition, this.lastPosition);
 			}
@@ -310,12 +311,14 @@ public class SimulatedDatalink extends Datalink {
 			}
 			
 			// TODO: introduce probabilistic errors
+			/*
 			double xte = this.getMaxTrackError().getCrossTrackError() *
 					Math.random() * this.getErrorProbablilty();
 			currentPosition = new Position(
 					currentPosition.latitude,
 					currentPosition.longitude,
 					currentPosition.elevation + xte);
+			*/
 			
 		} else if (!this.isAirborne) {
 			double elevation = this.globe.getElevationModel()
@@ -416,15 +419,17 @@ public class SimulatedDatalink extends Datalink {
 	 * Uploads a mission flight path to the aircraft connected via this
 	 * simulated datalink.
 	 * 
-	 * @param flightPath the mission flight path to be uploaded
+	 * @param mission the mission flight path to be uploaded
 	 *
 	 * @see Datalink#uploadMission(Path)
 	 */
 	@Override
-	public synchronized void uploadMission(Path flightPath) {
+	public synchronized void uploadMission(Path mission) {
+		super.uploadMission(mission);
+		
 		if (!this.isAirborne) {
 			// upload mission before flight
-			this.flightPath = flightPath;
+			this.flightPath = mission;
 			this.positionIndex = 0;
 			this.positionIterator = this.flightPath.getPositions().iterator();
 			if (this.positionIterator.hasNext()) {
@@ -437,7 +442,7 @@ public class SimulatedDatalink extends Datalink {
 			// upload mission during flight
 			this.lastPosition = this.getAircraftPosition();
 			this.nextPosition = this.lastPosition;
-			this.flightPath = flightPath;
+			this.flightPath = mission;
 			this.positionIndex = -1;
 			this.positionIterator = this.flightPath.getPositions().iterator();
 		}
@@ -453,13 +458,15 @@ public class SimulatedDatalink extends Datalink {
 	 * Downloads a mission flight path from the aircraft connected via this
 	 * simulated datalink.
 	 * 
+	 * @param cached indicates whether or not the mission cache is used
+	 * 
 	 * @return the downloaded mission flight path
 	 * 
-	 * @see Datalink#downloadMission()
+	 * @see Datalink#downloadMission(boolean)
 	 */
 	@Override
-	public synchronized Path downloadMission() {
-		return this.flightPath;
+	public synchronized Path downloadMission(boolean cached) {
+		return cached ? super.downloadMission(cached) : this.flightPath;
 	}
 	
 	/**
@@ -611,7 +618,15 @@ public class SimulatedDatalink extends Datalink {
 	@Override
 	public final boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
-		matches &= (specification.getId().equals(Specification.CONNECTION_DATALINK_SIMULATED_ID));
+		
+		if (matches && (specification.getProperties() instanceof SimulatedDatalinkProperties)) {
+			SimulatedDatalinkProperties sdlp = (SimulatedDatalinkProperties) specification.getProperties();
+			matches = (this.maxTrackError.getCrossTrackError() == sdlp.getMaxCrossTrackError())
+					&& (this.maxTrackError.getTimingError().equals(sdlp.getMaxTimingError()))
+					&& (this.errorProbability == sdlp.getErrorProbability())
+					&& (specification.getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID));
+		}
+		
 		return matches;
 	}
 	

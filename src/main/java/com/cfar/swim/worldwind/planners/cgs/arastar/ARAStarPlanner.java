@@ -45,6 +45,7 @@ import com.cfar.swim.worldwind.planners.AnytimePlanner;
 import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
@@ -521,6 +522,11 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected void compute() {
+		if (this.getStart().equals(this.getGoal())) {
+			this.connectPlan(this.getStart());
+			return;
+		}
+		
 		while (this.canExpand()) {
 			ARAStarWaypoint source = this.pollExpandable();
 			
@@ -572,7 +578,8 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	protected Trajectory planPart(int partIndex) {
-		super.planPart(partIndex);
+		Trajectory trajectory = super.planPart(partIndex);
+		this.revisePlan(trajectory);
 		this.elaborate(partIndex);
 		return this.createTrajectory();
 	}
@@ -653,7 +660,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		public Set<AStarWaypoint> closed = new HashSet<>();
 		
 		/** the plan waypoints of this ARA* backup */
-		public List<AStarWaypoint> plan = new LinkedList<>(); 
+		public List<Waypoint> plan = new LinkedList<>(); 
 		
 		/**
 		 * Clears this ARA* backup.
@@ -741,7 +748,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			backup.open.addAll(this.open);
 			backup.incons.addAll(this.incons);
 			backup.closed.addAll(this.closed);
-			backup.plan.addAll(this.plan);
+			backup.plan.addAll(this.getWaypoints());
 			backedup = true;
 		}
 		return backedup;
@@ -796,11 +803,40 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 			this.clearExpanded();
 			
 			this.clearWaypoints();
-			this.plan.addAll(backup.plan);
+			this.getWaypoints().addAll(backup.plan);
 			
 			restored = true;
 		}
 		return restored;
+	}
+	
+	/**
+	 * Determines whether or not an ARA* backup has waypoints.
+	 * 
+	 * @param backupIndex the index of the backup
+	 * 
+	 * @return true if the ARA* backup has waypoints, false otherwise
+	 */
+	protected boolean hasWaypoints(int backupIndex) {
+		boolean hasWaypoints = false;
+		
+		if (this.hasBackup(backupIndex)) {
+			Backup backup = this.backups.get(backupIndex);
+			hasWaypoints = !backup.plan.isEmpty();
+		}
+		
+		return hasWaypoints;
+	}
+	
+	/**
+	 * Determines whether or not an ARA* backup index is the last.
+	 * 
+	 * @param backupIndex the backup index
+	 * 
+	 * @return if the backup index is the last, false otherwise
+	 */
+	protected boolean isLastIndex(int backupIndex) {
+		return (this.backups.size() - 1) == backupIndex;
 	}
 	
 	/**

@@ -131,9 +131,9 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 							this.computeEto(source, target);
 							
 							// establish improved parent
-							this.getEnvironment().removeEdge(parent, target);
+							this.getPlanningContinuum().removeEdge(parent, target);
 							target.setParent(source);
-							this.getEnvironment().addEdge(source, target);
+							this.getPlanningContinuum().addEdge(source, target);
 							this.computeCost(source, target);
 							minCost = target.getCost();
 							parent = source;
@@ -178,9 +178,9 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 							this.computeEto(source, target);
 							
 							// re-wire dependent tree
-							this.getEnvironment().removeEdge(target.getParent(), target);
+							this.getPlanningContinuum().removeEdge(target.getParent(), target);
 							target.setParent(source);
-							this.getEnvironment().addEdge(source, target);
+							this.getPlanningContinuum().addEdge(source, target);
 							this.computeCost(source, target);
 							this.propagateChanges(target);
 						} catch (CapabilitiesException ce) {
@@ -198,7 +198,7 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 * @param source the source waypoint with changes to be propagated
 	 */
 	protected void propagateChanges(RRTreeWaypoint source) {
-		for (Position position : this.getEnvironment().getVertices()) {
+		for (Position position : this.getPlanningContinuum().getVertices()) {
 			RRTreeWaypoint target = (RRTreeWaypoint) position;
 			if (target.hasParent() && target.getParent().equals(source)) {
 				// TODO: IAE - edge not present?, SOE - termination / cycles?
@@ -231,6 +231,11 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	@SuppressWarnings("unchecked")
 	@Override
 	protected boolean compute() {
+		if (this.getStart().equals(this.getGoal())) {
+			this.connectPlan(this.getStart());
+			return true;
+		}
+		
 		this.createSamplingShape();
 		
 		for (int i = 0; i < this.getMaxIterations(); i++) {
@@ -252,9 +257,9 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 			if (Status.TRAPPED != status) {
 				RRTreeWaypoint endWaypoint = this.getNewestWaypoint();
 				Set<RRTreeWaypoint> nearestWaypoints = (Set<RRTreeWaypoint>)
-						this.getEnvironment().findNearest(endWaypoint,
-								this.getEnvironment().getOptimalNumNearest());
-								//this.getEnvironment().getNumVertices());
+						this.getPlanningContinuum().findNearest(endWaypoint,
+								this.getPlanningContinuum().getOptimalNumNearest());
+								//this.getPlanningContinuum().getNumVertices());
 				this.improveParent(nearestWaypoints, endWaypoint);
 				this.rewireTree(endWaypoint, nearestWaypoints);
 				

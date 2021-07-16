@@ -35,7 +35,6 @@ import java.beans.PropertyChangeListener;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.environments.PlanningGrid;
-import com.cfar.swim.worldwind.environments.PlanningRoadmap;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
@@ -144,9 +143,6 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 	            environment.setThreshold(0d);
 	            environment.setGlobe(this.scenario.getGlobe());
 	            ((PlanningGrid) environment).addStructuralChangeListener(this.scenario);
-			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID)) {
-				// TODO: implement
-				environment = new PlanningRoadmap();
 			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID)) {
 				PlanningContinuumProperties properties = (PlanningContinuumProperties) this.specification.getProperties();
 				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
@@ -156,6 +152,8 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 				environment.setGlobe(this.scenario.getGlobe());
 				((PlanningContinuum) environment).setResolution(properties.getResolution());
 				((PlanningContinuum) environment).addStructuralChangeListener(this.scenario); 
+			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID)) {
+				// TODO: implement
 			}
 		}
 		

@@ -231,7 +231,7 @@ implements DynamicPlanner, LifelongPlanner {
 			// purge the entire tree
 			this.clearExpendables();
 			this.getStart().clearChildren();
-			this.getEnvironment().addVertex(this.getStart());
+			this.getPlanningContinuum().addVertex(this.getStart());
 		} else {
 			root.setValid(false);
 			
@@ -245,7 +245,7 @@ implements DynamicPlanner, LifelongPlanner {
 			// remove the invalid vertex
 			if (root.hasParent()) {
 				root.setParent(null);
-				this.getEnvironment().removeVertex(root);
+				this.getPlanningContinuum().removeVertex(root);
 			}
 		}
 	}
@@ -257,7 +257,7 @@ implements DynamicPlanner, LifelongPlanner {
 	protected void trim() {
 		// trim all affected tree branches
 		for (Obstacle obstacle : this.getDynamicObstacles()) {
-			this.getEnvironment().findAffectedEdges(obstacle).stream()
+			this.getPlanningContinuum().findAffectedEdges(obstacle).stream()
 			.filter(edge -> obstacle.getCostInterval()
 					.intersects(new TimeInterval(
 						((DRRTreeWaypoint) edge.getFirstPosition()).getEto(),
@@ -724,7 +724,7 @@ implements DynamicPlanner, LifelongPlanner {
 			backup.clear();
 			backup.start = this.getStart();
 			backup.goal = this.getGoal();
-			for (Edge edge : this.getEnvironment().getEdges()) {
+			for (Edge edge : this.getPlanningContinuum().getEdges()) {
 				backup.edges.add((DirectedEdge) edge);
 			}
 			backup.dynamicObstacles.addAll(this.dynamicObstacles);
@@ -753,14 +753,14 @@ implements DynamicPlanner, LifelongPlanner {
 			this.setGoal(backup.goal);
 			double maxCost = this.getStart().getF();
 			for (Edge edge : backup.edges) {
-				this.getEnvironment().addEdge(edge);
+				this.getPlanningContinuum().addEdge(edge);
 				maxCost = Math.max(maxCost,
 						((DRRTreeWaypoint) edge.getSecondPosition()).getF());
 			}
 			this.getQuality().setMaximumCost(maxCost);
 			this.clearDynamicObstacles();
 			this.addDynamicObstacles(backup.dynamicObstacles);
-			this.addAllWaypoints(backup.plan);
+			this.getWaypoints().addAll(backup.plan);
 			restored = true;
 		}
 		

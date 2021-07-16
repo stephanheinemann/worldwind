@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planners.rrt.oadrrt;
+package com.cfar.swim.worldwind.planners.cgs.oadstar;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -45,14 +45,14 @@ import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
-import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
-import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreeWaypoint;
+import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
+import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarWaypoint;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
 import com.cfar.swim.worldwind.tracks.AircraftTrack;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
@@ -63,62 +63,62 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
 
 /**
- * Realizes an online anytime dynamic RRT planner that features a datalink
+ * Realizes an online anytime dynamic A* planner that features a datalink
  * connection to communicate with a planned aircraft.
  * 
  * @author Stephan Heinemann
  *
  */
-public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
+public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	
-	/** the current leg of the aircraft planned by this OADRRT planner */
+	/** the current leg of the aircraft planned by this OAD* planner */
 	private Optional<Edge> currentLeg = Optional.empty();
 	
-	/** the datalink of this OADRRT planner */
+	/** the datalink of this OAD* planner */
 	private Datalink datalink = null;
 	
-	/** the datalink take-off communication of this OADRRT planner */
+	/** the datalink take-off communication of this OAD* planner */
 	private Communication<Datalink> takeOff = null;
 	
-	/** the datalink landing communication of this OADRRT planner */
+	/** the datalink landing communication of this OAD* planner */
 	private Communication<Datalink> landing = null;
 	
-	/** the datalink unplanned landing communication of this OADRRT planner */
+	/** the datalink unplanned landing communication of this OAD* planner */
 	private Communication<Datalink> unplannedLanding = null;
 	
-	/** the establish datalink communication of this OADRRT planner */
+	/** the establish datalink communication of this OAD* planner */
 	private Communication<Datalink> establishDatalink = null;
 	
-	/** the maximum acceptable aircraft take-off error of this OADRRT planner */
+	/** the maximum acceptable aircraft take-off error of this OAD* planner */
 	private AircraftTrackPointError maxTakeOffError = AircraftTrackPointError.ZERO;
 	
-	/** the maximum acceptable aircraft landing error of this OADRRT planner */
+	/** the maximum acceptable aircraft landing error of this OAD* planner */
 	private AircraftTrackPointError maxLandingError = AircraftTrackPointError.ZERO;
 	
-	/** the maximum acceptable aircraft track error of this OADRRT planner */
+	/** the maximum acceptable aircraft track error of this OAD* planner */
 	private AircraftTrackError maxTrackError = AircraftTrackError.ZERO;
 	
-	/** the track change listener of this OADRRT planner */
+	/** the track change listener of this OAD* planner */
 	private final TrackChangeListener trackCl = new TrackChangeListener();
 	
-	/** the off-track counter of this OADRRT planner */
+	/** the off-track counter of this OAD* planner */
 	private int offTrackCount = 0;
 	
 	/**
-	 * Constructs a OADRRT planner for a specified aircraft and environment
+	 * Constructs a OAD* planner for a specified aircraft and environment
 	 * using default local cost and risk policies.
 	 * 
 	 * @param aircraft the aircraft
 	 * @param environment the environment
 	 */
-	public OADRRTreePlanner(Aircraft aircraft, Environment environment) {
+	public OADStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 		this.addPlanRevisionListener(new MissionLoader());
 	}
 	
 	/**
 	 * Realizes a mission loader to upload revised trajectories via the
-	 * datalink of this OADRRT planner.
+	 * datalink of this OAD* planner.
 	 * 
 	 * @author Stephan Heinemann
 	 *
@@ -126,7 +126,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	protected class MissionLoader implements PlanRevisionListener {
 		
 		/**
-		 * Uploads a revised trajectory via the datalink of this OADRRT planner.
+		 * Uploads a revised trajectory via the datalink of this OAD* planner.
 		 * 
 		 * @param trajectory the revised trajectory
 		 */
@@ -153,9 +153,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Gets the datalink of this OADRRT planner.
+	 * Gets the datalink of this OAD* planner.
 	 * 
-	 * @return the datalink of this OADRRT planner
+	 * @return the datalink of this OAD* planner
 	 * 
 	 * @see OnlinePlanner#getDatalink()
 	 */
@@ -165,7 +165,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets the datalink of this OADRRT planner.
+	 * Sets the datalink of this OAD* planner.
 	 * 
 	 * @param datalink the datalink to be set
 	 * 
@@ -183,9 +183,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not this OADRRT planner has a datalink.
+	 * Determines whether or not this OAD* planner has a datalink.
 	 * 
-	 * @return true if this OADRRT planner has a datalink, false otherwise
+	 * @return true if this OAD* planner has a datalink, false otherwise
 	 * 
 	 * @see OnlinePlanner#hasDatalink()
 	 */
@@ -195,10 +195,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Gets the maximum acceptable take-off error of this OADRRT planner to
+	 * Gets the maximum acceptable take-off error of this OAD* planner to
 	 * consider the aircraft within the take-off regime.
 	 * 
-	 * @return the maximum acceptable take-off error of this OADRRT planner to
+	 * @return the maximum acceptable take-off error of this OAD* planner to
 	 *         consider the aircraft within the take-off regime
 	 *
 	 * @see OnlinePlanner#getMaxTakeOffError()
@@ -209,13 +209,13 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets the maximum acceptable take-off error of this OADRRT planner to
+	 * Sets the maximum acceptable take-off error of this OAD* planner to
 	 * consider the aircraft within the take-off regime.
 	 * 
 	 * @param maxTakeOffError the maximum acceptable take-off error to be set
 	 *
 	 * @throws IllegalArgumentException if the maximum take-off error is null
-	 *
+	 * 
 	 * @see OnlinePlanner#setMaxTakeOffError(AircraftTrackPointError)
 	 */
 	@Override
@@ -227,10 +227,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not the aircraft of this OADRRT planner is within
+	 * Determines whether or not the aircraft of this OAD* planner is within
 	 * the take-off zone.
 	 * 
-	 * @return true if the aircraft of this OADRRT planner is within the
+	 * @return true if the aircraft of this OAD* planner is within the
 	 *         take-off zone, false otherwise
 	 *
 	 * @see OnlinePlanner#isInTakeOffZone()
@@ -271,10 +271,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not the aircraft of this OADRRT planner is within
+	 * Determines whether or not the aircraft of this OAD* planner is within
 	 * the take-off window.
 	 * 
-	 * @return true if the aircraft of this OADRRT planner is within the
+	 * @return true if the aircraft of this OAD* planner is within the
 	 *         take-off window, false otherwise
 	 *
 	 * @see OnlinePlanner#isInTakeOffWindow()
@@ -303,10 +303,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Gets the maximum acceptable landing error of this OADRRT planner to
+	 * Gets the maximum acceptable landing error of this OAD* planner to
 	 * consider the aircraft within the landing regime.
 	 * 
-	 * @return the maximum acceptable landing error of this OADRRT planner to
+	 * @return the maximum acceptable landing error of this OAD* planner to
 	 *         consider the aircraft within the landing regime
 	 *
 	 * @see OnlinePlanner#getMaxLandingError()
@@ -317,7 +317,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets the maximum acceptable landing error of this OADRRT planner to
+	 * Sets the maximum acceptable landing error of this OAD* planner to
 	 * consider the aircraft within the landing regime.
 	 * 
 	 * @param maxLandingError the maximum acceptable landing error to be set
@@ -335,10 +335,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not the aircraft of this OADRRT planner is within
+	 * Determines whether or not the aircraft of this OAD* planner is within
 	 * the landing zone.
 	 * 
-	 * @return true if the aircraft of this OADRRT planner is within the
+	 * @return true if the aircraft of this OAD* planner is within the
 	 *         landing zone, false otherwise
 	 *
 	 * @see OnlinePlanner#isInLandingZone()
@@ -379,10 +379,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not the aircraft of this OADRRT planner is within
+	 * Determines whether or not the aircraft of this OAD* planner is within
 	 * the landing window.
 	 * 
-	 * @return true if the aircraft of this OADRRT planner is within the
+	 * @return true if the aircraft of this OAD* planner is within the
 	 *         landing window, false otherwise
 	 *
 	 * @see OnlinePlanner#isInLandingWindow()
@@ -410,10 +410,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Gets the maximum acceptable track error of this OADRRT planner to
+	 * Gets the maximum acceptable track error of this OAD* planner to
 	 * consider the aircraft on track.
 	 * 
-	 * @return the maximum acceptable track error of this OADRRT planner to
+	 * @return the maximum acceptable track error of this OAD* planner to
 	 *         consider the aircraft on track
 	 * 
 	 * @see OnlinePlanner#getMaxTrackError()
@@ -424,10 +424,12 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets the maximum acceptable track error of this OADRRT planner to
+	 * Sets the maximum acceptable track error of this OAD* planner to
 	 * consider the aircraft on track.
 	 * 
 	 * @param maxTrackError the maximum acceptable track error to be set
+	 * 
+	 * @throws IllegalArgumentException if the maximum track error is null
 	 * 
 	 * @see OnlinePlanner#setMaxTrackError(AircraftTrackError)
 	 */
@@ -448,7 +450,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	private class TrackChangeListener implements PropertyChangeListener {
 		
 		/**
-		 * Notifies the OADRRT planner about a track change.
+		 * Notifies the OAD* planner about a track change.
 		 * 
 		 * @param evt the property change event
 		 * 
@@ -461,10 +463,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not the aircraft of this OADRRT planner is on
+	 * Determines whether or not the aircraft of this OAD* planner is on
 	 * track.
 	 * 
-	 * @return true if the aircraft of this OADRRT planner is on track,
+	 * @return true if the aircraft of this OAD* planner is on track,
 	 *         false otherwise
 	 * 
 	 * @see OnlinePlanner#isOnTrack()
@@ -489,10 +491,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			
 			if (track.size() >= (maxTrackPoints - 1)) {
 				DirectedEdge leg = (DirectedEdge) this.currentLeg.get();
-				ADRRTreeWaypoint next = (ADRRTreeWaypoint) leg.getSecondPosition();
+				ADStarWaypoint next = (ADStarWaypoint) leg.getSecondPosition();
 				
 				// cross track check
-				ADRRTreeWaypoint lastPosition = this.createWaypoint(last.getPosition());
+				ADStarWaypoint lastPosition = this.createWaypoint(last.getPosition());
 				double hced = leg.getHorizontalCrossEdgeDistance(lastPosition);
 				double vced = leg.getVerticalCrossEdgeDistance(lastPosition);
 				Angle ob = leg.getOpeningBearing(lastPosition);
@@ -545,27 +547,24 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Roots a branch of the tree generated by this OADRRT planner by removing
-	 * all parents and siblings.
+	 * Roots a graph in the grid generated by this OAD* planner by making
+	 * the previous root and its dependent children under-consistent.
 	 * 
-	 * @param root the root of the new tree
+	 * @param root the root of the new graph
 	 */
-	protected void root(ADRRTreeWaypoint root) {
+	protected void root(ADStarWaypoint root) {
 		this.setStart(root);
-		
 		if (root.hasParent()) {
-			ADRRTreeWaypoint parent = root.getParent();
-			parent.removeChild(root);
-			root.setParent(null);
-			while (parent.hasParent()) {
-				parent = parent.getParent();
-			}
-			this.trim(parent);
+			ADStarWaypoint parent = root.getParent();
+			root.resetParents();
+			// make parent under-consistent and propagate under-consistency
+			this.repair(parent);
+			this.updateSets(parent);
 		}
 	}
 	
 	/**
-	 * Progresses the plan of this OADRRT planner by rooting its generated tree
+	 * Progresses the plan of this OAD* planner by rooting its generated graph
 	 * at the next mission position.
 	 * 
 	 * @param partIndex the index of the part to be progressed
@@ -584,15 +583,15 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 				this.backup(partIndex - 1);
 				this.restore(partIndex);
 			} else {
-				// progress planner tree
+				// progress planner graph
 				while (!this.getStart().equals(this.createWaypoint(
 						this.getDatalink().getNextMissionPosition()))
 						&& this.hasWaypoints()) {
-					ADRRTreeWaypoint previous = (ADRRTreeWaypoint) this.getWaypoints().removeFirst();
+					ADStarWaypoint previous = (ADStarWaypoint) this.getWaypoints().removeFirst();
 					if (this.hasWaypoints()) {
-						this.currentLeg = this.getPlanningContinuum().findEdge(
-								previous, this.getWaypoints().getFirst());
-						this.root((ADRRTreeWaypoint) this.getWaypoints().getFirst());
+						this.currentLeg = Optional.of(new DirectedEdge(
+								this.getEnvironment(), previous, this.getWaypoints().getFirst()));
+						this.root((ADStarWaypoint) this.getWaypoints().getFirst());
 					}
 				}
 				
@@ -624,12 +623,12 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Re-plans an off-track aircraft of this OADRRT planner.
+	 * Re-plans an off-track aircraft of this OAD* planner.
 	 * 
 	 * @param partIndex the of the plan to be re-planned
 	 */
 	protected void replan(int partIndex) {
-		ADRRTreeWaypoint partStart = (ADRRTreeWaypoint) this.getStart().clone();
+		ADStarWaypoint partStart = (ADStarWaypoint) this.getStart().clone();
 		
 		if (this.hasWaypoints(partIndex - 1)) {
 			this.backup(partIndex);
@@ -643,7 +642,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		} else {
 			// naively re-plan based on aircraft capabilities
 			AircraftTrackPoint trackPoint = this.getDatalink().getAircraftTrack().getLastTrackPoint();
-			ADRRTreeWaypoint offTrackWaypoint = this.createWaypoint(trackPoint.getPosition());
+			ADStarWaypoint offTrackWaypoint = this.createWaypoint(trackPoint.getPosition());
 			
 			if (!this.getStart().equals(offTrackWaypoint)) {
 				offTrackWaypoint.setEto(trackPoint.getAto());
@@ -667,7 +666,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Elaborates an OADRRT plan.
+	 * Elaborates an OAD* plan.
 	 * 
 	 * @param partIndex the index of the plan to be elaborated
 	 */
@@ -694,18 +693,14 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Computes an OADRRT plan applying the current cost and goal biases by
-	 * growing a tree until the goal region is reached. The risk policy will
-	 * be boosted if necessary when airborne to continue temporarily under
-	 * higher risk.
-	 * 
-	 * @return true if the goal region was reached, false otherwise
+	 * Computes an OAD* plan. The risk policy will be boosted if necessary when
+	 * airborne to continue temporarily under higher risk.
 	 */
 	@Override
-	protected boolean compute() {
+	protected void compute() {
 		if (this.getStart().equals(this.getGoal())) {
 			this.connectPlan(this.getStart());
-			return true;
+			return;
 		}
 		
 		RiskPolicy riskPolicy = this.getRiskPolicy();
@@ -723,7 +718,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			
 			if (0d < distance) {
 				double ratio  = radius / distance;
-				ADRRTreeWaypoint end = this.createWaypoint(
+				ADStarWaypoint end = this.createWaypoint(
 						Position.interpolateGreatCircle(
 								ratio, this.getStart(), this.getGoal()));
 				this.computeEto(this.getStart(), end);
@@ -737,17 +732,16 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			}
 		}
 		
-		boolean isInGoalRegion = super.compute();
+		super.compute();
 		
 		// TODO: plan for in-flight alternates and / or issue warning if no solution
 		// TODO: alternate and precautionary landing communications
 		
 		this.setRiskPolicy(riskPolicy);
-		return isInGoalRegion;
 	}
 	
 	/**
-	 * Suspends this OADRRT planner until termination, context changes or
+	 * Suspends this OAD* planner until termination, context changes or
 	 * off-track situations occur.
 	 */
 	@Override
@@ -764,16 +758,16 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Notifies this OADRRT planner about progress of the aircraft.
+	 * Notifies this OAD* planner about progress of the aircraft.
 	 */
 	protected synchronized void notifyProgress() {
 		this.notifyAll();
 	}
 	
 	/**
-	 * Terminates this OADRRT planner and removes its downlink listener.
+	 * Terminates this OAD* planner and removes its downlink listener.
 	 * 
-	 * @see ADRRTreePlanner#terminate()
+	 * @see ADStarPlanner#terminate()
 	 */
 	@Override
 	public synchronized void terminate() {
@@ -784,9 +778,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Recycles this OADRRT planner and adds its downlink listener.
+	 * Recycles this OAD* planner and adds its downlink listener.
 	 * 
-	 * @see ADRRTreePlanner#recycle()
+	 * @see ADStarPlanner#recycle()
 	 */
 	@Override
 	public synchronized void recycle() {
@@ -797,9 +791,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Gets the datalink take-off communication of this OADRRT planner.
+	 * Gets the datalink take-off communication of this OAD* planner.
 	 * 
-	 * @return the datalink take-off communication of this OADRRT planner
+	 * @return the datalink take-off communication of this OAD* planner
 	 * 
 	 * @see OnlinePlanner#getTakeOff()
 	 */
@@ -809,7 +803,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets the datalink take-off communication of this OADRRT planner.
+	 * Sets the datalink take-off communication of this OAD* planner.
 	 * 
 	 * @param takeOff the datalink take-off communication to be set
 	 *
@@ -821,10 +815,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not this OADRRT planner has a datalink take-off
+	 * Determines whether or not this OAD* planner has a datalink take-off
 	 * communication.
 	 * 
-	 * @return true if this OADRRT planner has a datalink take-off
+	 * @return true if this OAD* planner has a datalink take-off
 	 *         communication, false otherwise
 	 *
 	 * @see OnlinePlanner#hasTakeOff()
@@ -835,9 +829,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Gets the datalink landing communication of this OADRRT planner.
+	 * Gets the datalink landing communication of this OAD* planner.
 	 * 
-	 * @return the datalink landing communication of this OADRRT planner
+	 * @return the datalink landing communication of this OAD* planner
 	 *
 	 * @see OnlinePlanner#getLanding()
 	 */
@@ -847,7 +841,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets the datalink landing communication of this OADRRT planner.
+	 * Sets the datalink landing communication of this OAD* planner.
 	 * 
 	 * @param landing the datalink landing communication to be set
 	 *
@@ -859,10 +853,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not this OADRRT planner has a datalink landing
+	 * Determines whether or not this OAD* planner has a datalink landing
 	 * communication.
 	 * 
-	 * @return true if this OADRRT planner has a datalink landing
+	 * @return true if this OAD* planner has a datalink landing
 	 *         communication, false otherwise
 	 *
 	 * @see OnlinePlanner#hasLanding() 
@@ -873,10 +867,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Gets the datalink unplanned landing communication of this OADRRT
-	 * planner.
+	 * Gets the datalink unplanned landing communication of this OAD* planner.
 	 * 
-	 * @return the datalink unplanned landing communication of this OADRRT
+	 * @return the datalink unplanned landing communication of this OAD*
 	 *         planner
 	 *
 	 * @see OnlinePlanner#getUnplannedLanding()
@@ -887,8 +880,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets the datalink unplanned landing communication of this OADRRT
-	 * planner.
+	 * Sets the datalink unplanned landing communication of this OAD* planner.
 	 * 
 	 * @param unplannedLanding the datalink unplanned landing communication to
 	 *                         be set
@@ -901,10 +893,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not this OADRRT planner has a datalink unplanned
+	 * Determines whether or not this OAD* planner has a datalink unplanned
 	 * landing communication.
 	 * 
-	 * @return true if this OADRRT planner has a datalink unplanned landing
+	 * @return true if this OAD* planner has a datalink unplanned landing
 	 *         communication, false otherwise
 	 *
 	 * @see OnlinePlanner#hasUnplannedLanding()
@@ -915,9 +907,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Gets the establish datalink communication of this OADRRT planner.
+	 * Gets the establish datalink communication of this OAD* planner.
 	 * 
-	 * @return the establish datalink communication of this OADRRT planner
+	 * @return the establish datalink communication of this OAD* planner
 	 *
 	 * @see OnlinePlanner#getEstablishDataLink()
 	 */
@@ -927,7 +919,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets the establish datalink communication of this OADRRT planner.
+	 * Sets the establish datalink communication of this OAD* planner.
 	 * 
 	 * @param establishDatalink the establish datalink communication to be set
 	 *
@@ -939,10 +931,10 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not this OADRRT planner has an establish datalink
+	 * Determines whether or not this OAD* planner has an establish datalink
 	 * communication.
 	 * 
-	 * @return true if this OADRRT planner has an establish datalink
+	 * @return true if this OAD* planner has an establish datalink
 	 *         communication, false otherwise
 	 *
 	 * @see OnlinePlanner#hasEstablishDatalink()
@@ -953,8 +945,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Performs a take-off via the datalink communication of this OADRRT
-	 * planner.
+	 * Performs a take-off via the datalink communication of this OAD* planner.
 	 */
 	private void performTakeOff() {
 		if (this.hasTakeOff()) {
@@ -963,8 +954,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Performs a landing via the datalink communication of this OADRRT
-	 * planner.
+	 * Performs a landing via the datalink communication of this OAD* planner.
 	 */
 	private void performLanding() {
 		if (this.hasLanding()) {
@@ -974,7 +964,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	
 	/**
 	 * Performs an unplanned landing via the datalink communication of this
-	 * OADRRT planner.
+	 * OAD* planner.
 	 */
 	private void performUnplannedLanding() {
 		if (this.hasUnplannedLanding()) {
@@ -983,7 +973,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Establishes the datalink communication of this OADRRT planner.
+	 * Establishes the datalink communication of this OAD* planner.
 	 */
 	private void establishDatalink() {
 		if (this.hasEstablishDatalink()) {
@@ -992,11 +982,11 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Determines whether or not this OADRRT planner matches a specification.
+	 * Determines whether or not this OAD* planner matches a specification.
 	 * 
 	 * @param specification the specification to be matched
 	 * 
-	 * @return true if the this OADRRT planner matches the specification,
+	 * @return true if the this OAD* planner matches the specification,
 	 *         false otherwise
 	 * 
 	 * @see AbstractPlanner#matches(Specification)
@@ -1005,29 +995,21 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
-		if ((null != specification) && (specification.getProperties() instanceof OADRRTreeProperties)) {
-			OADRRTreeProperties oadrrtp = (OADRRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(oadrrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(oadrrtp.getRiskPolicy()))
-					&& (this.getBias() == oadrrtp.getBias())
-					&& (this.getEpsilon() == oadrrtp.getEpsilon())
-					&& (this.getExtension() == oadrrtp.getExtension())
-					&& (this.getGoalThreshold() == oadrrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == oadrrtp.getMaxIterations())
-					&& (this.getSampling() == oadrrtp.getSampling())
-					&& (this.getStrategy() == oadrrtp.getStrategy())
-					&& (this.getMaximumQuality() == oadrrtp.getMaximumQuality())
-					&& (this.getMinimumQuality() == oadrrtp.getMaximumQuality())
-					&& (this.getNeighborLimit() == oadrrtp.getNeighborLimit())
-					&& (this.getQualityImprovement() == oadrrtp.getQualityImprovement())
-					&& (this.getSignificantChange() == oadrrtp.getSignificantChange())
-					&& (this.getMaxTrackError().getCrossTrackError() == oadrrtp.getMaxCrossTrackError())
-					&& (this.getMaxTrackError().getTimingError().equals(Duration.ofSeconds(oadrrtp.getMaxTimingError())))
-					&& (this.getMaxTakeOffError().getHorizontalError() == oadrrtp.getMaxTakeOffHorizontalError())
-					&& (this.getMaxTakeOffError().getTimingError().equals(Duration.ofSeconds(oadrrtp.getMaxTakeOffTimingError())))
-					&& (this.getMaxLandingError().getHorizontalError() == oadrrtp.getMaxLandingHorizontalError())
-					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(oadrrtp.getMaxLandingTimingError())))
-					&& (specification.getId().equals(Specification.PLANNER_OADRRT_ID));
+		if ((null != specification) && (specification.getProperties() instanceof OADStarProperties)) {
+			OADStarProperties oadsp = (OADStarProperties) specification.getProperties();
+			matches = (this.getCostPolicy().equals(oadsp.getCostPolicy()))
+					&& (this.getRiskPolicy().equals(oadsp.getRiskPolicy()))
+					&& (this.getMinimumQuality() == oadsp.getMinimumQuality())
+					&& (this.getMaximumQuality() == oadsp.getMaximumQuality())
+					&& (this.getQualityImprovement() == oadsp.getQualityImprovement()
+					&& (this.getSignificantChange() == oadsp.getSignificantChange())
+					&& (this.getMaxTrackError().getCrossTrackError() == oadsp.getMaxCrossTrackError())
+					&& (this.getMaxTrackError().getTimingError().equals(Duration.ofSeconds(oadsp.getMaxTimingError())))
+					&& (this.getMaxTakeOffError().getHorizontalError() == oadsp.getMaxTakeOffHorizontalError())
+					&& (this.getMaxTakeOffError().getTimingError().equals(Duration.ofSeconds(oadsp.getMaxTakeOffTimingError())))
+					&& (this.getMaxLandingError().getHorizontalError() == oadsp.getMaxLandingHorizontalError())
+					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(oadsp.getMaxLandingTimingError())))
+					&& (specification.getId().equals(Specification.PLANNER_OADS_ID)));
 		}
 		
 		return matches;

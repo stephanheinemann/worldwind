@@ -61,6 +61,7 @@ import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ForwardAStarProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ThetaStarProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.ADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.ARRTreeProperties;
@@ -195,6 +196,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, Specification.PLANNER_TS_DESCRIPTION, new ThetaStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, Specification.PLANNER_ARAS_DESCRIPTION, new ARAStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADS_ID, Specification.PLANNER_ADS_DESCRIPTION, new ADStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_OADS_ID, Specification.PLANNER_OADS_DESCRIPTION, new OADStarProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRT_ID, Specification.PLANNER_RRT_DESCRIPTION, new RRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRTS_ID, Specification.PLANNER_RRTS_DESCRIPTION, new RRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_HRRT_ID, Specification.PLANNER_HRRT_DESCRIPTION, new HRRTreeProperties()));

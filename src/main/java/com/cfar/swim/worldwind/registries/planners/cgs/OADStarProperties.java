@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners.rrt;
+package com.cfar.swim.worldwind.registries.planners.cgs;
 
 import java.util.Objects;
 
@@ -39,66 +39,66 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.planners.OnlinePlannerProperties;
 
 /**
- * Realizes the properties bean of an online anytime dynamic RRT planner.
+ * Realizes the properties bean of an online anytime dynamic A* planner.
  * 
  * @author Stephan Heinemann
  *
  */
-public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePlannerProperties {
+public class OADStarProperties extends ADStarProperties implements OnlinePlannerProperties {
 	
-	/** the maximum acceptable cross track error of this OADRRT planner properties bean */
-	@Min(value = 0, message = "{property.planner.oadrrt.maxCrossTrackError.min}")
-	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxCrossTrackError.max}")
+	/** the maximum acceptable cross track error of this OAD* planner properties bean */
+	@Min(value = 0, message = "{property.planner.oads.maxCrossTrackError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxCrossTrackError.max}")
 	private long maxCrossTrackError = 10;
 	
-	/** the maximum acceptable timing error of this OADRRT planner properties bean */
-	@Min(value = 0, message = "{property.planner.oadrrt.maxTimingError.min}")
-	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxTimingError.max}")
+	/** the maximum acceptable timing error of this OAD* planner properties bean */
+	@Min(value = 0, message = "{property.planner.oads.maxTimingError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxTimingError.max}")
 	private long maxTimingError = 60;
 	
-	/** the maximum acceptable horizontal take-off error of this OADRRT planner properties bean */
-	@Min(value = 0, message = "{property.planner.oadrrt.maxTakeOffHorizontalError.min}")
-	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxTakeOffHorizontalError.max}")
+	/** the maximum acceptable horizontal take-off error of this OAD* planner properties bean */
+	@Min(value = 0, message = "{property.planner.oads.maxTakeOffHorizontalError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxTakeOffHorizontalError.max}")
 	private long maxTakeOffHorizontalError = 5;
 	
-	/** the maximum acceptable take-off timing error of this OADRRT planner properties bean */
-	@Min(value = 0, message = "{property.planner.oadrrt.maxTakeOffTimingError.min}")
-	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxTakeOffTimingError.max}")
+	/** the maximum acceptable take-off timing error of this OAD* planner properties bean */
+	@Min(value = 0, message = "{property.planner.oads.maxTakeOffTimingError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxTakeOffTimingError.max}")
 	private long maxTakeOffTimingError = 30;
 	
-	/** the maximum acceptable horizontal landing error of this OADRRT planner properties bean */
-	@Min(value = 0, message = "{property.planner.oadrrt.maxLandingHorizontalError.min}")
-	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxLandingHorizontalError.max}")
+	/** the maximum acceptable horizontal landing error of this OAD* planner properties bean */
+	@Min(value = 0, message = "{property.planner.oads.maxLandingHorizontalError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxLandingHorizontalError.max}")
 	private long maxLandingHorizontalError = 5;
 	
-	/** the maximum acceptable landing timing error of this OADRRT planner properties bean */
-	@Min(value = 0, message = "{property.planner.oadrrt.maxLandingTimingError.min}")
-	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxLandingTimingError.max}")
+	/** the maximum acceptable landing timing error of this OAD* planner properties bean */
+	@Min(value = 0, message = "{property.planner.oads.maxLandingTimingError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxLandingTimingError.max}")
 	private long maxLandingTimingError = 60;
 	
 	/**
-	 * Constructs a new OADRRT planner properties bean.
+	 * Constructs a new OAD* planner properties bean.
 	 */
-	public OADRRTreeProperties() {
+	public OADStarProperties() {
 		super();
 	}
 	
 	/**
-	 * Constructs a new OADRRT planner properties bean with specified cost
+	 * Constructs a new OAD* planner properties bean with specified cost
 	 * and risk policy property values.
 	 * 
-	 * @param costPolicy the cost policy of this OADRRT planner properties bean
-	 * @param riskPolicy the risk policy of this OADRRT planner properties bean
+	 * @param costPolicy the cost policy of this OAD* planner properties bean
+	 * @param riskPolicy the risk policy of this OAD* planner properties bean
 	 */
-	public OADRRTreeProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
+	public OADStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
 	}
 	
 	/**
-	 * Gets the maximum acceptable cross track error of this OADRRT planner
+	 * Gets the maximum acceptable cross track error of this OAD* planner
 	 * properties bean in meters.
 	 * 
-	 * @return the maximum acceptable cross track error of this OADRRT planner
+	 * @return the maximum acceptable cross track error of this OAD* planner
 	 *         properties bean in meters
 	 * 
 	 * @see OnlinePlannerProperties#getMaxCrossTrackError()
@@ -109,7 +109,7 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Sets the maximum acceptable cross track error of this OADRRT planner
+	 * Sets the maximum acceptable cross track error of this OAD* planner
 	 * properties bean in meters.
 	 * 
 	 * @param maxCrossTrackError the maximum acceptable cross track error to be
@@ -123,10 +123,10 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Gets the maximum acceptable timing error of this OADRRT planner
-	 * properties bean in seconds.
+	 * Gets the maximum acceptable timing error of this OAD* planner properties
+	 * bean in seconds.
 	 * 
-	 * @return the maximum acceptable timing error of this OADRRT planner
+	 * @return the maximum acceptable timing error of this OAD* planner
 	 *         properties bean in seconds
 	 * 
 	 * @see OnlinePlannerProperties#getMaxTimingError()
@@ -137,8 +137,8 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Sets the maximum acceptable timing error of this OADRRT planner
-	 * properties bean in seconds.
+	 * Sets the maximum acceptable timing error of this OAD* planner properties
+	 * bean in seconds.
 	 * 
 	 * @param maxTimingError the maximum acceptable timing error to be set in
 	 *                       seconds
@@ -151,10 +151,10 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Gets the maximum horizontal take-off error of this OADRRT planner
+	 * Gets the maximum horizontal take-off error of this OAD* planner
 	 * properties bean in meters.
 	 * 
-	 * @return the maximum horizontal take-off error of this OADRRT planner
+	 * @return the maximum horizontal take-off error of this OAD* planner
 	 *         properties bean in meters
 	 *
 	 * @see OnlinePlannerProperties#getMaxTakeOffHorizontalError()
@@ -165,7 +165,7 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Sets the maximum horizontal take-off error of this OADRRT planner
+	 * Sets the maximum horizontal take-off error of this OAD* planner
 	 * properties bean in meters.
 	 * 
 	 * @param maxTakeOffHorizontalError the maximum horizontal take-off error
@@ -179,10 +179,10 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Gets the maximum take-off timing error of this OADRRT planner properties
+	 * Gets the maximum take-off timing error of this OAD* planner properties
 	 * bean in seconds.
 	 * 
-	 * @return the maximum take-off timing error of this OADRRT planner
+	 * @return the maximum take-off timing error of this OAD* planner
 	 *         properties bean in seconds
 	 *
 	 * @see OnlinePlannerProperties#getMaxTakeOffTimingError()
@@ -193,7 +193,7 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Sets the maximum take-off timing error of this OADRRT planner properties
+	 * Sets the maximum take-off timing error of this OAD* planner properties
 	 * bean in seconds.
 	 * 
 	 * @param maxTakeOffTimingError the maximum take-off timing error to be set
@@ -207,10 +207,10 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Gets the maximum horizontal landing error of this OADRRT planner
+	 * Gets the maximum horizontal landing error of this OAD* planner
 	 * properties bean in meters.
 	 * 
-	 * @return the maximum horizontal landing error of this OADRRT planner
+	 * @return the maximum horizontal landing error of this OAD* planner
 	 *         properties bean in meters
 	 *
 	 * @see OnlinePlannerProperties#getMaxLandingHorizontalError()
@@ -221,7 +221,7 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Sets the maximum horizontal landing error of this OADRRT planner
+	 * Sets the maximum horizontal landing error of this OAD* planner
 	 * properties bean in meters.
 	 * 
 	 * @param maxLandingHorizontalError the maximum horizontal landing error
@@ -235,10 +235,10 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Gets the maximum landing timing error of this OADRRT planner properties
+	 * Gets the maximum landing timing error of this OAD* planner properties
 	 * bean in seconds.
 	 * 
-	 * @return the maximum landing timing error of this OADRRT planner
+	 * @return the maximum landing timing error of this OAD* planner
 	 *         properties bean in seconds
 	 *
 	 * @see OnlinePlannerProperties#getMaxLandingTimingError()
@@ -249,7 +249,7 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	}
 	
 	/**
-	 * Sets the maximum landing timing error of this OADRRT planner properties
+	 * Sets the maximum landing timing error of this OAD* planner properties
 	 * bean in seconds.
 	 * 
 	 * @param maxLandingTimingError the maximum take-off timing error to be set
@@ -261,45 +261,45 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	public void setMaxLandingTimingError(long maxLandingTimingError) {
 		this.maxLandingTimingError = maxLandingTimingError;
 	}
-	
+
 	/**
-	 * Determines whether or not this OADRRT planner properties bean equals
-	 * another OADRRT planner properties bean based on their aggregated
+	 * Determines whether or not this OAD* planner properties bean equals
+	 * another OAD* planner properties bean based on their aggregated
 	 * properties.
 	 * 
-	 * @param o the other OADRRT planner properties bean
+	 * @param o the other OAD* planner properties bean
 	 * 
-	 * @return true, if the aggregated properties of this OADRRT planner
+	 * @return true, if the aggregated properties of this OAD* planner
 	 *         properties bean equal the aggregated properties of the other
-	 *         OADRRT planner properties bean, false otherwise
+	 *         OAD* planner properties bean, false otherwise
 	 * 
-	 * @see ADRRTreeProperties#equals(Object)
+	 * @see ADStarProperties#equals(Object)
 	 */
 	@Override
 	public boolean equals(Object o) {
 		boolean equals = super.equals(o);
 		
 		if (equals) {
-			OADRRTreeProperties oadrrtp = (OADRRTreeProperties) o;
-			equals = (this.maxCrossTrackError == oadrrtp.maxCrossTrackError)
-					&& (this.maxTimingError == oadrrtp.maxTimingError)
-					&& (this.maxTakeOffHorizontalError == oadrrtp.maxTakeOffHorizontalError)
-					&& (this.maxTakeOffTimingError == oadrrtp.maxTakeOffTimingError)
-					&& (this.maxLandingHorizontalError == oadrrtp.maxLandingHorizontalError)
-					&& (this.maxLandingTimingError == oadrrtp.maxLandingTimingError);
+			OADStarProperties oadsp = (OADStarProperties) o;
+			equals = (this.maxCrossTrackError == oadsp.maxCrossTrackError)
+					&& (this.maxTimingError == oadsp.maxTimingError)
+					&& (this.maxTakeOffHorizontalError == oadsp.maxTakeOffHorizontalError)
+					&& (this.maxTakeOffTimingError == oadsp.maxTakeOffTimingError)
+					&& (this.maxLandingHorizontalError == oadsp.maxLandingHorizontalError)
+					&& (this.maxLandingTimingError == oadsp.maxLandingTimingError);
 		}
 		
 		return equals;
 	}
 	
 	/**
-	 * Gets the hash code of this OADRRT planner properties bean based on its
+	 * Gets the hash code of this OAD* planner properties bean based on its
 	 * aggregated properties.
 	 * 
-	 * @return the hash code of this OADRRT planner properties bean based on
+	 * @return the hash code of this OAD* planner properties bean based on
 	 *         its aggregated properties
 	 * 
-	 * @see ADRRTreeProperties#hashCode()
+	 * @see ADStarProperties#hashCode()
 	 */
 	@Override
 	public int hashCode() {
@@ -312,5 +312,5 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 				this.maxLandingHorizontalError,
 				this.maxLandingTimingError);
 	}
-	
+
 }

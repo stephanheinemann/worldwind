@@ -57,8 +57,8 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
- * Realizes an edge of a roadmap or tree within a planning continuum based on
- * two sampled positions featuring temporal costs.
+ * Realizes an edge of a graph within a planning environment based on two sampled
+ * positions featuring temporal costs.
  * 
  * @author Henrique Ferreira
  * @author Manuel Rosa
@@ -67,15 +67,17 @@ import gov.nasa.worldwind.geom.Vec4;
  */
 public class Edge extends LineSegment implements TimedRenderable, ThresholdRenderable {
 	
-	// TODO: Consider edges to be dynamic, multi-resolution environments itself
-	// bounded by the sphere with its center at the center of the line segment
-	// and its radius half the segment length. Each Edge (Sphere) has a parent
-	// which is a planning continuum with either a Sphere (intermediate) or Box
-	// (top level) shape. Alternatively all continuums could be ellipsoids with
-	// the line segment end points at their foci.
+	/*
+	 * TODO: Consider edges to be dynamic, multi-resolution environments itself
+	 * bounded by the sphere with its center at the center of the line segment
+	 * and its radius half the segment length. Each Edge (Sphere) has a parent
+	 * which is a planning environment with either a Sphere (intermediate) or
+	 * Box (top level) shape. Alternatively all continuums could be ellipsoids
+	 * with the line segment end points at their foci.
+	 */ 
 	
-	/** the planning continuum of this edge */
-	private PlanningContinuum continuum = null;
+	/** the planning environment of this edge */
+	private Environment environment = null;
 	
 	/** the first end position of this edge */
 	private Position first = null;
@@ -91,17 +93,17 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	private double activeCost;
 	
 	/**
-	 * Constructs a new edge within a planning continuum based on two end
+	 * Constructs a new edge within a planning environment based on two end
 	 * positions.
 	 * 
-	 * @param continuum the planning continuum containing this edge
+	 * @param environment the planning environment containing this edge
 	 * @param first the first end position of this edge
 	 * @param second the second end position of this edge
 	 */
-	public Edge(PlanningContinuum continuum, Position first, Position second) {
-		super(continuum.getGlobe().computePointFromPosition(first),
-				continuum.getGlobe().computePointFromPosition(second));
-		this.continuum = continuum;
+	public Edge(Environment environment, Position first, Position second) {
+		super(environment.getGlobe().computePointFromPosition(first),
+				environment.getGlobe().computePointFromPosition(second));
+		this.environment = environment;
 		this.first = first;
 		this.second = second;
 		this.initCostIntervals();
@@ -112,8 +114,8 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 * 
 	 * @return the environment of this edge
 	 */
-	public PlanningContinuum getEnvironment() {
-		return this.continuum;
+	public Environment getEnvironment() {
+		return this.environment;
 	}
 	
 	/**
@@ -131,7 +133,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 * @param first the first end position of this edge
 	 */
 	public void setFirstPosition(Position first) {
-		this.setFirst(this.continuum.getGlobe().computePointFromPosition(first));
+		this.setFirst(this.environment.getGlobe().computePointFromPosition(first));
 		this.first = first;
 		this.initCostIntervals();
 	}
@@ -147,7 +149,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	public void setFirst(Vec4 first) {
 		super.setFirst(first);
 		this.setFirstPosition(
-				this.continuum.getGlobe().computePositionFromPoint(first));
+				this.environment.getGlobe().computePositionFromPoint(first));
 	}
 	
 	/**
@@ -158,14 +160,14 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	public Position getSecondPosition() {
 		return this.second;
 	}
-
+	
 	/**
 	 * Sets the second end position of this edge.
 	 * 
 	 * @param second the second end position of this edge
 	 */
 	public void setSecondPosition(Position second) {
-		this.setSecond(this.continuum.getGlobe().computePointFromPosition(second));
+		this.setSecond(this.environment.getGlobe().computePointFromPosition(second));
 		this.second = second;
 		this.initCostIntervals();
 	}
@@ -181,7 +183,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	public void setSecond(Vec4 second) {
 		super.setSecond(second);
 		this.setSecondPosition(
-				this.continuum.getGlobe().computePositionFromPoint(second));
+				this.environment.getGlobe().computePositionFromPoint(second));
 	}
 	
 	/**
@@ -259,12 +261,57 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	}
 	
 	/**
+	 * Gets the horizontal great circle distance of a cross edge position to
+	 * this edge in meters.
+	 * 
+	 * @param position the cross edge position in globe coordinates
+	 * 
+	 * @return the horizontal cross edge great circle distance of the position
+	 *         in meters, infinity if the cross edge position is not adjacent
+	 *         to this edge
+	 */
+	public double getHorizontalCrossEdgeDistance(Position position) {
+		double horizontalCrossEdgeDistance = Double.POSITIVE_INFINITY;
+		
+		Optional<Position> nearest = this.getCrossEdgePosition(position);
+		if (nearest.isPresent()) {
+			Position npos = new Position(nearest.get(), 0d);
+			Position cpos = new Position(position, 0d);
+			horizontalCrossEdgeDistance = this.getEnvironment()
+					.getGreatCircleDistance(npos, cpos);
+		}
+		
+		return horizontalCrossEdgeDistance;
+	}
+	
+	/**
+	 * Gets the vertical distance of a cross edge position to this edge in
+	 * meters.
+	 * 
+	 * @param position the cross edge position in globe coordinates
+	 * 
+	 * @return the vertical cross edge distance of the position in meters,
+	 *         infinity if the cross edge position is not adjacent to this edge
+	 */
+	public double getVerticalCrossEdgeDistance(Position position) {
+		double verticalCrossEdgeDistance = Double.POSITIVE_INFINITY;
+		
+		Optional<Position> nearest = this.getCrossEdgePosition(position);
+		if (nearest.isPresent()) {
+			verticalCrossEdgeDistance = Math.abs(
+					nearest.get().getElevation() - position.getElevation());
+		}
+		
+		return verticalCrossEdgeDistance;
+	}
+	
+	/**
 	 * Initializes the cost interval tree of this edge.
 	 */
 	public void initCostIntervals() {
 		this.clearCostIntervals();
-		for (Obstacle obstacle : this.continuum.getObstacles()) {
-			if (this.intersects(obstacle.getExtent(this.continuum.getGlobe()))) {
+		for (Obstacle obstacle : this.environment.getObstacles()) {
+			if (this.intersects(obstacle.getExtent(this.environment.getGlobe()))) {
 				this.addCostInterval(obstacle.getCostInterval());
 			}
 		}
@@ -343,7 +390,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 *
 	 */
 	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = this.continuum.getBaseCost(); // simple cost of normalized distance
+		double cost = this.environment.getBaseCost(); // simple cost of normalized distance
 		
 		Set<String> costIntervalIds = new HashSet<String>();
 		// add all (weighted) cost of the cell
@@ -548,7 +595,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 */
 	@Override
 	public void setThreshold(double threshold) {
-		this.continuum.setThreshold(threshold);
+		this.environment.setThreshold(threshold);
 		this.update();
 	}
 	
@@ -561,7 +608,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 */
 	@Override
 	public double getThreshold() {
-		return this.continuum.getThreshold();
+		return this.environment.getThreshold();
 	}
 	
 	/**
@@ -573,7 +620,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 */
 	@Override
 	public ZonedDateTime getTime() {
-		return this.continuum.getTime();
+		return this.environment.getTime();
 	}
 	
 	/**
@@ -585,7 +632,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 */
 	@Override
 	public void setTime(ZonedDateTime time) {
-		this.continuum.setTime(time);
+		this.environment.setTime(time);
 		this.update();
 	}
 	

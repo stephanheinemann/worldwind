@@ -51,6 +51,15 @@ public class ADStarPropertiesBeanInfo extends ARAStarPropertiesBeanInfo {
 	}
 	
 	/**
+	 * Constructs an AD* properties bean information.
+	 * 
+	 * @param beanClass the properties bean class of the properties bean
+	 */
+	public ADStarPropertiesBeanInfo(Class<? extends ADStarProperties> beanClass) {
+		super(beanClass);
+	}
+	
+	/**
 	 * Customizes the property descriptors for each property of an AD*
 	 * properties bean.
 	 * 

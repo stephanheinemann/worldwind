@@ -90,4 +90,29 @@ public enum RiskPolicy {
 		return this.thresholdCost >= cost;
 	}
 	
+	/**
+	 * Adjusts a risk policy to satisfy a cost.
+	 * 
+	 * @param cost the cost to be satisfied
+	 * 
+	 * @return the risk policy satisfying the cost
+	 */
+	public static RiskPolicy adjustTo(double cost) {
+		RiskPolicy adjusted = RiskPolicy.AVOIDANCE;
+		
+		if (RiskPolicy.AVOIDANCE.satisfies(cost)) {
+			adjusted = RiskPolicy.AVOIDANCE;
+		} else if (RiskPolicy.PROBE.satisfies(cost)) {
+			adjusted = RiskPolicy.PROBE;
+		} else if (RiskPolicy.SAFETY.satisfies(cost)) {
+			adjusted = RiskPolicy.SAFETY;
+		} else if (RiskPolicy.EFFECTIVENESS.satisfies(cost)) {
+			adjusted = RiskPolicy.EFFECTIVENESS;
+		} else {
+			adjusted = RiskPolicy.IGNORANCE;
+		}
+		
+		return adjusted;
+	}
+	
 }

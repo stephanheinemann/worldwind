@@ -280,7 +280,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 		
 		while (threshold > quality) {
 			sample = (HRRTreeWaypoint) super.sampleBiased();
-			nearest = (HRRTreeWaypoint) this.getEnvironment().findNearest(sample, 1).iterator().next();
+			nearest = (HRRTreeWaypoint) this.getPlanningContinuum()
+					.findNearest(sample, 1).iterator().next();
 			quality = this.getQuality().get(nearest);
 			threshold = random.nextDouble();
 		}
@@ -300,14 +301,16 @@ public class HRRTreePlanner extends RRTreePlanner {
 	@SuppressWarnings("unchecked")
 	protected HRRTreeWaypoint selectWaypointIk() {
 		HRRTreeWaypoint sample = null;
-		PriorityQueue<HRRTreeWaypoint> neighbors = new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.quality));
+		PriorityQueue<HRRTreeWaypoint> neighbors =
+				new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.quality));
 		
 		Random random = new Random();
 		
 		while (true) {
 			sample = (HRRTreeWaypoint) super.sampleBiased();
 			neighbors.clear();
-			neighbors.addAll((Set<HRRTreeWaypoint>) this.getEnvironment().findNearest(sample, this.getNeighborLimit()));
+			neighbors.addAll((Set<HRRTreeWaypoint>) this.getPlanningContinuum()
+					.findNearest(sample, this.getNeighborLimit()));
 			
 			for (HRRTreeWaypoint neighbor : neighbors) {
 				double quality = this.getQuality().get(neighbor);
@@ -331,7 +334,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 	@SuppressWarnings("unchecked")
 	protected HRRTreeWaypoint selectWaypointBk() {
 		HRRTreeWaypoint sample = null, nearest = null;
-		PriorityQueue<HRRTreeWaypoint> neighbors = new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.quality));
+		PriorityQueue<HRRTreeWaypoint> neighbors =
+				new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.quality));
 		
 		Random random = new Random();
 		double quality = 0d, threshold = 1d;
@@ -339,7 +343,8 @@ public class HRRTreePlanner extends RRTreePlanner {
 		while (threshold > quality) {
 			sample = (HRRTreeWaypoint) super.sampleBiased();
 			neighbors.clear();
-			neighbors.addAll((Set<HRRTreeWaypoint>) this.getEnvironment().findNearest(sample, this.getNeighborLimit()));
+			neighbors.addAll((Set<HRRTreeWaypoint>) this.getPlanningContinuum()
+					.findNearest(sample, this.getNeighborLimit()));
 			nearest = neighbors.poll();
 			quality = this.getQuality().get(nearest);
 			threshold = random.nextDouble();
@@ -441,7 +446,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 		this.getStart().setG(0d);
 		this.getStart().setH(this.computeHeuristic(this.getStart(), this.getGoal()));
 		
-		this.getEnvironment().addVertex(this.getStart());
+		this.getPlanningContinuum().addVertex(this.getStart());
 		this.setNewestWaypoint(this.getStart());
 		
 		this.getQuality().setOptimalCost(this.getStart().getF());
@@ -455,6 +460,11 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 */
 	@Override
 	protected boolean compute() {
+		if (this.getStart().equals(this.getGoal())) {
+			this.connectPlan(this.getStart());
+			return true;
+		}
+		
 		this.createSamplingShape();
 		
 		int iteration = 0;

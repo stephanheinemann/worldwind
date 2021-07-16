@@ -200,7 +200,7 @@ implements DynamicPlanner, LifelongPlanner {
 			// purge the entire tree
 			this.clearExpendables();
 			this.getStart().clearChildren();
-			this.getEnvironment().addVertex(this.getStart());
+			this.getPlanningContinuum().addVertex(this.getStart());
 		} else {
 			root.setValid(false);
 			
@@ -213,7 +213,7 @@ implements DynamicPlanner, LifelongPlanner {
 			}
 			// remove the invalid vertex
 			root.setParent(null);
-			this.getEnvironment().removeVertex(root);
+			this.getPlanningContinuum().removeVertex(root);
 		}
 	}
 	
@@ -224,7 +224,7 @@ implements DynamicPlanner, LifelongPlanner {
 	protected void trim() {
 		// trim all affected tree branches
 		for (Obstacle obstacle : this.getDynamicObstacles()) {
-			this.getEnvironment().findAffectedEdges(obstacle).stream()
+			this.getPlanningContinuum().findAffectedEdges(obstacle).stream()
 			.filter(edge -> obstacle.getCostInterval()
 					.intersects(new TimeInterval(
 						((ADRRTreeWaypoint) edge.getFirstPosition()).getEto(),

@@ -472,6 +472,11 @@ implements DynamicPlanner, LifelongPlanner {
 	 */
 	@Override
 	protected void compute() {
+		if (this.getStart().equals(this.getGoal())) {
+			this.connectPlan(this.getStart());
+			return;
+		}
+		
 		while (this.canExpand()) {
 			ADStarWaypoint source = this.pollExpandable();
 			Set<? extends ADStarWaypoint> neighbors = this.expand(source);

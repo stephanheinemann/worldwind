@@ -27,27 +27,4 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.environments;
-
-import com.cfar.swim.worldwind.geom.Box;
-
-/**
- * Realizes a planning roadmap that can be established by probabilistic roadmap
- * motion planning algorithms.
- * 
- * @author Stephan Heinemann
- *
- */
-public class PlanningRoadmap extends PlanningContinuum {
-	
-	/*
-	 *  A planning roadmap could be fed by AIXM data to establish valid VFR/IFR
-	 *  routes and there could be a geometric roadmap base class (similar to
-	 *  planning grid).
-	 */
-	
-	public PlanningRoadmap(Box box) {
-		super(box);
-	}
-	
-}
+package com.cfar.swim.worldwind.planners.cgs.oadstar;

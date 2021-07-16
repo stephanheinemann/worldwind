@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.registries.planners.rrt;
+package com.cfar.swim.worldwind.registries.planners.cgs;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
@@ -35,23 +35,23 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 /**
- * Realizes an OADRRT properties bean information customizing the descriptors
+ * Realizes an OAD* properties bean information customizing the descriptors
  * for each property.
  * 
  * @author Stephan Heinemann
  *
  */
-public class OADRRTreePropertiesBeanInfo extends ADRRTreePropertiesBeanInfo {
+public class OADStarPropertiesBeanInfo extends ADStarPropertiesBeanInfo {
 	
 	/**
-	 * Constructs an OADRRT properties bean information.
+	 * Constructs an OAD* properties bean information.
 	 */
-	public OADRRTreePropertiesBeanInfo() {
-		super(OADRRTreeProperties.class);
+	public OADStarPropertiesBeanInfo() {
+		super(OADStarProperties.class);
 	}
 	
 	/**
-	 * Customizes the property descriptors for each property of an OADRRT
+	 * Customizes the property descriptors for each property of an OAD*
 	 * properties bean.
 	 * 
 	 * @return the array of customized property descriptors
@@ -65,36 +65,36 @@ public class OADRRTreePropertiesBeanInfo extends ADRRTreePropertiesBeanInfo {
 		try {
 			PropertyDescriptor maxCrossTrackError = this.createPropertyDescriptor(
 					"maxCrossTrackError",
-					this.dictionary.getString("property.planner.oadrrt.maxCrossTrackError.name"),
-					this.dictionary.getString("property.planner.oadrrt.maxCrossTrackError.description"),
+					this.dictionary.getString("property.planner.oads.maxCrossTrackError.name"),
+					this.dictionary.getString("property.planner.oads.maxCrossTrackError.description"),
 					this.dictionary.getString("property.planner.category.online"));
 			PropertyDescriptor maxTimingError = this.createPropertyDescriptor(
 					"maxTimingError",
-					this.dictionary.getString("property.planner.oadrrt.maxTimingError.name"),
-					this.dictionary.getString("property.planner.oadrrt.maxTimingError.description"),
+					this.dictionary.getString("property.planner.oads.maxTimingError.name"),
+					this.dictionary.getString("property.planner.oads.maxTimingError.description"),
 					this.dictionary.getString("property.planner.category.online"));
 			PropertyDescriptor maxTakeOffHorizontalError = this.createPropertyDescriptor(
 					"maxTakeOffHorizontalError",
-					this.dictionary.getString("property.planner.oadrrt.maxTakeOffHorizontalError.name"),
-					this.dictionary.getString("property.planner.oadrrt.maxTakeOffHorizontalError.description"),
+					this.dictionary.getString("property.planner.oads.maxTakeOffHorizontalError.name"),
+					this.dictionary.getString("property.planner.oads.maxTakeOffHorizontalError.description"),
 					this.dictionary.getString("property.planner.category.online"));
 			PropertyDescriptor maxTakeOffTimingError = this.createPropertyDescriptor(
 					"maxTakeOffTimingError",
-					this.dictionary.getString("property.planner.oadrrt.maxTakeOffTimingError.name"),
-					this.dictionary.getString("property.planner.oadrrt.maxTakeOffTimingError.description"),
+					this.dictionary.getString("property.planner.oads.maxTakeOffTimingError.name"),
+					this.dictionary.getString("property.planner.oads.maxTakeOffTimingError.description"),
 					this.dictionary.getString("property.planner.category.online"));
 			PropertyDescriptor maxLandingHorizontalError = this.createPropertyDescriptor(
 					"maxLandingHorizontalError",
-					this.dictionary.getString("property.planner.oadrrt.maxLandingHorizontalError.name"),
-					this.dictionary.getString("property.planner.oadrrt.maxLandingHorizontalError.description"),
+					this.dictionary.getString("property.planner.oads.maxLandingHorizontalError.name"),
+					this.dictionary.getString("property.planner.oads.maxLandingHorizontalError.description"),
 					this.dictionary.getString("property.planner.category.online"));
 			PropertyDescriptor maxLandingTimingError = this.createPropertyDescriptor(
 					"maxLandingTimingError",
-					this.dictionary.getString("property.planner.oadrrt.maxLandingTimingError.name"),
-					this.dictionary.getString("property.planner.oadrrt.maxLandingTimingError.description"),
+					this.dictionary.getString("property.planner.oads.maxLandingTimingError.name"),
+					this.dictionary.getString("property.planner.oads.maxLandingTimingError.description"),
 					this.dictionary.getString("property.planner.category.online"));
 			
-			PropertyDescriptor[] oadrrtDescriptors = new PropertyDescriptor[] {
+			PropertyDescriptor[] oadsDescriptors = new PropertyDescriptor[] {
 					maxCrossTrackError,
 					maxTimingError,
 					maxTakeOffHorizontalError,
@@ -102,7 +102,7 @@ public class OADRRTreePropertiesBeanInfo extends ADRRTreePropertiesBeanInfo {
 					maxLandingHorizontalError,
 					maxLandingTimingError};
 			descriptors = Stream.concat(
-					Arrays.stream(descriptors), Arrays.stream(oadrrtDescriptors))
+					Arrays.stream(descriptors), Arrays.stream(oadsDescriptors))
 					.toArray(PropertyDescriptor[]::new);
 		
 		} catch (IntrospectionException e) {
