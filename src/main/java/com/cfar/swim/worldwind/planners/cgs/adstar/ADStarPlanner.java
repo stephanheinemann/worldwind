@@ -295,6 +295,22 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
+	 * Connects a plan from a specified AD* goal waypoint.
+	 * 
+	 * @param waypoint the last AD* waypoint of a computed plan
+	 */
+	@Override
+	protected void connectPlan(AStarWaypoint waypoint) {
+		this.clearWaypoints();
+		// only connect plan from reached goal featuring ETO
+		while ((null != waypoint) && (waypoint.hasEto())
+				&& (!((ADStarWaypoint) waypoint).isInfinite())) {
+			this.getWaypoints().addFirst(waypoint);
+			waypoint = waypoint.getParent();
+		}
+	}
+	
+	/**
 	 * Updates the planner waypoint sets for an updated AD* waypoint.
 	 * 
 	 * @param waypoint the updated AD* waypoint
@@ -303,7 +319,8 @@ implements DynamicPlanner, LifelongPlanner {
 	 */
 	@Override
 	protected void updateSets(AStarWaypoint waypoint) {
-		if (((ADStarWaypoint) waypoint).isConsistent()) {
+		if (((ADStarWaypoint) waypoint).isConsistent() 
+				|| ((ADStarWaypoint) waypoint).isInfinite()) {
 			// consistent waypoints can be removed from sets
 			if (this.isExpandable(waypoint)) {
 				this.removeExpandable(waypoint);

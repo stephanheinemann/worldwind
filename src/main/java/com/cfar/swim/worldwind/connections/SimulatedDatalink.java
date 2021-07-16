@@ -429,7 +429,7 @@ public class SimulatedDatalink extends Datalink {
 		
 		if (!this.isAirborne) {
 			// upload mission before flight
-			this.flightPath = mission;
+			this.flightPath = new Path(mission.getPositions());
 			this.positionIndex = 0;
 			this.positionIterator = this.flightPath.getPositions().iterator();
 			if (this.positionIterator.hasNext()) {
@@ -442,7 +442,7 @@ public class SimulatedDatalink extends Datalink {
 			// upload mission during flight
 			this.lastPosition = this.getAircraftPosition();
 			this.nextPosition = this.lastPosition;
-			this.flightPath = mission;
+			this.flightPath = new Path(mission.getPositions());
 			this.positionIndex = -1;
 			this.positionIterator = this.flightPath.getPositions().iterator();
 		}

@@ -142,7 +142,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 				if (!trajectory.isEmpty()) {
 					getDatalink().uploadMission(trajectory);
 					// confirm the consistent upload
-					if (getDatalink().hasMission(trajectory, false)) {
+					if (!getDatalink().hasMission(trajectory, false)) {
 						Logging.logger().severe("mission is not consistent...");
 					}
 				} else {
@@ -284,7 +284,8 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 		boolean isInTakeOffWindow = false;
 		
 		if (this.hasDatalink() && this.getDatalink().isConnected()
-				&& this.getDatalink().isMonitoring()) {
+				&& this.getDatalink().isMonitoring()
+				&& this.getStart().hasEto()) {
 			AircraftTrack track = this.getDatalink().getAircraftTrack();
 			AircraftTrackPoint last = track.getLastTrackPoint();
 			
@@ -392,7 +393,8 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 		boolean isInLandingWindow = false;
 		
 		if (this.hasDatalink() && this.getDatalink().isConnected()
-				&& this.getDatalink().isMonitoring()) {
+				&& this.getDatalink().isMonitoring()
+				&& this.getGoal().hasEto()) {
 			AircraftTrack track = this.getDatalink().getAircraftTrack();
 			AircraftTrackPoint last = track.getLastTrackPoint();
 		
@@ -722,8 +724,10 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 						Position.interpolateGreatCircle(
 								ratio, this.getStart(), this.getGoal()));
 				this.computeEto(this.getStart(), end);
-				DirectedEdge leg = new DirectedEdge(this.getEnvironment(), this.getStart(), end);
-				double cost = leg.getCost(this.getStart().getEto(), end.getEto());
+				double cost = this.getEnvironment().getStepCost(this.getStart(), end,
+						this.getStart().getEto(), end.getEto(),
+						this.getCostPolicy(), riskPolicy);
+				
 				if (!this.getRiskPolicy().satisfies(cost)) {
 					this.setRiskPolicy(RiskPolicy.adjustTo(cost));
 					Logging.logger().warning("the risk policy has been boosted...");

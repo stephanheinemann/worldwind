@@ -146,9 +146,23 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	}
 	
 	/**
-	 * Indicates whether or not this AD* waypoint is consistent, that is, if
-	 * its current estimated cost (g-value) equals the estimated cost of its
-	 * last expansion (v-value).
+	 * Determines whether or not this AD* waypoint is infinite, that is,
+	 * whether or not both its current estimated cost (g-value) and the
+	 * estimated cost of its last expansion (v-value) are infinite. Infinite
+	 * costs are found for unvisited or repaired waypoints that do not have
+	 * a non-infinite parent.
+	 * 
+	 * @return true if this AD* waypoint is infinite, false otherwise
+	 */
+	public boolean isInfinite() {
+		return (this.getG() == Double.POSITIVE_INFINITY) &&
+				(this.getV() == Double.POSITIVE_INFINITY);
+	}
+	
+	/**
+	 * Determines whether or not this AD* waypoint is consistent, that is,
+	 * whether or not its current estimated cost (g-value) equals the estimated
+	 * cost of its last expansion (v-value).
 	 * 
 	 * @return true if this AD* waypoint is consistent, false otherwise
 	 */
@@ -161,11 +175,11 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	}
 	
 	/**
-	 * Indicates whether or not this AD* waypoint is over-consistent, that is,
-	 * if its current estimated cost (g-value) is less than the estimated cost
-	 * of its last expansion (v-value). The expansion of an over-consistent
-	 * AD* waypoint may potentially lead to an improved solution (propagation
-	 * of over-consistency).
+	 * Determines whether or not this AD* waypoint is over-consistent, that is,
+	 * whether or not its current estimated cost (g-value) is less than the
+	 * estimated cost of its last expansion (v-value). The expansion of an
+	 * over-consistent AD* waypoint may potentially lead to an improved
+	 * solution (propagation of over-consistency).
 	 * 
 	 * @return true if this AD* waypoint is over-consistent, false otherwise
 	 */
@@ -179,9 +193,9 @@ public class ADStarWaypoint extends ARAStarWaypoint {
 	}
 	
 	/**
-	 * Indicates whether or not this AD* waypoint is under-consistent, that
-	 * is, if its current estimated cost (g-value) is greater than the
-	 * estimated cost of its last expansion (v-value). An under-consistent
+	 * Determines whether or not this AD* waypoint is under-consistent, that
+	 * is, whether or not its current estimated cost (g-value) is greater than
+	 * the estimated cost of its last expansion (v-value). An under-consistent
 	 * state indicates an increase in costs and requires an invalidation of
 	 * dependent costs (propagation of under-consistency).
 	 * 

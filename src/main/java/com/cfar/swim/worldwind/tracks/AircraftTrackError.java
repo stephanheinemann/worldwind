@@ -81,8 +81,8 @@ public class AircraftTrackError {
 		AircraftTrackError maxAircraftTrackError = new AircraftTrackError();
 		maxAircraftTrackError.setCrossTrackError(Double.POSITIVE_INFINITY);
 		maxAircraftTrackError.setAltitudeError(Double.POSITIVE_INFINITY);
-		maxAircraftTrackError.setOpeningBearingError(Angle.POS90);
-		maxAircraftTrackError.setClosingBearingError(Angle.POS90);
+		maxAircraftTrackError.setOpeningBearingError(Angle.POS180);
+		maxAircraftTrackError.setClosingBearingError(Angle.POS180);
 		maxAircraftTrackError.setTimingError(Duration.ofSeconds(Long.MAX_VALUE));
 		return maxAircraftTrackError;
 	}
