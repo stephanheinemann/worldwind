@@ -539,7 +539,9 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	protected void connectPlan(AStarWaypoint waypoint) {
 		this.clearWaypoints();
 		// only connect plan from reached goal featuring ETO
-		while ((null != waypoint) && (waypoint.hasEto())) {
+		// do not accept exceeded risk policy solutions
+		while ((null != waypoint) && (waypoint.hasEto())
+				&& (Double.POSITIVE_INFINITY != waypoint.getCost())) {
 			this.getWaypoints().addFirst(waypoint);
 			waypoint = waypoint.getParent();
 		}

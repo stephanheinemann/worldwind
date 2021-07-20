@@ -303,6 +303,7 @@ implements DynamicPlanner, LifelongPlanner {
 	protected void connectPlan(AStarWaypoint waypoint) {
 		this.clearWaypoints();
 		// only connect plan from reached goal featuring ETO
+		// do not accept exceeded risk policy solutions
 		while ((null != waypoint) && (waypoint.hasEto())
 				&& (!((ADStarWaypoint) waypoint).isInfinite())) {
 			this.getWaypoints().addFirst(waypoint);
