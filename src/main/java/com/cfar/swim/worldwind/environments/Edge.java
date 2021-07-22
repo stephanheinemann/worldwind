@@ -432,7 +432,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	 * @return the accumulated cost of this edge within the specified time span
 	 */
 	public double calculateCost(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		double cost = 1d; // simple cost of normalized distance
+		double cost = this.getEnvironment().getBaseCost(); // simple cost of normalized distance
 		List<Double> costList = new ArrayList<Double>();
 
 		Set<String> costIntervalIds = new HashSet<String>();
@@ -471,7 +471,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 		}
 
 		// Risk Policy implementation
-		if (!riskPolicy.satisfies(cost))
+		if (!riskPolicy.satisfies(cost - this.getEnvironment().getBaseCost()))
 			cost = Double.POSITIVE_INFINITY;
 
 		return cost;
@@ -491,7 +491,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 	public double calculateCostNew(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
 			RiskPolicy riskPolicy) {
 
-		double cost = 1d; // simple cost of normalized distance
+		double cost = this.getEnvironment().getBaseCost(); // simple cost of normalized distance
 
 		Set<ZonedDateTime> times = new HashSet<ZonedDateTime>();
 		times.add(start);
@@ -548,7 +548,7 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 			costPart = costAux == 0d ? costPart : costAux;
 
 			// Risk Policy implementation
-			if (!riskPolicy.satisfies(costPart))
+			if (!riskPolicy.satisfies(costPart - this.getEnvironment().getBaseCost()))
 				costPart = Double.POSITIVE_INFINITY;
 
 			costListTemporal.add(costPart);
