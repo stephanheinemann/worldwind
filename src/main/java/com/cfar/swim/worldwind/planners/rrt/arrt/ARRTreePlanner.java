@@ -97,6 +97,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	/** the current maximum number of sampling attempts of this ARRT planner */
 	private int maxSamplingAttempts = 50;
 	
+	/** the maximum number of risk-policy exceeding probes of this ARRT planner */
+	private int maxRiskyProbes = 10;
+	
 	/**
 	 * Constructs an ARRT planner for a specified aircraft and environment
 	 * using default local cost and risk policies.
@@ -431,6 +434,26 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	}
 	
 	/**
+	 * Gets the maximum number of risky probes of this ARRT planner exceeding
+	 * the risk policy before giving up any improvement attempt.
+	 * 
+	 * @return the maximum number of risky probes of this ARRT planner
+	 */
+	protected int getMaxRiskyProbes() {
+		return this.maxRiskyProbes;
+	}
+	
+	/**
+	 * Sets the maximum number of risky probes of this ARRT planner exceeding
+	 * the risk policy before giving up any improvement attempt.
+	 * 
+	 * @param maxRiskyProbes the maximum number of risky probes to be set
+	 */
+	protected void setMaxRiskyProbes(int maxRiskyProbes) {
+		this.maxRiskyProbes = maxRiskyProbes;
+	}
+	
+	/**
 	 * Computes the estimated remaining cost (heuristic) of a specified source
 	 * waypoint to reach a target ARRT waypoint.
 	 * 
@@ -577,7 +600,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 					// remove too expensive vertex and associated edge
 					if (newest.hasParent()) {
 						newest.getParent().removeChild(newest);
-						newest.setParent(null);
+						newest.removeParent();
 					}
 					this.getPlanningContinuum().removeVertex(newest);
 					this.setNewestWaypoint(this.getStart());
@@ -690,11 +713,15 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			this.getPlanningContinuum().clearVertices();
 			this.getPlanningContinuum().addVertex(this.getStart());
 			this.setNewestWaypoint(this.getStart());
+			this.getStart().clearChildren();
+			this.getGoal().removeParent();
 			
-			if (this.compute()) {
+			if (this.compute() && !this.getGoal().hasInfiniteCost()) {
+				// improved trajectory without exceeding risk policy
 				this.revisePlan(this.createTrajectory());
 				this.updateCostBound();
 			} else {
+				// no trajectory or exceeded risk policy
 				this.restore(partIndex);
 			}
 			
@@ -708,8 +735,14 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @param partIndex the index of the plan part to be elaborated
 	 */
 	protected void elaborate(int partIndex) {
-		while (!this.hasMaximumQuality()) {
+		// do not elaborate an exceeded risk policy solution beyond limit
+		int riskyProbes = (this.getGoal().hasInfiniteCost()) ? 1 : 0;
+		
+		while (!this.hasMaximumQuality() && (this.getMaxRiskyProbes() > riskyProbes)) {
 			this.improve(partIndex);
+			if (this.getGoal().hasInfiniteCost()) {
+				riskyProbes++;
+			}
 		}
 	}
 	
@@ -873,8 +906,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		if (this.canBackup(backupIndex)) {
 			Backup backup = this.backups.get(backupIndex);
 			backup.clear();
-			backup.start = this.getStart();
-			backup.goal = this.getGoal();
+			backup.start = (ARRTreeWaypoint) this.getStart().clone();
+			backup.goal = (ARRTreeWaypoint) this.getGoal().clone();
 			for (Edge edge : this.getPlanningContinuum().getEdges()) {
 				backup.edges.add((DirectedEdge) edge);
 			}

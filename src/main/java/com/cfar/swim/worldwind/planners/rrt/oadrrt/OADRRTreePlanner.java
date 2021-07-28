@@ -556,7 +556,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		if (root.hasParent()) {
 			ADRRTreeWaypoint parent = root.getParent();
 			parent.removeChild(root);
-			root.setParent(null);
+			root.removeParent();
 			while (parent.hasParent()) {
 				parent = parent.getParent();
 			}
@@ -683,11 +683,20 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			this.replan(partIndex);
 		}
 		
+		// do not elaborate an exceeded risk policy solution beyond limit
+		int riskyProbes = (this.getGoal().hasInfiniteCost()) ? 1 : 0;
+		
 		// proceed to next part only if fully improved and not in need of repair
-		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
+		while (((!this.hasMaximumQuality() && (this.getMaxRiskyProbes() > riskyProbes))
+				|| this.needsRepair()) && !this.hasTerminated()) {
 			this.repair(partIndex);
 			this.progress(partIndex);
 			this.improve(partIndex);
+			if (this.getGoal().hasInfiniteCost()) {
+				riskyProbes++;
+			} else {
+				riskyProbes = 0;
+			}
 		}
 		// backup after elaboration
 		this.backup(partIndex);
@@ -733,6 +742,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 					this.setRiskPolicy(RiskPolicy.adjustTo(cost));
 					Logging.logger().warning("the risk policy has been boosted...");
 					// TODO: consider risk policy boost notification callback
+					// TODO: boosting may lead to higher risk exposure beyond threat
 				}
 			}
 		}

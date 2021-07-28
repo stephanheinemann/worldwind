@@ -393,8 +393,14 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected void connectPlan(RRTreeWaypoint waypoint) {
 		this.clearWaypoints();
-		// only connect plan from reached goal featuring ETO
-		while ((null != waypoint) && (waypoint.hasEto())) {
+		/*
+		 * Only connect a plan from the reached goal featuring an ETO without
+		 * accepting solutions that exceed the applicable risk policy. Since
+		 * basic RRT does not consider costs during the expansion, it is less
+		 * likely to find a solution in an environment with obstacles that
+		 * exceed the risk policy in a single shot.
+		 */
+		while ((null != waypoint) && waypoint.hasEto() && !waypoint.hasInfiniteCost()) {
 			this.getWaypoints().addFirst(waypoint);
 			waypoint = waypoint.getParent();
 		}

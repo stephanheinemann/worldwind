@@ -172,6 +172,23 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	}
 	
 	/**
+	 * Sets the estimated cost of this waypoint in a trajectory to infinity.
+	 */
+	public void setInfiniteCost() {
+		this.cost = Double.POSITIVE_INFINITY;
+	}
+	
+	/**
+	 * Determines whether or not this waypoint has an infinite estimated cost.
+	 * 
+	 * @return true if this waypoint has an infinite estimated cost,
+	 *         false otherwise
+	 */
+	public boolean hasInfiniteCost() {
+		return (Double.POSITIVE_INFINITY == this.getCost());
+	}
+	
+	/**
 	 * Gets the distance to go from this waypoint (to the next one).
 	 * 
 	 * @return the distance to go from this waypoint in meters

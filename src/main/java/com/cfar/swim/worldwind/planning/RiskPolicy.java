@@ -37,26 +37,36 @@ package com.cfar.swim.worldwind.planning;
  *
  */
 public enum RiskPolicy {
+	
 	/**
 	 * Avoids all local risk
 	 */
 	AVOIDANCE(0d),
+	
 	/**
 	 * Accepts a maximum of 25% local risk
 	 */
 	PROBE(25d),
+	
 	/**
 	 * Accepts a maximum of 50% local risk
 	 */
 	SAFETY(50d),
+	
 	/**
 	 * Accepts a maximum of 75% local risk
 	 */
 	EFFECTIVENESS(75d),
+	
 	/**
-	 * Ignores all local risk
+	 * Ignores a maximum of 100% local risk
 	 */
-	IGNORANCE(100d);
+	IGNORANCE(100d),
+	
+	/**
+	 * Ignores all accumulated local risk
+	 */
+	INSANITY(Double.POSITIVE_INFINITY);
 	
 	/** the threshold cost of this risk policy */
 	private double thresholdCost = 0d;
@@ -108,8 +118,10 @@ public enum RiskPolicy {
 			adjusted = RiskPolicy.SAFETY;
 		} else if (RiskPolicy.EFFECTIVENESS.satisfies(cost)) {
 			adjusted = RiskPolicy.EFFECTIVENESS;
-		} else {
+		} else if (RiskPolicy.IGNORANCE.satisfies(cost)) {
 			adjusted = RiskPolicy.IGNORANCE;
+		} else {
+			adjusted = RiskPolicy.INSANITY;
 		}
 		
 		return adjusted;

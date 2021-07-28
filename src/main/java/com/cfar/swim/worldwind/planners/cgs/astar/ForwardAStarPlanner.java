@@ -540,8 +540,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.clearWaypoints();
 		// only connect plan from reached goal featuring ETO
 		// do not accept exceeded risk policy solutions
-		while ((null != waypoint) && (waypoint.hasEto())
-				&& (Double.POSITIVE_INFINITY != waypoint.getCost())) {
+		while ((null != waypoint) && waypoint.hasEto() && !waypoint.hasInfiniteCost()) {
 			this.getWaypoints().addFirst(waypoint);
 			waypoint = waypoint.getParent();
 		}
@@ -630,7 +629,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		boolean improvedTime = (target.hasEto() && end.isBefore(target.getEto()));
 		
 		// exceeded risk and parent needs to be known for dynamic repairs
-		boolean exceededRisk = (Double.POSITIVE_INFINITY == target.getG())
+		boolean exceededRisk = (target.hasInfiniteCost())
 				&& (Double.POSITIVE_INFINITY == cost);
 		
 		if (improvedCost || (equalCost && improvedTime) || exceededRisk) {

@@ -299,6 +299,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * 
 	 * @param waypoint the last AD* waypoint of a computed plan
 	 */
+	/*
 	@Override
 	protected void connectPlan(AStarWaypoint waypoint) {
 		this.clearWaypoints();
@@ -310,6 +311,7 @@ implements DynamicPlanner, LifelongPlanner {
 			waypoint = waypoint.getParent();
 		}
 	}
+	*/
 	
 	/**
 	 * Updates the planner waypoint sets for an updated AD* waypoint.
@@ -366,6 +368,12 @@ implements DynamicPlanner, LifelongPlanner {
 					.collect(Collectors.toSet()));
 		}
 		this.clearDynamicObstacles();
+		
+		if (affectedWaypoints.containsAll(this.getGoalRegion().stream()
+				.map(p -> this.createWaypoint(p))
+				.collect(Collectors.toSet()))) {
+			affectedWaypoints.add(this.getGoal());
+		}
 		
 		return affectedWaypoints;
 	}
@@ -433,8 +441,13 @@ implements DynamicPlanner, LifelongPlanner {
 	 * Repairs an AD* plan in case of dynamic changes.
 	 * 
 	 * @param partIndex the index of the part to be repaired
+	 * 
+	 * @return false if a repair is not possible due to incomplete previous
+	 *         parts, true otherwise
 	 */
-	protected void repair(int partIndex) {
+	protected boolean repair(int partIndex) {
+		boolean repaired = true;
+		
 		if (this.needsRepair()) {
 			ADStarWaypoint partStart = (ADStarWaypoint) this.getStart().clone();
 			
@@ -445,7 +458,7 @@ implements DynamicPlanner, LifelongPlanner {
 				this.setInflation(this.getMaximumQuality());
 				this.restore(partIndex -1);
 				this.planPart(partIndex - 1);
-				// TODO: what if no plan could be found
+				partStart.setCost(this.getGoal().getCost());
 				partStart.setEto(this.getGoal().getEto());
 				partStart.setParent(this.getGoal().getParent());
 				this.backup(partIndex - 1);
@@ -453,10 +466,16 @@ implements DynamicPlanner, LifelongPlanner {
 				this.restore(partIndex);
 			}
 			
-			// TODO: consider departure slots to avoid planning from scratch
-			// TODO: consider early arrivals with holding / loitering
-			if (this.getStart().getEto().equals(partStart.getEto())) {
+			if (partStart.hasInfiniteCost()) {
+				// no previous part without exceeded risk policy
+				this.clearDynamicObstacles();
+				this.clearWaypoints();
+				this.getGoal().setInfiniteCost();
+				repaired = false;
+			} else if (this.getStart().getEto().equals(partStart.getEto())) {
 				// connect current to previous part
+				// TODO: consider departure slots to avoid planning from scratch
+				// TODO: consider early arrivals with holding / loitering
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
 				}
@@ -468,10 +487,6 @@ implements DynamicPlanner, LifelongPlanner {
 						this.updateSets(target);
 					}
 				}
-				
-				// force improvement in case of dynamic removals
-				//this.setInflation(this.getMaximumQuality() + this.getQualityImprovement());
-				
 			} else {
 				// plan current part from scratch if start ETO has changed
 				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
@@ -481,6 +496,8 @@ implements DynamicPlanner, LifelongPlanner {
 				super.planPart(partIndex);
 			}
 		}
+		
+		return repaired;
 	}
 	
 	/**
@@ -654,7 +671,7 @@ implements DynamicPlanner, LifelongPlanner {
 		}
 		
 		this.restore(partIndex);
-		
+			
 		this.compute();
 		this.revisePlan(this.createTrajectory());
 	}
@@ -668,7 +685,7 @@ implements DynamicPlanner, LifelongPlanner {
 	protected void elaborate(int partIndex) {
 		// proceed to next part only if fully deflated and not in need of repair
 		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
-			this.repair(partIndex);
+			if (!this.repair(partIndex)) break;
 			this.improve(partIndex);
 		}
 		// always backup at least once for potential repair later

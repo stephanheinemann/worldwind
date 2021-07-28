@@ -81,6 +81,13 @@ public class RRTreeWaypoint extends Waypoint {
 	}
 	
 	/**
+	 * Removes the parent RRT waypoint of this RRT waypoint.
+	 */
+	public void removeParent() {
+		this.parent = null;
+	}
+	
+	/**
 	 * Determines whether or not this RRT waypoint has a parent.
 	 * 
 	 * @return true if this RRT waypoint has a parent, false otherwise

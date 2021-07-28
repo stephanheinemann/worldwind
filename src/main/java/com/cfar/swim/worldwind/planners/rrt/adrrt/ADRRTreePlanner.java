@@ -212,7 +212,7 @@ implements DynamicPlanner, LifelongPlanner {
 				root.clearChildren();
 			}
 			// remove the invalid vertex
-			root.setParent(null);
+			root.removeParent();
 			this.getPlanningContinuum().removeVertex(root);
 		}
 	}
@@ -238,7 +238,6 @@ implements DynamicPlanner, LifelongPlanner {
 			this.handleSignificantChange();
 		}
 		
-		this.clearDynamicObstacles();
 		this.setNewestWaypoint(this.getStart());
 	}
 	
@@ -273,8 +272,13 @@ implements DynamicPlanner, LifelongPlanner {
 	 * Repairs an ADRRT plan in case of dynamic changes.
 	 * 
 	 * @param partIndex the index of the part to be repaired
+	 * 
+	 * @return false if a repair is not possible due to incomplete previous
+	 *         parts, true otherwise
 	 */
-	protected void repair(int partIndex) {
+	protected boolean repair(int partIndex) {
+		boolean repaired = true;
+		
 		if (this.needsRepair()) {
 			ADRRTreeWaypoint partStart = (ADRRTreeWaypoint) this.getStart().clone();
 			
@@ -283,17 +287,23 @@ implements DynamicPlanner, LifelongPlanner {
 				this.backup(partIndex);
 				this.restore(partIndex -1);
 				this.planPart(partIndex - 1);
-				// TODO: what if no plan could be found
+				partStart.setCost(this.getGoal().getCost());
 				partStart.setEto(this.getGoal().getEto());
 				partStart.setParent(this.getGoal().getParent());
 				this.backup(partIndex - 1);
 				this.restore(partIndex);
 			}
 			
-			// TODO: consider departure slots to avoid planning from scratch
-			// TODO: consider early arrivals with holding / loitering
-			if (this.getStart().getEto().equals(partStart.getEto())) {
+			if (partStart.hasInfiniteCost()) {
+				// no previous part without exceeded risk policy
+				this.clearDynamicObstacles();
+				this.clearWaypoints();
+				this.getGoal().setInfiniteCost();
+				repaired = false;
+			} else if (this.getStart().getEto().equals(partStart.getEto())) {
 				// connect current to previous part
+				// TODO: consider departure slots to avoid planning from scratch
+				// TODO: consider early arrivals with holding / loitering
 				// TODO: feasibility issues connecting to goal region
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
@@ -301,17 +311,22 @@ implements DynamicPlanner, LifelongPlanner {
 				
 				// trim and re-grow tree if plan is affected
 				this.trim();
+				this.clearDynamicObstacles();
 				// force improvement in case of dynamic removals
 				this.setCostBound(this.getGoal().getCost());
 				if (!this.hasValidPlan()) {
 					// an invalid plan has an infinite cost bound
-					this.setCostBound(Double.POSITIVE_INFINITY);
-					if (this.compute()) {
+					this.getGoal().setInfiniteCost();
+					this.setCostBound(this.getGoal().getCost());
+					if (this.compute() && !this.getGoal().hasInfiniteCost()) {
+						// trajectory without exceeding risk policy
 						this.revisePlan(this.createTrajectory());
 						this.updateCostBound();
+					} else {
+						// no trajectory or exceeded risk policy
+						this.clearWaypoints();
 					}
-				}
-				
+				}	
 			} else {
 				// plan current part from scratch if start ETO has changed
 				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
@@ -321,6 +336,8 @@ implements DynamicPlanner, LifelongPlanner {
 				super.planPart(partIndex);
 			}
 		}
+		
+		return repaired;
 	}
 	
 	/**
@@ -329,10 +346,19 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @param partIndex the index of the plan to be elaborated
 	 */
 	protected void elaborate(int partIndex) {
+		// do not elaborate an exceeded risk policy solution beyond limit
+		int riskyProbes = (this.getGoal().hasInfiniteCost()) ? 1 : 0;
+		
 		// proceed to next part only if fully improved and not in need of repair
-		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
-			this.repair(partIndex);
+		while (((!this.hasMaximumQuality() && (this.getMaxRiskyProbes() > riskyProbes))
+				|| this.needsRepair()) && !this.hasTerminated()) {
+			if (!this.repair(partIndex)) break;
 			this.improve(partIndex);
+			if (this.getGoal().hasInfiniteCost()) {
+				riskyProbes++;
+			} else {
+				riskyProbes = 0;
+			}
 		}
 		// backup after elaboration
 		this.backup(partIndex);
@@ -596,7 +622,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * Handles a significant change for this ADRRT planner.
 	 */
 	protected void handleSignificantChange() {
-		// TODO: purge entire tree or adjust distance and coast biases 
+		// TODO: purge entire tree or adjust distance and cost biases 
 		// this.trim(this.getStart());
 		this.setDistanceBias(1d);
 		this.setCostBias(0d);
@@ -691,13 +717,13 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
-	 * Shares dynamic obstacles among all relevant ADRRT backups for dynamic repair.
+	 * Shares dynamic obstacles among all existing ADRRT backups for dynamic repair.
 	 * 
 	 * @param dynamicObstacles the dynamic obstacles to be shared
 	 */
 	protected void shareDynamicObstacles(Set<Obstacle> dynamicObstacles) {
 		for (int backupIndex = 0; backupIndex < backups.size(); backupIndex++) {
-			if (this.hasWaypoints(backupIndex)) {
+			if (this.hasBackup(backupIndex)) {
 				Backup backup = (Backup) this.backups.get(backupIndex);
 				backup.dynamicObstacles.addAll(dynamicObstacles);
 			}

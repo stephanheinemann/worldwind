@@ -243,10 +243,8 @@ implements DynamicPlanner, LifelongPlanner {
 				root.clearChildren();
 			}
 			// remove the invalid vertex
-			if (root.hasParent()) {
-				root.setParent(null);
-				this.getPlanningContinuum().removeVertex(root);
-			}
+			root.removeParent();
+			this.getPlanningContinuum().removeVertex(root);
 		}
 	}
 	
@@ -271,7 +269,6 @@ implements DynamicPlanner, LifelongPlanner {
 			this.handleSignificantChange();
 		}
 		
-		this.clearDynamicObstacles();
 		this.updateQuality();
 		this.setNewestWaypoint(this.getStart());
 	}
@@ -307,8 +304,13 @@ implements DynamicPlanner, LifelongPlanner {
 	 * Repairs a DRRT plan in case of dynamic changes.
 	 * 
 	 * @param partIndex the index of the part to be repaired
+	 * 
+	 * @return false if a repair is not possible due to incomplete previous
+	 *         parts, true otherwise
 	 */
-	protected void repair(int partIndex) {
+	protected boolean repair(int partIndex) {
+		boolean repaired = true;
+		
 		if (this.needsRepair()) {
 			DRRTreeWaypoint partStart = (DRRTreeWaypoint) this.getStart().clone();
 			
@@ -317,17 +319,23 @@ implements DynamicPlanner, LifelongPlanner {
 				this.backup(partIndex);
 				this.restore(partIndex -1);
 				this.planPart(partIndex - 1);
-				// TODO: what if no plan could be found
+				partStart.setCost(this.getGoal().getCost());
 				partStart.setEto(this.getGoal().getEto());
 				partStart.setParent(this.getGoal().getParent());
 				this.backup(partIndex - 1);
 				this.restore(partIndex);
 			}
 			
-			// TODO: consider departure slots to avoid planning from scratch
-			// TODO: consider early arrivals with holding / loitering
-			if (this.getStart().getEto().equals(partStart.getEto())) {
+			if (partStart.hasInfiniteCost()) {
+				// no previous part without exceeded risk policy
+				this.clearDynamicObstacles();
+				this.clearWaypoints();
+				this.getGoal().setInfiniteCost();
+				repaired = false;
+			} else if (this.getStart().getEto().equals(partStart.getEto())) {
 				// connect current to previous part
+				// TODO: consider departure slots to avoid planning from scratch
+				// TODO: consider early arrivals with holding / loitering
 				// TODO: feasibility issues connecting to goal region
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
@@ -335,8 +343,13 @@ implements DynamicPlanner, LifelongPlanner {
 				
 				// trim and re-grow tree if plan is affected
 				this.trim();
+				this.clearDynamicObstacles();
 				if (!this.hasValidPlan()) {
-					this.compute();
+					this.getGoal().setInfiniteCost();
+					if (!this.compute() || this.getGoal().hasInfiniteCost()) {
+						// no trajectory or exceeded risk policy
+						this.clearWaypoints();
+					}
 				}
 			} else {
 				// plan current part from scratch if start ETO has changed
@@ -347,6 +360,8 @@ implements DynamicPlanner, LifelongPlanner {
 				super.planPart(partIndex);
 			}
 		}
+		
+		return repaired;
 	}
 	
 	/**
@@ -357,7 +372,7 @@ implements DynamicPlanner, LifelongPlanner {
 	protected void elaborate(int partIndex) {
 		// proceed to next part only if not in need of repair
 		while (this.needsRepair() && !this.hasTerminated()) {
-			this.repair(partIndex);
+			if (!this.repair(partIndex)) break;
 		}
 		// backup after elaboration
 		this.backup(partIndex);
@@ -722,8 +737,8 @@ implements DynamicPlanner, LifelongPlanner {
 		if (this.canBackup(backupIndex)) {
 			Backup backup = this.backups.get(backupIndex);
 			backup.clear();
-			backup.start = this.getStart();
-			backup.goal = this.getGoal();
+			backup.start = (DRRTreeWaypoint) this.getStart().clone();
+			backup.goal = (DRRTreeWaypoint) this.getGoal().clone();
 			for (Edge edge : this.getPlanningContinuum().getEdges()) {
 				backup.edges.add((DirectedEdge) edge);
 			}
