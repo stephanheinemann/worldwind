@@ -133,13 +133,13 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 		@Override
 		public void revisePlan(Trajectory trajectory) {
 			if (hasDatalink() && getDatalink().isConnected()) {
-				Logging.logger().info("uploading mission...");
 				// warn if mission is obsolete
 				if (!getStart().equals(createWaypoint(getDatalink().getNextMissionPosition()))) {
 					Logging.logger().warning("start is not the next mission position...");
 				}
 				// do not upload an empty trajectory
 				if (!trajectory.isEmpty()) {
+					Logging.logger().info("uploading mission: " + trajectory);
 					getDatalink().uploadMission(trajectory);
 					// confirm the consistent upload
 					if (!getDatalink().hasMission(trajectory, false)) {
@@ -636,7 +636,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			this.backup(partIndex);
 			this.restore(partIndex - 1);
 			this.replan(partIndex - 1);
-			// TODO: what if no plan could be found
+			partStart.setCost(this.getGoal().getCost());
 			partStart.setEto(this.getGoal().getEto());
 			partStart.setParent(this.getGoal().getParent());
 			this.backup(partIndex - 1);
@@ -657,7 +657,9 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			}
 		}
 		
-		if (!this.getStart().getEto().equals(partStart.getEto())) {
+		if (partStart.hasInfiniteCost()) {
+			// TODO: invalid previous part?
+		} else if (!this.getStart().getEto().equals(partStart.getEto())) {
 			// plan current part from scratch if start ETO has changed
 			this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
 			if (partStart.hasParent()) {

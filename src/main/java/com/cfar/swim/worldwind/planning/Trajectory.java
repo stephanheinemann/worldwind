@@ -332,4 +332,22 @@ public class Trajectory extends Path implements Depictable {
 		return Objects.hash(this.getWaypoints());
 	}
 	
+	/**
+	 * Obtains the string representation of this trajectory.
+	 * 
+	 * @return the string representation of this trajectory
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		String ts = "[ ";
+		
+		for (Waypoint waypoint : this.getWaypoints()) {
+			ts += (waypoint.toString() + " ");
+		}
+		
+		return (ts + "]");
+	}
+	
 }
