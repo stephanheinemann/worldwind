@@ -40,6 +40,7 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.SwimConnection;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.managers.AutonomicManager;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Registry;
@@ -57,6 +58,8 @@ import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties;
+import com.cfar.swim.worldwind.registries.managers.BasicManagerProperties;
+import com.cfar.swim.worldwind.registries.managers.ManagerFactory;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
@@ -135,6 +138,12 @@ public class Session implements Identifiable {
 	
 	/** the SWIM connection factory of this session */
 	private SwimConnectionFactory swimConnectionFactory = new SwimConnectionFactory();
+	
+	/** the manager registry of this session */
+	private Registry<AutonomicManager> managerRegistry = new Registry<>();
+	
+	/** the manager factory of this session */
+	private ManagerFactory managerFactory = new ManagerFactory();
 	
 	/** the setup of this session */
 	private Setup setup;
@@ -216,6 +225,10 @@ public class Session implements Identifiable {
 		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.CONNECTION_SWIM_LIVE_ID, Specification.CONNECTION_SWIM_LIVE_DESCRIPTION, new LiveSwimConnectionProperties()));
 		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.CONNECTION_SWIM_SIMULATED_ID, Specification.CONNECTION_SWIM_SIMULATED_DESCRIPTION, new SimulatedSwimConnectionProperties()));
 		
+		// autonomic managers
+		this.managerRegistry.clearSpecifications();
+		this.managerRegistry.addSpecification(new Specification<AutonomicManager>(Specification.MANAGER_BASIC_ID, Specification.MANAGER_BASIC_DESCRIPTION, new BasicManagerProperties()));
+		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
@@ -223,6 +236,7 @@ public class Session implements Identifiable {
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.CONNECTION_DATALINK_SIMULATED_ID));
 		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.CONNECTION_SWIM_SIMULATED_ID));
+		this.setup.setManagerSpecification(this.managerRegistry.getSpecification(Specification.MANAGER_BASIC_ID));
 	}
 	
 	/**
@@ -597,6 +611,45 @@ public class Session implements Identifiable {
 		return this.swimConnectionFactory;
 	}
 	
+	/**
+	 * Gets the manager specifications of this session.
+	 * 
+	 * @return the manager specifications of this session
+	 */
+	public Set<Specification<AutonomicManager>> getManagerSpecifications() {
+		return this.managerRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified manager specification from this session.
+	 * 
+	 * @param id the manager specification identifier
+	 * 
+	 * @return the identified manager specification, or null otherwise
+	 */
+	public Specification<AutonomicManager> getManagerSpecification(String id) {
+		Specification<AutonomicManager> managerSpec = null;
+		Optional<Specification<AutonomicManager>> optSpec =
+				this.managerRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			managerSpec = optSpec.get();
+		}
+		
+		return managerSpec;
+	}
+	
+	/**
+	 * Gets the manager factory of this session.
+	 * 
+	 * @return the manager factory of this session
+	 */
+	public Factory<AutonomicManager> getManagerFactory() {
+		return this.managerFactory;
+	}
 	
 	/**
 	 * Gets the setup of this session.

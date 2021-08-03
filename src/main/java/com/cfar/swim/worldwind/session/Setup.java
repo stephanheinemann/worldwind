@@ -33,6 +33,7 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.SwimConnection;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.managers.AutonomicManager;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.registries.Specification;
 
@@ -59,6 +60,9 @@ public class Setup {
 	
 	/** the SWIM connection specification of this setup */
 	Specification<SwimConnection> swimConnectionSpecification;
+	
+	/** the manager specification of this setup */
+	Specification<AutonomicManager> managerSpecification;
 	
 	/**
 	 * Gets the aircraft specification of this setup.
@@ -148,6 +152,24 @@ public class Setup {
 	 */
 	public void setSwimConnectionSpecification(Specification<SwimConnection> swimConnectionSpecification) {
 		this.swimConnectionSpecification = swimConnectionSpecification;
+	}
+	
+	/**
+	 * Gets the manager specification of this setup.
+	 * 
+	 * @return the manager specification of this setup
+	 */
+	public Specification<AutonomicManager> getManagerSpecification() {
+		return this.managerSpecification;
+	}
+	
+	/**
+	 * Sets the manager specification of this setup.
+	 * 
+	 * @param managerSpecification the manager specification to be set
+	 */
+	public void setManagerSpecification(Specification<AutonomicManager> managerSpecification) {
+		this.managerSpecification = managerSpecification;
 	}
 	
 }

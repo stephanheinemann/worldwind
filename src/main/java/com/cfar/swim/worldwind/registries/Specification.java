@@ -212,6 +212,14 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			.getDictionaryBundle()
 			.getString("specification.connection.swim.simulated.description");
 	
+	/** the identifier of a basic manager specification */
+	public static final String MANAGER_BASIC_ID = "Basic Autonomic Manager";
+	
+	/** the description of a basic manager specification */
+	public static final String MANAGER_BASIC_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.manager.basic.description");
+	
 	/** the identifier of this specification */
 	private final String id;
 	
