@@ -692,6 +692,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		while (((!this.hasMaximumQuality() && (this.getMaxRiskyProbes() > riskyProbes))
 				|| this.needsRepair()) && !this.hasTerminated()) {
 			this.repair(partIndex);
+			// TODO: proceed with alternate or unplanned landing if repair was unsuccessful
 			this.progress(partIndex);
 			this.improve(partIndex);
 			if (this.getGoal().hasInfiniteCost()) {

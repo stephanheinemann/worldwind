@@ -689,6 +689,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 		// proceed to next part only if fully improved and not in need of repair
 		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
 			this.repair(partIndex);
+			// TODO: proceed with alternate or unplanned landing if repair was unsuccessful
 			this.progress(partIndex);
 			this.improve(partIndex);
 		}
