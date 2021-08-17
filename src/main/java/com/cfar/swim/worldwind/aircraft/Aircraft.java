@@ -46,7 +46,10 @@ import gov.nasa.worldwind.symbology.milstd2525.MilStd2525Constants;
  *
  */
 public abstract class Aircraft extends ObstacleSphere implements FactoryProduct {
-
+	
+	// TODO: consider extending and obstacle ellipsoid instead of sphere
+	// to reflect different vertical and horizontal speeds
+	
 	/** the combat identification of this aircraft */
 	protected final CombatIdentification cid;
 	

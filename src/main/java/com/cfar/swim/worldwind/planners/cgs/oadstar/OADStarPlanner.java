@@ -47,6 +47,7 @@ import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarWaypoint;
+import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -727,9 +728,10 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 						Position.interpolateGreatCircle(
 								ratio, this.getStart(), this.getGoal()));
 				this.computeEto(this.getStart(), end);
-				double cost = this.getEnvironment().getStepCost(this.getStart(), end,
+				double cost = this.getEnvironment().getStepCost(
+						this.getStart(), end,
 						this.getStart().getEto(), end.getEto(),
-						this.getCostPolicy(), riskPolicy);
+						CostPolicy.MAXIMUM, RiskPolicy.INSANITY);
 				
 				if (!this.getRiskPolicy().satisfies(cost)) {
 					this.setRiskPolicy(RiskPolicy.adjustTo(cost));

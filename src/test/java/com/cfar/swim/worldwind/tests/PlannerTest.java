@@ -70,7 +70,7 @@ public class PlannerTest {
 	public void forwardAStarTest() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
         // the reference cube has to be offset from the origin for the position computation to work
-		Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1);
+		Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1d);
         PlanningGrid planningGrid = new PlanningGrid(cube, 2, 2, 2);
         planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
         planningGrid.setGlobe(new Earth());

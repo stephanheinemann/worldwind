@@ -47,6 +47,7 @@ import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreeWaypoint;
+import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -739,8 +740,11 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 						Position.interpolateGreatCircle(
 								ratio, this.getStart(), this.getGoal()));
 				this.computeEto(this.getStart(), end);
-				DirectedEdge leg = new DirectedEdge(this.getEnvironment(), this.getStart(), end);
-				double cost = leg.getCost(this.getStart().getEto(), end.getEto());
+				DirectedEdge leg = new DirectedEdge(
+						this.getEnvironment(), this.getStart(), end);
+				double cost = leg.getCost(
+						this.getStart().getEto(), end.getEto(),
+						CostPolicy.MAXIMUM, RiskPolicy.INSANITY);
 				if (!this.getRiskPolicy().satisfies(cost)) {
 					this.setRiskPolicy(RiskPolicy.adjustTo(cost));
 					Logging.logger().warning("the risk policy has been boosted...");

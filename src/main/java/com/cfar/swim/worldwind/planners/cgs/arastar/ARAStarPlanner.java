@@ -268,12 +268,11 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		 */
 		
 		// only create new waypoints if necessary
-		if (this.hasStart() && this.getStart().equals(position)) {
+		araswp = new ARAStarWaypoint(position);
+		if (this.hasStart() && this.getStart().equals(araswp)) {
 			araswp = this.getStart();
-		} else if (this.hasGoal() && this.getGoal().equals(position)) {
+		} else if (this.hasGoal() && this.getGoal().equals(araswp)) {
 			araswp = this.getGoal();
-		} else {
-			araswp = new ARAStarWaypoint(position);
 		}
 		
 		// avoid duplicating discovered waypoints

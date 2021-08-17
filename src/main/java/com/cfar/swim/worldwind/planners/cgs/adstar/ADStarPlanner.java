@@ -127,12 +127,11 @@ implements DynamicPlanner, LifelongPlanner {
 		 */
 		
 		// only create new waypoints if necessary
-		if (this.hasStart() && this.getStart().equals(position)) {
+		adswp = new ADStarWaypoint(position);
+		if (this.hasStart() && this.getStart().equals(adswp)) {
 			adswp = this.getStart();
-		} else if (this.hasGoal() && this.getGoal().equals(position)) {
+		} else if (this.hasGoal() && this.getGoal().equals(adswp)) {
 			adswp = this.getGoal();
-		} else {
-			adswp = new ADStarWaypoint(position);
 		}
 		
 		// avoid duplicating discovered waypoints

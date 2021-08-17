@@ -292,6 +292,21 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getCost(ZonedDateTime start, ZonedDateTime end);
 	
 	/**
+	 * Gets the accumulated cost of this environment within a specified time
+	 * span applying an operational cost and risk policy.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * @param costPolicy the operational cost policy to be applied
+	 * @param riskPolicy the operational risk policy to be applied
+	 * 
+	 * @return the accumulated cost of this environment within the specified
+	 *         time span after applying the operational cost and risk policy
+	 */
+	public double getCost(ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy);
+	
+	/**
 	 * Gets the step cost from an origin to a destination position within this
 	 * environment between a start and an end time given a cost policy and
 	 * risk policy.

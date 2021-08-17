@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.environments;
 
 import java.awt.Color;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.chrono.ChronoZonedDateTime;
@@ -42,6 +43,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -565,6 +567,168 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
+	 * Gets the interval limits of all sub-cost intervals contained in this
+	 * planning continuum within a specified time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the interval limits of all sub-cost intervals contained in this
+	 *         planning continuum within the specified time span
+	 */
+	protected TreeSet<ZonedDateTime> getSubCostIntervalLimits(
+			ZonedDateTime start, ZonedDateTime end) {
+		// cost sub-interval time limits
+		TreeSet<ZonedDateTime> subCostIntervalLimits = new TreeSet<ZonedDateTime>();
+		subCostIntervalLimits.add(start);
+		subCostIntervalLimits.add(end);
+		
+		// add cost sub-interval time limits within enclosing interval
+		for (Interval<ChronoZonedDateTime<?>> interval :
+			this.getCostIntervals(start, end)) {
+			
+			if (interval instanceof CostInterval) {
+				CostInterval costInterval = (CostInterval) interval;
+				ZonedDateTime lower = costInterval.getLower();
+				ZonedDateTime upper = costInterval.getUpper();
+				if (lower.isAfter(start))
+					subCostIntervalLimits.add(costInterval.getLower());
+				if (upper.isBefore(end))
+					subCostIntervalLimits.add(costInterval.getUpper());
+			}
+		}
+		
+		return subCostIntervalLimits;
+	}
+	
+	/**
+	 * Gets all sub-cost intervals contained in this planning continuum within
+	 * a specified time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the sub-cost intervals contained in this planning continuum
+	 *         within the specified time span
+	 */
+	protected List<CostInterval> getSubCostIntervals(
+			ZonedDateTime start, ZonedDateTime end) {
+		List<CostInterval> subCostIntervals = new ArrayList<CostInterval>();
+		
+		// obtain sub-cost interval limits
+		TreeSet<ZonedDateTime> subCostIntervalLimits =
+				this.getSubCostIntervalLimits(start, end);
+		Iterator<ZonedDateTime> subCostIntervalLimitsIterator =
+				subCostIntervalLimits.iterator();
+		ZonedDateTime subCostIntervalStart = subCostIntervalLimitsIterator.next();
+		ZonedDateTime subCostIntervalEnd;
+
+		// calculate sub-cost intervals
+		while (subCostIntervalLimitsIterator.hasNext()) {
+			subCostIntervalEnd = subCostIntervalLimitsIterator.next();
+			double subIntervalCost = this.getBaseCost();
+			Set<String> costIntervalIds = new HashSet<String>();
+			
+			for (Interval<ChronoZonedDateTime<?>> interval :
+				this.getCostIntervals(start, end)) {
+				
+				if (interval instanceof CostInterval) {
+					CostInterval costInterval = (CostInterval) interval;
+					ZonedDateTime lower = costInterval.getLower();
+					ZonedDateTime upper = costInterval.getUpper();
+					
+					// only consider fully contained intervals
+					if (!lower.isAfter(subCostIntervalStart)
+							&& !upper.isBefore(subCostIntervalEnd)) {
+						
+						// only add different overlapping cost intervals
+						if (!costIntervalIds.contains(costInterval.getId())) {
+							costIntervalIds.add(costInterval.getId());
+							
+							// TODO: implement a proper weighted cost calculation normalized from 0 to 100
+							// TODO: the weight is affected by severity (reporting method) and currency (reporting time)
+							
+							if ((interval instanceof WeightedCostInterval)) {
+								subIntervalCost += ((WeightedCostInterval)
+										interval).getWeightedCost();
+							} else {
+								subIntervalCost += costInterval.getCost();
+							}
+						}
+					}
+				}
+			}
+			
+			subCostIntervals.add(new CostInterval(
+					Duration.between(subCostIntervalStart, subCostIntervalEnd).toString(),
+					subCostIntervalStart, subCostIntervalEnd, subIntervalCost));
+			subCostIntervalStart = subCostIntervalEnd;
+		}
+		
+		return subCostIntervals;
+	}
+	
+	/**
+	 * Gets the accumulated cost of this planning continuum within a specified
+	 * time span applying an operational cost and risk policy.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * @param costPolicy the operational cost policy to be applied
+	 * @param riskPolicy the operational risk policy to be applied
+	 * 
+	 * @return the accumulated cost of this planning continuum within the
+	 *         specified time span after applying the operational cost and risk
+	 *         policy
+	 */
+	@Override
+	public double getCost(ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		double cost = 0d;
+		
+		// obtain sub-cost intervals
+		List<CostInterval> subCostIntervals =
+				this.getSubCostIntervals(start, end);
+		
+		// adhere to operational risk policy
+		subCostIntervals.stream()
+			.forEach(c -> {
+				if (!riskPolicy.satisfies(c.getCost() - this.getBaseCost()))
+					c.setCost(Double.POSITIVE_INFINITY);
+			});
+		
+		// apply operational cost policy
+		switch (costPolicy) {
+		case MINIMUM:
+			cost = subCostIntervals.stream()
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).min().getAsDouble();
+			break;
+		case MAXIMUM:
+			cost = subCostIntervals.stream()
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).max().getAsDouble();
+			break;
+		case AVERAGE:
+			if (1 == subCostIntervals.stream()
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).distinct().count()) {
+				// avoid numerical issues in case of equal costs
+				cost = subCostIntervals.get(0).getCost();
+			} else {
+				Duration duration = Duration.between(start, end);
+				double intervalSeconds = duration.getSeconds() + (duration.getNano() * 10E-9);
+				double subIntervalSeconds;
+				for (CostInterval subCostInterval : subCostIntervals) {
+					duration = Duration.between(subCostInterval.getLower(), subCostInterval.getUpper());
+					subIntervalSeconds = duration.getSeconds() + (duration.getNano() * 10E-9);
+					cost += subCostInterval.getCost() * subIntervalSeconds / intervalSeconds;
+				}
+			}
+			break;
+		}
+		
+		return cost;
+	}
+	
+	/**
 	 * Gets the step cost from an origin to a destination position within this
 	 * planning continuum between a start and an end time given a cost policy
 	 * and risk policy.
@@ -594,7 +758,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		if (edge.isPresent()) {
 			double distance = this.getNormalizedDistance(origin, destination);
 			// TODO: consider environment air-data intervals
-			double cost = edge.get().calculateCost(start, end, costPolicy, riskPolicy);
+			double cost = edge.get().getCost(start, end, costPolicy, riskPolicy);
 			stepCost = distance * cost;
 		} else {
 			throw new IllegalStateException("no edge containing both positions");
@@ -629,7 +793,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		
 		Edge leg = new Edge(this, origin, destination);
 		double distance = this.getNormalizedDistance(origin, destination);
-		double cost = leg.calculateCost(start, end, costPolicy, riskPolicy);
+		double cost = leg.getCost(start, end, costPolicy, riskPolicy);
 		legCost = distance * cost;
 			
 		return legCost;

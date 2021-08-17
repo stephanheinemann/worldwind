@@ -75,22 +75,22 @@ public class AircraftTest {
 		Path leg = new Path(start, goal);
 		ZonedDateTime etd = ZonedDateTime.of(2016, 10, 13, 21, 31, 0, 0, ZoneId.of("UTC"));
 		ZonedDateTime eta = iris.getCapabilities().getEstimatedTime(leg, earth, etd);
-		assertEquals(etd.plusSeconds((long) totalSeconds), eta);	
+		assertEquals(etd.plusSeconds(duration.getSeconds()).plusNanos(duration.getNano()), eta);
 		
 		// climb 50 meters
 		goal = new Position(start, start.getElevation() + 50d);
 		duration = iris.getCapabilities().getEstimatedDuration(start, goal, earth);
-		assertEquals(5d, duration.getSeconds(), PrecisionDouble.EPSILON);
+		assertEquals(5d, duration.getSeconds() + (duration.getNano() * 10E-9), PrecisionDouble.EPSILON);
 		
 		// descent 100 meters
 		goal = new Position(start, start.getElevation() - 100d);
 		duration = iris.getCapabilities().getEstimatedDuration(start, goal, earth);
-		assertEquals(10d, duration.getSeconds(), PrecisionDouble.EPSILON);
+		assertEquals(10d, duration.getSeconds() + (duration.getNano() * 10E-9), PrecisionDouble.EPSILON);
 		
 		// descent 1000 meters and level off
 		goal = new Position(location, start.getElevation() - 1000d);
 		duration = iris.getCapabilities().getEstimatedDuration(start, goal, earth);
-		assertNotEquals(totalSeconds, duration.getSeconds(), PrecisionDouble.EPSILON);
+		assertNotEquals(totalSeconds, duration.getSeconds() + (duration.getNano() * 10E-9), PrecisionDouble.EPSILON);
 	}
-
+	
 }

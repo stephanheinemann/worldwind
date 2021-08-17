@@ -39,7 +39,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
+import java.util.TreeSet;
 
 import com.binarydreamers.trees.Interval;
 import com.binarydreamers.trees.IntervalTree;
@@ -418,171 +418,163 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 		return cost;
 	}
 	
-	// TODO: review calculate cost methods
+	/**
+	 * Gets the interval limits of all sub-cost intervals contained in this
+	 * edge within a specified time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the interval limits of all sub-cost intervals contained in this
+	 *         edge within the specified time span
+	 */
+	protected TreeSet<ZonedDateTime> getSubCostIntervalLimits(
+			ZonedDateTime start, ZonedDateTime end) {
+		// cost sub-interval time limits
+		TreeSet<ZonedDateTime> subCostIntervalLimits = new TreeSet<ZonedDateTime>();
+		subCostIntervalLimits.add(start);
+		subCostIntervalLimits.add(end);
+		
+		// add cost sub-interval time limits within enclosing interval
+		for (Interval<ChronoZonedDateTime<?>> interval :
+			this.getCostIntervals(start, end)) {
+			
+			if (interval instanceof CostInterval) {
+				CostInterval costInterval = (CostInterval) interval;
+				ZonedDateTime lower = costInterval.getLower();
+				ZonedDateTime upper = costInterval.getUpper();
+				if (lower.isAfter(start))
+					subCostIntervalLimits.add(costInterval.getLower());
+				if (upper.isBefore(end))
+					subCostIntervalLimits.add(costInterval.getUpper());
+			}
+		}
+		
+		return subCostIntervalLimits;
+	}
 	
 	/**
-	 * Calculates the cost of this edge within a specified time span by searching
-	 * the cost interval tree.
+	 * Gets all sub-cost intervals contained in this edge within a specified
+	 * time span.
 	 * 
 	 * @param start the start time of the time span
 	 * @param end the end time of the time span
-	 * @param costPolicy the cost policy of the planner
-	 * @param riskPolicy the risk policy of the planner
 	 * 
-	 * @return the accumulated cost of this edge within the specified time span
+	 * @return the sub-cost intervals contained in this edge within the
+	 *         specified time span
 	 */
-	public double calculateCost(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy, RiskPolicy riskPolicy) {
-		double cost = this.getEnvironment().getBaseCost(); // simple cost of normalized distance
-		List<Double> costList = new ArrayList<Double>();
+	protected List<CostInterval> getSubCostIntervals(
+			ZonedDateTime start, ZonedDateTime end) {
+		List<CostInterval> subCostIntervals = new ArrayList<CostInterval>();
+		
+		// obtain sub-cost interval limits
+		TreeSet<ZonedDateTime> subCostIntervalLimits =
+				this.getSubCostIntervalLimits(start, end);
+		Iterator<ZonedDateTime> subCostIntervalLimitsIterator =
+				subCostIntervalLimits.iterator();
+		ZonedDateTime subCostIntervalStart = subCostIntervalLimitsIterator.next();
+		ZonedDateTime subCostIntervalEnd;
 
-		Set<String> costIntervalIds = new HashSet<String>();
-		// add all (weighted) cost of the cell
-		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
-		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
-			if (interval instanceof CostInterval) {
-				CostInterval costInterval = (CostInterval) interval;
-
-				// only add costs of different overlapping cost intervals
-				if (!costIntervalIds.contains(costInterval.getId())) {
-					costIntervalIds.add(costInterval.getId());
-
-					if ((interval instanceof WeightedCostInterval)) {
-						costList.add(((WeightedCostInterval) interval).getWeightedCost());
-					} else {
-						costList.add(costInterval.getCost());
-					}
-				}
-			}
-		}
-		// TODO: Review cost policy implementation
-		if (!costList.isEmpty()) {
-			// cost is computed based on the minimum/average/maximum cost of all obstacles
-			// times the number of obstacles that affect this edge
-			/*
-			 * switch (costPolicy) { case MINIMUM: cost =
-			 * costList.stream().mapToDouble(Double::doubleValue).min().getAsDouble() *
-			 * costList.size(); break; case MAXIMUM: cost =
-			 * costList.stream().mapToDouble(Double::doubleValue).max().getAsDouble() *
-			 * costList.size(); break; case AVERAGE: cost =
-			 * costList.stream().mapToDouble(Double::doubleValue).average().getAsDouble() *
-			 * costList.size(); break; }
-			 */
-			cost = costList.stream().mapToDouble(f -> f.doubleValue()).sum();
-		}
-
-		// Risk Policy implementation
-		if (!riskPolicy.satisfies(cost - this.getEnvironment().getBaseCost()))
-			cost = Double.POSITIVE_INFINITY;
-
-		return cost;
-	}
-
-	/**
-	 * Calculates the cost of this edge within a specified time span by searching
-	 * the cost interval tree.
-	 * 
-	 * @param start the start time of the time span
-	 * @param end the end time of the time span
-	 * @param costPolicy the cost policy
-	 * @param riskPolicy the risk policy
-	 * 
-	 * @return the accumulated cost of this edge within the specified time span
-	 */
-	public double calculateCostNew(ZonedDateTime start, ZonedDateTime end, CostPolicy costPolicy,
-			RiskPolicy riskPolicy) {
-
-		double cost = this.getEnvironment().getBaseCost(); // simple cost of normalized distance
-
-		Set<ZonedDateTime> times = new HashSet<ZonedDateTime>();
-		times.add(start);
-		times.add(end);
-
-		// add all (weighted) cost of the cell
-		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
-
-		// For every interval get sub-Interval times
-		ZonedDateTime lower, upper;
-		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
-			if (interval instanceof CostInterval) {
-				CostInterval costInterval = (CostInterval) interval;
-				lower = costInterval.getLower();
-				upper = costInterval.getUpper();
-
-				// Add lower limit to times if it is higher than start
-				if (lower.isAfter(start))
-					times.add(costInterval.getLower());
-				// Add upper limit to times if it is lower than end
-				if (upper.isBefore(end))
-					times.add(costInterval.getUpper());
-
-			}
-		}
-
-		List<ZonedDateTime> sortedTimes = times.stream().sorted().collect(Collectors.toList());
-		Iterator<ZonedDateTime> iterator = sortedTimes.iterator();
-		List<Double> costListTemporal = new ArrayList<Double>();
-		ZonedDateTime startPart = iterator.next(), endPart;
-		double costPart = 1d, costAux = 0d;
-
-		// For every sub-Interval calculate cost
-		while (iterator.hasNext()) {
-			endPart = iterator.next();
-			costPart = 1d;
-			costAux = 0d;
-			for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
+		// calculate sub-cost intervals
+		while (subCostIntervalLimitsIterator.hasNext()) {
+			subCostIntervalEnd = subCostIntervalLimitsIterator.next();
+			double subIntervalCost = this.getEnvironment().getBaseCost();
+			Set<String> costIntervalIds = new HashSet<String>();
+			
+			for (Interval<ChronoZonedDateTime<?>> interval :
+				this.getCostIntervals(start, end)) {
+				
 				if (interval instanceof CostInterval) {
 					CostInterval costInterval = (CostInterval) interval;
-					lower = costInterval.getLower();
-					upper = costInterval.getUpper();
-
-					// Only consider intervals that fully contain this sub-interval
-					if (!lower.isAfter(startPart) && !upper.isBefore(endPart)) {
-						if ((interval instanceof WeightedCostInterval)) {
-							costAux += ((WeightedCostInterval) interval).getWeightedCost();
-						} else {
-							costAux += costInterval.getCost();
+					ZonedDateTime lower = costInterval.getLower();
+					ZonedDateTime upper = costInterval.getUpper();
+					
+					// only consider fully contained intervals
+					if (!lower.isAfter(subCostIntervalStart)
+							&& !upper.isBefore(subCostIntervalEnd)) {
+						
+						// only add different overlapping cost intervals
+						if (!costIntervalIds.contains(costInterval.getId())) {
+							costIntervalIds.add(costInterval.getId());
+							
+							// TODO: implement a proper weighted cost calculation normalized from 0 to 100
+							// TODO: the weight is affected by severity (reporting method) and currency (reporting time)
+							
+							if ((interval instanceof WeightedCostInterval)) {
+								subIntervalCost += ((WeightedCostInterval)
+										interval).getWeightedCost();
+							} else {
+								subIntervalCost += costInterval.getCost();
+							}
 						}
 					}
 				}
 			}
-			costPart = costAux == 0d ? costPart : costAux;
-
-			// Risk Policy implementation
-			if (!riskPolicy.satisfies(costPart - this.getEnvironment().getBaseCost()))
-				costPart = Double.POSITIVE_INFINITY;
-
-			costListTemporal.add(costPart);
-			startPart = endPart;
+			
+			subCostIntervals.add(new CostInterval(
+					Duration.between(subCostIntervalStart, subCostIntervalEnd).toString(),
+					subCostIntervalStart, subCostIntervalEnd, subIntervalCost));
+			subCostIntervalStart = subCostIntervalEnd;
 		}
-
-		// Cost Policy implementation to chose time interval of interest
+		
+		return subCostIntervals;
+	}
+	
+	/**
+	 * Gets the accumulated cost of this edge within a specified time span
+	 * applying an operational cost and risk policy.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * @param costPolicy the operational cost policy to be applied
+	 * @param riskPolicy the operational risk policy to be applied
+	 * 
+	 * @return the accumulated cost of this edge within the specified time span
+	 *         after applying the operational cost and risk policy
+	 */
+	public double getCost(ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		double cost = 0d;
+		
+		// obtain sub-cost intervals
+		List<CostInterval> subCostIntervals =
+				this.getSubCostIntervals(start, end);
+		
+		// adhere to operational risk policy
+		subCostIntervals.stream()
+			.forEach(c -> {
+				if (!riskPolicy.satisfies(c.getCost() - this.getEnvironment().getBaseCost()))
+					c.setCost(Double.POSITIVE_INFINITY);
+			});
+		
+		// apply operational cost policy
 		switch (costPolicy) {
 		case MINIMUM:
-			cost = costListTemporal.stream().mapToDouble(Double::doubleValue).min().getAsDouble();
+			cost = subCostIntervals.stream()
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).min().getAsDouble();
 			break;
 		case MAXIMUM:
-			cost = costListTemporal.stream().mapToDouble(Double::doubleValue).max().getAsDouble();
+			cost = subCostIntervals.stream()
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).max().getAsDouble();
 			break;
 		case AVERAGE:
-			// if the cost is the same during all sub intervals, avoids numerical errors
-			if (costListTemporal.stream().mapToDouble(Double::doubleValue).distinct().limit(2).count() <= 1) {
-				cost = costListTemporal.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
-				break;
+			if (1 == subCostIntervals.stream()
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).distinct().count()) {
+				// avoid numerical issues in case of equal costs
+				cost = subCostIntervals.get(0).getCost();
+			} else {
+				Duration duration = Duration.between(start, end);
+				double intervalSeconds = duration.getSeconds() + (duration.getNano() * 10E-9);
+				double subIntervalSeconds;
+				for (CostInterval subCostInterval : subCostIntervals) {
+					duration = Duration.between(subCostInterval.getLower(), subCostInterval.getUpper());
+					subIntervalSeconds = duration.getSeconds() + (duration.getNano() * 10E-9);
+					cost += subCostInterval.getCost() * subIntervalSeconds / intervalSeconds;
+				}
 			}
-			ZonedDateTime startAux = sortedTimes.get(0), endAux;
-			double duration;
-			for (int i = 0; i < costListTemporal.size(); i++) {
-				endAux = sortedTimes.get(i + 1);
-				duration = Duration.between(startAux, endAux).getSeconds();
-				cost += costListTemporal.get(i) * duration;
-				startAux = endAux;
-			}
-			duration = Duration.between(start, end).getSeconds();
-			cost = cost / duration;
-
 			break;
 		}
-
+		
 		return cost;
 	}
 	

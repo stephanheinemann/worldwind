@@ -388,7 +388,9 @@ public class Capabilities {
 	 *         at cruise speed
 	 */
 	public Duration getEstimatedDuration(double distance) {
-		return Duration.ofSeconds((long) (distance / this.cruiseSpeed));
+		double seconds = Math.floor(distance / this.cruiseSpeed);
+		double nanos = Math.floor(((distance / this.cruiseSpeed) - seconds) / 10E-9);
+		return Duration.ofSeconds((long) seconds, (long) nanos);
 	}
 	
 	/**

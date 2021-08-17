@@ -123,12 +123,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		 */
 		
 		// only create new waypoints if necessary
-		if (this.hasStart() && this.getStart().equals(position)) {
+		aswp = new AStarWaypoint(position);
+		if (this.hasStart() && this.getStart().equals(aswp)) {
 			aswp = this.getStart();
-		} else if (this.hasGoal() && this.getGoal().equals(position)) {
+		} else if (this.hasGoal() && this.getGoal().equals(aswp)) {
 			aswp = this.getGoal();
-		} else {
-			aswp = new AStarWaypoint(position);
 		}
 		
 		// avoid duplicating discovered waypoints
