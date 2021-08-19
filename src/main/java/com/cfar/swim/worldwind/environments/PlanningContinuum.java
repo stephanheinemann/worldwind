@@ -496,77 +496,6 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
-	 * Gets the base cost of a normalized step in this planning continuum.
-	 * 
-	 * @return the base cost of a normalized step in this planning continuum
-	 * 
-	 * @see Environment#getBaseCost()
-	 */
-	@Override
-	public double getBaseCost() {
-		return PlanningContinuum.BASE_COST;
-	}
-	
-	/**
-	 * Gets the accumulated cost of this planning continuum at a specified time
-	 * instant.
-	 * 
-	 * @param time the time instant
-	 * 
-	 * @return the accumulated cost of this planning continuum at the specified
-	 *         time instant
-	 * 
-	 * @see Environment#getCost(ZonedDateTime)
-	 */
-	@Override
-	public double getCost(ZonedDateTime time) {
-		return this.getCost(time, time);
-	}
-	
-	/**
-	 * Gets the accumulated cost of this planning continuum within a specified
-	 * time span.
-	 * 
-	 * @param start the start time of the time span
-	 * @param end the end time of the time span
-	 * 
-	 * @return the accumulated cost of this planning continuum within the
-	 *         specified time span
-	 * 
-	 * @see Environment#getCost(ZonedDateTime, ZonedDateTime)
-	 */
-	@Override
-	public double getCost(ZonedDateTime start, ZonedDateTime end) {
-		double cost = this.getBaseCost(); // simple cost of normalized distance
-
-		Set<String> costIntervalIds = new HashSet<String>();
-		// add all (weighted) cost of the cell
-		List<Interval<ChronoZonedDateTime<?>>> intervals = this.getCostIntervals(start, end);
-		for (Interval<ChronoZonedDateTime<?>> interval : intervals) {
-			if (interval instanceof CostInterval) {
-				CostInterval costInterval = (CostInterval) interval;
-
-				// only add costs of different overlapping cost intervals
-				if (!costIntervalIds.contains(costInterval.getId())) {
-					costIntervalIds.add(costInterval.getId());
-
-					// TODO: implement a proper weighted cost calculation normalized from 0 to 100
-					// TODO: the weight is affected by severity (reporting method) and currency
-					// (reporting time)
-
-					if ((interval instanceof WeightedCostInterval)) {
-						cost += ((WeightedCostInterval) interval).getWeightedCost();
-					} else {
-						cost += costInterval.getCost();
-					}
-				}
-			}
-		}
-
-		return cost;
-	}
-	
-	/**
 	 * Gets the interval limits of all sub-cost intervals contained in this
 	 * planning continuum within a specified time span.
 	 * 
@@ -579,7 +508,8 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	protected TreeSet<ZonedDateTime> getSubCostIntervalLimits(
 			ZonedDateTime start, ZonedDateTime end) {
 		// cost sub-interval time limits
-		TreeSet<ZonedDateTime> subCostIntervalLimits = new TreeSet<ZonedDateTime>();
+		TreeSet<ZonedDateTime> subCostIntervalLimits =
+				new TreeSet<ZonedDateTime>();
 		subCostIntervalLimits.add(start);
 		subCostIntervalLimits.add(end);
 		
@@ -611,13 +541,20 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 * @return the sub-cost intervals contained in this planning continuum
 	 *         within the specified time span
 	 */
-	protected List<CostInterval> getSubCostIntervals(
+	protected Set<CostInterval> getSubCostIntervals(
 			ZonedDateTime start, ZonedDateTime end) {
-		List<CostInterval> subCostIntervals = new ArrayList<CostInterval>();
+		Set<CostInterval> subCostIntervals = new HashSet<CostInterval>();
 		
 		// obtain sub-cost interval limits
-		TreeSet<ZonedDateTime> subCostIntervalLimits =
-				this.getSubCostIntervalLimits(start, end);
+		Collection<ZonedDateTime> subCostIntervalLimits;
+		if (start.equals(end)) {
+			subCostIntervalLimits = new ArrayList<ZonedDateTime>(2);
+			subCostIntervalLimits.add(start);
+			subCostIntervalLimits.add(end);
+		} else {
+			subCostIntervalLimits = this.getSubCostIntervalLimits(start, end);
+		}
+		
 		Iterator<ZonedDateTime> subCostIntervalLimitsIterator =
 				subCostIntervalLimits.iterator();
 		ZonedDateTime subCostIntervalStart = subCostIntervalLimitsIterator.next();
@@ -660,12 +597,68 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 			}
 			
 			subCostIntervals.add(new CostInterval(
-					Duration.between(subCostIntervalStart, subCostIntervalEnd).toString(),
+					subCostIntervalStart + "-" + subCostIntervalEnd,
 					subCostIntervalStart, subCostIntervalEnd, subIntervalCost));
 			subCostIntervalStart = subCostIntervalEnd;
 		}
 		
 		return subCostIntervals;
+	}
+	
+	/**
+	 * Gets the base cost of a normalized step in this planning continuum.
+	 * 
+	 * @return the base cost of a normalized step in this planning continuum
+	 * 
+	 * @see Environment#getBaseCost()
+	 */
+	@Override
+	public double getBaseCost() {
+		return PlanningContinuum.BASE_COST;
+	}
+	
+	/**
+	 * Gets the accumulated cost of this planning continuum at a specified time
+	 * instant.
+	 * 
+	 * @param time the time instant
+	 * 
+	 * @return the accumulated cost of this planning continuum at the specified
+	 *         time instant
+	 * 
+	 * @see Environment#getCost(ZonedDateTime)
+	 */
+	@Override
+	public double getCost(ZonedDateTime time) {
+		return this.getCost(time, time);
+	}
+	
+	/**
+	 * Gets the accumulated cost of this planning continuum within a specified
+	 * time span.
+	 * 
+	 * @param start the start time of the time span
+	 * @param end the end time of the time span
+	 * 
+	 * @return the accumulated cost of this planning continuum within the
+	 *         specified time span
+	 * 
+	 * @see Environment#getCost(ZonedDateTime, ZonedDateTime)
+	 */
+	@Override
+	public double getCost(ZonedDateTime start, ZonedDateTime end) {
+		double cost = 0d;
+		
+		// obtain sub-cost intervals
+		Set<CostInterval> subCostIntervals =
+				this.getSubCostIntervals(start, end);
+		
+		// assume maximum cost
+		cost = subCostIntervals.stream()
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue)
+				.max().getAsDouble();
+		
+		return cost;
 	}
 	
 	/**
@@ -687,7 +680,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		double cost = 0d;
 		
 		// obtain sub-cost intervals
-		List<CostInterval> subCostIntervals =
+		Set<CostInterval> subCostIntervals =
 				this.getSubCostIntervals(start, end);
 		
 		// adhere to operational risk policy
@@ -701,25 +694,32 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 		switch (costPolicy) {
 		case MINIMUM:
 			cost = subCostIntervals.stream()
-				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).min().getAsDouble();
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue)
+				.min().getAsDouble();
 			break;
 		case MAXIMUM:
 			cost = subCostIntervals.stream()
-				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).max().getAsDouble();
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue)
+				.max().getAsDouble();
 			break;
 		case AVERAGE:
 			if (1 == subCostIntervals.stream()
-				.map(c -> c.getCost()).mapToDouble(Double::doubleValue).distinct().count()) {
+				.map(c -> c.getCost()).mapToDouble(Double::doubleValue)
+				.distinct().count()) {
 				// avoid numerical issues in case of equal costs
-				cost = subCostIntervals.get(0).getCost();
+				cost = subCostIntervals.stream().findFirst().get().getCost();
 			} else {
 				Duration duration = Duration.between(start, end);
-				double intervalSeconds = duration.getSeconds() + (duration.getNano() * 10E-9);
+				double intervalSeconds = duration.getSeconds()
+						+ (duration.getNano() * 10E-9);
 				double subIntervalSeconds;
 				for (CostInterval subCostInterval : subCostIntervals) {
-					duration = Duration.between(subCostInterval.getLower(), subCostInterval.getUpper());
-					subIntervalSeconds = duration.getSeconds() + (duration.getNano() * 10E-9);
-					cost += subCostInterval.getCost() * subIntervalSeconds / intervalSeconds;
+					duration = Duration.between(subCostInterval.getLower(),
+							subCostInterval.getUpper());
+					subIntervalSeconds = duration.getSeconds()
+							+ (duration.getNano() * 10E-9);
+					cost += subCostInterval.getCost()
+							* subIntervalSeconds / intervalSeconds;
 				}
 			}
 			break;
