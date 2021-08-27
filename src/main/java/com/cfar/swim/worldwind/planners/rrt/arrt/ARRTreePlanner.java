@@ -490,7 +490,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * 
 	 * @return the selection cost of the source waypoint
 	 */
-	protected double computeSelectionCost(ARRTreeWaypoint source, ARRTreeWaypoint target) {
+	protected double computeSelectionCost(
+			ARRTreeWaypoint source, ARRTreeWaypoint target) {
 		return this.getDistanceBias() * this.computeHeuristic(source, target)
 				+ this.getCostBias() * source.getCost();
 	}
@@ -580,6 +581,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		// establish priority order according to selection cost
 		PriorityQueue<ARRTreeWaypoint> neighbors = new PriorityQueue<ARRTreeWaypoint>(
 				Comparator.comparingDouble(new CostSelector(target)));
+		// TODO: other nearest metrics (capabilities)
 		neighbors.addAll((Set<ARRTreeWaypoint>) this.getPlanningContinuum()
 				.findNearest(target, this.getNeighborLimit()));
 		

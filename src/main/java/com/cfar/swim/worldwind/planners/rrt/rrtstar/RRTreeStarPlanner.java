@@ -198,27 +198,23 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 * @param source the source waypoint with changes to be propagated
 	 */
 	protected void propagateChanges(RRTreeWaypoint source) {
-		for (Position position : this.getPlanningContinuum().getVertices()) {
-			RRTreeWaypoint target = (RRTreeWaypoint) position;
-			if (target.hasParent() && target.getParent().equals(source)) {
-				// TODO: IAE - edge not present?, SOE - termination / cycles?
-				/*
-				 * NOTE: ETO changes may negatively affect dependent costs.
-				 * There is no guarantee for increased overall optimality in
-				 * the space-time continuum. Even if propagation continues only
-				 * if the entire subtree is improved, it does not guarantee
-				 * improved trajectories for consecutive samples at future ETOs.
-				 * An improved parent (local improvement) does not necessarily
-				 * lead to a global improvement based on different ETOs. A
-				 * subtree improvement may lead to a global regression based
-				 * on different ETOs. A subtree regression may lead to a global
-				 * improvement based o different ETOs. Can this algorithm be
-				 * implemented without frequent roll-backs?
-				 */
-				this.computeEto(source, target);
-				this.computeCost(source, target);
-				this.propagateChanges(target);
-			}
+		for (RRTreeWaypoint target : source.getChidren()) {
+			/*
+			 * NOTE: ETO changes may negatively affect dependent costs.
+			 * There is no guarantee for increased overall optimality in
+			 * the space-time continuum. Even if propagation continues only
+			 * if the entire subtree is improved, it does not guarantee
+			 * improved trajectories for consecutive samples at future ETOs.
+			 * An improved parent (local improvement) does not necessarily
+			 * lead to a global improvement based on different ETOs. A
+			 * subtree improvement may lead to a global regression based
+			 * on different ETOs. A subtree regression may lead to a global
+			 * improvement based o different ETOs. Can this algorithm be
+			 * implemented without frequent roll-backs?
+			 */
+			this.computeEto(source, target);
+			this.computeCost(source, target);
+			this.propagateChanges(target);
 		}
 	}
 	

@@ -55,6 +55,8 @@ public class Setup {
 	/** the planner specification of this setup */
 	Specification<Planner> plannerSpecification;
 	
+	// TODO: waypointSpecification (POIs, actions, alternates)
+	
 	/** the datalink specification of this setup */
 	Specification<Datalink> datalinkSpecification;
 	

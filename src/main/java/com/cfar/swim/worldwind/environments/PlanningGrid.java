@@ -1627,7 +1627,7 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 		// TODO: consider environment air-data intervals
 		// compute cost of each adjacent cell
 		for (PlanningGrid segmentCell : segmentCells) {
-			// add all (weighted) cost of the cell
+			// obtain (weighted) cost of the cell
 			double cellCost = segmentCell.getCost(start, end, costPolicy, riskPolicy);
 			// boost cell cost if local risk is not acceptable
 			if (riskPolicy.satisfies(cellCost - this.getBaseCost())) {

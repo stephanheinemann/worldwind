@@ -611,6 +611,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 * @param target the target A* waypoint in globe coordinates
 	 */
 	protected void computeCost(AStarWaypoint source, AStarWaypoint target) {
+		// TODO: align with AbstractPlanner (computeEto, computeCost)
 		Path leg = new Path(source, target);
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();

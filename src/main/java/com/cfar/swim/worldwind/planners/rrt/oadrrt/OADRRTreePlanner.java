@@ -659,6 +659,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 		
 		if (partStart.hasInfiniteCost()) {
 			// TODO: invalid previous part?
+			// TODO: slots versus permissible aircraft track point error
 		} else if (!this.getStart().getEto().equals(partStart.getEto())) {
 			// plan current part from scratch if start ETO has changed
 			this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
