@@ -78,7 +78,7 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 	 * Creates a new datalink according to the customized datalink
 	 * specification of this datalink factory.
 	 * 
-	 * @return the created datalink
+	 * @return the created datalink, or null if no datalink could be created
 	 * 
 	 * @see AbstractFactory#createInstance()
 	 */

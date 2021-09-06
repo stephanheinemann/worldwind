@@ -142,7 +142,7 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 	 * Creates a new planner according to the customized planner specification
 	 * of this planner factory.
 	 * 
-	 * @return the created planner
+	 * @return the created planner, or null if no planner could be created
 	 * 
 	 * @see AbstractFactory#createInstance()
 	 */

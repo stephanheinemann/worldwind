@@ -441,6 +441,19 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	}
 	
 	/**
+	 * Gets the volume of this planning continuum.
+	 * 
+	 * @return the volume of this planning continuum
+	 * 
+	 * @see Environment#getVolume()
+	 */
+	@Override
+	public double getVolume() {
+		// TODO: use globe for conversion?
+		return this.getRLength() * this.getSLength() * this.getTLength();
+	}
+	
+	/**
 	 * Adds a cost interval to this planning continuum.
 	 * 
 	 * @param costInterval the cost interval to be added

@@ -29,6 +29,6 @@
  */
 package com.cfar.swim.worldwind.registries.managers;
 
-public class BasicManagerProperties extends AbstractManagerProperties {
+public class HeuristicManagerProperties extends AbstractManagerProperties {
 	// TODO: implement
 }

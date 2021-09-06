@@ -42,9 +42,10 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
-import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Sphere;
+import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
@@ -329,8 +330,29 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 * @see AbstractAirspace#getExtent(Globe, double)
 	 */
 	@Override
-	public Extent getExtent(Globe globe) {
-		return super.getExtent(globe, 1d);
+	public Sphere getExtent(Globe globe) {
+		Vec4 centerPoint = globe.computePointFromPosition(
+				this.getLocation(), this.getAltitudes()[0]);
+        return new Sphere(centerPoint, this.getRadius());
+        // TODO: check available method
+		//return super.getExtent(globe, 1d);
+	}
+	
+	/**
+	 * Gets the volume of the extent of this obstacle sphere for a specified
+	 * globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle sphere
+	 * 
+	 * @see Obstacle#getVolume(Globe)
+	 */
+	@Override
+	public double getVolume(Globe globe) {
+		Sphere sphere = this.getExtent(globe);
+		return (4d / 3d) * Math.PI
+				* sphere.getRadius() * sphere.getRadius() * sphere.getRadius();
 	}
 	
 	// TODO: interpolation and geometric conversion methods

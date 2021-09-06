@@ -40,6 +40,7 @@ import com.cfar.swim.worldwind.util.Enableable;
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.avlist.AVKey;
+import gov.nasa.worldwind.geom.Box;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
@@ -325,7 +326,31 @@ public class ObstaclePath extends Path implements Obstacle {
 	 */
 	@Override
 	public Extent getExtent(Globe globe) {
-		return super.getExtent(globe, 1d);
+		return super.computeExtentFromPositions(globe, 1d, this.getPositions());
+		//return super.getExtent(globe, 1d);
+	}
+	
+	/**
+	 * Gets the volume of the extent of this obstacle path for a specified
+	 * globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle path
+	 * 
+	 * @see Obstacle#getVolume(Globe)
+	 */
+	@Override
+	public double getVolume(Globe globe) {
+		double volume = 0d;
+		
+		Extent extent = this.getExtent(globe);
+		if ((null != extent) && (extent instanceof Box)) {
+			Box box = (Box) extent;
+			volume = box.getRLength() * box.getSLength() * box.getTLength();
+		}
+		
+		return volume;
 	}
 	
 	/**

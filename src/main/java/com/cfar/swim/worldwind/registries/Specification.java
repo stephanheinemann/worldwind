@@ -122,33 +122,33 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	/** the description of an OAD* planner specification */
 	public static final String PLANNER_OADS_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
-			.getString("specification.planner.oads.description");	
+			.getString("specification.planner.oads.description");
 	
-	/** the identifier of an RRT planner */
-    public static final String PLANNER_RRT_ID = "RRT";
-    
-    /** the description of an RRT planner specification */
+	/** the identifier of an RRT planner specification */
+	public static final String PLANNER_RRT_ID = "RRT";
+	
+	/** the description of an RRT planner specification */
 	public static final String PLANNER_RRT_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
 			.getString("specification.planner.rrt.description");
 	
-	/** the identifier of an RRT* planner */
-    public static final String PLANNER_RRTS_ID = "RRT*";
-    
-    /** the description of an RRT* planner specification */
+	/** the identifier of an RRT* planner specification */
+	public static final String PLANNER_RRTS_ID = "RRT*";
+	
+	/** the description of an RRT* planner specification */
 	public static final String PLANNER_RRTS_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
 			.getString("specification.planner.rrts.description");
 	
-	/** the identifier of an hRRT planner */
-    public static final String PLANNER_HRRT_ID = "hRRT";
-    
-    /** the description of an hRRT planner specification */
+	/** the identifier of an hRRT planner specification */
+	public static final String PLANNER_HRRT_ID = "hRRT";
+	
+	/** the description of an hRRT planner specification */
 	public static final String PLANNER_HRRT_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
 			.getString("specification.planner.hrrt.description");
 	
-	/** the identifier of an ARRT planner */
+	/** the identifier of an ARRT planner specification */
 	public static final String PLANNER_ARRT_ID = "ARRT";
 	
 	/** the description of an ARRT planner specification */
@@ -156,7 +156,7 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			.getDictionaryBundle()
 			.getString("specification.planner.arrt.description");
 	
-	/** the identifier of a DRRT planner */
+	/** the identifier of a DRRT planner specification */
 	public static final String PLANNER_DRRT_ID = "DRRT";
 	
 	/** the description of a DRRT planner specification */
@@ -164,7 +164,7 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			.getDictionaryBundle()
 			.getString("specification.planner.drrt.description");
 	
-	/** the identifier of an ADRRT planner */
+	/** the identifier of an ADRRT planner specification */
 	public static final String PLANNER_ADRRT_ID = "ADRRT";
 	
 	/** the description of an ADRRT planner specification */
@@ -172,7 +172,7 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			.getDictionaryBundle()
 			.getString("specification.planner.adrrt.description");
 	
-	/** the identifier of an OADRRT planner */
+	/** the identifier of an OADRRT planner specification */
 	public static final String PLANNER_OADRRT_ID = "OADRRT";
 	
 	/** the description of an OADRRT planner specification */
@@ -212,13 +212,13 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			.getDictionaryBundle()
 			.getString("specification.connection.swim.simulated.description");
 	
-	/** the identifier of a basic manager specification */
-	public static final String MANAGER_BASIC_ID = "Basic Autonomic Manager";
+	/** the identifier of a heuristic manager specification */
+	public static final String MANAGER_HEURISTIC_ID = "Heuristic Autonomic Manager";
 	
-	/** the description of a basic manager specification */
-	public static final String MANAGER_BASIC_DESCRIPTION = ResourceBundleLoader
+	/** the description of a heuristic manager specification */
+	public static final String MANAGER_HEURISTIC_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
-			.getString("specification.manager.basic.description");
+			.getString("specification.manager.heuristic.description");
 	
 	/** the identifier of this specification */
 	private final String id;

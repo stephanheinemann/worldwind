@@ -83,10 +83,16 @@ public class AbstractManagerPropertiesBeanInfo extends PropertiesBeanInfo {
 					this.dictionary.getString("property.planner.riskPolicy.name"),
 					this.dictionary.getString("property.planner.riskPolicy.description"),
 					this.dictionary.getString("property.planner.category.policies"));
+			PropertyDescriptor featureHorizon = this.createPropertyDescriptor(
+					"featureHorizon",
+					this.dictionary.getString("property.manager.featureHorizon.name"),
+					this.dictionary.getString("property.manager.featureHorizon.description"),
+					this.dictionary.getString("property.manager.category.managing"));
 		
 			descriptors = new PropertyDescriptor[] {
 					costPolicy,
-					riskPolicy};
+					riskPolicy,
+					featureHorizon};
 		
 		} catch (IntrospectionException e) {
 			e.printStackTrace();

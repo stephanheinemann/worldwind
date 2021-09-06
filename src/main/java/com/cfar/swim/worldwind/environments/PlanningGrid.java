@@ -1587,6 +1587,19 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	}
 	
 	/**
+	 * Gets the volume of this planning grid.
+	 * 
+	 * @return the volume of this planning grid
+	 * 
+	 * @see Environment#getVolume()
+	 */
+	@Override
+	public double getVolume() {
+		// TODO: use globe for conversion?
+		return this.getRLength() * this.getSLength() * this.getTLength();
+	}
+	
+	/**
 	 * Gets the step cost from an origin to a destination position within this
 	 * planning grid between a start and an end time given a cost policy and
 	 * risk policy.

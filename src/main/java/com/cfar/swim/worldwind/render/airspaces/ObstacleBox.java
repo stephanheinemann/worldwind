@@ -77,9 +77,13 @@ public class ObstacleBox extends Box implements Obstacle {
 	
 	/*
 	 * TODO:
-	 * Use ObstacleBox extends airspace box implements Obstacle to model altitude restrictions (min. altitudes, IFR, VFR altitudes). ThetaStar should plan vertically up and down through the costly airspace (CPDLC for landings) and perform string pulling at level. A desired altitude could be modeled as lowest cost altitude.
-	 * Overlapping positive and negative cost airspaces could better indicate suitable landing and descent areas.
-	 * Track airspaces could be useful too.
+	 * Use ObstacleBox extends airspace box implements Obstacle to model
+	 * altitude restrictions (min. altitudes, IFR, VFR altitudes). ThetaStar
+	 * should plan vertically up and down through the costly airspace (CPDLC
+	 * for landings) and perform string pulling at level. A desired altitude
+	 * could be modeled as lowest cost altitude. Overlapping positive and
+	 * negative cost airspaces could better indicate suitable landing and
+	 * descent areas. Track airspaces could be useful too.
 	 * PRM would require an IFR/VFR roadmap.
 	 * 
 	 * TODO: consider airspace Layer class
@@ -335,6 +339,30 @@ public class ObstacleBox extends Box implements Obstacle {
 	@Override
 	public Extent getExtent(Globe globe) {
 		return super.getExtent(globe, 1d);
+	}
+	
+	/**
+	 * Gets the volume of the extent of this obstacle box for a specified
+	 * globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle box
+	 * 
+	 * @see Obstacle#getVolume(Globe)
+	 */
+	@Override
+	public double getVolume(Globe globe) {
+		double volume = 0d;
+		
+		Extent extent = this.getExtent(globe);
+		if ((null != extent) && (extent instanceof Box)) {
+			gov.nasa.worldwind.geom.Box box =
+					(gov.nasa.worldwind.geom.Box) extent;
+			volume = box.getRLength() * box.getSLength() * box.getTLength();
+		}
+		
+		return volume;
 	}
 	
 	// TODO: interpolation and geometric conversion methods

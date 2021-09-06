@@ -71,4 +71,13 @@ public interface Obstacle extends Movable, TimedRenderable, ThresholdRenderable,
 	 */
 	public Extent getExtent(Globe globe);
 	
+	/**
+	 * Gets the volume of the extent of this obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle
+	 */
+	public double getVolume(Globe globe);
+	
 }

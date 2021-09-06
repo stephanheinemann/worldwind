@@ -179,6 +179,7 @@ public interface Planner extends FactoryProduct {
 	 */
 	public boolean supports(List<Position> waypoints);
 	
+	// TODO: rename waypoints to pois
 	// TODO: minimum ground clearances, altitude restrictions
 	// TODO: include capabilities (e.g., velocities, rates) and obtain cost at time
 	// TODO: think about feasibility and limited deliberation time

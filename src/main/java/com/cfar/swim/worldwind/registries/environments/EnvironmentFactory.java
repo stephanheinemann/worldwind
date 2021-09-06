@@ -122,7 +122,7 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 	 * Creates a new environment according to the customized environment
 	 * specification of this environment factory.
 	 * 
-	 * @return the created environment
+	 * @return the created environment, or null if no environment could be created
 	 * 
 	 * @see AbstractFactory#createInstance()
 	 */

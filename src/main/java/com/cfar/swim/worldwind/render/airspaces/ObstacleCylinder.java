@@ -411,10 +411,27 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		double radius = this.getRadii()[1];
 		
 		return new Cylinder(bottomCenter, topCenter, radius);
-		// TODO: check available method
+		// TODO: check available method, extend volume and intersection tests
 		//return super.computeExtent(globe, 1d);
 	}
-
+	
+	/**
+	 * Gets the volume of the extent of this obstacle cylinder for a specified
+	 * globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getVolume(Globe)
+	 */
+	@Override
+	public double getVolume(Globe globe) {
+		Cylinder cylinder = this.getExtent(globe);
+		return Math.PI * cylinder.getCylinderRadius()
+				* cylinder.getCylinderRadius() * cylinder.getCylinderHeight();
+	}
+	
 	/**
 	 * Determines whether or not this obstacle cylinder equals another one
 	 * based on their cost intervals.

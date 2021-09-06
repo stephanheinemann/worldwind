@@ -229,6 +229,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getDiameter();
 	
 	/**
+	 * Gets the volume of this environment.
+	 * 
+	 * @return the volume of this environment
+	 */
+	public double getVolume();
+	
+	/**
 	 * Adds a cost interval to this environment.
 	 * 
 	 * @param costInterval the cost interval to be added to this environment

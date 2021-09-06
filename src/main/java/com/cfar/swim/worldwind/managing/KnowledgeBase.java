@@ -30,5 +30,6 @@
 package com.cfar.swim.worldwind.managing;
 
 public interface KnowledgeBase {
+	// reputations
 	// TODO: implement
 }

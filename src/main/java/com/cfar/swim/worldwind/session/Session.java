@@ -58,7 +58,7 @@ import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties;
-import com.cfar.swim.worldwind.registries.managers.BasicManagerProperties;
+import com.cfar.swim.worldwind.registries.managers.HeuristicManagerProperties;
 import com.cfar.swim.worldwind.registries.managers.ManagerFactory;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
@@ -123,6 +123,9 @@ public class Session implements Identifiable {
 	
 	/** the planner registry of this session */
 	private Registry<Planner> plannerRegistry = new Registry<>();
+	
+	/** the managed planner registry of this session */
+	private Registry<Planner> managedPlannerRegistry = new Registry<>();
 	
 	/** the planner factory of this session */
 	private PlannerFactory plannerFactory = new PlannerFactory(this.activeScenario);
@@ -215,6 +218,11 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_OADRRT_ID, Specification.PLANNER_OADRRT_DESCRIPTION, new OADRRTreeProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
+		// managed planners
+		this.managedPlannerRegistry.clearSpecifications();
+		this.managedPlannerRegistry.addSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_OADS_ID));
+		this.managedPlannerRegistry.addSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_OADRRT_ID));
+		
 		// datalinks
 		this.datalinkRegistry.clearSpecifications();
 		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_DRONEKIT_ID, Specification.CONNECTION_DATALINK_DRONEKIT_DESCRIPTION, new DronekitDatalinkProperties()));
@@ -227,7 +235,8 @@ public class Session implements Identifiable {
 		
 		// autonomic managers
 		this.managerRegistry.clearSpecifications();
-		this.managerRegistry.addSpecification(new Specification<AutonomicManager>(Specification.MANAGER_BASIC_ID, Specification.MANAGER_BASIC_DESCRIPTION, new BasicManagerProperties()));
+		this.managerRegistry.addSpecification(new Specification<AutonomicManager>(Specification.MANAGER_HEURISTIC_ID, Specification.MANAGER_HEURISTIC_DESCRIPTION, new HeuristicManagerProperties()));
+		// TODO: ROAR and SMAC managers
 		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
@@ -236,7 +245,7 @@ public class Session implements Identifiable {
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
 		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.CONNECTION_DATALINK_SIMULATED_ID));
 		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.CONNECTION_SWIM_SIMULATED_ID));
-		this.setup.setManagerSpecification(this.managerRegistry.getSpecification(Specification.MANAGER_BASIC_ID));
+		this.setup.setManagerSpecification(this.managerRegistry.getSpecification(Specification.MANAGER_HEURISTIC_ID));
 	}
 	
 	/**
@@ -511,6 +520,37 @@ public class Session implements Identifiable {
 		Specification<Planner> plannerSpec = null;
 		Optional<Specification<Planner>> optSpec =
 				this.plannerRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			plannerSpec = optSpec.get();
+		}
+		
+		return plannerSpec;
+	}
+	
+	/**
+	 * Gets the managed planner specifications of this session.
+	 * 
+	 * @return the managed planner specifications of this session
+	 */
+	public Set<Specification<Planner>> getManagedPlannerSpecifications() {
+		return this.managedPlannerRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified managed planner specification from this session.
+	 * 
+	 * @param id the managed planner specification identifier
+	 * 
+	 * @return the identified managed planner specification, or null otherwise
+	 */
+	public Specification<Planner> getManagedPlannerSpecification(String id) {
+		Specification<Planner> plannerSpec = null;
+		Optional<Specification<Planner>> optSpec =
+				this.managedPlannerRegistry.getSpecifications()
 				.stream()
 				.filter(s -> s.getId().equals(id))
 				.findFirst();

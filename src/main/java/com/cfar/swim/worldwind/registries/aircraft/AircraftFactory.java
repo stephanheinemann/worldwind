@@ -76,7 +76,7 @@ public class AircraftFactory extends AbstractFactory<Aircraft> {
 	 * Creates a new aircraft according to the customized aircraft
 	 * specification of this aircraft factory.
 	 * 
-	 * @return the created aircraft
+	 * @return the created aircraft, or null if no aircraft could be created
 	 * 
 	 * @see AbstractFactory#createInstance()
 	 */

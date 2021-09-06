@@ -80,6 +80,8 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public class Scenario implements Identifiable, Enableable, StructuralChangeListener, ObstacleManager {
 	
+	// TODO: consider save / load scenario (persisting scenarios for reproducible tests)
+	
 	/** the default scenario identifier */
 	public static final String DEFAULT_SCENARIO_ID = "Default Scenario";
 	
@@ -124,6 +126,8 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
+	
+	// TODO: alternates (A1, .., An)
 	
 	/** the planned trajectory of this scenario */
 	private Trajectory trajectory;

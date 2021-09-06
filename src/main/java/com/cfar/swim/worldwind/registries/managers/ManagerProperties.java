@@ -71,6 +71,22 @@ public interface ManagerProperties extends Properties<AutonomicManager> {
 	public void setRiskPolicy(RiskPolicy riskPolicy);
 	
 	/**
+	 * Gets the feature horizon of this manager properties bean.
+	 * 
+	 * @return the feature horizon of this manager properties bean
+	 */
+	public double getFeatureHorizon();
+	
+	/**
+	 * Sets the feature horizon of this manager properties bean.
+	 * 
+	 * @param featureHorizon the feature horizon to be set
+	 */
+	public void setFeatureHorizon(double featureHorizon);
+	
+	// TODO: managed online planner error tolerances
+	
+	/**
 	 * Clones this manager properties bean.
 	 * 
 	 * @return a clone of this manager properties bean
@@ -79,7 +95,5 @@ public interface ManagerProperties extends Properties<AutonomicManager> {
 	 */
 	@Override
 	public ManagerProperties clone();
-	
-	// TODO: managed online planner error tolerances
 	
 }

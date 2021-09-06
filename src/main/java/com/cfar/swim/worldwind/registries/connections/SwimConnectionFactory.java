@@ -74,7 +74,7 @@ public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 	 * Creates a new SWIM connection according to the customized SWIM
 	 * connection specification of this SWIM connection factory.
 	 * 
-	 * @return the created SWIM connection
+	 * @return the created SWIM connection, or null if no SWIM connection could be created
 	 * 
 	 * @see AbstractFactory#createInstance()
 	 */

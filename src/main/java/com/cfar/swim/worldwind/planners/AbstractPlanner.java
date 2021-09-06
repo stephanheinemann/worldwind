@@ -321,6 +321,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * 
 	 * @return true if the environment is non-null, false otherwise
 	 */
+	@Override
 	public boolean supports(Environment environment) {
 		return (null != environment);
 	}

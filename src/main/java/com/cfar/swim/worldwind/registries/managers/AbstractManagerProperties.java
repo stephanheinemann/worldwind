@@ -31,6 +31,10 @@ package com.cfar.swim.worldwind.registries.managers;
 
 import java.util.Objects;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+
+import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.Properties;
@@ -49,6 +53,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	/** the risk policy of this manager properties bean */
 	RiskPolicy riskPolicy;
 	
+	/** the feature horizon of this manager properties bean */
+	@DecimalMin(value = "0", message = "{property.manager.featureHorizon.min}")
+	@DecimalMax(value = "60", message = "{property.manager.featureHorizon.max}")
+	double featureHorizon;
+	
 	/**
 	 * Constructs a new manager properties bean using default cost and risk
 	 * policy property values.
@@ -56,6 +65,7 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	public AbstractManagerProperties() {
 		this.costPolicy = CostPolicy.AVERAGE;
 		this.riskPolicy = RiskPolicy.SAFETY;
+		this.featureHorizon = Features.FEATURE_HORIZON.getSeconds() / 60d;
 	}
 	
 	/**
@@ -119,6 +129,32 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
+	 * Gets the feature horizon of this manager properties bean.
+	 * 
+	 * @return the feature horizon of this manager properties bean
+	 * 
+	 * @see ManagerProperties#getFeatureHorizon()
+	 */
+	@Override
+	public double getFeatureHorizon() {
+		return this.featureHorizon;
+	}
+	
+	/**
+	 * Sets the feature horizon of this manager properties bean.
+	 * 
+	 * @param featureHorizon the feature horizon to be set
+	 * 
+	 * @see ManagerProperties#setFeatureHorizon(double)
+	 */
+	@Override
+	public void setFeatureHorizon(double featureHorizon) {
+		this.featureHorizon = featureHorizon;
+	}
+	
+	// TODO: managed online planner error tolerances
+	
+	/**
 	 * Clones this manager properties bean.
 	 * 
 	 * @return a clone of this manager properties bean
@@ -158,7 +194,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 		} else if ((null != o) && (this.getClass() == o.getClass())) {
 			AbstractManagerProperties amp = (AbstractManagerProperties) o;
 			equals = (this.costPolicy.equals(amp.costPolicy))
-					&& (this.riskPolicy.equals(amp.riskPolicy));
+					&& (this.riskPolicy.equals(amp.riskPolicy))
+					&& (this.featureHorizon == amp.featureHorizon);
 		}
 		
 		return equals;
@@ -175,9 +212,10 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(this.costPolicy, this.riskPolicy);
+		return Objects.hash(
+				this.costPolicy,
+				this.riskPolicy,
+				this.featureHorizon);
 	}
-	
-	// TODO: managed planner error tolerances
 	
 }

@@ -406,6 +406,22 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	}
 	
 	/**
+	 * Gets the volume of the extent of this obstacle cylinder for a specified
+	 * globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getVolume(Globe)
+	 */
+	@Override
+	public double getVolume(Globe globe) {
+		// TODO: use globe extent?
+		return Math.PI * this.getRadius() * this.getRadius() * this.getHeight();
+	}
+	
+	/**
 	 * Determines whether or not this obstacle cylinder equals another one
 	 * based on their cost intervals.
 	 * 

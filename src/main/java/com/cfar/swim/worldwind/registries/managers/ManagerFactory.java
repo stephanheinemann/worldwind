@@ -29,16 +29,49 @@
  */
 package com.cfar.swim.worldwind.registries.managers;
 
+import java.time.Duration;
+
 import com.cfar.swim.worldwind.managers.AutonomicManager;
-import com.cfar.swim.worldwind.managers.BasicAutonomicManager;
+import com.cfar.swim.worldwind.managers.HeuristicAutonomicManager;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
+import com.cfar.swim.worldwind.registries.Specification;
 
+/**
+ * Realizes a manager factory to create autonomic managers according to
+ * customized manager specifications.
+ * 
+ * @author Stephan Heinemann
+ * 
+ * @see AbstractFactory
+ * @see Specification
+ */
 public class ManagerFactory extends AbstractFactory<AutonomicManager> {
-
+	
+	/**
+	 * Creates a new autonomic manager according to the customized manager
+	 * specification of this manager factory.
+	 * 
+	 * @return the created autonomic manager, or null if no autonomic manager
+	 *         could be created
+	 * 
+	 * @see AbstractFactory#createInstance()
+	 */
 	@Override
 	public AutonomicManager createInstance() {
-		// TODO: implement
-		return new BasicAutonomicManager();
+		AutonomicManager manager = null;
+		
+		if (this.hasSpecification()) {
+			if (this.specification.getId().equals(Specification.MANAGER_HEURISTIC_ID)) {
+				HeuristicManagerProperties properties = (HeuristicManagerProperties) this.specification.getProperties();
+				manager = new HeuristicAutonomicManager();
+				manager.setCostPolicy(properties.getCostPolicy());
+				manager.setRiskPolicy(properties.getRiskPolicy());
+				manager.setFeatureHorizon(Duration.ofSeconds(Math.round(properties.getFeatureHorizon() * 60d)));
+			}
+			// TODO: ROAR, SMAC autonomic managers
+		}
+			
+		return manager;
 	}
 
 }
