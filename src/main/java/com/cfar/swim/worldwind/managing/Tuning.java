@@ -71,6 +71,6 @@ public interface Tuning<Tunable> {
 	 * 
 	 * @return the tuned candidate properties for the specification
 	 */
-	public List<Properties<Tunable>> tune(Specification<Tunable> specfication);
+	public List<Properties<Tunable>> tune(Specification<Tunable> specification);
 	
 }
