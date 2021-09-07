@@ -71,7 +71,6 @@ public class Features extends HashMap<String, Object> {
 	/** the dictionary of these features */
 	protected final ResourceBundle dictionary = ResourceBundleLoader.getDictionaryBundle();
 	
-	// TODO: feature horizon as hyper-parameter of autonomic manager?
 	/** the default feature horizon */
 	public static final Duration FEATURE_HORIZON = Duration.from(Duration.ofMinutes(5));
 	
