@@ -37,7 +37,7 @@ package com.cfar.swim.worldwind.managing;
  * @see Quality
  * @see Quantity
  */
-public interface Performance {
+public interface Performance extends Comparable<Performance> {
 	
 	/**
 	 * Gets the performance measure.

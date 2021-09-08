@@ -29,6 +29,9 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.util.Comparator;
+import java.util.Objects;
+
 /**
  * Abstracts a performance consisting of quality and quantity.
  * 
@@ -59,7 +62,6 @@ public abstract class AbstractPerformance implements Performance {
 		if (null == quantity) {
 			throw new IllegalArgumentException("quantity is invalid");
 		}
-		
 		this.quality = quality;
 		this.quantity = quantity;
 	}
@@ -74,6 +76,58 @@ public abstract class AbstractPerformance implements Performance {
 	@Override
 	public double get() {
 		return this.quality.get() / this.quantity.get();
+	}
+	
+	/**
+	 * Compares this abstract performance to another performance.
+	 * 
+	 * @param performance the other performance
+	 * 
+	 * @return a negative integer, zero, or a positive integer as this
+	 *         abstract performance is less than, equal to, or greater than
+	 *         the other performance, respectively
+	 * 
+	 * @see Comparator#compare(Object, Object)
+	 */
+	@Override
+	public int compareTo(Performance performance) {
+		return Comparator.comparingDouble(Performance::get).compare(this, performance);
+	}
+	
+	/**
+	 * Determines whether or not this abstract performance equals another
+	 * abstract performance.
+	 * 
+	 * @param o the other abstract performance
+	 * 
+	 * @return true, if this abstract performance equals the other abstract
+	 *         performance, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = false;
+
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			equals = this.get() == ((AbstractPerformance) o).get();
+		}
+
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this abstract performance.
+	 * 
+	 * @return the hash code of this abstract performance
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(this.get());
 	}
 	
 }

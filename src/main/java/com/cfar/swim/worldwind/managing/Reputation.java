@@ -29,15 +29,110 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.OptionalDouble;
 import java.util.Set;
 
+/**
+ * Realizes a performance reputation of tunings.
+ * 
+ * @author Stephan Heinemann
+ *
+ * @see Tuning
+ * @see Performance
+ */
 public class Reputation {
-	// planner performances
-
-	Map<Tuning<?>, Set<Performance>> reputation;
 	
-	// use average performance for tuning
-	// reputations need to be visualized and persisted
-
+	/** the performance reputation of tunings */
+	private Map<Tuning<?>, Set<Performance>> reputation = new HashMap<>();
+	
+	/**
+	 * Clears this tunings reputation.
+	 */
+	public void clear() {
+		this.reputation.clear();
+	}
+	
+	/**
+	 * Adds a tuning performance to this reputation.
+	 * 
+	 * @param tuning the tuning to be added
+	 * @param performance the performance of the tuning
+	 */
+	public void addTuningPerformance(Tuning<?> tuning, Performance performance) {
+		if (this.reputation.containsKey(tuning)) {
+			this.reputation.get(tuning).add(performance);
+		} else {
+			HashSet<Performance> performances = new HashSet<>();
+			performances.add(performance);
+			this.reputation.put(tuning, performances);
+		}
+	}
+	
+	/**
+	 * Removes the performances of a tuning from this reputation.
+	 * 
+	 * @param tuning the tuning to be removed
+	 */
+	public void removeTuningPerformances(Tuning<?> tuning) {
+		this.reputation.remove(tuning);
+	}
+	
+	/**
+	 * Gets the average tuning performance of a tuning in this reputation.
+	 * 
+	 * @param tuning the tuning
+	 * 
+	 * @return the average tuning performance, if present
+	 */
+	public OptionalDouble getAverageTuningPerformance(Tuning<?> tuning) {
+		OptionalDouble performance = OptionalDouble.empty();
+		
+		if (this.reputation.containsKey(tuning)) {
+			performance = this.reputation.get(tuning).stream()
+					.map(p -> p.get()).mapToDouble(Double::valueOf).average();
+		}
+		
+		return performance;
+	}
+	
+	/**
+	 * Gets the maximum tuning performance of a tuning in this reputation.
+	 * 
+	 * @param tuning the tuning
+	 * 
+	 * @return the maximum tuning performance, if present
+	 */
+	public OptionalDouble getMaximumTuningPerformance(Tuning<?> tuning) {
+		OptionalDouble performance = OptionalDouble.empty();
+		
+		if (this.reputation.containsKey(tuning)) {
+			performance = this.reputation.get(tuning).stream()
+					.map(p -> p.get()).mapToDouble(Double::valueOf).max();
+		}
+		
+		return performance;
+	}
+	
+	/**
+	 * Gets the minimum tuning performance of a tuning in this reputation.
+	 * 
+	 * @param tuning the tuning
+	 * 
+	 * @return the minimum tuning performance, if present
+	 */
+	public OptionalDouble getMinimumTuningPerformance(Tuning<?> tuning) {
+		OptionalDouble performance = OptionalDouble.empty();
+		
+		if (this.reputation.containsKey(tuning)) {
+			performance = this.reputation.get(tuning).stream()
+					.map(p -> p.get()).mapToDouble(Double::valueOf).min();
+		}
+		
+		return performance;
+	}
+	
+	// TODO: reputations need to be visualized and persisted
 }

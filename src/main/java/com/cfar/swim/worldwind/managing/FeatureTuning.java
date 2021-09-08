@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.managing;
 
 import java.util.List;
+import java.util.Objects;
 
 import com.cfar.swim.worldwind.registries.Properties;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -98,5 +99,43 @@ public abstract class FeatureTuning<Tunable> extends AbstractTuning<Tunable> {
 	 */
 	public abstract List<Properties<Tunable>> tune(
 			Specification<Tunable> specification, Features features);
+	
+	/**
+	 * Determines whether or not this feature tuning equals another feature
+	 * tuning based on their specifications and features.
+	 * 
+	 * @param o the other feature tuning
+	 * 
+	 * @return true, if the specification and features of this feature tuning
+	 *         equal the specification and features of the other feature
+	 *         tuning, respectively, false otherwise
+	 * 
+	 * @see AbstractTuning#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals) {
+			FeatureTuning<?> ft = (FeatureTuning<?>) o;
+			equals = this.getFeatures().equals(ft.getFeatures());
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this feature tuning based on its specification and
+	 * features.
+	 * 
+	 * @return the hash code of this feature tuning based on its specification
+	 *         and features
+	 * 
+	 * @see AbstractTuning#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(super.hashCode(), this.features.hashCode());
+	}
 	
 }

@@ -29,6 +29,9 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.util.Comparator;
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.planning.Trajectory;
 
 /**
@@ -53,8 +56,7 @@ public class TrajectoryQuality implements Quality {
 	public TrajectoryQuality(Trajectory quality) {
 		if (null == quality) {
 			throw new IllegalArgumentException("quality is invalid");
-		}
-		
+		}	
 		this.quality = quality;
 	}
 	
@@ -79,5 +81,57 @@ public class TrajectoryQuality implements Quality {
 		
 		return measure;
 	}
+	
+	/**
+	 * Compares this trajectory quality to another quality.
+	 * 
+	 * @param quality the other quality
+	 * 
+	 * @return a negative integer, zero, or a positive integer as this
+	 *         trajectory quality is less than, equal to, or greater than the
+	 *         other quality, respectively
+	 * 
+	 * @see Comparator#compare(Object, Object)
+	 */
+	@Override
+	public int compareTo(Quality quality) {
+		return Comparator.comparingDouble(Quality::get).compare(this, quality);
+	}
+	
+	/**
+	 * Determines whether or not this trajectory quality equals another
+	 * trajectory quality.
+	 * 
+	 * @param o the other trajectory quality
+	 * 
+	 * @return true, if this trajectory quality equals the other trajectory
+	 *         quality, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = false;
 
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			equals = this.get() == ((TrajectoryQuality) o).get();
+		}
+
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this trajectory quality.
+	 * 
+	 * @return the hash code of this trajectory quality
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(this.get());
+	}
+	
 }

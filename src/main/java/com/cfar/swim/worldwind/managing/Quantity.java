@@ -34,7 +34,7 @@ package com.cfar.swim.worldwind.managing;
  * 
  * @author Stephan Heinemann
  */
-public interface Quantity {
+public interface Quantity extends Comparable<Quantity> {
 	
 	/**
 	 * Gets the performance quantity measure.

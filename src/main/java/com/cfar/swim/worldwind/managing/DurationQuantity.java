@@ -30,6 +30,8 @@
 package com.cfar.swim.worldwind.managing;
 
 import java.time.Duration;
+import java.util.Comparator;
+import java.util.Objects;
 
 /**
  * Realizes a duration quantity.
@@ -68,6 +70,58 @@ public class DurationQuantity implements Quantity {
 	@Override
 	public double get() {
 		return quantity.getSeconds() + (quantity.getNano() * 10E-9d);
+	}
+	
+	/**
+	 * Compares this duration quantity to another quantity.
+	 * 
+	 * @param quantity the other quantity
+	 * 
+	 * @return a negative integer, zero, or a positive integer as this
+	 *         duration quantity is less than, equal to, or greater than the
+	 *         other quantity, respectively
+	 * 
+	 * @see Comparator#compare(Object, Object)
+	 */
+	@Override
+	public int compareTo(Quantity quantity) {
+		return Comparator.comparingDouble(Quantity::get).compare(this, quantity);
+	}
+	
+	/**
+	 * Determines whether or not this duration quantity equals another
+	 * duration quantity.
+	 * 
+	 * @param o the other duration quantity
+	 * 
+	 * @return true, if this trajectory quantity equals the other trajectory
+	 *         quantity, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = false;
+
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			equals = this.get() == ((DurationQuantity) o).get();
+		}
+
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this duration quantity.
+	 * 
+	 * @return the hash code of this duration quantity
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(this.get());
 	}
 	
 }

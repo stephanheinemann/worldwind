@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.util.Objects;
+
 import com.cfar.swim.worldwind.registries.Specification;
 
 /**
@@ -82,6 +84,43 @@ public abstract class AbstractTuning<Tunable> implements Tuning<Tunable> {
 			throw new IllegalArgumentException("specification is invalid");
 		}
 		this.specification = specification;
+	}
+	
+	/**
+	 * Determines whether or not this abstract tuning equals another abstract
+	 * tuning based on their specifications.
+	 * 
+	 * @param o the other abstract tuning
+	 * 
+	 * @return true, if the specification of this abstract tuning equals the
+	 *         specification of the other abstract tuning, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			AbstractTuning<?> at = (AbstractTuning<?>) o;
+			equals = this.getSpecification().equals(at.getSpecification());
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this abstract tuning based on its specification.
+	 * 
+	 * @return the hash code of this abstract tuning based on its specification
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.specification);
 	}
 	
 }
