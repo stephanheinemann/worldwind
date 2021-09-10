@@ -30,6 +30,5 @@
 package com.cfar.swim.worldwind.managing;
 
 public interface KnowledgeBase {
-	// reputations
-	// TODO: implement
+	// reputations and model (fit model with reputations)
 }

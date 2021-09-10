@@ -90,6 +90,7 @@ public class Reputation {
 	public OptionalDouble getAverageTuningPerformance(Tuning<?> tuning) {
 		OptionalDouble performance = OptionalDouble.empty();
 		
+		// TODO: filter for system information
 		if (this.reputation.containsKey(tuning)) {
 			performance = this.reputation.get(tuning).stream()
 					.map(p -> p.get()).mapToDouble(Double::valueOf).average();
@@ -108,6 +109,7 @@ public class Reputation {
 	public OptionalDouble getMaximumTuningPerformance(Tuning<?> tuning) {
 		OptionalDouble performance = OptionalDouble.empty();
 		
+		// TODO: filter for system information
 		if (this.reputation.containsKey(tuning)) {
 			performance = this.reputation.get(tuning).stream()
 					.map(p -> p.get()).mapToDouble(Double::valueOf).max();
@@ -126,6 +128,7 @@ public class Reputation {
 	public OptionalDouble getMinimumTuningPerformance(Tuning<?> tuning) {
 		OptionalDouble performance = OptionalDouble.empty();
 		
+		// TODO: filter for system information
 		if (this.reputation.containsKey(tuning)) {
 			performance = this.reputation.get(tuning).stream()
 					.map(p -> p.get()).mapToDouble(Double::valueOf).min();
