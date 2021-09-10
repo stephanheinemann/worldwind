@@ -1059,7 +1059,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 */
 	@Override
 	public boolean update(Specification<? extends FactoryProduct> specification) {
-		boolean updated = super.matches(specification);
+		boolean updated = super.update(specification);
 		
 		if (updated && (specification.getProperties() instanceof OADRRTreeProperties)) {
 			OADRRTreeProperties properties = (OADRRTreeProperties) specification.getProperties();
