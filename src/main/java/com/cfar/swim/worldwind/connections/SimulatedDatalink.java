@@ -41,6 +41,7 @@ import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -141,6 +142,18 @@ public class SimulatedDatalink extends Datalink {
 	 */
 	public SimulatedDatalink() {
 		this.getAircraftTrack().setName("Simulated Iris");
+	}
+	
+	/**
+	 * Gets the identifier of this simulated datalink.
+	 * 
+	 * @return the identifier of this simulated datalink
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.CONNECTION_DATALINK_SIMULATED_ID;
 	}
 	
 	/**
@@ -616,18 +629,43 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#matches(Specification)
 	 */
 	@Override
-	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof SimulatedDatalinkProperties)) {
-			SimulatedDatalinkProperties sdlp = (SimulatedDatalinkProperties) specification.getProperties();
-			matches = (this.maxTrackError.getCrossTrackError() == sdlp.getMaxCrossTrackError())
-					&& (this.maxTrackError.getTimingError().equals(sdlp.getMaxTimingError()))
-					&& (this.errorProbability == sdlp.getErrorProbability())
-					&& (specification.getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID));
+			SimulatedDatalinkProperties properties =
+					(SimulatedDatalinkProperties) specification.getProperties();
+			matches = (this.maxTrackError.getCrossTrackError() == properties.getMaxCrossTrackError())
+					&& (this.maxTrackError.getTimingError().equals(properties.getMaxTimingError()))
+					&& (this.errorProbability == properties.getErrorProbability());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this simulated datalink according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this simulated datalink has been updated,
+	 *         false otherwise
+	 * 
+	 * @see Datalink#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof SimulatedDatalinkProperties)) {
+			SimulatedDatalinkProperties properties =
+					(SimulatedDatalinkProperties) specification.getProperties();
+			this.getMaxTrackError().setCrossTrackError(properties.getMaxCrossTrackError());
+			this.getMaxTrackError().setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+			this.setErrorProbablity(properties.getErrorProbability());
+		}
+		
+		return updated;
 	}
 	
 }

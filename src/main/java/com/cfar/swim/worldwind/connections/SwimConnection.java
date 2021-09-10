@@ -149,22 +149,60 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	 * @return true if the this SWIM connection matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see Connection#matches(Specification)
+	 * @see FactoryProduct#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
-		if ((null != specification) && (specification.getProperties() instanceof SwimConnectionProperties)) {
-			SwimConnectionProperties scp = (SwimConnectionProperties) specification.getProperties();
-			matches = (this.hasSubscribed(SwimData.AIXM) == scp.getSubscribesAIXM()
-					&& (this.hasSubscribed(SwimData.AMXM) == scp.getSubscribesAMXM())
-					&& (this.hasSubscribed(SwimData.FIXM) == scp.getSubscribesFIXM())
-					&& (this.hasSubscribed(SwimData.IWXXM) == scp.getSubscribesIWXXM())
-					&& (this.hasSubscribed(SwimData.WXXM) == scp.getSubscribesWXXM()));
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof SwimConnectionProperties)) {
+			
+			SwimConnectionProperties properties = (SwimConnectionProperties) specification.getProperties();
+			matches = (this.hasSubscribed(SwimData.AIXM) == properties.getSubscribesAIXM()
+					&& (this.hasSubscribed(SwimData.AMXM) == properties.getSubscribesAMXM())
+					&& (this.hasSubscribed(SwimData.FIXM) == properties.getSubscribesFIXM())
+					&& (this.hasSubscribed(SwimData.IWXXM) == properties.getSubscribesIWXXM())
+					&& (this.hasSubscribed(SwimData.WXXM) == properties.getSubscribesWXXM()));
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this SWIM connection according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this SWIM connection has been updated, false otherwise
+	 * 
+	 * @see FactoryProduct#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = false;
+		
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof SwimConnectionProperties)
+				&& !this.matches(specification)) {
+			
+			SwimConnectionProperties properties = (SwimConnectionProperties) specification.getProperties();
+			if (properties.getSubscribesAIXM())
+				this.subscribe(SwimData.AIXM);
+			if (properties.getSubscribesFIXM())
+				this.subscribe(SwimData.FIXM);
+			if (properties.getSubscribesWXXM())
+				this.subscribe(SwimData.WXXM);
+			if (properties.getSubscribesIWXXM())
+				this.subscribe(SwimData.IWXXM);
+			if (properties.getSubscribesAMXM())
+				this.subscribe(SwimData.AMXM);
+			updated = true;
+		}
+		
+		return updated;
 	}
 	
 }

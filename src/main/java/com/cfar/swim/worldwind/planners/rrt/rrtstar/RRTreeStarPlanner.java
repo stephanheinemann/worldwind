@@ -34,13 +34,11 @@ import java.util.Set;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.CapabilitiesException;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
-import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
@@ -70,6 +68,18 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 	 */
 	public RRTreeStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this RRT* planner.
+	 * 
+	 * @return the identifier of this RRT* planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_RRTS_ID;
 	}
 	
 	/**
@@ -281,37 +291,6 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 		}
 		
 		return this.getGoal().hasParent();
-	}
-	
-	/**
-	 * Determines whether or not this RRT* planner matches a specification.
-	 * 
-	 * @param specification the specification to be matched
-	 * 
-	 * @return true if the this RRT* planner matches the specification,
-	 *         false otherwise
-	 * 
-	 * @see AbstractPlanner#matches(Specification)
-	 */
-	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
-		
-		if ((null != specification) && (specification.getProperties() instanceof RRTreeProperties)) {
-			RRTreeProperties rrtp = (RRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(rrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(rrtp.getRiskPolicy()))
-					&& (this.getBias() == rrtp.getBias())
-					&& (this.getEpsilon() == rrtp.getEpsilon())
-					&& (this.getExtension() == rrtp.getExtension())
-					&& (this.getGoalThreshold() == rrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == rrtp.getMaxIterations())
-					&& (this.getSampling() == rrtp.getSampling())
-					&& (this.getStrategy() == rrtp.getStrategy())
-					&& (specification.getId().equals(Specification.PLANNER_RRTS_ID));
-		}
-		
-		return matches;
 	}
 	
 }

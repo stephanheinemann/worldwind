@@ -42,7 +42,6 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
@@ -58,6 +57,7 @@ import com.cfar.swim.worldwind.tracks.AircraftTrack;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -115,6 +115,18 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	public OADRRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 		this.addPlanRevisionListener(new MissionLoader());
+	}
+	
+	/**
+	 * Gets the identifier of this OADRRT planner.
+	 * 
+	 * @return the identifier of this OADRRT planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_OADRRT_ID;
 	}
 	
 	/**
@@ -1017,38 +1029,49 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if the this OADRRT planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see AbstractPlanner#matches(Specification)
+	 * @see ADRRTreePlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof OADRRTreeProperties)) {
-			OADRRTreeProperties oadrrtp = (OADRRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(oadrrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(oadrrtp.getRiskPolicy()))
-					&& (this.getBias() == oadrrtp.getBias())
-					&& (this.getEpsilon() == oadrrtp.getEpsilon())
-					&& (this.getExtension() == oadrrtp.getExtension())
-					&& (this.getGoalThreshold() == oadrrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == oadrrtp.getMaxIterations())
-					&& (this.getSampling() == oadrrtp.getSampling())
-					&& (this.getStrategy() == oadrrtp.getStrategy())
-					&& (this.getMaximumQuality() == oadrrtp.getMaximumQuality())
-					&& (this.getMinimumQuality() == oadrrtp.getMaximumQuality())
-					&& (this.getNeighborLimit() == oadrrtp.getNeighborLimit())
-					&& (this.getQualityImprovement() == oadrrtp.getQualityImprovement())
-					&& (this.getSignificantChange() == oadrrtp.getSignificantChange())
-					&& (this.getMaxTrackError().getCrossTrackError() == oadrrtp.getMaxCrossTrackError())
-					&& (this.getMaxTrackError().getTimingError().equals(Duration.ofSeconds(oadrrtp.getMaxTimingError())))
-					&& (this.getMaxTakeOffError().getHorizontalError() == oadrrtp.getMaxTakeOffHorizontalError())
-					&& (this.getMaxTakeOffError().getTimingError().equals(Duration.ofSeconds(oadrrtp.getMaxTakeOffTimingError())))
-					&& (this.getMaxLandingError().getHorizontalError() == oadrrtp.getMaxLandingHorizontalError())
-					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(oadrrtp.getMaxLandingTimingError())))
-					&& (specification.getId().equals(Specification.PLANNER_OADRRT_ID));
+		if (matches && (specification.getProperties() instanceof OADRRTreeProperties)) {
+			OADRRTreeProperties properties = (OADRRTreeProperties) specification.getProperties();
+			matches = (this.getMaxTrackError().getCrossTrackError() == properties.getMaxCrossTrackError())
+					&& (this.getMaxTrackError().getTimingError().equals(Duration.ofSeconds(properties.getMaxTimingError())))
+					&& (this.getMaxTakeOffError().getHorizontalError() == properties.getMaxTakeOffHorizontalError())
+					&& (this.getMaxTakeOffError().getTimingError().equals(Duration.ofSeconds(properties.getMaxTakeOffTimingError())))
+					&& (this.getMaxLandingError().getHorizontalError() == properties.getMaxLandingHorizontalError())
+					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(properties.getMaxLandingTimingError())));
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this OADRRT planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this OADRRT planner has been updated, false otherwise
+	 * 
+	 * @see ADRRTreePlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.matches(specification);
+		
+		if (updated && (specification.getProperties() instanceof OADRRTreeProperties)) {
+			OADRRTreeProperties properties = (OADRRTreeProperties) specification.getProperties();
+			this.getMaxTrackError().setCrossTrackError(properties.getMaxCrossTrackError());
+			this.getMaxTrackError().setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+			this.getMaxTakeOffError().setHorizontalError(properties.getMaxTakeOffHorizontalError());
+			this.getMaxTakeOffError().setTimingError(Duration.ofSeconds(properties.getMaxTakeOffTimingError()));
+			this.getMaxLandingError().setHorizontalError(properties.getMaxLandingHorizontalError());
+			this.getMaxLandingError().setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
+		}
+		
+		return updated;
 	}
 	
 }

@@ -43,6 +43,9 @@ import java.util.Objects;
  */
 public abstract class AbstractPerformance implements Performance {
 	
+	// TODO: System information: memory, processor, cores, oshi artifact
+	// https://github.com/oshi/oshi
+	
 	/** the quality of this abstract performance */
 	private final Quality quality;
 	

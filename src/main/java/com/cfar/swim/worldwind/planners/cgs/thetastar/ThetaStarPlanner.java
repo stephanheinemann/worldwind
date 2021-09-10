@@ -36,9 +36,8 @@ import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
-import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.registries.planners.cgs.ThetaStarProperties;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
@@ -65,6 +64,18 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 	 */
 	public ThetaStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this Theta* planner.
+	 * 
+	 * @return the identifier of this Theta* planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_TS_ID;
 	}
 	
 	/**
@@ -130,28 +141,4 @@ public class ThetaStarPlanner extends ForwardAStarPlanner {
 		}
 	}
 	
-	/**
-	 * Determines whether or not this Theta* planner matches a specification.
-	 * 
-	 * @param specification the specification to be matched
-	 * 
-	 * @return true if the this Theta* planner matches the specification,
-	 *         false otherwise
-	 * 
-	 * @see FactoryProduct#matches(Specification)
-	 */
-	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
-		
-		if ((null != specification) && (specification.getProperties() instanceof ThetaStarProperties)) {
-			ThetaStarProperties tsp = (ThetaStarProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(tsp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(tsp.getRiskPolicy()))
-					&& (specification.getId().equals(Specification.PLANNER_TS_ID));
-		}
-		
-		return matches;
-	}
-
 }

@@ -367,13 +367,43 @@ public abstract class AbstractPlanner implements Planner {
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
-		if ((null != specification) && (specification.getProperties() instanceof AbstractPlannerProperties)) {
-			AbstractPlannerProperties app = (AbstractPlannerProperties) specification.getProperties();
-			matches = this.getCostPolicy().equals(app.getCostPolicy())
-					&& this.getRiskPolicy().equals(app.getRiskPolicy());
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof AbstractPlannerProperties)) {
+			AbstractPlannerProperties properties =
+					(AbstractPlannerProperties) specification.getProperties();
+			matches = this.getCostPolicy().equals(properties.getCostPolicy())
+					&& this.getRiskPolicy().equals(properties.getRiskPolicy());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this abstract planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this abstract planner has been updated, false otherwise
+	 * 
+	 * @see FactoryProduct#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = false;
+		
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof AbstractPlannerProperties)
+				&& !this.matches(specification)) {
+			AbstractPlannerProperties properties =
+					(AbstractPlannerProperties) specification.getProperties();
+			this.setCostPolicy(properties.getCostPolicy());
+			this.setRiskPolicy(properties.getRiskPolicy());
+			updated = true;
+		}
+		
+		return updated;
 	}
 	
 }

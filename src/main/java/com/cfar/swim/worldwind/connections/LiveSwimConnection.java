@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.connections;
 
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 /**
  * Realizes a live SWIM connection.
@@ -39,6 +40,18 @@ import com.cfar.swim.worldwind.registries.Specification;
  *
  */
 public class LiveSwimConnection extends SwimConnection {
+	
+	/**
+	 * Gets the identifier of this live SWIM connection.
+	 * 
+	 * @return the identifier of this live SWIM connection
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.CONNECTION_SWIM_LIVE_ID;
+	}
 	
 	@Override
 	public void connect() {
@@ -54,8 +67,13 @@ public class LiveSwimConnection extends SwimConnection {
 	}
 
 	@Override
-	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		return false;
 	}
-
+	
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		return false;
+	}
+	
 }

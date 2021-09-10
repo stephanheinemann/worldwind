@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries;
 
+import com.cfar.swim.worldwind.util.Identifiable;
+
 /**
  * Describes the product of a factory.
  * 
@@ -38,15 +40,26 @@ package com.cfar.swim.worldwind.registries;
  * @see Registry
  * @see Specification
  */
-public interface FactoryProduct {
+public interface FactoryProduct extends Identifiable {
 
 	/**
-	 * Determines whether or not a registered item matches a specification.
+	 * Determines whether or not this factory product matches a specification.
 	 * 
 	 * @param specification the specification to be matched
 	 * 
-	 * @return true if the this item matches the specification, false otherwise
+	 * @return true if the this factory product matches the specification,
+	 *         false otherwise
 	 */
 	public boolean matches(Specification<? extends FactoryProduct> specification);
+	
+	
+	/**
+	 * Updates this factory product according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this factory product has been updated, false otherwise
+	 */
+	public boolean update(Specification<? extends FactoryProduct> specification);
 	
 }

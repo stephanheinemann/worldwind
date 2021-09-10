@@ -39,6 +39,7 @@ import java.util.Set;
 
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.managing.Features;
+import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planning.CostPolicy;
@@ -46,9 +47,11 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
+import com.cfar.swim.worldwind.registries.Properties;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
 import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
+import com.cfar.swim.worldwind.registries.managers.AbstractManagerProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.PlannerProperties;
 import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
@@ -82,8 +85,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	/** the feature horizon of this abstract autonomic manager */
 	private Duration featureHorizon = Features.FEATURE_HORIZON;
 	
-	/** the managed scenarios and their features of this abstract autonomic manager */
-	private Map<Scenario, Features> managedScenarios = new HashMap<>();
+	/** the managed scenarios and their planner tunings of this abstract autonomic manager */
+	private Map<Scenario, PlannerTuning> managedScenarios = new HashMap<>();
 	
 	/**
 	 * Gets the cost policy of this abstract autonomic manager.
@@ -170,19 +173,34 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	}
 	
 	/**
-	 * Gets the features of a scenario managed by this abstract autonomic
+	 * Creates a new planner tuning for this abstract autonomic manager based
+	 * on a planner specification and features.
+	 * 
+	 * @param specification the planner specification
+	 * @param features the features
+	 * 
+	 * @return the created planner tuning
+	 * 
+	 * @see AutonomicManager#createPlannerTuning(Specification, Features)
+	 */
+	@Override
+	public abstract PlannerTuning createPlannerTuning(
+			Specification<Planner> specification, Features features);
+	
+	/**
+	 * Gets the planner tuning of a managed scenario of this abstract autonomic
 	 * manager.
 	 * 
 	 * @param managedScenario the managed scenario
 	 * 
-	 * @return the features of the managed scenario, null if the scenario is
-	 *         not managed by this abstract autonomic manager
+	 * @return the planner tuning of the managed scenario, null if the scenario
+	 *         is not managed by this abstract autonomic manager
 	 * 
-	 * @see AutonomicManager#getFeatures(Scenario)
+	 * @see AutonomicManager#getPlannerTuning(Scenario)
 	 */
 	@Override
-	public Features getFeatures(Scenario managedScenario) {
-		return managedScenarios.get(managedScenario);
+	public PlannerTuning getPlannerTuning(Scenario managedScenario) {
+		return this.managedScenarios.get(managedScenario);
 	}
 	
 	/**
@@ -228,6 +246,12 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 					PlannerFactory plannerFactory = new PlannerFactory(managedScenario);
 					((PlannerProperties) plannerSpec.getProperties()).setCostPolicy(this.costPolicy);
 					((PlannerProperties) plannerSpec.getProperties()).setRiskPolicy(this.riskPolicy);
+					
+					Features features = new Features(managedScenario, this.featureHorizon);
+					PlannerTuning tuning = this.createPlannerTuning(plannerSpec, features);
+					List<Properties<Planner>> candidates = tuning.tune();
+					// TODO: which candidate to choose for the default?
+					plannerSpec.setProperties(candidates.get(0));
 					plannerFactory.setSpecification(plannerSpec);
 					Planner planner = plannerFactory.createInstance();
 					
@@ -253,8 +277,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 								}
 							});
 							
-							Features features = new Features(managedScenario, this.featureHorizon);
-							this.managedScenarios.put(managedScenario, features);							
+							this.managedScenarios.put(managedScenario, this.createPlannerTuning(plannerSpec, features));
 							managedSession.addScenario(managedScenario);
 						}
 					}
@@ -313,11 +336,60 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		}
 	}
 	
-
+	/**
+	 * Determines whether or not this abstract autonomic manager matches a
+	 * specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this abstract autonomic manager matches the
+	 *         specification, false otherwise
+	 * 
+	 * @see FactoryProduct#matches(Specification)
+	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		// TODO Auto-generated method stub
-		return false;
+		boolean matches = false;
+		
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof AbstractManagerProperties)) {
+			AbstractManagerProperties properties = (AbstractManagerProperties) specification.getProperties();
+			matches = this.getCostPolicy().equals(properties.getCostPolicy())
+					&& this.getRiskPolicy().equals(properties.getRiskPolicy())
+					&& this.getFeatureHorizon().equals(Duration.ofSeconds(
+							Math.round(properties.getFeatureHorizon() * 60d)));
+		}
+	
+		return matches;
+	}
+	
+	/**
+	 * Updates this abstract autonomic manager according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this autonomic manager has been updated, false otherwise
+	 * 
+	 * @see FactoryProduct#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = false;
+		
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof AbstractManagerProperties)
+				&& !this.matches(specification)) {
+			AbstractManagerProperties properties = (AbstractManagerProperties) specification.getProperties();
+			this.setCostPolicy(properties.getCostPolicy());
+			this.setRiskPolicy(properties.getRiskPolicy());
+			this.setFeatureHorizon(Duration.ofSeconds(
+					Math.round(properties.getFeatureHorizon() * 60d)));
+			updated = true;
+		}
+		
+		return updated;
 	}
 	
 }

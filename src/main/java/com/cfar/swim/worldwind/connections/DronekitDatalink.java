@@ -50,6 +50,7 @@ import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -120,6 +121,18 @@ public class DronekitDatalink extends Datalink {
 		this.channel = null;
 		this.blockingStub = null;
 		this.getAircraftTrack().setName(host + ":" + port);
+	}
+	
+	/**
+	 * Gets the identifier of this dronekit datalink.
+	 * 
+	 * @return the identifier of this dronekit datalink
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.CONNECTION_DATALINK_DRONEKIT_ID;
 	}
 	
 	/**
@@ -674,17 +687,40 @@ public class DronekitDatalink extends Datalink {
 	 * @see Datalink#matches(Specification)
 	 */
 	@Override
-	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof DronekitDatalinkProperties)) {
-			DronekitDatalinkProperties ddlp = (DronekitDatalinkProperties) specification.getProperties();
-			matches = (this.host.equals(ddlp.getHost()))
-						&& (this.port == ddlp.getPort())
-						&& (specification.getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID));
+			DronekitDatalinkProperties properties =
+					(DronekitDatalinkProperties) specification.getProperties();
+			matches = (this.host.equals(properties.getHost()))
+					&& (this.port == properties.getPort());
 		}
 	
 		return matches;
+	}
+	
+	/**
+	 * Updates this dronekit datalink according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this dronekit datalink has been updated, false otherwise
+	 * 
+	 * @see Datalink#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof DronekitDatalinkProperties)) {
+			DronekitDatalinkProperties properties =
+					(DronekitDatalinkProperties) specification.getProperties();
+			this.host = properties.getHost();
+			this.port = properties.getPort();
+		}
+		
+		return updated;
 	}
 	
 }

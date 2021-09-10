@@ -125,30 +125,76 @@ public abstract class Aircraft extends ObstacleSphere implements FactoryProduct 
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
-		if ((null != specification) && (specification.getProperties() instanceof AircraftProperties)) {
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof AircraftProperties)) {
+			
 			AircraftProperties properties = (AircraftProperties) specification.getProperties();
 			if (this.getRadius() == properties.getSeparationRadius()
 					&& (this.cid.equals(properties.getCombatIdentification()))) {
 				Capabilities capabilities = new Capabilities();
 				capabilities.setApproachRateOfDescent(properties.getApproachRateOfDescent());
-	            capabilities.setApproachSpeed(properties.getApproachSpeed());
-	            capabilities.setCruiseClimbSpeed(properties.getCruiseClimbSpeed());
-	            capabilities.setCruiseDescentSpeed(properties.getCruiseDescentSpeed());
-	            capabilities.setCruiseRateOfClimb(properties.getCruiseRateOfClimb());
-	            capabilities.setCruiseRateOfDescent(properties.getCruiseRateOfDescent());
-	            capabilities.setCruiseSpeed(properties.getCruiseSpeed());
-	            capabilities.setMaximumAngleOfClimb(Angle.fromDegrees(properties.getMaximumAngleOfClimb()));
-	            capabilities.setMaximumAngleOfClimbSpeed(properties.getMaximumAngleOfClimbSpeed());
-	            capabilities.setMaximumGlideSpeed(properties.getMaximumGlideSpeed());
-	            capabilities.setMaximumRateOfClimb(properties.getMaximumRateOfClimb());
-	            capabilities.setMaximumRateOfClimbSpeed(properties.getMaximumRateOfClimbSpeed());
-	            capabilities.setMaximumRateOfDescent(properties.getMaximumRateOfDescent());
-	            capabilities.setMaximumRateOfDescentSpeed(properties.getMaximumRateOfDescentSpeed());
-	            capabilities.setMaximumSpeed(properties.getMaximumSpeed());
-	            matches = this.capabilities.equals(capabilities);
+				capabilities.setApproachSpeed(properties.getApproachSpeed());
+				capabilities.setCruiseClimbSpeed(properties.getCruiseClimbSpeed());
+				capabilities.setCruiseDescentSpeed(properties.getCruiseDescentSpeed());
+				capabilities.setCruiseRateOfClimb(properties.getCruiseRateOfClimb());
+				capabilities.setCruiseRateOfDescent(properties.getCruiseRateOfDescent());
+				capabilities.setCruiseSpeed(properties.getCruiseSpeed());
+				capabilities.setMaximumAngleOfClimb(Angle.fromDegrees(properties.getMaximumAngleOfClimb()));
+				capabilities.setMaximumAngleOfClimbSpeed(properties.getMaximumAngleOfClimbSpeed());
+				capabilities.setMaximumGlideSpeed(properties.getMaximumGlideSpeed());
+				capabilities.setMaximumRateOfClimb(properties.getMaximumRateOfClimb());
+				capabilities.setMaximumRateOfClimbSpeed(properties.getMaximumRateOfClimbSpeed());
+				capabilities.setMaximumRateOfDescent(properties.getMaximumRateOfDescent());
+				capabilities.setMaximumRateOfDescentSpeed(properties.getMaximumRateOfDescentSpeed());
+				capabilities.setMaximumSpeed(properties.getMaximumSpeed());
+				matches = this.capabilities.equals(capabilities);
 			}
 		}
+		
 		return matches;
+	}
+	
+	/**
+	 * Updates this aircraft according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this aircraft has been updated, false otherwise
+	 * 
+	 * @see FactoryProduct#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = false;
+		
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof AircraftProperties)
+				&& !this.matches(specification)) {
+			
+			AircraftProperties properties = (AircraftProperties) specification.getProperties();
+			this.setRadius(properties.getSeparationRadius());
+			Capabilities capabilities = this.getCapabilities();
+			capabilities.setApproachRateOfDescent(properties.getApproachRateOfDescent());
+			capabilities.setApproachSpeed(properties.getApproachSpeed());
+			capabilities.setCruiseClimbSpeed(properties.getCruiseClimbSpeed());
+			capabilities.setCruiseDescentSpeed(properties.getCruiseDescentSpeed());
+			capabilities.setCruiseRateOfClimb(properties.getCruiseRateOfClimb());
+			capabilities.setCruiseRateOfDescent(properties.getCruiseRateOfDescent());
+			capabilities.setCruiseSpeed(properties.getCruiseSpeed());
+			capabilities.setMaximumAngleOfClimb(Angle.fromDegrees(properties.getMaximumAngleOfClimb()));
+			capabilities.setMaximumAngleOfClimbSpeed(properties.getMaximumAngleOfClimbSpeed());
+			capabilities.setMaximumGlideSpeed(properties.getMaximumGlideSpeed());
+			capabilities.setMaximumRateOfClimb(properties.getMaximumRateOfClimb());
+			capabilities.setMaximumRateOfClimbSpeed(properties.getMaximumRateOfClimbSpeed());
+			capabilities.setMaximumRateOfDescent(properties.getMaximumRateOfDescent());
+			capabilities.setMaximumRateOfDescentSpeed(properties.getMaximumRateOfDescentSpeed());
+			capabilities.setMaximumSpeed(properties.getMaximumSpeed());
+			updated = true;
+		}
+		
+		return updated;
 	}
 	
 }

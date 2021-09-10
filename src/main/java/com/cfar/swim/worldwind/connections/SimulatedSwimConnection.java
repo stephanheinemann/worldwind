@@ -56,6 +56,7 @@ import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionProperties;
 import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 /**
  * Realizes a simulated SWIM connection
@@ -128,6 +129,18 @@ public class SimulatedSwimConnection extends SwimConnection {
 		this.updatePeriod = updatePeriod;
 		this.updateProbability = updateProbability;
 		this.updateQuantity = updateQuantity;
+	}
+	
+	/**
+	 * Gets the identifier of this simulated SWIM connection.
+	 * 
+	 * @return the identifier of this simulated SWIM connection
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.CONNECTION_SWIM_SIMULATED_ID;
 	}
 	
 	/**
@@ -216,19 +229,45 @@ public class SimulatedSwimConnection extends SwimConnection {
 	 * @see SwimConnection#matches(Specification)
 	 */
 	@Override
-	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof SimulatedSwimConnectionProperties)) {
-			SimulatedSwimConnectionProperties sscp = (SimulatedSwimConnectionProperties) specification.getProperties();
-			matches = (this.resourceDirectory.equals(sscp.getResourceDirectory())
-					&& (this.updatePeriod == sscp.getUpdatePeriod())
-					&& (this.updateProbability == sscp.getUpdateProbability())
-					&& (this.updateQuantity == sscp.getUpdateQuantity()))
-					&& (specification.getId().equals(Specification.CONNECTION_SWIM_SIMULATED_ID));
+			SimulatedSwimConnectionProperties properties =
+					(SimulatedSwimConnectionProperties) specification.getProperties();
+			matches = (this.resourceDirectory.equals(properties.getResourceDirectory())
+					&& (this.updatePeriod == properties.getUpdatePeriod())
+					&& (this.updateProbability == properties.getUpdateProbability())
+					&& (this.updateQuantity == properties.getUpdateQuantity()));
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this simulated SWIM connection according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this simulated SWIM connection has been updated,
+	 *         false otherwise
+	 * 
+	 * @see SwimConnection#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof SimulatedSwimConnectionProperties)) {
+			SimulatedSwimConnectionProperties properties =
+					(SimulatedSwimConnectionProperties) specification.getProperties();
+			this.resourceDirectory = properties.getResourceDirectory();
+			this.updatePeriod = properties.getUpdatePeriod();
+			this.updateProbability = properties.getUpdateProbability();
+			this.updateQuantity = properties.getUpdateQuantity();
+		}
+		
+		return updated;
 	}
 	
 	/**

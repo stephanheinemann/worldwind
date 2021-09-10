@@ -453,18 +453,47 @@ public abstract class Datalink implements Connection {
 	 * @return true if the this datalink matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see Connection#matches(Specification)
+	 * @see FactoryProduct#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
-		if ((null != specification) && (specification.getProperties() instanceof DatalinkProperties)) {
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof DatalinkProperties)) {
+			
 			DatalinkProperties dlp = (DatalinkProperties) specification.getProperties();
 			matches = (this.downlinkPeriod == dlp.getDownlinkPeriod());
 		}
 	
 		return matches;
+	}
+	
+	/**
+	 * Updates this datalink according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this datalink has been updated, false otherwise
+	 * 
+	 * @see FactoryProduct#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = false;
+		
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof DatalinkProperties)
+				&& !this.matches(specification)) {
+			
+			DatalinkProperties properties = (DatalinkProperties) specification.getProperties();
+			this.setDownlinkPeriod(properties.getDownlinkPeriod());
+			updated = true;
+		}
+		
+		return updated;
 	}
 	
 }

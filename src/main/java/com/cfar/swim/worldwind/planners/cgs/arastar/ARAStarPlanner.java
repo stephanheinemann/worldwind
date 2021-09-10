@@ -49,6 +49,7 @@ import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -95,6 +96,18 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		this.setMaximumQuality(1d);
 		this.setQualityImprovement(1d);
 		this.setInflation(1d);
+	}
+	
+	/**
+	 * Gets the identifier of this forward ARA* planner.
+	 * 
+	 * @return the identifier of this forward ARA* planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_ARAS_ID;
 	}
 	
 	/**
@@ -850,19 +863,39 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof ARAStarProperties)) {
-			ARAStarProperties fasp = (ARAStarProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(fasp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(fasp.getRiskPolicy()))
-					&& (this.getMinimumQuality() == fasp.getMinimumQuality())
-					&& (this.getMaximumQuality() == fasp.getMaximumQuality())
-					&& (this.getQualityImprovement() == fasp.getQualityImprovement()
-					&& (specification.getId().equals(Specification.PLANNER_ARAS_ID)));
+		if (matches && (specification.getProperties() instanceof ARAStarProperties)) {
+			ARAStarProperties properties = (ARAStarProperties) specification.getProperties();
+			matches = (this.getMinimumQuality() == properties.getMinimumQuality())
+					&& (this.getMaximumQuality() == properties.getMaximumQuality())
+					&& (this.getQualityImprovement() == properties.getQualityImprovement());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this ARA* planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this ARA* planner has been updated, false otherwise
+	 * 
+	 * @see AbstractPlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof ARAStarProperties)) {
+			ARAStarProperties properties = (ARAStarProperties) specification.getProperties();
+			this.setMinimumQuality(properties.getMinimumQuality());
+			this.setMaximumQuality(properties.getMaximumQuality());
+			this.setQualityImprovement(properties.getQualityImprovement());
+		}
+		
+		return updated;
 	}
 	
 }

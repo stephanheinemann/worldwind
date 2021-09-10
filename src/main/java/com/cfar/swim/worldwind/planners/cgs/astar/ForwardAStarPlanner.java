@@ -50,8 +50,8 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planning.Trajectory;
-import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
@@ -98,6 +98,18 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	 */
 	public ForwardAStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this forward A* planner.
+	 * 
+	 * @return the identifier of this forward A* planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_FAS_ID;
 	}
 	
 	/**
@@ -833,23 +845,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		}
 		
 		return supports;
-	}
-	
-	/**
-	 * Determines whether or not this forward A* planner matches a specification.
-	 * 
-	 * @param specification the specification to be matched
-	 * 
-	 * @return true if the this forward A* planner matches the specification,
-	 *         false otherwise
-	 * 
-	 * @see AbstractPlanner#matches(Specification)
-	 */
-	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = super.matches(specification);
-		matches &= (specification.getId().equals(Specification.PLANNER_FAS_ID));
-		return matches;
 	}
 	
 }

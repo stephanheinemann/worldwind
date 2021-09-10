@@ -35,23 +35,41 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.cfar.swim.worldwind.managing.Features;
+import com.cfar.swim.worldwind.managing.HeuristicPlannerTuning;
 import com.cfar.swim.worldwind.planners.LifelongPlanner;
+import com.cfar.swim.worldwind.planners.Planner;
+import com.cfar.swim.worldwind.registries.Properties;
+import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.session.Session;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 
 public class HeuristicAutonomicManager extends AbstractAutonomicManager {
 
 	// TODO: real parallel service if possible (performance evaluation)
-	// otherwise sequential
+	// otherwise sequential (according to available cores https://github.com/oshi/oshi)
 	ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
+	
+	/**
+	 * Gets the identifier of this heuristic autonomic manager.
+	 * 
+	 * @return the identifier of this heuristic autonomic manager
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.MANAGER_HEURISTIC_ID;
+	}
 	
 	@Override
 	public void run(Session managedSession) {
 		for (Scenario managedScenario : this.getManagedScenarios()) {
 			System.out.println(managedScenario.getId());
-			System.out.println(this.getFeatures(managedScenario));
+			System.out.println(this.getPlannerTuning(managedScenario).getFeatures());
 		
 			LifelongPlanner managedPlanner = (LifelongPlanner) managedScenario.getPlanner();
 			List<Position> pois = new ArrayList<Position>();
@@ -74,6 +92,14 @@ public class HeuristicAutonomicManager extends AbstractAutonomicManager {
 					System.out.println("running planner " + managedScenario.getId());
 					Position origin = pois.remove(0);
 					Position destination = pois.remove(pois.size() - 1);
+					
+					// tuning procedure
+					/*
+					List<Properties<Planner>> candidates = getPlannerTuning(managedScenario).tune();
+					getPlannerTuning(managedScenario).getSpecification().setProperties(candidates.get(0));
+					managedPlanner.update(getPlannerTuning(managedScenario).getSpecification());
+					*/
+					
 					if (pois.isEmpty()) {
 						managedPlanner.plan(origin, destination, managedSession.getActiveScenario().getTime());
 					} else {
@@ -84,4 +110,22 @@ public class HeuristicAutonomicManager extends AbstractAutonomicManager {
 		}
 	}
 	// TODO: implement
+	
+	/**
+	 * Creates a new heuristic planner tuning for this abstract autonomic
+	 * manager based on a planner specification and features.
+	 * 
+	 * @param specification the planner specification
+	 * @param features the features
+	 * 
+	 * @return the created heuristic planner tuning
+	 * 
+	 * @see AbstractAutonomicManager#createPlannerTuning(Specification, Features)
+	 */
+	@Override
+	public HeuristicPlannerTuning createPlannerTuning(
+			Specification<Planner> specification, Features features) {
+		return new HeuristicPlannerTuning(specification, features);
+	}
+	
 }

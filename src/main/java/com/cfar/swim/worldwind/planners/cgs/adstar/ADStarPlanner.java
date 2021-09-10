@@ -41,7 +41,6 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.environments.DynamicEnvironment;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.DynamicPlanner;
 import com.cfar.swim.worldwind.planners.LifelongPlanner;
@@ -54,6 +53,7 @@ import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.session.ObstacleManager;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
@@ -101,6 +101,18 @@ implements DynamicPlanner, LifelongPlanner {
 	 */
 	public ADStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this AD* planner.
+	 * 
+	 * @return the identifier of this AD* planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_ADS_ID;
 	}
 	
 	/**
@@ -955,24 +967,39 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return true if the this AD* planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see AbstractPlanner#matches(Specification)
+	 * @see ARAStarPlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof ADStarProperties)) {
-			ADStarProperties adsp = (ADStarProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(adsp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(adsp.getRiskPolicy()))
-					&& (this.getMinimumQuality() == adsp.getMinimumQuality())
-					&& (this.getMaximumQuality() == adsp.getMaximumQuality())
-					&& (this.getQualityImprovement() == adsp.getQualityImprovement()
-					&& (this.getSignificantChange() == adsp.getSignificantChange())
-					&& (specification.getId().equals(Specification.PLANNER_ADS_ID)));
+		if (matches && (specification.getProperties() instanceof ADStarProperties)) {
+			ADStarProperties properties = (ADStarProperties) specification.getProperties();
+			matches = (this.getSignificantChange() == properties.getSignificantChange());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this AD* planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this AD* planner has been updated, false otherwise
+	 * 
+	 * @see ARAStarPlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof ADStarProperties)) {
+			ADStarProperties properties = (ADStarProperties) specification.getProperties();
+			this.setSignificantChange(properties.getSignificantChange());
+		}
+		
+		return updated;
 	}
 	
 }

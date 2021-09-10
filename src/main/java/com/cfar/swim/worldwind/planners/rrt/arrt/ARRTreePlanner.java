@@ -44,7 +44,6 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.AnytimePlanner;
 import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
@@ -54,6 +53,7 @@ import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.ARRTreeProperties;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
@@ -111,6 +111,18 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	public ARRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this ARRT planner.
+	 * 
+	 * @return the identifier of this ARRT planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_ARRT_ID;
 	}
 	
 	/**
@@ -988,31 +1000,45 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @return true if the this ARRT planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see AbstractPlanner#matches(Specification)
+	 * @see RRTreePlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof ARRTreeProperties)) {
-			ARRTreeProperties arrtp = (ARRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(arrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(arrtp.getRiskPolicy()))
-					&& (this.getBias() == arrtp.getBias())
-					&& (this.getEpsilon() == arrtp.getEpsilon())
-					&& (this.getExtension() == arrtp.getExtension())
-					&& (this.getGoalThreshold() == arrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == arrtp.getMaxIterations())
-					&& (this.getSampling() == arrtp.getSampling())
-					&& (this.getStrategy() == arrtp.getStrategy())
-					&& (this.getMaximumQuality() == arrtp.getMaximumQuality())
-					&& (this.getMinimumQuality() == arrtp.getMaximumQuality())
-					&& (this.getNeighborLimit() == arrtp.getNeighborLimit())
-					&& (this.getQualityImprovement() == arrtp.getQualityImprovement())
-					&& (specification.getId().equals(Specification.PLANNER_ARRT_ID));
+		if (matches && (specification.getProperties() instanceof ARRTreeProperties)) {
+			ARRTreeProperties properties = (ARRTreeProperties) specification.getProperties();
+			matches = (this.getMaximumQuality() == properties.getMaximumQuality())
+					&& (this.getMinimumQuality() == properties.getMinimumQuality())
+					&& (this.getNeighborLimit() == properties.getNeighborLimit())
+					&& (this.getQualityImprovement() == properties.getQualityImprovement());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this ARRT planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this ARRT planner has been updated, false otherwise
+	 * 
+	 * @see RRTreePlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof ARRTreeProperties)) {
+			ARRTreeProperties properties = (ARRTreeProperties) specification.getProperties();
+			this.setMaximumQuality(properties.getMaximumQuality());
+			this.setMinimumQuality(properties.getMinimumQuality());
+			this.setNeighborLimit(properties.getNeighborLimit());
+			this.setQualityImprovement(properties.getQualityImprovement());
+		}
+		
+		return updated;
 	}
 	
 }

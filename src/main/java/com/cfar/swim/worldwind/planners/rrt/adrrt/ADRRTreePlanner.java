@@ -37,7 +37,6 @@ import java.util.Set;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.DynamicPlanner;
 import com.cfar.swim.worldwind.planners.LifelongPlanner;
@@ -50,6 +49,7 @@ import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.ADRRTreeProperties;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.session.ObstacleManager;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -95,6 +95,18 @@ implements DynamicPlanner, LifelongPlanner {
 	 */
 	public ADRRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this ADRRT planner.
+	 * 
+	 * @return the identifier of this ADRRT planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_ADRRT_ID;
 	}
 	
 	/**
@@ -756,32 +768,39 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return true if the this ADRRT planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see AbstractPlanner#matches(Specification)
+	 * @see ARRTreePlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof ADRRTreeProperties)) {
-			ADRRTreeProperties adrrtp = (ADRRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(adrrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(adrrtp.getRiskPolicy()))
-					&& (this.getBias() == adrrtp.getBias())
-					&& (this.getEpsilon() == adrrtp.getEpsilon())
-					&& (this.getExtension() == adrrtp.getExtension())
-					&& (this.getGoalThreshold() == adrrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == adrrtp.getMaxIterations())
-					&& (this.getSampling() == adrrtp.getSampling())
-					&& (this.getStrategy() == adrrtp.getStrategy())
-					&& (this.getMaximumQuality() == adrrtp.getMaximumQuality())
-					&& (this.getMinimumQuality() == adrrtp.getMaximumQuality())
-					&& (this.getNeighborLimit() == adrrtp.getNeighborLimit())
-					&& (this.getQualityImprovement() == adrrtp.getQualityImprovement())
-					&& (this.getSignificantChange() == adrrtp.getSignificantChange())
-					&& (specification.getId().equals(Specification.PLANNER_ADRRT_ID));
+		if (matches && (specification.getProperties() instanceof ADRRTreeProperties)) {
+			ADRRTreeProperties properties = (ADRRTreeProperties) specification.getProperties();
+			matches = (this.getSignificantChange() == properties.getSignificantChange());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this ADRRT planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this ADRRT planner has been updated, false otherwise
+	 * 
+	 * @see ARRTreePlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof ADRRTreeProperties)) {
+			ADRRTreeProperties properties = (ADRRTreeProperties) specification.getProperties();
+			this.setSignificantChange(properties.getSignificantChange());
+		}
+		
+		return updated;
 	}
 	
 }

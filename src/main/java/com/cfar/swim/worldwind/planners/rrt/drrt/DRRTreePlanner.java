@@ -41,7 +41,6 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.DynamicPlanner;
 import com.cfar.swim.worldwind.planners.LifelongPlanner;
@@ -55,6 +54,7 @@ import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.DRRTreeProperties;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.session.ObstacleManager;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 
@@ -100,6 +100,18 @@ implements DynamicPlanner, LifelongPlanner {
 	 */
 	public DRRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this dynamic RRT planner.
+	 * 
+	 * @return the identifier of this dynamic RRT planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_DRRT_ID;
 	}
 	
 	/**
@@ -822,32 +834,39 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return true if the this DRRT planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see AbstractPlanner#matches(Specification)
+	 * @see HRRTreePlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof DRRTreeProperties)) {
-			DRRTreeProperties drrtp = (DRRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(drrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(drrtp.getRiskPolicy()))
-					&& (this.getBias() == drrtp.getBias())
-					&& (this.getEpsilon() == drrtp.getEpsilon())
-					&& (this.getExtension() == drrtp.getExtension())
-					&& (this.getGoalThreshold() == drrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == drrtp.getMaxIterations())
-					&& (this.getSampling() == drrtp.getSampling())
-					&& (this.getStrategy() == drrtp.getStrategy())
-					&& (this.getAlgorithm() == drrtp.getAlgorithm())
-					&& (this.getVariant() == drrtp.getVariant())
-					&& (this.getNeighborLimit() == drrtp.getNeighborLimit())
-					&& (this.getQualityBound() == drrtp.getQualityBound())
-					&& (this.getSignificantChange() == drrtp.getSignificantChange())
-					&& (specification.getId().equals(Specification.PLANNER_DRRT_ID));
+		if (matches && (specification.getProperties() instanceof DRRTreeProperties)) {
+			DRRTreeProperties properties = (DRRTreeProperties) specification.getProperties();
+			matches = (this.getSignificantChange() == properties.getSignificantChange());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this DRRT planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this DRRT planner has been updated, false otherwise
+	 * 
+	 * @see HRRTreePlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof DRRTreeProperties)) {
+			DRRTreeProperties properties = (DRRTreeProperties) specification.getProperties();
+			this.setSignificantChange(properties.getSignificantChange());
+		}
+		
+		return updated;
 	}
 	
 }

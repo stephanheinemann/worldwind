@@ -29,8 +29,8 @@
  */
 package com.cfar.swim.worldwind.aircraft;
 
-import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -130,22 +130,17 @@ public class Iris extends Quadcopter {
 		// TODO: use actual live data for symbol annotations...
 		this.getDepiction().setModifier(SymbologyConstants.SPEED, Iris.CRUISE_SPEED);
 	}
-
+	
 	/**
-	 * Determines whether or not this Iris matches a specification.
+	 * Gets the identifier of this Iris.
 	 * 
-	 * @param specification the specification to be matched
+	 * @return the identifier of this Iris
 	 * 
-	 * @return true if the this Iris matches the specification,
-	 *         false otherwise
-	 * 
-	 * @see Quadcopter#matches(Specification)
+	 * @see Identifiable#getId()
 	 */
 	@Override
-	public final boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = super.matches(specification);
-		matches &= specification.getId().equals(Specification.AIRCRAFT_IRIS_ID);
-		return matches;
+	public String getId() {
+		return Specification.AIRCRAFT_IRIS_ID;
 	}
 	
 }

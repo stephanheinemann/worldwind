@@ -55,6 +55,7 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Plane;
@@ -115,6 +116,18 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	public RRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this RRT planner.
+	 * 
+	 * @return the identifier of this RRT planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_RRT_ID;
 	}
 	
 	/**
@@ -951,23 +964,47 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof RRTreeProperties)) {
-			RRTreeProperties rrtp = (RRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(rrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(rrtp.getRiskPolicy()))
-					&& (this.getBias() == rrtp.getBias())
-					&& (this.getEpsilon() == rrtp.getEpsilon())
-					&& (this.getExtension() == rrtp.getExtension())
-					&& (this.getGoalThreshold() == rrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == rrtp.getMaxIterations())
-					&& (this.getSampling() == rrtp.getSampling())
-					&& (this.getStrategy() == rrtp.getStrategy())
-					&& (specification.getId().equals(Specification.PLANNER_RRT_ID));
+		if (matches && (specification.getProperties() instanceof RRTreeProperties)) {
+			RRTreeProperties properties = (RRTreeProperties) specification.getProperties();
+			matches = (this.getBias() == properties.getBias())
+					&& (this.getEpsilon() == properties.getEpsilon())
+					&& (this.getExtension() == properties.getExtension())
+					&& (this.getGoalThreshold() == properties.getGoalThreshold())
+					&& (this.getMaxIterations() == properties.getMaxIterations())
+					&& (this.getSampling() == properties.getSampling())
+					&& (this.getStrategy() == properties.getStrategy());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this RRT planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this RRT planner has been updated, false otherwise
+	 * 
+	 * @see AbstractPlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof RRTreeProperties)) {
+			RRTreeProperties properties = (RRTreeProperties) specification.getProperties();
+			this.setBias(properties.getBias());
+			this.setEpsilon(properties.getEpsilon());
+			this.setExtension(properties.getExtension());
+			this.setGoalThreshold(properties.getGoalThreshold());
+			this.setMaxIterations(properties.getMaxIterations());
+			this.setSampling(properties.getSampling());
+			this.setStrategy(properties.getStrategy());
+		}
+		
+		return updated;
 	}
 	
 }

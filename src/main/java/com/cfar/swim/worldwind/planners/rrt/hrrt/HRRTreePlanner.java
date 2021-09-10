@@ -39,13 +39,13 @@ import java.util.Set;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.rrt.Status;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreeWaypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
@@ -87,6 +87,18 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 */
 	public HRRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
+	}
+	
+	/**
+	 * Gets the identifier of this heuristic RRT planner.
+	 * 
+	 * @return the identifier of this heuristic RRT planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_HRRT_ID;
 	}
 	
 	/**
@@ -522,31 +534,45 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @return true if the this hRRT planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see AbstractPlanner#matches(Specification)
+	 * @see RRTreePlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof HRRTreeProperties)) {
-			HRRTreeProperties hrrtp = (HRRTreeProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(hrrtp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(hrrtp.getRiskPolicy()))
-					&& (this.getBias() == hrrtp.getBias())
-					&& (this.getEpsilon() == hrrtp.getEpsilon())
-					&& (this.getExtension() == hrrtp.getExtension())
-					&& (this.getGoalThreshold() == hrrtp.getGoalThreshold())
-					&& (this.getMaxIterations() == hrrtp.getMaxIterations())
-					&& (this.getSampling() == hrrtp.getSampling())
-					&& (this.getStrategy() == hrrtp.getStrategy())
-					&& (this.getAlgorithm() == hrrtp.getAlgorithm())
-					&& (this.getVariant() == hrrtp.getVariant())
-					&& (this.getNeighborLimit() == hrrtp.getNeighborLimit())
-					&& (this.getQualityBound() == hrrtp.getQualityBound())
-					&& (specification.getId().equals(Specification.PLANNER_HRRT_ID));
+		if (matches && (specification.getProperties() instanceof HRRTreeProperties)) {
+			HRRTreeProperties properties = (HRRTreeProperties) specification.getProperties();
+			matches = (this.getAlgorithm().equals(properties.getAlgorithm()))
+					&& (this.getVariant().equals(properties.getVariant()))
+					&& (this.getNeighborLimit() == properties.getNeighborLimit())
+					&& (this.getQualityBound() == properties.getQualityBound());
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this hRRT planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this hRRT planner has been updated, false otherwise
+	 * 
+	 * @see RRTreePlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof HRRTreeProperties)) {
+			HRRTreeProperties properties = (HRRTreeProperties) specification.getProperties();
+			this.setAlgorithm(properties.getAlgorithm());
+			this.setVariant(properties.getVariant());
+			this.setNeighborLimit(properties.getNeighborLimit());
+			this.setQualityBound(properties.getQualityBound());
+		}
+		
+		return updated;
 	}
 	
 }

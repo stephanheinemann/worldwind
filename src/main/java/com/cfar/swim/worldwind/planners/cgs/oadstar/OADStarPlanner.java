@@ -42,7 +42,6 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
@@ -58,6 +57,7 @@ import com.cfar.swim.worldwind.tracks.AircraftTrack;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -115,6 +115,18 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	public OADStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 		this.addPlanRevisionListener(new MissionLoader());
+	}
+	
+	/**
+	 * Gets the identifier of this OAD* planner.
+	 * 
+	 * @return the identifier of this OAD* planner
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.PLANNER_OADS_ID;
 	}
 	
 	/**
@@ -998,30 +1010,49 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	 * @return true if the this OAD* planner matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see AbstractPlanner#matches(Specification)
+	 * @see ADStarPlanner#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = false;
+		boolean matches = super.matches(specification);
 		
-		if ((null != specification) && (specification.getProperties() instanceof OADStarProperties)) {
-			OADStarProperties oadsp = (OADStarProperties) specification.getProperties();
-			matches = (this.getCostPolicy().equals(oadsp.getCostPolicy()))
-					&& (this.getRiskPolicy().equals(oadsp.getRiskPolicy()))
-					&& (this.getMinimumQuality() == oadsp.getMinimumQuality())
-					&& (this.getMaximumQuality() == oadsp.getMaximumQuality())
-					&& (this.getQualityImprovement() == oadsp.getQualityImprovement()
-					&& (this.getSignificantChange() == oadsp.getSignificantChange())
-					&& (this.getMaxTrackError().getCrossTrackError() == oadsp.getMaxCrossTrackError())
-					&& (this.getMaxTrackError().getTimingError().equals(Duration.ofSeconds(oadsp.getMaxTimingError())))
-					&& (this.getMaxTakeOffError().getHorizontalError() == oadsp.getMaxTakeOffHorizontalError())
-					&& (this.getMaxTakeOffError().getTimingError().equals(Duration.ofSeconds(oadsp.getMaxTakeOffTimingError())))
-					&& (this.getMaxLandingError().getHorizontalError() == oadsp.getMaxLandingHorizontalError())
-					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(oadsp.getMaxLandingTimingError())))
-					&& (specification.getId().equals(Specification.PLANNER_OADS_ID)));
+		if (matches && (specification.getProperties() instanceof OADStarProperties)) {
+			OADStarProperties properties = (OADStarProperties) specification.getProperties();
+			matches = (this.getMaxTrackError().getCrossTrackError() == properties.getMaxCrossTrackError())
+					&& (this.getMaxTrackError().getTimingError().equals(Duration.ofSeconds(properties.getMaxTimingError())))
+					&& (this.getMaxTakeOffError().getHorizontalError() == properties.getMaxTakeOffHorizontalError())
+					&& (this.getMaxTakeOffError().getTimingError().equals(Duration.ofSeconds(properties.getMaxTakeOffTimingError())))
+					&& (this.getMaxLandingError().getHorizontalError() == properties.getMaxLandingHorizontalError())
+					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(properties.getMaxLandingTimingError())));
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this OAD* planner according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this OAD* planner has been updated, false otherwise
+	 * 
+	 * @see ADStarPlanner#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof OADStarProperties)) {
+			OADStarProperties properties = (OADStarProperties) specification.getProperties();
+			this.getMaxTrackError().setCrossTrackError(properties.getMaxCrossTrackError());
+			this.getMaxTrackError().setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+			this.getMaxTakeOffError().setHorizontalError(properties.getMaxTakeOffHorizontalError());
+			this.getMaxTakeOffError().setTimingError(Duration.ofSeconds(properties.getMaxTakeOffTimingError()));
+			this.getMaxLandingError().setHorizontalError(properties.getMaxLandingHorizontalError());
+			this.getMaxLandingError().setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
+		}
+		
+		return updated;
 	}
 	
 }
