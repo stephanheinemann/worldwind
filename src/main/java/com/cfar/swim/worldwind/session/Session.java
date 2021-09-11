@@ -151,6 +151,9 @@ public class Session implements Identifiable {
 	/** the setup of this session */
 	private Setup setup;
 	
+	/** the autonomic manager of this session */
+	private AutonomicManager manager = null;
+	
 	/**
 	 * Constructs and initializes a default session.
 	 */
@@ -707,6 +710,33 @@ public class Session implements Identifiable {
 	 */
 	public void setSetup(Setup setup) {
 		this.setup = setup;
+	}
+	
+	/**
+	 * Gets the autonomic manager of this session.
+	 * 
+	 * @return the autonomic manager of this session
+	 */
+	public AutonomicManager getManager() {
+		return this.manager;
+	}
+	
+	/**
+	 * Sets the autonomic manager of this session.
+	 * 
+	 * @param manager the autonomic manager of this session
+	 */
+	public void setManager(AutonomicManager manager) {
+		this.manager = manager;
+	}
+	
+	/**
+	 * Determines whether or not this session has an autonomic manager.
+	 * 
+	 * @return true if this session has an autonomic manager, false otherwise
+	 */
+	public boolean hasManager() {
+		return (null != this.manager);
 	}
 	
 	/**

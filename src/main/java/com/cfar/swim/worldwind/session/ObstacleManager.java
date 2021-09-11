@@ -59,6 +59,14 @@ public interface ObstacleManager {
 	public void submitRemoveObstacles(Set<Obstacle> obstacles);
 	
 	/**
+	 * Submits an obstacle replacement to this obstacle manager. The obstacle
+	 * replacement has to be committed before being effective.
+	 * 
+	 * @param obstacles the obstacles to be replaced in this obstacle manager
+	 */
+	public void submitReplaceObstacles(Set<Obstacle> obstacles);
+	
+	/**
 	 * Submits an obstacle clearance to this obstacle manager. The obstacle
 	 * clearance has to be committed before being effective.
 	 */

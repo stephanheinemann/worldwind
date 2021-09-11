@@ -96,6 +96,13 @@ public interface AutonomicManager extends FactoryProduct {
 	public void setFeatureHorizon(Duration featureHorizon);
 	
 	/**
+	 * Gets the source scenario of this autonomic manager.
+	 * 
+	 * @return the source scenario of this autonomic manager
+	 */
+	public Scenario getSourceScenario();
+	
+	/**
 	 * Gets the managed scenarios of this autonomic manager.
 	 * 
 	 * @return the managed scenarios of this autonomic manager
@@ -142,12 +149,7 @@ public interface AutonomicManager extends FactoryProduct {
 	public void manage(Session session);
 	
 	/**
-	 * Abandons the managed session without terminating its planners.
-	 */
-	public void abandon();
-	
-	/**
-	 * Terminates the managed session.
+	 * Terminates the managed session of this autonomic manager.
 	 */
 	public void terminate();
 	

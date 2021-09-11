@@ -72,7 +72,7 @@ public class TrajectoryQuality implements Quality {
 		double measure = 0d;
 		
 		if (!quality.isEmpty()) {
-			measure = 1d / quality.getLastWaypoint().getCost();
+			measure = 1d / quality.getCost();
 			// TODO: weighted quality
 			// TODO: number of legs / edges (heading changes)
 			// TODO: horizontal versus vertical distance (cost calculation)

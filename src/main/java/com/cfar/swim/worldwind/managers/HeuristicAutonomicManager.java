@@ -29,29 +29,13 @@
  */
 package com.cfar.swim.worldwind.managers;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
-
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.HeuristicPlannerTuning;
-import com.cfar.swim.worldwind.planners.LifelongPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.registries.Properties;
 import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.session.Scenario;
-import com.cfar.swim.worldwind.session.Session;
 import com.cfar.swim.worldwind.util.Identifiable;
 
-import gov.nasa.worldwind.geom.Position;
-
 public class HeuristicAutonomicManager extends AbstractAutonomicManager {
-
-	// TODO: real parallel service if possible (performance evaluation)
-	// otherwise sequential (according to available cores https://github.com/oshi/oshi)
-	ScheduledExecutorService executor = Executors.newScheduledThreadPool(4);
 	
 	/**
 	 * Gets the identifier of this heuristic autonomic manager.
@@ -64,52 +48,6 @@ public class HeuristicAutonomicManager extends AbstractAutonomicManager {
 	public String getId() {
 		return Specification.MANAGER_HEURISTIC_ID;
 	}
-	
-	@Override
-	public void run(Session managedSession) {
-		for (Scenario managedScenario : this.getManagedScenarios()) {
-			System.out.println(managedScenario.getId());
-			System.out.println(this.getPlannerTuning(managedScenario).getFeatures());
-		
-			LifelongPlanner managedPlanner = (LifelongPlanner) managedScenario.getPlanner();
-			List<Position> pois = new ArrayList<Position>();
-			pois.addAll(managedScenario.getWaypoints());
-			
-			this.executor.schedule(new Runnable() {
-				@Override
-				public void run() {
-					System.out.println("terminating planner " + managedScenario.getId());
-					managedPlanner.terminate();
-				}
-				
-			}, 10l, TimeUnit.SECONDS);
-			
-			// TODO: a managed planner could be a task itself?
-			this.executor.execute(new Runnable() {
-				@Override
-				public void run() {
-					
-					System.out.println("running planner " + managedScenario.getId());
-					Position origin = pois.remove(0);
-					Position destination = pois.remove(pois.size() - 1);
-					
-					// tuning procedure
-					/*
-					List<Properties<Planner>> candidates = getPlannerTuning(managedScenario).tune();
-					getPlannerTuning(managedScenario).getSpecification().setProperties(candidates.get(0));
-					managedPlanner.update(getPlannerTuning(managedScenario).getSpecification());
-					*/
-					
-					if (pois.isEmpty()) {
-						managedPlanner.plan(origin, destination, managedSession.getActiveScenario().getTime());
-					} else {
-						managedPlanner.plan(origin, destination, pois, managedSession.getActiveScenario().getTime());
-					}
-				}
-			});// TODO Auto-generated method stub
-		}
-	}
-	// TODO: implement
 	
 	/**
 	 * Creates a new heuristic planner tuning for this abstract autonomic

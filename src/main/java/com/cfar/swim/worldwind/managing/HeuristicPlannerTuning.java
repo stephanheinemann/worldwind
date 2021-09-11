@@ -107,10 +107,17 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 				candidate.setMaximumQuality(1.0d);
 				candidate.setQualityImprovement(1.0d);
 			} else {
+				candidate.setBias(5);
 				candidate.setEpsilon(0.05d * (Double) features.get(Features.FEATURE_POIS_DISTANCE_MAX));
 				candidate.setGoalThreshold(candidate.getMaxLandingHorizontalError() / 2d);
+				candidate.setStrategy(Strategy.EXTEND);
+				candidate.setMaxIterations(1500);
+				candidate.setNeighborLimit(5);
+				candidate.setMinimumQuality(0.1d);
+				candidate.setMaximumQuality(1.0d);
+				candidate.setQualityImprovement(0.1d);
 			}
-			
+			/*
 			candidate.getExtension();
 			candidate.getGoalThreshold();
 			candidate.getMaximumQuality();
@@ -120,7 +127,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			candidate.getQualityImprovement();
 			candidate.getSampling();
 			candidate.getSignificantChange();
-			
+			*/
 			/*
 			if (0 == (Integer) features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
 				candidate.setStrategy(Strategy.CONNECT);

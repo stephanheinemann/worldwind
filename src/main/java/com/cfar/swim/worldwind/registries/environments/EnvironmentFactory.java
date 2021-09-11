@@ -140,7 +140,7 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 	            int sCells = (int) Math.ceil(envBox.getSLength() / side);
 	            int tCells = (int) Math.ceil(envBox.getTLength() / side);
 	            environment = new PlanningGrid(envCube, properties.getDivision(), sCells, tCells);
-	            environment.setThreshold(0d);
+	            environment.setThreshold(this.scenario.getThreshold());
 	            environment.setGlobe(this.scenario.getGlobe());
 	            ((PlanningGrid) environment).addStructuralChangeListener(this.scenario);
 			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID)) {
@@ -148,7 +148,7 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
 				Box envBox = new Box(bb);
 				environment = new PlanningContinuum(envBox);
-				environment.setThreshold(0d);
+				environment.setThreshold(this.scenario.getThreshold());
 				environment.setGlobe(this.scenario.getGlobe());
 				((PlanningContinuum) environment).setResolution(properties.getResolution());
 				((PlanningContinuum) environment).addStructuralChangeListener(this.scenario); 

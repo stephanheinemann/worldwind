@@ -1328,6 +1328,33 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
+	 * Submits an obstacle replacement to this scenario. The obstacle
+	 * replacement has to be committed before being effective. Commitment will
+	 * take place implicitly if this scenario is not hosting a dynamic planner.
+	 * 
+	 * @param obstacles the obstacles to be replaced in this scenario
+	 * 
+	 * @see ObstacleManager#submitReplaceObstacles(Set)
+	 */
+	@Override
+	public synchronized void submitReplaceObstacles(Set<Obstacle> obstacles) {
+		this.pendingRemovedObstacles.clear();
+		this.pendingRemovedObstacles.addAll(this.obstacles);
+		this.pendingRemovedObstacles.removeAll(obstacles);
+		this.pendingAddedObstacles.clear();
+		this.pendingAddedObstacles.addAll(obstacles);
+		this.pendingAddedObstacles.removeAll(this.obstacles);
+		// notify dynamic obstacle listener about cleared obstacles
+		if ((!this.pendingRemovedObstacles.isEmpty() || !this.pendingAddedObstacles.isEmpty())
+				&& (this.getPlanner() instanceof DynamicObstacleListener)
+				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
+			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		} else {
+			this.commitObstacleChange();
+		}
+	}
+	
+	/**
 	 * Submits an obstacle clearance to this scenario. The obstacle clearance
 	 * has to be committed before being effective. Commitment will take place
 	 * implicitly if this scenario is not hosting a dynamic planner.
