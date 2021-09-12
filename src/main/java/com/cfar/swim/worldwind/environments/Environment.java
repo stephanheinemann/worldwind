@@ -356,7 +356,7 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	 * 
 	 * @return the obstacles within this environment
 	 */
-	public Iterable<Obstacle> getObstacles();
+	public Set<Obstacle> getObstacles();
 	
 	/**
 	 * Determines whether or not a straight leg of two positions collides with

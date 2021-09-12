@@ -1533,7 +1533,7 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 * @see Environment#getObstacles()
 	 */
 	@Override
-	public Iterable<Obstacle> getObstacles() {
+	public Set<Obstacle> getObstacles() {
 		return Collections.unmodifiableSet(this.obstacles);
 	}
 	

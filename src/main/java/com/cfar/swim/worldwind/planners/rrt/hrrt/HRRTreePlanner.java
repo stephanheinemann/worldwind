@@ -162,7 +162,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * 
 	 * @return the heuristic algorithm of this hRRT planner
 	 */
-	public HRRTreeAlgorithm getAlgorithm() {
+	public synchronized HRRTreeAlgorithm getAlgorithm() {
 		return this.algorithm;
 	}
 	
@@ -171,7 +171,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * 
 	 * @param algorithm the heuristic algorithm to be set
 	 */
-	public void setAlgorithm(HRRTreeAlgorithm algorithm) {
+	public synchronized void setAlgorithm(HRRTreeAlgorithm algorithm) {
 		this.algorithm = algorithm;
 	}
 	
@@ -198,7 +198,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * 
 	 * @return the applied quality assessment variant of this hRRT planner
 	 */
-	public HRRTreeQualityVariant getVariant() {
+	public synchronized HRRTreeQualityVariant getVariant() {
 		return this.getQuality().getVariant();
 	}
 	
@@ -207,7 +207,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * 
 	 * @param variant the applied assessment variant to be set
 	 */
-	public void setVariant(HRRTreeQualityVariant variant) {
+	public synchronized void setVariant(HRRTreeQualityVariant variant) {
 		this.getQuality().setVariant(variant);
 	}
 	
@@ -218,7 +218,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @return the limit neighbors to consider for extension by this hRRT
 	 *         planner
 	 */
-	public int getNeighborLimit() {
+	public synchronized int getNeighborLimit() {
 		return this.neighborLimit;
 	}
 	
@@ -230,7 +230,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * 
 	 * @throws IllegalArgumentException if neighbor limit is invalid
 	 */
-	public void setNeighborLimit(int neighborLimit) {
+	public synchronized void setNeighborLimit(int neighborLimit) {
 		if ((0 < neighborLimit) && (Integer.MAX_VALUE >= neighborLimit)) {
 			this.neighborLimit = neighborLimit;
 		} else {
@@ -245,7 +245,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @return the quality (probability) bound of the quality assessment
 	 *         function of this hRRT planner
 	 */
-	public double getQualityBound() {
+	public synchronized double getQualityBound() {
 		return this.getQuality().getQualityBound();
 	}
 	
@@ -255,7 +255,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * 
 	 * @param qualityBound the quality (probability) bound to be set
 	 */
-	public void setQualityBound(double qualityBound) {
+	public synchronized void setQualityBound(double qualityBound) {
 		this.getQuality().setQualityBound(qualityBound);
 	}
 	
@@ -314,7 +314,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	protected HRRTreeWaypoint selectWaypointIk() {
 		HRRTreeWaypoint sample = null;
 		PriorityQueue<HRRTreeWaypoint> neighbors =
-				new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.quality));
+				new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.getQuality()));
 		
 		Random random = new Random();
 		
@@ -347,7 +347,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	protected HRRTreeWaypoint selectWaypointBk() {
 		HRRTreeWaypoint sample = null, nearest = null;
 		PriorityQueue<HRRTreeWaypoint> neighbors =
-				new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.quality));
+				new PriorityQueue<HRRTreeWaypoint>(Comparator.comparingDouble(this.getQuality()));
 		
 		Random random = new Random();
 		double quality = 0d, threshold = 1d;
@@ -537,7 +537,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @see RRTreePlanner#matches(Specification)
 	 */
 	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof HRRTreeProperties)) {
@@ -561,7 +561,7 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 * @see RRTreePlanner#update(Specification)
 	 */
 	@Override
-	public boolean update(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean update(Specification<? extends FactoryProduct> specification) {
 		boolean updated = super.update(specification);
 		
 		if (updated && (specification.getProperties() instanceof HRRTreeProperties)) {

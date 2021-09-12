@@ -217,7 +217,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @see OnlinePlanner#getMaxTakeOffError()
 	 */
 	@Override
-	public AircraftTrackPointError getMaxTakeOffError() {
+	public synchronized AircraftTrackPointError getMaxTakeOffError() {
 		return this.maxTakeOffError;
 	}
 	
@@ -232,7 +232,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @see OnlinePlanner#setMaxTakeOffError(AircraftTrackPointError)
 	 */
 	@Override
-	public void setMaxTakeOffError(AircraftTrackPointError maxTakeOffError) {
+	public synchronized void setMaxTakeOffError(AircraftTrackPointError maxTakeOffError) {
 		if (null == maxTakeOffError) {
 			throw new IllegalArgumentException();
 		}
@@ -325,7 +325,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @see OnlinePlanner#getMaxLandingError()
 	 */
 	@Override
-	public AircraftTrackPointError getMaxLandingError() {
+	public synchronized AircraftTrackPointError getMaxLandingError() {
 		return this.maxLandingError;
 	}
 	
@@ -340,7 +340,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @see OnlinePlanner#setMaxLandingError(AircraftTrackPointError)
 	 */
 	@Override
-	public void setMaxLandingError(AircraftTrackPointError maxLandingError) {
+	public synchronized void setMaxLandingError(AircraftTrackPointError maxLandingError) {
 		if (null == maxLandingError) {
 			throw new IllegalArgumentException();
 		}
@@ -432,7 +432,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @see OnlinePlanner#getMaxTrackError()
 	 */
 	@Override
-	public AircraftTrackError getMaxTrackError() {
+	public synchronized AircraftTrackError getMaxTrackError() {
 		return this.maxTrackError;
 	}
 	
@@ -445,7 +445,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @see OnlinePlanner#setMaxTrackError(AircraftTrackError)
 	 */
 	@Override
-	public void setMaxTrackError(AircraftTrackError maxTrackError) {
+	public synchronized void setMaxTrackError(AircraftTrackError maxTrackError) {
 		if (null == maxTrackError) {
 			throw new IllegalArgumentException();
 		}
@@ -528,7 +528,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 					deto = Duration.between(next.getEto(), eto).abs();
 					Logging.logger().info("eto = " + eto + ", deto = " + deto);
 				} else {
-					deto = this.maxTrackError.getTimingError().plusSeconds(1);
+					deto = this.getMaxTrackError().getTimingError().plusSeconds(1);
 				}
 				
 				isOnTrack = (this.getMaxTrackError().getCrossTrackError() >= hced)
@@ -714,6 +714,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			} else {
 				riskyProbes = 0;
 			}
+			Thread.yield();
 		}
 		// backup after elaboration
 		this.backup(partIndex);
@@ -1032,7 +1033,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @see ADRRTreePlanner#matches(Specification)
 	 */
 	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof OADRRTreeProperties)) {
@@ -1058,7 +1059,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @see ADRRTreePlanner#update(Specification)
 	 */
 	@Override
-	public boolean update(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean update(Specification<? extends FactoryProduct> specification) {
 		boolean updated = super.update(specification);
 		
 		if (updated && (specification.getProperties() instanceof OADRRTreeProperties)) {

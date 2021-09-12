@@ -229,7 +229,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the sampling distribution of this RRT planner
 	 */
-	public Sampling getSampling() {
+	public synchronized Sampling getSampling() {
 		return this.sampling;
 	}
 	
@@ -238,7 +238,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @param sampling the sampling distribution to be set
 	 */
-	public void setSampling(Sampling sampling) {
+	public synchronized void setSampling(Sampling sampling) {
 		this.sampling = sampling;
 	}
 	
@@ -247,7 +247,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the expansion strategy of this RRT planner
 	 */
-	public Strategy getStrategy() {
+	public synchronized Strategy getStrategy() {
 		return this.strategy;
 	}
 	
@@ -256,7 +256,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @param strategy the expansion strategy to be set
 	 */
-	public void setStrategy(Strategy strategy) {
+	public synchronized void setStrategy(Strategy strategy) {
 		this.strategy = strategy;
 	}
 	
@@ -265,7 +265,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the extension technique of this RRT planner
 	 */
-	public Extension getExtension() {
+	public synchronized Extension getExtension() {
 		return this.extension;
 	}
 	
@@ -274,7 +274,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @param extension the extension technique to be set
 	 */
-	public void setExtension(Extension extension) {
+	public synchronized void setExtension(Extension extension) {
 		this.extension = extension;
 	}
 	
@@ -284,7 +284,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the maximum number of sampling iterations of this RRT planner
 	 */
-	public int getMaxIterations() {
+	public synchronized int getMaxIterations() {
 		return this.maxIterations;
 	}
 	
@@ -296,7 +296,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @throws IllegalArgumentException if maximum iterations is invalid
 	 */
-	public void setMaxIterations(int maxIterations) {
+	public synchronized void setMaxIterations(int maxIterations) {
 		if ((0 < maxIterations) && (Integer.MAX_VALUE >= maxIterations)) {
 			this.maxIterations = maxIterations;
 		} else {
@@ -310,7 +310,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the maximum extension distance of this RRT planner
 	 */
-	public double getEpsilon() {
+	public synchronized double getEpsilon() {
 		return this.epsilon;
 	}
 	
@@ -322,7 +322,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @throws IllegalArgumentException if epsilon is invalid
 	 */
-	public void setEpsilon(double epsilon) {
+	public synchronized void setEpsilon(double epsilon) {
 		if ((1d < epsilon) && (Double.MAX_VALUE >= epsilon)) {
 			this.epsilon = epsilon;
 		} else {
@@ -335,7 +335,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the sampling bias towards the goal of this RRT planner
 	 */
-	public int getBias() {
+	public synchronized int getBias() {
 		return this.bias;
 	}
 	
@@ -346,8 +346,8 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @throws IllegalArgumentException if bias is invalid
 	 */
-	public void setBias(int bias) {
-		if ((0d <= bias) && (100d >= bias)) {
+	public synchronized void setBias(int bias) {
+		if ((0 <= bias) && (100 >= bias)) {
 			this.bias = bias;
 		} else {
 			throw new IllegalArgumentException("bias is invalid");
@@ -361,7 +361,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return the radius of the sphere defining the goal region of this RRT
 	 *         planner
 	 */
-	public double getGoalThreshold() {
+	public synchronized double getGoalThreshold() {
 		return this.goalThreshold;
 	}
 
@@ -374,7 +374,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @throws IllegalArgumentException if goal threshold is invalid
 	 */
-	public void setGoalThreshold(double goalThreshold) {
+	public synchronized void setGoalThreshold(double goalThreshold) {
 		if ((0d <= goalThreshold) && (Double.MAX_VALUE >= goalThreshold)) {
 			this.goalThreshold = goalThreshold;
 		} else {
@@ -477,7 +477,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected RRTreeWaypoint sampleBiased() {
 		int random = new Random().nextInt(100 - 1) + 1;
-		return (random <= this.bias) ? this.getGoal() : this.sample();
+		return (random <= this.getBias()) ? this.getGoal() : this.sample();
 	}
 	
 	/**
@@ -658,7 +658,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the extension position
 	 */
-	protected Position growPosition(Position source, Position destination) {
+	protected synchronized Position growPosition(Position source, Position destination) {
 		Position position = null;
 		
 		Vec4 point1 = this.getEnvironment().getGlobe().computePointFromPosition(source);
@@ -666,13 +666,13 @@ public class RRTreePlanner extends AbstractPlanner {
 		
 		double distance = point1.distanceTo3(point2);
 		
-		if (distance <= this.epsilon) {
+		if (distance <= this.getEpsilon()) {
 			// distance is within maximum distance epsilon
 			position = destination;
 		} else {
 			// shorten distance to maximum distance epsilon
 			Vec4 dp = point2.subtract3(point1);
-			Vec4 edp = dp.normalize3().multiply3(this.epsilon);
+			Vec4 edp = dp.normalize3().multiply3(this.getEpsilon());
 			Vec4 point = point1.add3(edp);
 			position = super.getEnvironment().getGlobe().computePositionFromPoint(point);
 		}
@@ -690,7 +690,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * 
 	 * @return the extension position
 	 */
-	protected Position growFeasiblePosition(Position source, Position destination) {
+	protected synchronized Position growFeasiblePosition(Position source, Position destination) {
 		Position position = null;
 		
 		Aircraft aircraft = this.getAircraft();
@@ -725,7 +725,7 @@ public class RRTreePlanner extends AbstractPlanner {
 			Plane rotationPlane = Plane.fromPoints(point1, point2, point1.add3(normal));
 			Vec4 rotationAxis = rotationPlane.getNormal();
 			Quaternion rotation = Quaternion.fromAxisAngle(rotationAngle, rotationAxis);
-			distance = (this.epsilon < distance) ? this.epsilon : distance;
+			distance = (this.getEpsilon() < distance) ? this.getEpsilon() : distance;
 			climb = normal.transformBy3(rotation).normalize3().multiply3(distance);
 			position = globe.computePositionFromPoint(point1.add3(climb));
 		} else {
@@ -963,7 +963,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @see AbstractPlanner#matches(Specification)
 	 */
 	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof RRTreeProperties)) {
@@ -990,7 +990,7 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @see AbstractPlanner#update(Specification)
 	 */
 	@Override
-	public boolean update(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean update(Specification<? extends FactoryProduct> specification) {
 		boolean updated = super.update(specification);
 		
 		if (updated && (specification.getProperties() instanceof RRTreeProperties)) {

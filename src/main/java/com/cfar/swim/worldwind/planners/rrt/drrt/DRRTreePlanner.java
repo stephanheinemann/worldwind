@@ -385,6 +385,7 @@ implements DynamicPlanner, LifelongPlanner {
 		// proceed to next part only if not in need of repair
 		while (this.needsRepair() && !this.hasTerminated()) {
 			if (!this.repair(partIndex)) break;
+			Thread.yield();
 		}
 		// backup after elaboration
 		this.backup(partIndex);
@@ -592,7 +593,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @see DynamicPlanner#getSignificantChange()
 	 */
 	@Override
-	public double getSignificantChange() {
+	public synchronized double getSignificantChange() {
 		return this.significantChange;
 	}
 	
@@ -607,7 +608,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 *                                  invalid
 	 */
 	@Override
-	public void setSignificantChange(double significantChange) {
+	public synchronized void setSignificantChange(double significantChange) {
 		if ((0d <= significantChange) && (1d >= significantChange)) {
 			this.significantChange = significantChange;
 		} else {
@@ -622,7 +623,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return true if this DRRT planner has a significant dynamic change,
 	 *         false otherwise
 	 */
-	protected boolean hasSignificantChange() {
+	protected synchronized boolean hasSignificantChange() {
 		boolean hasSignificantChange = false;
 		// TODO: examine different determination policies including
 		// (1) invalid close to start versus close to goal (ETOs)
@@ -837,7 +838,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @see HRRTreePlanner#matches(Specification)
 	 */
 	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof DRRTreeProperties)) {
@@ -858,7 +859,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @see HRRTreePlanner#update(Specification)
 	 */
 	@Override
-	public boolean update(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean update(Specification<? extends FactoryProduct> specification) {
 		boolean updated = super.update(specification);
 		
 		if (updated && (specification.getProperties() instanceof DRRTreeProperties)) {

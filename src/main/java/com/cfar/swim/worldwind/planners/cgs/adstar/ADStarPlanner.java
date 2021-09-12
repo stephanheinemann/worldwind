@@ -577,7 +577,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @see DynamicPlanner#getSignificantChange()
 	 */
 	@Override
-	public double getSignificantChange() {
+	public synchronized double getSignificantChange() {
 		return this.significantChange;
 	}
 	
@@ -592,7 +592,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 *                                  invalid
 	 */
 	@Override
-	public void setSignificantChange(double significantChange) {
+	public synchronized void setSignificantChange(double significantChange) {
 		if ((0d <= significantChange) && (1d >= significantChange)) {
 			this.significantChange = significantChange;
 		} else {
@@ -607,7 +607,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return true if this AD* planner has a significant dynamic change,
 	 *         false otherwise
 	 */
-	protected boolean hasSignificantChange() {
+	protected synchronized boolean hasSignificantChange() {
 		boolean hasSignificantChange = false;
 		// TODO: examine different determination policies including
 		// (1) consistent, under-consistent, over-consistent waypoints
@@ -633,7 +633,7 @@ implements DynamicPlanner, LifelongPlanner {
 	/**
 	 * Increases the current inflation depending on the actual dynamic change.
 	 */
-	protected void inflate() {
+	protected synchronized void inflate() {
 		// TODO: consider different significant change handling strategies
 		// increase epsilon or re-plan from scratch
 		double qualityRange = this.getMinimumQuality() - this.getMaximumQuality();
@@ -650,7 +650,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @param partIndex the index of the plan to be improved
 	 */
 	@Override
-	protected void improve(int partIndex) {
+	protected synchronized void improve(int partIndex) {
 		this.backup(partIndex);
 
 		// determine significant change
@@ -679,6 +679,7 @@ implements DynamicPlanner, LifelongPlanner {
 		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
 			if (!this.repair(partIndex)) break;
 			this.improve(partIndex);
+			Thread.yield();
 		}
 		// always backup at least once for potential repair later
 		this.backup(partIndex);
@@ -970,7 +971,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @see ARAStarPlanner#matches(Specification)
 	 */
 	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof ADStarProperties)) {
@@ -991,7 +992,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @see ARAStarPlanner#update(Specification)
 	 */
 	@Override
-	public boolean update(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean update(Specification<? extends FactoryProduct> specification) {
 		boolean updated = super.update(specification);
 		
 		if (updated && (specification.getProperties() instanceof ADStarProperties)) {

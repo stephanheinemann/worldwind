@@ -145,7 +145,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * @see Planner#getCostPolicy()
 	 */
 	@Override
-	public CostPolicy getCostPolicy() {
+	public synchronized CostPolicy getCostPolicy() {
 		return this.costPolicy;
 	}
 	
@@ -157,7 +157,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * @see Planner#setCostPolicy(CostPolicy)
 	 */
 	@Override
-	public void setCostPolicy(CostPolicy costPolicy) {
+	public synchronized void setCostPolicy(CostPolicy costPolicy) {
 		this.costPolicy = costPolicy;
 	}
 	
@@ -169,7 +169,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * @see Planner#getRiskPolicy()
 	 */
 	@Override
-	public RiskPolicy getRiskPolicy() {
+	public synchronized RiskPolicy getRiskPolicy() {
 		return this.riskPolicy;
 	}
 	
@@ -181,7 +181,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * @see Planner#setRiskPolicy(RiskPolicy)
 	 */
 	@Override
-	public void setRiskPolicy(RiskPolicy riskPolicy) {
+	public synchronized void setRiskPolicy(RiskPolicy riskPolicy) {
 		this.riskPolicy = riskPolicy;
 	}
 	
@@ -364,7 +364,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * @see FactoryProduct#matches(Specification)
 	 */
 	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
 		if ((null != specification)
@@ -389,7 +389,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * @see FactoryProduct#update(Specification)
 	 */
 	@Override
-	public boolean update(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean update(Specification<? extends FactoryProduct> specification) {
 		boolean updated = false;
 		
 		if ((null != specification)

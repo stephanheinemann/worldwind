@@ -174,7 +174,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @return the limit neighbors to consider for extension by this ARRT
 	 *         planner
 	 */
-	public int getNeighborLimit() {
+	public synchronized int getNeighborLimit() {
 		return this.neighborLimit;
 	}
 	
@@ -186,7 +186,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * 
 	 * @throws IllegalArgumentException if neighbor limit is invalid
 	 */
-	public void setNeighborLimit(int neighborLimit) {
+	public synchronized void setNeighborLimit(int neighborLimit) {
 		if ((0 < neighborLimit) && (Integer.MAX_VALUE >= neighborLimit)) {
 			this.neighborLimit = neighborLimit;
 		} else {
@@ -202,7 +202,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see AnytimePlanner#getMinimumQuality()
 	 */
 	@Override
-	public double getMinimumQuality() {
+	public synchronized double getMinimumQuality() {
 		return this.initialCostBias;
 	}
 	
@@ -217,7 +217,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see AnytimePlanner#setMinimumQuality(double)
 	 */
 	@Override
-	public void setMinimumQuality(double initialCostBias) {
+	public synchronized void setMinimumQuality(double initialCostBias) {
 		if ((0d <= initialCostBias) && (this.getMaximumQuality() >= initialCostBias)) {
 			this.initialCostBias = initialCostBias;
 			this.step = (this.finalCostBias - this.initialCostBias) / 10d;
@@ -234,7 +234,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see AnytimePlanner#getMaximumQuality()
 	 */
 	@Override
-	public double getMaximumQuality() {
+	public synchronized double getMaximumQuality() {
 		return this.finalCostBias;
 	}
 	
@@ -249,7 +249,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see AnytimePlanner#setMaximumQuality(double)
 	 */
 	@Override
-	public void setMaximumQuality(double finalCostBias) {
+	public synchronized void setMaximumQuality(double finalCostBias) {
 		if ((this.getMinimumQuality() <= finalCostBias) && (1d >= finalCostBias)) {
 			this.finalCostBias = finalCostBias;
 			this.step = (this.finalCostBias - this.initialCostBias) / 10d;
@@ -270,12 +270,13 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see AnytimePlanner#hasMaximumQuality()
 	 */
 	@Override
-	public boolean hasMaximumQuality() {
+	public synchronized boolean hasMaximumQuality() {
 		boolean hasMaximumQuality = false;
 		
 		if (this.hasGoal()) {
-			hasMaximumQuality = (this.getCostBound() < this.getGoal().getCost())
-				&& (this.getCostBias() >= this.getMaximumQuality());
+			hasMaximumQuality = (this.getStart().getH() == this.getGoal().getCost())
+					|| ((this.getCostBound() < this.getGoal().getCost())
+							&& (this.getCostBias() >= this.getMaximumQuality()));
 		}
 		
 		return hasMaximumQuality;
@@ -289,7 +290,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see AnytimePlanner#getQualityImprovement()
 	 */
 	@Override
-	public double getQualityImprovement() {
+	public synchronized double getQualityImprovement() {
 		return this.improvementFactor;
 	}
 	
@@ -303,7 +304,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see AnytimePlanner#setQualityImprovement(double)
 	 */
 	@Override
-	public void setQualityImprovement(double improvementFactor) {
+	public synchronized void setQualityImprovement(double improvementFactor) {
 		if ((0d <= improvementFactor) && (1d >= improvementFactor)) {
 			this.improvementFactor = improvementFactor;
 		} else {
@@ -369,7 +370,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * Updates the cost and distance biases applied by this ARRT planner.
 	 * Shifts the bias from distance to cost by a single step.
 	 */
-	protected void updateBiases() {
+	protected synchronized void updateBiases() {
 		// delta cost bias
 		double dq = this.getMaximumQuality() - this.getMinimumQuality();
 		// optimal cost fraction
@@ -757,6 +758,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			if (this.getGoal().hasInfiniteCost()) {
 				riskyProbes++;
 			}
+			Thread.yield();
 		}
 	}
 	
@@ -1003,7 +1005,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see RRTreePlanner#matches(Specification)
 	 */
 	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof ARRTreeProperties)) {
@@ -1027,7 +1029,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 * @see RRTreePlanner#update(Specification)
 	 */
 	@Override
-	public boolean update(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean update(Specification<? extends FactoryProduct> specification) {
 		boolean updated = super.update(specification);
 		
 		if (updated && (specification.getProperties() instanceof ARRTreeProperties)) {

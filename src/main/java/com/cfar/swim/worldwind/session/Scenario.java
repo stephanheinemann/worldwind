@@ -1289,12 +1289,18 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitAddObstacles(Set)
 	 */
 	@Override
-	public synchronized void submitAddObstacles(Set<Obstacle> obstacles) {
-		this.pendingAddedObstacles.addAll(obstacles);
-		this.pendingAddedObstacles.removeAll(this.obstacles);
-		this.pendingRemovedObstacles.removeAll(this.pendingAddedObstacles);
+	public void submitAddObstacles(Set<Obstacle> obstacles) {
+		boolean hasPendingObstacles = false;
+		
+		synchronized(this) {
+			this.pendingAddedObstacles.addAll(obstacles);
+			this.pendingAddedObstacles.removeAll(this.obstacles);
+			this.pendingRemovedObstacles.removeAll(this.pendingAddedObstacles);
+			hasPendingObstacles = !this.pendingAddedObstacles.isEmpty();
+		}
+		
 		// notify dynamic obstacle listener about added obstacles
-		if ((!this.pendingAddedObstacles.isEmpty())
+		if (hasPendingObstacles
 				&& (this.getPlanner() instanceof DynamicObstacleListener)
 				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
@@ -1313,12 +1319,18 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitRemoveObstacles(Set)
 	 */
 	@Override
-	public synchronized void submitRemoveObstacles(Set<Obstacle> obstacles) {
-		this.pendingRemovedObstacles.addAll(obstacles);
-		this.pendingRemovedObstacles.retainAll(this.obstacles);
-		this.pendingAddedObstacles.removeAll(this.pendingRemovedObstacles);
+	public void submitRemoveObstacles(Set<Obstacle> obstacles) {
+		boolean hasPendingObstacles = false;
+		
+		synchronized(this) {
+			this.pendingRemovedObstacles.addAll(obstacles);
+			this.pendingRemovedObstacles.retainAll(this.obstacles);
+			this.pendingAddedObstacles.removeAll(this.pendingRemovedObstacles);
+			hasPendingObstacles = !this.pendingRemovedObstacles.isEmpty();
+		}
+		
 		// notify dynamic obstacle listener about removed obstacles
-		if ((!this.pendingRemovedObstacles.isEmpty())
+		if (hasPendingObstacles
 				&& (this.getPlanner() instanceof DynamicObstacleListener)
 				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
@@ -1337,15 +1349,22 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitReplaceObstacles(Set)
 	 */
 	@Override
-	public synchronized void submitReplaceObstacles(Set<Obstacle> obstacles) {
-		this.pendingRemovedObstacles.clear();
-		this.pendingRemovedObstacles.addAll(this.obstacles);
-		this.pendingRemovedObstacles.removeAll(obstacles);
-		this.pendingAddedObstacles.clear();
-		this.pendingAddedObstacles.addAll(obstacles);
-		this.pendingAddedObstacles.removeAll(this.obstacles);
+	public void submitReplaceObstacles(Set<Obstacle> obstacles) {
+		boolean hasPendingObstacles = false;
+		
+		synchronized(this) {
+			this.pendingRemovedObstacles.clear();
+			this.pendingRemovedObstacles.addAll(this.obstacles);
+			this.pendingRemovedObstacles.removeAll(obstacles);
+			this.pendingAddedObstacles.clear();
+			this.pendingAddedObstacles.addAll(obstacles);
+			this.pendingAddedObstacles.removeAll(this.obstacles);
+			hasPendingObstacles = !this.pendingRemovedObstacles.isEmpty()
+					|| !this.pendingAddedObstacles.isEmpty();
+		}
+		
 		// notify dynamic obstacle listener about cleared obstacles
-		if ((!this.pendingRemovedObstacles.isEmpty() || !this.pendingAddedObstacles.isEmpty())
+		if (hasPendingObstacles
 				&& (this.getPlanner() instanceof DynamicObstacleListener)
 				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
@@ -1362,12 +1381,18 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitClearObstacles()
 	 */
 	@Override
-	public synchronized void submitClearObstacles() {
-		this.pendingAddedObstacles.clear();
-		this.pendingRemovedObstacles.clear();
-		this.pendingRemovedObstacles.addAll(this.obstacles);
+	public void submitClearObstacles() {
+		boolean hasPendingObstacles = false;
+		
+		synchronized(this) {
+			this.pendingAddedObstacles.clear();
+			this.pendingRemovedObstacles.clear();
+			this.pendingRemovedObstacles.addAll(this.obstacles);
+			hasPendingObstacles = !this.pendingRemovedObstacles.isEmpty();
+		}
+		
 		// notify dynamic obstacle listener about cleared obstacles
-		if ((!this.pendingRemovedObstacles.isEmpty())
+		if (hasPendingObstacles
 				&& (this.getPlanner() instanceof DynamicObstacleListener)
 				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
@@ -1386,12 +1411,18 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitEnableObstacles(Set)
 	 */
 	@Override
-	public synchronized void submitEnableObstacles(Set<Obstacle> obstacles) {
-		this.pendingEnabledObstacles.addAll(obstacles);
-		this.pendingEnabledObstacles.retainAll(this.obstacles);
-		this.pendingDisabledObstacles.removeAll(this.pendingEnabledObstacles);
+	public void submitEnableObstacles(Set<Obstacle> obstacles) {
+		boolean hasPendingObstacles = false;
+		
+		synchronized(this) {
+			this.pendingEnabledObstacles.addAll(obstacles);
+			this.pendingEnabledObstacles.retainAll(this.obstacles);
+			this.pendingDisabledObstacles.removeAll(this.pendingEnabledObstacles);
+			hasPendingObstacles = !this.pendingEnabledObstacles.isEmpty();
+		}
+		
 		// notify dynamic obstacle listener about enabled obstacles
-		if ((!this.pendingEnabledObstacles.isEmpty())
+		if (hasPendingObstacles
 				&& (this.getPlanner() instanceof DynamicObstacleListener)
 				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
@@ -1410,12 +1441,18 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitDisableObstacles(Set)
 	 */
 	@Override
-	public synchronized void submitDisableObstacles(Set<Obstacle> obstacles) {
-		this.pendingDisabledObstacles.addAll(obstacles);
-		this.pendingDisabledObstacles.retainAll(this.obstacles);
-		this.pendingEnabledObstacles.removeAll(this.pendingDisabledObstacles);
+	public void submitDisableObstacles(Set<Obstacle> obstacles) {
+		boolean hasPendingObstacles = false;
+		
+		synchronized(this) {
+			this.pendingDisabledObstacles.addAll(obstacles);
+			this.pendingDisabledObstacles.retainAll(this.obstacles);
+			this.pendingEnabledObstacles.removeAll(this.pendingDisabledObstacles);
+			hasPendingObstacles = !this.pendingDisabledObstacles.isEmpty();
+		}
+		
 		// notify dynamic obstacle listener about disabled obstacles
-		if ((!this.pendingDisabledObstacles.isEmpty())
+		if (hasPendingObstacles
 				&& (this.getPlanner() instanceof DynamicObstacleListener)
 				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
 			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();

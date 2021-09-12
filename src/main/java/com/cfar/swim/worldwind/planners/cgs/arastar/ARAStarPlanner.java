@@ -118,7 +118,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AnytimePlanner#getMinimumQuality()
 	 */
 	@Override
-	public double getMinimumQuality() {
+	public synchronized double getMinimumQuality() {
 		return this.initialInflation;
 	}
 	
@@ -133,7 +133,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AnytimePlanner#setMinimumQuality(double)
 	 */
 	@Override
-	public void setMinimumQuality(double initialInflation) {
+	public synchronized void setMinimumQuality(double initialInflation) {
 		if ((1d <= initialInflation) &&
 				(initialInflation >= this.finalInflation)) {
 			this.initialInflation = initialInflation;
@@ -150,7 +150,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AnytimePlanner#getMaximumQuality()
 	 */
 	@Override
-	public double getMaximumQuality() {
+	public synchronized double getMaximumQuality() {
 		return this.finalInflation;
 	}
 	
@@ -165,7 +165,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AnytimePlanner#setMaximumQuality(double)
 	 */
 	@Override
-	public void setMaximumQuality(double finalInflation) {
+	public synchronized void setMaximumQuality(double finalInflation) {
 		if ((1d <= finalInflation) && (this.initialInflation >= finalInflation)) {
 			this.finalInflation = finalInflation;
 		} else {
@@ -183,7 +183,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AnytimePlanner#hasMaximumQuality()
 	 */
 	@Override
-	public boolean hasMaximumQuality() {
+	public synchronized boolean hasMaximumQuality() {
 		return this.isDeflated();
 	}
 	
@@ -195,7 +195,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AnytimePlanner#getQualityImprovement()
 	 */
 	@Override
-	public double getQualityImprovement() {
+	public synchronized double getQualityImprovement() {
 		return this.deflationAmount;
 	}
 	
@@ -210,7 +210,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AnytimePlanner#setQualityImprovement(double)
 	 */
 	@Override
-	public void setQualityImprovement(double deflationAmount) {
+	public synchronized void setQualityImprovement(double deflationAmount) {
 		if (0d < deflationAmount) {
 			this.deflationAmount = deflationAmount;
 		} else {
@@ -222,7 +222,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * Decreases the current inflation by the deflation amount, or otherwise to
 	 * the final deflation.
 	 */
-	protected void deflate() {
+	protected synchronized void deflate() {
 		if (this.finalInflation < (this.inflation - this.deflationAmount)) {
 			this.inflation -= this.deflationAmount;
 		} else {
@@ -235,7 +235,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * 
 	 * @return true if the final deflation has been reached, false otherwise
 	 */
-	protected boolean isDeflated() {
+	protected synchronized boolean isDeflated() {
 		return (this.inflation == this.finalInflation);
 	}
 	
@@ -558,7 +558,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @param partIndex the index of the plan part to be improved
 	 * 
 	 */
-	protected void improve(int partIndex) {
+	protected synchronized void improve(int partIndex) {
 		this.backup(partIndex);
 		// TODO: potentially deflate below actual current sub-optimality
 		// bound for more aggressive optimization 
@@ -577,6 +577,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	protected void elaborate(int partIndex) {
 		while (!this.hasMaximumQuality()) {
 			this.improve(partIndex);
+			Thread.yield();
 		}
 	}
 	
@@ -862,7 +863,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AbstractPlanner#matches(Specification)
 	 */
 	@Override
-	public boolean matches(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
 		
 		if (matches && (specification.getProperties() instanceof ARAStarProperties)) {
@@ -885,7 +886,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @see AbstractPlanner#update(Specification)
 	 */
 	@Override
-	public boolean update(Specification<? extends FactoryProduct> specification) {
+	public synchronized boolean update(Specification<? extends FactoryProduct> specification) {
 		boolean updated = super.update(specification);
 		
 		if (updated && (specification.getProperties() instanceof ARAStarProperties)) {

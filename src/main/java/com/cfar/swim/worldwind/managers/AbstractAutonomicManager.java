@@ -535,15 +535,15 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			getSourceScenario().setTrajectory(new Trajectory());
 			// update all managed scenarios and planner tunings
 			for (Scenario managedScenario : getManagedScenarios()) {
-				managedScenario.submitReplaceObstacles(getSourceScenario().getObstacles());
 				PlannerTuning tuning = getPlannerTuning(managedScenario);
 				tuning.getFeatures().extractFeatures(getSourceScenario());
 				System.out.println(tuning.getFeatures());
 				List<Properties<Planner>> candidates = tuning.tune();
 				// TODO: default candidate
 				tuning.getSpecification().setProperties(candidates.get(0));
-				// TODO: synchronize update or parameters
 				managedScenario.getPlanner().update(tuning.getSpecification());
+				managedScenario.submitReplaceObstacles(
+						getSourceScenario().getEnvironment().getObstacles());
 			}
 		}
 	}
