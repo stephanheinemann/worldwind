@@ -42,14 +42,13 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.planners.MissionLoader;
 import com.cfar.swim.worldwind.planners.OnlinePlanner;
-import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreeWaypoint;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.TimeInterval;
-import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
@@ -102,8 +101,14 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	/** the track change listener of this OADRRT planner */
 	private final TrackChangeListener trackCl = new TrackChangeListener();
 	
+	/** the mission loader of this OADRRT planner */
+	private final MissionLoader missionLoader = new MissionLoader(this);
+	
 	/** the off-track counter of this OADRRT planner */
 	private int offTrackCount = 0;
+	
+	/** the standby status of this OADRRT planner */
+	private boolean isStandby = false;
 	
 	/**
 	 * Constructs a OADRRT planner for a specified aircraft and environment
@@ -114,7 +119,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 */
 	public OADRRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		this.addPlanRevisionListener(new MissionLoader());
+		this.addPlanRevisionListener(this.missionLoader);
 	}
 	
 	/**
@@ -130,39 +135,59 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Realizes a mission loader to upload revised trajectories via the
-	 * datalink of this OADRRT planner.
+	 * Gets the next waypoint of this OADRRT planner.
 	 * 
-	 * @author Stephan Heinemann
-	 *
+	 * @return the next waypoint of this OADRRT planner
+	 * 
+	 * @see OnlinePlanner#getNextWaypoint()
 	 */
-	protected class MissionLoader implements PlanRevisionListener {
-		
-		/**
-		 * Uploads a revised trajectory via the datalink of this OADRRT planner.
-		 * 
-		 * @param trajectory the revised trajectory
-		 */
-		@Override
-		public void revisePlan(Trajectory trajectory) {
-			if (hasDatalink() && getDatalink().isConnected()) {
-				// warn if mission is obsolete
-				if (!getStart().equals(createWaypoint(getDatalink().getNextMissionPosition()))) {
-					Logging.logger().warning("start is not the next mission position...");
-				}
-				// do not upload an empty trajectory
-				if (!trajectory.isEmpty()) {
-					Logging.logger().info("uploading mission: " + trajectory);
-					getDatalink().uploadMission(trajectory);
-					// confirm the consistent upload
-					if (!getDatalink().hasMission(trajectory, false)) {
-						Logging.logger().severe("mission is not consistent...");
-					}
-				} else {
-					Logging.logger().warning("not uploading an empty trajectory...");
-				}
+	@Override
+	public ADRRTreeWaypoint getNextWaypoint() {
+		return this.currentLeg.isEmpty() ? null :
+			(ADRRTreeWaypoint) this.currentLeg.get().getSecondPosition();
+	}
+	
+	/**
+	 * Determines whether or not this OADRRT planner has a next waypoint.
+	 * 
+	 * @return true if this OADRRT planner has a next waypoint, false otherwise
+	 * 
+	 * @see OnlinePlanner#hasNextWaypoint()
+	 */
+	@Override
+	public boolean hasNextWaypoint() {
+		return this.currentLeg.isPresent();
+	}
+	
+	/**
+	 * Sets this OADRRT planner to standby or active.
+	 * 
+	 * @param isStandby true if standby, false if active
+	 * 
+	 * @see OnlinePlanner#setStandby(boolean)
+	 */
+	@Override
+	public void setStandby(boolean isStandby) {
+		if (this.isStandby != isStandby) {
+			if (isStandby) {
+				this.removePlanRevisionListener(this.missionLoader);
+			} else {
+				this.addPlanRevisionListener(this.missionLoader);
 			}
+			this.isStandby = isStandby;
 		}
+	}
+	
+	/**
+	 * Determines whether or not this OADRRT planner is standing by.
+	 * 
+	 * @return true if this OADRRT planner is standing by, false if active
+	 * 
+	 * @see OnlinePlanner#isStandby()
+	 */
+	@Override
+	public boolean isStandby() {
+		return this.isStandby;
 	}
 	
 	/**

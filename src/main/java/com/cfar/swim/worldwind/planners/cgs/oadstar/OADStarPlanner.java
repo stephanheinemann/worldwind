@@ -42,14 +42,13 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.planners.MissionLoader;
 import com.cfar.swim.worldwind.planners.OnlinePlanner;
-import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarWaypoint;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.TimeInterval;
-import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
@@ -102,8 +101,14 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	/** the track change listener of this OAD* planner */
 	private final TrackChangeListener trackCl = new TrackChangeListener();
 	
+	/** the mission loader of this OAD* planner */
+	private final MissionLoader missionLoader = new MissionLoader(this);
+	
 	/** the off-track counter of this OAD* planner */
 	private int offTrackCount = 0;
+	
+	/** the standby status of this OAD* planner */
+	private boolean isStandby = false;
 	
 	/**
 	 * Constructs a OAD* planner for a specified aircraft and environment
@@ -114,7 +119,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	 */
 	public OADStarPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		this.addPlanRevisionListener(new MissionLoader());
+		this.addPlanRevisionListener(this.missionLoader);
 	}
 	
 	/**
@@ -130,39 +135,59 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Realizes a mission loader to upload revised trajectories via the
-	 * datalink of this OAD* planner.
+	 * Gets the next waypoint of this OAD* planner.
 	 * 
-	 * @author Stephan Heinemann
-	 *
+	 * @return the next waypoint of this OAD* planner
+	 * 
+	 * @see OnlinePlanner#getNextWaypoint()
 	 */
-	protected class MissionLoader implements PlanRevisionListener {
-		
-		/**
-		 * Uploads a revised trajectory via the datalink of this OAD* planner.
-		 * 
-		 * @param trajectory the revised trajectory
-		 */
-		@Override
-		public void revisePlan(Trajectory trajectory) {
-			if (hasDatalink() && getDatalink().isConnected()) {
-				// warn if mission is obsolete
-				if (!getStart().equals(createWaypoint(getDatalink().getNextMissionPosition()))) {
-					Logging.logger().warning("start is not the next mission position...");
-				}
-				// do not upload an empty trajectory
-				if (!trajectory.isEmpty()) {
-					Logging.logger().info("uploading mission: " + trajectory);
-					getDatalink().uploadMission(trajectory);
-					// confirm the consistent upload
-					if (!getDatalink().hasMission(trajectory, false)) {
-						Logging.logger().severe("mission is not consistent...");
-					}
-				} else {
-					Logging.logger().warning("not uploading an empty trajectory...");
-				}
+	@Override
+	public ADStarWaypoint getNextWaypoint() {
+		return this.currentLeg.isEmpty() ? null :
+			(ADStarWaypoint) this.currentLeg.get().getSecondPosition();
+	}
+	
+	/**
+	 * Determines whether or not this OAD* planner has a next waypoint.
+	 * 
+	 * @return true if this OAD* planner has a next waypoint, false otherwise
+	 * 
+	 * @see OnlinePlanner#hasNextWaypoint()
+	 */
+	@Override
+	public boolean hasNextWaypoint() {
+		return this.currentLeg.isPresent();
+	}
+	
+	/**
+	 * Sets this OAD* planner to standby or active.
+	 * 
+	 * @param isStandby true if standby, false if active
+	 * 
+	 * @see OnlinePlanner#setStandby(boolean)
+	 */
+	@Override
+	public void setStandby(boolean isStandby) {
+		if (this.isStandby != isStandby) {
+			if (isStandby) {
+				this.removePlanRevisionListener(this.missionLoader);
+			} else {
+				this.addPlanRevisionListener(this.missionLoader);
 			}
+			this.isStandby = isStandby;
 		}
+	}
+	
+	/**
+	 * Determines whether or not this OAD* planner is standing by.
+	 * 
+	 * @return true if this OAD* planner is standing by, false if active
+	 * 
+	 * @see OnlinePlanner#isStandby()
+	 */
+	@Override
+	public boolean isStandby() {
+		return this.isStandby;
 	}
 	
 	/**

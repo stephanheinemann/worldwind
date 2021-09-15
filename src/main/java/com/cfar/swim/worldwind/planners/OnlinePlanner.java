@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.planners;
 
 import com.cfar.swim.worldwind.connections.Communication;
 import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
 
@@ -42,7 +43,35 @@ import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
  *
  */
 public interface OnlinePlanner extends Planner {
-
+	
+	/**
+	 * Gets the next waypoint of this online planner.
+	 * 
+	 * @return the next waypoint of this online planner
+	 */
+	public Waypoint getNextWaypoint();
+	
+	/**
+	 * Determines whether or not this online planner has a next waypoint.
+	 * 
+	 * @return true if this online planner has a next waypoint, false otherwise
+	 */
+	public boolean hasNextWaypoint();
+	
+	/**
+	 * Sets this online planner to standby or active.
+	 * 
+	 * @param isStandby true if standby, false if active
+	 */
+	public void setStandby(boolean isStandby);
+	
+	/**
+	 * Determines whether or not this online planner is standing by.
+	 * 
+	 * @return true if this online planner is standing by, false if active
+	 */
+	public boolean isStandby();
+	
 	/**
 	 * Gets the datalink of this online planner.
 	 * 

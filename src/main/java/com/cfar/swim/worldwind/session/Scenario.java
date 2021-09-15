@@ -147,6 +147,12 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	/** the pending (uncommitted) disabled obstacles of this scenario */
 	private HashSet<Obstacle> pendingDisabledObstacles;
 	
+	/** the dynamic (embedded) obstacles of this scenario */
+	private HashSet<Obstacle> dynamicObstacles;
+	
+	/** the dynamic obstacle listeners of this scenario */
+	private DynamicObstacleListener dynamicObstacleListener;
+	
 	/** the timer executor of this scenario */
 	private ScheduledExecutorService executor;
 	
@@ -197,6 +203,8 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		this.pendingRemovedObstacles = new HashSet<Obstacle>();
 		this.pendingEnabledObstacles = new HashSet<Obstacle>();
 		this.pendingDisabledObstacles = new HashSet<Obstacle>();
+		this.dynamicObstacles = new HashSet<Obstacle>();
+		this.dynamicObstacleListener = null;
 	}
 	
 	/**
@@ -346,6 +354,68 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	
 	// TODO: be more conservative with firing property change listeners
 	// only fire if properties have actually changed and pass along old values
+	
+	/**
+	 * Gets the dynamic obstacle listener of this scenario.
+	 * 
+	 * @return the dynamic obstacle listener of this scenario
+	 * 
+	 * @see ObstacleManager#getDynamicObstacleListener()
+	 */
+	@Override
+	public synchronized DynamicObstacleListener getDynamicObstacleListener() {
+		return this.dynamicObstacleListener;
+	}
+	
+	/**
+	 * Sets the dynamic obstacle listener of this scenario.
+	 * 
+	 * @param listener the dynamic obstacle listener to be set
+	 * 
+	 * @see ObstacleManager#setDynamicObstacleListener(DynamicObstacleListener)
+	 */
+	@Override
+	public synchronized void setDynamicObstacleListener(DynamicObstacleListener listener) {
+		this.dynamicObstacleListener = listener;
+	}
+	
+	/**
+	 * Resets the dynamic obstacle listener of this scenario.
+	 * 
+	 * @see ObstacleManager#resetDynamicObstacleListener()
+	 */
+	@Override
+	public void resetDynamicObstacleListener() {
+		if (this.getPlanner() instanceof DynamicObstacleListener) {
+			this.setDynamicObstacleListener((DynamicObstacleListener) this.getPlanner());
+		} else {
+			this.removeDynamicObstacleListener();
+		}
+	}
+	
+	/**
+	 * Removes the dynamic obstacle listener of this scenario.
+	 * 
+	 * @see ObstacleManager#removeDynamicObstacleListener()
+	 */
+	@Override
+	public synchronized void removeDynamicObstacleListener() {
+		this.dynamicObstacleListener = null;
+	}
+	
+	/**
+	 * Determines whether or not this scenario has a dynamic obstacle
+	 * listener.
+	 * 
+	 * @return true if this scenario has a dynamic obstacle listener,
+	 *         false otherwise
+	 * 
+	 * @see ObstacleManager#hasDynamicObstacleListener()
+	 */
+	@Override
+	public synchronized boolean hasDynamicObstacleListener() {
+		return (null != this.dynamicObstacleListener);
+	}
 	
 	/**
 	 * Gets the time of this scenario.
@@ -887,6 +957,11 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	public synchronized void setPlanner(Planner planner) {
 		if (null != planner) {
 			this.planner = planner;
+			if (planner instanceof DynamicObstacleListener) {
+				this.setDynamicObstacleListener((DynamicObstacleListener) planner);
+			} else {
+				this.removeDynamicObstacleListener();
+			}
 		} else {
 			throw new IllegalArgumentException();
 		}
@@ -1088,6 +1163,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 				if (this.environment instanceof DynamicEnvironment) {
 					if (obstacle.isEnabled()
 							&& ((DynamicEnvironment) this.environment).embed(obstacle)) {
+						this.dynamicObstacles.add(obstacle);
 						this.pcs.firePropertyChange("environment", null, this.environment);
 					}
 				}
@@ -1111,6 +1187,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 				
 				if (this.environment instanceof DynamicEnvironment) {
 					if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
+						this.dynamicObstacles.add(obstacle);
 						this.pcs.firePropertyChange("environment", null, this.environment);
 					}
 				}
@@ -1138,6 +1215,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 				
 				if (this.environment instanceof DynamicEnvironment) {
 					if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
+						this.dynamicObstacles.add(obstacle);
 						unembedded = true;
 					}
 				}
@@ -1161,6 +1239,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		this.pcs.firePropertyChange("obstacles", null, this.getObstacles());
 		
 		if (this.environment instanceof DynamicEnvironment) {
+			this.dynamicObstacles.addAll(this.environment.getObstacles());
 			((DynamicEnvironment) this.environment).unembedAll();
 			this.pcs.firePropertyChange("environment", null, this.environment);
 		}
@@ -1183,6 +1262,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 			
 			if (this.environment instanceof DynamicEnvironment) {
 				if (((DynamicEnvironment) this.environment).embed(obstacle)) {
+					this.dynamicObstacles.add(obstacle);
 					this.pcs.firePropertyChange("environment", null, this.environment);
 				}
 			}
@@ -1202,6 +1282,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		if (null != obstacle) {
 			if (this.environment instanceof DynamicEnvironment) {
 				if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
+					this.dynamicObstacles.add(obstacle);
 					this.pcs.firePropertyChange("environment", null, this.environment);
 				}
 			}
@@ -1226,6 +1307,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 				
 				if (this.environment instanceof DynamicEnvironment) {
 					if (((DynamicEnvironment) this.environment).embed(obstacle)) {
+						this.dynamicObstacles.add(obstacle);
 						embedded = true;
 					}
 				}
@@ -1257,6 +1339,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 				
 				if (this.environment instanceof DynamicEnvironment) {
 					if (((DynamicEnvironment) this.environment).unembed(obstacle)) {
+						this.dynamicObstacles.add(obstacle);
 						unembedded = true;
 					}
 				}
@@ -1289,21 +1372,16 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitAddObstacles(Set)
 	 */
 	@Override
-	public void submitAddObstacles(Set<Obstacle> obstacles) {
-		boolean hasPendingObstacles = false;
-		
-		synchronized(this) {
-			this.pendingAddedObstacles.addAll(obstacles);
-			this.pendingAddedObstacles.removeAll(this.obstacles);
-			this.pendingRemovedObstacles.removeAll(this.pendingAddedObstacles);
-			hasPendingObstacles = !this.pendingAddedObstacles.isEmpty();
-		}
+	public synchronized void submitAddObstacles(Set<Obstacle> obstacles) {
+		this.pendingAddedObstacles.addAll(obstacles);
+		this.pendingAddedObstacles.removeAll(this.obstacles);
+		this.pendingRemovedObstacles.removeAll(this.pendingAddedObstacles);
 		
 		// notify dynamic obstacle listener about added obstacles
-		if (hasPendingObstacles
-				&& (this.getPlanner() instanceof DynamicObstacleListener)
-				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
-			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		if (!this.pendingAddedObstacles.isEmpty()
+				&& this.hasDynamicObstacleListener()
+				&& this.getDynamicObstacleListener().isListening()) {
+			this.getDynamicObstacleListener().notifyPendingObstacleChange();
 		} else {
 			this.commitObstacleChange();
 		}
@@ -1319,21 +1397,16 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitRemoveObstacles(Set)
 	 */
 	@Override
-	public void submitRemoveObstacles(Set<Obstacle> obstacles) {
-		boolean hasPendingObstacles = false;
-		
-		synchronized(this) {
-			this.pendingRemovedObstacles.addAll(obstacles);
-			this.pendingRemovedObstacles.retainAll(this.obstacles);
-			this.pendingAddedObstacles.removeAll(this.pendingRemovedObstacles);
-			hasPendingObstacles = !this.pendingRemovedObstacles.isEmpty();
-		}
+	public synchronized void submitRemoveObstacles(Set<Obstacle> obstacles) {
+		this.pendingRemovedObstacles.addAll(obstacles);
+		this.pendingRemovedObstacles.retainAll(this.obstacles);
+		this.pendingAddedObstacles.removeAll(this.pendingRemovedObstacles);
 		
 		// notify dynamic obstacle listener about removed obstacles
-		if (hasPendingObstacles
-				&& (this.getPlanner() instanceof DynamicObstacleListener)
-				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
-			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		if (!this.pendingRemovedObstacles.isEmpty()
+				&& this.hasDynamicObstacleListener()
+				&& this.getDynamicObstacleListener().isListening()) {
+			this.getDynamicObstacleListener().notifyPendingObstacleChange();
 		} else {
 			this.commitObstacleChange();
 		}
@@ -1349,25 +1422,33 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitReplaceObstacles(Set)
 	 */
 	@Override
-	public void submitReplaceObstacles(Set<Obstacle> obstacles) {
-		boolean hasPendingObstacles = false;
+	public synchronized void submitReplaceObstacles(Set<Obstacle> obstacles) {
+		this.pendingRemovedObstacles.clear();
+		this.pendingRemovedObstacles.addAll(this.obstacles);
+		this.pendingRemovedObstacles.removeAll(obstacles);
 		
-		synchronized(this) {
-			this.pendingRemovedObstacles.clear();
-			this.pendingRemovedObstacles.addAll(this.obstacles);
-			this.pendingRemovedObstacles.removeAll(obstacles);
-			this.pendingAddedObstacles.clear();
-			this.pendingAddedObstacles.addAll(obstacles);
-			this.pendingAddedObstacles.removeAll(this.obstacles);
-			hasPendingObstacles = !this.pendingRemovedObstacles.isEmpty()
-					|| !this.pendingAddedObstacles.isEmpty();
-		}
+		this.pendingAddedObstacles.clear();
+		this.pendingAddedObstacles.addAll(obstacles);
+		this.pendingAddedObstacles.removeAll(this.obstacles);
+		
+		this.pendingEnabledObstacles.clear();
+		this.pendingEnabledObstacles.addAll(obstacles);
+		this.pendingEnabledObstacles.removeIf(o -> !o.isEnabled()
+				|| this.getEnvironment().getObstacles().contains(o));
+		
+		this.pendingDisabledObstacles.clear();
+		this.pendingDisabledObstacles.addAll(obstacles);
+		this.pendingDisabledObstacles.removeIf(o -> o.isEnabled()
+				|| !this.getEnvironment().getObstacles().contains(o));
 		
 		// notify dynamic obstacle listener about cleared obstacles
-		if (hasPendingObstacles
-				&& (this.getPlanner() instanceof DynamicObstacleListener)
-				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
-			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		if ((!this.pendingRemovedObstacles.isEmpty()
+				|| !this.pendingAddedObstacles.isEmpty()
+				|| !this.pendingEnabledObstacles.isEmpty()
+				|| !this.pendingDisabledObstacles.isEmpty())
+				&& this.hasDynamicObstacleListener()
+				&& this.getDynamicObstacleListener().isListening()) {
+			this.getDynamicObstacleListener().notifyPendingObstacleChange();
 		} else {
 			this.commitObstacleChange();
 		}
@@ -1381,21 +1462,16 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitClearObstacles()
 	 */
 	@Override
-	public void submitClearObstacles() {
-		boolean hasPendingObstacles = false;
-		
-		synchronized(this) {
-			this.pendingAddedObstacles.clear();
-			this.pendingRemovedObstacles.clear();
-			this.pendingRemovedObstacles.addAll(this.obstacles);
-			hasPendingObstacles = !this.pendingRemovedObstacles.isEmpty();
-		}
+	public synchronized void submitClearObstacles() {
+		this.pendingAddedObstacles.clear();
+		this.pendingRemovedObstacles.clear();
+		this.pendingRemovedObstacles.addAll(this.obstacles);
 		
 		// notify dynamic obstacle listener about cleared obstacles
-		if (hasPendingObstacles
-				&& (this.getPlanner() instanceof DynamicObstacleListener)
-				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
-			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		if (!this.pendingRemovedObstacles.isEmpty()
+				&& this.hasDynamicObstacleListener()
+				&& this.getDynamicObstacleListener().isListening()) {
+			this.getDynamicObstacleListener().notifyPendingObstacleChange();
 		} else {
 			this.commitObstacleChange();
 		}
@@ -1411,21 +1487,16 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitEnableObstacles(Set)
 	 */
 	@Override
-	public void submitEnableObstacles(Set<Obstacle> obstacles) {
-		boolean hasPendingObstacles = false;
-		
-		synchronized(this) {
-			this.pendingEnabledObstacles.addAll(obstacles);
-			this.pendingEnabledObstacles.retainAll(this.obstacles);
-			this.pendingDisabledObstacles.removeAll(this.pendingEnabledObstacles);
-			hasPendingObstacles = !this.pendingEnabledObstacles.isEmpty();
-		}
+	public synchronized void submitEnableObstacles(Set<Obstacle> obstacles) {
+		this.pendingEnabledObstacles.addAll(obstacles);
+		this.pendingEnabledObstacles.retainAll(this.obstacles);
+		this.pendingDisabledObstacles.removeAll(this.pendingEnabledObstacles);
 		
 		// notify dynamic obstacle listener about enabled obstacles
-		if (hasPendingObstacles
-				&& (this.getPlanner() instanceof DynamicObstacleListener)
-				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
-			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		if (!this.pendingEnabledObstacles.isEmpty()
+				&& this.hasDynamicObstacleListener()
+				&& this.getDynamicObstacleListener().isListening()) {
+			this.getDynamicObstacleListener().notifyPendingObstacleChange();
 		} else {
 			this.commitObstacleChange();
 		}
@@ -1441,21 +1512,16 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see ObstacleManager#submitDisableObstacles(Set)
 	 */
 	@Override
-	public void submitDisableObstacles(Set<Obstacle> obstacles) {
-		boolean hasPendingObstacles = false;
-		
-		synchronized(this) {
-			this.pendingDisabledObstacles.addAll(obstacles);
-			this.pendingDisabledObstacles.retainAll(this.obstacles);
-			this.pendingEnabledObstacles.removeAll(this.pendingDisabledObstacles);
-			hasPendingObstacles = !this.pendingDisabledObstacles.isEmpty();
-		}
+	public synchronized void submitDisableObstacles(Set<Obstacle> obstacles) {
+		this.pendingDisabledObstacles.addAll(obstacles);
+		this.pendingDisabledObstacles.retainAll(this.obstacles);
+		this.pendingEnabledObstacles.removeAll(this.pendingDisabledObstacles);
 		
 		// notify dynamic obstacle listener about disabled obstacles
-		if (hasPendingObstacles
-				&& (this.getPlanner() instanceof DynamicObstacleListener)
-				&& ((DynamicObstacleListener) this.getPlanner()).isListening()) {
-			((DynamicObstacleListener) this.getPlanner()).notifyPendingObstacleChange();
+		if (!this.pendingDisabledObstacles.isEmpty()
+				&& this.hasDynamicObstacleListener()
+				&& this.getDynamicObstacleListener().isListening()) {
+			this.getDynamicObstacleListener().notifyPendingObstacleChange();
 		} else {
 			this.commitObstacleChange();
 		}
@@ -1465,35 +1531,29 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * Commits an obstacle change (addition, removal, enabling, disabling) to
 	 * this scenario.
 	 * 
-	 * @return the obstacles that were changed
+	 * @return the dynamic obstacles that were changed in the environment of
+	 *         this scenario
 	 * 
 	 * @see ObstacleManager#commitObstacleChange()
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public synchronized Set<Obstacle> commitObstacleChange() {
-		Set<Obstacle> committedObstacles = new HashSet<Obstacle>();
+		this.dynamicObstacles.clear();
+		
 		for (Obstacle obstacle : this.pendingAddedObstacles) {
-			if (!this.getObstacles().contains(obstacle)) {
-				this.addObstacle(obstacle);
-				committedObstacles.add(obstacle);
-			}
+			this.addObstacle(obstacle);
 		}
 		for (Obstacle obstacle : this.pendingRemovedObstacles) {
-			if (this.getObstacles().contains(obstacle)) {
-				this.removeObstacle(obstacle);
-				committedObstacles.add(obstacle);
-			}
+			this.removeObstacle(obstacle);
 		}
 		for (Obstacle obstacle : this.pendingEnabledObstacles) {
-			if (this.getObstacles().contains(obstacle)) {
-				this.enableObstacles(obstacle.getCostInterval().getId());
-				committedObstacles.add(obstacle);
-			}
+			this.enableObstacles(obstacle.getCostInterval().getId());
 		}
 		for (Obstacle obstacle : this.pendingDisabledObstacles) {
-			if (this.getObstacles().contains(obstacle)) {
-				this.disableObstacles(obstacle.getCostInterval().getId());
-				committedObstacles.add(obstacle);
+			this.disableObstacles(obstacle.getCostInterval().getId());
+			if (this.pendingAddedObstacles.contains(obstacle)) {
+				this.dynamicObstacles.remove(obstacle);
 			}
 		}
 		
@@ -1502,7 +1562,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		this.pendingEnabledObstacles.clear();
 		this.pendingDisabledObstacles.clear();
 		
-		return committedObstacles;
+		return (Set<Obstacle>) this.dynamicObstacles.clone();
 	}
 	
 	/**
@@ -1532,6 +1592,19 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 				|| (!this.pendingRemovedObstacles.isEmpty()
 				|| (!this.pendingEnabledObstacles.isEmpty())
 				|| (!this.pendingDisabledObstacles.isEmpty()));
+	}
+	
+	/**
+	 * Gets the embedded obstacles of the environment of this scenario.
+	 *  
+	 * @return the embedded obstacles of the environment of this scenario
+	 */
+	public synchronized Set<Obstacle> getEmbeddedObstacles() {
+		HashSet<Obstacle> embeddedObstacles = new HashSet<Obstacle>();
+		for (Obstacle embeddedObstacle : this.getEnvironment().getObstacles()) {
+			embeddedObstacles.add(embeddedObstacle);
+		}
+		return embeddedObstacles;
 	}
 	
 	/**

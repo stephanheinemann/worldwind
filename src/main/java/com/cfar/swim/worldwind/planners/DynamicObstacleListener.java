@@ -53,6 +53,13 @@ public interface DynamicObstacleListener {
 	public void notifyPendingObstacleChange();
 	
 	/**
+	 * Gets the obstacle manager of this dynamic obstacle listener.
+	 * 
+	 * @return the obstacle manager of this dynamic obstacle listener
+	 */
+	public ObstacleManager getObstacleManager();
+	
+	/**
 	 * Sets the obstacle manager of this dynamic obstacle listener.
 	 * 
 	 * @param obstacleManager the obstacle manager to be set

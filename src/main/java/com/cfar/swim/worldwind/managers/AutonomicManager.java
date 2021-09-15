@@ -30,7 +30,6 @@
 package com.cfar.swim.worldwind.managers;
 
 import java.time.Duration;
-import java.util.Set;
 
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
@@ -94,20 +93,6 @@ public interface AutonomicManager extends FactoryProduct {
 	 * @param featureHorizon the feature horizon to be set
 	 */
 	public void setFeatureHorizon(Duration featureHorizon);
-	
-	/**
-	 * Gets the source scenario of this autonomic manager.
-	 * 
-	 * @return the source scenario of this autonomic manager
-	 */
-	public Scenario getSourceScenario();
-	
-	/**
-	 * Gets the managed scenarios of this autonomic manager.
-	 * 
-	 * @return the managed scenarios of this autonomic manager
-	 */
-	public Set<Scenario> getManagedScenarios();
 	
 	/**
 	 * Creates a new planner tuning for this autonomic manager based

@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.session;
 
 import java.util.Set;
 
+import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.render.Obstacle;
 
 /**
@@ -109,5 +110,38 @@ public interface ObstacleManager {
 	 *         false otherwise
 	 */
 	public boolean hasObstacleChange();
+	
+	/**
+	 * Gets the dynamic obstacle listener of this obstacle manager.
+	 * 
+	 * @return the dynamic obstacle listener of this obstacle manager
+	 */
+	public DynamicObstacleListener getDynamicObstacleListener();
+	
+	/**
+	 * Sets the dynamic obstacle listener of this obstacle manager.
+	 * 
+	 * @param listener the dynamic obstacle listener to be set
+	 */
+	public void setDynamicObstacleListener(DynamicObstacleListener listener);
+	
+	/**
+	 * Resets the dynamic obstacle listener of this obstacle manager.
+	 */
+	public void resetDynamicObstacleListener();
+	
+	/**
+	 * Removes the dynamic obstacle listener of this obstacle manager.
+	 */
+	public void removeDynamicObstacleListener();
+	
+	/**
+	 * Determines whether or not this obstacle manager has a dynamic obstacle
+	 * listener.
+	 * 
+	 * @return true if this obstacle manager has a dynamic obstacle listener,
+	 *         false otherwise
+	 */
+	public boolean hasDynamicObstacleListener();
 	
 }

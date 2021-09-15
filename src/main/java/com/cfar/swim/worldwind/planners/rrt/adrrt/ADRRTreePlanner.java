@@ -271,8 +271,8 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return true if the ADRRT plan needs a potential repair, false otherwise
 	 */
 	protected boolean needsRepair() {
-		if (this.hasObstacleManager() && this.obstacleManager.hasObstacleChange()) {
-			Set<Obstacle> dynamicObstacles = this.obstacleManager.commitObstacleChange();
+		if (this.hasObstacleManager() && this.getObstacleManager().hasObstacleChange()) {
+			Set<Obstacle> dynamicObstacles = this.getObstacleManager().commitObstacleChange();
 			this.addDynamicObstacles(dynamicObstacles);
 			this.shareDynamicObstacles(dynamicObstacles);
 		}
@@ -511,6 +511,18 @@ implements DynamicPlanner, LifelongPlanner {
 	@Override
 	public synchronized void notifyPendingObstacleChange() {
 		this.notifyAll();
+	}
+	
+	/**
+	 * Gets the obstacle manager of this ADRRT planner.
+	 * 
+	 * @return the obstacle manager of this ADRRT planner
+	 * 
+	 * @see DynamicObstacleListener#getObstacleManager()
+	 */
+	@Override
+	public synchronized ObstacleManager getObstacleManager() {
+		return this.obstacleManager;
 	}
 	
 	/**

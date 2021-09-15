@@ -29,8 +29,6 @@
  */
 package com.cfar.swim.worldwind.managers;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +44,9 @@ import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.managing.TrajectoryQuality;
+import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.LifelongPlanner;
+import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planning.CostPolicy;
@@ -62,6 +62,7 @@ import com.cfar.swim.worldwind.registries.managers.AbstractManagerProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.PlannerProperties;
 import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
+import com.cfar.swim.worldwind.session.ObstacleManager;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.session.Session;
 import com.cfar.swim.worldwind.session.SessionManager;
@@ -81,7 +82,7 @@ import gov.nasa.worldwind.symbology.milstd2525.MilStd2525GraphicFactory;
  * @see Session
  * @see Scenario
  */
-public abstract class AbstractAutonomicManager implements AutonomicManager {
+public abstract class AbstractAutonomicManager implements AutonomicManager, DynamicObstacleListener {
 	
 	/** the cost policy of this abstract autonomic manager */
 	private CostPolicy costPolicy = CostPolicy.AVERAGE;
@@ -95,11 +96,11 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	/** the source scenario of this abstract autonomic manager */
 	private Scenario sourceScenario = null;
 	
+	/** the obstacle manager of this abstract autonomic manager */
+	private ObstacleManager obstacleManager = null;
+	
 	/** the managed scenarios and their planner tunings of this abstract autonomic manager */
 	private Map<Scenario, PlannerTuning> managedScenarios = new HashMap<>();
-	
-	/** the environment change listener of this abstract autonomic manager */
-	private final EnvironmentChangeListener ecl = new EnvironmentChangeListener();
 	
 	/** the executor of this abstract autonomic manager */
 	private ExecutorService executor = null;
@@ -180,23 +181,26 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 * Gets the source scenario of this autonomic manager.
 	 * 
 	 * @return the source scenario of this autonomic manager
-	 * 
-	 * @see AutonomicManager#getSourceScenario()
 	 */
-	@Override
-	public Scenario getSourceScenario() {
+	protected Scenario getSourceScenario() {
 		return this.sourceScenario;
+	}
+	
+	/**
+	 * Sets the source scenario of this autonomic manager.
+	 * 
+	 * @param sourceScenario the source scenario to be set
+	 */
+	protected void setSourceScenario(Scenario sourceScenario) {
+		this.sourceScenario = sourceScenario;
 	}
 	
 	/**
 	 * Gets the managed scenarios of this abstract autonomic manager.
 	 * 
 	 * @return the managed scenarios of this abstract autonomic manager
-	 * 
-	 * @see AutonomicManager#getManagedScenarios()
 	 */
-	@Override
-	public Set<Scenario> getManagedScenarios() {
+	protected Set<Scenario> getManagedScenarios() {
 		return Collections.unmodifiableSet(this.managedScenarios.keySet());
 	}
 	
@@ -237,7 +241,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 * @param managedSession the managed session
 	 */
 	protected void initialize(Session managedSession) {
-		this.sourceScenario = managedSession.getActiveScenario();
+		this.setSourceScenario(managedSession.getActiveScenario());
 		Set<Specification<Planner>> plannerSpecs =
 				managedSession.getManagedPlannerSpecifications();
 		Set<Specification<Environment>> envSpecs =
@@ -250,26 +254,27 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 				Scenario managedScenario = new Scenario(managedScenarioId);
 				
 				// managed scenario time
-				managedScenario.setTime(sourceScenario.getTime());
+				managedScenario.setTime(this.getSourceScenario().getTime());
 				// managed scenario cost threshold
-				managedScenario.setThreshold(sourceScenario.getThreshold());
+				managedScenario.setThreshold(this.getSourceScenario().getThreshold());
 				// managed scenario globe
-				managedScenario.setGlobe(sourceScenario.getGlobe());
+				managedScenario.setGlobe(this.getSourceScenario().getGlobe());
 				
 				// managed scenario aircraft
 				if (sourceScenario.hasAircraft()) {
-					AircraftFactory aircraftFactory =
-							new AircraftFactory(managedSession.getSetup().getAircraftSpecification());
+					AircraftFactory aircraftFactory = new AircraftFactory(
+							managedSession.getSetup().getAircraftSpecification());
 					managedScenario.setAircraft(aircraftFactory.createInstance());
-					managedScenario.getAircraft().setCostInterval(sourceScenario.getAircraft().getCostInterval());
+					managedScenario.getAircraft().setCostInterval(
+							this.getSourceScenario().getAircraft().getCostInterval());
 				}
 				
 				// managed scenario sector / environment boundary
-				managedScenario.setSector(sourceScenario.getSector());
+				managedScenario.setSector(this.getSourceScenario().getSector());
 				// managed scenario POIs
 				List<Position> pois = new ArrayList<Position>();
-				pois.addAll(sourceScenario.getWaypoints());
-				for (Waypoint poi : sourceScenario.getWaypoints()) {
+				pois.addAll(this.getSourceScenario().getWaypoints());
+				for (Waypoint poi : this.getSourceScenario().getWaypoints()) {
 					managedScenario.addWaypoint(poi);
 				}
 				// managed scenario environment
@@ -281,8 +286,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 					managedScenario.setEnvironment(environment);
 					// managed scenario planner
 					PlannerFactory plannerFactory = new PlannerFactory(managedScenario);
-					((PlannerProperties) plannerSpec.getProperties()).setCostPolicy(this.costPolicy);
-					((PlannerProperties) plannerSpec.getProperties()).setRiskPolicy(this.riskPolicy);
+					((PlannerProperties) plannerSpec.getProperties()).setCostPolicy(this.getCostPolicy());
+					((PlannerProperties) plannerSpec.getProperties()).setRiskPolicy(this.getRiskPolicy());
 					plannerFactory.setSpecification(plannerSpec);
 					Planner planner = plannerFactory.createInstance();
 					
@@ -297,8 +302,15 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 							// managed scenario aircraft position
 							managedScenario.moveAircraft(pois.get(0));
 							// managed scenario obstacles
-							managedScenario.submitAddObstacles(sourceScenario.getObstacles());
+							managedScenario.submitAddObstacles(this.getSourceScenario().getObstacles());
+							//managedScenario.submitAddObstacles(this.getSourceScenario().getEmbeddedObstacles());
 							managedScenario.commitObstacleChange();
+							
+							if (planner instanceof OnlinePlanner) {
+								OnlinePlanner onlinePlanner = (OnlinePlanner) planner;
+								onlinePlanner.setStandby(true);
+								onlinePlanner.setDatalink(this.getSourceScenario().getDatalink());
+							}
 							
 							// TODO: datalink and SWIM
 							// TODO: features and knowledge base
@@ -311,17 +323,20 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 									// TODO: update source scenario with best trajectory
 									// TODO: measure performance and update reputation
 									Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
+									
+									// TODO: multiple parts / uploading versus showing
 									if (sourceTrajectory.isEmpty() ||
 											(0 > (new TrajectoryQuality(sourceTrajectory))
 												.compareTo(new TrajectoryQuality(trajectory)))) {
-										sourceScenario.setTrajectory(trajectory);
+										getSourceScenario().setTrajectory(trajectory);
 									}
 									Thread.yield();
 								}
 							});
 							
 							// managed scenario features and initial tuning
-							Features features = new Features(managedScenario, this.featureHorizon);
+							// TODO: environment versus scenario obstacles
+							Features features = new Features(managedScenario, this.getFeatureHorizon());
 							PlannerTuning tuning = this.createPlannerTuning(plannerSpec, features);
 							List<Properties<Planner>> candidates = tuning.tune();
 							// TODO: default candidate
@@ -339,7 +354,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			// execute managed planners in parallel
 			this.executor = Executors.newWorkStealingPool(this.getManagedScenarios().size());
 			// inject all source scenario environment changes into managed scenarios
-			this.sourceScenario.addEnvironmentChangeListener(this.ecl);
+			this.setObstacleManager(this.getSourceScenario());
+			this.getSourceScenario().setDynamicObstacleListener(this);
 		}
 	}
 	
@@ -395,7 +411,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 *                       manager
 	 */
 	protected void cleanup(Session managedSession) {
-		this.sourceScenario.removePropertyChangeListener(this.ecl);
+		this.getSourceScenario().resetDynamicObstacleListener();
+		this.setObstacleManager(null);
 		for (Scenario managedScenario : this.managedScenarios.keySet()) {
 			managedSession.removeScenario(managedScenario);
 		}
@@ -409,6 +426,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 * Manages a session identified by a session identifier.
 	 * 
 	 * @param sessionId the identifier of the session to be managed
+	 * 
+	 * @see AutonomicManager#manage(String)
 	 */
 	@Override
 	public void manage(String sessionId) {
@@ -420,6 +439,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 * Manages a specified session.
 	 * 
 	 * @param session the session to be managed
+	 * 
+	 * @see AutonomicManager#manage(Session)
 	 */
 	@Override
 	public void manage(Session session) {
@@ -432,12 +453,94 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	
 	/**
 	 * Terminates the managed session of this abstract autonomic manager.
+	 * 
+	 * @see AutonomicManager#terminate()
 	 */
 	@Override
-	public void terminate() {
+	public synchronized void terminate() {
 		for (Scenario managedScenario : this.managedScenarios.keySet()) {
 			((LifelongPlanner) managedScenario.getPlanner()).terminate();
 		}
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager is listening.
+	 * 
+	 * @return true if this abstract autonomic manager is listening,
+	 *         false otherwise
+	 * 
+	 * @see DynamicObstacleListener#isListening()
+	 */
+	@Override
+	public synchronized boolean isListening() {
+		return true;
+	}
+	
+	/**
+	 * Notifies this abstract autonomic manager about a pending obstacle change.
+	 * 
+	 * @see DynamicObstacleListener#notifyPendingObstacleChange()
+	 */
+	@Override
+	public synchronized void notifyPendingObstacleChange() {
+		if (this.hasObstacleManager()
+				&& !this.getObstacleManager().commitObstacleChange().isEmpty()) {
+			this.getSourceScenario().setTrajectory(new Trajectory());
+			
+			// update all managed scenarios and planner tunings
+			for (Scenario managedScenario : getManagedScenarios()) {
+				PlannerTuning tuning = getPlannerTuning(managedScenario);
+				// TODO: environment obstacles only
+				tuning.getFeatures().extractFeatures(this.getSourceScenario());
+				System.out.println(tuning.getFeatures());
+				List<Properties<Planner>> candidates = tuning.tune();
+				// TODO: default candidate
+				tuning.getSpecification().setProperties(candidates.get(0));
+				managedScenario.getPlanner().update(tuning.getSpecification());
+				managedScenario.submitReplaceObstacles(
+						getSourceScenario().getObstacles());
+				//managedScenario.submitReplaceObstacles(
+				//		getSourceScenario().getEmbeddedObstacles());
+			}
+		}
+	}
+	
+	/**
+	 * Gets the obstacle manager of this abstract autonomic manager.
+	 * 
+	 * @return the obstacle manager of this abstract autonomic manager
+	 * 
+	 * @see DynamicObstacleListener#getObstacleManager()
+	 */
+	@Override
+	public synchronized ObstacleManager getObstacleManager() {
+		return this.obstacleManager;
+	}
+	
+	/**
+	 * Sets the obstacle manager of this abstract autonomic manager.
+	 * 
+	 * @param obstacleManager the obstacle manager to be set
+	 * 
+	 * @see DynamicObstacleListener#setObstacleManager(ObstacleManager)
+	 */
+	@Override
+	public synchronized void setObstacleManager(ObstacleManager obstacleManager) {
+		this.obstacleManager = obstacleManager;
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager has an
+	 * obstacle manager.
+	 * 
+	 * @return true if this abstract autonomic manager has an obstacle manager,
+	 *         false otherwise
+	 * 
+	 * @see DynamicObstacleListener#hasObstacleManager()
+	 */
+	@Override
+	public synchronized boolean hasObstacleManager() {
+		return (null != this.obstacleManager);
 	}
 	
 	private final MilStd2525GraphicFactory symbolFactory = new MilStd2525GraphicFactory();
@@ -512,40 +615,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		}
 		
 		return updated;
-	}
-	
-	/**
-	 * Realizes an environment change listener.
-	 * 
-	 * @author Stephan Heinemann
-	 *
-	 */
-	private class EnvironmentChangeListener implements PropertyChangeListener {
-		
-		/**
-		 * Updates the environment of managed scenarios if the source scenario
-		 * environment changes.
-		 * 
-		 * @param evt the property change event
-		 * 
-		 * @see PropertyChangeListener#propertyChange(PropertyChangeEvent)
-		 */
-		@Override
-		public void propertyChange(PropertyChangeEvent evt) {
-			getSourceScenario().setTrajectory(new Trajectory());
-			// update all managed scenarios and planner tunings
-			for (Scenario managedScenario : getManagedScenarios()) {
-				PlannerTuning tuning = getPlannerTuning(managedScenario);
-				tuning.getFeatures().extractFeatures(getSourceScenario());
-				System.out.println(tuning.getFeatures());
-				List<Properties<Planner>> candidates = tuning.tune();
-				// TODO: default candidate
-				tuning.getSpecification().setProperties(candidates.get(0));
-				managedScenario.getPlanner().update(tuning.getSpecification());
-				managedScenario.submitReplaceObstacles(
-						getSourceScenario().getEnvironment().getObstacles());
-			}
-		}
 	}
 	
 }
