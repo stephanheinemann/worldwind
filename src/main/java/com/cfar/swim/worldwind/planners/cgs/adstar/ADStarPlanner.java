@@ -470,6 +470,15 @@ implements DynamicPlanner, LifelongPlanner {
 				// TODO: consider early arrivals with holding / loitering
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
+					// propagate potential cost change
+					double deltaCost = partStart.getCost() - this.getStart().getCost();
+					if (0 != deltaCost) {
+						for (AStarWaypoint waypoint : this.visited) {
+							ADStarWaypoint adswp = (ADStarWaypoint) waypoint;
+							adswp.setG(adswp.getG() + deltaCost);
+							adswp.setV(adswp.getV() + deltaCost);
+						}
+					}
 				}
 				
 				// repair affected waypoints for current part
@@ -484,6 +493,7 @@ implements DynamicPlanner, LifelongPlanner {
 				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
+					this.getStart().setCost(partStart.getCost());
 				}
 				super.planPart(partIndex);
 			}

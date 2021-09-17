@@ -58,6 +58,7 @@ import com.cfar.swim.worldwind.registries.Properties;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
 import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
+import com.cfar.swim.worldwind.registries.environments.EnvironmentProperties;
 import com.cfar.swim.worldwind.registries.managers.AbstractManagerProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.PlannerProperties;
@@ -205,6 +206,17 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	}
 	
 	/**
+	 * Determines whether or not this abstract autonomic manager has managed
+	 * scenarios.
+	 * 
+	 * @return true if this abstract autonomic manager has managed scenarios,
+	 *         false otherwise
+	 */
+	protected boolean hasManagedScenarios() {
+		return (0 < this.getManagedScenarios().size());
+	}
+	
+	/**
 	 * Creates a new planner tuning for this abstract autonomic manager based
 	 * on a planner specification and features.
 	 * 
@@ -246,10 +258,13 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 				managedSession.getManagedPlannerSpecifications();
 		Set<Specification<Environment>> envSpecs =
 				managedSession.getEnvironmentSpecifications();
+		EnvironmentProperties sourceEnvProperties = (EnvironmentProperties)
+				managedSession.getSetup().getEnvironmentSpecification().getProperties();
 		
 		// create managed scenarios
 		for (Specification<Planner> plannerSpec : plannerSpecs) {
 			for (Specification<Environment> envSpec : envSpecs) {
+				// managed scenario
 				String managedScenarioId = plannerSpec.getId() + " / " + envSpec.getId();
 				Scenario managedScenario = new Scenario(managedScenarioId);
 				
@@ -277,8 +292,14 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 				for (Waypoint poi : this.getSourceScenario().getWaypoints()) {
 					managedScenario.addWaypoint(poi);
 				}
+				
 				// managed scenario environment
 				EnvironmentFactory envFactory = new EnvironmentFactory(managedScenario);
+				// apply common source scenario environment boundaries
+				((EnvironmentProperties) envSpec.getProperties()).setCeiling(
+						sourceEnvProperties.getCeiling());
+				((EnvironmentProperties) envSpec.getProperties()).setFloor(
+						sourceEnvProperties.getFloor());
 				envFactory.setSpecification(envSpec);
 				Environment environment = envFactory.createInstance();
 				
@@ -324,10 +345,24 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 									// TODO: measure performance and update reputation
 									Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
 									
+									List<Waypoint> spois = sourceTrajectory.getPois();
+									List<Waypoint> rpois = trajectory.getPois();
+									int poiIndex = Math.min(spois.size(), rpois.size()) - 1;
+									System.out.println("common POI indices = " + poiIndex);
+									
+									Trajectory st = sourceTrajectory.getSubTrajectory(poiIndex);
+									TrajectoryQuality stq = new TrajectoryQuality(st);
+									Trajectory rt = trajectory.getSubTrajectory(poiIndex);
+									TrajectoryQuality rtq = new TrajectoryQuality(rt);
+									
+									// TODO: comparison of trajectories can only be based on
+									// same start and end POIs using same normalizer
+									
 									// TODO: multiple parts / uploading versus showing
-									if (sourceTrajectory.isEmpty() ||
-											(0 > (new TrajectoryQuality(sourceTrajectory))
-												.compareTo(new TrajectoryQuality(trajectory)))) {
+									// consider non-empty, improved, or longer revised trajectory
+									if (!trajectory.isEmpty() && (sourceTrajectory.isEmpty()
+											|| (0 > stq.compareTo(rtq))
+											|| ((0 == stq.compareTo(rtq)) && (rpois.size() >= poiIndex)))) {
 										getSourceScenario().setTrajectory(trajectory);
 									}
 									Thread.yield();
@@ -351,11 +386,14 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 				}
 			}
 			
-			// execute managed planners in parallel
-			this.executor = Executors.newWorkStealingPool(this.getManagedScenarios().size());
-			// inject all source scenario environment changes into managed scenarios
-			this.setObstacleManager(this.getSourceScenario());
-			this.getSourceScenario().setDynamicObstacleListener(this);
+			if (this.hasManagedScenarios()) {
+				// execute managed planners in parallel
+				this.executor = Executors.newWorkStealingPool(this.getManagedScenarios().size());
+				// inject all source scenario environment changes into managed scenarios
+				this.getSourceScenario().clearTrajectory();
+				this.setObstacleManager(this.getSourceScenario());
+				this.getSourceScenario().setDynamicObstacleListener(this);
+			}
 		}
 	}
 	
@@ -397,7 +435,9 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 		}
 		
 		try {
-			this.executor.invokeAll(managedPlanners);
+			if (!managedPlanners.isEmpty()) {
+				this.executor.invokeAll(managedPlanners);
+			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -411,13 +451,16 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	 *                       manager
 	 */
 	protected void cleanup(Session managedSession) {
-		this.getSourceScenario().resetDynamicObstacleListener();
-		this.setObstacleManager(null);
-		for (Scenario managedScenario : this.managedScenarios.keySet()) {
-			managedSession.removeScenario(managedScenario);
+		if (this.hasManagedScenarios()) {
+			this.getSourceScenario().resetDynamicObstacleListener();
+			this.setObstacleManager(null);
+			for (Scenario managedScenario : this.managedScenarios.keySet()) {
+				managedSession.removeScenario(managedScenario);
+			}
+			this.managedScenarios.clear();
+			this.executor.shutdown();
+			this.getSourceScenario().clearTrajectory();
 		}
-		this.managedScenarios.clear();
-		this.executor.shutdown();
 	}
 	
 	// TODO: managed session versus training session
@@ -485,7 +528,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	public synchronized void notifyPendingObstacleChange() {
 		if (this.hasObstacleManager()
 				&& !this.getObstacleManager().commitObstacleChange().isEmpty()) {
-			this.getSourceScenario().setTrajectory(new Trajectory());
+			this.getSourceScenario().clearTrajectory();
 			
 			// update all managed scenarios and planner tunings
 			for (Scenario managedScenario : getManagedScenarios()) {

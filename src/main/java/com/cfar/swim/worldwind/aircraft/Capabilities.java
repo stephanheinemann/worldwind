@@ -404,6 +404,9 @@ public class Capabilities {
 	 * @return the estimated duration to travel directly from the start to the
 	 *         goal position at cruise speed including climbs and descents in
 	 *         still air
+	 * 
+	 * @throws CapabilitiesException if traveling directly from the start to
+	 *         the goal position exceeds these capabilities
 	 */
 	public Duration getEstimatedDuration(Position start, Position goal, Globe globe) {
 		Duration estimatedDuration = Duration.ZERO;

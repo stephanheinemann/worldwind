@@ -52,7 +52,7 @@ public class CubicGrid extends RegularGrid {
 	/**
 	 * the normalizer for distances of this cubic grid
 	 */
-	protected double normalizer = Double.NaN;
+	private double normalizer = Double.NaN;
 	
 	/**
 	 * Constructs a new cubic grid from a geometric cube without any children. 
@@ -115,6 +115,21 @@ public class CubicGrid extends RegularGrid {
 	 */
 	public double getNormalizer() {
 		return this.normalizer;
+	}
+	
+	/**
+	 * Sets the normalizer of this cubic grid.
+	 * 
+	 * @param normalizer the normalizer to be set
+	 * 
+	 * @throws IllegalArgumentException if the normalizer is less than 1
+	 */
+	public void setNormalizer(double normalizer) {
+		if (1d > normalizer) {
+			throw new IllegalArgumentException("invalid normalizer");
+		}
+		this.normalizer = normalizer;
+		this.updateNormalizer();
 	}
 	
 	/**

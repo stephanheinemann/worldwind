@@ -29,12 +29,9 @@
  */
 package com.cfar.swim.worldwind.planners.cgs.astar;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.PriorityQueue;
@@ -230,7 +227,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Indicates whether or not a position is within the start region.
+	 * Determines whether or not a position is within the start region.
 	 * 
 	 * @param position the position
 	 * 
@@ -259,7 +256,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Indicates whether or not a position is within the goal region.
+	 * Determines whether or not a position is within the goal region.
 	 * 
 	 * @param position the position
 	 * 
@@ -528,12 +525,14 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		// expand start region position towards the start
 		if ((!waypoint.equals(this.getStart())) &&
 				this.isInStartRegion(waypoint.getPrecisionPosition())) {
+			// TODO: possible feasibility / capability issues
 			neighborhood.add(this.getStart());
 		}
 
 		// expand a goal region position towards the goal
 		if ((!waypoint.equals(this.getGoal())) &&
 				this.isInGoalRegion(waypoint.getPrecisionPosition())) {
+			// TODO: possible feasibility / capability issues
 			neighborhood.add(this.getGoal());
 		}
 
@@ -555,31 +554,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 			this.getWaypoints().addFirst(waypoint);
 			waypoint = waypoint.getParent();
 		}
-	}
-	
-	/**
-	 * Creates a trajectory of the computed plan.
-	 * 
-	 * @return the trajectory of the computed plan
-	 */
-	protected Trajectory createTrajectory() {
-		LinkedList<AStarWaypoint> waypoints = new LinkedList<>();
-		
-		this.getWaypoints().descendingIterator()
-			.forEachRemaining(waypoint -> {
-				AStarWaypoint current = (AStarWaypoint) waypoint.clone();
-				if (waypoints.isEmpty()) {
-					current.setTtg(Duration.ZERO);
-					current.setDtg(0d);
-				} else {
-					// TODO: consider time and distance to next versus to goal waypoint
-					current.setTtg(Duration.between(current.getEto(), waypoints.getFirst().getEto()));
-					current.setDtg(this.getEnvironment().getDistance(current, waypoints.getFirst()));
-				}
-				waypoints.addFirst(current);
-			});
-		
-		return new Trajectory(Collections.unmodifiableList(waypoints));
 	}
 	
 	/**
@@ -671,9 +645,11 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.getStart().setG(0);
 		this.getStart().setH(this.getEnvironment().getNormalizedDistance(origin, destination));
 		this.getStart().setEto(etd);
+		this.getStart().setPoi(true);
 		
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setH(0);
+		this.getGoal().setPoi(true);
 		
 		// the adjacent waypoints to the origin
 		this.setStartRegion(this.getEnvironment().getAdjacentWaypointPositions(origin)
@@ -802,6 +778,7 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 				// objects for AD* repairs
 				if (currentOrigin.hasParent()) {
 					this.getStart().setParent(currentOrigin.getParent());
+					this.getStart().setCost(currentOrigin.getCost());
 				}
 				this.planPart(partIndex);
 				

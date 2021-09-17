@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.planners;
 
+import java.time.Duration;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -240,6 +242,31 @@ public abstract class AbstractPlanner implements Planner {
 	 */
 	protected LinkedList<Waypoint> getWaypoints() {
 		return this.plan;
+	}
+	
+	/**
+	 * Creates a trajectory of the computed plan of this abstract planner.
+	 * 
+	 * @return the trajectory of the computed plan of this abstract planner
+	 */
+	protected Trajectory createTrajectory() {
+		LinkedList<Waypoint> waypoints = new LinkedList<>();
+		
+		this.getWaypoints().descendingIterator()
+			.forEachRemaining(waypoint -> {
+				Waypoint current = waypoint.clone();
+				if (waypoints.isEmpty()) {
+					current.setTtg(Duration.ZERO);
+					current.setDtg(0d);
+				} else {
+					// TODO: consider time and distance to next versus to goal waypoint
+					current.setTtg(Duration.between(current.getEto(), waypoints.getFirst().getEto()));
+					current.setDtg(this.getEnvironment().getDistance(current, waypoints.getFirst()));
+				}
+				waypoints.addFirst(current);
+			});
+		
+		return new Trajectory(Collections.unmodifiableList(waypoints));
 	}
 	
 	/**

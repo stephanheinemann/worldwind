@@ -668,6 +668,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	 * @param partIndex the of the plan to be re-planned
 	 */
 	protected void replan(int partIndex) {
+		// TODO: possibly always re-plan from scratch based on track point
 		ADStarWaypoint partStart = (ADStarWaypoint) this.getStart().clone();
 		
 		if (this.hasWaypoints(partIndex - 1)) {
@@ -697,11 +698,13 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 		
 		if (partStart.hasInfiniteCost()) {
 			// TODO: invalid previous part?
+			// TODO: slots versus permissible aircraft track point error
 		} else if (!this.getStart().getEto().equals(partStart.getEto())) {
 			// plan current part from scratch if start ETO has changed
 			this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
 			if (partStart.hasParent()) {
 				this.getStart().setParent(partStart.getParent());
+				this.getStart().setCost(partStart.getCost());
 			}
 			this.planPart(partIndex);
 		}

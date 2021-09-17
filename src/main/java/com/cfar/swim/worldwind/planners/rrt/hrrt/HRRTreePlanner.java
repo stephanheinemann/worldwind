@@ -140,7 +140,15 @@ public class HRRTreePlanner extends RRTreePlanner {
 	 */
 	@Override
 	protected HRRTreeWaypoint createWaypoint(Position position) {
-		return new HRRTreeWaypoint(position);
+		HRRTreeWaypoint waypoint = new HRRTreeWaypoint(position);
+		
+		if (waypoint.equals(this.getStart())) {
+			waypoint = this.getStart();
+		} else if (waypoint.equals(this.getGoal())) {
+			waypoint = this.getGoal();
+		}
+		
+		return waypoint;
 	}
 	
 	/**
@@ -509,8 +517,12 @@ public class HRRTreePlanner extends RRTreePlanner {
 			
 			// check goal region
 			if ((Status.TRAPPED != status) && this.isInGoalRegion()) {
-				// avoid feasibility issues connecting to newest sample only
-				this.setGoal(this.getNewestWaypoint());
+				if (this.getNewestWaypoint().equals(this.getGoal())) {
+					this.setGoal(this.getNewestWaypoint());
+				} else {
+					// TODO: possible feasibility / capability issues
+					this.createExtension(this.getNewestWaypoint(), this.getGoal());
+				}
 				this.connectPlan();
 			}
 			

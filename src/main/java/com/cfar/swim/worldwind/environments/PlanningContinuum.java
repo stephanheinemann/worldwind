@@ -89,6 +89,9 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	/** the base cost of this planning continuum */
 	private static final double BASE_COST = 1d;
 	
+	/** the normalizer of this planning continuum */
+	private double normalizer = this.getDiameter();
+	
 	/** the globe of this planning continuum */
 	private Globe globe = null;
 	
@@ -407,7 +410,24 @@ implements DynamicEnvironment, StructuredEnvironment, MultiResolutionEnvironment
 	 */
 	@Override
 	public double getNormalizer() {
-		return this.getDiameter();
+		return this.normalizer;
+	}
+	
+	/**
+	 * Sets the normalizer of this planning continuum.
+	 * 
+	 * @param normalizer the normalizer to be set
+	 * 
+	 * @throws IllegalArgumentException if the normalizer is less than 1
+	 * 
+	 * @see Environment#setNormalizer(double)
+	 */
+	@Override
+	public void setNormalizer(double normalizer) {
+		if (1d > normalizer) {
+			throw new IllegalArgumentException("invalid normalizer");
+		}
+		this.normalizer = normalizer;
 	}
 	
 	/**

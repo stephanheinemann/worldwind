@@ -29,11 +29,8 @@
  */
 package com.cfar.swim.worldwind.planners.rrt.brrt;
 
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
@@ -149,7 +146,15 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * @return the RRT waypoint at the specified position
 	 */
 	protected RRTreeWaypoint createWaypoint(Position position) {
-		return new RRTreeWaypoint(position);
+		RRTreeWaypoint waypoint = new RRTreeWaypoint(position);
+		
+		if (waypoint.equals(this.getStart())) {
+			waypoint = this.getStart();
+		} else if (waypoint.equals(this.getGoal())) {
+			waypoint = this.getGoal();
+		}
+		
+		return waypoint;
 	}
 	
 	/**
@@ -386,6 +391,8 @@ public class RRTreePlanner extends AbstractPlanner {
 	 * Clears the planning data structures of this RRT planner.
 	 */
 	protected void clearExpendables() {
+		this.setStart(null);
+		this.setGoal(null);
 		this.getPlanningContinuum().clearVertices();
 		this.clearWaypoints();
 	}
@@ -417,31 +424,6 @@ public class RRTreePlanner extends AbstractPlanner {
 			this.getWaypoints().addFirst(waypoint);
 			waypoint = waypoint.getParent();
 		}
-	}
-	
-	/**
-	 * Creates a trajectory of the computed plan of this RRT planner.
-	 * 
-	 * @return the trajectory of the computed plan of this RRT planner
-	 */
-	protected Trajectory createTrajectory() {
-		LinkedList<RRTreeWaypoint> waypoints = new LinkedList<>();
-		
-		this.getWaypoints().descendingIterator()
-			.forEachRemaining(waypoint -> {
-				RRTreeWaypoint current = (RRTreeWaypoint) waypoint.clone();
-				if (waypoints.isEmpty()) {
-					current.setTtg(Duration.ZERO);
-					current.setDtg(0d);
-				} else {
-					// TODO: consider time and distance to next versus to goal waypoint
-					current.setTtg(Duration.between(current.getEto(), waypoints.getFirst().getEto()));
-					current.setDtg(this.getEnvironment().getDistance(current, waypoints.getFirst()));
-				}
-				waypoints.addFirst(current);
-			});
-		
-		return new Trajectory(Collections.unmodifiableList(waypoints));
 	}
 	
 	/**
@@ -770,14 +752,16 @@ public class RRTreePlanner extends AbstractPlanner {
 	 */
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		this.clearExpendables();
-
+		
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setEto(etd);
 		this.getStart().setCost(0d);
+		this.getStart().setPoi(true);
 		this.getPlanningContinuum().addVertex(this.getStart());
 		this.setNewestWaypoint(this.getStart());
-
+		
 		this.setGoal(this.createWaypoint(destination));
+		this.getGoal().setPoi(true);
 	}
 	
 	/**
@@ -811,8 +795,12 @@ public class RRTreePlanner extends AbstractPlanner {
 			
 			// check goal region
 			if ((Status.TRAPPED != status) && this.isInGoalRegion()) {
-				// avoid feasibility issues connecting to newest sample only
-				this.setGoal(this.getNewestWaypoint());
+				if (this.getNewestWaypoint().equals(this.getGoal())) {
+					this.setGoal(this.getNewestWaypoint());
+				} else {
+					// TODO: possible feasibility / capability issues
+					this.createExtension(this.getNewestWaypoint(), this.getGoal());
+				}
 				this.connectPlan();
 			}
 		
@@ -911,6 +899,7 @@ public class RRTreePlanner extends AbstractPlanner {
 				// generation
 				if (currentOrigin.hasParent()) {
 					this.getStart().setParent(currentOrigin.getParent());
+					this.getStart().setCost(currentOrigin.getCost());
 				}
 				this.planPart(partIndex);
 				

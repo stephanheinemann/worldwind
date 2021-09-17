@@ -272,11 +272,12 @@ public class RRTreeStarPlanner extends RRTreePlanner {
 				if (this.isInGoalRegion()
 						&& (endWaypoint.getCost() < this.getGoal().getCost())) {
 					// update goal for cost comparison
-					this.getGoal().setParent(endWaypoint);
-					this.getGoal().setEto(endWaypoint.getEto());
-					this.getGoal().setCost(endWaypoint.getCost());
-					
-					// avoid feasibility issues connecting to newest sample only
+					if (this.getNewestWaypoint().equals(this.getGoal())) {
+						this.setGoal(this.getNewestWaypoint());
+					} else {
+						// TODO: possible feasibility / capability issues
+						this.createExtension(this.getNewestWaypoint(), this.getGoal());
+					}
 					this.connectPlan();
 					this.revisePlan(this.createTrajectory());
 				}

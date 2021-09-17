@@ -153,7 +153,15 @@ implements DynamicPlanner, LifelongPlanner {
 	 */
 	@Override
 	protected DRRTreeWaypoint createWaypoint(Position position) {
-		return new DRRTreeWaypoint(position);
+		DRRTreeWaypoint waypoint = new DRRTreeWaypoint(position);
+		
+		if (waypoint.equals(this.getStart())) {
+			waypoint = this.getStart();
+		} else if (waypoint.equals(this.getGoal())) {
+			waypoint = this.getGoal();
+		}
+		
+		return waypoint;
 	}
 	
 	/**
@@ -348,9 +356,16 @@ implements DynamicPlanner, LifelongPlanner {
 				// connect current to previous part
 				// TODO: consider departure slots to avoid planning from scratch
 				// TODO: consider early arrivals with holding / loitering
-				// TODO: feasibility issues connecting to goal region
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
+					// propagate potential cost change
+					double deltaCost = partStart.getCost() - this.getStart().getCost();
+					if (0 != deltaCost) {
+						for (Position vertex : this.getPlanningContinuum().getVertices()) {
+							DRRTreeWaypoint waypoint = (DRRTreeWaypoint) vertex;
+							waypoint.setCost(waypoint.getCost() + deltaCost);
+						}
+					}
 				}
 				
 				// trim and re-grow tree if plan is affected
@@ -368,6 +383,7 @@ implements DynamicPlanner, LifelongPlanner {
 				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
+					this.getStart().setCost(partStart.getCost());
 				}
 				super.planPart(partIndex);
 			}

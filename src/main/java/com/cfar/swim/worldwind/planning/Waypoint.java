@@ -86,6 +86,9 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	/** the precision position of this waypoint */
 	private PrecisionPosition position = null;
 	
+	/** determines whether or not this waypoint is a POI */
+	private boolean isPoi = false;
+	
 	/** the estimated cost of this waypoint in a trajectory */ 
 	private double cost = Double.POSITIVE_INFINITY;
 	
@@ -142,6 +145,24 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 		if (null != this.depiction) {
 			this.depiction.setDesignation(this.designator);
 		}
+	}
+	
+	/**
+	 * Sets whether or not this waypoint is a POI.
+	 * 
+	 * @param isPoi true if this waypoint is a POI, false otherwise
+	 */
+	public void setPoi(boolean isPoi) {
+		this.isPoi = isPoi;
+	}
+	
+	/**
+	 * Determines whether or not this waypoint is a POI.
+	 * 
+	 * @return true if this waypoint is a POI, false otherwise
+	 */
+	public boolean isPoi() {
+		return this.isPoi;
 	}
 	
 	/**

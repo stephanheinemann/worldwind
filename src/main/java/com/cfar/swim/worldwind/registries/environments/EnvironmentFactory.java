@@ -142,6 +142,7 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 	            environment = new PlanningGrid(envCube, properties.getDivision(), sCells, tCells);
 	            environment.setThreshold(this.scenario.getThreshold());
 	            environment.setGlobe(this.scenario.getGlobe());
+	            environment.setNormalizer(bb.getDiameter());
 	            ((PlanningGrid) environment).addStructuralChangeListener(this.scenario);
 			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID)) {
 				PlanningContinuumProperties properties = (PlanningContinuumProperties) this.specification.getProperties();
@@ -150,6 +151,7 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 				environment = new PlanningContinuum(envBox);
 				environment.setThreshold(this.scenario.getThreshold());
 				environment.setGlobe(this.scenario.getGlobe());
+				environment.setNormalizer(bb.getDiameter());
 				((PlanningContinuum) environment).setResolution(properties.getResolution());
 				((PlanningContinuum) environment).addStructuralChangeListener(this.scenario); 
 			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID)) {

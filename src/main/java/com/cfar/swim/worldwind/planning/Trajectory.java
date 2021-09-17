@@ -30,8 +30,10 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Objects;
 
 import com.cfar.swim.worldwind.util.Depictable;
@@ -105,6 +107,46 @@ public class Trajectory extends Path implements Depictable {
 	 */
 	public int getWaypointsLength() {
 		return Iterables.size(this.getWaypoints());
+	}
+	
+	/**
+	 * Gets the POIs of this trajectory.
+	 * 
+	 * @return the POIs of this trajectory
+	 */
+	public List<Waypoint> getPois() {
+		List<Waypoint> pois = new ArrayList<>();
+		for (Waypoint waypoint : this.getWaypoints()) {
+			if (waypoint.isPoi()) {
+				pois.add(waypoint);
+			}
+		}
+		
+		return pois;
+	}
+	
+	/**
+	 * Gets a sub-trajectory of this trajectory from its start POI up to an end
+	 * POI index.
+	 * 
+	 * @param poiIndex the end POI index
+	 * 
+	 * @return the sub-trajectory of this trajectory from its start POI up to
+	 *         the end POI index
+	 */
+	public Trajectory getSubTrajectory(int poiIndex) {
+		List<Waypoint> subWaypoints = new ArrayList<>();
+		Iterator<? extends Waypoint> waypoints = this.getWaypoints().iterator();
+		
+		while ((0 <= poiIndex) && waypoints.hasNext()) {
+			Waypoint waypoint = waypoints.next();
+			subWaypoints.add(waypoint);
+			if (waypoint.isPoi()) {
+				poiIndex--;
+			}
+		}
+		
+		return new Trajectory(subWaypoints);
 	}
 	
 	/**

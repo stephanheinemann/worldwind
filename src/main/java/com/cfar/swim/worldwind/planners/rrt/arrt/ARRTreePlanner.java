@@ -164,7 +164,15 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	protected ARRTreeWaypoint createWaypoint(Position position) {
-		return new ARRTreeWaypoint(position);
+		ARRTreeWaypoint waypoint = new ARRTreeWaypoint(position);
+		
+		if (waypoint.equals(this.getStart())) {
+			waypoint = this.getStart();
+		} else if (waypoint.equals(this.getGoal())) {
+			waypoint = this.getGoal();
+		}
+		
+		return waypoint;
 	}
 	
 	/**
@@ -695,10 +703,12 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 				Status status = this.extendToTarget(target.get());
 				if ((Status.TRAPPED != status) && (this.isInGoalRegion())) {
 					// update goal for cost bound calculation
-					this.getGoal().setEto(this.getNewestWaypoint().getEto());
-					this.getGoal().setCost(this.getNewestWaypoint().getCost());
-					this.getGoal().setParent(this.getNewestWaypoint().getParent());
-					// avoid feasibility issues connecting to newest sample only
+					if (this.getNewestWaypoint().equals(this.getGoal())) {
+						this.setGoal(this.getNewestWaypoint());
+					} else {
+						// TODO: possible feasibility / capability issues
+						this.createExtension(this.getNewestWaypoint(), this.getGoal());
+					}
 					this.connectPlan();
 				}
 			}

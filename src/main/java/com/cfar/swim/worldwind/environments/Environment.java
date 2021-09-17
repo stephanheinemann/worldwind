@@ -204,6 +204,13 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getNormalizer();
 	
 	/**
+	 * Sets the normalizer of this environment.
+	 * 
+	 * @param normalizer the normalizer to be set
+	 */
+	public void setNormalizer(double normalizer);
+	
+	/**
 	 * Converts a normalized distance to a distance within this environment.
 	 * 
 	 * @param normalizedDistance the normalized distance
