@@ -29,6 +29,11 @@
  */
 package com.cfar.swim.worldwind.registries;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+
+import com.cfar.swim.worldwind.session.Scenario;
+
 /**
  * Abstracts a factory of registered items. Factories can create items
  * such as environments and planners according to a customized specification.
@@ -43,7 +48,13 @@ package com.cfar.swim.worldwind.registries;
 public abstract class AbstractFactory<Registree> implements Factory<Registree> {
 
 	/** the specification of this abstract factory */
-	protected Specification<Registree> specification;
+	private Specification<Registree> specification;
+	
+	/** the scenario of this abstract factory */
+	private Scenario scenario = null;
+	
+	/** the active scenario change listener of this abstract factory */
+	private ActiveScenarioChangeListener ascl = new ActiveScenarioChangeListener();
 	
 	/**
 	 * Constructs a new abstract factory without a customized specification.
@@ -108,5 +119,61 @@ public abstract class AbstractFactory<Registree> implements Factory<Registree> {
 	 */
 	@Override
 	public abstract Registree createInstance();
+	
+	/**
+	 * Gets the scenario of this abstract factory.
+	 * 
+	 * @return the scenario of this abstract factory
+	 */
+	protected Scenario getScenario() {
+		return this.scenario;
+	}
+	
+	/**
+	 * Sets the scenario of this abstract factory.
+	 * 
+	 * @param scenario the scenario to be set
+	 */
+	protected void setScenario(Scenario scenario) {
+		this.scenario = scenario;
+	}
+	
+	/**
+	 * Determines whether or not this abstract factory has a scenario.
+	 * 
+	 * @return true if this abstract factory has a scenario, false otherwise
+	 */
+	protected boolean hasScenario() {
+		return (null != this.scenario);
+	}
+	
+	/**
+	 * Gets the active scenario change listener of this abstract factory.
+	 * 
+	 * @return the active scenario change listener of this abstract factory
+	 */
+	public PropertyChangeListener getActiveScenarioChangeListener() {
+		return this.ascl;
+	}
+	
+	/**
+	 * Realizes an active scenario change listener for this abstract factory.
+	 * 
+	 * @author Stephan Heinemann
+	 */
+	private class ActiveScenarioChangeListener implements PropertyChangeListener {
+		
+		/**
+		 * Notifies the abstract factory about an active scenario change.
+		 * 
+		 * @param evt the property change event
+		 */
+		@Override
+		public void propertyChange(PropertyChangeEvent evt) {
+			if (evt.getNewValue() instanceof Scenario) {
+				setScenario((Scenario) evt.getNewValue());
+			}
+		}
+	}
 
 }

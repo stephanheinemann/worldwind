@@ -82,14 +82,14 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			Specification<Planner> specification, Features features) {
 		ArrayList<Properties<Planner>> candidates = new ArrayList<>();
 		
-		if (specification.getId().equals(Specification.PLANNER_OADS_ID)) {
+		if (specification.getId().equals(Specification.PLANNER_MGP_ID)) {
 			OADStarProperties candidate = (OADStarProperties)
-					specification.getProperties().clone();
+					specification.getProperties(); //.clone();
 			// TODO: add suitable candidates
 			candidates.add(candidate);
-		} else if (specification.getId().equals(Specification.PLANNER_OADRRT_ID)) {
+		} else if (specification.getId().equals(Specification.PLANNER_MTP_ID)) {
 			OADRRTreeProperties candidate = (OADRRTreeProperties)
-					specification.getProperties().clone();
+					specification.getProperties(); //.clone();
 			candidate.getBias();
 			
 			// TODO: feasibility

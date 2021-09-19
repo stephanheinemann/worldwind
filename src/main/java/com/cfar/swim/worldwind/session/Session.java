@@ -119,7 +119,7 @@ public class Session implements Identifiable {
 	private Registry<Environment> environmentRegistry = new Registry<>();
 	
 	/** the environment factory of this session */
-	private EnvironmentFactory environmentFactory = new EnvironmentFactory(this.activeScenario);
+	private EnvironmentFactory environmentFactory = new EnvironmentFactory(this.getActiveScenario());
 	
 	/** the planner registry of this session */
 	private Registry<Planner> plannerRegistry = new Registry<>();
@@ -128,7 +128,7 @@ public class Session implements Identifiable {
 	private Registry<Planner> managedPlannerRegistry = new Registry<>();
 	
 	/** the planner factory of this session */
-	private PlannerFactory plannerFactory = new PlannerFactory(this.activeScenario);
+	private PlannerFactory plannerFactory = new PlannerFactory(this.getActiveScenario());
 	
 	/** the datalink registry of this session */
 	private Registry<Datalink> datalinkRegistry = new Registry<>();
@@ -146,7 +146,7 @@ public class Session implements Identifiable {
 	private Registry<AutonomicManager> managerRegistry = new Registry<>();
 	
 	/** the manager factory of this session */
-	private ManagerFactory managerFactory = new ManagerFactory();
+	private ManagerFactory managerFactory = new ManagerFactory(this.getActiveScenario());
 	
 	/** the setup of this session */
 	private Setup setup;
@@ -223,8 +223,8 @@ public class Session implements Identifiable {
 		
 		// managed planners
 		this.managedPlannerRegistry.clearSpecifications();
-		this.managedPlannerRegistry.addSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_OADS_ID));
-		this.managedPlannerRegistry.addSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_OADRRT_ID));
+		this.managedPlannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_MGP_ID, this.plannerRegistry.getSpecification(Specification.PLANNER_OADS_ID).getProperties()));
+		this.managedPlannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_MTP_ID, this.plannerRegistry.getSpecification(Specification.PLANNER_OADRRT_ID).getProperties()));
 		
 		// datalinks
 		this.datalinkRegistry.clearSpecifications();
@@ -240,6 +240,7 @@ public class Session implements Identifiable {
 		this.managerRegistry.clearSpecifications();
 		this.managerRegistry.addSpecification(new Specification<AutonomicManager>(Specification.MANAGER_HEURISTIC_ID, Specification.MANAGER_HEURISTIC_DESCRIPTION, new HeuristicManagerProperties()));
 		// TODO: ROAR and SMAC managers
+		this.addActiveScenarioChangeListener(this.managerFactory.getActiveScenarioChangeListener());
 		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();

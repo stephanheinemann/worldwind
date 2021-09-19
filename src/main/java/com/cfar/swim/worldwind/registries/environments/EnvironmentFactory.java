@@ -29,9 +29,6 @@
  */
 package com.cfar.swim.worldwind.registries.environments;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.environments.PlanningGrid;
@@ -54,15 +51,6 @@ import gov.nasa.worldwind.geom.Sector;
  */
 public class EnvironmentFactory extends AbstractFactory<Environment> {
 	
-	// TODO: Both, environment and planner factory need the active scenario
-	// maybe pull up scenario functionality into abstract factory
-	
-	/** the scenario of this environment factory */
-	private Scenario scenario;
-	
-	/** the active scenario change listener of this environment factory */
-	private ActiveScenarioChangeListener ascl = new ActiveScenarioChangeListener();
-	
 	/**
 	 * Constructs a new environment factory with a specified scenario. The
 	 * scenario aggregates a globe and sector which shall not be part of the
@@ -71,7 +59,7 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 	 * @param scenario the scenario of this environment factory
 	 */
 	public EnvironmentFactory(Scenario scenario) {
-		this.scenario = scenario;
+		this.setScenario(scenario);
 	}
 	
 	/**
@@ -86,36 +74,10 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 	 * 
 	 * @see AbstractFactory
 	 */
-	public EnvironmentFactory(Specification<Environment> specification, Scenario scenario) {
+	public EnvironmentFactory(
+			Specification<Environment> specification, Scenario scenario) {
 		super(specification);
-		this.scenario = scenario;
-	}
-	
-	/**
-	 * Gets the scenario of this environment factory.
-	 * 
-	 * @return the scenario of this environment factory
-	 */
-	public Scenario getScenario() {
-		return this.scenario;
-	}
-	
-	/**
-	 * Sets the scenario of this environment factory.
-	 * 
-	 * @param scenario the scenario to be set
-	 */
-	public void setScenario(Scenario scenario) {
-		this.scenario = scenario;
-	}
-	
-	/**
-	 * Gets the active scenario change listener of this environment factory.
-	 * 
-	 * @return the active scenario change listener of this environment factory
-	 */
-	public PropertyChangeListener getActiveScenarioChangeListener() {
-		return this.ascl;
+		this.setScenario(scenario);
 	}
 	
 	/**
@@ -131,55 +93,35 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 		Environment environment = null;
 		
 		if (this.hasSpecification()) {
-			if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_GRID_ID)) {
-				PlanningGridProperties properties = (PlanningGridProperties) this.specification.getProperties();
-				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
+			if (this.getSpecification().getId().equals(Specification.ENVIRONMENT_PLANNING_GRID_ID)) {
+				PlanningGridProperties properties = (PlanningGridProperties) this.getSpecification().getProperties();
+				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.getScenario().getGlobe(), 1d, this.getScenario().getSector(), properties.getFloor(), properties.getCeiling());
 	            Box envBox = new Box(bb);
 	            double side = envBox.getRLength() / properties.getDivision();
 	            Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
 	            int sCells = (int) Math.ceil(envBox.getSLength() / side);
 	            int tCells = (int) Math.ceil(envBox.getTLength() / side);
 	            environment = new PlanningGrid(envCube, properties.getDivision(), sCells, tCells);
-	            environment.setThreshold(this.scenario.getThreshold());
-	            environment.setGlobe(this.scenario.getGlobe());
+	            environment.setThreshold(this.getScenario().getThreshold());
+	            environment.setGlobe(this.getScenario().getGlobe());
 	            environment.setNormalizer(bb.getDiameter());
-	            ((PlanningGrid) environment).addStructuralChangeListener(this.scenario);
-			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID)) {
-				PlanningContinuumProperties properties = (PlanningContinuumProperties) this.specification.getProperties();
-				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.scenario.getGlobe(), 1d, this.scenario.getSector(), properties.getFloor(), properties.getCeiling());
+	            ((PlanningGrid) environment).addStructuralChangeListener(this.getScenario());
+			} else if (this.getSpecification().getId().equals(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID)) {
+				PlanningContinuumProperties properties = (PlanningContinuumProperties) this.getSpecification().getProperties();
+				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.getScenario().getGlobe(), 1d, this.getScenario().getSector(), properties.getFloor(), properties.getCeiling());
 				Box envBox = new Box(bb);
 				environment = new PlanningContinuum(envBox);
-				environment.setThreshold(this.scenario.getThreshold());
-				environment.setGlobe(this.scenario.getGlobe());
+				environment.setThreshold(this.getScenario().getThreshold());
+				environment.setGlobe(this.getScenario().getGlobe());
 				environment.setNormalizer(bb.getDiameter());
 				((PlanningContinuum) environment).setResolution(properties.getResolution());
-				((PlanningContinuum) environment).addStructuralChangeListener(this.scenario); 
-			} else if (this.specification.getId().equals(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID)) {
+				((PlanningContinuum) environment).addStructuralChangeListener(this.getScenario()); 
+			} else if (this.getSpecification().getId().equals(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID)) {
 				// TODO: implement
 			}
 		}
 		
 		return environment;
-	}
-
-	/**
-	 * Realizes an active scenario change listener for this environment factory.
-	 * 
-	 * @author Stephan Heinemann
-	 */
-	private class ActiveScenarioChangeListener implements PropertyChangeListener {
-		
-		/**
-		 * Notifies the environment factory about an active scenario change.
-		 * 
-		 * @param evt the property change event
-		 */
-		@Override
-		public void propertyChange(PropertyChangeEvent evt) {
-			if (evt.getNewValue() instanceof Scenario) {
-				scenario = (Scenario) evt.getNewValue();
-			}
-		}
 	}
 	
 }

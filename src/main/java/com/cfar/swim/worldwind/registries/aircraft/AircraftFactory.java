@@ -85,11 +85,11 @@ public class AircraftFactory extends AbstractFactory<Aircraft> {
 		Aircraft aircraft = null;
 		
 		if (this.hasSpecification()) {
-			AircraftProperties properties = (AircraftProperties) this.specification.getProperties();
+			AircraftProperties properties = (AircraftProperties) this.getSpecification().getProperties();
 			
-			if (this.specification.getId().equals(Specification.AIRCRAFT_IRIS_ID)) {
+			if (this.getSpecification().getId().equals(Specification.AIRCRAFT_IRIS_ID)) {
 				aircraft = new Iris(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
-			} else if (this.specification.getId().equals(Specification.AIRCRAFT_A320_ID)) {
+			} else if (this.getSpecification().getId().equals(Specification.AIRCRAFT_A320_ID)) {
 				aircraft = new A320(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
 			}
 			

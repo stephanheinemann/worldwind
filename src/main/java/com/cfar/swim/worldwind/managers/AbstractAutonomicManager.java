@@ -36,19 +36,22 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.cfar.swim.worldwind.connections.Communication;
+import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
+import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.managing.TrajectoryQuality;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
-import com.cfar.swim.worldwind.planners.LifelongPlanner;
-import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.Planner;
+import com.cfar.swim.worldwind.planners.managed.ManagedGoals;
+import com.cfar.swim.worldwind.planners.managed.ManagedPlanner;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -67,6 +70,8 @@ import com.cfar.swim.worldwind.session.ObstacleManager;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.session.Session;
 import com.cfar.swim.worldwind.session.SessionManager;
+import com.cfar.swim.worldwind.tracks.AircraftTrackError;
+import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
 import com.cfar.swim.worldwind.util.Depiction;
 
 import gov.nasa.worldwind.geom.Position;
@@ -83,7 +88,7 @@ import gov.nasa.worldwind.symbology.milstd2525.MilStd2525GraphicFactory;
  * @see Session
  * @see Scenario
  */
-public abstract class AbstractAutonomicManager implements AutonomicManager, DynamicObstacleListener {
+public abstract class AbstractAutonomicManager implements AutonomicManager {
 	
 	/** the cost policy of this abstract autonomic manager */
 	private CostPolicy costPolicy = CostPolicy.AVERAGE;
@@ -97,11 +102,35 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	/** the source scenario of this abstract autonomic manager */
 	private Scenario sourceScenario = null;
 	
+	/** the managed scenarios and their planner tunings of this abstract autonomic manager */
+	private Map<Scenario, PlannerTuning> managedScenarios = new HashMap<>();
+	
+	/** the active planner of this abstract autonomic manager */
+	private ManagedPlanner activePlanner = null;
+	
 	/** the obstacle manager of this abstract autonomic manager */
 	private ObstacleManager obstacleManager = null;
 	
-	/** the managed scenarios and their planner tunings of this abstract autonomic manager */
-	private Map<Scenario, PlannerTuning> managedScenarios = new HashMap<>();
+	/** the datalink take-off communication of this abstract autonomic manager */
+	private Communication<Datalink> takeOff = null;
+	
+	/** the datalink landing communication of this abstract autonomic manager */
+	private Communication<Datalink> landing = null;
+	
+	/** the datalink unplanned landing communication of this abstract autonomic manager */
+	private Communication<Datalink> unplannedLanding = null;
+	
+	/** the establish datalink communication of this abstract autonomic manager */
+	private Communication<Datalink> establishDatalink = null;
+	
+	/** the maximum acceptable aircraft take-off error of this abstract autonomic manager */
+	private AircraftTrackPointError maxTakeOffError = AircraftTrackPointError.ZERO;
+	
+	/** the maximum acceptable aircraft landing error of this abstract autonomic manager */
+	private AircraftTrackPointError maxLandingError = AircraftTrackPointError.ZERO;
+	
+	/** the maximum acceptable aircraft track error of this abstract autonomic manager */
+	private AircraftTrackError maxTrackError = AircraftTrackError.ZERO;
 	
 	/** the executor of this abstract autonomic manager */
 	private ExecutorService executor = null;
@@ -179,21 +208,41 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	}
 	
 	/**
-	 * Gets the source scenario of this autonomic manager.
+	 * Gets the source scenario of this abstract autonomic manager.
 	 * 
-	 * @return the source scenario of this autonomic manager
+	 * @return the source scenario of this abstract autonomic manager
+	 * 
+	 * @see AutonomicManager#getSourceScenario()
 	 */
-	protected Scenario getSourceScenario() {
+	@Override
+	public Scenario getSourceScenario() {
 		return this.sourceScenario;
 	}
 	
 	/**
-	 * Sets the source scenario of this autonomic manager.
+	 * Sets the source scenario of this abstract autonomic manager.
 	 * 
 	 * @param sourceScenario the source scenario to be set
+	 * 
+	 * @see AutonomicManager#setSourceScenario(Scenario)
 	 */
-	protected void setSourceScenario(Scenario sourceScenario) {
+	@Override
+	public void setSourceScenario(Scenario sourceScenario) {
 		this.sourceScenario = sourceScenario;
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager has a source
+	 * scenario.
+	 * 
+	 * @return true if this abstract autonomic manager has a source scenario,
+	 *         false otherwise
+	 * 
+	 * @see AutonomicManager#hasSourceScenario()
+	 */
+	@Override
+	public boolean hasSourceScenario() {
+		return (null != this.sourceScenario);
 	}
 	
 	/**
@@ -214,6 +263,35 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	 */
 	protected boolean hasManagedScenarios() {
 		return (0 < this.getManagedScenarios().size());
+	}
+	
+	/**
+	 * Gets the active planner of this abstract autonomic manager.
+	 * 
+	 * @return the active planner of this abstract autonomic manager
+	 */
+	protected ManagedPlanner getActivePlanner() {
+		return this.activePlanner;
+	}
+	
+	/**
+	 * Sets the active planner of this abstract autonomic manager.
+	 * 
+	 * @param activePlanner the active planner to be set
+	 */
+	public void setActivePlanner(ManagedPlanner activePlanner) {
+		this.activePlanner = activePlanner;
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager has an active
+	 * planner.
+	 * 
+	 * @return true if this abstract autonomic manager has an active planner,
+	 *         false otherwise
+	 */
+	public boolean hasActivePlanner() {
+		return (null != this.activePlanner);
 	}
 	
 	/**
@@ -248,12 +326,414 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	}
 	
 	/**
+	 * Gets the datalink of this abstract autonomic manager.
+	 * 
+	 * @return the datalink of this abstract autonomic manager
+	 * 
+	 * @see DatalinkCommunicator#getDatalink()
+	 */
+	@Override
+	public Datalink getDatalink() {
+		return this.getSourceScenario().getDatalink();
+	}
+	
+	/**
+	 * Sets the datalink of this abstract autonomic manager.
+	 * 
+	 * @param datalink the datalink to be set
+	 * 
+	 * @see DatalinkCommunicator#setDatalink(Datalink)
+	 */
+	@Override
+	public void setDatalink(Datalink datalink) {
+		this.getSourceScenario().setDatalink(datalink);
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager has a
+	 * datalink.
+	 * 
+	 * @return true if this abstract autonomic manager has a datalink,
+	 *         false otherwise
+	 * 
+	 * @see DatalinkCommunicator#hasDatalink()
+	 */
+	@Override
+	public boolean hasDatalink() {
+		return this.hasSourceScenario();
+	}
+	
+	/**
+	 * Gets the datalink take-off communication of this abstract autonomic
+	 * manager.
+	 * 
+	 * @return the datalink take-off communication of this abstract autonomic
+	 *         manager
+	 * 
+	 * @see DatalinkCommunicator#getTakeOff()
+	 */
+	@Override
+	public Communication<Datalink> getTakeOff() {
+		return this.takeOff;
+	}
+	
+	/**
+	 * Sets the datalink take-off communication of this abstract autonomic
+	 * manager.
+	 * 
+	 * @param takeOff the datalink take-off communication to be set
+	 *
+	 * @see DatalinkCommunicator#setTakeOff(Communication)
+	 */
+	@Override
+	public void setTakeOff(Communication<Datalink> takeOff) {
+		this.takeOff = takeOff;
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager has a datalink
+	 * take-off communication.
+	 * 
+	 * @return true if this abstract autonomic manager has a datalink take-off
+	 *         communication, false otherwise
+	 *
+	 * @see DatalinkCommunicator#hasTakeOff()
+	 */
+	@Override
+	public boolean hasTakeOff() {
+		return (null != this.takeOff);
+	}
+	
+	/**
+	 * Gets the datalink landing communication of this abstract autonomic
+	 * manager.
+	 * 
+	 * @return the datalink landing communication of this abstract autonomic
+	 *         manager
+	 *
+	 * @see DatalinkCommunicator#getLanding()
+	 */
+	@Override
+	public Communication<Datalink> getLanding() {
+		return this.landing;
+	}
+	
+	/**
+	 * Sets the datalink landing communication of this abstract autonomic
+	 * manager.
+	 * 
+	 * @param landing the datalink landing communication to be set
+	 *
+	 * @see DatalinkCommunicator#setLanding(Communication)
+	 */
+	@Override
+	public void setLanding(Communication<Datalink> landing) {
+		this.landing = landing;
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager has a datalink
+	 * landing communication.
+	 * 
+	 * @return true if this abstract autonomic manager has a datalink landing
+	 *         communication, false otherwise
+	 *
+	 * @see DatalinkCommunicator#hasLanding() 
+	 */
+	@Override
+	public boolean hasLanding() {
+		return (null != this.landing);
+	}
+	
+	/**
+	 * Gets the datalink unplanned landing communication of this abstract
+	 * autonomic manager.
+	 * 
+	 * @return the datalink unplanned landing communication of this abstract
+	 *         autonomic manager
+	 *
+	 * @see DatalinkCommunicator#getUnplannedLanding()
+	 */
+	@Override
+	public Communication<Datalink> getUnplannedLanding() {
+		return this.unplannedLanding;
+	}
+	
+	/**
+	 * Sets the datalink unplanned landing communication of this abstract
+	 * autonomic manager.
+	 * 
+	 * @param unplannedLanding the datalink unplanned landing communication to
+	 *                         be set
+	 *
+	 * @see DatalinkCommunicator#setUnplannedLanding(Communication)
+	 */
+	@Override
+	public void setUnplannedLanding(Communication<Datalink> unplannedLanding) {
+		this.unplannedLanding = unplannedLanding;
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager has a datalink
+	 * unplanned landing communication.
+	 * 
+	 * @return true if this abstract autonomic manager has a datalink unplanned
+	 *         landing communication, false otherwise
+	 *
+	 * @see DatalinkCommunicator#hasUnplannedLanding()
+	 */
+	@Override
+	public boolean hasUnplannedLanding() {
+		return (null != this.unplannedLanding);
+	}
+	
+	/**
+	 * Gets the establish datalink communication of this abstract autonomic
+	 * manager.
+	 * 
+	 * @return the establish datalink communication of this abstract autonomic
+	 *         manager
+	 *
+	 * @see DatalinkCommunicator#getEstablishDataLink()
+	 */
+	@Override
+	public Communication<Datalink> getEstablishDataLink() {
+		return this.establishDatalink;
+	}
+	
+	/**
+	 * Sets the establish datalink communication of this abstract autonomic
+	 * manager.
+	 * 
+	 * @param establishDatalink the establish datalink communication to be set
+	 *
+	 * @see DatalinkCommunicator#setEstablishDatalink(Communication)
+	 */
+	@Override
+	public void setEstablishDatalink(Communication<Datalink> establishDatalink) {
+		this.establishDatalink = establishDatalink;
+	}
+	
+	/**
+	 * Determines whether or not this abstract autonomic manager has an
+	 * establish datalink communication.
+	 * 
+	 * @return true if this abstract autonomic manager has an establish
+	 *         datalink communication, false otherwise
+	 *
+	 * @see DatalinkCommunicator#hasEstablishDatalink()
+	 */
+	@Override
+	public boolean hasEstablishDatalink() {
+		return (null != this.establishDatalink);
+	}
+	
+	/**
+	 * Gets the maximum acceptable take-off error of this abstract autonomic
+	 * manager to consider the aircraft within the take-off regime.
+	 * 
+	 * @return the maximum acceptable take-off error of this abstract autonomic
+	 *         manager to consider the aircraft within the take-off regime
+	 *
+	 * @see DatalinkTracker#getMaxTakeOffError()
+	 */
+	@Override
+	public AircraftTrackPointError getMaxTakeOffError() {
+		return this.maxTakeOffError;
+	}
+	
+	/**
+	 * Sets the maximum acceptable take-off error of this abstract autonomic
+	 * manager to consider the aircraft within the take-off regime.
+	 * 
+	 * @param maxTakeOffError the maximum acceptable take-off error to be set
+	 *
+	 * @throws IllegalArgumentException if the maximum take-off error is null
+	 * 
+	 * @see DatalinkTracker#setMaxTakeOffError(AircraftTrackPointError)
+	 */
+	@Override
+	public void setMaxTakeOffError(AircraftTrackPointError maxTakeOffError) {
+		if (null == maxTakeOffError) {
+			throw new IllegalArgumentException();
+		}
+		this.maxTakeOffError = maxTakeOffError;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft of this abstract autonomic
+	 * manager is on track.
+	 * 
+	 * @return true if the aircraft of this abstract autonomic manager is on
+	 *         track, false otherwise
+	 * 
+	 * @see DatalinkTracker#isOnTrack()
+	 */
+	@Override
+	public boolean isOnTrack() {
+		boolean isOnTrack = false;
+		
+		if (this.hasActivePlanner()) {
+			isOnTrack = this.getActivePlanner().isOnTrack();
+		}
+		
+		return isOnTrack;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft of this abstract autonomic
+	 * manager is within the take-off zone.
+	 * 
+	 * @return true if the aircraft of this abstract autonomic manager is
+	 *         within the take-off zone, false otherwise
+	 *
+	 * @see DatalinkTracker#isInTakeOffZone()
+	 */
+	@Override
+	public boolean isInTakeOffZone() {
+		boolean isInTakeOffZone = false;
+		
+		if (this.hasActivePlanner()) {
+			isInTakeOffZone = this.getActivePlanner().isInTakeOffZone();
+		}
+		
+		return isInTakeOffZone;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft of this abstract autonomic
+	 * manager is within the take-off window.
+	 * 
+	 * @return true if the aircraft of this abstract autonomic manager is
+	 *         within the take-off window, false otherwise
+	 *
+	 * @see DatalinkTracker#isInTakeOffWindow()
+	 */
+	@Override
+	public boolean isInTakeOffWindow() {
+		boolean isInTakeOffWindow = false;
+		
+		if (this.hasActivePlanner()) {
+			isInTakeOffWindow = this.getActivePlanner().isInTakeOffWindow();
+		}
+		
+		return isInTakeOffWindow;
+	}
+	
+	/**
+	 * Gets the maximum acceptable landing error of this abstract autonomic
+	 * manager to consider the aircraft within the landing regime.
+	 * 
+	 * @return the maximum acceptable landing error of this abstract autonomic
+	 *         manager to consider the aircraft within the landing regime
+	 *
+	 * @see DatalinkTracker#getMaxLandingError()
+	 */
+	@Override
+	public AircraftTrackPointError getMaxLandingError() {
+		return this.maxLandingError;
+	}
+	
+	/**
+	 * Sets the maximum acceptable landing error of this abstract autonomic
+	 * manager to consider the aircraft within the landing regime.
+	 * 
+	 * @param maxLandingError the maximum acceptable landing error to be set
+	 *
+	 * @throws IllegalArgumentException if the maximum landing error is null
+	 *
+	 * @see DatalinkTracker#setMaxLandingError(AircraftTrackPointError)
+	 */
+	@Override
+	public void setMaxLandingError(AircraftTrackPointError maxLandingError) {
+		if (null == maxLandingError) {
+			throw new IllegalArgumentException();
+		}
+		this.maxLandingError = maxLandingError;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft of this abstract autonomic
+	 * manager is within the landing zone.
+	 * 
+	 * @return true if the aircraft of this abstract autonomic manager is
+	 *         within the landing zone, false otherwise
+	 *
+	 * @see DatalinkTracker#isInLandingZone()
+	 */
+	@Override
+	public boolean isInLandingZone() {
+		boolean isInLandingZone = false;
+		
+		if (this.hasActivePlanner()) {
+			isInLandingZone = this.getActivePlanner().isInLandingZone();
+		}
+		
+		return isInLandingZone;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft of this abstract autonomic
+	 * manager is within the landing window.
+	 * 
+	 * @return true if the aircraft of this abstract autonomic manager is
+	 *         within the landing window, false otherwise
+	 *
+	 * @see DatalinkTracker#isInLandingWindow()
+	 */
+	@Override
+	public boolean isInLandingWindow() {
+		boolean isInLandingWindow = false;
+		
+		if (this.hasActivePlanner()) {
+			isInLandingWindow = this.getActivePlanner().isInLandingWindow();
+		}
+		
+		return isInLandingWindow;
+	}
+	
+	/**
+	 * Gets the maximum acceptable track error of this abstract autonomic
+	 * manager to consider the aircraft on track.
+	 * 
+	 * @return the maximum acceptable track error of this abstract autonomic
+	 *         manager to consider the aircraft on track
+	 * 
+	 * @see DatalinkTracker#getMaxTrackError()
+	 */
+	@Override
+	public AircraftTrackError getMaxTrackError() {
+		return this.maxTrackError;
+	}
+	
+	/**
+	 * Sets the maximum acceptable track error of this abstract autonomic
+	 * manager to consider the aircraft on track.
+	 * 
+	 * @param maxTrackError the maximum acceptable track error to be set
+	 * 
+	 * @throws IllegalArgumentException if the maximum track error is null
+	 * 
+	 * @see DatalinkTracker#setMaxTrackError(AircraftTrackError)
+	 */
+	@Override
+	public void setMaxTrackError(AircraftTrackError maxTrackError) {
+		if (null == maxTrackError) {
+			throw new IllegalArgumentException();
+		}
+		this.maxTrackError = maxTrackError;
+	}
+	
+	/**
 	 * Initializes this abstract autonomic manager for a managed session.
 	 * 
 	 * @param managedSession the managed session
 	 */
 	protected void initialize(Session managedSession) {
-		this.setSourceScenario(managedSession.getActiveScenario());
+		if (!this.hasSourceScenario()) {
+			this.setSourceScenario(managedSession.getActiveScenario());
+		}
+		
 		Set<Specification<Planner>> plannerSpecs =
 				managedSession.getManagedPlannerSpecifications();
 		Set<Specification<Environment>> envSpecs =
@@ -312,13 +792,15 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 					plannerFactory.setSpecification(plannerSpec);
 					Planner planner = plannerFactory.createInstance();
 					
-					if ((null != planner) && (planner instanceof LifelongPlanner)) {
-						managedScenario.setPlanner(planner);
+					// TODO: check managed planner and assign active managed planner
+					if ((null != planner) && (planner instanceof ManagedPlanner)) {
+						ManagedPlanner managedPlanner = (ManagedPlanner) planner;
+						managedScenario.setPlanner(managedPlanner);
 						
 						// confirm environment and planner compatibility
-						if (planner.supports(managedScenario.getAircraft())
-								&& planner.supports(managedScenario.getEnvironment())
-								&& planner.supports(pois) && (1 < pois.size())) {
+						if (managedPlanner.supports(managedScenario.getAircraft())
+								&& managedPlanner.supports(managedScenario.getEnvironment())
+								&& managedPlanner.supports(pois) && (1 < pois.size())) {
 							
 							// managed scenario aircraft position
 							managedScenario.moveAircraft(pois.get(0));
@@ -327,16 +809,24 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 							//managedScenario.submitAddObstacles(this.getSourceScenario().getEmbeddedObstacles());
 							managedScenario.commitObstacleChange();
 							
-							if (planner instanceof OnlinePlanner) {
-								OnlinePlanner onlinePlanner = (OnlinePlanner) planner;
-								onlinePlanner.setStandby(true);
-								onlinePlanner.setDatalink(this.getSourceScenario().getDatalink());
-							}
+							// TODO: managed planner online properties
+							managedPlanner.setStandby(true);
+							managedPlanner.setDatalink(this.getSourceScenario().getDatalink());
+							/*
+							managedPlanner.setTakeOff(this.getTakeOff());
+							managedPlanner.setLanding(this.getLanding());
+							managedPlanner.setUnplannedLanding(this.getUnplannedLanding());
+							managedPlanner.setEstablishDatalink(this.getEstablishDataLink());
+							*/
+							managedPlanner.setMaxLandingError(this.getMaxLandingError());
+							managedPlanner.setMaxTakeOffError(this.getMaxTakeOffError());
+							managedPlanner.setMaxTrackError(this.getMaxTrackError());
 							
 							// TODO: datalink and SWIM
 							// TODO: features and knowledge base
 							
-							planner.addPlanRevisionListener(new PlanRevisionListener() {
+							managedPlanner.addPlanRevisionListener(new PlanRevisionListener() {
+								
 								@Override
 								public void revisePlan(Trajectory trajectory) {
 									styleTrajectory(trajectory);
@@ -364,6 +854,18 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 											|| (0 > stq.compareTo(rtq))
 											|| ((0 == stq.compareTo(rtq)) && (rpois.size() >= poiIndex)))) {
 										getSourceScenario().setTrajectory(trajectory);
+										
+										// TODO:
+										// if planner != active planner, deactivate active planner
+										// acitvate planner, upload trajectory?
+										/*
+										if (activePlanner !=  managedPlanner) {
+											activePlanner.setStandby(true);
+											activePlanner = managedPlanner;
+											activePlanner.setStandby(false);
+										}
+										*/
+										
 									}
 									Thread.yield();
 								}
@@ -376,7 +878,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 							List<Properties<Planner>> candidates = tuning.tune();
 							// TODO: default candidate
 							tuning.getSpecification().setProperties(candidates.get(0));
-							planner.update(tuning.getSpecification());
+							managedPlanner.update(tuning.getSpecification());
 							
 							// add elaborated managed scenario
 							this.managedScenarios.put(managedScenario, tuning);
@@ -388,6 +890,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 			
 			if (this.hasManagedScenarios()) {
 				// execute managed planners in parallel
+				this.activePlanner = (ManagedPlanner) this.getManagedScenarios().stream().findFirst().get().getPlanner();
 				this.executor = Executors.newWorkStealingPool(this.getManagedScenarios().size());
 				// inject all source scenario environment changes into managed scenarios
 				this.getSourceScenario().clearTrajectory();
@@ -397,41 +900,30 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 		}
 	}
 	
+	/**
+	 * Runs this abstract autonomic manager for a managed session.
+	 * 
+	 * @param managedSession the managed session
+	 */
 	protected void run(Session managedSession) {
-		ArrayList<Callable<Trajectory>> managedPlanners = new ArrayList<>();
+		ArrayList<ManagedPlanner> managedPlanners = new ArrayList<>();
 		
 		for (Scenario managedScenario : this.getManagedScenarios()) {
 			System.out.println(managedScenario.getId());
 			System.out.println(this.getPlannerTuning(managedScenario).getFeatures());
 		
-			Planner managedPlanner = managedScenario.getPlanner();
+			ManagedPlanner managedPlanner = (ManagedPlanner) managedScenario.getPlanner();
+			ManagedGoals managedGoals = new ManagedGoals();
+			
 			List<Position> pois = new ArrayList<Position>();
 			pois.addAll(managedScenario.getWaypoints());
-			Position origin = pois.remove(0);
-			Position destination = pois.remove(pois.size() - 1);
+			managedGoals.setOrigin(pois.remove(0));
+			managedGoals.setDestination(pois.remove(pois.size() - 1));
+			managedGoals.addAllPois(pois);
+			managedGoals.setEtd(managedScenario.getTime());
 			
-			// tuning procedure
-			/*
-			List<Properties<Planner>> candidates = getPlannerTuning(managedScenario).tune();
-			getPlannerTuning(managedScenario).getSpecification().setProperties(candidates.get(0));
-			managedPlanner.update(getPlannerTuning(managedScenario).getSpecification());
-			*/
-			
-			if (pois.isEmpty()) {
-				managedPlanners.add(new Callable<Trajectory>() {
-					@Override
-					public Trajectory call() throws Exception {
-						System.out.println("running planner " + managedPlanner.getId());
-						return managedPlanner.plan(origin, destination, managedScenario.getTime());
-					}});
-			} else {
-				managedPlanners.add(new Callable<Trajectory>() {
-					@Override
-					public Trajectory call() throws Exception {
-						System.out.println("running planner " + managedPlanner.getId());
-						return managedPlanner.plan(origin, destination, pois, managedScenario.getTime());
-					}});
-			}
+			managedPlanner.setGoals(managedGoals);
+			managedPlanners.add(managedPlanner);
 		}
 		
 		try {
@@ -445,7 +937,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	
 	/**
 	 * Cleans up this abstract autonomic manager and removes all its managed
-	 * scenarios.
+	 * scenarios from its managed session.
 	 * 
 	 * @param managedSession the managed session of this abstract autonomic
 	 *                       manager
@@ -459,6 +951,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 			}
 			this.managedScenarios.clear();
 			this.executor.shutdown();
+			this.activePlanner = null;
 			this.getSourceScenario().clearTrajectory();
 		}
 	}
@@ -502,7 +995,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager, Dyna
 	@Override
 	public synchronized void terminate() {
 		for (Scenario managedScenario : this.managedScenarios.keySet()) {
-			((LifelongPlanner) managedScenario.getPlanner()).terminate();
+			((ManagedPlanner) managedScenario.getPlanner()).terminate();
 		}
 	}
 	

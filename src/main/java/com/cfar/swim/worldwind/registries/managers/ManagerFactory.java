@@ -35,6 +35,7 @@ import com.cfar.swim.worldwind.managers.AutonomicManager;
 import com.cfar.swim.worldwind.managers.HeuristicAutonomicManager;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.session.Scenario;
 
 /**
  * Realizes a manager factory to create autonomic managers according to
@@ -46,6 +47,34 @@ import com.cfar.swim.worldwind.registries.Specification;
  * @see Specification
  */
 public class ManagerFactory extends AbstractFactory<AutonomicManager> {
+	
+	/**
+	 * Constructs a new manager factory with a specified scenario. The
+	 * scenario represents the source scenario of the created manager.
+	 * 
+	 * @param scenario the scenario of this manager factory
+	 */
+	public ManagerFactory(Scenario scenario) {
+		this.setScenario(scenario);
+	}
+	
+	/**
+	 * Constructs a new manager factory with a specified scenario to create
+	 * registered managers according to a customized manager
+	 * specification. The scenario represents the source scenario of the
+	 * created manager.
+	 * 
+	 * @param specification the manager specification describing the
+	 *                      registered manager
+	 * @param scenario the scenario of this manager factory
+	 * 
+	 * @see AbstractFactory
+	 */
+	public ManagerFactory(
+			Specification<AutonomicManager> specification, Scenario scenario) {
+		super(specification);
+		this.setScenario(scenario);
+	}
 	
 	/**
 	 * Creates a new autonomic manager according to the customized manager
@@ -61,12 +90,13 @@ public class ManagerFactory extends AbstractFactory<AutonomicManager> {
 		AutonomicManager manager = null;
 		
 		if (this.hasSpecification()) {
-			if (this.specification.getId().equals(Specification.MANAGER_HEURISTIC_ID)) {
-				HeuristicManagerProperties properties = (HeuristicManagerProperties) this.specification.getProperties();
+			if (this.getSpecification().getId().equals(Specification.MANAGER_HEURISTIC_ID)) {
+				HeuristicManagerProperties properties = (HeuristicManagerProperties) this.getSpecification().getProperties();
 				manager = new HeuristicAutonomicManager();
 				manager.setCostPolicy(properties.getCostPolicy());
 				manager.setRiskPolicy(properties.getRiskPolicy());
 				manager.setFeatureHorizon(Duration.ofSeconds(Math.round(properties.getFeatureHorizon() * 60d)));
+				manager.setSourceScenario(this.getScenario());
 			}
 			// TODO: ROAR, SMAC autonomic managers
 		}

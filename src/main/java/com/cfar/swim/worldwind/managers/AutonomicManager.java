@@ -31,8 +31,10 @@ package com.cfar.swim.worldwind.managers;
 
 import java.time.Duration;
 
+import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
+import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
@@ -50,7 +52,7 @@ import com.cfar.swim.worldwind.session.Session;
  * @see Session
  * @see Scenario
  */
-public interface AutonomicManager extends FactoryProduct {
+public interface AutonomicManager extends FactoryProduct, DynamicObstacleListener, DatalinkTracker {
 	
 	/**
 	 * Gets the cost policy of this autonomic manager.
@@ -93,6 +95,28 @@ public interface AutonomicManager extends FactoryProduct {
 	 * @param featureHorizon the feature horizon to be set
 	 */
 	public void setFeatureHorizon(Duration featureHorizon);
+	
+	/**
+	 * Gets the source scenario of this autonomic manager.
+	 * 
+	 * @return the source scenario of this autonomic manager
+	 */
+	public Scenario getSourceScenario();
+	
+	/**
+	 * Sets the source scenario of this autonomic manager.
+	 * 
+	 * @param sourceScenario the source scenario to be set
+	 */
+	public void setSourceScenario(Scenario sourceScenario);
+	
+	/**
+	 * Determines whether or not this autonomic manager has a source scenario.
+	 * 
+	 * @return true if this autonomic manager has a source scenario,
+	 *         false otherwise
+	 */
+	public boolean hasSourceScenario();
 	
 	/**
 	 * Creates a new planner tuning for this autonomic manager based

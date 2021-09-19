@@ -39,6 +39,8 @@ import java.util.Optional;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Communication;
 import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
+import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.environments.DirectedEdge;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
@@ -107,9 +109,6 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	/** the off-track counter of this OADRRT planner */
 	private int offTrackCount = 0;
 	
-	/** the standby status of this OADRRT planner */
-	private boolean isStandby = false;
-	
 	/**
 	 * Constructs a OADRRT planner for a specified aircraft and environment
 	 * using default local cost and risk policies.
@@ -119,7 +118,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 */
 	public OADRRTreePlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		this.addPlanRevisionListener(this.missionLoader);
+		this.addPlanRevisionListener(this.getMissionLoader());
 	}
 	
 	/**
@@ -160,42 +159,11 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
-	 * Sets this OADRRT planner to standby or active.
-	 * 
-	 * @param isStandby true if standby, false if active
-	 * 
-	 * @see OnlinePlanner#setStandby(boolean)
-	 */
-	@Override
-	public void setStandby(boolean isStandby) {
-		if (this.isStandby != isStandby) {
-			if (isStandby) {
-				this.removePlanRevisionListener(this.missionLoader);
-			} else {
-				this.addPlanRevisionListener(this.missionLoader);
-			}
-			this.isStandby = isStandby;
-		}
-	}
-	
-	/**
-	 * Determines whether or not this OADRRT planner is standing by.
-	 * 
-	 * @return true if this OADRRT planner is standing by, false if active
-	 * 
-	 * @see OnlinePlanner#isStandby()
-	 */
-	@Override
-	public boolean isStandby() {
-		return this.isStandby;
-	}
-	
-	/**
 	 * Gets the datalink of this OADRRT planner.
 	 * 
 	 * @return the datalink of this OADRRT planner
 	 * 
-	 * @see OnlinePlanner#getDatalink()
+	 * @see DatalinkCommunicator#getDatalink()
 	 */
 	@Override
 	public Datalink getDatalink() {
@@ -207,7 +175,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @param datalink the datalink to be set
 	 * 
-	 * @see OnlinePlanner#setDatalink(Datalink)
+	 * @see DatalinkCommunicator#setDatalink(Datalink)
 	 */
 	@Override
 	public void setDatalink(Datalink datalink) {
@@ -225,7 +193,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @return true if this OADRRT planner has a datalink, false otherwise
 	 * 
-	 * @see OnlinePlanner#hasDatalink()
+	 * @see DatalinkCommunicator#hasDatalink()
 	 */
 	@Override
 	public boolean hasDatalink() {
@@ -239,7 +207,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return the maximum acceptable take-off error of this OADRRT planner to
 	 *         consider the aircraft within the take-off regime
 	 *
-	 * @see OnlinePlanner#getMaxTakeOffError()
+	 * @see DatalinkTracker#getMaxTakeOffError()
 	 */
 	@Override
 	public synchronized AircraftTrackPointError getMaxTakeOffError() {
@@ -254,7 +222,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 *
 	 * @throws IllegalArgumentException if the maximum take-off error is null
 	 *
-	 * @see OnlinePlanner#setMaxTakeOffError(AircraftTrackPointError)
+	 * @see DatalinkTracker#setMaxTakeOffError(AircraftTrackPointError)
 	 */
 	@Override
 	public synchronized void setMaxTakeOffError(AircraftTrackPointError maxTakeOffError) {
@@ -271,7 +239,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if the aircraft of this OADRRT planner is within the
 	 *         take-off zone, false otherwise
 	 *
-	 * @see OnlinePlanner#isInTakeOffZone()
+	 * @see DatalinkTracker#isInTakeOffZone()
 	 */
 	@Override
 	public boolean isInTakeOffZone() {
@@ -315,7 +283,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if the aircraft of this OADRRT planner is within the
 	 *         take-off window, false otherwise
 	 *
-	 * @see OnlinePlanner#isInTakeOffWindow()
+	 * @see DatalinkTracker#isInTakeOffWindow()
 	 */
 	@Override
 	public boolean isInTakeOffWindow() {
@@ -347,7 +315,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return the maximum acceptable landing error of this OADRRT planner to
 	 *         consider the aircraft within the landing regime
 	 *
-	 * @see OnlinePlanner#getMaxLandingError()
+	 * @see DatalinkTracker#getMaxLandingError()
 	 */
 	@Override
 	public synchronized AircraftTrackPointError getMaxLandingError() {
@@ -362,7 +330,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 *
 	 * @throws IllegalArgumentException if the maximum landing error is null
 	 *
-	 * @see OnlinePlanner#setMaxLandingError(AircraftTrackPointError)
+	 * @see DatalinkTracker#setMaxLandingError(AircraftTrackPointError)
 	 */
 	@Override
 	public synchronized void setMaxLandingError(AircraftTrackPointError maxLandingError) {
@@ -379,7 +347,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if the aircraft of this OADRRT planner is within the
 	 *         landing zone, false otherwise
 	 *
-	 * @see OnlinePlanner#isInLandingZone()
+	 * @see DatalinkTracker#isInLandingZone()
 	 */
 	@Override
 	public boolean isInLandingZone() {
@@ -423,7 +391,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if the aircraft of this OADRRT planner is within the
 	 *         landing window, false otherwise
 	 *
-	 * @see OnlinePlanner#isInLandingWindow()
+	 * @see DatalinkTracker#isInLandingWindow()
 	 */
 	@Override
 	public boolean isInLandingWindow() {
@@ -454,7 +422,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return the maximum acceptable track error of this OADRRT planner to
 	 *         consider the aircraft on track
 	 * 
-	 * @see OnlinePlanner#getMaxTrackError()
+	 * @see DatalinkTracker#getMaxTrackError()
 	 */
 	@Override
 	public synchronized AircraftTrackError getMaxTrackError() {
@@ -467,7 +435,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @param maxTrackError the maximum acceptable track error to be set
 	 * 
-	 * @see OnlinePlanner#setMaxTrackError(AircraftTrackError)
+	 * @see DatalinkTracker#setMaxTrackError(AircraftTrackError)
 	 */
 	@Override
 	public synchronized void setMaxTrackError(AircraftTrackError maxTrackError) {
@@ -505,7 +473,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if the aircraft of this OADRRT planner is on track,
 	 *         false otherwise
 	 * 
-	 * @see OnlinePlanner#isOnTrack()
+	 * @see DatalinkTracker#isOnTrack()
 	 */
 	@Override
 	public boolean isOnTrack() {
@@ -855,11 +823,20 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	}
 	
 	/**
+	 * Gets the mission loader of this OADRRT planner.
+	 * 
+	 * @return the mission loader of this OADRRT planner
+	 */
+	protected MissionLoader getMissionLoader() {
+		return this.missionLoader;
+	}
+	
+	/**
 	 * Gets the datalink take-off communication of this OADRRT planner.
 	 * 
 	 * @return the datalink take-off communication of this OADRRT planner
 	 * 
-	 * @see OnlinePlanner#getTakeOff()
+	 * @see DatalinkCommunicator#getTakeOff()
 	 */
 	@Override
 	public Communication<Datalink> getTakeOff() {
@@ -871,7 +848,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @param takeOff the datalink take-off communication to be set
 	 *
-	 * @see OnlinePlanner#setTakeOff(Communication)
+	 * @see DatalinkCommunicator#setTakeOff(Communication)
 	 */
 	@Override
 	public void setTakeOff(Communication<Datalink> takeOff) {
@@ -885,7 +862,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if this OADRRT planner has a datalink take-off
 	 *         communication, false otherwise
 	 *
-	 * @see OnlinePlanner#hasTakeOff()
+	 * @see DatalinkCommunicator#hasTakeOff()
 	 */
 	@Override
 	public boolean hasTakeOff() {
@@ -897,7 +874,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @return the datalink landing communication of this OADRRT planner
 	 *
-	 * @see OnlinePlanner#getLanding()
+	 * @see DatalinkCommunicator#getLanding()
 	 */
 	@Override
 	public Communication<Datalink> getLanding() {
@@ -909,7 +886,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @param landing the datalink landing communication to be set
 	 *
-	 * @see OnlinePlanner#setLanding(Communication)
+	 * @see DatalinkCommunicator#setLanding(Communication)
 	 */
 	@Override
 	public void setLanding(Communication<Datalink> landing) {
@@ -923,7 +900,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if this OADRRT planner has a datalink landing
 	 *         communication, false otherwise
 	 *
-	 * @see OnlinePlanner#hasLanding() 
+	 * @see DatalinkCommunicator#hasLanding() 
 	 */
 	@Override
 	public boolean hasLanding() {
@@ -937,7 +914,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return the datalink unplanned landing communication of this OADRRT
 	 *         planner
 	 *
-	 * @see OnlinePlanner#getUnplannedLanding()
+	 * @see DatalinkCommunicator#getUnplannedLanding()
 	 */
 	@Override
 	public Communication<Datalink> getUnplannedLanding() {
@@ -951,7 +928,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @param unplannedLanding the datalink unplanned landing communication to
 	 *                         be set
 	 *
-	 * @see OnlinePlanner#setUnplannedLanding(Communication)
+	 * @see DatalinkCommunicator#setUnplannedLanding(Communication)
 	 */
 	@Override
 	public void setUnplannedLanding(Communication<Datalink> unplannedLanding) {
@@ -965,7 +942,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if this OADRRT planner has a datalink unplanned landing
 	 *         communication, false otherwise
 	 *
-	 * @see OnlinePlanner#hasUnplannedLanding()
+	 * @see DatalinkCommunicator#hasUnplannedLanding()
 	 */
 	@Override
 	public boolean hasUnplannedLanding() {
@@ -977,7 +954,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @return the establish datalink communication of this OADRRT planner
 	 *
-	 * @see OnlinePlanner#getEstablishDataLink()
+	 * @see DatalinkCommunicator#getEstablishDataLink()
 	 */
 	@Override
 	public Communication<Datalink> getEstablishDataLink() {
@@ -989,7 +966,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * 
 	 * @param establishDatalink the establish datalink communication to be set
 	 *
-	 * @see OnlinePlanner#setEstablishDatalink(Communication)
+	 * @see DatalinkCommunicator#setEstablishDatalink(Communication)
 	 */
 	@Override
 	public void setEstablishDatalink(Communication<Datalink> establishDatalink) {
@@ -1003,7 +980,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * @return true if this OADRRT planner has an establish datalink
 	 *         communication, false otherwise
 	 *
-	 * @see OnlinePlanner#hasEstablishDatalink()
+	 * @see DatalinkCommunicator#hasEstablishDatalink()
 	 */
 	@Override
 	public boolean hasEstablishDatalink() {
@@ -1014,7 +991,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * Performs a take-off via the datalink communication of this OADRRT
 	 * planner.
 	 */
-	private void performTakeOff() {
+	protected void performTakeOff() {
 		if (this.hasTakeOff()) {
 			this.takeOff.perform();
 		}
@@ -1024,7 +1001,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * Performs a landing via the datalink communication of this OADRRT
 	 * planner.
 	 */
-	private void performLanding() {
+	protected void performLanding() {
 		if (this.hasLanding()) {
 			this.landing.perform();
 		}
@@ -1034,7 +1011,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	 * Performs an unplanned landing via the datalink communication of this
 	 * OADRRT planner.
 	 */
-	private void performUnplannedLanding() {
+	protected void performUnplannedLanding() {
 		if (this.hasUnplannedLanding()) {
 			this.unplannedLanding.perform();
 		}
@@ -1043,7 +1020,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 	/**
 	 * Establishes the datalink communication of this OADRRT planner.
 	 */
-	private void establishDatalink() {
+	protected void establishDatalink() {
 		if (this.hasEstablishDatalink()) {
 			this.establishDatalink.perform();
 		}

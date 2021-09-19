@@ -83,8 +83,8 @@ public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 		SwimConnection connection = null;
 		
 		if (this.hasSpecification()) {
-			if (this.specification.getId().equals(Specification.CONNECTION_SWIM_SIMULATED_ID)) {
-				SimulatedSwimConnectionProperties properties = (SimulatedSwimConnectionProperties) this.specification.getProperties();
+			if (this.getSpecification().getId().equals(Specification.CONNECTION_SWIM_SIMULATED_ID)) {
+				SimulatedSwimConnectionProperties properties = (SimulatedSwimConnectionProperties) this.getSpecification().getProperties();
 				connection = new SimulatedSwimConnection(
 						properties.getResourceDirectory(),
 						properties.getUpdatePeriod(),
@@ -100,8 +100,8 @@ public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 					connection.subscribe(SwimData.IWXXM);
 				if (properties.getSubscribesAMXM())
 					connection.subscribe(SwimData.AMXM);
-			} else if (this.specification.getId().equals(Specification.CONNECTION_SWIM_LIVE_ID)) {
-				LiveSwimConnectionProperties properties = (LiveSwimConnectionProperties) this.specification.getProperties();
+			} else if (this.getSpecification().getId().equals(Specification.CONNECTION_SWIM_LIVE_ID)) {
+				LiveSwimConnectionProperties properties = (LiveSwimConnectionProperties) this.getSpecification().getProperties();
 				connection = new LiveSwimConnection();
 				// TODO: set properties for live SWIM connection
 				if (properties.getSubscribesAIXM())

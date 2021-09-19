@@ -29,11 +29,8 @@
  */
 package com.cfar.swim.worldwind.planners;
 
-import com.cfar.swim.worldwind.connections.Communication;
-import com.cfar.swim.worldwind.connections.Datalink;
+import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.planning.Waypoint;
-import com.cfar.swim.worldwind.tracks.AircraftTrackError;
-import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
 
 /**
  * Describes an online planner featuring a datalink connection to communicate
@@ -42,7 +39,23 @@ import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
  * @author Stephan Heinemann
  *
  */
-public interface OnlinePlanner extends Planner {
+public interface OnlinePlanner extends Planner, DatalinkTracker {
+	
+	// TODO: minimum planning time (start planning at suitable future waypoint)
+	// use future waypoint with maximum planning time (legs not affected by dynamic obstacles)
+	// only upload mission when planning completed according to available deliberation time
+	// check affected waypoints: current deliberation time (criticality)
+	// only upload mission if current deliberation time is exhausted or maximum quality achieved
+	// run timer for available deliberation time and stop planner (setMaximumQuality once exhausted)
+	// then upload latest revised mission
+	// the autonomic manager can pick the best quality one and upload it via datalink and display
+	// it in the source scenario
+	/*
+	public Duration getMinimumDeliberation();
+	public void setMinimumDeliberation(Duration minimumDeliberation);
+	public Duration getMaximumDeliberation();
+	public void setMaximumDeliberation(Duration maximumDeliberation);
+	*/
 	
 	/**
 	 * Gets the next waypoint of this online planner.
@@ -58,234 +71,4 @@ public interface OnlinePlanner extends Planner {
 	 */
 	public boolean hasNextWaypoint();
 	
-	/**
-	 * Sets this online planner to standby or active.
-	 * 
-	 * @param isStandby true if standby, false if active
-	 */
-	public void setStandby(boolean isStandby);
-	
-	/**
-	 * Determines whether or not this online planner is standing by.
-	 * 
-	 * @return true if this online planner is standing by, false if active
-	 */
-	public boolean isStandby();
-	
-	/**
-	 * Gets the datalink of this online planner.
-	 * 
-	 * @return the datalink of this online planner
-	 */
-	public Datalink getDatalink();
-	
-	/**
-	 * Sets the datalink of this online planner.
-	 * 
-	 * @param datalink the datalink of this online planner
-	 */
-	public void setDatalink(Datalink datalink);
-	
-	/**
-	 * Determines whether or not this online planner has a datalink.
-	 * 
-	 * @return true if this online planner has a datalink, false otherwise
-	 */
-	public boolean hasDatalink();
-	
-	/**
-	 * Gets the datalink take-off communication of this online planner.
-	 * 
-	 * @return the datalink take-off communication of this online planner
-	 */
-	public Communication<Datalink> getTakeOff();
-	
-	/**
-	 * Sets the datalink take-off communication of this online planner.
-	 * 
-	 * @param takeOff the datalink take-off communication to be set
-	 */
-	public void setTakeOff(Communication<Datalink> takeOff);
-	
-	/**
-	 * Determines whether or not this online planner has a datalink take-off
-	 * communication.
-	 * 
-	 * @return true if this online planner has a datalink take-off
-	 *         communication, false otherwise
-	 */
-	public boolean hasTakeOff();
-	
-	/**
-	 * Gets the datalink landing communication of this online planner.
-	 * 
-	 * @return the datalink landing communication of this online planner
-	 */
-	public Communication<Datalink> getLanding();
-	
-	/**
-	 * Sets the datalink landing communication of this online planner.
-	 * 
-	 * @param landing the datalink landing communication to be set
-	 */
-	public void setLanding(Communication<Datalink> landing);
-	
-	/**
-	 * Determines whether or not this online planner has a datalink landing
-	 * communication.
-	 * 
-	 * @return true if this online planner has a datalink landing
-	 *         communication, false otherwise
-	 */
-	public boolean hasLanding();
-	
-	/**
-	 * Gets the datalink unplanned landing communication of this online
-	 * planner.
-	 * 
-	 * @return the datalink unplanned landing communication of this online
-	 *         planner
-	 */
-	public Communication<Datalink> getUnplannedLanding();
-	
-	/**
-	 * Sets the datalink unplanned landing communication of this online
-	 * planner.
-	 * 
-	 * @param unplannedLanding the datalink unplanned landing communication to
-	 *                         be set
-	 */
-	public void setUnplannedLanding(Communication<Datalink> unplannedLanding);
-	
-	/**
-	 * Determines whether or not this online planner has a datalink unplanned
-	 * landing communication.
-	 * 
-	 * @return true if this online planner has a datalink unplanned landing
-	 *         communication, false otherwise
-	 */
-	public boolean hasUnplannedLanding();
-	
-	/**
-	 * Gets the establish datalink communication of this online planner.
-	 * 
-	 * @return the establish datalink communication of this online planner
-	 */
-	public Communication<Datalink> getEstablishDataLink();
-	
-	/**
-	 * Sets the establish datalink communication of this online planner.
-	 * 
-	 * @param establishDatalink the establish datalink communication to be set
-	 */
-	public void setEstablishDatalink(Communication<Datalink> establishDatalink);
-	
-	/**
-	 * Determines whether or not this online planner has an establish datalink
-	 * communication.
-	 * 
-	 * @return true if this online planner has an establish datalink
-	 *         communication, false otherwise
-	 */
-	public boolean hasEstablishDatalink();
-	
-	/**
-	 * Gets the maximum acceptable track error of this online planner to
-	 * consider the aircraft on track.
-	 * 
-	 * @return the maximum acceptable track error of this online planner to
-	 *         consider the aircraft on track
-	 */
-	public AircraftTrackError getMaxTrackError();
-	
-	/**
-	 * Sets the maximum acceptable track error of this online planner to
-	 * consider the aircraft on track.
-	 * 
-	 * @param maxTrackError the maximum acceptable track error to be set
-	 */
-	public void setMaxTrackError(AircraftTrackError maxTrackError);
-	
-	/**
-	 * Determines whether or not the aircraft of this online planner is on
-	 * track.
-	 * 
-	 * @return true if the aircraft of this online planner is on track,
-	 *         false otherwise
-	 */
-	public boolean isOnTrack();
-	
-	/**
-	 * Gets the maximum acceptable take-off error of this online planner to
-	 * consider the aircraft within the take-off regime.
-	 * 
-	 * @return the maximum acceptable take-off error of this online planner to
-	 *         consider the aircraft within the take-off regime
-	 */
-	public AircraftTrackPointError getMaxTakeOffError();
-	
-	/**
-	 * Sets the maximum acceptable take-off error of this online planner to
-	 * consider the aircraft within the take-off regime.
-	 * 
-	 * @param maxTakeOffError the maximum acceptable take-off error to be set
-	 */
-	public void setMaxTakeOffError(AircraftTrackPointError maxTakeOffError);
-	
-	/**
-	 * Determines whether or not the aircraft of this online planner is within
-	 * the take-off zone.
-	 * 
-	 * @return true if the aircraft of this online planner is within the
-	 *         take-off zone, false otherwise
-	 */
-	public boolean isInTakeOffZone();
-	
-	/**
-	 * Determines whether or not the aircraft of this online planner is within
-	 * the take-off window.
-	 * 
-	 * @return true if the aircraft of this online planner is within the
-	 *         take-off window, false otherwise
-	 */
-	public boolean isInTakeOffWindow();
-	
-	/**
-	 * Gets the maximum acceptable landing error of this online planner to
-	 * consider the aircraft within the landing regime.
-	 * 
-	 * @return the maximum acceptable landing error of this online planner to
-	 *         consider the aircraft within the landing regime
-	 */
-	public AircraftTrackPointError getMaxLandingError();
-	
-	/**
-	 * Sets the maximum acceptable landing error of this online planner to
-	 * consider the aircraft within the landing regime.
-	 * 
-	 * @param maxLandingError the maximum acceptable landing error to be set
-	 */
-	public void setMaxLandingError(AircraftTrackPointError maxLandingError);
-	
-	/**
-	 * Determines whether or not the aircraft of this online planner is within
-	 * the landing zone.
-	 * 
-	 * @return true if the aircraft of this online planner is within the
-	 *         landing zone, false otherwise
-	 */
-	public boolean isInLandingZone();
-	
-	/**
-	 * Determines whether or not the aircraft of this online planner is within
-	 * the landing window.
-	 * 
-	 * @return true if the aircraft of this online planner is within the
-	 *         landing window, false otherwise
-	 */
-	public boolean isInLandingWindow();
-	
-	// TODO: consider maximum departure, arrival (terminal), and approach errors
-	// TODO: in-flight alternates
-	// TODO: alternate and precautionary landing communications
 }

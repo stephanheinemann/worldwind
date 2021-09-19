@@ -124,6 +124,9 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			.getDictionaryBundle()
 			.getString("specification.planner.oads.description");
 	
+	/** the identifier of a managed grid planner specification */
+	public static final String PLANNER_MGP_ID = "MGP";
+	
 	/** the identifier of an RRT planner specification */
 	public static final String PLANNER_RRT_ID = "RRT";
 	
@@ -179,6 +182,9 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	public static final String PLANNER_OADRRT_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
 			.getString("specification.planner.oadrrt.description");
+	
+	/** the identifier of a managed tree planner specification */
+	public static final String PLANNER_MTP_ID = "MTP";
 	
 	/** the identifier of a dronekit datalink specification */
 	public static final String CONNECTION_DATALINK_DRONEKIT_ID = "Dronekit Datalink";

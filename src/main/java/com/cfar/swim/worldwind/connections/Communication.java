@@ -47,7 +47,7 @@ public abstract class Communication<C extends Connection> {
 	 * @param connection the connection of this communication
 	 */
 	public Communication(C connection) {
-		if (null == connection ) {
+		if (null == connection) {
 			throw new IllegalArgumentException();
 		}
 		this.connection = connection;
