@@ -809,15 +809,13 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 							//managedScenario.submitAddObstacles(this.getSourceScenario().getEmbeddedObstacles());
 							managedScenario.commitObstacleChange();
 							
-							// TODO: managed planner online properties
+							// managed planner online properties
 							managedPlanner.setStandby(true);
 							managedPlanner.setDatalink(this.getSourceScenario().getDatalink());
-							/*
 							managedPlanner.setTakeOff(this.getTakeOff());
 							managedPlanner.setLanding(this.getLanding());
 							managedPlanner.setUnplannedLanding(this.getUnplannedLanding());
 							managedPlanner.setEstablishDatalink(this.getEstablishDataLink());
-							*/
 							managedPlanner.setMaxLandingError(this.getMaxLandingError());
 							managedPlanner.setMaxTakeOffError(this.getMaxTakeOffError());
 							managedPlanner.setMaxTrackError(this.getMaxTrackError());
@@ -865,6 +863,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 											activePlanner.setStandby(false);
 										}
 										*/
+										//getActivePlanner().getMissionLoader().revise(trajectory);
 										
 									}
 									Thread.yield();
@@ -887,16 +886,18 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 					}
 				}
 			}
-			
-			if (this.hasManagedScenarios()) {
-				// execute managed planners in parallel
-				this.activePlanner = (ManagedPlanner) this.getManagedScenarios().stream().findFirst().get().getPlanner();
-				this.executor = Executors.newWorkStealingPool(this.getManagedScenarios().size());
-				// inject all source scenario environment changes into managed scenarios
-				this.getSourceScenario().clearTrajectory();
-				this.setObstacleManager(this.getSourceScenario());
-				this.getSourceScenario().setDynamicObstacleListener(this);
-			}
+		}
+		
+		if (this.hasManagedScenarios()) {
+			// execute managed planners in parallel
+			this.setActivePlanner((ManagedPlanner)
+					this.getManagedScenarios().stream().findFirst().get().getPlanner());
+			this.getActivePlanner().setStandby(false);
+			this.executor = Executors.newWorkStealingPool(this.getManagedScenarios().size());
+			// inject all source scenario environment changes into managed scenarios
+			this.getSourceScenario().clearTrajectory();
+			this.setObstacleManager(this.getSourceScenario());
+			this.getSourceScenario().setDynamicObstacleListener(this);
 		}
 	}
 	
@@ -951,7 +952,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			}
 			this.managedScenarios.clear();
 			this.executor.shutdown();
-			this.activePlanner = null;
+			this.setActivePlanner(null);
 			this.getSourceScenario().clearTrajectory();
 		}
 	}

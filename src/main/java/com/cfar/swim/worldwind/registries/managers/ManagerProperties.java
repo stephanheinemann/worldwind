@@ -84,7 +84,113 @@ public interface ManagerProperties extends Properties<AutonomicManager> {
 	 */
 	public void setFeatureHorizon(double featureHorizon);
 	
-	// TODO: managed online planner error tolerances
+	/**
+	 * Gets the maximum acceptable cross track error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @return the maximum acceptable cross track error of this manager
+	 *         properties bean in meters
+	 */
+	public long getMaxCrossTrackError();
+	
+	/**
+	 * Sets the maximum acceptable cross track error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @param maxCrossTrackError the maximum acceptable cross track error to be
+	 *                           set in meters
+	 */
+	public void setMaxCrossTrackError(long maxCrossTrackError);
+	
+	/**
+	 * Gets the maximum acceptable timing error of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @return the maximum acceptable timing error of this manager properties
+	 *         bean in seconds
+	 */
+	public long getMaxTimingError();
+	
+	/**
+	 * Sets the maximum acceptable timing error of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @param maxTimingError the maximum acceptable timing error to be set in
+	 *                       seconds
+	 */
+	public void setMaxTimingError(long maxTimingError);
+	
+	/**
+	 * Gets the maximum horizontal take-off error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @return the maximum horizontal take-off error of this manager properties
+	 *         bean in meters
+	 */
+	public long getMaxTakeOffHorizontalError();
+	
+	/**
+	 * Sets the maximum horizontal take-off error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @param maxTakeOffHorizontalError the maximum horizontal take-off error
+	 *                                  to be set in meters
+	 */
+	public void setMaxTakeOffHorizontalError(long maxTakeOffHorizontalError);
+	
+	/**
+	 * Gets the maximum take-off timing error of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @return the maximum take-off timing error of this manager properties
+	 *         bean in seconds
+	 */
+	public long getMaxTakeOffTimingError();
+	
+	/**
+	 * Sets the maximum take-off timing error of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @param maxTakeOffTimingError the maximum take-off timing error to be set
+	 *                              in seconds
+	 */
+	public void setMaxTakeOffTimingError(long maxTakeOffTimingError);
+	
+	/**
+	 * Gets the maximum horizontal landing error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @return the maximum horizontal landing error of this manager properties
+	 *         bean in meters
+	 */
+	public long getMaxLandingHorizontalError();
+	
+	/**
+	 * Sets the maximum horizontal landing error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @param maxLandingHorizontalError the maximum horizontal landing error
+	 *                                  to be set in meters
+	 */
+	public void setMaxLandingHorizontalError(long maxLandingHorizontalError);
+	
+	/**
+	 * Gets the maximum landing timing error of this manager properties bean in
+	 * seconds.
+	 * 
+	 * @return the maximum landing timing error of this manager properties bean
+	 *         in seconds
+	 */
+	public long getMaxLandingTimingError();
+	
+	/**
+	 * Sets the maximum landing timing error of this manager properties bean in
+	 * seconds.
+	 * 
+	 * @param maxLandingTimingError the maximum take-off timing error to be set
+	 *                              in seconds
+	 */
+	public void setMaxLandingTimingError(long maxLandingTimingError);
 	
 	/**
 	 * Clones this manager properties bean.

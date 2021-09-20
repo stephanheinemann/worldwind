@@ -33,6 +33,8 @@ import java.util.Objects;
 
 import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.planning.CostPolicy;
@@ -57,6 +59,36 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	@DecimalMin(value = "0", message = "{property.manager.featureHorizon.min}")
 	@DecimalMax(value = "60", message = "{property.manager.featureHorizon.max}")
 	double featureHorizon;
+	
+	/** the maximum acceptable cross track error of this manager properties bean */
+	@Min(value = 0, message = "{property.manager.maxCrossTrackError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxCrossTrackError.max}")
+	private long maxCrossTrackError = 10;
+	
+	/** the maximum acceptable timing error of this manager properties bean */
+	@Min(value = 0, message = "{property.manager.maxTimingError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTimingError.max}")
+	private long maxTimingError = 60;
+	
+	/** the maximum acceptable horizontal take-off error of this manager properties bean */
+	@Min(value = 0, message = "{property.manager.maxTakeOffHorizontalError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTakeOffHorizontalError.max}")
+	private long maxTakeOffHorizontalError = 5;
+	
+	/** the maximum acceptable take-off timing error of this manager properties bean */
+	@Min(value = 0, message = "{property.manager.maxTakeOffTimingError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTakeOffTimingError.max}")
+	private long maxTakeOffTimingError = 30;
+	
+	/** the maximum acceptable horizontal landing error of this manager properties bean */
+	@Min(value = 0, message = "{property.manager.maxLandingHorizontalError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxLandingHorizontalError.max}")
+	private long maxLandingHorizontalError = 5;
+	
+	/** the maximum acceptable landing timing error of this manager properties bean */
+	@Min(value = 0, message = "{property.manager.maxLandingTimingError.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxLandingTimingError.max}")
+	private long maxLandingTimingError = 60;
 	
 	/**
 	 * Constructs a new manager properties bean using default cost and risk
@@ -152,7 +184,173 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 		this.featureHorizon = featureHorizon;
 	}
 	
-	// TODO: managed online planner error tolerances
+	/**
+	 * Gets the maximum acceptable cross track error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @return the maximum acceptable cross track error of this manager
+	 *         properties bean in meters
+	 * 
+	 * @see ManagerProperties#getMaxCrossTrackError()
+	 */
+	@Override
+	public long getMaxCrossTrackError() {
+		return this.maxCrossTrackError;
+	}
+	
+	/**
+	 * Sets the maximum acceptable cross track error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @param maxCrossTrackError the maximum acceptable cross track error to be
+	 *                           set in meters
+	 * 
+	 * @see ManagerProperties#setMaxCrossTrackError(long)
+	 */
+	@Override
+	public void setMaxCrossTrackError(long maxCrossTrackError) {
+		this.maxCrossTrackError = maxCrossTrackError;
+	}
+	
+	/**
+	 * Gets the maximum acceptable timing error of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @return the maximum acceptable timing error of this manager properties
+	 *         bean in seconds
+	 * 
+	 * @see ManagerProperties#getMaxTimingError()
+	 */
+	@Override
+	public long getMaxTimingError() {
+		return this.maxTimingError;
+	}
+	
+	/**
+	 * Sets the maximum acceptable timing error of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @param maxTimingError the maximum acceptable timing error to be set in
+	 *                       seconds
+	 * 
+	 * @see ManagerProperties#setMaxTimingError(long)
+	 */
+	@Override
+	public void setMaxTimingError(long maxTimingError) {
+		this.maxTimingError = maxTimingError;
+	}
+	
+	/**
+	 * Gets the maximum horizontal take-off error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @return the maximum horizontal take-off error of this manager properties
+	 *         bean in meters
+	 *
+	 * @see ManagerProperties#getMaxTakeOffHorizontalError()
+	 */
+	@Override
+	public long getMaxTakeOffHorizontalError() {
+		return this.maxTakeOffHorizontalError;
+	}
+	
+	/**
+	 * Sets the maximum horizontal take-off error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @param maxTakeOffHorizontalError the maximum horizontal take-off error
+	 *                                  to be set in meters
+	 *
+	 * @see ManagerProperties#setMaxTakeOffHorizontalError(long)
+	 */
+	@Override
+	public void setMaxTakeOffHorizontalError(long maxTakeOffHorizontalError) {
+		this.maxTakeOffHorizontalError = maxTakeOffHorizontalError;
+	}
+	
+	/**
+	 * Gets the maximum take-off timing error of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @return the maximum take-off timing error of this manager properties
+	 *         bean in seconds
+	 *
+	 * @see ManagerProperties#getMaxTakeOffTimingError()
+	 */
+	@Override
+	public long getMaxTakeOffTimingError() {
+		return this.maxTakeOffTimingError;
+	}
+	
+	/**
+	 * Sets the maximum take-off timing error of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @param maxTakeOffTimingError the maximum take-off timing error to be set
+	 *                              in seconds
+	 *
+	 * @see ManagerProperties#setMaxTakeOffTimingError(long)
+	 */
+	@Override
+	public void setMaxTakeOffTimingError(long maxTakeOffTimingError) {
+		this.maxTakeOffTimingError = maxTakeOffTimingError;
+	}
+	
+	/**
+	 * Gets the maximum horizontal landing error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @return the maximum horizontal landing error of this manager properties
+	 *         bean in meters
+	 *
+	 * @see ManagerProperties#getMaxLandingHorizontalError()
+	 */
+	@Override
+	public long getMaxLandingHorizontalError() {
+		return this.maxLandingHorizontalError;
+	}
+	
+	/**
+	 * Sets the maximum horizontal landing error of this manager properties
+	 * bean in meters.
+	 * 
+	 * @param maxLandingHorizontalError the maximum horizontal landing error
+	 *                                  to be set in meters
+	 *
+	 * @see ManagerProperties#setMaxLandingHorizontalError(long)
+	 */
+	@Override
+	public void setMaxLandingHorizontalError(long maxLandingHorizontalError) {
+		this.maxLandingHorizontalError = maxLandingHorizontalError;
+	}
+	
+	/**
+	 * Gets the maximum landing timing error of this manager properties bean in
+	 * seconds.
+	 * 
+	 * @return the maximum landing timing error of this manager properties bean
+	 *         in seconds
+	 *
+	 * @see ManagerProperties#getMaxLandingTimingError()
+	 */
+	@Override
+	public long getMaxLandingTimingError() {
+		return this.maxLandingTimingError;
+	}
+	
+	/**
+	 * Sets the maximum landing timing error of this manager properties bean in
+	 * seconds.
+	 * 
+	 * @param maxLandingTimingError the maximum take-off timing error to be set
+	 *                              in seconds
+	 *
+	 * @see ManagerProperties#setMaxLandingTimingError(long)
+	 */
+	@Override
+	public void setMaxLandingTimingError(long maxLandingTimingError) {
+		this.maxLandingTimingError = maxLandingTimingError;
+	}
 	
 	/**
 	 * Clones this manager properties bean.

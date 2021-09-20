@@ -75,24 +75,60 @@ public class AbstractManagerPropertiesBeanInfo extends PropertiesBeanInfo {
 		try {
 			PropertyDescriptor costPolicy = this.createPropertyDescriptor(
 					"costPolicy",
-					this.dictionary.getString("property.planner.costPolicy.name"),
-					this.dictionary.getString("property.planner.costPolicy.description"),
-					this.dictionary.getString("property.planner.category.policies"));
+					this.dictionary.getString("property.manager.costPolicy.name"),
+					this.dictionary.getString("property.manager.costPolicy.description"),
+					this.dictionary.getString("property.manager.category.policies"));
 			PropertyDescriptor riskPolicy = this.createPropertyDescriptor(
 					"riskPolicy",
-					this.dictionary.getString("property.planner.riskPolicy.name"),
-					this.dictionary.getString("property.planner.riskPolicy.description"),
-					this.dictionary.getString("property.planner.category.policies"));
+					this.dictionary.getString("property.manager.riskPolicy.name"),
+					this.dictionary.getString("property.manager.riskPolicy.description"),
+					this.dictionary.getString("property.manager.category.policies"));
 			PropertyDescriptor featureHorizon = this.createPropertyDescriptor(
 					"featureHorizon",
 					this.dictionary.getString("property.manager.featureHorizon.name"),
 					this.dictionary.getString("property.manager.featureHorizon.description"),
 					this.dictionary.getString("property.manager.category.managing"));
+			PropertyDescriptor maxCrossTrackError = this.createPropertyDescriptor(
+					"maxCrossTrackError",
+					this.dictionary.getString("property.manager.maxCrossTrackError.name"),
+					this.dictionary.getString("property.manager.maxCrossTrackError.description"),
+					this.dictionary.getString("property.manager.category.online"));
+			PropertyDescriptor maxTimingError = this.createPropertyDescriptor(
+					"maxTimingError",
+					this.dictionary.getString("property.manager.maxTimingError.name"),
+					this.dictionary.getString("property.manager.maxTimingError.description"),
+					this.dictionary.getString("property.manager.category.online"));
+			PropertyDescriptor maxTakeOffHorizontalError = this.createPropertyDescriptor(
+					"maxTakeOffHorizontalError",
+					this.dictionary.getString("property.manager.maxTakeOffHorizontalError.name"),
+					this.dictionary.getString("property.manager.maxTakeOffHorizontalError.description"),
+					this.dictionary.getString("property.manager.category.online"));
+			PropertyDescriptor maxTakeOffTimingError = this.createPropertyDescriptor(
+					"maxTakeOffTimingError",
+					this.dictionary.getString("property.manager.maxTakeOffTimingError.name"),
+					this.dictionary.getString("property.manager.maxTakeOffTimingError.description"),
+					this.dictionary.getString("property.manager.category.online"));
+			PropertyDescriptor maxLandingHorizontalError = this.createPropertyDescriptor(
+					"maxLandingHorizontalError",
+					this.dictionary.getString("property.manager.maxLandingHorizontalError.name"),
+					this.dictionary.getString("property.manager.maxLandingHorizontalError.description"),
+					this.dictionary.getString("property.manager.category.online"));
+			PropertyDescriptor maxLandingTimingError = this.createPropertyDescriptor(
+					"maxLandingTimingError",
+					this.dictionary.getString("property.manager.maxLandingTimingError.name"),
+					this.dictionary.getString("property.manager.maxLandingTimingError.description"),
+					this.dictionary.getString("property.manager.category.online"));
 		
 			descriptors = new PropertyDescriptor[] {
 					costPolicy,
 					riskPolicy,
-					featureHorizon};
+					featureHorizon,
+					maxCrossTrackError,
+					maxTimingError,
+					maxTakeOffHorizontalError,
+					maxTakeOffTimingError,
+					maxLandingHorizontalError,
+					maxLandingTimingError};
 		
 		} catch (IntrospectionException e) {
 			e.printStackTrace();

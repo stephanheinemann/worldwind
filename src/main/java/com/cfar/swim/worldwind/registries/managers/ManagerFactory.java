@@ -36,6 +36,8 @@ import com.cfar.swim.worldwind.managers.HeuristicAutonomicManager;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
+import com.cfar.swim.worldwind.tracks.AircraftTrackError;
+import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
 
 /**
  * Realizes a manager factory to create autonomic managers according to
@@ -96,6 +98,18 @@ public class ManagerFactory extends AbstractFactory<AutonomicManager> {
 				manager.setCostPolicy(properties.getCostPolicy());
 				manager.setRiskPolicy(properties.getRiskPolicy());
 				manager.setFeatureHorizon(Duration.ofSeconds(Math.round(properties.getFeatureHorizon() * 60d)));
+				AircraftTrackError maxTrackError = AircraftTrackError.maxAircraftTrackError();
+				maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
+				maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+				manager.setMaxTrackError(maxTrackError);
+				AircraftTrackPointError maxTakeOffError = AircraftTrackPointError.maxAircraftTrackPointError();
+				maxTakeOffError.setHorizontalError(properties.getMaxTakeOffHorizontalError());
+				maxTakeOffError.setTimingError(Duration.ofSeconds(properties.getMaxTakeOffTimingError()));
+				manager.setMaxTakeOffError(maxTakeOffError);
+				AircraftTrackPointError maxLandingError = AircraftTrackPointError.maxAircraftTrackPointError();
+				maxLandingError.setHorizontalError(properties.getMaxLandingHorizontalError());
+				maxLandingError.setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
+				manager.setMaxLandingError(maxLandingError);
 				manager.setSourceScenario(this.getScenario());
 			}
 			// TODO: ROAR, SMAC autonomic managers
