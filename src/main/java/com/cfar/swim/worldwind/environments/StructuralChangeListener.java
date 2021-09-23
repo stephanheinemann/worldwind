@@ -29,13 +29,15 @@
  */
 package com.cfar.swim.worldwind.environments;
 
+import java.util.EventListener;
+
 /**
  * Describes an environment structural change listener.
  * 
  * @author Stephan Heinemann
  *
  */
-public interface StructuralChangeListener {
+public interface StructuralChangeListener extends EventListener {
 
 	/**
 	 * Notifies this structural change listener about a structural environment

@@ -35,6 +35,7 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.cgs.oadstar.OADStarPlanner;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -52,6 +53,9 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	
 	/** the standby status of this managed grid planner */
 	private boolean isStandby = false;
+	
+	/** the associate planner of this managed grid planner to join */
+	private ManagedPlanner associate = null;
 	
 	/**
 	 * Constructs a managed grid planner for a specified aircraft and
@@ -101,12 +105,12 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * @see ManagedPlanner#setStandby(boolean)
 	 */
 	@Override
-	public void setStandby(boolean isStandby) {
+	public synchronized void setStandby(boolean isStandby) {
 		if (this.isStandby != isStandby) {
 			if (isStandby) {
-				this.removePlanRevisionListener(this.getMissionLoader());
+				this.getMissionLoader().mute();
 			} else {
-				this.addPlanRevisionListener(this.getMissionLoader());
+				this.getMissionLoader().unmute();
 			}
 			this.isStandby = isStandby;
 		}
@@ -121,8 +125,41 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * @see ManagedPlanner#isStandby()
 	 */
 	@Override
-	public boolean isStandby() {
+	public synchronized boolean isStandby() {
 		return this.isStandby;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft of this managed grid planner is
+	 * on track.
+	 * 
+	 * @return true if the aircraft of this managed grid planner is on track,
+	 *         false otherwise
+	 * 
+	 * @see OADStarPlanner#isOnTrack()
+	 */
+	@Override
+	public synchronized boolean isOnTrack() {
+		boolean isOnTrack = true;
+		
+		if (!this.isStandby()) {
+			isOnTrack = super.isOnTrack();
+		}
+		
+		return isOnTrack;
+	}
+	
+	/**
+	 * Progresses the plan of this managed grid planner by rooting its
+	 * generated graph at the next mission position.
+	 * 
+	 * @param partIndex the index of the part to be progressed
+	 */
+	@Override
+	protected synchronized void progress(int partIndex) {
+		if (!this.isStandby()) {
+			super.progress(partIndex);
+		}
 	}
 	
 	/**
@@ -130,7 +167,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * planner.
 	 */
 	@Override
-	protected void performTakeOff() {
+	protected synchronized void performTakeOff() {
 		if (!this.isStandby()) {
 			super.performTakeOff();
 		}
@@ -141,8 +178,8 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * planner.
 	 */
 	@Override
-	protected void performLanding() {
-		if (!this.isStandby) {
+	protected synchronized void performLanding() {
+		if (!this.isStandby()) {
 			super.performLanding();
 		}
 	}
@@ -152,7 +189,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * managed grid planner.
 	 */
 	@Override
-	protected void performUnplannedLanding() {
+	protected synchronized void performUnplannedLanding() {
 		if (!this.isStandby()) {
 			super.performUnplannedLanding();
 		}
@@ -162,7 +199,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * Establishes the datalink communication of this managed tree planner.
 	 */
 	@Override
-	protected void establishDatalink() {
+	protected synchronized void establishDatalink() {
 		if (!this.isStandby()) {
 			super.establishDatalink();
 		}
@@ -202,6 +239,96 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	@Override
 	public boolean hasGoals() {
 		return (null != this.goals);
+	}
+	
+	/**
+	 * Gets the associate planner of this managed grid planner.
+	 * 
+	 * @return the associate planner of this managed grid planner
+	 */
+	protected synchronized ManagedPlanner getAssociate() {
+		return this.associate;
+	}
+	
+	/**
+	 * Sets the associate planner of this managed grid planner
+	 * 
+	 * @param associate the associate planner to be set
+	 */
+	protected synchronized void setAssociate(ManagedPlanner associate) {
+		this.associate = associate;
+	}
+	
+	/**
+	 * Determines whether or not this managed grid planner has an associate
+	 * planner.
+	 * 
+	 * @return true if this managed grid planner has an associate planner,
+	 *         false otherwise
+	 */
+	protected synchronized boolean hasAssociate() {
+		return (null != this.associate);
+	}
+	
+	/**
+	 * Joins a managed planner at its next waypoint.
+	 * 
+	 * @param associate the managed planner to be joined
+	 * 
+	 * @see ManagedPlanner#join(ManagedPlanner)
+	 */
+	@Override
+	public synchronized void join(ManagedPlanner associate) {
+		if (this.isStandby()) {
+			this.setAssociate(associate);
+			this.notifyAll();
+		}
+	}
+	
+	/**
+	 * Joins the associate of this managed grid planner.
+	 */
+	protected synchronized void joinAssociate() {
+		if (this.isStandby() && this.hasAssociate()
+				&& this.getAssociate().hasNextWaypoint()) {
+			Waypoint nextWaypoint = this.getAssociate().getNextWaypoint();
+			int activePart = this.getAssociate().getActivePart();
+			
+			// clear all previous parts
+			for (int part = 0; part < activePart; part++) {
+				this.backups.get(part).clear();
+			}
+			
+			// join active part
+			this.restore(activePart);
+			this.setStart(this.createWaypoint(nextWaypoint));
+			this.getStart().setCost(nextWaypoint.getCost());
+			this.getStart().setEto(nextWaypoint.getEto());
+			this.backup(activePart);
+			
+			// re-plan from joined starting point
+			this.restore(backups.size() - 1);
+			this.replan(backups.size() - 1);
+			this.setAssociate(null);
+		}
+	}
+	
+	/**
+	 * Suspends this managed grid planner until termination, context changes,
+	 * off-track situations, or join requests occur.
+	 */
+	@Override
+	protected synchronized void suspend() {
+		try {
+			// wait for termination, dynamic changes, off-track situations, or joins
+			while (!this.hasTerminated() && !this.needsRepair() && this.isOnTrack()) {
+				this.progress(this.backups.size() - 1);
+				this.wait();
+				this.joinAssociate();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**

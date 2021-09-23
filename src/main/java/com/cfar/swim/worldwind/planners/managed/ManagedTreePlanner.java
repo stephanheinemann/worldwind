@@ -35,6 +35,7 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.rrt.oadrrt.OADRRTreePlanner;
 import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -52,6 +53,9 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	
 	/** the standby status of this managed tree planner */
 	private boolean isStandby = false;
+	
+	/** the associate planner of this managed grid planner to join */
+	private ManagedPlanner associate = null;
 	
 	/**
 	 * Constructs a managed tree planner for a specified aircraft and
@@ -101,12 +105,12 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * @see ManagedPlanner#setStandby(boolean)
 	 */
 	@Override
-	public void setStandby(boolean isStandby) {
+	public synchronized void setStandby(boolean isStandby) {
 		if (this.isStandby != isStandby) {
 			if (isStandby) {
-				this.removePlanRevisionListener(this.getMissionLoader());
+				this.getMissionLoader().mute();
 			} else {
-				this.addPlanRevisionListener(this.getMissionLoader());
+				this.getMissionLoader().unmute();
 			}
 			this.isStandby = isStandby;
 		}
@@ -121,8 +125,28 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * @see ManagedPlanner#isStandby()
 	 */
 	@Override
-	public boolean isStandby() {
+	public synchronized boolean isStandby() {
 		return this.isStandby;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft of this managed tree planner is
+	 * on track.
+	 * 
+	 * @return true if the aircraft of this managed tree planner is on track,
+	 *         false otherwise
+	 * 
+	 * @see OADRRTreePlanner#isOnTrack()
+	 */
+	@Override
+	public synchronized boolean isOnTrack() {
+		boolean isOnTrack = true;
+		
+		if (!this.isStandby()) {
+			isOnTrack = super.isOnTrack();
+		}
+		
+		return isOnTrack;
 	}
 	
 	/**
@@ -130,7 +154,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * planner.
 	 */
 	@Override
-	protected void performTakeOff() {
+	protected synchronized void performTakeOff() {
 		if (!this.isStandby()) {
 			super.performTakeOff();
 		}
@@ -141,8 +165,8 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * planner.
 	 */
 	@Override
-	protected void performLanding() {
-		if (!this.isStandby) {
+	protected synchronized void performLanding() {
+		if (!this.isStandby()) {
 			super.performLanding();
 		}
 	}
@@ -152,7 +176,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * managed tree planner.
 	 */
 	@Override
-	protected void performUnplannedLanding() {
+	protected synchronized void performUnplannedLanding() {
 		if (!this.isStandby()) {
 			super.performUnplannedLanding();
 		}
@@ -162,7 +186,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * Establishes the datalink communication of this managed tree planner.
 	 */
 	@Override
-	protected void establishDatalink() {
+	protected synchronized void establishDatalink() {
 		if (!this.isStandby()) {
 			super.establishDatalink();
 		}
@@ -202,6 +226,96 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	@Override
 	public boolean hasGoals() {
 		return (null != this.goals);
+	}
+	
+	/**
+	 * Gets the associate planner of this managed tree planner.
+	 * 
+	 * @return the associate planner of this managed tree planner
+	 */
+	protected synchronized ManagedPlanner getAssociate() {
+		return this.associate;
+	}
+	
+	/**
+	 * Sets the associate planner of this managed tree planner
+	 * 
+	 * @param associate the associate planner to be set
+	 */
+	protected synchronized void setAssociate(ManagedPlanner associate) {
+		this.associate = associate;
+	}
+	
+	/**
+	 * Determines whether or not this managed tree planner has an associate
+	 * planner.
+	 * 
+	 * @return true if this managed tree planner has an associate planner,
+	 *         false otherwise
+	 */
+	protected synchronized boolean hasAssociate() {
+		return (null != this.associate);
+	}
+	
+	/**
+	 * Joins a managed planner at its next waypoint.
+	 * 
+	 * @param associate the managed planner to be joined
+	 * 
+	 * @see ManagedPlanner#join(ManagedPlanner)
+	 */
+	@Override
+	public synchronized void join(ManagedPlanner associate) {
+		if (this.isStandby()) {
+			this.setAssociate(associate);
+			this.notifyAll();
+		}
+	}
+	
+	/**
+	 * Joins the associate of this managed tree planner.
+	 */
+	protected synchronized void joinAssociate() {
+		if (this.isStandby() && this.hasAssociate()
+				&& this.getAssociate().hasNextWaypoint()) {
+			Waypoint nextWaypoint = this.getAssociate().getNextWaypoint();
+			int activePart = this.getAssociate().getActivePart();
+			
+			// clear all previous parts
+			for (int part = 0; part < activePart; part++) {
+				this.backups.get(part).clear();
+			}
+			
+			// join active part
+			this.restore(activePart);
+			this.setStart(this.createWaypoint(nextWaypoint));
+			this.getStart().setCost(nextWaypoint.getCost());
+			this.getStart().setEto(nextWaypoint.getEto());
+			this.backup(activePart);
+			
+			// re-plan from joined starting point
+			this.restore(backups.size() - 1);
+			this.replan(backups.size() - 1);
+			this.setAssociate(null);
+		}
+	}
+	
+	/**
+	 * Suspends this managed tree planner until termination, context changes,
+	 * off-track situations, or join requests occur.
+	 */
+	@Override
+	protected synchronized void suspend() {
+		try {
+			// wait for termination, dynamic changes, off-track situations, or joins
+			while (!this.hasTerminated() && !this.needsRepair() && this.isOnTrack()) {
+				this.progress(this.backups.size() - 1);
+				this.wait();
+				this.joinAssociate();
+			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 	
 	/**

@@ -82,4 +82,11 @@ Callable<Trajectory> {
 	 */
 	public boolean hasGoals();
 	
+	/**
+	 * Joins a managed planner at its next waypoint.
+	 * 
+	 * @param associate the managed planner to be joined
+	 */
+	public void join(ManagedPlanner associate);
+	
 }

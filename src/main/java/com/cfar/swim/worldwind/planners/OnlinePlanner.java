@@ -58,9 +58,25 @@ public interface OnlinePlanner extends Planner, DatalinkTracker {
 	*/
 	
 	/**
+	 * Gets the previous waypoint of this online planner.
+	 * 
+	 * @return the previous waypoint of this online planner if any,
+	 *         null otherwise
+	 */
+	public Waypoint getPreviousWaypoint();
+	
+	/**
+	 * Determines whether or not this online planner has a previous waypoint.
+	 * 
+	 * @return true if this online planner has a previous waypoint,
+	 *         false otherwise
+	 */
+	public boolean hasPreviousWaypoint();
+	
+	/**
 	 * Gets the next waypoint of this online planner.
 	 * 
-	 * @return the next waypoint of this online planner
+	 * @return the next waypoint of this online planner if any, null otherwise
 	 */
 	public Waypoint getNextWaypoint();
 	
@@ -70,5 +86,19 @@ public interface OnlinePlanner extends Planner, DatalinkTracker {
 	 * @return true if this online planner has a next waypoint, false otherwise
 	 */
 	public boolean hasNextWaypoint();
+	
+	/**
+	 * Gets the active part of this online planner.
+	 * 
+	 * @return the active part of this online planner
+	 */
+	public int getActivePart();
+	
+	/**
+	 * Gets the mission loader of this online planner.
+	 * 
+	 * @return the mission loader of this online planner
+	 */
+	public MissionLoader getMissionLoader();
 	
 }

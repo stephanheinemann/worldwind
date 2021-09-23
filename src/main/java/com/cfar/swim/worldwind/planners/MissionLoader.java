@@ -47,6 +47,9 @@ public class MissionLoader implements PlanRevisionListener {
 	/** the online planner of this mission loader */
 	private final OnlinePlanner planner;
 	
+	/** indicates whether or not this mission loader is muted */
+	private boolean isMuted = false;
+	
 	/**
 	 * Constructs a new mission loader for an online planner.
 	 * 
@@ -62,6 +65,29 @@ public class MissionLoader implements PlanRevisionListener {
 	}
 	
 	/**
+	 * Mutes this mission loader.
+	 */
+	public synchronized void mute() {
+		this.isMuted = true;
+	}
+	
+	/**
+	 * Unmoutes this mission loader.
+	 */
+	public synchronized void unmute() {
+		this.isMuted = false;
+	}
+	
+	/**
+	 * Determines whether or not this mission loader is muted.
+	 * 
+	 * @return true if this mission loader is loaded, false otherwise
+	 */
+	public synchronized boolean isMuted() {
+		return this.isMuted;
+	}
+	
+	/**
 	 * Uploads a revised trajectory via the datalink of the online planner of
 	 * this mission loader.
 	 * 
@@ -70,30 +96,44 @@ public class MissionLoader implements PlanRevisionListener {
 	 * @see PlanRevisionListener#revisePlan(Trajectory)
 	 */
 	@Override
-	public void revisePlan(Trajectory trajectory) {
-		if (this.planner.hasDatalink() && this.planner.getDatalink().isConnected()) {
+	public synchronized void revisePlan(Trajectory trajectory) {
+		if (!this.isMuted) {
 			
-			// warn if mission is obsolete
-			if (this.planner.hasNextWaypoint() &&
-					!this.planner.getNextWaypoint().getPrecisionPosition().getOriginal()
-					.equals(this.planner.getDatalink().getNextMissionPosition())) {
-				Logging.logger().warning(this.planner.getId()
-						+ ": obsolete next mission position...");
-			}
-			
-			// do not upload an empty trajectory
-			if (!trajectory.isEmpty()) {
-				Logging.logger().info(this.planner.getId()
-						+ ": uploading mission: " + trajectory);
-				this.planner.getDatalink().uploadMission(trajectory);
-				// confirm the consistent upload
-				if (!this.planner.getDatalink().hasMission(trajectory, false)) {
-					Logging.logger().severe(this.planner.getId()
-							+ ": uploaded mission is not consistent...");
+			// TODO: establish datalink if necessary
+			/*
+			if (!this.planner.hasDatalink()
+					|| !this.planner.getDatalink().isConnected()
+					|| !this.planner.getDatalink().isMonitoring()) {
+				if (planner.hasEstablishDatalink()) {
+					this.planner.getEstablishDataLink().perform();
 				}
-			} else {
-				Logging.logger().warning(this.planner.getId()
-						+ ": not uploading an empty trajectory...");
+			}
+			*/
+			
+			if (this.planner.hasDatalink()
+					&& this.planner.getDatalink().isConnected()) {
+				// warn if mission is obsolete
+				if (this.planner.hasNextWaypoint() &&
+						!this.planner.getNextWaypoint().getPrecisionPosition().getOriginal()
+						.equals(this.planner.getDatalink().getNextMissionPosition())) {
+					Logging.logger().warning(this.planner.getId()
+							+ ": obsolete next mission position...");
+				}
+				
+				// do not upload an empty trajectory
+				if (!trajectory.isEmpty()) {
+					Logging.logger().info(this.planner.getId()
+							+ ": uploading mission: " + trajectory);
+					this.planner.getDatalink().uploadMission(trajectory);
+					// confirm the consistent upload
+					if (!this.planner.getDatalink().hasMission(trajectory, false)) {
+						Logging.logger().severe(this.planner.getId()
+								+ ": uploaded mission is not consistent...");
+					}
+				} else {
+					Logging.logger().warning(this.planner.getId()
+							+ ": not uploading an empty trajectory...");
+				}
 			}
 		}
 	}

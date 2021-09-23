@@ -42,15 +42,16 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
 import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.environments.DirectedEdge;
-import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.planners.MissionLoader;
 import com.cfar.swim.worldwind.planners.OnlinePlanner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarWaypoint;
+import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.TimeInterval;
+import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
@@ -73,8 +74,11 @@ import gov.nasa.worldwind.util.Logging;
  */
 public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	
-	/** the current leg of the aircraft planned by this OAD* planner */
-	private Optional<Edge> currentLeg = Optional.empty();
+	/** the active leg of this OAD* planner */
+	private Optional<DirectedEdge> activeLeg = Optional.empty();
+	
+	/** the active part of this OAD* planner */
+	private int activePart = 0;
 	
 	/** the datalink of this OAD* planner */
 	private Datalink datalink = null;
@@ -134,16 +138,61 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	}
 	
 	/**
+	 * Gets the active leg of this OAD* planner.
+	 * 
+	 * @return the active leg of this OAD* planner
+	 */
+	protected synchronized Optional<DirectedEdge> getActiveLeg() {
+		return this.activeLeg;
+	}
+	
+	/**
+	 * Sets the active leg of this OAD* planner.
+	 * 
+	 * @param activeLeg the active leg to be set
+	 */
+	protected synchronized void setActiveLeg(Optional<DirectedEdge> activeLeg) {
+		this.activeLeg = activeLeg;
+	}
+	
+	/**
+	 * Gets the previous waypoint of this OAD* planner.
+	 * 
+	 * @return the previous waypoint of this OAD* planner if any,
+	 *         null otherwise
+	 * 
+	 * @see OnlinePlanner#getPreviousWaypoint()
+	 */
+	@Override
+	public synchronized Waypoint getPreviousWaypoint() {
+		return this.getActiveLeg().isEmpty() ? null :
+			(ADStarWaypoint) this.getActiveLeg().get().getFirstPosition();
+	}
+	
+	/**
+	 * Determines whether or not this OAD* planner has a previous waypoint.
+	 * 
+	 * @return true if this OAD* planner has a previous waypoint,
+	 *         false otherwise
+	 * 
+	 * @see OnlinePlanner#hasPreviousWaypoint()
+	 */
+	@Override
+	public synchronized boolean hasPreviousWaypoint() {
+		return this.getActiveLeg().isPresent();
+	}
+	
+	/**
 	 * Gets the next waypoint of this OAD* planner.
 	 * 
-	 * @return the next waypoint of this OAD* planner
+	 * @return the next waypoint of this OAD* planner if any, null otherwise
 	 * 
 	 * @see OnlinePlanner#getNextWaypoint()
 	 */
 	@Override
-	public ADStarWaypoint getNextWaypoint() {
-		return this.currentLeg.isEmpty() ? null :
-			(ADStarWaypoint) this.currentLeg.get().getSecondPosition();
+	public synchronized ADStarWaypoint getNextWaypoint() {
+		return this.getActiveLeg().isEmpty() ? null :
+			(ADStarWaypoint) this.getActiveLeg().get().getSecondPosition();
 	}
 	
 	/**
@@ -154,8 +203,29 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	 * @see OnlinePlanner#hasNextWaypoint()
 	 */
 	@Override
-	public boolean hasNextWaypoint() {
-		return this.currentLeg.isPresent();
+	public synchronized boolean hasNextWaypoint() {
+		return this.getActiveLeg().isPresent();
+	}
+	
+	/**
+	 * Gets the active part of this OAD* planner.
+	 * 
+	 * @return the active part of this OAD* planner
+	 * 
+	 * @see OnlinePlanner#getActivePart()
+	 */
+	@Override
+	public synchronized int getActivePart() {
+		return this.activePart;
+	}
+	
+	/**
+	 * Sets the active part of this OAD* planner.
+	 * 
+	 * @param activePart the active part to be set
+	 */
+	protected synchronized void setActivePart(int activePart) {
+		this.activePart = activePart;
 	}
 	
 	/**
@@ -483,7 +553,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	public boolean isOnTrack() {
 		boolean isOnTrack = true;
 		
-		if (this.currentLeg.isPresent()
+		if (this.getActiveLeg().isPresent()
 				&& this.hasDatalink() && this.getDatalink().isConnected()
 				&& this.getDatalink().isMonitoring()
 				&& this.getDatalink().isAirborne()) {
@@ -498,7 +568,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			long maxTrackPoints = maxAge / period;
 			
 			if (track.size() >= (maxTrackPoints - 1)) {
-				DirectedEdge leg = (DirectedEdge) this.currentLeg.get();
+				DirectedEdge leg = this.getActiveLeg().get();
 				ADStarWaypoint next = (ADStarWaypoint) leg.getSecondPosition();
 				
 				// cross track check
@@ -577,7 +647,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	 * 
 	 * @param partIndex the index of the part to be progressed
 	 */
-	protected void progress(int partIndex) {
+	protected synchronized void progress(int partIndex) {
 		if (this.hasStart()
 				&& this.hasDatalink() && this.getDatalink().isConnected()
 				&& this.getDatalink().isMonitoring()
@@ -597,9 +667,13 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 						&& this.hasWaypoints()) {
 					ADStarWaypoint previous = (ADStarWaypoint) this.getWaypoints().removeFirst();
 					if (this.hasWaypoints()) {
-						this.currentLeg = Optional.of(new DirectedEdge(
-								this.getEnvironment(), previous, this.getWaypoints().getFirst()));
+						this.setActiveLeg(Optional.of(new DirectedEdge(
+								this.getEnvironment(), previous, this.getWaypoints().getFirst())));
+						this.setActivePart(partIndex);
 						this.root((ADStarWaypoint) this.getWaypoints().getFirst());
+					} else {
+						this.setActiveLeg(Optional.empty());
+						Logging.logger().info(this.getId() + " has an empty part " + partIndex);
 					}
 				}
 				
@@ -635,7 +709,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	 * 
 	 * @param partIndex the of the plan to be re-planned
 	 */
-	protected void replan(int partIndex) {
+	protected synchronized void replan(int partIndex) {
 		// TODO: possibly always re-plan from scratch based on track point
 		ADStarWaypoint partStart = (ADStarWaypoint) this.getStart().clone();
 		
@@ -656,25 +730,47 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			if (!this.getStart().equals(offTrackWaypoint)) {
 				offTrackWaypoint.setEto(trackPoint.getAto());
 				this.computeEto(offTrackWaypoint, this.getStart());
-				this.currentLeg = Optional.of(new DirectedEdge(
-						this.getEnvironment(), offTrackWaypoint, this.getStart()));
-				this.initialize(this.getStart(), this.getGoal(), this.getStart().getEto());
-				this.planPart(partIndex);
-				partStart.setEto(this.getStart().getEto());
+				this.setActiveLeg(Optional.of(new DirectedEdge(
+						this.getEnvironment(), offTrackWaypoint, this.getStart())));
+			} else {
+				this.setActiveLeg(Optional.empty());
 			}
+			
+			// plan active part from scratch
+			this.initialize(this.getStart(), this.getGoal(), this.getStart().getEto());
+			this.getStart().setCost(partStart.getCost());
+			this.backups.get(partIndex).clear();
+			this.planPart(partIndex);
+			partStart.setEto(this.getStart().getEto());
 		}
 		
 		if (partStart.hasInfiniteCost()) {
-			// TODO: invalid previous part?
-			// TODO: slots versus permissible aircraft track point error
+			// invalid previous part
+			this.getGoal().setInfiniteCost();
 		} else if (!this.getStart().getEto().equals(partStart.getEto())) {
+			// TODO: slots versus permissible aircraft track point error
 			// plan current part from scratch if start ETO has changed
 			this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
+			this.getStart().setCost(partStart.getCost());
 			if (partStart.hasParent()) {
 				this.getStart().setParent(partStart.getParent());
-				this.getStart().setCost(partStart.getCost());
 			}
+			this.backups.get(partIndex).clear();
 			this.planPart(partIndex);
+		} else {
+			// propagate potential cost change
+			double deltaCost = partStart.getCost() - this.getStart().getCost();
+			if (0 != deltaCost) {
+				for (AStarWaypoint waypoint : this.visited) {
+					ADStarWaypoint adswp = (ADStarWaypoint) waypoint;
+					adswp.setG(adswp.getG() + deltaCost);
+					adswp.setV(adswp.getV() + deltaCost);
+				}
+			}
+			
+			if (partStart.hasParent()) {
+				this.getStart().setParent(partStart.getParent());
+			}
 		}
 	}
 	
@@ -812,8 +908,11 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	 * Gets the mission loader of this OAD* planner.
 	 * 
 	 * @return the mission loader of this OAD* planner
+	 * 
+	 * @see OnlinePlanner#getMissionLoader()
 	 */
-	protected MissionLoader getMissionLoader() {
+	@Override
+	public MissionLoader getMissionLoader() {
 		return this.missionLoader;
 	}
 	

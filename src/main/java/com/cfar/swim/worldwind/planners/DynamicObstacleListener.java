@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.planners;
 
+import java.util.EventListener;
+
 import com.cfar.swim.worldwind.session.ObstacleManager;
 
 /**
@@ -37,7 +39,7 @@ import com.cfar.swim.worldwind.session.ObstacleManager;
  * @author Stephan Heinemann
  *
  */
-public interface DynamicObstacleListener {
+public interface DynamicObstacleListener extends EventListener {
 	
 	/**
 	 * Determines whether or not this dynamic obstacle listener is listening.

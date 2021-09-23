@@ -303,7 +303,8 @@ implements DynamicPlanner, LifelongPlanner {
 			ADRRTreeWaypoint partStart = (ADRRTreeWaypoint) this.getStart().clone();
 			
 			// repair previous parts before current part
-			if (this.hasDynamicObstacles(partIndex - 1)) {
+			if (this.hasDynamicObstacles(partIndex - 1)
+					&& this.hasWaypoints(partIndex - 1)) {
 				this.backup(partIndex);
 				this.restore(partIndex -1);
 				this.planPart(partIndex - 1);
@@ -324,16 +325,18 @@ implements DynamicPlanner, LifelongPlanner {
 				// connect current to previous part
 				// TODO: consider departure slots to avoid planning from scratch
 				// TODO: consider early arrivals with holding / loitering
+				
+				// propagate potential cost change
+				double deltaCost = partStart.getCost() - this.getStart().getCost();
+				if (0 != deltaCost) {
+					for (Position vertex : this.getPlanningContinuum().getVertices()) {
+						ADRRTreeWaypoint waypoint = (ADRRTreeWaypoint) vertex;
+						waypoint.setCost(waypoint.getCost() + deltaCost);
+					}
+				}
+				
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
-					// propagate potential cost change
-					double deltaCost = partStart.getCost() - this.getStart().getCost();
-					if (0 != deltaCost) {
-						for (Position vertex : this.getPlanningContinuum().getVertices()) {
-							ADRRTreeWaypoint waypoint = (ADRRTreeWaypoint) vertex;
-							waypoint.setCost(waypoint.getCost() + deltaCost);
-						}
-					}
 				}
 				
 				// trim and re-grow tree if plan is affected
@@ -361,7 +364,8 @@ implements DynamicPlanner, LifelongPlanner {
 					this.getStart().setParent(partStart.getParent());
 					this.getStart().setCost(partStart.getCost());
 				}
-				super.planPart(partIndex);
+				this.backups.get(partIndex).clear();
+				this.planPart(partIndex);
 			}
 		}
 		
@@ -764,7 +768,7 @@ implements DynamicPlanner, LifelongPlanner {
 	 */
 	protected void shareDynamicObstacles(Set<Obstacle> dynamicObstacles) {
 		for (int backupIndex = 0; backupIndex < backups.size(); backupIndex++) {
-			if (this.hasBackup(backupIndex)) {
+			if (this.hasWaypoints(backupIndex)) {
 				Backup backup = (Backup) this.backups.get(backupIndex);
 				backup.dynamicObstacles.addAll(dynamicObstacles);
 			}

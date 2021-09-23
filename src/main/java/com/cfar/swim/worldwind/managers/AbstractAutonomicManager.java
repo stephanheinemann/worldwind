@@ -78,6 +78,7 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525GraphicFactory;
+import gov.nasa.worldwind.util.Logging;
 
 /**
  * Abstracts an autonomic manager for motion planners operating in autonomic
@@ -792,7 +793,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 					plannerFactory.setSpecification(plannerSpec);
 					Planner planner = plannerFactory.createInstance();
 					
-					// TODO: check managed planner and assign active managed planner
 					if ((null != planner) && (planner instanceof ManagedPlanner)) {
 						ManagedPlanner managedPlanner = (ManagedPlanner) planner;
 						managedScenario.setPlanner(managedPlanner);
@@ -820,52 +820,10 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 							managedPlanner.setMaxTakeOffError(this.getMaxTakeOffError());
 							managedPlanner.setMaxTrackError(this.getMaxTrackError());
 							
-							// TODO: datalink and SWIM
-							// TODO: features and knowledge base
-							
 							managedPlanner.addPlanRevisionListener(new PlanRevisionListener() {
-								
 								@Override
 								public void revisePlan(Trajectory trajectory) {
-									styleTrajectory(trajectory);
-									managedScenario.setTrajectory(trajectory);
-									// TODO: update source scenario with best trajectory
-									// TODO: measure performance and update reputation
-									Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
-									
-									List<Waypoint> spois = sourceTrajectory.getPois();
-									List<Waypoint> rpois = trajectory.getPois();
-									int poiIndex = Math.min(spois.size(), rpois.size()) - 1;
-									System.out.println("common POI indices = " + poiIndex);
-									
-									Trajectory st = sourceTrajectory.getSubTrajectory(poiIndex);
-									TrajectoryQuality stq = new TrajectoryQuality(st);
-									Trajectory rt = trajectory.getSubTrajectory(poiIndex);
-									TrajectoryQuality rtq = new TrajectoryQuality(rt);
-									
-									// TODO: comparison of trajectories can only be based on
-									// same start and end POIs using same normalizer
-									
-									// TODO: multiple parts / uploading versus showing
-									// consider non-empty, improved, or longer revised trajectory
-									if (!trajectory.isEmpty() && (sourceTrajectory.isEmpty()
-											|| (0 > stq.compareTo(rtq))
-											|| ((0 == stq.compareTo(rtq)) && (rpois.size() >= poiIndex)))) {
-										getSourceScenario().setTrajectory(trajectory);
-										
-										// TODO:
-										// if planner != active planner, deactivate active planner
-										// acitvate planner, upload trajectory?
-										/*
-										if (activePlanner !=  managedPlanner) {
-											activePlanner.setStandby(true);
-											activePlanner = managedPlanner;
-											activePlanner.setStandby(false);
-										}
-										*/
-										//getActivePlanner().getMissionLoader().revise(trajectory);
-										
-									}
+									evaluatePlanner(managedScenario, managedPlanner, trajectory);
 									Thread.yield();
 								}
 							});
@@ -1020,6 +978,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 */
 	@Override
 	public synchronized void notifyPendingObstacleChange() {
+		// TODO: potentially use dedicated worker thread
 		if (this.hasObstacleManager()
 				&& !this.getObstacleManager().commitObstacleChange().isEmpty()) {
 			this.getSourceScenario().clearTrajectory();
@@ -1033,12 +992,21 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 				List<Properties<Planner>> candidates = tuning.tune();
 				// TODO: default candidate
 				tuning.getSpecification().setProperties(candidates.get(0));
-				managedScenario.getPlanner().update(tuning.getSpecification());
+				
+				ManagedPlanner managedPlanner = (ManagedPlanner) managedScenario.getPlanner();
+				managedPlanner.update(tuning.getSpecification());
+				if (this.getActivePlanner() != managedPlanner) {
+					// join active planner in trajectory competition
+					managedPlanner.join(this.getActivePlanner());
+				}
+				
 				managedScenario.submitReplaceObstacles(
 						getSourceScenario().getObstacles());
 				//managedScenario.submitReplaceObstacles(
 				//		getSourceScenario().getEmbeddedObstacles());
 			}
+			
+			// TODO: include replanning callback?
 		}
 	}
 	
@@ -1078,6 +1046,58 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	@Override
 	public synchronized boolean hasObstacleManager() {
 		return (null != this.obstacleManager);
+	}
+	
+	/**
+	 * Evaluates a managed planner's trajectory and selects an active planner
+	 * accordingly.
+	 * 
+	 * @param scenario the managed scenario of the planner
+	 * @param planner the managed planner
+	 * @param trajectory the trajectory computed by the managed planner
+	 */
+	private synchronized void evaluatePlanner(
+			Scenario scenario, ManagedPlanner planner, Trajectory trajectory) {
+		styleTrajectory(trajectory);
+		scenario.setTrajectory(trajectory);
+		// TODO: measure performance and update reputation
+		// TODO: features and knowledge base
+		Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
+		
+		
+		// comparison of trajectories can only be based on the same start
+		// and end POIs using the same environment normalizer
+		List<Waypoint> spois = sourceTrajectory.getPois();
+		List<Waypoint> rpois = trajectory.getPois();
+		int poiIndex = Math.min(spois.size(), rpois.size()) - 1;
+		System.out.println("common POI indices = " + poiIndex);
+		
+		Trajectory st = sourceTrajectory.getSubTrajectory(poiIndex);
+		TrajectoryQuality stq = new TrajectoryQuality(st);
+		Trajectory rt = trajectory.getSubTrajectory(poiIndex);
+		TrajectoryQuality rtq = new TrajectoryQuality(rt);
+		
+		boolean commonStart = true;
+		if (!st.isEmpty() && !rt.isEmpty()) {
+			commonStart = st.getFirstWaypoint().equals(rt.getFirstWaypoint());
+		}
+		
+		// TODO: multiple parts / uploading versus showing
+		// consider non-empty, improved, or longer revised trajectory
+		if (!trajectory.isEmpty() && commonStart && (sourceTrajectory.isEmpty()
+				|| (0 > stq.compareTo(rtq))
+				|| ((0 == stq.compareTo(rtq)) && (rpois.size() >= poiIndex)))) {
+			getSourceScenario().setTrajectory(trajectory);
+			
+			// select improved planner if necessary
+			if (getActivePlanner() !=  planner) {
+				getActivePlanner().setStandby(true);
+				setActivePlanner(planner);
+				getActivePlanner().setStandby(false);
+				getActivePlanner().getMissionLoader().revisePlan(trajectory);
+				Logging.logger().info("new active planner is " + getActivePlanner().getId());
+			}
+		}
 	}
 	
 	private final MilStd2525GraphicFactory symbolFactory = new MilStd2525GraphicFactory();
