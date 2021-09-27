@@ -811,7 +811,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 				this.addExpandable(waypoint);
 			}
 			
-			// clear inconsistent and expandable waypoints
+			// clear inconsistent and expanded waypoints
 			this.clearInconsistent();
 			this.clearExpanded();
 			

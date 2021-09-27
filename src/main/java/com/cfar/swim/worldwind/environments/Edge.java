@@ -666,4 +666,17 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 		this.setVisible(this.activeCost > this.getThreshold());
 	}
 	
+	/**
+	 * Gets the string representation of this edge.
+	 * 
+	 * @return the string representation of this edge
+	 * 
+	 * @see LineSegment#toString()
+	 */
+	@Override
+	public String toString() {
+		return "[" + this.getFirstPosition() + " -- "
+				+ this.getSecondPosition() + "]";
+	}
+	
 }

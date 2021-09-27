@@ -99,8 +99,7 @@ public class MissionLoader implements PlanRevisionListener {
 	public synchronized void revisePlan(Trajectory trajectory) {
 		if (!this.isMuted) {
 			
-			// TODO: establish datalink if necessary
-			/*
+			// establish datalink if necessary
 			if (!this.planner.hasDatalink()
 					|| !this.planner.getDatalink().isConnected()
 					|| !this.planner.getDatalink().isMonitoring()) {
@@ -108,7 +107,6 @@ public class MissionLoader implements PlanRevisionListener {
 					this.planner.getEstablishDataLink().perform();
 				}
 			}
-			*/
 			
 			if (this.planner.hasDatalink()
 					&& this.planner.getDatalink().isConnected()) {
@@ -117,7 +115,8 @@ public class MissionLoader implements PlanRevisionListener {
 						!this.planner.getNextWaypoint().getPrecisionPosition().getOriginal()
 						.equals(this.planner.getDatalink().getNextMissionPosition())) {
 					Logging.logger().warning(this.planner.getId()
-							+ ": obsolete next mission position...");
+							+ ": obsolete next mission position "
+							+ this.planner.getDatalink().getNextMissionPosition());
 				}
 				
 				// do not upload an empty trajectory

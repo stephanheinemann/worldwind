@@ -428,4 +428,14 @@ public class LineSegment /* extends Line */ implements Renderable {
 		return Objects.hash(this.getFirst(), this.getSecond());
 	}
 	
+	/**
+	 * Gets the string representation of this line segment.
+	 * 
+	 * @return the string representation of this line segment
+	 */
+	@Override
+	public String toString() {
+		return "[" + this.getFirst() + ", " + this.getSecond() + "]";
+	}
+	
 }

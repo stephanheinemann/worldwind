@@ -303,8 +303,7 @@ implements DynamicPlanner, LifelongPlanner {
 			ADRRTreeWaypoint partStart = (ADRRTreeWaypoint) this.getStart().clone();
 			
 			// repair previous parts before current part
-			if (this.hasDynamicObstacles(partIndex - 1)
-					&& this.hasWaypoints(partIndex - 1)) {
+			if (this.hasDynamicObstacles(partIndex - 1)) {
 				this.backup(partIndex);
 				this.restore(partIndex -1);
 				this.planPart(partIndex - 1);
@@ -767,8 +766,8 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @param dynamicObstacles the dynamic obstacles to be shared
 	 */
 	protected void shareDynamicObstacles(Set<Obstacle> dynamicObstacles) {
-		for (int backupIndex = 0; backupIndex < backups.size(); backupIndex++) {
-			if (this.hasWaypoints(backupIndex)) {
+		for (int backupIndex = 0; backupIndex < this.backups.size(); backupIndex++) {
+			if (this.hasBackup(backupIndex)) {
 				Backup backup = (Backup) this.backups.get(backupIndex);
 				backup.dynamicObstacles.addAll(dynamicObstacles);
 			}

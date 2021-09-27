@@ -342,6 +342,7 @@ public class SimulatedDatalink extends Datalink {
 		
 		this.iris.moveTo(currentPosition);
 		
+		// TODO: observed invalid position (NaN or Infinite components)
 		return currentPosition;
 	}
 	

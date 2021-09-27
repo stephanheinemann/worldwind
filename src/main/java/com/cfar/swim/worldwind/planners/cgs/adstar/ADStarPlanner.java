@@ -192,7 +192,8 @@ implements DynamicPlanner, LifelongPlanner {
 	 */
 	@Override
 	protected boolean canExpand() {
-		return super.canExpand() || (this.getGoal().isUnderConsistent());
+		return super.canExpand() ||
+				(!this.open.isEmpty() && this.getGoal().isUnderConsistent());
 	}
 	
 	/**
@@ -362,7 +363,7 @@ implements DynamicPlanner, LifelongPlanner {
 		this.clearDynamicObstacles();
 		
 		if (affectedWaypoints.containsAll(this.getGoalRegion().stream()
-				.map(p -> this.createWaypoint(p))
+				.map(p -> this.createWaypoint(p.getOriginal()))
 				.collect(Collectors.toSet()))) {
 			affectedWaypoints.add(this.getGoal());
 		}
@@ -444,8 +445,7 @@ implements DynamicPlanner, LifelongPlanner {
 			ADStarWaypoint partStart = (ADStarWaypoint) this.getStart().clone();
 			
 			// repair previous parts before current part
-			if (this.hasDynamicObstacles(partIndex - 1)
-					&& this.hasWaypoints(partIndex - 1)) {
+			if (this.hasDynamicObstacles(partIndex - 1)) {
 				this.backup(partIndex);
 				double partInflation = this.getInflation();
 				this.setInflation(this.getMaximumQuality());
@@ -960,8 +960,8 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @param dynamicObstacles the dynamic obstacles to be shared
 	 */
 	protected void shareDynamicObstacles(Set<Obstacle> dynamicObstacles) {
-		for (int backupIndex = 0; backupIndex < backups.size(); backupIndex++) {
-			if (this.hasWaypoints(backupIndex)) {
+		for (int backupIndex = 0; backupIndex < this.backups.size(); backupIndex++) {
+			if (this.hasBackup(backupIndex)) {
 				Backup backup = (Backup) this.backups.get(backupIndex);
 				backup.dynamicObstacles.addAll(dynamicObstacles);
 			}

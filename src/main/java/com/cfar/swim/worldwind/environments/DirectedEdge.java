@@ -127,4 +127,17 @@ public class DirectedEdge extends Edge {
 		return equals;
 	}
 	
+	/**
+	 * Gets the string representation of this directed edge.
+	 * 
+	 * @return the string representation of this directed edge
+	 * 
+	 * @see Edge#toString()
+	 */
+	@Override
+	public String toString() {
+		return "[" + this.getFirstPosition() + " -> "
+				+ this.getSecondPosition() + "]";
+	}
+	
 }
