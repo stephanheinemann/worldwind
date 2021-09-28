@@ -107,7 +107,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * @see ManagedPlanner#setStandby(boolean)
 	 */
 	@Override
-	public synchronized void setStandby(boolean isStandby) {
+	public void setStandby(boolean isStandby) {
 		if (this.isStandby != isStandby) {
 			if (isStandby) {
 				this.getMissionLoader().mute();
@@ -127,7 +127,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * @see ManagedPlanner#isStandby()
 	 */
 	@Override
-	public synchronized boolean isStandby() {
+	public boolean isStandby() {
 		return this.isStandby;
 	}
 	
@@ -141,7 +141,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * @see OADRRTreePlanner#isOnTrack()
 	 */
 	@Override
-	public synchronized boolean isOnTrack() {
+	public boolean isOnTrack() {
 		boolean isOnTrack = true;
 		
 		if (!this.isStandby()) {
@@ -156,7 +156,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * planner.
 	 */
 	@Override
-	protected synchronized void performTakeOff() {
+	protected void performTakeOff() {
 		if (!this.isStandby()) {
 			super.performTakeOff();
 		}
@@ -167,7 +167,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * planner.
 	 */
 	@Override
-	protected synchronized void performLanding() {
+	protected void performLanding() {
 		if (!this.isStandby()) {
 			super.performLanding();
 		}
@@ -178,7 +178,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * managed tree planner.
 	 */
 	@Override
-	protected synchronized void performUnplannedLanding() {
+	protected void performUnplannedLanding() {
 		if (!this.isStandby()) {
 			super.performUnplannedLanding();
 		}
@@ -188,7 +188,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 * Establishes the datalink communication of this managed tree planner.
 	 */
 	@Override
-	protected synchronized void establishDatalink() {
+	protected void establishDatalink() {
 		if (!this.isStandby()) {
 			super.establishDatalink();
 		}

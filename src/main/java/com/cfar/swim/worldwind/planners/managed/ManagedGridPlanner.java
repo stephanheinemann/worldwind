@@ -107,7 +107,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * @see ManagedPlanner#setStandby(boolean)
 	 */
 	@Override
-	public synchronized void setStandby(boolean isStandby) {
+	public void setStandby(boolean isStandby) {
 		if (this.isStandby != isStandby) {
 			if (isStandby) {
 				this.getMissionLoader().mute();
@@ -127,7 +127,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * @see ManagedPlanner#isStandby()
 	 */
 	@Override
-	public synchronized boolean isStandby() {
+	public boolean isStandby() {
 		return this.isStandby;
 	}
 	
@@ -141,7 +141,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * @see OADStarPlanner#isOnTrack()
 	 */
 	@Override
-	public synchronized boolean isOnTrack() {
+	public boolean isOnTrack() {
 		boolean isOnTrack = true;
 		
 		if (!this.isStandby()) {
@@ -158,7 +158,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * @param partIndex the index of the part to be progressed
 	 */
 	@Override
-	protected synchronized void progress(int partIndex) {
+	protected void progress(int partIndex) {
 		if (!this.isStandby()) {
 			super.progress(partIndex);
 		}
@@ -169,7 +169,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * planner.
 	 */
 	@Override
-	protected synchronized void performTakeOff() {
+	protected void performTakeOff() {
 		if (!this.isStandby()) {
 			super.performTakeOff();
 		}
@@ -180,7 +180,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * planner.
 	 */
 	@Override
-	protected synchronized void performLanding() {
+	protected void performLanding() {
 		if (!this.isStandby()) {
 			super.performLanding();
 		}
@@ -191,7 +191,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * managed grid planner.
 	 */
 	@Override
-	protected synchronized void performUnplannedLanding() {
+	protected void performUnplannedLanding() {
 		if (!this.isStandby()) {
 			super.performUnplannedLanding();
 		}
@@ -201,7 +201,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * Establishes the datalink communication of this managed tree planner.
 	 */
 	@Override
-	protected synchronized void establishDatalink() {
+	protected void establishDatalink() {
 		if (!this.isStandby()) {
 			super.establishDatalink();
 		}
