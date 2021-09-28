@@ -817,7 +817,7 @@ public class Features extends HashMap<String, Object> {
 	 * @return the string representation of these features
 	 */
 	public String toString() {
-		String features = "________________________________________________________________________________\n";
+		String features = "\n________________________________________________________________________________\n";
 		
 		if (this.containsKey(Features.FEATURE_AIRCRAFT_ALTITUDE)) {
 			features = features.concat(this.dictionary.getString(

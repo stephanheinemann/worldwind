@@ -359,9 +359,9 @@ implements DynamicPlanner, LifelongPlanner {
 			} else {
 				// plan current part from scratch if start ETO has changed
 				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
+				this.getStart().setCost(partStart.getCost());
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
-					this.getStart().setCost(partStart.getCost());
 				}
 				this.backups.get(partIndex).clear();
 				this.planPart(partIndex);

@@ -760,6 +760,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			
 			// plan active part from scratch
 			this.initialize(this.getStart(), this.getGoal(), this.getStart().getEto());
+			this.getStart().setPoi(partStart.isPoi());
 			this.getStart().setCost(partStart.getCost());
 			this.backups.get(partIndex).clear();
 			this.planPart(partIndex);

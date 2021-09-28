@@ -871,8 +871,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		ArrayList<ManagedPlanner> managedPlanners = new ArrayList<>();
 		
 		for (Scenario managedScenario : this.getManagedScenarios()) {
-			System.out.println(managedScenario.getId());
-			System.out.println(this.getPlannerTuning(managedScenario).getFeatures());
+			Logging.logger().info("managing " + managedScenario.getId());
+			Logging.logger().info(this.getPlannerTuning(managedScenario).getFeatures().toString());
 		
 			ManagedPlanner managedPlanner = (ManagedPlanner) managedScenario.getPlanner();
 			ManagedGoals managedGoals = new ManagedGoals();
@@ -996,7 +996,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 						PlannerTuning tuning = getPlannerTuning(managedScenario);
 						// TODO: environment obstacles only
 						tuning.getFeatures().extractFeatures(getSourceScenario());
-						System.out.println(tuning.getFeatures());
+						Logging.logger().info("tuning " + tuning.getSpecification().getId());
+						Logging.logger().info(tuning.getFeatures().toString());
 						List<Properties<Planner>> candidates = tuning.tune();
 						// TODO: default candidate
 						tuning.getSpecification().setProperties(candidates.get(0));
@@ -1066,28 +1067,34 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 */
 	private synchronized void evaluatePlanner(
 			Scenario scenario, ManagedPlanner planner, Trajectory trajectory) {
+		Logging.logger().info("evaluating planner " + planner.getId());
+		
 		styleTrajectory(trajectory);
 		scenario.setTrajectory(trajectory);
 		// TODO: measure performance and update reputation
 		// TODO: features and knowledge base
 		Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
-		
+		Logging.logger().info("current source trajectory = "  + sourceTrajectory);
+		Logging.logger().info("evaluated trajectory = " + trajectory);
 		
 		// comparison of trajectories can only be based on the same start
 		// and end POIs using the same environment normalizer
 		List<Waypoint> spois = sourceTrajectory.getPois();
 		List<Waypoint> rpois = trajectory.getPois();
 		int poiIndex = Math.min(spois.size(), rpois.size()) - 1;
-		System.out.println("common POI indices = " + poiIndex);
+		Logging.logger().info("common POI indices = " + poiIndex);
 		
 		Trajectory st = sourceTrajectory.getSubTrajectory(poiIndex);
 		TrajectoryQuality stq = new TrajectoryQuality(st);
-		Trajectory rt = trajectory.getSubTrajectory(poiIndex);
-		TrajectoryQuality rtq = new TrajectoryQuality(rt);
+		Trajectory et = trajectory.getSubTrajectory(poiIndex);
+		TrajectoryQuality rtq = new TrajectoryQuality(et);
+		
+		Logging.logger().info("current source sub-trajectory = " + st);
+		Logging.logger().info("evaluated sub-trajectory = " + et);
 		
 		boolean commonStart = true;
-		if (!st.isEmpty() && !rt.isEmpty()) {
-			commonStart = st.getFirstWaypoint().equals(rt.getFirstWaypoint());
+		if (!st.isEmpty() && !et.isEmpty()) {
+			commonStart = st.getFirstWaypoint().equals(et.getFirstWaypoint());
 		}
 		
 		// TODO: multiple parts / uploading versus showing
@@ -1096,6 +1103,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 				|| (0 > stq.compareTo(rtq))
 				|| ((0 == stq.compareTo(rtq)) && (rpois.size() >= poiIndex)))) {
 			getSourceScenario().setTrajectory(trajectory);
+			Logging.logger().info("new source trajectory = " + trajectory);
 			
 			// select improved planner if necessary
 			if (getActivePlanner() !=  planner) {
