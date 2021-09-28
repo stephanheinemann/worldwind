@@ -302,7 +302,7 @@ public abstract class AbstractPlanner implements Planner {
 	 * 
 	 * @param trajectory the revised trajectory
 	 */
-	protected synchronized void revisePlan(Trajectory trajectory) {
+	protected void revisePlan(Trajectory trajectory) {
 		if (this.revisionsEnabled) {
 			Logging.logger().info("revising plan...");
 			for (PlanRevisionListener listener : this.planRevisionListeners) {
@@ -314,14 +314,14 @@ public abstract class AbstractPlanner implements Planner {
 	/**
 	 * Enables plan revision notification.
 	 */
-	protected synchronized void enableRevisions() {
+	protected void enableRevisions() {
 		this.revisionsEnabled = true;
 	}
 	
 	/**
 	 * Disables plan revision notification.
 	 */
-	protected synchronized void disableRevisions() {
+	protected void disableRevisions() {
 		this.revisionsEnabled = false;
 	}
 	

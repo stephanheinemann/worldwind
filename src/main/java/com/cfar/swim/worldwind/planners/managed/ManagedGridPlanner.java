@@ -39,6 +39,8 @@ import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.util.Identifiable;
 
+import gov.nasa.worldwind.util.Logging;
+
 /**
  * Realizes a managed grid planner based on an online anytime dynamic A*
  * planner.
@@ -281,7 +283,6 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	public synchronized void join(ManagedPlanner associate) {
 		if (this.isStandby()) {
 			this.setAssociate(associate);
-			this.notifyAll();
 		}
 	}
 	
@@ -307,8 +308,12 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 			this.backup(activePart);
 			
 			// re-plan from joined starting point
-			this.restore(backups.size() - 1);
-			this.replan(backups.size() - 1);
+			Logging.logger().info(this.getId()
+					+ " joins active part " + activePart
+					+ " at " + this.getStart()
+					+ " of " + this.getAssociate().getId());
+			this.restore(this.backups.size() - 1);
+			this.replan(this.backups.size() - 1);
 			this.setAssociate(null);
 		}
 	}

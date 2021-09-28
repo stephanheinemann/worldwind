@@ -133,8 +133,11 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	/** the maximum acceptable aircraft track error of this abstract autonomic manager */
 	private AircraftTrackError maxTrackError = AircraftTrackError.ZERO;
 	
-	/** the executor of this abstract autonomic manager */
-	private ExecutorService executor = null;
+	/** the tuner executor of this abstract autonomic manager */
+	private final ExecutorService tunerExecutor = Executors.newSingleThreadExecutor();
+	
+	/** the planner executor of this abstract autonomic manager */
+	private ExecutorService plannerExecutor = null;
 	
 	/**
 	 * Gets the cost policy of this abstract autonomic manager.
@@ -851,7 +854,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			this.setActivePlanner((ManagedPlanner)
 					this.getManagedScenarios().stream().findFirst().get().getPlanner());
 			this.getActivePlanner().setStandby(false);
-			this.executor = Executors.newWorkStealingPool(this.getManagedScenarios().size());
+			this.plannerExecutor = Executors.newWorkStealingPool(this.getManagedScenarios().size());
 			// inject all source scenario environment changes into managed scenarios
 			this.getSourceScenario().clearTrajectory();
 			this.setObstacleManager(this.getSourceScenario());
@@ -887,7 +890,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		
 		try {
 			if (!managedPlanners.isEmpty()) {
-				this.executor.invokeAll(managedPlanners);
+				this.plannerExecutor.invokeAll(managedPlanners);
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -909,7 +912,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 				managedSession.removeScenario(managedScenario);
 			}
 			this.managedScenarios.clear();
-			this.executor.shutdown();
+			this.plannerExecutor.shutdown();
 			this.setActivePlanner(null);
 			this.getSourceScenario().clearTrajectory();
 		}
@@ -971,43 +974,48 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		return true;
 	}
 	
+	// TODO: include replanning callback?
+	
 	/**
-	 * Notifies this abstract autonomic manager about a pending obstacle change.
+	 * Notifies this abstract autonomic manager about a pending obstacle change
+	 * and invokes a tuning and joining procedure as required.
 	 * 
 	 * @see DynamicObstacleListener#notifyPendingObstacleChange()
 	 */
 	@Override
 	public synchronized void notifyPendingObstacleChange() {
-		// TODO: potentially use dedicated worker thread
-		if (this.hasObstacleManager()
-				&& !this.getObstacleManager().commitObstacleChange().isEmpty()) {
-			this.getSourceScenario().clearTrajectory();
-			
-			// update all managed scenarios and planner tunings
-			for (Scenario managedScenario : getManagedScenarios()) {
-				PlannerTuning tuning = getPlannerTuning(managedScenario);
-				// TODO: environment obstacles only
-				tuning.getFeatures().extractFeatures(this.getSourceScenario());
-				System.out.println(tuning.getFeatures());
-				List<Properties<Planner>> candidates = tuning.tune();
-				// TODO: default candidate
-				tuning.getSpecification().setProperties(candidates.get(0));
-				
-				ManagedPlanner managedPlanner = (ManagedPlanner) managedScenario.getPlanner();
-				managedPlanner.update(tuning.getSpecification());
-				if (this.getActivePlanner() != managedPlanner) {
-					// join active planner in trajectory competition
-					managedPlanner.join(this.getActivePlanner());
+		this.tunerExecutor.execute(new Runnable() {
+			@Override
+			public void run() {
+				if (hasObstacleManager()
+						&& !getObstacleManager().commitObstacleChange().isEmpty()) {
+					getSourceScenario().clearTrajectory();
+					
+					// update all managed scenarios and planner tunings
+					for (Scenario managedScenario : getManagedScenarios()) {
+						PlannerTuning tuning = getPlannerTuning(managedScenario);
+						// TODO: environment obstacles only
+						tuning.getFeatures().extractFeatures(getSourceScenario());
+						System.out.println(tuning.getFeatures());
+						List<Properties<Planner>> candidates = tuning.tune();
+						// TODO: default candidate
+						tuning.getSpecification().setProperties(candidates.get(0));
+						
+						ManagedPlanner managedPlanner = (ManagedPlanner) managedScenario.getPlanner();
+						managedPlanner.update(tuning.getSpecification());
+						if (getActivePlanner() != managedPlanner) {
+							// join active planner in trajectory competition
+							managedPlanner.join(getActivePlanner());
+						}
+						
+						managedScenario.submitReplaceObstacles(
+								getSourceScenario().getObstacles());
+						//managedScenario.submitReplaceObstacles(
+						//		getSourceScenario().getEmbeddedObstacles());
+					}
 				}
-				
-				managedScenario.submitReplaceObstacles(
-						getSourceScenario().getObstacles());
-				//managedScenario.submitReplaceObstacles(
-				//		getSourceScenario().getEmbeddedObstacles());
 			}
-			
-			// TODO: include replanning callback?
-		}
+		});
 	}
 	
 	/**

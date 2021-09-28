@@ -300,7 +300,10 @@ public class Features extends HashMap<String, Object> {
 			}
 		}
 		
-		if (0 != featureObstacles.size()) {
+		
+		if (0 == featureObstacles.size()) {
+			this.resetAircraftObstacleFeatures();
+		} else {
 			List<Double> distances = featureObstacles.stream()
 					.map(o -> env.getGreatCircleDistance(
 							o.getReferencePosition(),
@@ -667,6 +670,19 @@ public class Features extends HashMap<String, Object> {
 		// operational policy features
 		this.put(Features.FEATURE_POLICY_COST, planner.getCostPolicy());
 		this.put(Features.FEATURE_POLICY_RISK, planner.getRiskPolicy());
+	}
+	
+	/**
+	 * Resets the aircraft obstacle features.
+	 */
+	protected void resetAircraftObstacleFeatures() {
+		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_AVG, Double.POSITIVE_INFINITY);
+		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MAX, Double.POSITIVE_INFINITY);
+		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MIN, Double.POSITIVE_INFINITY);
+		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_COST, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_COST_POLICIES, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO, 0d);
 	}
 	
 	/**
