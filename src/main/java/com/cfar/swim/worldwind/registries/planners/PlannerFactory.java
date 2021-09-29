@@ -156,6 +156,8 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((OADStarPlanner) planner).setSignificantChange(properties.getSignificantChange());
 				((OADStarPlanner) planner).setObstacleManager(this.getScenario());
 				((OADStarPlanner) planner).setDatalink(this.getScenario().getDatalink());
+				((OADStarPlanner) planner).setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
+				((OADStarPlanner) planner).setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
 				AircraftTrackError maxTrackError = AircraftTrackError.maxAircraftTrackError();
 				maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
 				maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
@@ -179,6 +181,8 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((ManagedGridPlanner) planner).setSignificantChange(properties.getSignificantChange());
 				((ManagedGridPlanner) planner).setObstacleManager(this.getScenario());
 				((ManagedGridPlanner) planner).setDatalink(this.getScenario().getDatalink());
+				((ManagedGridPlanner) planner).setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
+				((ManagedGridPlanner) planner).setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
 				AircraftTrackError maxTrackError = AircraftTrackError.maxAircraftTrackError();
 				maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
 				maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
@@ -302,6 +306,8 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((OADRRTreePlanner) planner).setSignificantChange(properties.getSignificantChange());
 				((OADRRTreePlanner) planner).setObstacleManager(this.getScenario());
 				((OADRRTreePlanner) planner).setDatalink(this.getScenario().getDatalink());
+				((OADRRTreePlanner) planner).setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
+				((OADRRTreePlanner) planner).setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
 				AircraftTrackError maxTrackError = AircraftTrackError.maxAircraftTrackError();
 				maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
 				maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
@@ -333,6 +339,8 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				((ManagedTreePlanner) planner).setSignificantChange(properties.getSignificantChange());
 				((ManagedTreePlanner) planner).setObstacleManager(this.getScenario());
 				((ManagedTreePlanner) planner).setDatalink(this.getScenario().getDatalink());
+				((ManagedTreePlanner) planner).setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
+				((ManagedTreePlanner) planner).setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
 				AircraftTrackError maxTrackError = AircraftTrackError.maxAircraftTrackError();
 				maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
 				maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));

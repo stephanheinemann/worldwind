@@ -47,6 +47,7 @@ import com.cfar.swim.worldwind.registries.Properties;
  * @author Stephan Heinemann
  *
  */
+@AbstractManagerValidDeliberation
 public abstract class AbstractManagerProperties implements ManagerProperties {
 	
 	/** the cost policy of this manager properties bean */
@@ -58,37 +59,43 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	/** the feature horizon of this manager properties bean */
 	@DecimalMin(value = "0", message = "{property.manager.featureHorizon.min}")
 	@DecimalMax(value = "60", message = "{property.manager.featureHorizon.max}")
-	double featureHorizon;
+	double featureHorizon = 5l;
+	
+	/** the minimum deliberation duration of this manager properties bean */
+	private long minDeliberation = 10l;
+	
+	/** the maximum deliberation duration of this manager properties bean */
+	private long maxDeliberation = 60l;
 	
 	/** the maximum acceptable cross track error of this manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxCrossTrackError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxCrossTrackError.max}")
-	private long maxCrossTrackError = 10;
+	private long maxCrossTrackError = 10l;
 	
 	/** the maximum acceptable timing error of this manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTimingError.max}")
-	private long maxTimingError = 60;
+	private long maxTimingError = 60l;
 	
 	/** the maximum acceptable horizontal take-off error of this manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxTakeOffHorizontalError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTakeOffHorizontalError.max}")
-	private long maxTakeOffHorizontalError = 5;
+	private long maxTakeOffHorizontalError = 5l;
 	
 	/** the maximum acceptable take-off timing error of this manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxTakeOffTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTakeOffTimingError.max}")
-	private long maxTakeOffTimingError = 30;
+	private long maxTakeOffTimingError = 30l;
 	
 	/** the maximum acceptable horizontal landing error of this manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxLandingHorizontalError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxLandingHorizontalError.max}")
-	private long maxLandingHorizontalError = 5;
+	private long maxLandingHorizontalError = 5l;
 	
 	/** the maximum acceptable landing timing error of this manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxLandingTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxLandingTimingError.max}")
-	private long maxLandingTimingError = 60;
+	private long maxLandingTimingError = 60l;
 	
 	/**
 	 * Constructs a new manager properties bean using default cost and risk
@@ -182,6 +189,62 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	@Override
 	public void setFeatureHorizon(double featureHorizon) {
 		this.featureHorizon = featureHorizon;
+	}
+	
+	/**
+	 * Gets the minimum deliberation duration of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @return the minimum deliberation duration of this manager properties
+	 *         bean in seconds
+	 * 
+	 * @see ManagerProperties#getMinDeliberation()
+	 */
+	@Override
+	public long getMinDeliberation() {
+		return this.minDeliberation;
+	}
+	
+	/**
+	 * Sets the minimum deliberation duration of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @param minDeliberation the minimum deliberation duration to be set in
+	 *                        seconds
+	 * 
+	 * @see ManagerProperties#setMinDeliberation(long)
+	 */
+	@Override
+	public void setMinDeliberation(long minDeliberation) {
+		this.minDeliberation = minDeliberation;
+	}
+	
+	/**
+	 * Gets the maximum deliberation duration of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @return the maximum deliberation duration of this manager properties
+	 *         bean in seconds
+	 * 
+	 * @see ManagerProperties#getMaxDeliberation()
+	 */
+	@Override
+	public long getMaxDeliberation() {
+		return this.maxDeliberation;
+	}
+	
+	/**
+	 * Sets the maximum deliberation duration of this manager properties bean
+	 * in seconds.
+	 * 
+	 * @param maxDeliberation the maximum deliberation duration to be set in
+	 *                        seconds
+	 * 
+	 * @see ManagerProperties#setMaxDeliberation(long)
+	 */
+	@Override
+	public void setMaxDeliberation(long maxDeliberation) {
+		this.maxDeliberation = maxDeliberation;
 	}
 	
 	/**
@@ -390,10 +453,18 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 		if (this == o) {
 			equals = true;
 		} else if ((null != o) && (this.getClass() == o.getClass())) {
-			AbstractManagerProperties amp = (AbstractManagerProperties) o;
-			equals = (this.costPolicy.equals(amp.costPolicy))
-					&& (this.riskPolicy.equals(amp.riskPolicy))
-					&& (this.featureHorizon == amp.featureHorizon);
+			AbstractManagerProperties properties = (AbstractManagerProperties) o;
+			equals = (this.costPolicy.equals(properties.costPolicy))
+					&& (this.riskPolicy.equals(properties.riskPolicy))
+					&& (this.featureHorizon == properties.featureHorizon)
+					&& (this.minDeliberation == properties.minDeliberation)
+					&& (this.maxDeliberation == properties.maxDeliberation)
+					&& (this.maxCrossTrackError == properties.maxCrossTrackError)
+					&& (this.maxTimingError == properties.maxTimingError)
+					&& (this.maxTakeOffHorizontalError == properties.maxTakeOffHorizontalError)
+					&& (this.maxTakeOffTimingError == properties.maxTakeOffTimingError)
+					&& (this.maxLandingHorizontalError == properties.maxLandingHorizontalError)
+					&& (this.maxLandingTimingError == properties.maxLandingTimingError);
 		}
 		
 		return equals;
@@ -413,7 +484,15 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 		return Objects.hash(
 				this.costPolicy,
 				this.riskPolicy,
-				this.featureHorizon);
+				this.featureHorizon,
+				this.minDeliberation,
+				this.maxDeliberation,
+				this.maxCrossTrackError,
+				this.maxTimingError,
+				this.maxTakeOffHorizontalError,
+				this.maxTakeOffTimingError,
+				this.maxLandingHorizontalError,
+				this.maxLandingTimingError);
 	}
 	
 }

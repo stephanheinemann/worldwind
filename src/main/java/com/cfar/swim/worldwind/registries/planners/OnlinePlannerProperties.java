@@ -37,6 +37,42 @@ package com.cfar.swim.worldwind.registries.planners;
 public interface OnlinePlannerProperties extends PlannerProperties {
 	
 	/**
+	 * Gets the minimum deliberation duration of this online planner properties
+	 * bean in seconds.
+	 * 
+	 * @return the minimum deliberation duration of this online planner
+	 *         properties bean in seconds
+	 */
+	public long getMinDeliberation();
+	
+	/**
+	 * Sets the minimum deliberation duration of this online planner properties
+	 * bean in seconds.
+	 * 
+	 * @param minDeliberation the minimum deliberation duration to be set in
+	 *                        seconds
+	 */
+	public void setMinDeliberation(long minDeliberation);
+	
+	/**
+	 * Gets the maximum deliberation duration of this online planner properties
+	 * bean in seconds.
+	 * 
+	 * @return the maximum deliberation duration of this online planner
+	 *         properties bean in seconds
+	 */
+	public long getMaxDeliberation();
+	
+	/**
+	 * Sets the maximum deliberation duration of this online planner properties
+	 * bean in seconds.
+	 * 
+	 * @param maxDeliberation the maximum deliberation duration to be set in
+	 *                        seconds
+	 */
+	public void setMaxDeliberation(long maxDeliberation);
+	
+	/**
 	 * Gets the maximum acceptable cross track error of this online planner
 	 * properties bean in meters.
 	 * 

@@ -44,37 +44,44 @@ import com.cfar.swim.worldwind.registries.planners.OnlinePlannerProperties;
  * @author Stephan Heinemann
  *
  */
+@OADRRTreeValidDeliberation
 public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePlannerProperties {
+	
+	/** the minimum deliberation duration of this OADRRT planner properties bean */
+	private long minDeliberation = 10l;
+	
+	/** the maximum deliberation duration of this OADRRT planner properties bean */
+	private long maxDeliberation = 60l;
 	
 	/** the maximum acceptable cross track error of this OADRRT planner properties bean */
 	@Min(value = 0, message = "{property.planner.oadrrt.maxCrossTrackError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxCrossTrackError.max}")
-	private long maxCrossTrackError = 10;
+	private long maxCrossTrackError = 10l;
 	
 	/** the maximum acceptable timing error of this OADRRT planner properties bean */
 	@Min(value = 0, message = "{property.planner.oadrrt.maxTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxTimingError.max}")
-	private long maxTimingError = 60;
+	private long maxTimingError = 60l;
 	
 	/** the maximum acceptable horizontal take-off error of this OADRRT planner properties bean */
 	@Min(value = 0, message = "{property.planner.oadrrt.maxTakeOffHorizontalError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxTakeOffHorizontalError.max}")
-	private long maxTakeOffHorizontalError = 5;
+	private long maxTakeOffHorizontalError = 5l;
 	
 	/** the maximum acceptable take-off timing error of this OADRRT planner properties bean */
 	@Min(value = 0, message = "{property.planner.oadrrt.maxTakeOffTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxTakeOffTimingError.max}")
-	private long maxTakeOffTimingError = 30;
+	private long maxTakeOffTimingError = 30l;
 	
 	/** the maximum acceptable horizontal landing error of this OADRRT planner properties bean */
 	@Min(value = 0, message = "{property.planner.oadrrt.maxLandingHorizontalError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxLandingHorizontalError.max}")
-	private long maxLandingHorizontalError = 5;
+	private long maxLandingHorizontalError = 5l;
 	
 	/** the maximum acceptable landing timing error of this OADRRT planner properties bean */
 	@Min(value = 0, message = "{property.planner.oadrrt.maxLandingTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oadrrt.maxLandingTimingError.max}")
-	private long maxLandingTimingError = 60;
+	private long maxLandingTimingError = 60l;
 	
 	/**
 	 * Constructs a new OADRRT planner properties bean.
@@ -92,6 +99,62 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	 */
 	public OADRRTreeProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
+	}
+	
+	/**
+	 * Gets the minimum deliberation duration of this OADRRT planner properties
+	 * bean in seconds.
+	 * 
+	 * @return the minimum deliberation duration of this OADRRT planner
+	 *         properties bean in seconds
+	 * 
+	 * @see OnlinePlannerProperties#getMinDeliberation()
+	 */
+	@Override
+	public long getMinDeliberation() {
+		return this.minDeliberation;
+	}
+	
+	/**
+	 * Sets the minimum deliberation duration of this OADRRT planner properties
+	 * bean in seconds.
+	 * 
+	 * @param minDeliberation the minimum deliberation duration to be set in
+	 *                        seconds
+	 * 
+	 * @see OnlinePlannerProperties#setMinDeliberation(long)
+	 */
+	@Override
+	public void setMinDeliberation(long minDeliberation) {
+		this.minDeliberation = minDeliberation;
+	}
+	
+	/**
+	 * Gets the maximum deliberation duration of this OADRRT planner properties
+	 * bean in seconds.
+	 * 
+	 * @return the maximum deliberation duration of this OADRRT planner
+	 *         properties bean in seconds
+	 * 
+	 * @see OnlinePlannerProperties#getMaxDeliberation()
+	 */
+	@Override
+	public long getMaxDeliberation() {
+		return this.maxDeliberation;
+	}
+	
+	/**
+	 * Sets the maximum deliberation duration of this OADRRT planner properties
+	 * bean in seconds.
+	 * 
+	 * @param maxDeliberation the maximum deliberation duration to be set in
+	 *                        seconds
+	 * 
+	 * @see OnlinePlannerProperties#setMaxDeliberation(long)
+	 */
+	@Override
+	public void setMaxDeliberation(long maxDeliberation) {
+		this.maxDeliberation = maxDeliberation;
 	}
 	
 	/**
@@ -280,13 +343,15 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 		boolean equals = super.equals(o);
 		
 		if (equals) {
-			OADRRTreeProperties oadrrtp = (OADRRTreeProperties) o;
-			equals = (this.maxCrossTrackError == oadrrtp.maxCrossTrackError)
-					&& (this.maxTimingError == oadrrtp.maxTimingError)
-					&& (this.maxTakeOffHorizontalError == oadrrtp.maxTakeOffHorizontalError)
-					&& (this.maxTakeOffTimingError == oadrrtp.maxTakeOffTimingError)
-					&& (this.maxLandingHorizontalError == oadrrtp.maxLandingHorizontalError)
-					&& (this.maxLandingTimingError == oadrrtp.maxLandingTimingError);
+			OADRRTreeProperties properties = (OADRRTreeProperties) o;
+			equals = (this.minDeliberation == properties.minDeliberation)
+					&& (this.maxDeliberation == properties.maxDeliberation)
+					&& (this.maxCrossTrackError == properties.maxCrossTrackError)
+					&& (this.maxTimingError == properties.maxTimingError)
+					&& (this.maxTakeOffHorizontalError == properties.maxTakeOffHorizontalError)
+					&& (this.maxTakeOffTimingError == properties.maxTakeOffTimingError)
+					&& (this.maxLandingHorizontalError == properties.maxLandingHorizontalError)
+					&& (this.maxLandingTimingError == properties.maxLandingTimingError);
 		}
 		
 		return equals;
@@ -305,6 +370,8 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 	public int hashCode() {
 		return Objects.hash(
 				super.hashCode(),
+				this.minDeliberation,
+				this.maxDeliberation,
 				this.maxCrossTrackError,
 				this.maxTimingError,
 				this.maxTakeOffHorizontalError,

@@ -63,6 +63,16 @@ public class OADRRTreePropertiesBeanInfo extends ADRRTreePropertiesBeanInfo {
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
+			PropertyDescriptor minDeliberation = this.createPropertyDescriptor(
+					"minDeliberation",
+					this.dictionary.getString("property.planner.oadrrt.minDeliberation.name"),
+					this.dictionary.getString("property.planner.oadrrt.minDeliberation.description"),
+					this.dictionary.getString("property.planner.category.online"));
+			PropertyDescriptor maxDeliberation = this.createPropertyDescriptor(
+					"maxDeliberation",
+					this.dictionary.getString("property.planner.oadrrt.maxDeliberation.name"),
+					this.dictionary.getString("property.planner.oadrrt.maxDeliberation.description"),
+					this.dictionary.getString("property.planner.category.online"));
 			PropertyDescriptor maxCrossTrackError = this.createPropertyDescriptor(
 					"maxCrossTrackError",
 					this.dictionary.getString("property.planner.oadrrt.maxCrossTrackError.name"),
@@ -95,6 +105,8 @@ public class OADRRTreePropertiesBeanInfo extends ADRRTreePropertiesBeanInfo {
 					this.dictionary.getString("property.planner.category.online"));
 			
 			PropertyDescriptor[] oadrrtDescriptors = new PropertyDescriptor[] {
+					minDeliberation,
+					maxDeliberation,
 					maxCrossTrackError,
 					maxTimingError,
 					maxTakeOffHorizontalError,

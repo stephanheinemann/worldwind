@@ -124,6 +124,12 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	/** the establish datalink communication of this abstract autonomic manager */
 	private Communication<Datalink> establishDatalink = null;
 	
+	/** the minimum deliberation duration of this abstract autonomic manager */
+	private Duration minDeliberation = Duration.ofSeconds(10l);
+	
+	/** the maximum deliberation duration of this abstract autonomic manager */
+	private Duration maxDeliberation = Duration.ofSeconds(60l);
+	
 	/** the maximum acceptable aircraft take-off error of this abstract autonomic manager */
 	private AircraftTrackPointError maxTakeOffError = AircraftTrackPointError.ZERO;
 	
@@ -530,6 +536,70 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	@Override
 	public boolean hasEstablishDatalink() {
 		return (null != this.establishDatalink);
+	}
+	
+	/**
+	 * Gets the minimum deliberation duration of this abstract autonomic
+	 * manager.
+	 * 
+	 * @return the minimum deliberation duration of this abstract autonomic
+	 *         manager
+	 * 
+	 * @see AutonomicManager#getMinDeliberation()
+	 */
+	@Override
+	public synchronized Duration getMinDeliberation() {
+		return this.minDeliberation;
+	}
+	
+	/**
+	 * Sets the minimum deliberation duration of this abstract autonomic
+	 * manager.
+	 * 
+	 * @param minDeliberation the minimum deliberation duration to be set
+	 * 
+	 * @throws IllegalArgumentException if the minimum deliberation is invalid
+	 * 
+	 * @see AutonomicManager#setMinDeliberation(Duration)
+	 */
+	@Override
+	public synchronized void setMinDeliberation(Duration minDeliberation) {
+		if (null == minDeliberation) {
+			throw new IllegalArgumentException();
+		}
+		this.minDeliberation = minDeliberation;
+	}
+	
+	/**
+	 * Gets the maximum deliberation duration of this abstract autonomic
+	 * manager.
+	 * 
+	 * @return the maximum deliberation duration of this abstract autonomic
+	 *         manager
+	 * 
+	 * @see AutonomicManager#getMaxDeliberation()
+	 */
+	@Override
+	public synchronized Duration getMaxDeliberation() {
+		return this.maxDeliberation;
+	}
+	
+	/**
+	 * Sets the maximum deliberation duration of this abstract autonomic
+	 * manager.
+	 * 
+	 * @param maxDeliberation the maximum deliberation duration to be set
+	 * 
+	 * @throws IllegalArgumentException if the maximum deliberation is invalid
+	 * 
+	 * @see AutonomicManager#setMaxDeliberation(Duration)
+	 */
+	@Override
+	public synchronized void setMaxDeliberation(Duration maxDeliberation) {
+		if (null == maxDeliberation) {
+			throw new IllegalArgumentException();
+		}
+		this.maxDeliberation = maxDeliberation;
 	}
 	
 	/**
@@ -1156,7 +1226,15 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			matches = this.getCostPolicy().equals(properties.getCostPolicy())
 					&& this.getRiskPolicy().equals(properties.getRiskPolicy())
 					&& this.getFeatureHorizon().equals(Duration.ofSeconds(
-							Math.round(properties.getFeatureHorizon() * 60d)));
+							Math.round(properties.getFeatureHorizon() * 60d)))
+					&& (this.getMinDeliberation().equals(Duration.ofSeconds(properties.getMinDeliberation())))
+					&& (this.getMaxDeliberation().equals(Duration.ofSeconds(properties.getMaxDeliberation())))
+					&& (this.getMaxTrackError().getCrossTrackError() == properties.getMaxCrossTrackError())
+					&& (this.getMaxTrackError().getTimingError().equals(Duration.ofSeconds(properties.getMaxTimingError())))
+					&& (this.getMaxTakeOffError().getHorizontalError() == properties.getMaxTakeOffHorizontalError())
+					&& (this.getMaxTakeOffError().getTimingError().equals(Duration.ofSeconds(properties.getMaxTakeOffTimingError())))
+					&& (this.getMaxLandingError().getHorizontalError() == properties.getMaxLandingHorizontalError())
+					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(properties.getMaxLandingTimingError())));;
 		}
 	
 		return matches;
@@ -1184,6 +1262,14 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			this.setRiskPolicy(properties.getRiskPolicy());
 			this.setFeatureHorizon(Duration.ofSeconds(
 					Math.round(properties.getFeatureHorizon() * 60d)));
+			this.setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
+			this.setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
+			this.getMaxTrackError().setCrossTrackError(properties.getMaxCrossTrackError());
+			this.getMaxTrackError().setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+			this.getMaxTakeOffError().setHorizontalError(properties.getMaxTakeOffHorizontalError());
+			this.getMaxTakeOffError().setTimingError(Duration.ofSeconds(properties.getMaxTakeOffTimingError()));
+			this.getMaxLandingError().setHorizontalError(properties.getMaxLandingHorizontalError());
+			this.getMaxLandingError().setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
 			updated = true;
 		}
 		

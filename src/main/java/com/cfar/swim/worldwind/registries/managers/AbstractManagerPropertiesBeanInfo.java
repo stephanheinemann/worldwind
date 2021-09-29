@@ -88,6 +88,16 @@ public class AbstractManagerPropertiesBeanInfo extends PropertiesBeanInfo {
 					this.dictionary.getString("property.manager.featureHorizon.name"),
 					this.dictionary.getString("property.manager.featureHorizon.description"),
 					this.dictionary.getString("property.manager.category.managing"));
+			PropertyDescriptor minDeliberation = this.createPropertyDescriptor(
+					"minDeliberation",
+					this.dictionary.getString("property.manager.minDeliberation.name"),
+					this.dictionary.getString("property.manager.minDeliberation.description"),
+					this.dictionary.getString("property.manager.category.online"));
+			PropertyDescriptor maxDeliberation = this.createPropertyDescriptor(
+					"maxDeliberation",
+					this.dictionary.getString("property.manager.maxDeliberation.name"),
+					this.dictionary.getString("property.manager.maxDeliberation.description"),
+					this.dictionary.getString("property.manager.category.online"));
 			PropertyDescriptor maxCrossTrackError = this.createPropertyDescriptor(
 					"maxCrossTrackError",
 					this.dictionary.getString("property.manager.maxCrossTrackError.name"),
@@ -123,6 +133,8 @@ public class AbstractManagerPropertiesBeanInfo extends PropertiesBeanInfo {
 					costPolicy,
 					riskPolicy,
 					featureHorizon,
+					minDeliberation,
+					maxDeliberation,
 					maxCrossTrackError,
 					maxTimingError,
 					maxTakeOffHorizontalError,

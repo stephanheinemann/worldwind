@@ -97,6 +97,34 @@ public interface AutonomicManager extends FactoryProduct, DynamicObstacleListene
 	public void setFeatureHorizon(Duration featureHorizon);
 	
 	/**
+	 * Gets the minimum deliberation duration of this autonomic manager.
+	 * 
+	 * @return the minimum deliberation duration of this autonomic manager
+	 */
+	public Duration getMinDeliberation();
+	
+	/**
+	 * Sets the minimum deliberation duration of this autonomic manager.
+	 * 
+	 * @param minDeliberation the minimum deliberation duration to be set
+	 */
+	public void setMinDeliberation(Duration minDeliberation);
+	
+	/**
+	 * Gets the maximum deliberation duration of this autonomic manager.
+	 * 
+	 * @return the maximum deliberation duration of this autonomic manager
+	 */
+	public Duration getMaxDeliberation();
+	
+	/**
+	 * Sets the maximum deliberation duration of this autonomic manager.
+	 * 
+	 * @param maxDeliberation the maximum deliberation duration to be set
+	 */
+	public void setMaxDeliberation(Duration maxDeliberation);
+	
+	/**
 	 * Gets the source scenario of this autonomic manager.
 	 * 
 	 * @return the source scenario of this autonomic manager

@@ -98,6 +98,8 @@ public class ManagerFactory extends AbstractFactory<AutonomicManager> {
 				manager.setCostPolicy(properties.getCostPolicy());
 				manager.setRiskPolicy(properties.getRiskPolicy());
 				manager.setFeatureHorizon(Duration.ofSeconds(Math.round(properties.getFeatureHorizon() * 60d)));
+				manager.setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
+				manager.setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
 				AircraftTrackError maxTrackError = AircraftTrackError.maxAircraftTrackError();
 				maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
 				maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));

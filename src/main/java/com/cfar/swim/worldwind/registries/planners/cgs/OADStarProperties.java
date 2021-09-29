@@ -44,37 +44,44 @@ import com.cfar.swim.worldwind.registries.planners.OnlinePlannerProperties;
  * @author Stephan Heinemann
  *
  */
+@OADStarValidDeliberation
 public class OADStarProperties extends ADStarProperties implements OnlinePlannerProperties {
+	
+	/** the minimum deliberation duration of this OAD* planner properties bean */
+	private long minDeliberation = 10l;
+	
+	/** the maximum deliberation duration of this OAD* planner properties bean */
+	private long maxDeliberation = 60l;
 	
 	/** the maximum acceptable cross track error of this OAD* planner properties bean */
 	@Min(value = 0, message = "{property.planner.oads.maxCrossTrackError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxCrossTrackError.max}")
-	private long maxCrossTrackError = 10;
+	private long maxCrossTrackError = 10l;
 	
 	/** the maximum acceptable timing error of this OAD* planner properties bean */
 	@Min(value = 0, message = "{property.planner.oads.maxTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxTimingError.max}")
-	private long maxTimingError = 60;
+	private long maxTimingError = 60l;
 	
 	/** the maximum acceptable horizontal take-off error of this OAD* planner properties bean */
 	@Min(value = 0, message = "{property.planner.oads.maxTakeOffHorizontalError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxTakeOffHorizontalError.max}")
-	private long maxTakeOffHorizontalError = 5;
+	private long maxTakeOffHorizontalError = 5l;
 	
 	/** the maximum acceptable take-off timing error of this OAD* planner properties bean */
 	@Min(value = 0, message = "{property.planner.oads.maxTakeOffTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxTakeOffTimingError.max}")
-	private long maxTakeOffTimingError = 30;
+	private long maxTakeOffTimingError = 30l;
 	
 	/** the maximum acceptable horizontal landing error of this OAD* planner properties bean */
 	@Min(value = 0, message = "{property.planner.oads.maxLandingHorizontalError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxLandingHorizontalError.max}")
-	private long maxLandingHorizontalError = 5;
+	private long maxLandingHorizontalError = 5l;
 	
 	/** the maximum acceptable landing timing error of this OAD* planner properties bean */
 	@Min(value = 0, message = "{property.planner.oads.maxLandingTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.planner.oads.maxLandingTimingError.max}")
-	private long maxLandingTimingError = 60;
+	private long maxLandingTimingError = 60l;
 	
 	/**
 	 * Constructs a new OAD* planner properties bean.
@@ -92,6 +99,62 @@ public class OADStarProperties extends ADStarProperties implements OnlinePlanner
 	 */
 	public OADStarProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
+	}
+	
+	/**
+	 * Gets the minimum deliberation duration of this OAD* planner properties
+	 * bean in seconds.
+	 * 
+	 * @return the minimum deliberation duration of this OAD* planner
+	 *         properties bean in seconds
+	 * 
+	 * @see OnlinePlannerProperties#getMinDeliberation()
+	 */
+	@Override
+	public long getMinDeliberation() {
+		return this.minDeliberation;
+	}
+	
+	/**
+	 * Sets the minimum deliberation duration of this OAD* planner properties
+	 * bean in seconds.
+	 * 
+	 * @param minDeliberation the minimum deliberation duration to be set in
+	 *                        seconds
+	 * 
+	 * @see OnlinePlannerProperties#setMinDeliberation(long)
+	 */
+	@Override
+	public void setMinDeliberation(long minDeliberation) {
+		this.minDeliberation = minDeliberation;
+	}
+	
+	/**
+	 * Gets the maximum deliberation duration of this OAD* planner properties
+	 * bean in seconds.
+	 * 
+	 * @return the maximum deliberation duration of this OAD* planner
+	 *         properties bean in seconds
+	 * 
+	 * @see OnlinePlannerProperties#getMaxDeliberation()
+	 */
+	@Override
+	public long getMaxDeliberation() {
+		return this.maxDeliberation;
+	}
+	
+	/**
+	 * Sets the maximum deliberation duration of this OAD* planner properties
+	 * bean in seconds.
+	 * 
+	 * @param maxDeliberation the maximum deliberation duration to be set in
+	 *                        seconds
+	 * 
+	 * @see OnlinePlannerProperties#setMaxDeliberation(long)
+	 */
+	@Override
+	public void setMaxDeliberation(long maxDeliberation) {
+		this.maxDeliberation = maxDeliberation;
 	}
 	
 	/**
@@ -280,13 +343,15 @@ public class OADStarProperties extends ADStarProperties implements OnlinePlanner
 		boolean equals = super.equals(o);
 		
 		if (equals) {
-			OADStarProperties oadsp = (OADStarProperties) o;
-			equals = (this.maxCrossTrackError == oadsp.maxCrossTrackError)
-					&& (this.maxTimingError == oadsp.maxTimingError)
-					&& (this.maxTakeOffHorizontalError == oadsp.maxTakeOffHorizontalError)
-					&& (this.maxTakeOffTimingError == oadsp.maxTakeOffTimingError)
-					&& (this.maxLandingHorizontalError == oadsp.maxLandingHorizontalError)
-					&& (this.maxLandingTimingError == oadsp.maxLandingTimingError);
+			OADStarProperties properties = (OADStarProperties) o;
+			equals = (this.minDeliberation == properties.minDeliberation)
+					&& (this.maxDeliberation == properties.maxDeliberation)
+					&& (this.maxCrossTrackError == properties.maxCrossTrackError)
+					&& (this.maxTimingError == properties.maxTimingError)
+					&& (this.maxTakeOffHorizontalError == properties.maxTakeOffHorizontalError)
+					&& (this.maxTakeOffTimingError == properties.maxTakeOffTimingError)
+					&& (this.maxLandingHorizontalError == properties.maxLandingHorizontalError)
+					&& (this.maxLandingTimingError == properties.maxLandingTimingError);
 		}
 		
 		return equals;
@@ -305,6 +370,8 @@ public class OADStarProperties extends ADStarProperties implements OnlinePlanner
 	public int hashCode() {
 		return Objects.hash(
 				super.hashCode(),
+				this.minDeliberation,
+				this.maxDeliberation,
 				this.maxCrossTrackError,
 				this.maxTimingError,
 				this.maxTakeOffHorizontalError,

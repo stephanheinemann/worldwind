@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.planners;
 
+import java.time.Duration;
+
 import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
@@ -41,21 +43,33 @@ import com.cfar.swim.worldwind.planning.Waypoint;
  */
 public interface OnlinePlanner extends Planner, DatalinkTracker {
 	
-	// TODO: minimum planning time (start planning at suitable future waypoint)
-	// use future waypoint with maximum planning time (legs not affected by dynamic obstacles)
-	// only upload mission when planning completed according to available deliberation time
-	// check affected waypoints: current deliberation time (criticality)
-	// only upload mission if current deliberation time is exhausted or maximum quality achieved
-	// run timer for available deliberation time and stop planner (setMaximumQuality once exhausted)
-	// then upload latest revised mission
-	// the autonomic manager can pick the best quality one and upload it via datalink and display
-	// it in the source scenario
-	/*
-	public Duration getMinimumDeliberation();
-	public void setMinimumDeliberation(Duration minimumDeliberation);
-	public Duration getMaximumDeliberation();
-	public void setMaximumDeliberation(Duration maximumDeliberation);
-	*/
+	/**
+	 * Gets the minimum deliberation duration of this online planner.
+	 * 
+	 * @return the minimum deliberation duration of this online planner
+	 */
+	public Duration getMinDeliberation();
+	
+	/**
+	 * Sets the minimum deliberation duration of this online planner.
+	 * 
+	 * @param minDeliberation the minimum deliberation duration to be set
+	 */
+	public void setMinDeliberation(Duration minDeliberation);
+	
+	/**
+	 * Gets the maximum deliberation duration of this online planner.
+	 * 
+	 * @return the maximum deliberation duration of this online planner
+	 */
+	public Duration getMaxDeliberation();
+	
+	/**
+	 * Sets the maximum deliberation duration of this online planner.
+	 * 
+	 * @param maxDeliberation the maximum deliberation duration to be set
+	 */
+	public void setMaxDeliberation(Duration maxDeliberation);
 	
 	/**
 	 * Gets the previous waypoint of this online planner.

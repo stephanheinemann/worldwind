@@ -63,6 +63,16 @@ public class OADStarPropertiesBeanInfo extends ADStarPropertiesBeanInfo {
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
+			PropertyDescriptor minDeliberation = this.createPropertyDescriptor(
+					"minDeliberation",
+					this.dictionary.getString("property.planner.oads.minDeliberation.name"),
+					this.dictionary.getString("property.planner.oads.minDeliberation.description"),
+					this.dictionary.getString("property.planner.category.online"));
+			PropertyDescriptor maxDeliberation = this.createPropertyDescriptor(
+					"maxDeliberation",
+					this.dictionary.getString("property.planner.oads.maxDeliberation.name"),
+					this.dictionary.getString("property.planner.oads.maxDeliberation.description"),
+					this.dictionary.getString("property.planner.category.online"));
 			PropertyDescriptor maxCrossTrackError = this.createPropertyDescriptor(
 					"maxCrossTrackError",
 					this.dictionary.getString("property.planner.oads.maxCrossTrackError.name"),
@@ -95,6 +105,8 @@ public class OADStarPropertiesBeanInfo extends ADStarPropertiesBeanInfo {
 					this.dictionary.getString("property.planner.category.online"));
 			
 			PropertyDescriptor[] oadsDescriptors = new PropertyDescriptor[] {
+					minDeliberation,
+					maxDeliberation,
 					maxCrossTrackError,
 					maxTimingError,
 					maxTakeOffHorizontalError,
