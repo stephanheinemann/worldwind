@@ -176,6 +176,17 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
+	 * Updates the dynamic obstacles of this ADRRT planner.
+	 */
+	protected void updateDynamicObstacles() {
+		if (this.hasObstacleManager() && this.getObstacleManager().hasObstacleChange()) {
+			Set<Obstacle> dynamicObstacles = this.getObstacleManager().commitObstacleChange();
+			this.addDynamicObstacles(dynamicObstacles);
+			this.shareDynamicObstacles(dynamicObstacles);
+		}
+	}
+	
+	/**
 	 * Gets the dynamic obstacles of this ADRRT planner.
 	 * 
 	 * @return the dynamic obstacles of this ADRRT planner
@@ -279,12 +290,6 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return true if the ADRRT plan needs a potential repair, false otherwise
 	 */
 	protected boolean needsRepair() {
-		if (this.hasObstacleManager() && this.getObstacleManager().hasObstacleChange()) {
-			Set<Obstacle> dynamicObstacles = this.getObstacleManager().commitObstacleChange();
-			this.addDynamicObstacles(dynamicObstacles);
-			this.shareDynamicObstacles(dynamicObstacles);
-		}
-		
 		return this.hasDynamicObstacles();
 	}
 	
@@ -391,6 +396,7 @@ implements DynamicPlanner, LifelongPlanner {
 				riskyProbes = 0;
 			}
 			Thread.yield();
+			this.updateDynamicObstacles();
 		}
 		// backup after elaboration
 		this.backup(partIndex);

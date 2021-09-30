@@ -329,6 +329,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 			while (!this.hasTerminated() && !this.needsRepair() && this.isOnTrack()) {
 				this.progress(this.backups.size() - 1);
 				this.wait();
+				this.updateDynamicObstacles();
 				this.joinAssociate();
 			}
 		} catch (InterruptedException e) {

@@ -273,6 +273,17 @@ implements DynamicPlanner, LifelongPlanner {
 	}
 	
 	/**
+	 * Updates the dynamic obstacles of this AD* planner.
+	 */
+	protected void updateDynamicObstacles() {
+		if (this.hasObstacleManager() && this.getObstacleManager().hasObstacleChange()) {
+			Set<Obstacle> dynamicObstacles = this.getObstacleManager().commitObstacleChange();
+			this.addDynamicObstacles(dynamicObstacles);
+			this.shareDynamicObstacles(dynamicObstacles);
+		}
+	}
+	
+	/**
 	 * Gets the dynamic obstacles of this AD* planner.
 	 * 
 	 * @return the dynamic obstacles of this AD* planner
@@ -360,7 +371,6 @@ implements DynamicPlanner, LifelongPlanner {
 									waypoint.getEto())))
 					.collect(Collectors.toSet()));
 		}
-		this.clearDynamicObstacles();
 		
 		if (affectedWaypoints.containsAll(this.getGoalRegion().stream()
 				.map(p -> this.createWaypoint(p.getOriginal()))
@@ -421,12 +431,6 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @return true if the AD* plan needs a potential repair, false otherwise
 	 */
 	protected boolean needsRepair() {
-		if (this.hasObstacleManager() && this.getObstacleManager().hasObstacleChange()) {
-			Set<Obstacle> dynamicObstacles = this.getObstacleManager().commitObstacleChange();
-			this.addDynamicObstacles(dynamicObstacles);
-			this.shareDynamicObstacles(dynamicObstacles);
-		}
-		
 		return this.hasDynamicObstacles();
 	}
 	
@@ -491,6 +495,7 @@ implements DynamicPlanner, LifelongPlanner {
 						this.updateSets(target);
 					}
 				}
+				this.clearDynamicObstacles();
 			} else {
 				// plan current part from scratch if start ETO has changed
 				this.initialize(this.getStart(), this.getGoal(), partStart.getEto());
@@ -694,6 +699,7 @@ implements DynamicPlanner, LifelongPlanner {
 			if (!this.repair(partIndex)) break;
 			this.improve(partIndex);
 			Thread.yield();
+			this.updateDynamicObstacles();
 		}
 		// always backup at least once for potential repair later
 		this.backup(partIndex);

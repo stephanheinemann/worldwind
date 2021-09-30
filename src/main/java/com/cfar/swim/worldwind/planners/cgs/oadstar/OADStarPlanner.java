@@ -34,6 +34,7 @@ import java.beans.PropertyChangeListener;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Comparator;
 import java.util.Optional;
 import java.util.Set;
 
@@ -102,6 +103,12 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	
 	/** the maximum deliberation duration of this OAD* planner */
 	private Duration maxDeliberation = Duration.ofSeconds(60l);
+	
+	/** the deliberation start of this OAD* planner */
+	private ZonedDateTime deliberationStart = null;
+	
+	/** the deliberation end of this OAD* planner */
+	private ZonedDateTime deliberationEnd = null;
 	
 	/** the maximum acceptable aircraft take-off error of this OAD* planner */
 	private AircraftTrackPointError maxTakeOffError = AircraftTrackPointError.ZERO;
@@ -334,6 +341,115 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			throw new IllegalArgumentException();
 		}
 		this.maxDeliberation = maxDeliberation;
+	}
+	
+	/**
+	 * Gets the deliberation start of this OAD* planner.
+	 * 
+	 * @return the deliberation start of this OAD* planner
+	 */
+	protected ZonedDateTime getDeliberationStart() {
+		return this.deliberationStart;
+	}
+	
+	/**
+	 * Sets the deliberation start of this OAD* planner.
+	 * 
+	 * @param deliberationStart the deliberation start to be set
+	 */
+	protected void setDeliberationStart(ZonedDateTime deliberationStart) {
+		this.deliberationStart = deliberationStart;
+	}
+	
+	/**
+	 * Gets the deliberation end of this OAD* planner.
+	 * 
+	 * @return the deliberation end of this OAD* planner
+	 */
+	protected ZonedDateTime getDeliberationEnd() {
+		return this.deliberationEnd;
+	}
+	
+	/**
+	 * Sets the deliberation end of this OAD* planner.
+	 * 
+	 * @param deliberationEnd the deliberation end to be set
+	 */
+	protected void setDeliberationEnd(ZonedDateTime deliberationEnd) {
+		this.deliberationEnd = deliberationEnd;
+	}
+	
+	/**
+	 * Gets the available deliberation duration of this OAD* planner.
+	 * 
+	 * @return the available deliberation duration of this OAD* planner
+	 */
+	protected Duration getDeliberation() {
+		Duration deliberation = this.getMaxDeliberation();
+		
+		// determine critical plan waypoint affected by dynamic obstacles
+		Optional<ADStarWaypoint> criticalWaypoint =
+				this.findAffectedWaypoints().stream()
+					.filter(w -> this.getWaypoints().contains(w))
+					.min(new Comparator<ADStarWaypoint>() {
+						@Override
+						public int compare(ADStarWaypoint w1, ADStarWaypoint w2) {
+							return w1.getEto().compareTo(w2.getEto());
+						}
+					});
+		
+		// determine if critical waypoint features higher cost
+		if (criticalWaypoint.isPresent()) {
+			ADStarWaypoint target = criticalWaypoint.get();
+			if (target.hasParent()) {
+				ADStarWaypoint source = target.getParent();
+				double cost = this.getEnvironment().getLegCost(
+						source, target, source.getEto(), target.getEto(),
+						this.getCostPolicy(), this.getRiskPolicy());
+				if ((source.getCost() + cost) > target.getCost()) {
+					// compute available deliberation time
+					ZonedDateTime minDeliberationEnd = this.getDeliberationStart()
+							.plus(this.getMinDeliberation()
+							.plus(this.getMaxTrackError().getTimingError()
+							.plus(Duration.ofSeconds(
+									Math.round(this.getAircraft().getRadius() /
+									this.getAircraft().getCapabilities().getCruiseSpeed())))));
+					ZonedDateTime maxDeliberationEnd = this.getDeliberationStart()
+							.plus(this.getMaxDeliberation()
+							.plus(this.getMaxTrackError().getTimingError()
+							.plus(Duration.ofSeconds(
+									Math.round(this.getAircraft().getRadius() /
+									this.getAircraft().getCapabilities().getCruiseSpeed())))));
+				
+					ZonedDateTime criticalDeliberationEnd = criticalWaypoint.get().getParent().getEto();
+					if (criticalDeliberationEnd.isBefore(minDeliberationEnd)) {
+						deliberation = this.getMinDeliberation();
+					} else if (criticalDeliberationEnd.isBefore(maxDeliberationEnd)) {
+						deliberation = Duration.between(
+								this.getDeliberationStart(),
+								criticalDeliberationEnd);
+					}
+				}
+			}
+		}
+		
+		Logging.logger().info("deliberation duration = " + deliberation);
+		return deliberation;
+	}
+	
+	/**
+	 * Determines if this OAD* planner can deliberate.
+	 * 
+	 * @return true if this OAD* planner can deliberate, false otherwise
+	 */
+	protected boolean canDeliberate() {
+		boolean canDeliberate = true;
+		
+		if (null != this.getDeliberationEnd()) {
+			return (0 < this.getDeliberationEnd().compareTo(ZonedDateTime.now()));
+		}
+		
+		return canDeliberate;
 	}
 	
 	/**
@@ -871,6 +987,14 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	 */
 	@Override
 	protected void elaborate(int partIndex) {
+		// limit deliberation for active part
+		if (partIndex == this.getActivePart()) {
+			this.setDeliberationStart(ZonedDateTime.now());
+			this.setDeliberationEnd(this.getDeliberationStart().plus(this.getDeliberation()));
+		} else {
+			this.setDeliberationEnd(null);
+		}
+		
 		// TODO: off-track elaboration: re-plan or control?
 		// (1) re-planning from next mission or track point position
 		// based on static or dynamic performance
@@ -882,12 +1006,16 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 		}
 		
 		// proceed to next part only if fully improved and not in need of repair
-		while ((!this.hasMaximumQuality() || this.needsRepair()) && !this.hasTerminated()) {
+		while (this.canDeliberate() && !this.hasTerminated()
+				&& (!this.hasMaximumQuality() || this.needsRepair())) {
+			// TODO: override repair to start at deliberation waypoint limit
 			this.repair(partIndex);
 			// TODO: proceed with alternate or unplanned landing if repair was unsuccessful
 			this.improve(partIndex);
 			this.progress(partIndex);
 			Thread.yield();
+			this.updateDynamicObstacles();
+			// TODO: update deliberation times?
 		}
 		// backup after elaboration
 		this.backup(partIndex);
@@ -971,6 +1099,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			while (!this.hasTerminated() && !this.needsRepair() && this.isOnTrack()) {
 				this.progress(this.backups.size() - 1);
 				this.wait();
+				this.updateDynamicObstacles();
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();

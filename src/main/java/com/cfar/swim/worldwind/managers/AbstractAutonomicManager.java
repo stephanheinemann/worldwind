@@ -889,6 +889,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 							managedPlanner.setLanding(this.getLanding());
 							managedPlanner.setUnplannedLanding(this.getUnplannedLanding());
 							managedPlanner.setEstablishDatalink(this.getEstablishDataLink());
+							managedPlanner.setMinDeliberation(this.getMinDeliberation());
+							managedPlanner.setMaxDeliberation(this.getMaxDeliberation());
 							managedPlanner.setMaxLandingError(this.getMaxLandingError());
 							managedPlanner.setMaxTakeOffError(this.getMaxTakeOffError());
 							managedPlanner.setMaxTrackError(this.getMaxTrackError());
@@ -1044,7 +1046,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		return true;
 	}
 	
-	// TODO: include replanning callback?
+	// TODO: include re-planning callback in addition to repair?
 	
 	/**
 	 * Notifies this abstract autonomic manager about a pending obstacle change
