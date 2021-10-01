@@ -46,6 +46,9 @@ import com.cfar.swim.worldwind.registries.Specification;
  */
 public abstract class FeatureTuning<Tunable> extends AbstractTuning<Tunable> {
 	
+	/** the default serial identification of this feature tuning */
+	private static final long serialVersionUID = 1L;
+	
 	/** the features of this feature tuning */
 	private Features features;
 	

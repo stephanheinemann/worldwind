@@ -41,7 +41,10 @@ import com.cfar.swim.worldwind.registries.Properties;
  *
  */
 public abstract class SwimConnectionProperties implements Properties<SwimConnection> {
-
+	
+	/** the default serial identification of this SWIM connection properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the AIXM subscription status of this SWIM connection properties bean */
 	private boolean subscribesAIXM = false;
 	

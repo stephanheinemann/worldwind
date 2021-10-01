@@ -47,6 +47,9 @@ import com.cfar.swim.worldwind.registries.planners.OnlinePlannerProperties;
 @OADRRTreeValidDeliberation
 public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePlannerProperties {
 	
+	/** the default serial identification of this OADRRT planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the minimum deliberation duration of this OADRRT planner properties bean */
 	private long minDeliberation = 10l;
 	

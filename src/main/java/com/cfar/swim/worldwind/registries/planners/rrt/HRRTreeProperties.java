@@ -50,6 +50,9 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  */
 public class HRRTreeProperties extends RRTreeProperties {
 	
+	/** the default serial identification of this hRRT planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the heuristic algorithm applied by the hRRT planner */
 	private HRRTreeAlgorithm algorithm = HRRTreeAlgorithm.BkRRT;
 	

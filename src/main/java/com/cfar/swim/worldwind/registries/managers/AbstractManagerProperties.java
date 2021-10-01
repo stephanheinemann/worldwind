@@ -50,56 +50,59 @@ import com.cfar.swim.worldwind.registries.Properties;
 @AbstractManagerValidDeliberation
 public abstract class AbstractManagerProperties implements ManagerProperties {
 	
-	/** the cost policy of this manager properties bean */
+	/** the default serial identification of this abstract manager properties bean */
+	private static final long serialVersionUID = 1L;
+	
+	/** the cost policy of this abstract manager properties bean */
 	CostPolicy costPolicy;
 	
-	/** the risk policy of this manager properties bean */
+	/** the risk policy of this abstract manager properties bean */
 	RiskPolicy riskPolicy;
 	
-	/** the feature horizon of this manager properties bean */
+	/** the feature horizon of this abstract manager properties bean */
 	@DecimalMin(value = "0", message = "{property.manager.featureHorizon.min}")
 	@DecimalMax(value = "60", message = "{property.manager.featureHorizon.max}")
 	double featureHorizon = 5l;
 	
-	/** the minimum deliberation duration of this manager properties bean */
+	/** the minimum deliberation duration of this abstract manager properties bean */
 	private long minDeliberation = 10l;
 	
-	/** the maximum deliberation duration of this manager properties bean */
+	/** the maximum deliberation duration of this abstract manager properties bean */
 	private long maxDeliberation = 60l;
 	
-	/** the maximum acceptable cross track error of this manager properties bean */
+	/** the maximum acceptable cross track error of this abstract manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxCrossTrackError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxCrossTrackError.max}")
 	private long maxCrossTrackError = 10l;
 	
-	/** the maximum acceptable timing error of this manager properties bean */
+	/** the maximum acceptable timing error of this abstract manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTimingError.max}")
 	private long maxTimingError = 60l;
 	
-	/** the maximum acceptable horizontal take-off error of this manager properties bean */
+	/** the maximum acceptable horizontal take-off error of this abstract manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxTakeOffHorizontalError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTakeOffHorizontalError.max}")
 	private long maxTakeOffHorizontalError = 5l;
 	
-	/** the maximum acceptable take-off timing error of this manager properties bean */
+	/** the maximum acceptable take-off timing error of this abstract manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxTakeOffTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxTakeOffTimingError.max}")
 	private long maxTakeOffTimingError = 30l;
 	
-	/** the maximum acceptable horizontal landing error of this manager properties bean */
+	/** the maximum acceptable horizontal landing error of this abstract manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxLandingHorizontalError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxLandingHorizontalError.max}")
 	private long maxLandingHorizontalError = 5l;
 	
-	/** the maximum acceptable landing timing error of this manager properties bean */
+	/** the maximum acceptable landing timing error of this abstract manager properties bean */
 	@Min(value = 0, message = "{property.manager.maxLandingTimingError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.maxLandingTimingError.max}")
 	private long maxLandingTimingError = 60l;
 	
 	/**
-	 * Constructs a new manager properties bean using default cost and risk
-	 * policy property values.
+	 * Constructs a new abstract manager properties bean using default cost and
+	 * risk policy property values.
 	 */
 	public AbstractManagerProperties() {
 		this.costPolicy = CostPolicy.AVERAGE;
@@ -108,8 +111,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Constructs a new manager properties bean with specified cost and risk
-	 * policy property values.
+	 * Constructs a new abstract manager properties bean with specified cost
+	 * and risk policy property values.
 	 * 
 	 * @param costPolicy the cost policy of this manager properties bean
 	 * @param riskPolicy the risk policy of this manager properties bean
@@ -120,9 +123,9 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the cost policy of this manager properties bean.
+	 * Gets the cost policy of this abstract manager properties bean.
 	 * 
-	 * @return the cost policy of this manager properties bean
+	 * @return the cost policy of this abstract manager properties bean
 	 * 
 	 * @see ManagerProperties#getCostPolicy()
 	 */
@@ -132,7 +135,7 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the cost policy of this manager properties bean.
+	 * Sets the cost policy of this abstract manager properties bean.
 	 * 
 	 * @param costPolicy the cost policy to be set
 	 * 
@@ -144,9 +147,9 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the risk policy of this manager properties bean.
+	 * Gets the risk policy of this abstract manager properties bean.
 	 * 
-	 * @return the risk policy of this manager properties bean
+	 * @return the risk policy of this abstract manager properties bean
 	 * 
 	 * @see ManagerProperties#getRiskPolicy()
 	 */
@@ -156,7 +159,7 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the risk policy of this manager properties bean.
+	 * Sets the risk policy of this abstract manager properties bean.
 	 * 
 	 * @param riskPolicy the risk policy to be set
 	 * 
@@ -168,9 +171,9 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the feature horizon of this manager properties bean.
+	 * Gets the feature horizon of this abstract manager properties bean.
 	 * 
-	 * @return the feature horizon of this manager properties bean
+	 * @return the feature horizon of this abstract manager properties bean
 	 * 
 	 * @see ManagerProperties#getFeatureHorizon()
 	 */
@@ -180,7 +183,7 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the feature horizon of this manager properties bean.
+	 * Sets the feature horizon of this abstract manager properties bean.
 	 * 
 	 * @param featureHorizon the feature horizon to be set
 	 * 
@@ -192,11 +195,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the minimum deliberation duration of this manager properties bean
-	 * in seconds.
+	 * Gets the minimum deliberation duration of this abstract manager
+	 * properties bean in seconds.
 	 * 
-	 * @return the minimum deliberation duration of this manager properties
-	 *         bean in seconds
+	 * @return the minimum deliberation duration of this abstract manager
+	 *         properties bean in seconds
 	 * 
 	 * @see ManagerProperties#getMinDeliberation()
 	 */
@@ -206,8 +209,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the minimum deliberation duration of this manager properties bean
-	 * in seconds.
+	 * Sets the minimum deliberation duration of this abstract manager
+	 * properties bean in seconds.
 	 * 
 	 * @param minDeliberation the minimum deliberation duration to be set in
 	 *                        seconds
@@ -220,11 +223,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the maximum deliberation duration of this manager properties bean
-	 * in seconds.
+	 * Gets the maximum deliberation duration of this abstract manager
+	 * properties bean in seconds.
 	 * 
-	 * @return the maximum deliberation duration of this manager properties
-	 *         bean in seconds
+	 * @return the maximum deliberation duration of this abstract manager
+	 *         properties bean in seconds
 	 * 
 	 * @see ManagerProperties#getMaxDeliberation()
 	 */
@@ -234,8 +237,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the maximum deliberation duration of this manager properties bean
-	 * in seconds.
+	 * Sets the maximum deliberation duration of this abstract manager
+	 * properties bean in seconds.
 	 * 
 	 * @param maxDeliberation the maximum deliberation duration to be set in
 	 *                        seconds
@@ -248,11 +251,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the maximum acceptable cross track error of this manager properties
-	 * bean in meters.
+	 * Gets the maximum acceptable cross track error of this abstract manager
+	 * properties bean in meters.
 	 * 
-	 * @return the maximum acceptable cross track error of this manager
-	 *         properties bean in meters
+	 * @return the maximum acceptable cross track error of this abstract
+	 *         manager properties bean in meters
 	 * 
 	 * @see ManagerProperties#getMaxCrossTrackError()
 	 */
@@ -262,8 +265,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the maximum acceptable cross track error of this manager properties
-	 * bean in meters.
+	 * Sets the maximum acceptable cross track error of this abstract manager
+	 * properties bean in meters.
 	 * 
 	 * @param maxCrossTrackError the maximum acceptable cross track error to be
 	 *                           set in meters
@@ -276,11 +279,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the maximum acceptable timing error of this manager properties bean
-	 * in seconds.
+	 * Gets the maximum acceptable timing error of this abstract manager
+	 * properties bean in seconds.
 	 * 
-	 * @return the maximum acceptable timing error of this manager properties
-	 *         bean in seconds
+	 * @return the maximum acceptable timing error of this abstract manager
+	 *         properties bean in seconds
 	 * 
 	 * @see ManagerProperties#getMaxTimingError()
 	 */
@@ -290,8 +293,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the maximum acceptable timing error of this manager properties bean
-	 * in seconds.
+	 * Sets the maximum acceptable timing error of this abstract manager
+	 * properties bean in seconds.
 	 * 
 	 * @param maxTimingError the maximum acceptable timing error to be set in
 	 *                       seconds
@@ -304,11 +307,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the maximum horizontal take-off error of this manager properties
-	 * bean in meters.
+	 * Gets the maximum horizontal take-off error of this abstract manager
+	 * properties bean in meters.
 	 * 
-	 * @return the maximum horizontal take-off error of this manager properties
-	 *         bean in meters
+	 * @return the maximum horizontal take-off error of this abstract manager
+	 *         properties bean in meters
 	 *
 	 * @see ManagerProperties#getMaxTakeOffHorizontalError()
 	 */
@@ -318,8 +321,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the maximum horizontal take-off error of this manager properties
-	 * bean in meters.
+	 * Sets the maximum horizontal take-off error of this abstract manager
+	 * properties bean in meters.
 	 * 
 	 * @param maxTakeOffHorizontalError the maximum horizontal take-off error
 	 *                                  to be set in meters
@@ -332,11 +335,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the maximum take-off timing error of this manager properties bean
-	 * in seconds.
+	 * Gets the maximum take-off timing error of this abstract manager
+	 * properties bean in seconds.
 	 * 
-	 * @return the maximum take-off timing error of this manager properties
-	 *         bean in seconds
+	 * @return the maximum take-off timing error of this abstract manager
+	 *         properties bean in seconds
 	 *
 	 * @see ManagerProperties#getMaxTakeOffTimingError()
 	 */
@@ -346,8 +349,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the maximum take-off timing error of this manager properties bean
-	 * in seconds.
+	 * Sets the maximum take-off timing error of this abstract manager
+	 * properties bean in seconds.
 	 * 
 	 * @param maxTakeOffTimingError the maximum take-off timing error to be set
 	 *                              in seconds
@@ -360,11 +363,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the maximum horizontal landing error of this manager properties
-	 * bean in meters.
+	 * Gets the maximum horizontal landing error of this abstract manager
+	 * properties bean in meters.
 	 * 
-	 * @return the maximum horizontal landing error of this manager properties
-	 *         bean in meters
+	 * @return the maximum horizontal landing error of this abstract manager
+	 *         properties bean in meters
 	 *
 	 * @see ManagerProperties#getMaxLandingHorizontalError()
 	 */
@@ -374,8 +377,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the maximum horizontal landing error of this manager properties
-	 * bean in meters.
+	 * Sets the maximum horizontal landing error of this abstract manager
+	 * properties bean in meters.
 	 * 
 	 * @param maxLandingHorizontalError the maximum horizontal landing error
 	 *                                  to be set in meters
@@ -388,11 +391,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Gets the maximum landing timing error of this manager properties bean in
-	 * seconds.
+	 * Gets the maximum landing timing error of this abstract manager
+	 * properties bean in seconds.
 	 * 
-	 * @return the maximum landing timing error of this manager properties bean
-	 *         in seconds
+	 * @return the maximum landing timing error of this abstract manager
+	 *         properties bean in seconds
 	 *
 	 * @see ManagerProperties#getMaxLandingTimingError()
 	 */
@@ -402,8 +405,8 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Sets the maximum landing timing error of this manager properties bean in
-	 * seconds.
+	 * Sets the maximum landing timing error of this abstract manager
+	 * properties bean in seconds.
 	 * 
 	 * @param maxLandingTimingError the maximum take-off timing error to be set
 	 *                              in seconds
@@ -416,9 +419,9 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	}
 	
 	/**
-	 * Clones this manager properties bean.
+	 * Clones this abstract manager properties bean.
 	 * 
-	 * @return a clone of this manager properties bean
+	 * @return a clone of this abstract manager properties bean
 	 * 
 	 * @see Properties#clone()
 	 */

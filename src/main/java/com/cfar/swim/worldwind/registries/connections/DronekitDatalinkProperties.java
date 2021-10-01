@@ -42,6 +42,9 @@ import javax.validation.constraints.Min;
  */
 public class DronekitDatalinkProperties extends DatalinkProperties {
 	
+	/** the default serial identification of this dronekit datalink properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the standard localhost of a dronekit datalink properties bean */
 	public static final String DATALINK_LOCALHOST = "localhost";
 	

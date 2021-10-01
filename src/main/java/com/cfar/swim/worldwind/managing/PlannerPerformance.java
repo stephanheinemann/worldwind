@@ -31,7 +31,7 @@ package com.cfar.swim.worldwind.managing;
 
 /**
  * Realizes a planner performance consisting of trajectory quality and
- * computational duration quantity.
+ * computational duration quantity within a context.
  * 
  * @author Stephan Heinemann
  *
@@ -39,6 +39,9 @@ package com.cfar.swim.worldwind.managing;
  */
 public class PlannerPerformance extends AbstractPerformance {
 	
+	/** the default serial identification of this planner performance */
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * Construct a new planner performance based on a trajectory quality and
 	 * a computational duration quantity.

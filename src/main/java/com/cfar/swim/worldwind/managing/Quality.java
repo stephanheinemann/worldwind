@@ -29,12 +29,14 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.io.Serializable;
+
 /**
  * Describes a performance quality.
  * 
  * @author Stephan Heinemann
  */
-public interface Quality extends Comparable<Quality> {
+public interface Quality extends Comparable<Quality>, Serializable {
 	
 	/**
 	 * Gets the performance quality measure.

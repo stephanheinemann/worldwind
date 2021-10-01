@@ -52,31 +52,34 @@ import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
  */
 public class RRTreeProperties extends AbstractPlannerProperties {
 	
-	/** the sampling distribution of the RRT planner */
+	/** the default serial identification of this RRT planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
+	/** the sampling distribution of this RRT planner properties bean */
 	private Sampling sampling = Sampling.UNIFORM;
 	
-	/** the expansion strategy of the RRT planner */
+	/** the expansion strategy of this RRT planner properties bean */
 	private Strategy strategy = Strategy.EXTEND;
 	
-	/** the extension technique of the RRT planner */
+	/** the extension technique of this RRT planner properties bean */
 	private Extension extension = Extension.LINEAR;
 	
-	/** the maximum number of sampling iterations of the RRT planner */
+	/** the maximum number of sampling iterations of this RRT planner properties bean */
 	@Min(value = 1, message = "{property.planner.rrt.maxIterations.min}")
 	@Max(value = Integer.MAX_VALUE, message = "{property.planner.rrt.maxIterations.max}")
 	private int maxIterations = 3_000;
 	
-	/** the maximum extension distance to a waypoint in the tree */
+	/** the maximum extension distance to a waypoint in the tree of this RRT planner properties bean */
 	@DecimalMin(value = "1", message = "{property.planner.rrt.epsilon.min}")
 	@DecimalMax(value = "100000", message = "{property.planner.rrt.epsilon.max}")
 	private double epsilon = 25d;
 	
-	/** the sampling bias towards the goal */
+	/** the sampling bias towards the goal of this RRT planner properties bean */
 	@Min(value = 0, message = "{property.planner.rrt.bias.min}")
 	@Max(value = 100, message = "{property.planner.rrt.bias.max}")
 	private int bias = 5;
 	
-	/** the radius of the sphere defining the goal region */
+	/** the radius of the sphere defining the goal region of this RRT planner properties bean */
 	@DecimalMin(value = "0", message = "{property.planner.rrt.goalThreshold.min}")
 	@DecimalMax(value = "100000", message = "{property.planner.rrt.goalThreshold.max}")
 	private double goalThreshold = 1d;

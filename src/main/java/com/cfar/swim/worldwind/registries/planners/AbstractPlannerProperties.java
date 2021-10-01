@@ -45,6 +45,9 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 
 	// TODO: maximum slot time (departure or waypoint in general)
 	
+	/** the default serial identification of this abstract planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the cost policy of this planner properties bean */
 	CostPolicy costPolicy;
 	

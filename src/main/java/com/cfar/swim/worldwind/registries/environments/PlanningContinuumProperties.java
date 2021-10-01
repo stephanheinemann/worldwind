@@ -44,6 +44,9 @@ import javax.validation.constraints.DecimalMin;
  */
 public class PlanningContinuumProperties extends EnvironmentProperties {
 	
+	/** the default serial identification of this planning continuum properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the resolution of this planning continuum properties bean */
 	@DecimalMin(value = "0", message = "{property.environment.continuum.resolution.min}")
 	@DecimalMax(value = "100000", message = "{property.environment.continuum.resolution.max}")

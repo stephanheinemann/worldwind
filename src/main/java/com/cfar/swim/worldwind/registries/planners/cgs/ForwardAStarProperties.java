@@ -40,7 +40,10 @@ import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
  *
  */
 public class ForwardAStarProperties extends AbstractPlannerProperties {
-
+	
+	/** the default serial identification of this forward A* planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs a new forward A* planner properties bean.
 	 */

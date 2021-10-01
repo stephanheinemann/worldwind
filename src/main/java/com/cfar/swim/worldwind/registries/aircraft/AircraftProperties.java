@@ -46,6 +46,9 @@ import com.cfar.swim.worldwind.registries.Properties;
  */
 public abstract class AircraftProperties implements Properties<Aircraft> {
 
+	/** the default serial identification of this aircraft properties bean */
+	private static final long serialVersionUID = 1L;
+
 	/** the combat identification of this aircraft properties bean */
 	private CombatIdentification combatIdentification;
 	

@@ -48,18 +48,21 @@ import com.cfar.swim.worldwind.registries.planners.AnytimePlannerProperties;
 @ARRTreeValidQuality
 public class ARRTreeProperties extends RRTreeProperties implements AnytimePlannerProperties {
 	
-	/** the limit of neighbors to consider for extension by the ARRT planner */
+	/** the default serial identification of this ARRT planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
+	/** the limit of neighbors to consider for extension of this ARRT planner properties bean */
 	@Min(value = 1, message = "{property.planner.arrt.neighborLimit.min}")
 	@Max(value = Integer.MAX_VALUE, message = "{property.planner.arrt.neighborLimit.max}")
 	private int neighborLimit = 5;
 	
-	/** the initial bias towards cost versus distance */
+	/** the initial bias towards cost versus distance of this ARRT planner properties bean */
 	private double initialCostBias = 0d;
 	
-	/** the final bias towards costs versus distance */
+	/** the final bias towards costs versus distance of this ARRT planner properties bean */
 	private double finalCostBias = 1d;
 	
-	/** the improvement factor for the cost of consecutive solutions */
+	/** the improvement factor for the cost of consecutive solutions of this ARRT planner properties bean */
 	private double improvementFactor = 0.05d;
 	
 	/**

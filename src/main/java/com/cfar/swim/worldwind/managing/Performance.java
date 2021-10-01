@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.io.Serializable;
+
 /**
  * Describes a performance.
  * 
@@ -37,13 +39,20 @@ package com.cfar.swim.worldwind.managing;
  * @see Quality
  * @see Quantity
  */
-public interface Performance extends Comparable<Performance> {
+public interface Performance extends Comparable<Performance>, Serializable {
 	
 	/**
-	 * Gets the performance measure.
+	 * Gets the measure of this performance.
 	 * 
-	 * @return the performance measure
+	 * @return the measure of this performance
 	 */
 	public double get();
+	
+	/**
+	 * Gets the context of this performance.
+	 * 
+	 * @return the context of this performance
+	 */
+	public PerformanceContext getContext();
 	
 }

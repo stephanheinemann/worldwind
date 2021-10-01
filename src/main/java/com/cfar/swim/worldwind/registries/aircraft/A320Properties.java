@@ -40,6 +40,9 @@ import com.cfar.swim.worldwind.aircraft.A320;
  */
 public class A320Properties extends AircraftProperties {
 
+	/** the default serial identification of this A320 aircraft properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs a new A320 aircraft properties bean.
 	 */

@@ -44,6 +44,9 @@ import javax.validation.constraints.Min;
  */
 public class SimulatedDatalinkProperties extends DatalinkProperties {
 	
+	/** the default serial identification of this simulated datalink properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	// TODO: aircraft (simulated performance)
 	
 	/** the maximum possible cross track error of this simulated datalink properties bean */

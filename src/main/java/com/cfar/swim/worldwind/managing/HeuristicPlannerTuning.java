@@ -50,6 +50,9 @@ import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
  */
 public class HeuristicPlannerTuning extends PlannerTuning {
 	
+	/** the default serial identification of this heuristic planner tuning */
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * Constructs a new heuristic planner tuning based on a planner
 	 * specification and features.

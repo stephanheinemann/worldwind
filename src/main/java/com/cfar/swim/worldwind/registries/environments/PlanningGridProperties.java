@@ -42,6 +42,9 @@ import javax.validation.constraints.Min;
  */
 public class PlanningGridProperties extends EnvironmentProperties {
 
+	/** the default serial identification of this planning grid properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the longest axis division of this planning grid properties bean */
 	@Min(value = 1, message = "{property.environment.grid.division.min}")
 	@Max(value = Integer.MAX_VALUE, message = "{property.environment.grid.division.max}")

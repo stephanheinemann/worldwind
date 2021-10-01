@@ -46,6 +46,9 @@ import com.cfar.swim.worldwind.registries.Properties;
  */
 public abstract class DatalinkProperties implements Properties<Datalink> {
 	
+	/** the default serial identification of this datalink properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the downlink period of this datalink properties bean */
 	@Min(value = 1, message = "{property.connection.datalink.downlinkPeriod.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.connection.datalink.downlinkPeriod.max}")

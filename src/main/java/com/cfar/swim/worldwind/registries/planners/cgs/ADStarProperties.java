@@ -47,7 +47,10 @@ import com.cfar.swim.worldwind.registries.planners.DynamicPlannerProperties;
  */
 public class ADStarProperties extends ARAStarProperties
 	implements AnytimePlannerProperties, DynamicPlannerProperties {
-
+	
+	/** the default serial identification of this AD* planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the significant change threshold of this AD* planner properties bean */
 	@DecimalMin(value = "0", message = "{property.planner.ads.significantChange.min}")
 	@DecimalMax(value = "1", message = "{property.planner.ads.significantChange.max}")

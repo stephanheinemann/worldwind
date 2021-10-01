@@ -43,6 +43,9 @@ import com.cfar.swim.worldwind.registries.Properties;
 @EnvironmentValidBoundaries
 public abstract class EnvironmentProperties implements Properties<Environment> {
 
+	/** the default serial identification of this environment properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the floor of this environment properties bean */
 	protected double floor;
 	

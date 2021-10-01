@@ -33,7 +33,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 /**
- * Abstracts a performance consisting of quality and quantity.
+ * Abstracts a performance consisting of quality and quantity within a context.
  * 
  * @author Stephan Heinemann
  *
@@ -42,15 +42,18 @@ import java.util.Objects;
  * @see Quantity
  */
 public abstract class AbstractPerformance implements Performance {
-	
-	// TODO: System information: memory, processor, cores, oshi artifact
-	// https://github.com/oshi/oshi
-	
+		
+	/** the default serial identification of this abstract performance */
+	private static final long serialVersionUID = 1L;
+
 	/** the quality of this abstract performance */
 	private final Quality quality;
 	
 	/** the quantity of this abstract performance */
 	private final Quantity quantity;
+	
+	/** the context of this abstract performance */
+	private final PerformanceContext context;
 	
 	/**
 	 * Construct a new abstract performance based on a quality and quantity.
@@ -67,6 +70,7 @@ public abstract class AbstractPerformance implements Performance {
 		}
 		this.quality = quality;
 		this.quantity = quantity;
+		this.context = new PerformanceContext();
 	}
 	
 	/**
@@ -79,6 +83,18 @@ public abstract class AbstractPerformance implements Performance {
 	@Override
 	public double get() {
 		return this.quality.get() / this.quantity.get();
+	}
+	
+	/**
+	 * Gets the context of this abstract performance.
+	 * 
+	 * @return the context of this abstract performance
+	 * 
+	 * @see Performance#getContext()
+	 */
+	@Override
+	public PerformanceContext getContext() {
+		return this.context;
 	}
 	
 	/**
@@ -131,6 +147,18 @@ public abstract class AbstractPerformance implements Performance {
 	@Override
 	public final int hashCode() {
 		return Objects.hash(this.get());
+	}
+	
+	/**
+	 * Gets the string representation of this abstract performance.
+	 * 
+	 * @return the string representation of this abstract performance
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "p = " + this.get() + "\n" + this.getContext().toString();
 	}
 	
 }

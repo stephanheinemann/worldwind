@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -43,7 +44,10 @@ import java.util.Set;
  * @see Tuning
  * @see Performance
  */
-public class Reputation {
+public class Reputation implements Serializable {
+	
+	/** the default serial identification of this reputation */
+	private static final long serialVersionUID = 1L;
 	
 	/** the performance reputation of tunings */
 	private Map<Tuning<?>, Set<Performance>> reputation = new HashMap<>();

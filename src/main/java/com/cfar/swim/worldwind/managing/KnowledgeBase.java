@@ -29,6 +29,100 @@
  */
 package com.cfar.swim.worldwind.managing;
 
-public interface KnowledgeBase {
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.net.URI;
+
+/**
+ * Realizes a knowledge base of an autonomic manager.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public class KnowledgeBase implements Serializable {
+	
+	/** the default serial identification of this knowledge base */
+	private static final long serialVersionUID = 1L;
+	
+	/** the performance reputation of this knowledge base */
+	private Reputation reputation = new Reputation();
+	
 	// reputations and model (fit model with reputations)
+	// load and save knowledge to database
+	
+	/**
+	 * Gets the reputation of this knowledge base.
+	 * 
+	 * @return the reputation of this knowledge base
+	 */
+	public Reputation getReputation() {
+		return this.reputation;
+	}
+	
+	/**
+	 * Sets the reputation of this knowledge base.
+	 * 
+	 * @param reputation the reputation of this knowledge base
+	 * 
+	 * @throws IllegalArgumentException if reputation is invalid
+	 */
+	public void setReputation(Reputation reputation) {
+		if (null == reputation) {
+			throw new IllegalArgumentException("invalid reputation");
+		}
+		this.reputation = reputation;
+	}
+	
+	/**
+	 * Loads this knowledge base.
+	 * 
+	 * @param uri the URI to load this knowledge base from
+	 * 
+	 * @return true if this knowledge base has been loaded, false otherwise
+	 */
+	public boolean load(URI uri) {
+		boolean isLoaded = false;
+		
+		try {
+			FileInputStream fis = new FileInputStream(new File(uri));
+			ObjectInputStream ois = new ObjectInputStream(fis);
+			this.setReputation((Reputation) ois.readObject());
+			ois.close();
+			isLoaded = true;
+		} catch (IOException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		return isLoaded;
+	}
+	
+	/**
+	 * Saves this knowledge base.
+	 * 
+	 * @param uri the URI to save this knowledge base to
+	 * 
+	 * @return true if this knowledge base has been save, false otherwise
+	 */
+	public boolean save(URI uri) {
+		boolean isSaved = false;
+		
+		try {
+			FileOutputStream fos = new FileOutputStream(new File(uri));
+			ObjectOutputStream oos = new ObjectOutputStream(fos);
+			oos.writeObject(this.getReputation());
+			oos.flush();
+			oos.close();
+			isSaved = true;
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return isSaved;
+	}
+	
 }

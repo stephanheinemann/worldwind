@@ -29,7 +29,10 @@
  */
 package com.cfar.swim.worldwind.managers;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -44,7 +47,10 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
 import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.managing.DurationQuantity;
 import com.cfar.swim.worldwind.managing.Features;
+import com.cfar.swim.worldwind.managing.KnowledgeBase;
+import com.cfar.swim.worldwind.managing.PlannerPerformance;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.managing.TrajectoryQuality;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
@@ -144,6 +150,15 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	
 	/** the planner executor of this abstract autonomic manager */
 	private ExecutorService plannerExecutor = null;
+	
+	/** the knowledge base of this abstract autonomic manager */
+	private KnowledgeBase knowledgeBase = new KnowledgeBase();
+	
+	/** the plan start time of this abstract autonomic manager */
+	private ZonedDateTime planStartTime = null;
+	
+	/** the plan revision time of this abstract autonomic manager */
+	private ZonedDateTime planRevisionTime = null;
 	
 	/**
 	 * Gets the cost policy of this abstract autonomic manager.
@@ -922,6 +937,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		}
 		
 		if (this.hasManagedScenarios()) {
+			// TODO: autonomic manager knowledge base URI property
+			// TODO: load knowledge base
 			// execute managed planners in parallel
 			this.setActivePlanner((ManagedPlanner)
 					this.getManagedScenarios().stream().findFirst().get().getPlanner());
@@ -962,6 +979,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		
 		try {
 			if (!managedPlanners.isEmpty()) {
+				// TODO: move to managed planner instead and exclude revision cost (mission loader)
+				this.planStartTime = ZonedDateTime.now();
 				this.plannerExecutor.invokeAll(managedPlanners);
 			}
 		} catch (InterruptedException e) {
@@ -987,6 +1006,12 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			this.plannerExecutor.shutdown();
 			this.setActivePlanner(null);
 			this.getSourceScenario().clearTrajectory();
+			// TODO: autonomic manager knowledge base URI property
+			try {
+				this.knowledgeBase.save(new URI("file:///tmp/knowledge-base.obj"));
+			} catch (URISyntaxException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 	
@@ -1056,6 +1081,9 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 */
 	@Override
 	public synchronized void notifyPendingObstacleChange() {
+		// TODO: move to managed planner instead and exclude revision cost (mission loader)
+		this.planStartTime = ZonedDateTime.now();
+		
 		this.tunerExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
@@ -1140,6 +1168,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	private synchronized void evaluatePlanner(
 			Scenario scenario, ManagedPlanner planner, Trajectory trajectory) {
 		Logging.logger().info("evaluating planner " + planner.getId());
+		// TODO: move to managed planner instead and exclude revision cost (mission loader)
+		this.planRevisionTime = ZonedDateTime.now();
 		
 		styleTrajectory(trajectory);
 		scenario.setTrajectory(trajectory);
@@ -1160,6 +1190,14 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		TrajectoryQuality stq = new TrajectoryQuality(st);
 		Trajectory et = trajectory.getSubTrajectory(poiIndex);
 		TrajectoryQuality rtq = new TrajectoryQuality(et);
+		DurationQuantity rdq = new DurationQuantity(Duration.between(
+				this.planStartTime, this.planRevisionTime));
+		
+		// TODO: knowledge base getters / setters / loading / saving
+		PlannerPerformance performance = new PlannerPerformance(rtq, rdq);
+		PlannerTuning tuning = this.getPlannerTuning(scenario);
+		this.knowledgeBase.getReputation().addTuningPerformance(tuning, performance);
+		Logging.logger().info("added performance " + performance.toString());
 		
 		Logging.logger().info("current source sub-trajectory = " + st);
 		Logging.logger().info("evaluated sub-trajectory = " + et);

@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.io.Serializable;
 import java.util.List;
 
 import com.cfar.swim.worldwind.registries.Properties;
@@ -41,7 +42,7 @@ import com.cfar.swim.worldwind.registries.Specification;
  * 
  * @param <Tunable> the tunable
  */
-public interface Tuning<Tunable> {
+public interface Tuning<Tunable> extends Serializable {
 	
 	/**
 	 * Gets the specification of the tunable of this tuning.

@@ -36,4 +36,8 @@ package com.cfar.swim.worldwind.registries.connections;
  *
  */
 public class LiveSwimConnectionProperties extends SwimConnectionProperties {
+	
+	/** the default serial identification of this live SWIM connection properties bean */
+	private static final long serialVersionUID = 1L;
+	
 }

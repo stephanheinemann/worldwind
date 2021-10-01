@@ -44,6 +44,9 @@ import com.cfar.swim.worldwind.registries.planners.AnytimePlannerProperties;
 @ARAStarValidQuality
 public class ARAStarProperties extends ForwardAStarProperties implements AnytimePlannerProperties {
 	
+	/** the default serial identification of this ARA* planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the initial inflation factor applied to the heuristic function */
 	private double initialInflation;
 	

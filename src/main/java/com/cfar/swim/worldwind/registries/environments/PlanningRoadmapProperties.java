@@ -36,4 +36,8 @@ package com.cfar.swim.worldwind.registries.environments;
  *
  */
 public class PlanningRoadmapProperties extends EnvironmentProperties {
+
+	/** the default serial identification of this planning roadmap properties bean */
+	private static final long serialVersionUID = 1L;
+	
 }

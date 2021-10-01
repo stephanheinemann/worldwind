@@ -47,6 +47,9 @@ import com.cfar.swim.worldwind.registries.planners.OnlinePlannerProperties;
 @OADStarValidDeliberation
 public class OADStarProperties extends ADStarProperties implements OnlinePlannerProperties {
 	
+	/** the default serial identification of this OAD* planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the minimum deliberation duration of this OAD* planner properties bean */
 	private long minDeliberation = 10l;
 	

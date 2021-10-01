@@ -30,5 +30,8 @@
 package com.cfar.swim.worldwind.registries.managers;
 
 public class HeuristicManagerProperties extends AbstractManagerProperties {
-	// TODO: implement
+	
+	/** the default serial identification of this heuristic manager properties bean */
+	private static final long serialVersionUID = 1L;
+	
 }

@@ -43,7 +43,10 @@ import javax.validation.constraints.Min;
  *
  */
 public class SimulatedSwimConnectionProperties extends SwimConnectionProperties {
-
+	
+	/** the default serial identification of this simulated SWIM connection properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the default resource directory of this simulated SWIM connection properties bean */
 	public static final String SWIM_RESOURCE_DIRECTORY = "swim/xml";
 	

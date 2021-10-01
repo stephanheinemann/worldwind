@@ -69,7 +69,7 @@ public class Features extends HashMap<String, Object> {
 	private static final long serialVersionUID = 1L;
 	
 	/** the dictionary of these features */
-	protected final ResourceBundle dictionary = ResourceBundleLoader.getDictionaryBundle();
+	protected transient final ResourceBundle dictionary = ResourceBundleLoader.getDictionaryBundle();
 	
 	/** the default feature horizon */
 	public static final Duration FEATURE_HORIZON = Duration.from(Duration.ofMinutes(5));

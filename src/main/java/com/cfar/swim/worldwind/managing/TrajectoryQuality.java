@@ -43,8 +43,14 @@ import com.cfar.swim.worldwind.planning.Trajectory;
  */
 public class TrajectoryQuality implements Quality {
 	
+	/** the default serial identification of this trajectory quality */
+	private static final long serialVersionUID = 1L;
+	
 	/** the quality of this trajectory quality */
-	final Trajectory quality;
+	transient final Trajectory quality;
+	
+	/** the quality measure of this trajectory quality */
+	private final double measure;
 	
 	/**
 	 * Constructs a new trajectory quality based on a trajectory.
@@ -58,6 +64,16 @@ public class TrajectoryQuality implements Quality {
 			throw new IllegalArgumentException("quality is invalid");
 		}	
 		this.quality = quality;
+		
+		if (quality.isEmpty()) {
+			measure = 0d;
+		} else {
+			measure = 1d / quality.getCost();
+			// TODO: weighted quality
+			// TODO: number of legs / edges (heading changes)
+			// TODO: horizontal versus vertical distance (cost calculation)
+			// TODO: ETE, ETA
+		}
 	}
 	
 	/**
@@ -69,17 +85,7 @@ public class TrajectoryQuality implements Quality {
 	 */
 	@Override
 	public double get() {
-		double measure = 0d;
-		
-		if (!quality.isEmpty()) {
-			measure = 1d / quality.getCost();
-			// TODO: weighted quality
-			// TODO: number of legs / edges (heading changes)
-			// TODO: horizontal versus vertical distance (cost calculation)
-			// TODO: ETE, ETA
-		}
-		
-		return measure;
+		return this.measure;
 	}
 	
 	/**

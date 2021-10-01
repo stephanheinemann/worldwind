@@ -39,7 +39,10 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
  *
  */
 public class ThetaStarProperties extends ForwardAStarProperties {
-
+	
+	/** the default serial identification of this Theta* planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs a new Theta* planner properties bean.
 	 */

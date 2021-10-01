@@ -40,6 +40,9 @@ import com.cfar.swim.worldwind.aircraft.Iris;
  */
 public class IrisProperties extends AircraftProperties {
 
+	/** the default serial identification of this Iris aircraft properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs a new Iris aircraft properties bean.
 	 */

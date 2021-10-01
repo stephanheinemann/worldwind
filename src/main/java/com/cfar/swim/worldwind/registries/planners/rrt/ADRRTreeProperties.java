@@ -46,6 +46,9 @@ import com.cfar.swim.worldwind.registries.planners.DynamicPlannerProperties;
  */
 public class ADRRTreeProperties extends ARRTreeProperties implements DynamicPlannerProperties {
 	
+	/** the default serial identification of this ADRRT planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the significant change threshold of this ADRRT planner properties bean */
 	@DecimalMin(value = "0", message = "{property.planner.adrrt.significantChange.min}")
 	@DecimalMax(value = "1", message = "{property.planner.adrrt.significantChange.max}")

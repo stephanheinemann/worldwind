@@ -42,6 +42,9 @@ import java.util.Objects;
  */
 public class DurationQuantity implements Quantity {
 	
+	/** the default serial identification of this duration quantity */
+	private static final long serialVersionUID = 1L;
+	
 	/** the quantity of this duration quantity */
 	private final Duration quantity;
 	

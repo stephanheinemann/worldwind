@@ -44,6 +44,9 @@ import com.cfar.swim.worldwind.registries.Specification;
  */
 public abstract class PlannerTuning extends FeatureTuning<Planner> {
 	
+	/** the default serial identification of this planner tuning */
+	private static final long serialVersionUID = 1L;
+
 	/**
 	 * Constructs a new planner tuning based on a planner specification and
 	 * features.

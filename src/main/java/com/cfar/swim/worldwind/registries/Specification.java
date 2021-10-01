@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.registries;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import com.cfar.swim.worldwind.util.Customizable;
@@ -47,8 +48,12 @@ import com.cfar.swim.worldwind.util.ResourceBundleLoader;
  * @see Factory
  * @see Registry
  */
-public class Specification<Registree> implements Identifiable, Customizable<Registree>, Comparable<Specification<Registree>> {
+public class Specification<Registree>
+implements Identifiable, Customizable<Registree>, Comparable<Specification<Registree>>, Serializable {
 	
+	/** the default serial identification of this specification */
+	private static final long serialVersionUID = 1L;
+
 	/** the identifier of an A320 aircraft specification */
 	public static final String AIRCRAFT_A320_ID = "A320";
 	

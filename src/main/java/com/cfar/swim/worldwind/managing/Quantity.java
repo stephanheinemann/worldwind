@@ -29,12 +29,14 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.io.Serializable;
+
 /**
  * Describes a performance quantity.
  * 
  * @author Stephan Heinemann
  */
-public interface Quantity extends Comparable<Quantity> {
+public interface Quantity extends Comparable<Quantity>, Serializable {
 	
 	/**
 	 * Gets the performance quantity measure.
