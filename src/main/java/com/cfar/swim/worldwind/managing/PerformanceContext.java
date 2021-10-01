@@ -56,8 +56,17 @@ public class PerformanceContext implements Serializable {
 	/** the logical processor count of this performance context */
 	private final int logicalProcessorCount;
 	
-	/** the maximum logical processor frequency of this performance context */
-	private final long maxFreq;
+	/** the maximum logical processor frequency of this performance context in Hz */
+	private final long maxFrequency;
+	
+	/** the total memory of this performance context in bytes */
+	private final long totalMemory;
+	
+	/** the operating system platform of this performance context */
+	private final String osPlatform;
+	
+	/** the operating system manufacturer of this performance context */
+	private final String osManufacturer;
 	
 	/**
 	 * Constructs a new performance context.
@@ -69,9 +78,14 @@ public class PerformanceContext implements Serializable {
 				.getHardware().getProcessor().getPhysicalProcessorCount();
 		this.logicalProcessorCount = PerformanceContext.systemInfo
 				.getHardware().getProcessor().getLogicalProcessorCount();
-		this.maxFreq = PerformanceContext.systemInfo
+		this.maxFrequency = PerformanceContext.systemInfo
 				.getHardware().getProcessor().getMaxFreq();
-		// TODO: more context information
+		this.totalMemory = PerformanceContext.systemInfo
+				.getHardware().getMemory().getTotal();
+		this.osPlatform = SystemInfo.getCurrentPlatform().toString();
+		this.osManufacturer = PerformanceContext.systemInfo
+				.getOperatingSystem().getManufacturer();
+		// TODO: more context information as required
 	}
 	
 	/**
@@ -108,8 +122,35 @@ public class PerformanceContext implements Serializable {
 	 * @return the maximum logical processor frequency of this performance
 	 *         context
 	 */
-	public long getMaxFreq() {
-		return this.maxFreq;
+	public long getMaxFrequency() {
+		return this.maxFrequency;
+	}
+	
+	/**
+	 * Gets the total memory of this performance context.
+	 * 
+	 * @return the total memory of this performance context
+	 */
+	public long getTotalMemory() {
+		return this.totalMemory;
+	}
+	
+	/**
+	 * Gets the operating system platform of this performance context.
+	 * 
+	 * @return the operating system platform of this performance context
+	 */
+	public String getOsPlatform() {
+		return this.osPlatform;
+	}
+	
+	/**
+	 * Gets the operating system manufacturer of this performance context.
+	 * 
+	 * @return the operating system manufacturer of this performance context
+	 */
+	public String getOsManufacturer() {
+		return this.osManufacturer;
 	}
 	
 	/**
@@ -121,10 +162,13 @@ public class PerformanceContext implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		return "PN  = " + this.getProcessorName() + "\n"
-				+ "PPC = " + this.getPhysicalProcessorCount() + "\n"
-				+ "LPC = " + this.getLogicalProcessorCount() + "\n"
-				+ "MLF = " + this.getMaxFreq();
+		return "processor name  = " + this.getProcessorName() + "\n"
+				+ "physical processor count = " + this.getPhysicalProcessorCount() + "\n"
+				+ "logical processor count = " + this.getLogicalProcessorCount() + "\n"
+				+ "maximum logical processor frequency [Hz] = " + this.getMaxFrequency() + "\n"
+				+ "total physical memory [bytes] = " + this.getTotalMemory() + "\n"
+				+ "operating system platform = " + this.getOsPlatform() + "\n"
+				+ "operating system manufacturer = " + this.getOsManufacturer();
 	}
 	
 }
