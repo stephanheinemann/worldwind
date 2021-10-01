@@ -313,7 +313,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	public synchronized void setQualityImprovement(double improvementFactor) {
-		if ((0d <= improvementFactor) && (1d >= improvementFactor)) {
+		if ((0d < improvementFactor) && (1d >= improvementFactor)) {
 			this.improvementFactor = improvementFactor;
 		} else {
 			throw new IllegalArgumentException("improvement factor is invalid");

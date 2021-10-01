@@ -31,8 +31,6 @@ package com.cfar.swim.worldwind.registries.planners.rrt;
 
 import java.util.Objects;
 
-import javax.validation.constraints.DecimalMax;
-import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 
@@ -62,8 +60,6 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 	private double finalCostBias = 1d;
 	
 	/** the improvement factor for the cost of consecutive solutions */
-	@DecimalMin(value = "0", message = "{property.planner.arrt.improvementFactor.min}")
-	@DecimalMax(value = "1", message = "{property.planner.arrt.improvementFactor.max}")
 	private double improvementFactor = 0.05d;
 	
 	/**

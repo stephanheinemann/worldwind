@@ -70,8 +70,8 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 	/**
 	 * Tunes the specification of a planner according to features.
 	 * 
-	 * @param specification the specification to be tuned.
-	 * @param features the features
+	 * @param specification the planner specification to be tuned
+	 * @param features the features to tune the planner specification for
 	 * 
 	 * @return the tuned candidate properties for the specification
 	 * 
@@ -80,66 +80,152 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 	@Override
 	public List<Properties<Planner>> tune(
 			Specification<Planner> specification, Features features) {
-		ArrayList<Properties<Planner>> candidates = new ArrayList<>();
+		ArrayList<Properties<Planner>> properties = new ArrayList<>();
 		
 		if (specification.getId().equals(Specification.PLANNER_MGP_ID)) {
 			OADStarProperties candidate = (OADStarProperties)
 					specification.getProperties(); //.clone();
-			// TODO: add suitable candidates
-			candidates.add(candidate);
+			this.tuneManagedGridPlanner(candidate, features);
+			properties.add(candidate);
 		} else if (specification.getId().equals(Specification.PLANNER_MTP_ID)) {
 			OADRRTreeProperties candidate = (OADRRTreeProperties)
 					specification.getProperties(); //.clone();
-			candidate.getBias();
-			
-			// TODO: feasibility
-			if (0 == (Integer) features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
-				candidate.setSampling(Sampling.ELLIPSOIDAL);
-				candidate.setBias(50); // possible terrain?
-				candidate.setEpsilon((Double) features.get(Features.FEATURE_POIS_DISTANCE_MAX));
-				candidate.setStrategy(Strategy.CONNECT);
-				candidate.setExtension(Extension.LINEAR); // TODO
-				candidate.setGoalThreshold(0);
-				candidate.setMaxIterations(50); // TODO
-				candidate.setSignificantChange(0.1d); // TODO
-				candidate.setNeighborLimit(1);
-				candidate.setMinimumQuality(1.0d);
-				candidate.setMaximumQuality(1.0d);
-				candidate.setQualityImprovement(1.0d);
-			} else {
-				candidate.setBias(5);
-				candidate.setEpsilon(0.05d * (Double) features.get(Features.FEATURE_POIS_DISTANCE_MAX));
-				candidate.setGoalThreshold(candidate.getMaxLandingHorizontalError() / 2d);
-				candidate.setStrategy(Strategy.EXTEND);
-				candidate.setMaxIterations(1500);
-				candidate.setNeighborLimit(5);
-				candidate.setMinimumQuality(0.1d);
-				candidate.setMaximumQuality(1.0d);
-				candidate.setQualityImprovement(0.1d);
-			}
-			/*
-			candidate.getExtension();
-			candidate.getGoalThreshold();
-			candidate.getMaximumQuality();
-			candidate.getMaxIterations();
-			candidate.getMinimumQuality();
-			candidate.getNeighborLimit();
-			candidate.getQualityImprovement();
-			candidate.getSampling();
-			candidate.getSignificantChange();
-			*/
-			/*
-			if (0 == (Integer) features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
-				candidate.setStrategy(Strategy.CONNECT);
-			} else {
-				candidate.setStrategy(Strategy.EXTEND);
-			}
-			*/
-			
-			candidates.add(candidate);
-		}
+			this.tuneManageTreePlanner(candidate, features);
+			properties.add(candidate);
+		} // TODO: ManagedRoadmapPlanner
 		
-		return candidates;
+		return properties;
 	}
-
+	
+	/**
+	 * Tunes the properties of a managed grid planner according to features.
+	 * 
+	 * @param properties the properties of the managed grid planner to be tuned
+	 * @param features the features to tune the managed grid planner for
+	 */
+	private void tuneManagedGridPlanner(OADStarProperties properties, Features features) {
+		if (0 == (Integer) features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
+			// quality
+			properties.setMinimumQuality(1.0d);
+			properties.setMaximumQuality(1.0d);
+			properties.setQualityImprovement(0.1d);
+			properties.setSignificantChange(0.1d);
+		} else {
+			// quality
+			properties.setMinimumQuality(1d + ((Double)
+					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)));
+			properties.setMaximumQuality(1.0d);
+			properties.setQualityImprovement(
+					Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d);
+			properties.setSignificantChange(0.5d);
+		}
+	}
+	
+	/**
+	 * Tunes the properties of a managed tree planner according to features.
+	 * 
+	 * @param properties the properties of the managed tree planner to be tuned
+	 * @param features the features to tune the managed tree planner for
+	 */
+	private void tuneManageTreePlanner(OADRRTreeProperties properties, Features features) {
+		if (0 == (Integer) features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
+			// sampling
+			properties.setSampling(Sampling.ELLIPSOIDAL);
+			// goal bias
+			properties.setBias(75); // possible terrain
+			// epsilon - extension distance
+			properties.setEpsilon((Double) features.get(Features.FEATURE_POIS_DISTANCE_MAX));
+			// extension strategy and technique
+			properties.setStrategy(Strategy.CONNECT);
+			properties.setExtension(Extension.LINEAR); // TODO: feasible
+			// goal threshold
+			properties.setGoalThreshold(0d);
+			// maximum iterations
+			properties.setMaxIterations(50);
+			// neighborhood
+			properties.setNeighborLimit(1);
+			// quality
+			properties.setMinimumQuality(1.0d);
+			properties.setMaximumQuality(1.0d);
+			properties.setQualityImprovement(0.1d);
+			properties.setSignificantChange(0.1d);
+		} else {
+			// sampling
+			if (0.25d > (Double) features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
+				if ((0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.25d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+					properties.setSampling(Sampling.ELLIPSOIDAL);
+				} else if ((0.75d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.5d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+					properties.setSampling(Sampling.UNIFORM);
+				} else {
+					properties.setSampling(Sampling.GAUSSIAN);
+				}
+			} else if (0.5d > (Double) features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
+				if ((0.25d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.25d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+					properties.setSampling(Sampling.ELLIPSOIDAL);
+				} else if ((0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.5d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+					properties.setSampling(Sampling.UNIFORM);
+				} else {
+					properties.setSampling(Sampling.GAUSSIAN);
+				}
+			} else {
+				if ((0.25d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.5d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+					properties.setSampling(Sampling.ELLIPSOIDAL);
+				} else if ((0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.75d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+					properties.setSampling(Sampling.UNIFORM);
+				} else {
+					properties.setSampling(Sampling.GAUSSIAN);
+				}
+			}
+			
+			// goal bias
+			if ((Double) features.get(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)
+					> (Double) features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MIN)) {
+				properties.setBias(1);
+			} else {
+				properties.setBias((int) Math.round(3d + (Double)
+						features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO)));
+			}
+			
+			// epsilon - extension distance
+			properties.setEpsilon(0.05d * (Double) features.get(Features.FEATURE_POIS_DISTANCE_MAX));
+			
+			// goal threshold
+			properties.setGoalThreshold(properties.getMaxLandingHorizontalError() / 2d);
+			
+			// extension strategy and technique
+			if (0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {
+				properties.setStrategy(Strategy.CONNECT);
+			} else {
+				properties.setStrategy(Strategy.EXTEND);
+			}
+			properties.setExtension(Extension.LINEAR); // TODO: feasible
+			
+			// maximum iterations
+			if (0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {
+				properties.setMaxIterations(1500);
+			} else {
+				properties.setMaxIterations(1500 + (int) (Math.round(1500d * (Double)
+						features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))));
+			}
+			
+			// neighborhood
+			properties.setNeighborLimit(5 + (int) (Math.round(5d * (Double)
+					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))));
+			
+			// quality
+			properties.setMinimumQuality(1d - Math.min(0.9d,
+					(Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)));
+			properties.setMaximumQuality(1.0d);
+			properties.setQualityImprovement(
+					Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d);
+			properties.setSignificantChange(0.5d);
+		}
+	}
+	
 }
