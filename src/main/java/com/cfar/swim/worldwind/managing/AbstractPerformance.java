@@ -149,16 +149,4 @@ public abstract class AbstractPerformance implements Performance {
 		return Objects.hash(this.get());
 	}
 	
-	/**
-	 * Gets the string representation of this abstract performance.
-	 * 
-	 * @return the string representation of this abstract performance
-	 * 
-	 * @see Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return "p = " + this.get() + "\n" + this.getContext().toString();
-	}
-	
 }

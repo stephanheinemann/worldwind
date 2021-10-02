@@ -105,4 +105,17 @@ public abstract class PlannerTuning extends FeatureTuning<Planner> {
 	public abstract List<Properties<Planner>> tune(
 			Specification<Planner> specification, Features features);
 	
+	/**
+	 * Gets the string representation of this planner tuning.
+	 * 
+	 * @return the string representation of this planner tuning
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.getSpecification().getId()
+				+ "(" + this.getFeatures().hashCode() + ")";
+	}
+	
 }

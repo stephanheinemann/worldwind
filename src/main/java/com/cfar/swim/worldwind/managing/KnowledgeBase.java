@@ -125,4 +125,16 @@ public class KnowledgeBase implements Serializable {
 		return isSaved;
 	}
 	
+	/**
+	 * Gets the string representation of this knowledge base.
+	 * 
+	 * @return the string representation of this knowledge base
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.getReputation().toString();
+	}
+	
 }

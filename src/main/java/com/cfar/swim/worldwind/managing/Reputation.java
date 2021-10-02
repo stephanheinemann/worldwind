@@ -141,5 +141,27 @@ public class Reputation implements Serializable {
 		return performance;
 	}
 	
-	// TODO: reputations need to be visualized and persisted
+	/**
+	 * Gets the string representation of this reputation.
+	 * 
+	 * @return the string representation of this reputation
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		String reputation = "";
+		
+		for (Tuning<?> tuning : this.reputation.keySet()) {
+			reputation = reputation.concat(tuning.toString() + ": ");
+			for (Performance performance : this.reputation.get(tuning)) {
+				reputation = reputation.concat(performance.toString() + " ");
+			}
+			reputation = reputation.trim().concat("\n");
+		}
+		
+		return reputation;
+	}
+	
+	// TODO: reputations need to be visualized
 }

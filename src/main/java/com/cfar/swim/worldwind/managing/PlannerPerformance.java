@@ -55,5 +55,17 @@ public class PlannerPerformance extends AbstractPerformance {
 			TrajectoryQuality quality, DurationQuantity quantity) {
 		super(quality, quantity);
 	}
-
+	
+	/**
+	 * Gets the string representation of this planner performance.
+	 * 
+	 * @return the string representation of this planner performance
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return String.valueOf(this.get());
+	}
+	
 }
