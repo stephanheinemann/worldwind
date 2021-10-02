@@ -35,6 +35,8 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 /**
  * Realizes the properties bean of a simulation SWIM connection.
@@ -60,6 +62,8 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	public static final int SWIM_UPDATE_QUANTITY = 1;
 	
 	/** the resource directory of this simulated SWIM connection properties bean */
+	@NotNull
+	@NotEmpty
 	private String resourceDirectory;
 	
 	/** the update period of this simulated SWIM connection properties bean */

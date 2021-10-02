@@ -35,6 +35,8 @@ import javax.validation.constraints.DecimalMax;
 import javax.validation.constraints.DecimalMin;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.planning.CostPolicy;
@@ -53,6 +55,9 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	/** the default serial identification of this abstract manager properties bean */
 	private static final long serialVersionUID = 1L;
 	
+	/** the default knowledge base resource of this abstract manager properties bean */
+	public static final String KNOWLEDGE_BASE_RESOURCE = "file:///tmp/safcs-knowledge-base.bin";
+	
 	/** the cost policy of this abstract manager properties bean */
 	CostPolicy costPolicy;
 	
@@ -63,6 +68,11 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	@DecimalMin(value = "0", message = "{property.manager.featureHorizon.min}")
 	@DecimalMax(value = "60", message = "{property.manager.featureHorizon.max}")
 	double featureHorizon = 5l;
+	
+	/** the knowledge base resource of this abstract manager properties bean */
+	@NotNull
+	@NotEmpty
+	private String knowledgeBaseResource;
 	
 	/** the minimum deliberation duration of this abstract manager properties bean */
 	private long minDeliberation = 10l;
@@ -105,6 +115,7 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	 * risk policy property values.
 	 */
 	public AbstractManagerProperties() {
+		this.knowledgeBaseResource = AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE;
 		this.costPolicy = CostPolicy.AVERAGE;
 		this.riskPolicy = RiskPolicy.SAFETY;
 		this.featureHorizon = Features.FEATURE_HORIZON.getSeconds() / 60d;
@@ -192,6 +203,33 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	@Override
 	public void setFeatureHorizon(double featureHorizon) {
 		this.featureHorizon = featureHorizon;
+	}
+	
+	/**
+	 * Gets the knowledge base resource of this abstract manager properties
+	 * bean.
+	 * 
+	 * @return the knowledge base resource of this abstract manager properties
+	 *         bean
+	 * 
+	 * @see ManagerProperties#getKnowledgeBaseResource()
+	 */
+	@Override
+	public String getKnowledgeBaseResource() {
+		return this.knowledgeBaseResource;
+	}
+	
+	/**
+	 * Sets the knowledge base resource of this abstract manager properties
+	 * bean.
+	 * 
+	 * @param knowledgeBaseResource the knowledge base resource to be set
+	 * 
+	 * @see ManagerProperties#setKnowledgeBaseResource(String)
+	 */
+	@Override
+	public void setKnowledgeBaseResource(String knowledgeBaseResource) {
+		this.knowledgeBaseResource = knowledgeBaseResource;
 	}
 	
 	/**

@@ -30,7 +30,6 @@
 package com.cfar.swim.worldwind.managers;
 
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -106,6 +105,12 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	/** the feature horizon of this abstract autonomic manager */
 	private Duration featureHorizon = Features.FEATURE_HORIZON;
 	
+	/** the knowledge base resource of this abstract autonomic manager */
+	private URI knowledgeBaseResource = URI.create(AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE);
+	
+	/** the knowledge base of this abstract autonomic manager */
+	private KnowledgeBase knowledgeBase = new KnowledgeBase();
+	
 	/** the source scenario of this abstract autonomic manager */
 	private Scenario sourceScenario = null;
 	
@@ -150,9 +155,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	
 	/** the planner executor of this abstract autonomic manager */
 	private ExecutorService plannerExecutor = null;
-	
-	/** the knowledge base of this abstract autonomic manager */
-	private KnowledgeBase knowledgeBase = new KnowledgeBase();
 	
 	/** the plan start time of this abstract autonomic manager */
 	private ZonedDateTime planStartTime = null;
@@ -225,11 +227,63 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 * 
 	 * @param featureHorizon the feature horizon to be set
 	 * 
+	 * @throws IllegalArgumentException if feature horizon is null or negative
+	 * 
 	 * @see AutonomicManager#setFeatureHorizon(Duration)
 	 */
 	@Override
 	public void setFeatureHorizon(Duration featureHorizon) {
+		if ((null == featureHorizon) || (featureHorizon.isNegative())) {
+			throw new IllegalArgumentException("feature horizon is invalid");
+		}
 		this.featureHorizon = featureHorizon;
+	}
+	
+	/**
+	 * Gets the knowledge base resource of this abstract autonomic manager.
+	 * 
+	 * @return the knowledge base resource of this abstract autonomic manager
+	 * 
+	 * @see AutonomicManager#getKnowledgeBaseResource()
+	 */
+	@Override
+	public URI getKnowledgeBaseResource() {
+		return this.knowledgeBaseResource;
+	}
+	
+	/**
+	 * Sets the knowledge base resource of this abstract autonomic manager.
+	 * 
+	 * @param knowledgeBaseResource the knowledge base resource to be set
+	 * 
+	 * @throws IllegalArgumentException if the knowledge base resource is
+	 *                                  invalid
+	 * @see AutonomicManager#setKnowledgeBaseResource(URI)
+	 */
+	@Override
+	public void setKnowledgeBaseResource(URI knowledgeBaseResource) {
+		if (null == knowledgeBaseResource) {
+			throw new IllegalArgumentException("knowledge base resource is invalid");
+		}
+		this.knowledgeBaseResource = knowledgeBaseResource;
+	}
+	
+	/**
+	 * Gets the knowledge base of this abstract autonomic manager.
+	 * 
+	 * @return the knowledge base of this abstract autonomic manager
+	 */
+	protected KnowledgeBase getKnowledgeBase() {
+		return this.knowledgeBase;
+	}
+	
+	/**
+	 * Sets the knowledge base of this abstract autonomic manager.
+	 * 
+	 * @param knowledgeBase the knowledge base to be set
+	 */
+	protected void setKnowledgeBase(KnowledgeBase knowledgeBase) {
+		this.knowledgeBase = knowledgeBase;
 	}
 	
 	/**
@@ -937,8 +991,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		}
 		
 		if (this.hasManagedScenarios()) {
-			// TODO: autonomic manager knowledge base URI property
-			// TODO: load knowledge base
+			// load knowledge base
+			this.getKnowledgeBase().load(this.getKnowledgeBaseResource());
 			// execute managed planners in parallel
 			this.setActivePlanner((ManagedPlanner)
 					this.getManagedScenarios().stream().findFirst().get().getPlanner());
@@ -1006,12 +1060,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			this.plannerExecutor.shutdown();
 			this.setActivePlanner(null);
 			this.getSourceScenario().clearTrajectory();
-			// TODO: autonomic manager knowledge base URI property
-			try {
-				this.knowledgeBase.save(new URI("file:///tmp/knowledge-base.obj"));
-			} catch (URISyntaxException e) {
-				e.printStackTrace();
-			}
+			// save knowledge base
+			this.getKnowledgeBase().save(this.getKnowledgeBaseResource());
 		}
 	}
 	
@@ -1196,7 +1246,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		// TODO: knowledge base getters / setters / loading / saving
 		PlannerPerformance performance = new PlannerPerformance(rtq, rdq);
 		PlannerTuning tuning = this.getPlannerTuning(scenario);
-		this.knowledgeBase.getReputation().addTuningPerformance(tuning, performance);
+		this.getKnowledgeBase().getReputation().addTuningPerformance(tuning, performance);
 		Logging.logger().info("added performance " + performance.toString());
 		
 		Logging.logger().info("current source sub-trajectory = " + st);

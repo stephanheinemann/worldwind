@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.managers;
 
+import java.net.URI;
 import java.time.Duration;
 
 import com.cfar.swim.worldwind.connections.DatalinkTracker;
@@ -95,6 +96,20 @@ public interface AutonomicManager extends FactoryProduct, DynamicObstacleListene
 	 * @param featureHorizon the feature horizon to be set
 	 */
 	public void setFeatureHorizon(Duration featureHorizon);
+	
+	/**
+	 * Gets the knowledge base resource of this autonomic manager.
+	 * 
+	 * @return the knowledge base resource of this autonomic manager
+	 */
+	public URI getKnowledgeBaseResource();
+	
+	/**
+	 * Sets the knowledge base resource of this autonomic manager.
+	 * 
+	 * @param knowledgeBaseResource the knowledge base resource to be set
+	 */
+	public void setKnowledgeBaseResource(URI knowledgeBaseResource);
 	
 	/**
 	 * Gets the minimum deliberation duration of this autonomic manager.

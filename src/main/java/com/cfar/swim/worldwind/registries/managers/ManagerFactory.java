@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.registries.managers;
 
+import java.net.URI;
 import java.time.Duration;
 
 import com.cfar.swim.worldwind.managers.AutonomicManager;
@@ -98,6 +99,10 @@ public class ManagerFactory extends AbstractFactory<AutonomicManager> {
 				manager.setCostPolicy(properties.getCostPolicy());
 				manager.setRiskPolicy(properties.getRiskPolicy());
 				manager.setFeatureHorizon(Duration.ofSeconds(Math.round(properties.getFeatureHorizon() * 60d)));
+				try {
+					manager.setKnowledgeBaseResource(URI.create(properties.getKnowledgeBaseResource()));
+				} catch (IllegalArgumentException iae) {
+				}
 				manager.setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
 				manager.setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
 				AircraftTrackError maxTrackError = AircraftTrackError.maxAircraftTrackError();

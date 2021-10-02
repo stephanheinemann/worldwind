@@ -85,6 +85,20 @@ public interface ManagerProperties extends Properties<AutonomicManager> {
 	public void setFeatureHorizon(double featureHorizon);
 	
 	/**
+	 * Gets the knowledge base resource of this manager properties bean.
+	 * 
+	 * @return the knowledge base resource of this manager properties bean
+	 */
+	public String getKnowledgeBaseResource();
+	
+	/**
+	 * Sets the knowledge base resource of this manager properties bean.
+	 * 
+	 * @param knowledgeBaseResource the knowledge base resource to be set
+	 */
+	public void setKnowledgeBaseResource(String knowledgeBaseResource);
+	
+	/**
 	 * Gets the minimum deliberation duration of this manager properties bean
 	 * in seconds.
 	 * 
