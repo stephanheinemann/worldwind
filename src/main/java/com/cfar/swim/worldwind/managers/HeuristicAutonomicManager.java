@@ -35,6 +35,12 @@ import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.util.Identifiable;
 
+/**
+ * Realizes a heuristic autonomic manager.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class HeuristicAutonomicManager extends AbstractAutonomicManager {
 	
 	/**
@@ -50,7 +56,7 @@ public class HeuristicAutonomicManager extends AbstractAutonomicManager {
 	}
 	
 	/**
-	 * Creates a new heuristic planner tuning for this abstract autonomic
+	 * Creates a new heuristic planner tuning for this heuristic autonomic
 	 * manager based on a planner specification and features.
 	 * 
 	 * @param specification the planner specification

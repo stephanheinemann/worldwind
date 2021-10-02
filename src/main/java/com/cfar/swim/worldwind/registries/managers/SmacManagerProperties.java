@@ -30,14 +30,14 @@
 package com.cfar.swim.worldwind.registries.managers;
 
 /**
- * Realizes the properties bean of a heuristic autonomic manager.
+ * Realizes the properties bean of a SMAC autonomic manager.
  * 
  * @author Stephan Heinemann
  *
  */
-public class HeuristicManagerProperties extends AbstractManagerProperties {
+public class SmacManagerProperties extends AbstractManagerProperties {
 	
-	/** the default serial identification of this heuristic manager properties bean */
+	/** the default serial identification of this SMAC manager properties bean */
 	private static final long serialVersionUID = 1L;
 	
 }

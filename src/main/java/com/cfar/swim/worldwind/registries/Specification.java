@@ -231,6 +231,14 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getDictionaryBundle()
 			.getString("specification.manager.heuristic.description");
 	
+	/** the identifier of a SMAC manager specification */
+	public static final String MANAGER_SMAC_ID = "SMAC Autonomic Manager";
+	
+	/** the description of a SMAC manager specification */
+	public static final String MANAGER_SMAC_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.manager.smac.description");
+	
 	/** the identifier of this specification */
 	private final String id;
 	

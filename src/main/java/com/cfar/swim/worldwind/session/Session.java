@@ -60,6 +60,7 @@ import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties;
 import com.cfar.swim.worldwind.registries.managers.HeuristicManagerProperties;
 import com.cfar.swim.worldwind.registries.managers.ManagerFactory;
+import com.cfar.swim.worldwind.registries.managers.SmacManagerProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
@@ -239,7 +240,7 @@ public class Session implements Identifiable {
 		// autonomic managers
 		this.managerRegistry.clearSpecifications();
 		this.managerRegistry.addSpecification(new Specification<AutonomicManager>(Specification.MANAGER_HEURISTIC_ID, Specification.MANAGER_HEURISTIC_DESCRIPTION, new HeuristicManagerProperties()));
-		// TODO: ROAR and SMAC managers
+		this.managerRegistry.addSpecification(new Specification<AutonomicManager>(Specification.MANAGER_SMAC_ID, Specification.MANAGER_SMAC_DESCRIPTION, new SmacManagerProperties()));
 		this.addActiveScenarioChangeListener(this.managerFactory.getActiveScenarioChangeListener());
 		
 		// modifications on setup shall always be reflected in the registries
