@@ -558,7 +558,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 * @param partIndex the index of the plan part to be improved
 	 * 
 	 */
-	protected synchronized void improve(int partIndex) {
+	protected void improve(int partIndex) {
 		this.backup(partIndex);
 		// TODO: potentially deflate below actual current sub-optimality
 		// bound for more aggressive optimization 

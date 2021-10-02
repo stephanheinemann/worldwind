@@ -669,16 +669,18 @@ implements DynamicPlanner, LifelongPlanner {
 	 * @param partIndex the index of the plan to be improved
 	 */
 	@Override
-	protected synchronized void improve(int partIndex) {
+	protected void improve(int partIndex) {
 		this.backup(partIndex);
-
-		// determine significant change
-		if (this.hasSignificantChange()) {
-			// inflate to lower quality or re-plan from scratch
-			this.inflate();
-		} else if (!this.isDeflated()) {
-			// deflate to higher quality and continue improving
-			this.deflate();
+		
+		synchronized(this) {
+			// determine significant change
+			if (this.hasSignificantChange()) {
+				// inflate to lower quality or re-plan from scratch
+				this.inflate();
+			} else if (!this.isDeflated()) {
+				// deflate to higher quality and continue improving
+				this.deflate();
+			}
 		}
 		
 		this.restore(partIndex);
