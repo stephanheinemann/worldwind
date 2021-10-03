@@ -133,6 +133,8 @@ public class Features extends HashMap<String, Object> {
 	public static final String FEATURE_POIS_DISTANCE_MAX = "feature.pois.distance.max";
 	/** the POIs minimum consecutive distance feature key of these features */
 	public static final String FEATURE_POIS_DISTANCE_MIN = "feature.pois.distance.min";
+	/** the POIs accumulated consecutive distance feature key of these features */
+	public static final String FEATURE_POIS_DISTANCE_SUM = "feature.pois.distance.sum";
 	/** the POIS average consecutive vertical distance feature key of these features */
 	public static final String FEATURE_POIS_DISTANCE_VERTICAL_AVG = "feature.pois.distance.vertical.avg";
 	/** the POIS maximum consecutive vertical distance feature key of these features */
@@ -505,6 +507,9 @@ public class Features extends HashMap<String, Object> {
 		this.put(Features.FEATURE_POIS_DISTANCE_MIN,
 				poiDistances.stream()
 				.mapToDouble(Double::valueOf).min().getAsDouble());
+		this.put(Features.FEATURE_POIS_DISTANCE_SUM,
+				poiDistances.stream()
+				.mapToDouble(Double::valueOf).sum());
 		this.put(Features.FEATURE_POIS_DISTANCE_VERTICAL_AVG,
 				poiVerticalDistances.stream()
 				.mapToDouble(Double::valueOf).average().getAsDouble());
@@ -804,6 +809,7 @@ public class Features extends HashMap<String, Object> {
 		this.remove(Features.FEATURE_POIS_DISTANCE_AVG);
 		this.remove(Features.FEATURE_POIS_DISTANCE_MAX);
 		this.remove(Features.FEATURE_POIS_DISTANCE_MIN);
+		this.remove(Features.FEATURE_POIS_DISTANCE_SUM);
 		this.remove(Features.FEATURE_POIS_DISTANCE_VERTICAL_AVG);
 		this.remove(Features.FEATURE_POIS_DISTANCE_VERTICAL_MAX);
 		this.remove(Features.FEATURE_POIS_DISTANCE_VERTICAL_MIN);
@@ -1017,6 +1023,12 @@ public class Features extends HashMap<String, Object> {
 			features = features.concat(this.dictionary.getString(
 					Features.FEATURE_POIS_DISTANCE_MIN) + " = "
 					+ this.get(Features.FEATURE_POIS_DISTANCE_MIN)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_POIS_DISTANCE_SUM)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_POIS_DISTANCE_SUM) + " = "
+					+ this.get(Features.FEATURE_POIS_DISTANCE_SUM)
 					+ "\n");
 		}
 		if (this.containsKey(Features.FEATURE_POIS_DISTANCE_VERTICAL_AVG)) {
