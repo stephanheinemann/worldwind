@@ -29,38 +29,58 @@
  */
 package com.cfar.swim.worldwind.registries.managers;
 
-import com.cfar.swim.worldwind.managing.SmacManagerMode;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
- * Realizes the properties bean of a SMAC autonomic manager.
- * 
- * @author Stephan Heinemann
- *
- */
-public class SmacManagerProperties extends AbstractManagerProperties {
-	
-	/** the default serial identification of this SMAC manager properties bean */
-	private static final long serialVersionUID = 1L;
-	
-	/** the manager mode of this SMAC manager properties bean */
-	private SmacManagerMode managerMode = SmacManagerMode.EXECUTING;
+* Realizes a SMAC manager properties bean information customizing the
+* descriptors for each property.
+* 
+* @author Stephan Heinemann
+*
+*/
+public class SmacManagerPropertiesBeanInfo extends AbstractManagerPropertiesBeanInfo {
 	
 	/**
-	 * Gets the manager mode of this SMAC manager properties bean.
-	 * 
-	 * @return the manager mode of this SMAC manager properties bean
+	 * Constructs a SMAC manager properties bean information.
 	 */
-	public SmacManagerMode getManagerMode() {
-		return this.managerMode;
+	public SmacManagerPropertiesBeanInfo() {
+		super(SmacManagerProperties.class);
 	}
 	
 	/**
-	 * Sets the manager mode of this SMAC manager properties bean.
+	 * Customizes the property descriptors for each property of a SMAC manager
+	 * properties bean.
 	 * 
-	 * @param managerMode the manager mode to be set
+	 * @return the array of customized property descriptors
+	 * 
+	 * @see java.beans.SimpleBeanInfo#getPropertyDescriptors()
 	 */
-	public void setManagerMode(SmacManagerMode managerMode) {
-		this.managerMode = managerMode;
+	@Override
+	public PropertyDescriptor[] getPropertyDescriptors() {
+		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
+		
+		try {
+			PropertyDescriptor managerMode = this.createPropertyDescriptor(
+					"managerMode",
+					this.dictionary.getString("property.manager.smac.managerMode.name"),
+					this.dictionary.getString("property.manager.smac.managerMode.description"),
+					this.dictionary.getString("property.manager.category.managing"));
+			
+			PropertyDescriptor[] samDescriptors = new PropertyDescriptor[] {
+					managerMode};
+			
+			descriptors = Stream.concat(
+					Arrays.stream(descriptors), Arrays.stream(samDescriptors))
+					.toArray(PropertyDescriptor[]::new);
+			
+		} catch (IntrospectionException e) {
+			e.printStackTrace();
+		}
+		
+		return descriptors;
 	}
 	
 }

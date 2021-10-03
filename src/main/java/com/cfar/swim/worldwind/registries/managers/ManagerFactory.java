@@ -34,6 +34,7 @@ import java.time.Duration;
 
 import com.cfar.swim.worldwind.managers.AutonomicManager;
 import com.cfar.swim.worldwind.managers.HeuristicAutonomicManager;
+import com.cfar.swim.worldwind.managers.SmacAutonomicManager;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
@@ -118,10 +119,35 @@ public class ManagerFactory extends AbstractFactory<AutonomicManager> {
 				maxLandingError.setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
 				manager.setMaxLandingError(maxLandingError);
 				manager.setSourceScenario(this.getScenario());
+			} else if (this.getSpecification().getId().equals(Specification.MANAGER_SMAC_ID)) {
+				SmacManagerProperties properties = (SmacManagerProperties) this.getSpecification().getProperties();
+				manager = new SmacAutonomicManager();
+				manager.setCostPolicy(properties.getCostPolicy());
+				manager.setRiskPolicy(properties.getRiskPolicy());
+				manager.setFeatureHorizon(Duration.ofSeconds(Math.round(properties.getFeatureHorizon() * 60d)));
+				try {
+					manager.setKnowledgeBaseResource(URI.create(properties.getKnowledgeBaseResource()));
+				} catch (IllegalArgumentException iae) {
+				}
+				manager.setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
+				manager.setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
+				AircraftTrackError maxTrackError = AircraftTrackError.maxAircraftTrackError();
+				maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
+				maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+				manager.setMaxTrackError(maxTrackError);
+				AircraftTrackPointError maxTakeOffError = AircraftTrackPointError.maxAircraftTrackPointError();
+				maxTakeOffError.setHorizontalError(properties.getMaxTakeOffHorizontalError());
+				maxTakeOffError.setTimingError(Duration.ofSeconds(properties.getMaxTakeOffTimingError()));
+				manager.setMaxTakeOffError(maxTakeOffError);
+				AircraftTrackPointError maxLandingError = AircraftTrackPointError.maxAircraftTrackPointError();
+				maxLandingError.setHorizontalError(properties.getMaxLandingHorizontalError());
+				maxLandingError.setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
+				manager.setMaxLandingError(maxLandingError);
+				manager.setSourceScenario(this.getScenario());
+				((SmacAutonomicManager) manager).setManagerMode(properties.getManagerMode());
 			}
-			// TODO: ROAR, SMAC autonomic managers
 		}
-			
+		
 		return manager;
 	}
 

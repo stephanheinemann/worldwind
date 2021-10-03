@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.managers;
 
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
+import com.cfar.swim.worldwind.managing.SmacManagerMode;
 import com.cfar.swim.worldwind.managing.SmacPlannerTuning;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -44,6 +45,9 @@ import com.cfar.swim.worldwind.util.Identifiable;
  */
 public class SmacAutonomicManager extends AbstractAutonomicManager implements AutonomicManager {
 	
+	/** the manager mode of this SMAC autonomic manager */
+	private SmacManagerMode managerMode = SmacManagerMode.EXECUTING;
+	
 	/**
 	 * Gets the identifier of this SMAC autonomic manager.
 	 * 
@@ -54,6 +58,24 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	@Override
 	public String getId() {
 		return Specification.MANAGER_SMAC_ID;
+	}
+	
+	/**
+	 * Gets the manager mode of this SMAC autonomic manager.
+	 * 
+	 * @return the manager mode of this SMAC autonomic manager
+	 */
+	public SmacManagerMode getManagerMode() {
+		return this.managerMode;
+	}
+	
+	/**
+	 * Sets the manager mode of this SMAC autonomic manager.
+	 * 
+	 * @param managerMode the manager mode to be set
+	 */
+	public void setManagerMode(SmacManagerMode managerMode) {
+		this.managerMode = managerMode;
 	}
 	
 	/**
@@ -72,5 +94,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			Specification<Planner> specification, Features features) {
 		return new SmacPlannerTuning(specification, features);
 	}
-
+	
+	// TODO: override abstract manager methods for SmacManagerMode.TRAINING
+	
 }
