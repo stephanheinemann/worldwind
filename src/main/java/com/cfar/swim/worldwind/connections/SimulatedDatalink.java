@@ -80,6 +80,9 @@ public class SimulatedDatalink extends Datalink {
 	
 	// TODO: available status and mode constants (consider enum)
 	
+	/** the uplink delay of this simulated datalink */
+	private Duration uplinkDelay = Duration.ofMillis(500);
+	
 	/** the gobe of this simulated datalink */
 	private Globe globe = new Earth();
 	
@@ -154,6 +157,29 @@ public class SimulatedDatalink extends Datalink {
 	@Override
 	public String getId() {
 		return Specification.CONNECTION_DATALINK_SIMULATED_ID;
+	}
+	
+	/**
+	 * Gets the uplink delay of this simulated datalink.
+	 * 
+	 * @return the uplink delay of this simulated datalink
+	 */
+	public Duration getUplinkDelay() {
+		return this.uplinkDelay;
+	}
+	
+	/**
+	 * Sets the uplink delay of this simulated datalink.
+	 * 
+	 * @param uplinkDelay the uplink delay to be set
+	 * 
+	 * @throws IllegalArgumentException if the uplink delay is invalid
+	 */
+	public void setUplinkDelay(Duration uplinkDelay) {
+		if ((null == uplinkDelay) ||  uplinkDelay.isZero()) {
+			throw new IllegalArgumentException("uplink delay is invalid");
+		}
+		this.uplinkDelay = uplinkDelay;
 	}
 	
 	/**
@@ -462,7 +488,7 @@ public class SimulatedDatalink extends Datalink {
 		}
 		
 		try {
-			Thread.sleep(2000);
+			Thread.sleep(this.getUplinkDelay().toMillis());
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
@@ -522,7 +548,7 @@ public class SimulatedDatalink extends Datalink {
 			this.eto = ZonedDateTime.now(ZoneId.of("UTC"));
 			this.ete = Duration.ZERO;
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(this.getUplinkDelay().toMillis());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -542,7 +568,7 @@ public class SimulatedDatalink extends Datalink {
 			this.setAircraftMode(SimulatedDatalink.MODE_LAND);
 			this.nextPosition = this.iris.getReferencePosition();
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(this.getUplinkDelay().toMillis());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -563,7 +589,7 @@ public class SimulatedDatalink extends Datalink {
 			Path rtl = new Path(this.getAircraftPosition(), this.homePosition);
 			this.uploadMission(rtl);
 			try {
-				Thread.sleep(2000);
+				Thread.sleep(this.getUplinkDelay().toMillis());
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -636,7 +662,8 @@ public class SimulatedDatalink extends Datalink {
 		if (matches && (specification.getProperties() instanceof SimulatedDatalinkProperties)) {
 			SimulatedDatalinkProperties properties =
 					(SimulatedDatalinkProperties) specification.getProperties();
-			matches = (this.maxTrackError.getCrossTrackError() == properties.getMaxCrossTrackError())
+			matches = (this.getUplinkDelay().toMillis() == properties.getUplinkDelay())
+					&& (this.maxTrackError.getCrossTrackError() == properties.getMaxCrossTrackError())
 					&& (this.maxTrackError.getTimingError().equals(properties.getMaxTimingError()))
 					&& (this.errorProbability == properties.getErrorProbability());
 		}
@@ -661,6 +688,7 @@ public class SimulatedDatalink extends Datalink {
 		if (updated && (specification.getProperties() instanceof SimulatedDatalinkProperties)) {
 			SimulatedDatalinkProperties properties =
 					(SimulatedDatalinkProperties) specification.getProperties();
+			this.setUplinkDelay(Duration.ofMillis(properties.getUplinkDelay()));
 			this.getMaxTrackError().setCrossTrackError(properties.getMaxCrossTrackError());
 			this.getMaxTrackError().setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
 			this.setErrorProbablity(properties.getErrorProbability());

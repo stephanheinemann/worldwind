@@ -753,7 +753,7 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 			
 			// ensure sufficient track points for on-track assessment
 			long maxAge = last.getMaxAge().toMillis();
-			long period = this.getDatalink().getDownlinkPeriod();
+			long period = this.getDatalink().getDownlinkPeriod().toMillis();
 			long maxTrackPoints = maxAge / period;
 			
 			if (track.size() >= (maxTrackPoints - 1)) {

@@ -89,7 +89,8 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 		if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_SIMULATED_ID)) {
 			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) this.getSpecification().getProperties();
 			connection = new SimulatedDatalink();
-			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
+			connection.setDownlinkPeriod(Duration.ofMillis(properties.getDownlinkPeriod()));
+			((SimulatedDatalink) connection).setUplinkDelay(Duration.ofMillis(properties.getUplinkDelay()));
 			AircraftTrackError maxTrackError = new AircraftTrackError();
 			maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
 			maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
@@ -100,7 +101,7 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 		} else if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID)) {
 			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) this.getSpecification().getProperties();
 			connection = new DronekitDatalink(properties.getHost(), properties.getPort());
-			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
+			connection.setDownlinkPeriod(Duration.ofMillis(properties.getDownlinkPeriod()));
 		}
 		
 		return connection;

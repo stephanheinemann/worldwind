@@ -49,6 +49,11 @@ public class SimulatedDatalinkProperties extends DatalinkProperties {
 	
 	// TODO: aircraft (simulated performance)
 	
+	/** the uplink delay of this simulated datalink properties bean */
+	@Min(value = 0, message = "{property.connection.datalink.simulated.uplinkDelay.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.connection.datalink.simulated.uplinkDelay.max}")
+	private long uplinkDelay = 500;
+	
 	/** the maximum possible cross track error of this simulated datalink properties bean */
 	@Min(value = 0, message = "{property.connection.datalink.simulated.maxCrossTrackError.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.connection.datalink.simulated.maxCrossTrackError.max}")
@@ -63,6 +68,27 @@ public class SimulatedDatalinkProperties extends DatalinkProperties {
 	@DecimalMin(value = "0", message = "{property.connection.datalink.simulated.errorProbability.min}")
 	@DecimalMax(value = "1", message = "{property.connection.datalink.simulated.errorProbability.max}")
 	private float errorProbability;
+	
+	/**
+	 * Gets the uplink delay of this simulated datalink properties bean in
+	 * milliseconds.
+	 * 
+	 * @return the uplink delay of this simulated datalink properties bean in
+	 *         milliseconds
+	 */
+	public long getUplinkDelay() {
+		return this.uplinkDelay;
+	}
+	
+	/**
+	 * Sets the uplink delay of this simulated datalink properties bean in
+	 * milliseconds.
+	 * 
+	 * @param uplinkDelay the uplink delay to be set in milliseconds
+	 */
+	public void setUplinkDelay(long uplinkDelay) {
+		this.uplinkDelay = uplinkDelay;
+	}
 	
 	/**
 	 * Gets the maximum possible cross track error of this simulated datalink
@@ -145,7 +171,8 @@ public class SimulatedDatalinkProperties extends DatalinkProperties {
 		
 		if (equals) {
 			SimulatedDatalinkProperties sdlp = (SimulatedDatalinkProperties) o;
-			equals = (this.maxCrossTrackError == sdlp.maxCrossTrackError)
+			equals = (this.uplinkDelay == sdlp.uplinkDelay)
+					&& (this.maxCrossTrackError == sdlp.maxCrossTrackError)
 					&& (this.maxTimingError == sdlp.maxTimingError)
 					&& (this.errorProbability == sdlp.errorProbability);
 		}
@@ -166,6 +193,7 @@ public class SimulatedDatalinkProperties extends DatalinkProperties {
 	public int hashCode() {
 		return Objects.hash(
 				super.hashCode(),
+				this.uplinkDelay,
 				this.maxCrossTrackError,
 				this.maxTimingError,
 				this.errorProbability);

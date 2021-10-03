@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.connections;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.time.Duration;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -58,7 +59,7 @@ public abstract class Datalink implements Connection {
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
 	/** the downlink (monitoring) period of this datalink */
-	private long downlinkPeriod = 1000; // ms
+	private Duration downlinkPeriod = Duration.ofMillis(1000);
 	
 	/** the cached mission of this datalink */
 	private Path mission = new Path();
@@ -335,21 +336,21 @@ public abstract class Datalink implements Connection {
 	/**
 	 * Gets the downlink (monitoring) period of this datalink.
 	 * 
-	 * @return the downlink period of this datalink in milliseconds
+	 * @return the downlink period of this datalink
 	 */
-	public long getDownlinkPeriod() {
+	public Duration getDownlinkPeriod() {
 		return this.downlinkPeriod;
 	}
 	
 	/**
 	 * Sets the downlink (monitoring) period of this datalink.
 	 * 
-	 * @param downlinkPeriod the downlink period to be set in milliseconds
+	 * @param downlinkPeriod the downlink period to be set
 	 * 
 	 * @throws IllegalArgumentException if the downlink period is invalid
 	 */
-	public void setDownlinkPeriod(long downlinkPeriod) {
-		if (1 <= downlinkPeriod) {
+	public void setDownlinkPeriod(Duration downlinkPeriod) {
+		if (!downlinkPeriod.isNegative() && !downlinkPeriod.isZero()) {
 			this.downlinkPeriod = downlinkPeriod;
 		} else {
 			throw new IllegalArgumentException("downlink period is invalid");
@@ -366,7 +367,7 @@ public abstract class Datalink implements Connection {
 			this.executor.scheduleAtFixedRate(
 					new DatalinkMonitor(),
 					0,
-					this.downlinkPeriod,
+					this.getDownlinkPeriod().toMillis(),
 					TimeUnit.MILLISECONDS);
 		}
 	}
@@ -464,7 +465,7 @@ public abstract class Datalink implements Connection {
 				&& (specification.getProperties() instanceof DatalinkProperties)) {
 			
 			DatalinkProperties dlp = (DatalinkProperties) specification.getProperties();
-			matches = (this.downlinkPeriod == dlp.getDownlinkPeriod());
+			matches = (this.getDownlinkPeriod().equals(dlp.getDownlinkPeriod()));
 		}
 	
 		return matches;
@@ -489,7 +490,7 @@ public abstract class Datalink implements Connection {
 				&& !this.matches(specification)) {
 			
 			DatalinkProperties properties = (DatalinkProperties) specification.getProperties();
-			this.setDownlinkPeriod(properties.getDownlinkPeriod());
+			this.setDownlinkPeriod(Duration.ofMillis(properties.getDownlinkPeriod()));
 			updated = true;
 		}
 		

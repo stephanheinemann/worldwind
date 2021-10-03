@@ -63,6 +63,11 @@ public class SimulatedDatalinkPropertiesBeanInfo extends DatalinkPropertiesBeanI
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
+			PropertyDescriptor uplinkDelay = this.createPropertyDescriptor(
+					"uplinkDelay",
+					this.dictionary.getString("property.connection.datalink.simulated.uplinkDelay.name"),
+					this.dictionary.getString("property.connection.datalink.simulated.uplinkDelay.description"),
+					this.dictionary.getString("property.connection.datalink.category.connection"));
 			PropertyDescriptor maxCrossTrackError = this.createPropertyDescriptor(
 					"maxCrossTrackError",
 					this.dictionary.getString("property.connection.datalink.simulated.maxCrossTrackError.name"),
@@ -80,6 +85,7 @@ public class SimulatedDatalinkPropertiesBeanInfo extends DatalinkPropertiesBeanI
 					this.dictionary.getString("property.connection.datalink.category.error"));
 			
 			PropertyDescriptor[] sdlDescriptors = new PropertyDescriptor[] {
+					uplinkDelay,
 					maxCrossTrackError,
 					maxTimingError,
 					errorProbability};
