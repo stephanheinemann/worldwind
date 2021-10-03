@@ -133,6 +133,14 @@ public class Features extends HashMap<String, Object> {
 	public static final String FEATURE_POIS_DISTANCE_MAX = "feature.pois.distance.max";
 	/** the POIs minimum consecutive distance feature key of these features */
 	public static final String FEATURE_POIS_DISTANCE_MIN = "feature.pois.distance.min";
+	/** the POIS average consecutive vertical distance feature key of these features */
+	public static final String FEATURE_POIS_DISTANCE_VERTICAL_AVG = "feature.pois.distance.vertical.avg";
+	/** the POIS maximum consecutive vertical distance feature key of these features */
+	public static final String FEATURE_POIS_DISTANCE_VERTICAL_MAX = "feature.pois.distance.vertical.max";
+	/** the POIS minimum consecutive vertical distance feature key of these features */
+	public static final String FEATURE_POIS_DISTANCE_VERTICAL_MIN = "feature.pois.distance.vertical.min";
+	/** the POIS accumulated consecutive vertical distance feature key of these features */
+	public static final String FEATURE_POIS_DISTANCE_VERTICAL_SUM = "feature.pois.distance.vertical.sum";
 	/** the POIs diameter feature key of these features */
 	public static final String FEATURE_POIS_DIAMETER = "feature.pois.diameter";
 	/** the POIs volume feature key of these features */
@@ -477,11 +485,13 @@ public class Features extends HashMap<String, Object> {
 		
 		// distances between consecutive POIs
 		List<Double> poiDistances = new ArrayList<>();
+		List<Double> poiVerticalDistances = new ArrayList<>();
 		Iterator<Waypoint> poiIterator = pois.iterator();
 		Waypoint current = poiIterator.next();
 		while (poiIterator.hasNext()) {
 			Waypoint next = poiIterator.next();
 			poiDistances.add(env.getDistance(current, next));
+			poiVerticalDistances.add(next.getAltitude() - current.getAltitude());
 			current = next;
 		}
 		
@@ -495,6 +505,18 @@ public class Features extends HashMap<String, Object> {
 		this.put(Features.FEATURE_POIS_DISTANCE_MIN,
 				poiDistances.stream()
 				.mapToDouble(Double::valueOf).min().getAsDouble());
+		this.put(Features.FEATURE_POIS_DISTANCE_VERTICAL_AVG,
+				poiVerticalDistances.stream()
+				.mapToDouble(Double::valueOf).average().getAsDouble());
+		this.put(Features.FEATURE_POIS_DISTANCE_VERTICAL_MAX,
+				poiVerticalDistances.stream()
+				.mapToDouble(Double::valueOf).max().getAsDouble());
+		this.put(Features.FEATURE_POIS_DISTANCE_VERTICAL_MIN,
+				poiVerticalDistances.stream()
+				.mapToDouble(Double::valueOf).min().getAsDouble());
+		this.put(Features.FEATURE_POIS_DISTANCE_VERTICAL_SUM,
+				poiVerticalDistances.stream()
+				.mapToDouble(Double::valueOf).sum());
 		
 		ObstaclePath poiPath = new ObstaclePath(pois);
 		Extent poiExtent = poiPath.getExtent(env.getGlobe());
@@ -782,6 +804,10 @@ public class Features extends HashMap<String, Object> {
 		this.remove(Features.FEATURE_POIS_DISTANCE_AVG);
 		this.remove(Features.FEATURE_POIS_DISTANCE_MAX);
 		this.remove(Features.FEATURE_POIS_DISTANCE_MIN);
+		this.remove(Features.FEATURE_POIS_DISTANCE_VERTICAL_AVG);
+		this.remove(Features.FEATURE_POIS_DISTANCE_VERTICAL_MAX);
+		this.remove(Features.FEATURE_POIS_DISTANCE_VERTICAL_MIN);
+		this.remove(Features.FEATURE_POIS_DISTANCE_VERTICAL_SUM);
 		this.remove(Features.FEATURE_POIS_OBSTACLES_COUNT);
 		this.remove(Features.FEATURE_POIS_OBSTACLES_COST_POLICIES);
 		this.remove(Features.FEATURE_POIS_OBSTACLES_COST_AVG);
@@ -991,6 +1017,30 @@ public class Features extends HashMap<String, Object> {
 			features = features.concat(this.dictionary.getString(
 					Features.FEATURE_POIS_DISTANCE_MIN) + " = "
 					+ this.get(Features.FEATURE_POIS_DISTANCE_MIN)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_POIS_DISTANCE_VERTICAL_AVG)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_POIS_DISTANCE_VERTICAL_AVG) + " = "
+					+ this.get(Features.FEATURE_POIS_DISTANCE_VERTICAL_AVG)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_POIS_DISTANCE_VERTICAL_MAX)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_POIS_DISTANCE_VERTICAL_MAX) + " = "
+					+ this.get(Features.FEATURE_POIS_DISTANCE_VERTICAL_MAX)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_POIS_DISTANCE_VERTICAL_MIN)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_POIS_DISTANCE_VERTICAL_MIN) + " = "
+					+ this.get(Features.FEATURE_POIS_DISTANCE_VERTICAL_MIN)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_POIS_DISTANCE_VERTICAL_SUM)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_POIS_DISTANCE_VERTICAL_SUM) + " = "
+					+ this.get(Features.FEATURE_POIS_DISTANCE_VERTICAL_SUM)
 					+ "\n");
 		}
 		if (this.containsKey(Features.FEATURE_POIS_DIAMETER)) {
