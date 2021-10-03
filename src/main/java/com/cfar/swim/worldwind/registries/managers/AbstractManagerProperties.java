@@ -56,7 +56,7 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	private static final long serialVersionUID = 1L;
 	
 	/** the default knowledge base resource of this abstract manager properties bean */
-	public static final String KNOWLEDGE_BASE_RESOURCE = "file:///tmp/safcs-knowledge-base.bin";
+	public static final String KNOWLEDGE_BASE_RESOURCE = "file:///var/tmp/safcs-knowledge-base.bin";
 	
 	/** the cost policy of this abstract manager properties bean */
 	CostPolicy costPolicy;
