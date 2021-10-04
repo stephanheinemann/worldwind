@@ -344,6 +344,11 @@
 			<artifactId>oshi-core-java11</artifactId>
 			<version>5.8.2</version>
 		</dependency>
+		<!--dependency>
+			<groupId>ca.ubc.cs.beta</groupId>
+			<artifactId>smac</artifactId>
+			<version>2.10.3-SNAPSHOT</version>
+		</dependency-->
 		<dependency>
 			<groupId>com.uvic-cfar.swim</groupId>
 			<artifactId>iwxxm-jaxb</artifactId>
