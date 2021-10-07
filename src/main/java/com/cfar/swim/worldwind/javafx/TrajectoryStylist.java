@@ -27,46 +27,47 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.managing;
+package com.cfar.swim.worldwind.javafx;
 
-import java.io.Serializable;
+import com.cfar.swim.worldwind.planning.Trajectory;
+import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
+import com.cfar.swim.worldwind.util.Depiction;
+
+import gov.nasa.worldwind.render.BasicShapeAttributes;
+import gov.nasa.worldwind.render.Material;
+import gov.nasa.worldwind.symbology.milstd2525.MilStd2525GraphicFactory;
 
 /**
- * Describes a performance.
+ * Realizes a trajectory stylist to style trajectories for display.
  * 
  * @author Stephan Heinemann
  *
- * @see Quality
- * @see Quantity
  */
-public interface Performance extends Comparable<Performance>, Serializable {
+public class TrajectoryStylist {
+	
+	/** the symbol factory of this trajectory stylist */
+	private static final MilStd2525GraphicFactory symbolFactory = new MilStd2525GraphicFactory();
 	
 	/**
-	 * Gets the measure of this performance.
+	 * Styles a trajectory for display.
 	 * 
-	 * @return the measure of this performance
+	 * @param trajectory the trajectory to be styled
 	 */
-	public double get();
-	
-	/**
-	 * Gets the quality of this performance.
-	 * 
-	 * @return the quality of this performance
-	 */
-	public Quality getQuality();
-	
-	/**
-	 * Gets the quantity of this performance.
-	 * 
-	 * @return the quantity of this performance
-	 */
-	public Quantity getQuantity();
-	
-	/**
-	 * Gets the context of this performance.
-	 * 
-	 * @return the context of this performance
-	 */
-	public PerformanceContext getContext();
+	public static void styleTrajectory(Trajectory trajectory) {
+		trajectory.setVisible(true);
+		trajectory.setShowPositions(true);
+		trajectory.setDrawVerticals(true);
+		trajectory.setAttributes(new BasicShapeAttributes());
+		trajectory.getAttributes().setOutlineMaterial(Material.MAGENTA);
+		trajectory.getAttributes().setOutlineWidth(5d);
+		trajectory.getAttributes().setOutlineOpacity(0.5d);
+		for (Waypoint waypoint : trajectory.getWaypoints()) {
+			Depiction depiction = new Depiction(symbolFactory.createPoint(Waypoint.SICD_NAV_WAYPOINT_ROUTE, waypoint, null));
+			depiction.setAnnotation(new DepictionAnnotation(waypoint.getEto().toString(), waypoint));
+			depiction.setVisible(true);
+			waypoint.setDepiction(depiction);
+		}
+	}
 	
 }

@@ -134,8 +134,10 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<includes>
+					<include>com/cfar/swim/worldwind/managers/smac/*.pcs</include>
 					<include>com/cfar/swim/worldwind/**/*.properties</include>
 					<include>config/*.xml</include>
+					<include>logback.xml</include>
 				</includes>
 			</resource>
 			<resource>
@@ -344,11 +346,11 @@
 			<artifactId>oshi-core-java11</artifactId>
 			<version>5.8.2</version>
 		</dependency>
-		<!--dependency>
+		<dependency>
 			<groupId>ca.ubc.cs.beta</groupId>
 			<artifactId>smac</artifactId>
 			<version>2.10.3-SNAPSHOT</version>
-		</dependency-->
+		</dependency>
 		<dependency>
 			<groupId>com.uvic-cfar.swim</groupId>
 			<artifactId>iwxxm-jaxb</artifactId>

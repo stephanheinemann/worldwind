@@ -46,6 +46,9 @@ public class TrajectoryQuality implements Quality {
 	/** the default serial identification of this trajectory quality */
 	private static final long serialVersionUID = 1L;
 	
+	/** the zero trajectory quality */
+	public static final TrajectoryQuality ZERO = new TrajectoryQuality(new Trajectory());
+	
 	/** the quality of this trajectory quality */
 	transient final Trajectory quality;
 	

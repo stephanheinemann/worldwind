@@ -29,7 +29,14 @@
  */
 package com.cfar.swim.worldwind.registries.managers;
 
-import com.cfar.swim.worldwind.managing.SmacManagerMode;
+import java.util.Objects;
+
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
+import com.cfar.swim.worldwind.managers.smac.SmacManagerMode;
 
 /**
  * Realizes the properties bean of a SMAC autonomic manager.
@@ -42,8 +49,61 @@ public class SmacManagerProperties extends AbstractManagerProperties {
 	/** the default serial identification of this SMAC manager properties bean */
 	private static final long serialVersionUID = 1L;
 	
+	/** the default workspace resource of this SMAC manager properties bean */
+	public static final String WORKSPACE_RESOURCE = "file:///var/tmp/safcs/smac";
+	
+	/** the default training runs of this SMAC manager properties bean */
+	public static final long TRAINING_RUNS = 1000l;
+	
+	/** the workspace resource of this SMAC manager properties bean */
+	@NotNull
+	@NotEmpty
+	private String worksapceResource = SmacManagerProperties.WORKSPACE_RESOURCE;
+	
+	/** the training runs of this SMAC manager properties bean */
+	@Min(value = 1, message = "{property.manager.smac.trainingRuns.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.manager.trainingRuns.max}")
+	private long trainingRuns = SmacManagerProperties.TRAINING_RUNS;
+	
 	/** the manager mode of this SMAC manager properties bean */
+	@NotNull
 	private SmacManagerMode managerMode = SmacManagerMode.EXECUTING;
+	
+	/**
+	 * Gets the workspace resource of this SMAC manager properties bean.
+	 * 
+	 * @return the workspace resource of this abstract manager properties bean
+	 */
+	public String getWorkspaceResource() {
+		return this.worksapceResource;
+	}
+	
+	/**
+	 * Sets the workspace resource of this SMAC manager properties bean.
+	 * 
+	 * @param workspaceResource the workspace resource to be set
+	 */
+	public void setWorkspaceResource(String workspaceResource) {
+		this.worksapceResource = workspaceResource;
+	}
+	
+	/**
+	 * Gets the training runs of this SMAC manager properties bean.
+	 * 
+	 * @return the training runs of this SMAC manager properties bean
+	 */
+	public long getTrainingRuns() {
+		return this.trainingRuns;
+	}
+	
+	/**
+	 * Sets the training runs of this SMAC manager properties bean.
+	 * 
+	 * @param trainingRuns the training runs to be set
+	 */
+	public void setTrainingRuns(long trainingRuns) {
+		this.trainingRuns = trainingRuns;
+	}
 	
 	/**
 	 * Gets the manager mode of this SMAC manager properties bean.
@@ -61,6 +121,51 @@ public class SmacManagerProperties extends AbstractManagerProperties {
 	 */
 	public void setManagerMode(SmacManagerMode managerMode) {
 		this.managerMode = managerMode;
+	}
+	
+	/**
+	 * Determines whether or not this SMAC manager properties bean equals
+	 * another SMAC manager properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other SMAC manager properties bean
+	 * 
+	 * @return true, if the aggregated properties of this SMAC manager
+	 *         properties bean equal the aggregated properties of the other
+	 *         SMAC manager properties bean, false otherwise
+	 * 
+	 * @see AbstractManagerProperties#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals) {
+			SmacManagerProperties properties = (SmacManagerProperties) o;
+			equals = (this.managerMode == properties.managerMode)
+					&& (this.trainingRuns == properties.trainingRuns)
+					&& (this.worksapceResource.equals(properties.worksapceResource));
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this SMAC manager properties bean based on its
+	 * aggregated properties.
+	 * 
+	 * @return the hash code of this SMAC manager properties bean based on its
+	 *         aggregated properties
+	 * 
+	 * @see AbstractManagerProperties#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(
+				super.hashCode(),
+				this.managerMode,
+				this.trainingRuns,
+				this.worksapceResource);
 	}
 	
 }

@@ -45,7 +45,7 @@ public abstract class AbstractPerformance implements Performance {
 		
 	/** the default serial identification of this abstract performance */
 	private static final long serialVersionUID = 1L;
-
+	
 	/** the quality of this abstract performance */
 	private final Quality quality;
 	
@@ -65,7 +65,7 @@ public abstract class AbstractPerformance implements Performance {
 		if (null == quality) {
 			throw new IllegalArgumentException("quality is invalid");
 		}
-		if (null == quantity) {
+		if ((null == quantity) || (0d >= quantity.get())) {
 			throw new IllegalArgumentException("quantity is invalid");
 		}
 		this.quality = quality;
@@ -83,6 +83,30 @@ public abstract class AbstractPerformance implements Performance {
 	@Override
 	public double get() {
 		return this.quality.get() / this.quantity.get();
+	}
+	
+	/**
+	 * Gets the quality of this abstract performance.
+	 * 
+	 * @return the quality of this abstract performance
+	 * 
+	 * @see Performance#getQuality()
+	 */
+	@Override
+	public Quality getQuality() {
+		return this.quality;
+	}
+	
+	/**
+	 * Gets the quantity of this abstract performance.
+	 * 
+	 * @return the quantity of this abstract performance
+	 * 
+	 * @see Performance#getQuantity()
+	 */
+	@Override
+	public Quantity getQuantity() {
+		return this.quantity;
 	}
 	
 	/**

@@ -27,46 +27,49 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.managing;
+package com.cfar.swim.worldwind.managers.heuristic;
 
-import java.io.Serializable;
+import com.cfar.swim.worldwind.managers.AbstractAutonomicManager;
+import com.cfar.swim.worldwind.managing.Features;
+import com.cfar.swim.worldwind.planners.Planner;
+import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 /**
- * Describes a performance.
+ * Realizes a heuristic autonomic manager.
  * 
  * @author Stephan Heinemann
  *
- * @see Quality
- * @see Quantity
  */
-public interface Performance extends Comparable<Performance>, Serializable {
+public class HeuristicAutonomicManager extends AbstractAutonomicManager {
 	
 	/**
-	 * Gets the measure of this performance.
+	 * Gets the identifier of this heuristic autonomic manager.
 	 * 
-	 * @return the measure of this performance
+	 * @return the identifier of this heuristic autonomic manager
+	 * 
+	 * @see Identifiable#getId()
 	 */
-	public double get();
+	@Override
+	public String getId() {
+		return Specification.MANAGER_HEURISTIC_ID;
+	}
 	
 	/**
-	 * Gets the quality of this performance.
+	 * Creates a new heuristic planner tuning for this heuristic autonomic
+	 * manager based on a planner specification and features.
 	 * 
-	 * @return the quality of this performance
-	 */
-	public Quality getQuality();
-	
-	/**
-	 * Gets the quantity of this performance.
+	 * @param specification the planner specification
+	 * @param features the features
 	 * 
-	 * @return the quantity of this performance
-	 */
-	public Quantity getQuantity();
-	
-	/**
-	 * Gets the context of this performance.
+	 * @return the created heuristic planner tuning
 	 * 
-	 * @return the context of this performance
+	 * @see AbstractAutonomicManager#createPlannerTuning(Specification, Features)
 	 */
-	public PerformanceContext getContext();
+	@Override
+	public HeuristicPlannerTuning createPlannerTuning(
+			Specification<Planner> specification, Features features) {
+		return new HeuristicPlannerTuning(specification, features);
+	}
 	
 }

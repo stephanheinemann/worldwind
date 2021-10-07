@@ -27,24 +27,4 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.managing;
-
-/**
- * Enumerates the SMAC autonomic manager modes.
- * 
- * @author Stephan Heinemann
- *
- */
-public enum SmacManagerMode {
-	
-	/**
-	 * the executing SMAC autonomic manager mode -- prediction and tuning only
-	 */
-	EXECUTING,
-	
-	/**
-	 * the training SMAC autonomic manager mode -- regression testing and model
-	 * fitting
-	 */
-	TRAINING
-}
+package com.cfar.swim.worldwind.managers.smac;

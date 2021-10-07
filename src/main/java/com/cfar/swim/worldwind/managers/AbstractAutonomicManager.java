@@ -31,7 +31,6 @@ package com.cfar.swim.worldwind.managers;
 
 import java.net.URI;
 import java.time.Duration;
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,6 +45,7 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
 import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.javafx.TrajectoryStylist;
 import com.cfar.swim.worldwind.managing.DurationQuantity;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.KnowledgeBase;
@@ -70,19 +70,14 @@ import com.cfar.swim.worldwind.registries.environments.EnvironmentProperties;
 import com.cfar.swim.worldwind.registries.managers.AbstractManagerProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
 import com.cfar.swim.worldwind.registries.planners.PlannerProperties;
-import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
 import com.cfar.swim.worldwind.session.ObstacleManager;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.session.Session;
 import com.cfar.swim.worldwind.session.SessionManager;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
-import com.cfar.swim.worldwind.util.Depiction;
 
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.render.BasicShapeAttributes;
-import gov.nasa.worldwind.render.Material;
-import gov.nasa.worldwind.symbology.milstd2525.MilStd2525GraphicFactory;
 import gov.nasa.worldwind.util.Logging;
 
 /**
@@ -155,12 +150,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	
 	/** the planner executor of this abstract autonomic manager */
 	private ExecutorService plannerExecutor = null;
-	
-	/** the plan start time of this abstract autonomic manager */
-	private ZonedDateTime planStartTime = null;
-	
-	/** the plan revision time of this abstract autonomic manager */
-	private ZonedDateTime planRevisionTime = null;
 	
 	/**
 	 * Gets the cost policy of this abstract autonomic manager.
@@ -1034,8 +1023,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		
 		try {
 			if (!managedPlanners.isEmpty()) {
-				// TODO: move to managed planner instead and exclude revision cost (mission loader)
-				this.planStartTime = ZonedDateTime.now();
 				this.plannerExecutor.invokeAll(managedPlanners);
 			}
 		} catch (InterruptedException e) {
@@ -1133,9 +1120,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 */
 	@Override
 	public synchronized void notifyPendingObstacleChange() {
-		// TODO: move to managed planner instead and exclude revision cost (mission loader)
-		this.planStartTime = ZonedDateTime.now();
-		
 		this.tunerExecutor.execute(new Runnable() {
 			@Override
 			public void run() {
@@ -1220,13 +1204,9 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	private synchronized void evaluatePlanner(
 			Scenario scenario, ManagedPlanner planner, Trajectory trajectory) {
 		Logging.logger().info("evaluating planner " + planner.getId());
-		// TODO: move to managed planner instead and exclude revision cost (mission loader)
-		this.planRevisionTime = ZonedDateTime.now();
 		
-		styleTrajectory(trajectory);
+		TrajectoryStylist.styleTrajectory(trajectory);
 		scenario.setTrajectory(trajectory);
-		// TODO: measure performance and update reputation
-		// TODO: features and knowledge base
 		Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
 		Logging.logger().info("current source trajectory = "  + sourceTrajectory);
 		Logging.logger().info("evaluated trajectory = " + trajectory);
@@ -1242,12 +1222,11 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		TrajectoryQuality stq = new TrajectoryQuality(st);
 		Trajectory et = trajectory.getSubTrajectory(poiIndex);
 		TrajectoryQuality rtq = new TrajectoryQuality(et);
-		DurationQuantity rdq = new DurationQuantity(Duration.between(
-				this.planStartTime, this.planRevisionTime));
-		
-		// TODO: knowledge base getters / setters / loading / saving
+		DurationQuantity rdq = (DurationQuantity) planner.getPerformance().getQuantity();
 		PlannerPerformance performance = new PlannerPerformance(rtq, rdq);
 		PlannerTuning tuning = this.getPlannerTuning(scenario);
+		
+		// extending knowledge base
 		this.getKnowledgeBase().getReputation().addTuningPerformance(tuning, performance);
 		Logging.logger().info("added performance " + performance.toString());
 		
@@ -1278,24 +1257,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		}
 	}
 	
-	private final MilStd2525GraphicFactory symbolFactory = new MilStd2525GraphicFactory();
-	
-	private void styleTrajectory(Trajectory trajectory) {
-		trajectory.setVisible(true);
-		trajectory.setShowPositions(true);
-		trajectory.setDrawVerticals(true);
-		trajectory.setAttributes(new BasicShapeAttributes());
-		trajectory.getAttributes().setOutlineMaterial(Material.MAGENTA);
-		trajectory.getAttributes().setOutlineWidth(5d);
-		trajectory.getAttributes().setOutlineOpacity(0.5d);
-		for (Waypoint waypoint : trajectory.getWaypoints()) {
-			Depiction depiction = new Depiction(symbolFactory.createPoint(Waypoint.SICD_NAV_WAYPOINT_ROUTE, waypoint, null));
-			depiction.setAnnotation(new DepictionAnnotation(waypoint.getEto().toString(), waypoint));
-			depiction.setVisible(true);
-			waypoint.setDepiction(depiction);
-		}
-	}
-	
 	/**
 	 * Determines whether or not this abstract autonomic manager matches a
 	 * specification.
@@ -1319,6 +1280,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 					&& this.getRiskPolicy().equals(properties.getRiskPolicy())
 					&& this.getFeatureHorizon().equals(Duration.ofSeconds(
 							Math.round(properties.getFeatureHorizon() * 60d)))
+					&& (this.getKnowledgeBaseResource().equals(URI.create(properties.getKnowledgeBaseResource())))
 					&& (this.getMinDeliberation().equals(Duration.ofSeconds(properties.getMinDeliberation())))
 					&& (this.getMaxDeliberation().equals(Duration.ofSeconds(properties.getMaxDeliberation())))
 					&& (this.getMaxTrackError().getCrossTrackError() == properties.getMaxCrossTrackError())
@@ -1326,7 +1288,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 					&& (this.getMaxTakeOffError().getHorizontalError() == properties.getMaxTakeOffHorizontalError())
 					&& (this.getMaxTakeOffError().getTimingError().equals(Duration.ofSeconds(properties.getMaxTakeOffTimingError())))
 					&& (this.getMaxLandingError().getHorizontalError() == properties.getMaxLandingHorizontalError())
-					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(properties.getMaxLandingTimingError())));;
+					&& (this.getMaxLandingError().getTimingError().equals(Duration.ofSeconds(properties.getMaxLandingTimingError())));
 		}
 	
 		return matches;
@@ -1354,6 +1316,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			this.setRiskPolicy(properties.getRiskPolicy());
 			this.setFeatureHorizon(Duration.ofSeconds(
 					Math.round(properties.getFeatureHorizon() * 60d)));
+			this.setKnowledgeBaseResource(URI.create(properties.getKnowledgeBaseResource()));
 			this.setMinDeliberation(Duration.ofSeconds(properties.getMinDeliberation()));
 			this.setMaxDeliberation(Duration.ofSeconds(properties.getMaxDeliberation()));
 			this.getMaxTrackError().setCrossTrackError(properties.getMaxCrossTrackError());

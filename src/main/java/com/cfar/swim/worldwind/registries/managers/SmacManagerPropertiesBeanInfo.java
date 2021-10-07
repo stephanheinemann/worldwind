@@ -63,6 +63,16 @@ public class SmacManagerPropertiesBeanInfo extends AbstractManagerPropertiesBean
 		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
 		
 		try {
+			PropertyDescriptor workspaceResource = this.createPropertyDescriptor(
+					"workspaceResource",
+					this.dictionary.getString("property.manager.smac.workspaceResource.name"),
+					this.dictionary.getString("property.manager.smac.workspaceResource.description"),
+					this.dictionary.getString("property.manager.category.managing"));
+			PropertyDescriptor trainingRuns = this.createPropertyDescriptor(
+					"trainingRuns",
+					this.dictionary.getString("property.manager.smac.trainingRuns.name"),
+					this.dictionary.getString("property.manager.smac.trainingRuns.description"),
+					this.dictionary.getString("property.manager.category.managing"));
 			PropertyDescriptor managerMode = this.createPropertyDescriptor(
 					"managerMode",
 					this.dictionary.getString("property.manager.smac.managerMode.name"),
@@ -70,6 +80,8 @@ public class SmacManagerPropertiesBeanInfo extends AbstractManagerPropertiesBean
 					this.dictionary.getString("property.manager.category.managing"));
 			
 			PropertyDescriptor[] samDescriptors = new PropertyDescriptor[] {
+					workspaceResource,
+					trainingRuns,
 					managerMode};
 			
 			descriptors = Stream.concat(

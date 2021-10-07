@@ -27,11 +27,14 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.managing;
+package com.cfar.swim.worldwind.managers.heuristic;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cfar.swim.worldwind.managing.FeatureTuning;
+import com.cfar.swim.worldwind.managing.Features;
+import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.rrt.Extension;
 import com.cfar.swim.worldwind.planners.rrt.Sampling;
@@ -107,7 +110,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 	 * @param features the features to tune the managed grid planner for
 	 */
 	private void tuneManagedGridPlanner(OADStarProperties properties, Features features) {
-		if (0 == (Integer) features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
+		if (0d == features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
 			// quality
 			properties.setMinimumQuality(1.0d);
 			properties.setMaximumQuality(1.0d);
@@ -115,8 +118,8 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			properties.setSignificantChange(0.1d);
 		} else {
 			// quality
-			properties.setMinimumQuality(1d + ((Double)
-					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)));
+			properties.setMinimumQuality(1d
+					+ features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO));
 			properties.setMaximumQuality(1.0d);
 			properties.setQualityImprovement(
 					Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d);
@@ -131,13 +134,13 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 	 * @param features the features to tune the managed tree planner for
 	 */
 	private void tuneManageTreePlanner(OADRRTreeProperties properties, Features features) {
-		if (0 == (Integer) features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
+		if (0d == features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
 			// sampling
 			properties.setSampling(Sampling.ELLIPSOIDAL);
 			// goal bias
 			properties.setBias(75); // possible terrain
 			// epsilon - extension distance
-			properties.setEpsilon((Double) features.get(Features.FEATURE_POIS_DISTANCE_MAX));
+			properties.setEpsilon(features.get(Features.FEATURE_POIS_DISTANCE_MAX));
 			// extension strategy and technique
 			properties.setStrategy(Strategy.CONNECT);
 			properties.setExtension(Extension.LINEAR); // TODO: feasible
@@ -154,32 +157,32 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			properties.setSignificantChange(0.1d);
 		} else {
 			// sampling
-			if (0.25d > (Double) features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
-				if ((0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.25d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+			if (0.25d > features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
+				if ((0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.25d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.ELLIPSOIDAL);
-				} else if ((0.75d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.5d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+				} else if ((0.75d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.5d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.UNIFORM);
 				} else {
 					properties.setSampling(Sampling.GAUSSIAN);
 				}
-			} else if (0.5d > (Double) features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
-				if ((0.25d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.25d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+			} else if (0.5d > features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
+				if ((0.25d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.25d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.ELLIPSOIDAL);
-				} else if ((0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.5d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+				} else if ((0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.5d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.UNIFORM);
 				} else {
 					properties.setSampling(Sampling.GAUSSIAN);
 				}
 			} else {
-				if ((0.25d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.5d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+				if ((0.25d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.5d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.ELLIPSOIDAL);
-				} else if ((0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.75d > (Double) features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
+				} else if ((0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
+						|| (0.75d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.UNIFORM);
 				} else {
 					properties.setSampling(Sampling.GAUSSIAN);
@@ -187,22 +190,22 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			}
 			
 			// goal bias
-			if ((Double) features.get(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)
-					> (Double) features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MIN)) {
+			if (features.get(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)
+					> features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MIN)) {
 				properties.setBias(1);
 			} else {
-				properties.setBias((int) Math.round(3d + (Double)
-						features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO)));
+				properties.setBias((int) Math.round(3d
+						+ features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO)));
 			}
 			
 			// epsilon - extension distance
-			properties.setEpsilon(0.05d * (Double) features.get(Features.FEATURE_POIS_DISTANCE_MAX));
+			properties.setEpsilon(0.05d * features.get(Features.FEATURE_POIS_DISTANCE_MAX));
 			
 			// goal threshold
 			properties.setGoalThreshold(properties.getMaxLandingHorizontalError() / 2d);
 			
 			// extension strategy and technique
-			if (0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {
+			if (0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {
 				properties.setStrategy(Strategy.CONNECT);
 			} else {
 				properties.setStrategy(Strategy.EXTEND);
@@ -210,20 +213,20 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			properties.setExtension(Extension.LINEAR); // TODO: feasible
 			
 			// maximum iterations
-			if (0.5d > (Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {
+			if (0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {
 				properties.setMaxIterations(1500);
 			} else {
-				properties.setMaxIterations(1500 + (int) (Math.round(1500d * (Double)
-						features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))));
+				properties.setMaxIterations(1500 + (int) (Math.round(1500d
+						* features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))));
 			}
 			
 			// neighborhood
-			properties.setNeighborLimit(5 + (int) (Math.round(5d * (Double)
-					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))));
+			properties.setNeighborLimit(5 + (int) (Math.round(5d
+					* features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))));
 			
 			// quality
 			properties.setMinimumQuality(1d - Math.min(0.9d,
-					(Double) features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)));
+					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)));
 			properties.setMaximumQuality(1.0d);
 			properties.setQualityImprovement(
 					Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d);

@@ -29,8 +29,10 @@
  */
 package com.cfar.swim.worldwind.planners.managed;
 
+import java.util.Collection;
 import java.util.concurrent.Callable;
 
+import com.cfar.swim.worldwind.managing.PlannerPerformance;
 import com.cfar.swim.worldwind.planners.AnytimePlanner;
 import com.cfar.swim.worldwind.planners.DynamicPlanner;
 import com.cfar.swim.worldwind.planners.LifelongPlanner;
@@ -88,5 +90,19 @@ Callable<Trajectory> {
 	 * @param associate the managed planner to be joined
 	 */
 	public void join(ManagedPlanner associate);
+	
+	/**
+	 * Gets the performance of this managed planner.
+	 * 
+	 * @return the performance of this managed planner
+	 */
+	public PlannerPerformance getPerformance();
+	
+	/**
+	 * Gets the revisions of this managed planner.
+	 * 
+	 * @return the revisions of this managed planner
+	 */
+	public Collection<Trajectory> getRevisions();
 	
 }

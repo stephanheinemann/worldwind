@@ -27,59 +27,24 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.managing;
-
-import java.util.List;
-
-import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.registries.Properties;
-import com.cfar.swim.worldwind.registries.Specification;
+package com.cfar.swim.worldwind.managers.smac;
 
 /**
- * Realizes a SMAC planner tuning based on features.
+ * Enumerates the SMAC autonomic manager modes.
  * 
  * @author Stephan Heinemann
  *
- * @see PlannerTuning
  */
-public class SmacPlannerTuning extends PlannerTuning {
-	
-	/** the default serial identification of this SMAC planner tuning */
-	private static final long serialVersionUID = 1L;
+public enum SmacManagerMode {
 	
 	/**
-	 * Constructs a new SMAC planner tuning based on a planner
-	 * specification and features.
-	 * 
-	 * @param specification the planner specification
-	 * @param features the features
-	 * 
-	 * @throws IllegalArgumentException if the planner specification or
-	 *         features are invalid
-	 *
-	 * @see PlannerTuning#PlannerTuning(Specification, Features)
+	 * the executing SMAC autonomic manager mode -- prediction and tuning only
 	 */
-	public SmacPlannerTuning(
-			Specification<Planner> specification, Features features) {
-		super(specification, features);
-	}
+	EXECUTING,
 	
 	/**
-	 * Tunes the specification of a planner according to features.
-	 * 
-	 * @param specification the planner specification to be tuned
-	 * @param features the features to tune the planner specification for
-	 * 
-	 * @return the tuned candidate properties for the specification
-	 * 
-	 * @see FeatureTuning#tune(Specification, Features)
+	 * the training SMAC autonomic manager mode -- regression testing and model
+	 * fitting
 	 */
-	@Override
-	public List<Properties<Planner>> tune(
-			Specification<Planner> specification, Features features) {
-		// TODO: only select configuration based on loaded model (warm-start)
-		// TODO Auto-generated method stub
-		return null;
-	}
-	
+	TRAINING
 }

@@ -37,6 +37,8 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
  * Realizes a knowledge base of an autonomic manager.
@@ -112,6 +114,7 @@ public class KnowledgeBase implements Serializable {
 		boolean isSaved = false;
 		
 		try {
+			Files.createDirectories(Path.of(uri).getParent());
 			FileOutputStream fos = new FileOutputStream(new File(uri));
 			ObjectOutputStream oos = new ObjectOutputStream(fos);
 			oos.writeObject(this.getReputation());

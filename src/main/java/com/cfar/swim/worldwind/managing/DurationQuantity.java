@@ -56,8 +56,7 @@ public class DurationQuantity implements Quantity {
 	 * @throws IllegalArgumentException if the quantity is invalid
 	 */
 	public DurationQuantity(Duration quantity) {
-		if ((null == quantity) || ((null != quantity)
-				&& (quantity.isNegative() || quantity.isZero()))) {
+		if ((null == quantity) || quantity.isNegative() || quantity.isZero()) {
 			throw new IllegalArgumentException("quantity is invalid");
 		}
 		this.quantity = quantity;

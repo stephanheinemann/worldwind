@@ -39,13 +39,35 @@ public enum CostPolicy {
 	/**
 	 * the minimum of all occurring costs
 	 */
-	MINIMUM,
+	MINIMUM(0d),
 	/**
 	 * the maximum of all occurring costs
 	 */
-	MAXIMUM,
+	MAXIMUM(1d),
 	/**
 	 * the average of all occurring costs
 	 */
-	AVERAGE
+	AVERAGE(2d);
+	
+	/** the feature value of this cost policy */
+	private double featureValue = 0d;
+	
+	/**
+	 * Constructs a new cost policy from a feature value.
+	 * 
+	 * @param featureValue the feature value
+	 */
+	private CostPolicy(double featureValue) {
+		this.featureValue = featureValue;
+	}
+	
+	/**
+	 * Gets the feature value of this cost policy.
+	 * 
+	 * @return the feature value of this cost policy
+	 */
+	public double getFeatureValue() {
+		return this.featureValue;
+	}
+	
 }

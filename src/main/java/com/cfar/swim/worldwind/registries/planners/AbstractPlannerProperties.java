@@ -31,6 +31,8 @@ package com.cfar.swim.worldwind.registries.planners;
 
 import java.util.Objects;
 
+import javax.validation.constraints.NotNull;
+
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.Properties;
@@ -49,10 +51,12 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 	private static final long serialVersionUID = 1L;
 	
 	/** the cost policy of this planner properties bean */
-	CostPolicy costPolicy;
+	@NotNull
+	private CostPolicy costPolicy;
 	
 	/** the risk policy of this planner properties bean */
-	RiskPolicy riskPolicy;
+	@NotNull
+	private RiskPolicy riskPolicy;
 	
 	/**
 	 * Constructs a new planner properties bean using default cost and risk

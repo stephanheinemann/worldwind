@@ -56,23 +56,25 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	private static final long serialVersionUID = 1L;
 	
 	/** the default knowledge base resource of this abstract manager properties bean */
-	public static final String KNOWLEDGE_BASE_RESOURCE = "file:///var/tmp/safcs-knowledge-base.bin";
+	public static final String KNOWLEDGE_BASE_RESOURCE = "file:///var/tmp/safcs/knowledge-base.bin";
 	
 	/** the cost policy of this abstract manager properties bean */
-	CostPolicy costPolicy;
+	@NotNull
+	private CostPolicy costPolicy = CostPolicy.AVERAGE;;
 	
 	/** the risk policy of this abstract manager properties bean */
-	RiskPolicy riskPolicy;
+	@NotNull
+	private RiskPolicy riskPolicy = RiskPolicy.SAFETY;;
 	
 	/** the feature horizon of this abstract manager properties bean */
 	@DecimalMin(value = "0", message = "{property.manager.featureHorizon.min}")
 	@DecimalMax(value = "60", message = "{property.manager.featureHorizon.max}")
-	double featureHorizon = 5l;
+	private double featureHorizon =  Features.FEATURE_HORIZON.getSeconds() / 60d;
 	
 	/** the knowledge base resource of this abstract manager properties bean */
 	@NotNull
 	@NotEmpty
-	private String knowledgeBaseResource;
+	private String knowledgeBaseResource = AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE;
 	
 	/** the minimum deliberation duration of this abstract manager properties bean */
 	private long minDeliberation = 10l;
@@ -111,14 +113,10 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 	private long maxLandingTimingError = 60l;
 	
 	/**
-	 * Constructs a new abstract manager properties bean using default cost and
-	 * risk policy property values.
+	 * Constructs a new abstract manager properties bean using default property
+	 * values.
 	 */
 	public AbstractManagerProperties() {
-		this.knowledgeBaseResource = AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE;
-		this.costPolicy = CostPolicy.AVERAGE;
-		this.riskPolicy = RiskPolicy.SAFETY;
-		this.featureHorizon = Features.FEATURE_HORIZON.getSeconds() / 60d;
 	}
 	
 	/**
@@ -498,6 +496,7 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 			equals = (this.costPolicy.equals(properties.costPolicy))
 					&& (this.riskPolicy.equals(properties.riskPolicy))
 					&& (this.featureHorizon == properties.featureHorizon)
+					&& (this.knowledgeBaseResource.equals(properties.knowledgeBaseResource))
 					&& (this.minDeliberation == properties.minDeliberation)
 					&& (this.maxDeliberation == properties.maxDeliberation)
 					&& (this.maxCrossTrackError == properties.maxCrossTrackError)
@@ -526,6 +525,7 @@ public abstract class AbstractManagerProperties implements ManagerProperties {
 				this.costPolicy,
 				this.riskPolicy,
 				this.featureHorizon,
+				this.knowledgeBaseResource,
 				this.minDeliberation,
 				this.maxDeliberation,
 				this.maxCrossTrackError,

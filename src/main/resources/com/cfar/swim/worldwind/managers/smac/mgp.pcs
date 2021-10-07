@@ -1,0 +1,6 @@
+# name type range default
+minimumQuality real [1.0, 10.0] [2.5]
+maximumQuality real [1.0, 10.0] [1.0]
+qualityImprovement real [0.1, 10.0] [0.5]
+# forbidden clauses
+{(minimumQuality < maximumQuality)}

@@ -33,8 +33,8 @@ import java.net.URI;
 import java.time.Duration;
 
 import com.cfar.swim.worldwind.managers.AutonomicManager;
-import com.cfar.swim.worldwind.managers.HeuristicAutonomicManager;
-import com.cfar.swim.worldwind.managers.SmacAutonomicManager;
+import com.cfar.swim.worldwind.managers.heuristic.HeuristicAutonomicManager;
+import com.cfar.swim.worldwind.managers.smac.SmacAutonomicManager;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.session.Scenario;
@@ -144,6 +144,11 @@ public class ManagerFactory extends AbstractFactory<AutonomicManager> {
 				maxLandingError.setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
 				manager.setMaxLandingError(maxLandingError);
 				manager.setSourceScenario(this.getScenario());
+				try {
+					((SmacAutonomicManager) manager).setWorkspaceResource(URI.create(properties.getWorkspaceResource()));
+				} catch (IllegalArgumentException iae) {
+				}
+				((SmacAutonomicManager) manager).setTrainingRuns(properties.getTrainingRuns());
 				((SmacAutonomicManager) manager).setManagerMode(properties.getManagerMode());
 			}
 		}

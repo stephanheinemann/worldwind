@@ -29,16 +29,27 @@
  */
 package com.cfar.swim.worldwind.planners.managed;
 
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.managing.DurationQuantity;
+import com.cfar.swim.worldwind.managing.PlannerPerformance;
+import com.cfar.swim.worldwind.managing.TrajectoryQuality;
+import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.oadrrt.OADRRTreePlanner;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.util.Identifiable;
 
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
 
 /**
@@ -56,8 +67,17 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	/** the standby status of this managed tree planner */
 	private boolean isStandby = false;
 	
-	/** the associate planner of this managed grid planner to join */
+	/** the associate planner of this managed tree planner to join */
 	private ManagedPlanner associate = null;
+	
+	/** the plan start time of this managed tree planner */
+	private ZonedDateTime planStartTime = ZonedDateTime.now();
+	
+	/** the performance of this managed tree planner */
+	private PlannerPerformance performance = PlannerPerformance.ZERO;
+	
+	/** the revisions of this managed tree planner */
+	private List<Trajectory> revisions = new ArrayList<>();
 	
 	/**
 	 * Constructs a managed tree planner for a specified aircraft and
@@ -316,6 +336,7 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 			while (!this.hasTerminated() && !this.needsRepair() && this.isOnTrack()) {
 				this.progress(this.backups.size() - 1);
 				this.wait();
+				this.resetPerformance();
 				this.updateDynamicObstacles();
 				this.joinAssociate();
 			}
@@ -354,5 +375,92 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 		
 		return trajectory;
 	}
-
+	
+	/**
+	 * Plans a trajectory from an origin to a destination at a specified
+	 * estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination with
+	 *         the estimated time of departure
+	 * 
+	 * @see ADRRTreePlanner#plan(Position, Position, ZonedDateTime)
+	 */
+	@Override
+	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		this.resetPerformance();
+		return super.plan(origin, destination, etd);
+	}
+	
+	/**
+	 * Plans a trajectory from an origin to a destination along waypoints at a
+	 * specified estimated time of departure.
+	 * 
+	 * @param origin the origin in globe coordinates
+	 * @param destination the destination in globe coordinates
+	 * @param waypoints the waypoints in globe coordinates
+	 * @param etd the estimated time of departure
+	 * 
+	 * @return the planned trajectory from the origin to the destination along
+	 *         the waypoints with the estimated time of departure
+	 * 
+	 * @see ADRRTreePlanner#plan(Position, Position, List, ZonedDateTime)
+	 */
+	@Override
+	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+		this.resetPerformance();
+		return super.plan(origin, destination, waypoints, etd);
+	}
+	
+	/**
+	 * Revises a plan notifying the plan revision listeners of this managed
+	 * tree planner.
+	 * 
+	 * @param trajectory the revised trajectory
+	 */
+	@Override
+	protected void revisePlan(Trajectory trajectory) {
+		this.performance = new PlannerPerformance(
+				new TrajectoryQuality(trajectory),
+				new DurationQuantity(Duration.between(this.planStartTime, ZonedDateTime.now())));
+		this.revisions.add(trajectory);
+		super.revisePlan(trajectory);
+	}
+	
+	/**
+	 * Resets the performance of this managed tree planner.
+	 */
+	protected void resetPerformance() {
+		this.performance = PlannerPerformance.ZERO;
+		this.revisions.clear();
+		this.planStartTime = ZonedDateTime.now();
+	}
+	
+	/**
+	 * Gets the performance of this managed tree planner.
+	 * 
+	 * @return the performance of this managed tree planner
+	 * 
+	 * @see ManagedPlanner#getPerformance()
+	 */
+	@Override
+	public PlannerPerformance getPerformance() {
+		return this.performance;
+	}
+	
+	/**
+	 * Gets the revisions of this managed tree planner.
+	 * 
+	 * @return the revisions of this managed tree planner
+	 * 
+	 * @see ManagedPlanner#getRevisions()
+	 */
+	@Override
+	public Collection<Trajectory> getRevisions() {
+		return Collections.unmodifiableList(this.revisions);
+	}
+	
 }

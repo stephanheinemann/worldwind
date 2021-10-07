@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.time.Duration;
+
 /**
  * Realizes a planner performance consisting of trajectory quality and
  * computational duration quantity within a context.
@@ -41,7 +43,12 @@ public class PlannerPerformance extends AbstractPerformance {
 	
 	/** the default serial identification of this planner performance */
 	private static final long serialVersionUID = 1L;
-
+	
+	/** the zero planning performance */
+	public static final PlannerPerformance ZERO = new PlannerPerformance(
+			TrajectoryQuality.ZERO,
+			new DurationQuantity(Duration.ofSeconds(1l)));
+	
 	/**
 	 * Construct a new planner performance based on a trajectory quality and
 	 * a computational duration quantity.

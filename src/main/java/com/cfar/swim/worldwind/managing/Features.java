@@ -63,7 +63,7 @@ import gov.nasa.worldwind.geom.Extent;
  * @see Scenario
  * @see AutonomicManager
  */
-public class Features extends HashMap<String, Object> {
+public class Features extends HashMap<String, Double> {
 
 	/** the default serial identification of these features */
 	private static final long serialVersionUID = 1L;
@@ -357,8 +357,8 @@ public class Features extends HashMap<String, Object> {
 			this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME,
 					nearest.getVolume(env.getGlobe()));
 			this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO,
-					((Double) this.get(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY))
-					/ ((Double) this.get(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME)));
+					this.get(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)
+					/ this.get(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME));
 		}
 	}
 	
@@ -410,7 +410,7 @@ public class Features extends HashMap<String, Object> {
 			}
 			
 			this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT,
-					distinctObstacles.keySet().size());
+					(double) distinctObstacles.keySet().size());
 			this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES, env.getCost(
 					env.getTime(),
 					env.getTime().plus(Features.FEATURE_HORIZON),
@@ -462,8 +462,8 @@ public class Features extends HashMap<String, Object> {
 					distinctVolumes.stream()
 					.mapToDouble(Double::valueOf).sum());
 			this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO,
-					((Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_SUM))
-					/ ((Double) this.get(Features.FEATURE_ENVIRONMENT_VOLUME)));
+					this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_SUM)
+					/ this.get(Features.FEATURE_ENVIRONMENT_VOLUME));
 		}
 	}
 	
@@ -535,10 +535,10 @@ public class Features extends HashMap<String, Object> {
 			this.put(Features.FEATURE_POIS_VOLUME, poiContinuum.getVolume());
 			
 			if (this.containsKey(Features.FEATURE_ENVIRONMENT_VOLUME) &&
-					(0d != (Double) this.get(Features.FEATURE_ENVIRONMENT_VOLUME))) {
+					(0d != this.get(Features.FEATURE_ENVIRONMENT_VOLUME))) {
 				this.put(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO,
-						(Double) this.get(Features.FEATURE_POIS_VOLUME)
-						/ (Double) this.get(Features.FEATURE_ENVIRONMENT_VOLUME));
+						this.get(Features.FEATURE_POIS_VOLUME)
+						/ this.get(Features.FEATURE_ENVIRONMENT_VOLUME));
 			}
 			
 			// environment obstacles within the feature horizon
@@ -575,7 +575,7 @@ public class Features extends HashMap<String, Object> {
 				this.resetPoisObstacleFeatures();
 			} else {
 				this.put(Features.FEATURE_POIS_OBSTACLES_COUNT,
-						distinctObstacles.keySet().size());
+						(double) distinctObstacles.keySet().size());
 				this.put(Features.FEATURE_POIS_OBSTACLES_COST_POLICIES,
 						poiContinuum.getCost(
 								env.getTime(),
@@ -629,50 +629,50 @@ public class Features extends HashMap<String, Object> {
 						distinctVolumes.stream()
 						.mapToDouble(Double::valueOf).sum());
 				this.put(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO,
-						((Double) this.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_SUM))
-						/ ((Double) this.get(Features.FEATURE_POIS_VOLUME)));
+						this.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_SUM)
+						/ this.get(Features.FEATURE_POIS_VOLUME));
 				
 				if (this.containsKey(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT) &&
-						(0 != (Integer) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT))) {
+						(0 != this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT))) {
 					this.put(Features.FEATURE_POIS_ENVIRONMENT_OBSTACLES_COUNT_RATIO,
-							((Integer) this.get(Features.FEATURE_POIS_OBSTACLES_COUNT)).doubleValue()
-							/ ((Integer) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT)).doubleValue());
+							this.get(Features.FEATURE_POIS_OBSTACLES_COUNT)
+							/ this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT));
 				}
 				if (this.containsKey(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES) &&
-						(0d != (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES))) {
+						(0d != this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES))) {
 					this.put(Features.FEATURE_POIS_ENVIRONMENT_OBSTACLES_COST_POLICIES_RATIO,
-							(Double) this.get(Features.FEATURE_POIS_OBSTACLES_COST_POLICIES)
-							/ (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES));
+							this.get(Features.FEATURE_POIS_OBSTACLES_COST_POLICIES)
+							/ this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES));
 				}
 				if (this.containsKey(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_AVG) &&
-						(0d != (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_AVG))) {
+						(0d != this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_AVG))) {
 					this.put(Features.FEATURE_POIS_ENVIRONMENT_OBSTACLES_COST_AVG_RATIO,
-							(Double) this.get(Features.FEATURE_POIS_OBSTACLES_COST_AVG)
-							/ (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_AVG));
+							this.get(Features.FEATURE_POIS_OBSTACLES_COST_AVG)
+							/ this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_AVG));
 				}
 				if (this.containsKey(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MAX) &&
-						(0d != (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MAX))) {
+						(0d != this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MAX))) {
 					this.put(Features.FEATURE_POIS_ENVIRONMENT_OBSTACLES_COST_MAX_RATIO,
-							(Double) this.get(Features.FEATURE_POIS_OBSTACLES_COST_MAX)
-							/ (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MAX));
+							this.get(Features.FEATURE_POIS_OBSTACLES_COST_MAX)
+							/ this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MAX));
 				}
 				if (this.containsKey(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MIN) &&
-						(0d != (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MIN))) {
+						(0d != this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MIN))) {
 					this.put(Features.FEATURE_POIS_ENVIRONMENT_OBSTACLES_COST_MIN_RATIO,
-							(Double) this.get(Features.FEATURE_POIS_OBSTACLES_COST_MIN)
-							/ (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MIN));
+							this.get(Features.FEATURE_POIS_OBSTACLES_COST_MIN)
+							/ this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MIN));
 				}
 				if (this.containsKey(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_SUM) &&
-						(0d != (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_SUM))) {
+						(0d != this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_SUM))) {
 					this.put(Features.FEATURE_POIS_ENVIRONMENT_OBSTACLES_COST_SUM_RATIO,
-							(Double) this.get(Features.FEATURE_POIS_OBSTACLES_COST_SUM)
-							/ (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_SUM));
+							this.get(Features.FEATURE_POIS_OBSTACLES_COST_SUM)
+							/ this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_SUM));
 				}
 				if (this.containsKey(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_SUM) &&
-						(0d != (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_SUM))) {
+						(0d != this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_SUM))) {
 					this.put(Features.FEATURE_POIS_ENVIRONMENT_OBSTACLES_VOLUME_RATIO,
-							(Double) this.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_SUM)
-							/ (Double) this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_SUM));
+							this.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_SUM)
+							/ this.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_SUM));
 				}
 			}
 		} else {
@@ -695,8 +695,8 @@ public class Features extends HashMap<String, Object> {
 		
 		Planner planner = scenario.getPlanner();
 		// operational policy features
-		this.put(Features.FEATURE_POLICY_COST, planner.getCostPolicy());
-		this.put(Features.FEATURE_POLICY_RISK, planner.getRiskPolicy());
+		this.put(Features.FEATURE_POLICY_COST, planner.getCostPolicy().getFeatureValue());
+		this.put(Features.FEATURE_POLICY_RISK, planner.getRiskPolicy().getThreshholdCost());
 	}
 	
 	/**
@@ -716,7 +716,7 @@ public class Features extends HashMap<String, Object> {
 	 * Resets the environment obstacle features.
 	 */
 	protected void resetEnvironmentObstacleFeatures() {
-		this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT, 0);
+		this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT, 0d);
 		this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES, 0d);
 		this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_AVG, 0d);
 		this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MAX, 0d);
@@ -733,7 +733,7 @@ public class Features extends HashMap<String, Object> {
 	 * Resets the POIs obstacle features.
 	 */
 	protected void resetPoisObstacleFeatures() {
-		this.put(Features.FEATURE_POIS_OBSTACLES_COUNT, 0);
+		this.put(Features.FEATURE_POIS_OBSTACLES_COUNT, 0d);
 		this.put(Features.FEATURE_POIS_OBSTACLES_COST_POLICIES, 0d);
 		this.put(Features.FEATURE_POIS_OBSTACLES_COST_AVG, 0d);
 		this.put(Features.FEATURE_POIS_OBSTACLES_COST_MAX, 0d);
