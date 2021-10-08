@@ -40,9 +40,13 @@ import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGoals;
 import com.cfar.swim.worldwind.planners.managed.ManagedPlanner;
+import com.cfar.swim.worldwind.planners.rrt.Extension;
+import com.cfar.swim.worldwind.planners.rrt.Sampling;
+import com.cfar.swim.worldwind.planners.rrt.Strategy;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.session.Session;
 
@@ -163,10 +167,12 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 			ExistingAlgorithmRunResult earr = new ExistingAlgorithmRunResult(
 					arc,
 					managedScenario.getTrajectory().isEmpty()
-					? RunStatus.UNSAT : RunStatus.SAT, // TODO: versus TIMEOUT
+						? RunStatus.UNSAT : RunStatus.SAT, // TODO: versus TIMEOUT
 					managedPlanner.getPerformance().getQuantity().get(), // runtime
 					managedPlanner.getRevisions().size(), // number of quality improvements
-					managedPlanner.getPerformance().get(), // quality of solution
+					/*1d /  */1000d - managedPlanner.getPerformance().get(), // quality of solution
+					//(0d == managedPlanner.getPerformance().get())
+					//	? Double.MAX_VALUE : 1d / managedPlanner.getPerformance().get(),
 					1l); // problem instance seed (automatically generated instead)
 			// TODO: additional run-data: trajectory.toString()
 			results.add(earr);
@@ -202,13 +208,40 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 			plannerProperties.setMaxLandingHorizontalError((long) this.managedSession.getManager().getMaxLandingError().getHorizontalError());
 			plannerProperties.setMaxLandingTimingError(this.managedSession.getManager().getMaxLandingError().getTimingError().toSeconds());
 			// TODO: consider dynamic training
-			plannerProperties.setSignificantChange(1.0);
 			plannerProperties.setMinimumQuality(Double.parseDouble(arc.getParameterConfiguration().get("minimumQuality")));
-			plannerProperties.setMaximumQuality(Double.parseDouble(arc.getParameterConfiguration().get("maximumQuality")));
+			plannerProperties.setMaximumQuality(1.0d/*Double.parseDouble(arc.getParameterConfiguration().get("maximumQuality"))*/);
 			plannerProperties.setQualityImprovement(Double.parseDouble(arc.getParameterConfiguration().get("qualityImprovement")));
+			plannerProperties.setSignificantChange(0.5d);
 			plannerSpecification = new Specification<Planner>(Specification.PLANNER_MGP_ID, plannerProperties);
 		} else if (Specification.PLANNER_MTP_ID.equals(arc.getAlgorithmExecutionConfiguration().getAlgorithmExecutable())) {
-			// TODO: implement
+			OADRRTreeProperties plannerProperties = new OADRRTreeProperties();
+			plannerProperties.setCostPolicy(this.managedSession.getManager().getCostPolicy());
+			plannerProperties.setRiskPolicy(this.managedSession.getManager().getRiskPolicy());
+			plannerProperties.setMinDeliberation(this.managedSession.getManager().getMinDeliberation().getSeconds());
+			plannerProperties.setMaxDeliberation(this.managedSession.getManager().getMaxDeliberation().getSeconds());
+			// TODO: review track error basic types (long versus double)
+			plannerProperties.setMaxCrossTrackError((long) this.managedSession.getManager().getMaxTrackError().getCrossTrackError());
+			plannerProperties.setMaxTimingError(this.managedSession.getManager().getMaxTrackError().getTimingError().toSeconds());
+			// TODO: review track error basic types (long versus double)
+			plannerProperties.setMaxTakeOffHorizontalError((long) this.managedSession.getManager().getMaxTakeOffError().getHorizontalError());
+			plannerProperties.setMaxTakeOffTimingError(this.managedSession.getManager().getMaxTakeOffError().getTimingError().toSeconds());
+			// TODO: review track error basic types (long versus double)
+			plannerProperties.setMaxLandingHorizontalError((long) this.managedSession.getManager().getMaxLandingError().getHorizontalError());
+			plannerProperties.setMaxLandingTimingError(this.managedSession.getManager().getMaxLandingError().getTimingError().toSeconds());
+			// TODO: consider dynamic training
+			plannerProperties.setBias(Integer.parseInt(arc.getParameterConfiguration().get("bias")));
+			plannerProperties.setEpsilon(Double.parseDouble(arc.getParameterConfiguration().get("epsilon")));
+			plannerProperties.setExtension(Extension.valueOf(arc.getParameterConfiguration().get("extension")));
+			plannerProperties.setGoalThreshold(Double.parseDouble(arc.getParameterConfiguration().get("goalThreshold")));
+			plannerProperties.setMaxIterations(Integer.parseInt(arc.getParameterConfiguration().get("maxIterations")));
+			plannerProperties.setNeighborLimit(Integer.parseInt(arc.getParameterConfiguration().get("neighborLimit")));
+			plannerProperties.setSampling(Sampling.valueOf(arc.getParameterConfiguration().get("sampling")));
+			plannerProperties.setStrategy(Strategy.valueOf(arc.getParameterConfiguration().get("strategy")));
+			plannerProperties.setMinimumQuality(Double.parseDouble(arc.getParameterConfiguration().get("initialCostBias")));
+			plannerProperties.setMaximumQuality(1.0d/*Double.parseDouble(arc.getParameterConfiguration().get("finalCostBias"))*/);
+			plannerProperties.setQualityImprovement(Double.parseDouble(arc.getParameterConfiguration().get("improvementFactor")));
+			plannerProperties.setSignificantChange(0.5d);
+			plannerSpecification = new Specification<Planner>(Specification.PLANNER_MTP_ID, plannerProperties);
 		}
 		
 		return plannerSpecification;

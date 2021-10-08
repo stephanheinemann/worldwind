@@ -39,12 +39,15 @@ import java.util.ArrayList;
 
 import com.cfar.swim.worldwind.managers.AbstractAutonomicManager;
 import com.cfar.swim.worldwind.managers.AutonomicManager;
+import com.cfar.swim.worldwind.managers.heuristic.HeuristicPlannerTuning;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.managers.SmacManagerProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.session.Session;
 import com.cfar.swim.worldwind.util.Identifiable;
@@ -56,10 +59,10 @@ import ca.ubc.cs.beta.aeatk.logging.LogLevel;
 import ca.ubc.cs.beta.aeatk.misc.options.OptionLevel;
 import ca.ubc.cs.beta.aeatk.objectives.RunObjective;
 import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfiguration;
+import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfiguration.ParameterStringFormat;
 import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfigurationSpace;
 import ca.ubc.cs.beta.aeatk.probleminstance.InstanceListWithSeeds;
 import ca.ubc.cs.beta.aeatk.probleminstance.ProblemInstance;
-import ca.ubc.cs.beta.aeatk.probleminstance.ProblemInstanceOptions.TrainTestInstances;
 import ca.ubc.cs.beta.aeatk.probleminstance.seedgenerator.InstanceSeedGenerator;
 import ca.ubc.cs.beta.aeatk.probleminstance.seedgenerator.RandomInstanceSeedGenerator;
 import ca.ubc.cs.beta.aeatk.random.SeedableRandomPool;
@@ -188,23 +191,125 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		return new SmacPlannerTuning(specification, features);
 	}
 	
+	/**
+	 * Gets the managed grid planner algorithm execution configuration.
+	 * 
+	 * @param smacOptions the SMAC options
+	 * @param defaultFeatures the default features
+	 * 
+	 * @return the managed grid planner algorithm execution configuration
+	 */
+	private AlgorithmExecutionConfiguration getManagedGridPlannerAec(
+			SMACOptions smacOptions,
+			Features defaultFeatures) {
+		// copy MGP PCS resource
+		InputStream mpgPcsInputStream = this.getClass()
+				.getResourceAsStream(SmacAutonomicManager.MGP_PCS_RESOURCE);
+		try {
+			Files.createDirectories(Path.of(
+					this.getWorkspaceResource().getPath() + "/"
+							+ Specification.PLANNER_MGP_ID));
+			Files.copy(mpgPcsInputStream, Path.of(
+					this.getWorkspaceResource().getPath() + "/"
+							+ Specification.PLANNER_MGP_ID + "/"
+							+ SmacAutonomicManager.MGP_PCS_RESOURCE),
+					StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		// create MGP PCS
+		ParameterConfigurationSpace mgpPcs = new ParameterConfigurationSpace(
+				this.getWorkspaceResource().getPath() + "/"
+						+ Specification.PLANNER_MGP_ID + "/"
+						+ SmacAutonomicManager.MGP_PCS_RESOURCE);
+		
+		// create MGP heuristic default configuration
+		Specification<Planner> mgpSpec = new Specification<Planner>(Specification.PLANNER_MGP_ID, new OADStarProperties());
+		HeuristicPlannerTuning mgpTuning = new HeuristicPlannerTuning(mgpSpec, defaultFeatures);
+		OADStarProperties mgpProperties = (OADStarProperties) mgpTuning.tune().get(0);
+		smacOptions.initialIncumbent = "-minimumQuality '" + Double.toString(mgpProperties.getMinimumQuality()) + "' "
+				+ "-qualityImprovement '" + Double.toString(mgpProperties.getQualityImprovement()) + "'";
+		
+		// create MGP AEC
+		return new AlgorithmExecutionConfiguration(
+				Specification.PLANNER_MGP_ID, // executable
+				this.getWorkspaceResource().getPath(), // directory (irrelevant)
+				mgpPcs, // from file resource
+				false, // no cluster (irrelevant)
+				true, // deterministic algorithm
+				// terminate explicitly (cut-off)
+				smacOptions.scenarioConfig.algoExecOptions.cutoffTime);
+	}
+	
+	/**
+	 * Gets the managed tree planner algorithm execution configuration.
+	 * 
+	 * @param smacOptions the SMAC options
+	 * @param defaultFeatures the default features
+	 * 
+	 * @return the managed tree planner algorithm execution configuration
+	 */
+	private AlgorithmExecutionConfiguration getManagedTreePlannerAec(
+			SMACOptions smacOptions,
+			Features defaultFeatures) {
+		// copy MTP PCS resource
+		InputStream mtpPcsInputStream = this.getClass()
+				.getResourceAsStream(SmacAutonomicManager.MTP_PCS_RESOURCE);
+		try {
+			Files.createDirectories(Path.of(
+					this.getWorkspaceResource().getPath() + "/"
+							+ Specification.PLANNER_MTP_ID));
+			Files.copy(mtpPcsInputStream, Path.of(
+					this.getWorkspaceResource().getPath() + "/"
+							+ Specification.PLANNER_MTP_ID + "/"
+							+ SmacAutonomicManager.MTP_PCS_RESOURCE),
+					StandardCopyOption.REPLACE_EXISTING);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		// create MTP PCS
+		ParameterConfigurationSpace mtpPcs = new ParameterConfigurationSpace(
+				this.getWorkspaceResource().getPath() + "/"
+						+ Specification.PLANNER_MTP_ID + "/"
+						+ SmacAutonomicManager.MTP_PCS_RESOURCE);
+		
+		// create MTP heuristic default configuration
+		Specification<Planner> mtpSpec = new Specification<Planner>(Specification.PLANNER_MTP_ID, new OADRRTreeProperties());
+		HeuristicPlannerTuning mtpTuning = new HeuristicPlannerTuning(mtpSpec, defaultFeatures);
+		OADRRTreeProperties mtpProperties = (OADRRTreeProperties) mtpTuning.tune().get(0);
+		smacOptions.initialIncumbent = "-sampling '" + mtpProperties.getSampling().name() + "' "
+				+ "-strategy '" + mtpProperties.getStrategy().name() + "' "
+				+ "-extension '" + mtpProperties.getExtension().name() + "' "
+				+ "-maxIterations '" + Integer.toString(mtpProperties.getMaxIterations()) + "' "
+				+ "-epsilon '" + Double.toString(mtpProperties.getEpsilon()) + "' "
+				+ "-bias '" + Double.toString(mtpProperties.getBias()) + "' "
+				+ "-goalThreshold '" + Double.toString(mtpProperties.getGoalThreshold()) + "' "
+				+ "-neighborLimit '" + Double.toString(mtpProperties.getNeighborLimit()) + "' "
+				+ "-initialCostBias '" + Double.toString(mtpProperties.getMinimumQuality()) + "' "
+				+ "-improvementFactor '" + Double.toString(mtpProperties.getQualityImprovement()) + "'";
+		
+		// create MTP AEC
+		return new AlgorithmExecutionConfiguration(
+				Specification.PLANNER_MTP_ID, // executable
+				this.getWorkspaceResource().getPath(), // directory (irrelevant)
+				mtpPcs, // from file resource
+				false, // no cluster (irrelevant)
+				false, // non-deterministic algorithm
+				// terminate explicitly (cut-off)
+				smacOptions.scenarioConfig.algoExecOptions.cutoffTime);
+	}
+	
 	@Override
 	protected void initialize(Session managedSession) {
 		if (SmacManagerMode.EXECUTING == this.getManagerMode()) {
 			super.initialize(managedSession);
 		} else if (SmacManagerMode.TRAINING == this.getManagerMode()){
 			// TODO: initialize training session
-			InputStream is = this.getClass().getResourceAsStream(SmacAutonomicManager.MGP_PCS_RESOURCE);
-			try {
-				Files.createDirectories(Path.of(this.getWorkspaceResource()));
-				Files.copy(is, Path.of(
-						this.getWorkspaceResource().getPath() + "/" + SmacAutonomicManager.MGP_PCS_RESOURCE),
-						StandardCopyOption.REPLACE_EXISTING);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-			ParameterConfigurationSpace pcs = new ParameterConfigurationSpace(
-					this.getWorkspaceResource().getPath() + "/" + SmacAutonomicManager.MGP_PCS_RESOURCE);
+			
+			//ParameterConfigurationSpace mgpPcs = this.getManagedGridPlannerPcs();
+			//ParameterConfigurationSpace mtpPcs = this.getManagedTreePlannerPcs();
 			
 			/*
 			BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -234,7 +339,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			//smacOptions.initialChallengers = new ArrayList<>();
 			//smacOptions.initialChallengersIntensificationTime = 2147483647;
 			//smacOptions.initialChallengeRuns = 1;
-			//smacOptions.initialIncumbent = "DEFAULT"; // TODO: from heuristic AM
+			//smacOptions.initialIncumbent = "DEFAULT"; // from heuristic tuner
 			//smacOptions.initializationMode = InitializationMode.CLASSIC;
 			//smacOptions.intensificationPercentage = 0.5d;
 			//smacOptions.intermediarySaves = true;
@@ -299,7 +404,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			//smacOptions.scenarioConfig.algoExecOptions.algoExecDir = this.getClass().getResource(MGP_PCS_RESOURCE).getPath().;
 			
 			//smacOptions.scenarioConfig.algoExecOptions.cutoffLength = Double.POSITIVE_INFINITY;
-			smacOptions.scenarioConfig.algoExecOptions.cutoffTime = 5d;
+			smacOptions.scenarioConfig.algoExecOptions.cutoffTime = 5d; // seconds
 			/*
 			smacOptions.scenarioConfig.algoExecOptions.deterministic = true;
 			smacOptions.scenarioConfig.algoExecOptions.paramFileDelegate.continuousNeighbours = 4;
@@ -435,13 +540,22 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			//smacOptions.warmStartOptions.restoreIteration = 32;
 			//smacOptions.warmStartOptions.warmStartStateFrom = this.getWorkspaceResource().getPath();
 			
-			AlgorithmExecutionConfiguration algorithmExecutionConfiguration = new AlgorithmExecutionConfiguration(
+			/*
+			AlgorithmExecutionConfiguration mgpAec = new AlgorithmExecutionConfiguration(
 					Specification.PLANNER_MGP_ID, // smacOptions.getAlgorithmExecutionConfig().getAlgorithmExecutable(), // executable
 					this.getWorkspaceResource().getPath(), //smacOptions.getAlgorithmExecutionConfig().getAlgorithmExecutionDirectory(), // irrelevant (directory)
-					pcs, // from file resource
+					mgpPcs, // from file resource
 					false, // irrelevant (cluster)
 					true, // deterministic
 					smacOptions.scenarioConfig.algoExecOptions.cutoffTime); // terminate explicitly (cut-off), or criticality
+			*/
+			
+			Features defaultFeatures = new Features();
+			defaultFeatures.extractFeatures(managedSession.getActiveScenario());
+			//AlgorithmExecutionConfiguration mgpAec = this.getManagedGridPlannerAec(smacOptions, defaultFeatures);
+			//Logging.logger().info(mgpAec.toString());
+			AlgorithmExecutionConfiguration mtpAec = this.getManagedTreePlannerAec(smacOptions, defaultFeatures);
+			Logging.logger().info(mtpAec.toString());
 			
 			ArrayList<ProblemInstance> problemInstances = new ArrayList<>();
 			int instanceId = 1;
@@ -462,32 +576,33 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			SmacPlannerEvaluator plannerEvaluator = new SmacPlannerEvaluator(managedSession);
 			
 			SeedableRandomPool pool = smacOptions.seedOptions.getSeedableRandomPool();
+			/*
 			TrainTestInstances tti;
 			InstanceListWithSeeds trainingInstances = null; // create instances from features
-			InstanceListWithSeeds testingILWS = null;
-			/*
+			InstanceListWithSeeds testingInstances = null;
 			try {
 				tti = smacOptions.getTrainingAndTestProblemInstances(
 						pool, new SeedableRandomPool(smacOptions.validationSeed
 								+ smacOptions.seedOptions.seedOffset,
 								pool.getInitialSeeds()));
-				trainingILWS = tti.getTrainingInstances();
-				testingILWS = tti.getTestInstances();
+				trainingInstances = tti.getTrainingInstances();
+				testingInstances = tti.getTestInstances();
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 			*/
 			InstanceSeedGenerator isg = new RandomInstanceSeedGenerator(problemInstances, problemInstances.hashCode());
-			trainingInstances = new InstanceListWithSeeds(isg, problemInstances);
+			InstanceListWithSeeds trainingInstances = new InstanceListWithSeeds(isg, problemInstances);
 			
 			EventManager eventManager = new EventManager();
 			// TODO: register event handlers
 			
+			Logging.logger().info(smacOptions.initialIncumbent);
 			// TODO: possibly use builder and simply replace plannerEvaluator
 			SMACBuilder builder = new SMACBuilder();
 			this.smac = (SequentialModelBasedAlgorithmConfiguration) builder.getAutomaticConfigurator(
-					algorithmExecutionConfiguration,
+					mtpAec,
 					trainingInstances,
 					smacOptions,
 					// TODO: not really relevant since the evaluator is provided below
@@ -496,6 +611,18 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 					pool,
 					new OutstandingEvaluationsTargetAlgorithmEvaluatorDecorator(plannerEvaluator),
 					null); // run history created internally
+			Logging.logger().info(this.smac.getInitialIncumbent().getFormattedParameterString(ParameterStringFormat.NODB_SYNTAX));
+			
+			/*
+			Specification<Planner> mgpSpec = new Specification<Planner>(Specification.PLANNER_MGP_ID, new OADStarProperties());
+			HeuristicPlannerTuning mgpTuning = new HeuristicPlannerTuning(mgpSpec, defaultFeatures);
+			OADStarProperties mgpProperties = (OADStarProperties) mgpTuning.tune().get(0);
+			this.smac.getInitialIncumbent().put("minimumQuality", Double.toString(mgpProperties.getMinimumQuality()));
+			this.smac.getInitialIncumbent().put("qualityImprovement", Double.toString(mgpProperties.getQualityImprovement()));
+			for (String parameter : this.smac.getInitialIncumbent().keySet()) {
+				Logging.logger().info(parameter + " = " + this.smac.getInitialIncumbent().get(parameter));
+			}
+			*/
 			
 			/*
 			SequentialModelBasedPlannerConfiguration smpc = new

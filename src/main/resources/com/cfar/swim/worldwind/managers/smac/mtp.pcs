@@ -1,0 +1,15 @@
+# name type range default
+sampling ordinal {ELLIPSOIDAL, UNIFORM, GAUSSIAN} [UNIFORM] # categorical
+strategy categorical {EXTEND, CONNECT} [EXTEND]
+extension categorical {LINEAR, FEASIBLE} [LINEAR]
+maxIterations integer [1, 10000] [1500]
+epsilon real [1, 10000] [500]
+bias integer [0, 100] [5]
+goalThreshold real [0.0, 500] [50]
+neighborLimit integer [1, 50] [5]
+initialCostBias real [0.0, 1.0] [0.0]
+#finalCostBias real [1.0, 1.0] [1.0]
+improvementFactor real [0.01, 1.0] [0.05]
+
+# forbidden clauses
+{epsilon < goalThreshold}
