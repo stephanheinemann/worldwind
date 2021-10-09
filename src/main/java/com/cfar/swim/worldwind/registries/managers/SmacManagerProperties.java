@@ -55,6 +55,9 @@ public class SmacManagerProperties extends AbstractManagerProperties {
 	/** the default training runs of this SMAC manager properties bean */
 	public static final long TRAINING_RUNS = 1000l;
 	
+	/** the default training run cut-off of this SMAC manager properties bean */
+	public static final long TRAINING_RUN_CUTOFF = 5l;
+	
 	/** the workspace resource of this SMAC manager properties bean */
 	@NotNull
 	@NotEmpty
@@ -64,6 +67,11 @@ public class SmacManagerProperties extends AbstractManagerProperties {
 	@Min(value = 1, message = "{property.manager.smac.trainingRuns.min}")
 	@Max(value = Long.MAX_VALUE, message = "{property.manager.trainingRuns.max}")
 	private long trainingRuns = SmacManagerProperties.TRAINING_RUNS;
+	
+	/** the training run cut-off of this SMAC manager properties bean in seconds */
+	@Min(value = 1, message = "{property.manager.smac.trainingRunCutOff.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.manager.trainingRunCutOff.max}")
+	private long trainingRunCutOff = SmacManagerProperties.TRAINING_RUN_CUTOFF;
 	
 	/** the manager mode of this SMAC manager properties bean */
 	@NotNull
@@ -106,6 +114,27 @@ public class SmacManagerProperties extends AbstractManagerProperties {
 	}
 	
 	/**
+	 * Gets the training run cut-off of this SMAC manager properties bean in
+	 * seconds.
+	 * 
+	 * @return the training run cut-off of this SMAC manager properties bean in
+	 *         seconds
+	 */
+	public long getTrainingRunCutOff() {
+		return this.trainingRunCutOff;
+	}
+	
+	/**
+	 * Sets the training run cut-off of this SMAC manager properties bean in
+	 * seconds.
+	 * 
+	 * @param trainingRunCutOff the training cut-off to be set in seconds
+	 */
+	public void setTrainingRunCutOff(long trainingRunCutOff) {
+		this.trainingRunCutOff = trainingRunCutOff;
+	}
+	
+	/**
 	 * Gets the manager mode of this SMAC manager properties bean.
 	 * 
 	 * @return the manager mode of this SMAC manager properties bean
@@ -144,6 +173,7 @@ public class SmacManagerProperties extends AbstractManagerProperties {
 			SmacManagerProperties properties = (SmacManagerProperties) o;
 			equals = (this.managerMode == properties.managerMode)
 					&& (this.trainingRuns == properties.trainingRuns)
+					&& (this.trainingRunCutOff == properties.trainingRunCutOff)
 					&& (this.worksapceResource.equals(properties.worksapceResource));
 		}
 		
@@ -165,6 +195,7 @@ public class SmacManagerProperties extends AbstractManagerProperties {
 				super.hashCode(),
 				this.managerMode,
 				this.trainingRuns,
+				this.trainingRunCutOff,
 				this.worksapceResource);
 	}
 	

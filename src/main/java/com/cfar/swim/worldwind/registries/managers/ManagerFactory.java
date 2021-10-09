@@ -149,6 +149,7 @@ public class ManagerFactory extends AbstractFactory<AutonomicManager> {
 				} catch (IllegalArgumentException iae) {
 				}
 				((SmacAutonomicManager) manager).setTrainingRuns(properties.getTrainingRuns());
+				((SmacAutonomicManager) manager).setTrainingRunCutOff(Duration.ofSeconds(properties.getTrainingRunCutOff()));
 				((SmacAutonomicManager) manager).setManagerMode(properties.getManagerMode());
 			}
 		}

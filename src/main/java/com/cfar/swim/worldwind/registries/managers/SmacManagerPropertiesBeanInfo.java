@@ -73,6 +73,11 @@ public class SmacManagerPropertiesBeanInfo extends AbstractManagerPropertiesBean
 					this.dictionary.getString("property.manager.smac.trainingRuns.name"),
 					this.dictionary.getString("property.manager.smac.trainingRuns.description"),
 					this.dictionary.getString("property.manager.category.managing"));
+			PropertyDescriptor trainingRunCutOff = this.createPropertyDescriptor(
+					"trainingRunCutOff",
+					this.dictionary.getString("property.manager.smac.trainingRunCutOff.name"),
+					this.dictionary.getString("property.manager.smac.trainingRunCutOff.description"),
+					this.dictionary.getString("property.manager.category.managing"));
 			PropertyDescriptor managerMode = this.createPropertyDescriptor(
 					"managerMode",
 					this.dictionary.getString("property.manager.smac.managerMode.name"),
@@ -82,6 +87,7 @@ public class SmacManagerPropertiesBeanInfo extends AbstractManagerPropertiesBean
 			PropertyDescriptor[] samDescriptors = new PropertyDescriptor[] {
 					workspaceResource,
 					trainingRuns,
+					trainingRunCutOff,
 					managerMode};
 			
 			descriptors = Stream.concat(

@@ -1034,8 +1034,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 * Cleans up this abstract autonomic manager and removes all its managed
 	 * scenarios from its managed session.
 	 * 
-	 * @param managedSession the managed session of this abstract autonomic
-	 *                       manager
+	 * @param managedSession the managed session
 	 */
 	protected void cleanup(Session managedSession) {
 		if (this.hasManagedScenarios()) {

@@ -35,7 +35,12 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.managers.AbstractAutonomicManager;
 import com.cfar.swim.worldwind.managers.AutonomicManager;
@@ -43,6 +48,9 @@ import com.cfar.swim.worldwind.managers.heuristic.HeuristicPlannerTuning;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.planners.Planner;
+import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
+import com.cfar.swim.worldwind.planners.managed.ManagedPlanner;
+import com.cfar.swim.worldwind.planners.managed.ManagedTreePlanner;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.managers.SmacManagerProperties;
@@ -54,9 +62,7 @@ import com.cfar.swim.worldwind.util.Identifiable;
 
 import ca.ubc.cs.beta.aeatk.acquisitionfunctions.AcquisitionFunctions;
 import ca.ubc.cs.beta.aeatk.algorithmexecutionconfiguration.AlgorithmExecutionConfiguration;
-import ca.ubc.cs.beta.aeatk.eventsystem.EventManager;
 import ca.ubc.cs.beta.aeatk.logging.LogLevel;
-import ca.ubc.cs.beta.aeatk.misc.options.OptionLevel;
 import ca.ubc.cs.beta.aeatk.objectives.RunObjective;
 import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfiguration;
 import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfiguration.ParameterStringFormat;
@@ -70,6 +76,7 @@ import ca.ubc.cs.beta.aeatk.smac.SMACOptions;
 import ca.ubc.cs.beta.aeatk.targetalgorithmevaluator.decorators.functionality.OutstandingEvaluationsTargetAlgorithmEvaluatorDecorator;
 import ca.ubc.cs.beta.smac.builder.SMACBuilder;
 import ca.ubc.cs.beta.smac.configurator.SequentialModelBasedAlgorithmConfiguration;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
 
 /**
@@ -92,11 +99,14 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	/** the training runs of this SMAC autonomic manager */
 	private long trainingRuns = SmacManagerProperties.TRAINING_RUNS;
 	
+	/** the training run cut-off of this SMAC autonomic manager */
+	private Duration trainingRunCutOff = Duration.ofSeconds(SmacManagerProperties.TRAINING_RUN_CUTOFF);
+	
 	/** the manager mode of this SMAC autonomic manager */
 	private SmacManagerMode managerMode = SmacManagerMode.EXECUTING;
 	
-	/** the SMAC of this SMAC autonomic manager */
-	private SequentialModelBasedAlgorithmConfiguration smac = null;
+	/** the SMACs of this SMAC autonomic manager */
+	private List<SequentialModelBasedAlgorithmConfiguration> smacs = new ArrayList<>();
 	
 	/**
 	 * Gets the identifier of this SMAC autonomic manager.
@@ -157,6 +167,30 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	}
 	
 	/**
+	 * Gets the training run cut-off of this SMAC autonomic manager.
+	 * 
+	 * @return the training run cut-off of this SMAC autonomic manager
+	 */
+	public Duration getTrainingRunCutOff() {
+		return this.trainingRunCutOff;
+	}
+	
+	/**
+	 * Sets the training run cut-off of this SMAC autonomic manager.
+	 * 
+	 * @param trainingRunCutOff the training run cut-off to be set
+	 * 
+	 * @throws IllegalArgumentException if the training run cut-off is invalid
+	 */
+	public void setTrainingRunCutOff(Duration trainingRunCutOff) {
+		if ((null == trainingRunCutOff) || trainingRunCutOff.isZero()
+				|| trainingRunCutOff.isNegative()) {
+			throw new IllegalArgumentException("training runs is invalid");
+		}
+		this.trainingRunCutOff = trainingRunCutOff;
+	}
+	
+	/**
 	 * Gets the manager mode of this SMAC autonomic manager.
 	 * 
 	 * @return the manager mode of this SMAC autonomic manager
@@ -192,27 +226,139 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	}
 	
 	/**
-	 * Gets the managed grid planner algorithm execution configuration.
+	 * Creates managed planner SMAC options.
 	 * 
-	 * @param smacOptions the SMAC options
+	 * @param plannerId the identifier of the managed planner
+	 * 
+	 * @return the managed planner SMAC options if supported, null otherwise
+	 */
+	private SMACOptions createManagedPlannerOptions(String plannerId) {
+		SMACOptions smacOptions = null;
+		
+		if (Specification.PLANNER_MGP_ID.equals(plannerId)) {
+			smacOptions = this.createManagedGridPlannerOptions();
+		} else if (Specification.PLANNER_MTP_ID.equals(plannerId)) {
+			smacOptions = this.createManagedTreePlannerOptions();
+		} // TODO: managed roadmap planner
+		
+		return smacOptions;
+	}
+	
+	/**
+	 * Creates managed grid planner SMAC options.
+	 * 
+	 * @return the managed grid planner SMAC options
+	 */
+	private SMACOptions createManagedGridPlannerOptions() {
+		SMACOptions smacOptions = new SMACOptions();
+		
+		String mgpWorkspace = this.getWorkspaceResource().getPath()
+				+ "/" + Specification.PLANNER_MGP_ID;
+		smacOptions.adaptiveCapping = false; // QUALITY
+		smacOptions.alwaysRunInitialConfiguration = true;
+		smacOptions.experimentDir = mgpWorkspace;
+		smacOptions.expFunc = AcquisitionFunctions.EI;
+		smacOptions.logOptions.consoleLogLevel = LogLevel.INFO;
+		smacOptions.logOptions.logLevel = LogLevel.INFO;
+		smacOptions.randomForestOptions.logModel = false; // QUALITY
+		smacOptions.scenarioConfig._runObj = RunObjective.QUALITY;
+		smacOptions.scenarioConfig.algoExecOptions.algoExec = Specification.PLANNER_MGP_ID;
+		smacOptions.scenarioConfig.algoExecOptions.algoExecDir = mgpWorkspace;
+		smacOptions.scenarioConfig.algoExecOptions.cutoffTime = this.getTrainingRunCutOff().toSeconds();
+		smacOptions.scenarioConfig.algoExecOptions.deterministic = true;
+		smacOptions.scenarioConfig.algoExecOptions.paramFileDelegate.paramFile =
+				mgpWorkspace + "/" + SmacAutonomicManager.MGP_PCS_RESOURCE;
+		smacOptions.scenarioConfig.limitOptions.totalNumRunsLimit = this.getTrainingRuns();
+		smacOptions.scenarioConfig.outputDirectory = mgpWorkspace;
+		smacOptions.stateOpts.restoreStateFrom = mgpWorkspace;
+		/*
+		smacOptions.warmStartOptions.restoreIteration = 32;
+		smacOptions.warmStartOptions.warmStartStateFrom = mtpWorkspace;
+		*/
+		
+		return smacOptions;
+	}
+	
+	/**
+	 * Creates managed tree planner SMAC options.
+	 * 
+	 * @return the managed tree planner SMAC options
+	 */
+	private SMACOptions createManagedTreePlannerOptions() {
+		SMACOptions smacOptions = new SMACOptions();
+		
+		String mtpWorkspace = this.getWorkspaceResource().getPath()
+				+ "/" + Specification.PLANNER_MTP_ID;
+		smacOptions.adaptiveCapping = false; // QUALITY
+		smacOptions.alwaysRunInitialConfiguration = true;
+		smacOptions.experimentDir = mtpWorkspace;
+		smacOptions.expFunc = AcquisitionFunctions.EI;
+		smacOptions.logOptions.consoleLogLevel = LogLevel.INFO;
+		smacOptions.logOptions.logLevel = LogLevel.INFO;
+		smacOptions.randomForestOptions.logModel = false; // QUALITY
+		smacOptions.scenarioConfig._runObj = RunObjective.QUALITY;
+		smacOptions.scenarioConfig.algoExecOptions.algoExec = Specification.PLANNER_MTP_ID;
+		smacOptions.scenarioConfig.algoExecOptions.algoExecDir = mtpWorkspace;
+		smacOptions.scenarioConfig.algoExecOptions.cutoffTime = this.getTrainingRunCutOff().toSeconds();
+		smacOptions.scenarioConfig.algoExecOptions.deterministic = false;
+		smacOptions.scenarioConfig.algoExecOptions.paramFileDelegate.paramFile =
+				mtpWorkspace + "/" + SmacAutonomicManager.MTP_PCS_RESOURCE;
+		smacOptions.scenarioConfig.limitOptions.totalNumRunsLimit = this.getTrainingRuns();
+		smacOptions.scenarioConfig.outputDirectory = mtpWorkspace;
+		smacOptions.stateOpts.restoreStateFrom = mtpWorkspace;
+		/*
+		smacOptions.warmStartOptions.restoreIteration = 32;
+		smacOptions.warmStartOptions.warmStartStateFrom = mtpWorkspace;
+		*/
+		
+		return smacOptions;
+	}
+	
+	/**
+	 * Creates a managed planner algorithm execution configuration based on
+	 * managed planner SMAC options and default features.
+	 * 
+	 * @param smacOptions the managed planner SMAC options
 	 * @param defaultFeatures the default features
 	 * 
-	 * @return the managed grid planner algorithm execution configuration
+	 * @return the managed planner algorithm execution configuration based on
+	 *         the managed planner SMAC options and default features if
+	 *         supported, null otherwise 
 	 */
-	private AlgorithmExecutionConfiguration getManagedGridPlannerAec(
+	private AlgorithmExecutionConfiguration createManagedPlannerAec(
 			SMACOptions smacOptions,
+			Features defaultFeatures) {
+		AlgorithmExecutionConfiguration aec = null;
+		
+		if (Specification.PLANNER_MGP_ID.equals(smacOptions.scenarioConfig.algoExecOptions.algoExec)) {
+			aec = this.createManagedGridPlannerAec(smacOptions, defaultFeatures);
+		} else if (Specification.PLANNER_MTP_ID.equals(smacOptions.scenarioConfig.algoExecOptions.algoExec)) {
+			aec = this.createManagedTreePlannerAec(smacOptions, defaultFeatures);
+		} // TODO: managed roadmap planner
+			
+		return aec;
+	}
+	
+	/**
+	 * Creates a managed grid planner algorithm execution configuration based
+	 * on managed grid planner SMAC options and default features.
+	 * 
+	 * @param mgpOptions the managed grid planner SMAC options
+	 * @param defaultFeatures the default features
+	 * 
+	 * @return the managed grid planner algorithm execution configuration based
+	 *         on the managed grid planner SMAC options and default features
+	 */
+	private AlgorithmExecutionConfiguration createManagedGridPlannerAec(
+			SMACOptions mgpOptions,
 			Features defaultFeatures) {
 		// copy MGP PCS resource
 		InputStream mpgPcsInputStream = this.getClass()
 				.getResourceAsStream(SmacAutonomicManager.MGP_PCS_RESOURCE);
 		try {
-			Files.createDirectories(Path.of(
-					this.getWorkspaceResource().getPath() + "/"
-							+ Specification.PLANNER_MGP_ID));
+			Files.createDirectories(Path.of(mgpOptions.experimentDir));
 			Files.copy(mpgPcsInputStream, Path.of(
-					this.getWorkspaceResource().getPath() + "/"
-							+ Specification.PLANNER_MGP_ID + "/"
-							+ SmacAutonomicManager.MGP_PCS_RESOURCE),
+					mgpOptions.scenarioConfig.algoExecOptions.paramFileDelegate.paramFile),
 					StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -220,50 +366,45 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		
 		// create MGP PCS
 		ParameterConfigurationSpace mgpPcs = new ParameterConfigurationSpace(
-				this.getWorkspaceResource().getPath() + "/"
-						+ Specification.PLANNER_MGP_ID + "/"
-						+ SmacAutonomicManager.MGP_PCS_RESOURCE);
+				mgpOptions.scenarioConfig.algoExecOptions.paramFileDelegate.paramFile);
 		
 		// create MGP heuristic default configuration
 		Specification<Planner> mgpSpec = new Specification<Planner>(Specification.PLANNER_MGP_ID, new OADStarProperties());
 		HeuristicPlannerTuning mgpTuning = new HeuristicPlannerTuning(mgpSpec, defaultFeatures);
 		OADStarProperties mgpProperties = (OADStarProperties) mgpTuning.tune().get(0);
-		smacOptions.initialIncumbent = "-minimumQuality '" + Double.toString(mgpProperties.getMinimumQuality()) + "' "
+		mgpOptions.initialIncumbent = "-minimumQuality '" + Double.toString(mgpProperties.getMinimumQuality()) + "' "
 				+ "-qualityImprovement '" + Double.toString(mgpProperties.getQualityImprovement()) + "'";
 		
 		// create MGP AEC
 		return new AlgorithmExecutionConfiguration(
-				Specification.PLANNER_MGP_ID, // executable
-				this.getWorkspaceResource().getPath(), // directory (irrelevant)
+				mgpOptions.scenarioConfig.algoExecOptions.algoExec, // executable
+				mgpOptions.scenarioConfig.algoExecOptions.algoExecDir, // directory (irrelevant)
 				mgpPcs, // from file resource
 				false, // no cluster (irrelevant)
-				true, // deterministic algorithm
-				// terminate explicitly (cut-off)
-				smacOptions.scenarioConfig.algoExecOptions.cutoffTime);
+				mgpOptions.scenarioConfig.algoExecOptions.deterministic, // deterministic algorithm
+				mgpOptions.scenarioConfig.algoExecOptions.cutoffTime); // terminate explicitly (cut-off)
 	}
 	
 	/**
-	 * Gets the managed tree planner algorithm execution configuration.
+	 * Creates a managed tree planner algorithm execution configuration based
+	 * on managed tree planner SMAC options and default features.
 	 * 
-	 * @param smacOptions the SMAC options
+	 * @param mtpOptions the managed tree planner SMAC options
 	 * @param defaultFeatures the default features
 	 * 
-	 * @return the managed tree planner algorithm execution configuration
+	 * @return the managed tree planner algorithm execution configuration based
+	 *         on the managed tree planner SMAC options and default features
 	 */
-	private AlgorithmExecutionConfiguration getManagedTreePlannerAec(
-			SMACOptions smacOptions,
+	private AlgorithmExecutionConfiguration createManagedTreePlannerAec(
+			SMACOptions mtpOptions,
 			Features defaultFeatures) {
 		// copy MTP PCS resource
 		InputStream mtpPcsInputStream = this.getClass()
 				.getResourceAsStream(SmacAutonomicManager.MTP_PCS_RESOURCE);
 		try {
-			Files.createDirectories(Path.of(
-					this.getWorkspaceResource().getPath() + "/"
-							+ Specification.PLANNER_MTP_ID));
+			Files.createDirectories(Path.of(mtpOptions.experimentDir));
 			Files.copy(mtpPcsInputStream, Path.of(
-					this.getWorkspaceResource().getPath() + "/"
-							+ Specification.PLANNER_MTP_ID + "/"
-							+ SmacAutonomicManager.MTP_PCS_RESOURCE),
+					mtpOptions.scenarioConfig.algoExecOptions.paramFileDelegate.paramFile),
 					StandardCopyOption.REPLACE_EXISTING);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -271,15 +412,13 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		
 		// create MTP PCS
 		ParameterConfigurationSpace mtpPcs = new ParameterConfigurationSpace(
-				this.getWorkspaceResource().getPath() + "/"
-						+ Specification.PLANNER_MTP_ID + "/"
-						+ SmacAutonomicManager.MTP_PCS_RESOURCE);
+				mtpOptions.scenarioConfig.algoExecOptions.paramFileDelegate.paramFile);
 		
 		// create MTP heuristic default configuration
 		Specification<Planner> mtpSpec = new Specification<Planner>(Specification.PLANNER_MTP_ID, new OADRRTreeProperties());
 		HeuristicPlannerTuning mtpTuning = new HeuristicPlannerTuning(mtpSpec, defaultFeatures);
 		OADRRTreeProperties mtpProperties = (OADRRTreeProperties) mtpTuning.tune().get(0);
-		smacOptions.initialIncumbent = "-sampling '" + mtpProperties.getSampling().name() + "' "
+		mtpOptions.initialIncumbent = "-sampling '" + mtpProperties.getSampling().name() + "' "
 				+ "-strategy '" + mtpProperties.getStrategy().name() + "' "
 				+ "-extension '" + mtpProperties.getExtension().name() + "' "
 				+ "-maxIterations '" + Integer.toString(mtpProperties.getMaxIterations()) + "' "
@@ -292,386 +431,158 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		
 		// create MTP AEC
 		return new AlgorithmExecutionConfiguration(
-				Specification.PLANNER_MTP_ID, // executable
-				this.getWorkspaceResource().getPath(), // directory (irrelevant)
+				mtpOptions.scenarioConfig.algoExecOptions.algoExec, // executable
+				mtpOptions.scenarioConfig.algoExecOptions.algoExecDir, // directory (irrelevant)
 				mtpPcs, // from file resource
 				false, // no cluster (irrelevant)
-				false, // non-deterministic algorithm
-				// terminate explicitly (cut-off)
-				smacOptions.scenarioConfig.algoExecOptions.cutoffTime);
+				mtpOptions.scenarioConfig.algoExecOptions.deterministic, // non-deterministic algorithm
+				mtpOptions.scenarioConfig.algoExecOptions.cutoffTime); // terminate explicitly (cut-off)
 	}
 	
+	/**
+	 * Gets the supported scenarios of a managed session for managed planner
+	 * SMAC options.
+	 * 
+	 * @param managedSession the managed session
+	 * @param options the managed planner SMAC options
+	 * 
+	 * @return the supported scenarios of the managed session for the managed
+	 *         planner SMAC options
+	 */
+	private Set<Scenario> getSupportedScenarios(Session managedSession, SMACOptions options) {
+		Set<Scenario> supportedScenarios = new HashSet<>();
+		
+		for (Scenario scenario : managedSession.getScenarios()) {
+			ManagedPlanner managedPlanner = null;
+			if (Specification.PLANNER_MGP_ID.equals(options.scenarioConfig.algoExecOptions.algoExec)) {
+				managedPlanner = new ManagedGridPlanner(scenario.getAircraft(), scenario.getEnvironment());
+			} else if (Specification.PLANNER_MTP_ID.equals(options.scenarioConfig.algoExecOptions.algoExec)) {
+				managedPlanner = new ManagedTreePlanner(scenario.getAircraft(), scenario.getEnvironment());
+			} // TODO: managed roadmap planner
+			
+			List<Position> pois = scenario.getWaypoints().stream()
+					.map(w -> (Position) w)
+					.collect(Collectors.toList());
+			
+			if ((null != managedPlanner)
+					&& managedPlanner.supports(scenario.getAircraft())
+					&& managedPlanner.supports(scenario.getEnvironment())
+					&& managedPlanner.supports(pois)
+					&& (1 < pois.size())) {
+				supportedScenarios.add(scenario);
+			}
+		}
+		
+		return supportedScenarios;
+	}
+	
+	/**
+	 * Creates problem instances for scenarios.
+	 * 
+	 * @param scenarios the scenarios to create problem instances for
+	 * 
+	 * @return the problem instances created from scenarios
+	 */
+	private List<ProblemInstance> createProblemInstances(Set<Scenario> scenarios) {
+		List<ProblemInstance> problemInstances = new ArrayList<>();
+		
+		int instanceId = 1;
+		for (Scenario scenario : scenarios) {
+			Features features = new Features(scenario, this.getFeatureHorizon());
+			ProblemInstance problemInstance = new ProblemInstance(
+					scenario.getId(),
+					instanceId++,
+					features);
+			problemInstances.add(problemInstance);
+		}
+		
+		return problemInstances;
+	}
+	
+	/**
+	 * Initializes this SMAC autonomic manager for a managed session.
+	 * 
+	 * @param managedSession the managed session
+	 */
 	@Override
 	protected void initialize(Session managedSession) {
 		if (SmacManagerMode.EXECUTING == this.getManagerMode()) {
 			super.initialize(managedSession);
 		} else if (SmacManagerMode.TRAINING == this.getManagerMode()){
-			// TODO: initialize training session
-			
-			//ParameterConfigurationSpace mgpPcs = this.getManagedGridPlannerPcs();
-			//ParameterConfigurationSpace mtpPcs = this.getManagedTreePlannerPcs();
-			
-			/*
-			BufferedReader br = new BufferedReader(new InputStreamReader(is));
-			ParameterConfigurationSpace pcs = new ParameterConfigurationSpace(br);
-			ParameterConfiguration pc = pcs.getRandomParameterConfiguration(new Random());
-			for (String parameter : pc.keySet()) {
-				System.out.println(parameter + " = " + pc.get(parameter));
-			}
-			*/
-			
-			SMACOptions smacOptions = new SMACOptions();
-			smacOptions.adaptiveCapping = false; // QUALITY
-			smacOptions.alwaysRunInitialConfiguration = true;
-			//smacOptions.capAddSlack = 1.0d;
-			//smacOptions.capSlack = 1.3d;
-			//smacOptions.classicInitModeOpts.initialIncumbentRuns = 1;
-			//smacOptions.dciModeOpts.numberOfChallengers = 2; // double capping
-			//smacOptions.dciModeOpts.numberOfRunsPerChallenger = 2; // double capping
-			//smacOptions.defaultHandler = SharedModelModeDefaultHandling.USE_ALL;
-			//smacOptions.deterministicInstanceOrdering = false;
-			//smacOptions.doValidation = true;
-			//smacOptions.execMode = ExecutionMode.SMAC;
-			smacOptions.experimentDir = this.getWorkspaceResource().getPath();
-			smacOptions.expFunc = AcquisitionFunctions.EI;
-			//smacOptions.help.helpDefaults = null;
-			smacOptions.help.helpLevel = OptionLevel.ADVANCED;
-			//smacOptions.initialChallengers = new ArrayList<>();
-			//smacOptions.initialChallengersIntensificationTime = 2147483647;
-			//smacOptions.initialChallengeRuns = 1;
-			//smacOptions.initialIncumbent = "DEFAULT"; // from heuristic tuner
-			//smacOptions.initializationMode = InitializationMode.CLASSIC;
-			//smacOptions.intensificationPercentage = 0.5d;
-			//smacOptions.intermediarySaves = true;
-			//smacOptions.iterativeCappingBreakOnFirstCompletion = false;
-			//smacOptions.iterativeCappingK = 1;
-			
-			smacOptions.logOptions.consoleLogLevel = LogLevel.INFO;
-			smacOptions.logOptions.logLevel = LogLevel.INFO;
-			
-			// ------------------------ model building ------------------------
-			/*
-			smacOptions.mbOptions.imputationIterations = 2;
-			smacOptions.mbOptions.maskCensoredDataAsKappaMax = false;
-			smacOptions.mbOptions.maskCensoredDataAsUncensored = false;
-			smacOptions.mbOptions.maskInactiveConditionalParametersAsDefaultValue = true;
-			*/
-			
-			//smacOptions.maxIncumbentRuns = 2000;
-			//smacOptions.numberOfChallengers = 10;
-			//smacOptions.numberOfRandomConfigsInEI = 10000;
-			//smacOptions.numberOfRandomConfigsUsedForLocalSearch = 0;
-			//smacOptions.numPCA = 7;
-			//smacOptions.optionFile = null;
-			//smacOptions.optionFile2 = null;
-			
-			// ------------------------ random forest -------------------------
-			/*
-			smacOptions.randomForestOptions.brokenVarianceCalculation = false;
-			smacOptions.randomForestOptions.freeMemoryPercentageToSubsample = 0.25d;
-			smacOptions.randomForestOptions.fullTreeBootstrap = false;
-			smacOptions.randomForestOptions.ignoreConditionality = false;
-			smacOptions.randomForestOptions.imputeMean = false;
-			*/
-			smacOptions.randomForestOptions.logModel = false; // QUALITY
-			/*
-			smacOptions.randomForestOptions.minVariance = 1E-14d;
-			smacOptions.randomForestOptions.numTrees = 10;
-			smacOptions.randomForestOptions.penalizeImputedValues = false;
-			smacOptions.randomForestOptions.preprocessMarginal = true;
-			smacOptions.randomForestOptions.ratioFeatures = 0.83d;
-			smacOptions.randomForestOptions.shuffleImputedValues = false;
-			smacOptions.randomForestOptions.splitMin = 10;
-			smacOptions.randomForestOptions.storeDataInLeaves = false;
-			smacOptions.randomForestOptions.subsamplePercentage = 0.9d;
-			smacOptions.randomForestOptions.subsampleValuesWhenLowMemory = false;
-			*/
-			
-			// ------------------------ run groups ----------------------------
-			// TODO: run groups for flight phases
-			/*
-			smacOptions.runGroupOptions.replacementChar = null;
-			smacOptions.runGroupOptions.runGroupName = null;
-			smacOptions.runGroupOptions.runGroupExit = false;
-			*/
-			
-			//smacOptions.saveRunsEveryIteration = false;
-			
-			// ------------------------ scenarios -----------------------------
-			smacOptions.scenarioConfig._runObj = RunObjective.QUALITY;
-			
-			smacOptions.scenarioConfig.algoExecOptions.algoExec = Specification.PLANNER_MGP_ID;
-			//smacOptions.scenarioConfig.algoExecOptions.algoExecDir = this.getClass().getResource(MGP_PCS_RESOURCE).getPath().;
-			
-			//smacOptions.scenarioConfig.algoExecOptions.cutoffLength = Double.POSITIVE_INFINITY;
-			smacOptions.scenarioConfig.algoExecOptions.cutoffTime = 5d; // seconds
-			/*
-			smacOptions.scenarioConfig.algoExecOptions.deterministic = true;
-			smacOptions.scenarioConfig.algoExecOptions.paramFileDelegate.continuousNeighbours = 4;
-			smacOptions.scenarioConfig.algoExecOptions.paramFileDelegate.paramFile = SmacAutonomicManager.MGP_PCS_RESOURCE;
-			smacOptions.scenarioConfig.algoExecOptions.paramFileDelegate.searchSubspace = null;
-			smacOptions.scenarioConfig.algoExecOptions.paramFileDelegate.searchSubspaceFile = null;
-			*/
-			
-			// ------------------------ algorithm evaluator -------------------
-			/*
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.abortOnCrash = true;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.abortOnFirstRunCrash = true;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.boundRuns = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.cacheDebug = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.cacheRuns = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.callObserverBeforeCompletion = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.checkResultOrderConsistent = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.checkRunConfigsUnique = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.checkRunConfigsUniqueException = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.checkSATConsistency = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.checkSATConsistencyException = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.exitOnFailure = true;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.filecache = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.fileCacheCrashOnMiss = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.fileCacheOutput = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.fileCacheSource = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.fileToWatch = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.filterZeroCutoffRuns = true;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.killCaptimeExceedingRun = true;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.killCaptimeExceedingRunFactor = 0d;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.leakMemory = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.leakMemoryAmount = 0;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.logRequestResponses = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.logRequestResponsesRCOnly = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.maxConcurrentAlgoExecs = 0;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.observeWalltimeDelay = 0d;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.observeWalltimeIfNoRuntime = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.observeWalltimeScale = 0d;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.prePostOptions.directory = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.prePostOptions.exceptionOnError = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.prePostOptions.logOutput = true;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.prePostOptions.postCommand = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.prePostOptions.preCommand = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.reportStrictlyIncreasingRuntimes = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.retryCount = 0;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.runHashCodeFile = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.skipOutstandingEvaluationsTAE = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.synchronousObserver = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.taeDefaults = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.taeStopProcessingOnShutdown = true;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.targetAlgorithmEvaluator = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.tForkOptions.forkToTAE = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.tForkOptions.fPolicyOptions.duplicateOnSlaveQuickTimeout = 0;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.tForkOptions.fPolicyOptions.fPolicy = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.trackRunsScheduled = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.trackRunsScheduledResolution = 0d;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.transformCrashedQuality = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.transformCrashedQualityValue = 0d;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.other_quality_transform = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.other_runtime_transform = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.SAT_quality_transform = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.SAT_runtime_transform = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.TIMEOUT_quality_transform = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.TIMEOUT_runtime_transform = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.transform = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.transformValidValuesOnly = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.UNSAT_quality_transform = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.ttaedo.UNSAT_runtime_transform = null;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.uncleanShutdownCheck = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.useDynamicCappingExclusively = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.verifySAT = false;
-			smacOptions.scenarioConfig.algoExecOptions.taeOpts.warnIfNoResponseFromTAE = 0;
-			*/
-			
-			// ------------------------ problem instances ---------------------
-			/*
-			smacOptions.scenarioConfig.instanceOptions.checkInstanceFilesExist = false;
-			smacOptions.scenarioConfig.instanceOptions.ignoreFeatures = false;
-			smacOptions.scenarioConfig.instanceOptions.instanceFeatureFile = null;
-			smacOptions.scenarioConfig.instanceOptions.instanceFile = null;
-			smacOptions.scenarioConfig.instanceOptions.instanceSuffix = "csv";
-			smacOptions.scenarioConfig.instanceOptions.testInstanceFile = null;
-			smacOptions.scenarioConfig.instanceOptions.testInstanceSuffix = "csv";
-			smacOptions.scenarioConfig.instanceOptions.useInstances = true;
-			
-			smacOptions.scenarioConfig.interInstanceObj = OverallObjective.MEAN;
-			smacOptions.scenarioConfig.intraInstanceObj = OverallObjective.MEAN;
-			smacOptions.scenarioConfig.invalidScenarioReason = null;
-			*/
-			
-			// ------------------------ limitations ---------------------------
-			/*
-			smacOptions.scenarioConfig.limitOptions.challengeIncumbentAttempts = 5;
-			smacOptions.scenarioConfig.limitOptions.countSMACTimeAsTunerTime = false;
-			smacOptions.scenarioConfig.limitOptions.fileToWatch = null;
-			*/
-			//smacOptions.scenarioConfig.limitOptions.numIterations = 500;
-			//smacOptions.scenarioConfig.limitOptions.runtimeLimit = 2147483647;
-			smacOptions.scenarioConfig.limitOptions.totalNumRunsLimit = this.getTrainingRuns();
-			//smacOptions.scenarioConfig.limitOptions.tunerTimeout = Integer.MAX_VALUE;
-			smacOptions.scenarioConfig.outputDirectory = this.getWorkspaceResource().getPath();
-			//smacOptions.scenarioConfig.scenarioFile = null;
-			
-			// ------------------------ seed options --------------------------
-			/*
-			smacOptions.seedOptions.initialSeedMap = null;
-			smacOptions.seedOptions.numRun = 0;
-			smacOptions.seedOptions.seedOffset = 0;
-			*/
-			
-			// ------------------------ shared models -------------------------
-			/*
-			smacOptions.sharedModeModeAssymetricMode = false;
-			smacOptions.shareModelMode = false;
-			smacOptions.shareModeModeTAE = true;
-			smacOptions.shareRunDataFrequency = 300;
-			*/
-			
-			// ------------------------ state handling ------------------------
-			//smacOptions.stateOpts.cleanOldStatesOnSuccess = true;
-			//smacOptions.stateOpts.restoreIteration = 0;
-			//smacOptions.stateOpts.restoreScenario = null;
-			smacOptions.stateOpts.restoreStateFrom = this.getWorkspaceResource().getPath();
-			//smacOptions.stateOpts.saveContextWithState = true;
-			//smacOptions.stateOpts.statedeSerializer = StateSerializers.LEGACY
-			//smacOptions.stateOpts.statedeSerializer = StateSerializers.LEGACY;
-			
-			//smacOptions.stateQuickSaves = true;
-			//smacOptions.validationCores = 0;
-			//smacOptions.validationSeed = 0;
-			
-			// ------------------------ warm starting -------------------------
-			//smacOptions.warmStartOptions.restoreIteration = 32;
-			//smacOptions.warmStartOptions.warmStartStateFrom = this.getWorkspaceResource().getPath();
-			
-			/*
-			AlgorithmExecutionConfiguration mgpAec = new AlgorithmExecutionConfiguration(
-					Specification.PLANNER_MGP_ID, // smacOptions.getAlgorithmExecutionConfig().getAlgorithmExecutable(), // executable
-					this.getWorkspaceResource().getPath(), //smacOptions.getAlgorithmExecutionConfig().getAlgorithmExecutionDirectory(), // irrelevant (directory)
-					mgpPcs, // from file resource
-					false, // irrelevant (cluster)
-					true, // deterministic
-					smacOptions.scenarioConfig.algoExecOptions.cutoffTime); // terminate explicitly (cut-off), or criticality
-			*/
-			
-			Features defaultFeatures = new Features();
-			defaultFeatures.extractFeatures(managedSession.getActiveScenario());
-			//AlgorithmExecutionConfiguration mgpAec = this.getManagedGridPlannerAec(smacOptions, defaultFeatures);
-			//Logging.logger().info(mgpAec.toString());
-			AlgorithmExecutionConfiguration mtpAec = this.getManagedTreePlannerAec(smacOptions, defaultFeatures);
-			Logging.logger().info(mtpAec.toString());
-			
-			ArrayList<ProblemInstance> problemInstances = new ArrayList<>();
-			int instanceId = 1;
-			for (Scenario trainingScenario : managedSession.getScenarios()) {
-				Features trainingFeatures = new Features();
-				trainingFeatures.extractFeatures(trainingScenario);
-				ProblemInstance problemInstance = new ProblemInstance(
-						trainingScenario.getId(),
-						instanceId++,
-						trainingFeatures);
-				problemInstances.add(problemInstance);
-			}
-			
-			// ProblemInstanceSeedPair is build by SMAC and combines instance and features with seed
-			// to be used in the AlgorithmRunConfiguration
+			SMACBuilder builder = new SMACBuilder();
 			
 			// TODO: check TargetAlgorithmEvaluatorBuilder
 			SmacPlannerEvaluator plannerEvaluator = new SmacPlannerEvaluator(managedSession);
+			// TODO: register event handlers for run notifications
+			//EventManager eventManager = new EventManager();
 			
-			SeedableRandomPool pool = smacOptions.seedOptions.getSeedableRandomPool();
-			/*
-			TrainTestInstances tti;
-			InstanceListWithSeeds trainingInstances = null; // create instances from features
-			InstanceListWithSeeds testingInstances = null;
-			try {
-				tti = smacOptions.getTrainingAndTestProblemInstances(
-						pool, new SeedableRandomPool(smacOptions.validationSeed
-								+ smacOptions.seedOptions.seedOffset,
-								pool.getInitialSeeds()));
-				trainingInstances = tti.getTrainingInstances();
-				testingInstances = tti.getTestInstances();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+			for (Specification<Planner> managedPlannerSpec :
+				managedSession.getManagedPlannerSpecifications()) {
+				
+				// create managed planner SMAC context
+				SMACOptions options = this.createManagedPlannerOptions(managedPlannerSpec.getId());
+				Set<Scenario> scenarios = this.getSupportedScenarios(managedSession, options);
+				
+				if (!scenarios.isEmpty()) {
+					// extract default features
+					Features defaultFeatures = new Features(
+							scenarios.stream().findAny().get(),
+							this.getFeatureHorizon());
+					AlgorithmExecutionConfiguration aec = this.createManagedPlannerAec(
+							options, defaultFeatures);
+					List<ProblemInstance> problems = this.createProblemInstances(scenarios);
+					SeedableRandomPool seeds = options.seedOptions.getSeedableRandomPool();
+					InstanceSeedGenerator isg = new RandomInstanceSeedGenerator(problems, problems.hashCode());
+					InstanceListWithSeeds ilws = new InstanceListWithSeeds(isg, problems);
+					Logging.logger().info(aec.toString());
+					Logging.logger().info(options.initialIncumbent);
+				
+					// create managed planner SMAC
+					this.smacs.add((SequentialModelBasedAlgorithmConfiguration) builder.getAutomaticConfigurator(
+							aec,
+							ilws,
+							options,
+							options.scenarioConfig.algoExecOptions.taeOpts.getAvailableTargetAlgorithmEvaluators(),
+							options.scenarioConfig.outputDirectory,
+							seeds,
+							new OutstandingEvaluationsTargetAlgorithmEvaluatorDecorator(plannerEvaluator),
+							null)); // run history created internally
+				}
 			}
-			*/
-			InstanceSeedGenerator isg = new RandomInstanceSeedGenerator(problemInstances, problemInstances.hashCode());
-			InstanceListWithSeeds trainingInstances = new InstanceListWithSeeds(isg, problemInstances);
-			
-			EventManager eventManager = new EventManager();
-			// TODO: register event handlers
-			
-			Logging.logger().info(smacOptions.initialIncumbent);
-			// TODO: possibly use builder and simply replace plannerEvaluator
-			SMACBuilder builder = new SMACBuilder();
-			this.smac = (SequentialModelBasedAlgorithmConfiguration) builder.getAutomaticConfigurator(
-					mtpAec,
-					trainingInstances,
-					smacOptions,
-					// TODO: not really relevant since the evaluator is provided below
-					smacOptions.scenarioConfig.algoExecOptions.taeOpts.getAvailableTargetAlgorithmEvaluators(),
-					smacOptions.scenarioConfig.outputDirectory,
-					pool,
-					new OutstandingEvaluationsTargetAlgorithmEvaluatorDecorator(plannerEvaluator),
-					null); // run history created internally
-			Logging.logger().info(this.smac.getInitialIncumbent().getFormattedParameterString(ParameterStringFormat.NODB_SYNTAX));
-			
-			/*
-			Specification<Planner> mgpSpec = new Specification<Planner>(Specification.PLANNER_MGP_ID, new OADStarProperties());
-			HeuristicPlannerTuning mgpTuning = new HeuristicPlannerTuning(mgpSpec, defaultFeatures);
-			OADStarProperties mgpProperties = (OADStarProperties) mgpTuning.tune().get(0);
-			this.smac.getInitialIncumbent().put("minimumQuality", Double.toString(mgpProperties.getMinimumQuality()));
-			this.smac.getInitialIncumbent().put("qualityImprovement", Double.toString(mgpProperties.getQualityImprovement()));
-			for (String parameter : this.smac.getInitialIncumbent().keySet()) {
-				Logging.logger().info(parameter + " = " + this.smac.getInitialIncumbent().get(parameter));
-			}
-			*/
-			
-			/*
-			SequentialModelBasedPlannerConfiguration smpc = new
-					SequentialModelBasedPlannerConfiguration(
-							smacOptions,
-							algorithmExecutionConfiguration,
-							problemInstances,
-							plannerEvaluator,
-							AcquisitionFunctions.EI,
-							smacOptions.getRestoreStateFactory("/var/tmp/smac/state"),
-							pcs,
-							trainingILWS.getSeedGen(),
-							pc,
-							new ArrayList<>(), // initial challengers (from heuristic planner knowledge base)
-							eventManager,
-							null,
-							null,
-							null,
-							null,
-							null,
-							null,
-							null);
-			*/
 		}
 	}
 	
+	/**
+	 * Runs this SMAC autonomic manager for a managed session.
+	 * 
+	 * @param managedSession the managed session
+	 */
 	@Override
 	protected void run(Session managedSession) {
 		if (SmacManagerMode.EXECUTING == this.getManagerMode()) {
 			super.run(managedSession);
 		} else if (SmacManagerMode.TRAINING == this.getManagerMode()) {
-			// TODO: run training session
-			// TODO: create and run SMAC on available problem instances (scenarios)
-			this.smac.run();
-			ParameterConfiguration incumbent = this.smac.getIncumbent();
-			for (String parameter : incumbent.getActiveParameters()) {
-				Logging.logger().info(parameter + " = " + incumbent.get(parameter));
+			// run training session
+			for (SequentialModelBasedAlgorithmConfiguration smac : this.smacs) {
+				smac.run();
+				ParameterConfiguration incumbent = smac.getIncumbent();
+				Logging.logger().info(incumbent.getFormattedParameterString(ParameterStringFormat.STATEFILE_SYNTAX));
+				Logging.logger().info("performance = " + smac.getEmpericalPerformance(incumbent));
 			}
-			Logging.logger().info("performance = " + this.smac.getEmpericalPerformance(incumbent));
 		}
 	}
 	
+	/**
+	 * Cleans up this SMAC autonomic manager.
+	 * 
+	 * @param managedSession the managed session
+	 */
 	@Override
 	protected void cleanup(Session managedSession) {
 		if (SmacManagerMode.EXECUTING == this.getManagerMode()) {
 			super.cleanup(managedSession);
 		} else if (SmacManagerMode.TRAINING == this.getManagerMode()) {
-			// TODO: cleanup training session
-			this.smac = null;
+			this.smacs.clear();
 		}
 	}
 	
@@ -694,6 +605,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			SmacManagerProperties properties = (SmacManagerProperties) specification.getProperties();
 			matches = (this.getManagerMode() == properties.getManagerMode())
 					&& (this.getTrainingRuns() == properties.getTrainingRuns())
+					&& (this.getTrainingRunCutOff().equals(Duration.ofSeconds(properties.getTrainingRunCutOff())))
 					&& (this.getWorkspaceResource().equals(URI.create(properties.getWorkspaceResource())));
 		}
 		
@@ -718,6 +630,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			SmacManagerProperties properties = (SmacManagerProperties) specification.getProperties();
 			this.setManagerMode(properties.getManagerMode());
 			this.setTrainingRuns(properties.getTrainingRuns());
+			this.setTrainingRunCutOff(Duration.ofSeconds(properties.getTrainingRunCutOff()));
 			this.setWorkspaceResource(URI.create(properties.getWorkspaceResource()));
 		}
 		
