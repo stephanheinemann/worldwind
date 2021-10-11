@@ -46,6 +46,9 @@ public abstract class AbstractPerformance implements Performance {
 	/** the default serial identification of this abstract performance */
 	private static final long serialVersionUID = 1L;
 	
+	/** the maximum performance (cap) value of this abstract performance */
+	public static final double MAX_VALUE = 1000d;
+	
 	/** the quality of this abstract performance */
 	private final Quality quality;
 	
@@ -82,7 +85,8 @@ public abstract class AbstractPerformance implements Performance {
 	 */
 	@Override
 	public double get() {
-		return this.quality.get() / this.quantity.get();
+		return Math.min(this.quality.get() / this.quantity.get(),
+				AbstractPerformance.MAX_VALUE);
 	}
 	
 	/**

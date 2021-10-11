@@ -32,91 +32,73 @@ package com.cfar.swim.worldwind.managing;
 import java.util.Comparator;
 import java.util.Objects;
 
-import com.cfar.swim.worldwind.planning.Trajectory;
-
 /**
- * Realizes a trajectory quality.
+ * Realizes a numeric quantity.
  * 
  * @author Stephan Heinemann
  *
- * @see Quality
+ * @see Quantity
  */
-public class TrajectoryQuality implements Quality {
+public class NumericQuantity implements Quantity {
 	
-	// TODO: consider AbstractQuality for compareTo, equals, hashCode
+	// TODO: consider AbstractQuantity for compareTo, equals, hashCode
 	
-	/** the default serial identification of this trajectory quality */
+	/** the default serial identification of this numeric quantity */
 	private static final long serialVersionUID = 1L;
 	
-	/** the zero trajectory quality */
-	public static final TrajectoryQuality ZERO = new TrajectoryQuality(new Trajectory());
-	
-	/** the quality of this trajectory quality */
-	transient final Trajectory quality;
-	
-	/** the quality measure of this trajectory quality */
-	private final double measure;
+	/** the numeric value of this numeric quantity */
+	private final Number value; 
 	
 	/**
-	 * Constructs a new trajectory quality based on a trajectory.
+	 * Constructs a new numeric quantity based on a numeric value.
 	 * 
-	 * @param quality the trajectory
+	 * @param value the numeric value
 	 * 
-	 * @throws IllegalArgumentException if the quality is invalid
+	 * @throws IllegalArgumentException if the numeric value is invalid
 	 */
-	public TrajectoryQuality(Trajectory quality) {
-		if (null == quality) {
-			throw new IllegalArgumentException("quality is invalid");
-		}	
-		this.quality = quality;
-		
-		if (quality.isEmpty()) {
-			measure = 0d;
-		} else {
-			measure = 1d / quality.getCost();
-			// TODO: weighted quality
-			// TODO: number of legs / edges (heading changes)
-			// TODO: horizontal versus vertical distance (cost calculation)
-			// TODO: ETE, ETA
+	public NumericQuantity(Number value) {
+		if ((null == value) || (0d >= value.doubleValue())) {
+			throw new IllegalArgumentException("numeric value is invalid");
 		}
+		this.value = value;
 	}
 	
 	/**
-	 * Gets the trajectory quality in overall cost.
+	 * Gets the numeric value of this numeric quantity.
 	 * 
-	 * @return the trajectory quality in overall cost
+	 * @return the numeric value of this numeric quantity
 	 * 
-	 * @see Quality#get()
+	 * @see Quantity#get()
 	 */
 	@Override
 	public double get() {
-		return this.measure;
+		return this.value.doubleValue();
 	}
 	
 	/**
-	 * Compares this trajectory quality to another quality.
+	 * Compares this numeric quantity to another quantity.
 	 * 
-	 * @param quality the other quality
+	 * @param quantity the other quantity
 	 * 
-	 * @return a negative integer, zero, or a positive integer as this
-	 *         trajectory quality is less than, equal to, or greater than the
-	 *         other quality, respectively
+	 * @return a negative integer, zero, or a positive integer as this numeric
+	 *         quantity is less than, equal to, or greater than the other
+	 *         quantity, respectively
 	 * 
 	 * @see Comparator#compare(Object, Object)
 	 */
 	@Override
-	public int compareTo(Quality quality) {
-		return Comparator.comparingDouble(Quality::get).compare(this, quality);
+	public int compareTo(Quantity quantity) {
+		return Comparator.comparingDouble(Quantity::get).compare(this, quantity);
 	}
 	
 	/**
-	 * Determines whether or not this trajectory quality equals another
-	 * trajectory quality.
+	 * Determines whether or not this numeric quantity equals another numeric
+	 * quantity.
 	 * 
-	 * @param o the other trajectory quality
+	 * @param o the other numeric quantity
 	 * 
-	 * @return true, if this trajectory quality equals the other trajectory
-	 *         quality, false otherwise
+	 * @return true, if this numeric quantity equals the other numeric
+	 *         quantity, false otherwise
 	 * 
 	 * @see Object#equals(Object)
 	 */
@@ -127,16 +109,16 @@ public class TrajectoryQuality implements Quality {
 		if (this == o) {
 			equals = true;
 		} else if ((null != o) && (this.getClass() == o.getClass())) {
-			equals = this.get() == ((TrajectoryQuality) o).get();
+			equals = this.get() == ((NumericQuantity) o).get();
 		}
 
 		return equals;
 	}
 	
 	/**
-	 * Gets the hash code of this trajectory quality.
+	 * Gets the hash code of this numeric quantity.
 	 * 
-	 * @return the hash code of this trajectory quality
+	 * @return the hash code of this numeric quantity
 	 * 
 	 * @see Object#hashCode()
 	 */

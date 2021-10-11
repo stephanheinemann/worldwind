@@ -42,6 +42,8 @@ import java.util.Objects;
  */
 public class DurationQuantity implements Quantity {
 	
+	// TODO: consider AbstractQuantity for compareTo, equals, hashCode
+	
 	/** the default serial identification of this duration quantity */
 	private static final long serialVersionUID = 1L;
 	

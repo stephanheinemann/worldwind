@@ -36,6 +36,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import com.cfar.swim.worldwind.javafx.TrajectoryStylist;
+import com.cfar.swim.worldwind.managing.PlannerPerformance;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGoals;
@@ -54,6 +55,7 @@ import ca.ubc.cs.beta.aeatk.algorithmrunconfiguration.AlgorithmRunConfiguration;
 import ca.ubc.cs.beta.aeatk.algorithmrunresult.AlgorithmRunResult;
 import ca.ubc.cs.beta.aeatk.algorithmrunresult.ExistingAlgorithmRunResult;
 import ca.ubc.cs.beta.aeatk.algorithmrunresult.RunStatus;
+import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfiguration;
 import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfiguration.ParameterStringFormat;
 import ca.ubc.cs.beta.aeatk.targetalgorithmevaluator.AbstractSyncTargetAlgorithmEvaluator;
 import ca.ubc.cs.beta.aeatk.targetalgorithmevaluator.TargetAlgorithmEvaluatorRunObserver;
@@ -82,7 +84,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 	public boolean isRunFinal() {
 		// TODO Auto-generated method stub
 		//return false;
-		return true;
+		return true; // true if deterministic
 	}
 
 	@Override
@@ -127,7 +129,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 			this.managedSession.setActiveScenario(managedScenario);
 			
 			// create managed planner (target algorithm)
-			Specification<Planner> plannerSpecification = this.createPlannerSpecification(arc);
+			Specification<Planner> plannerSpecification = this.createManagedPlannerSpecification(arc);
 			this.managedSession.getPlannerFactory().setSpecification(plannerSpecification);
 			ManagedPlanner managedPlanner = (ManagedPlanner) this.managedSession.getPlannerFactory().createInstance();
 			
@@ -170,9 +172,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 						? RunStatus.UNSAT : RunStatus.SAT, // TODO: versus TIMEOUT
 					managedPlanner.getPerformance().getQuantity().get(), // runtime
 					managedPlanner.getRevisions().size(), // number of quality improvements
-					/*1d /  */1000d - managedPlanner.getPerformance().get(), // quality of solution
-					//(0d == managedPlanner.getPerformance().get())
-					//	? Double.MAX_VALUE : 1d / managedPlanner.getPerformance().get(),
+					SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().get()), // quality of solution
 					1l); // problem instance seed (automatically generated instead)
 			// TODO: additional run-data: trajectory.toString()
 			results.add(earr);
@@ -183,68 +183,111 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 	}
 	
 	/**
-	 * Creates a planner specification for an algorithm run configuration.
+	 * Creates a managed planner specification for an algorithm run
+	 * configuration.
 	 * 
 	 * @param arc the algorithm run configuration
 	 * 
-	 * @return the planner specification for the algorithm run configuration
+	 * @return the managed planner specification for the algorithm run
+	 *         configuration
 	 */
-	protected Specification<Planner> createPlannerSpecification(AlgorithmRunConfiguration arc) {
-		Specification<Planner> plannerSpecification = null;
+	protected Specification<Planner> createManagedPlannerSpecification(AlgorithmRunConfiguration arc) {
+		Specification<Planner> managedPlannerSpecification = null;
 		
 		if (Specification.PLANNER_MGP_ID.equals(arc.getAlgorithmExecutionConfiguration().getAlgorithmExecutable())) {
-			OADStarProperties plannerProperties = new OADStarProperties();
-			plannerProperties.setCostPolicy(this.managedSession.getManager().getCostPolicy());
-			plannerProperties.setRiskPolicy(this.managedSession.getManager().getRiskPolicy());
-			plannerProperties.setMinDeliberation(this.managedSession.getManager().getMinDeliberation().getSeconds());
-			plannerProperties.setMaxDeliberation(this.managedSession.getManager().getMaxDeliberation().getSeconds());
-			// TODO: review track error basic types (long versus double)
-			plannerProperties.setMaxCrossTrackError((long) this.managedSession.getManager().getMaxTrackError().getCrossTrackError());
-			plannerProperties.setMaxTimingError(this.managedSession.getManager().getMaxTrackError().getTimingError().toSeconds());
-			// TODO: review track error basic types (long versus double)
-			plannerProperties.setMaxTakeOffHorizontalError((long) this.managedSession.getManager().getMaxTakeOffError().getHorizontalError());
-			plannerProperties.setMaxTakeOffTimingError(this.managedSession.getManager().getMaxTakeOffError().getTimingError().toSeconds());
-			// TODO: review track error basic types (long versus double)
-			plannerProperties.setMaxLandingHorizontalError((long) this.managedSession.getManager().getMaxLandingError().getHorizontalError());
-			plannerProperties.setMaxLandingTimingError(this.managedSession.getManager().getMaxLandingError().getTimingError().toSeconds());
-			// TODO: consider dynamic training
-			plannerProperties.setMinimumQuality(Double.parseDouble(arc.getParameterConfiguration().get("minimumQuality")));
-			plannerProperties.setMaximumQuality(1.0d/*Double.parseDouble(arc.getParameterConfiguration().get("maximumQuality"))*/);
-			plannerProperties.setQualityImprovement(Double.parseDouble(arc.getParameterConfiguration().get("qualityImprovement")));
-			plannerProperties.setSignificantChange(0.5d);
-			plannerSpecification = new Specification<Planner>(Specification.PLANNER_MGP_ID, plannerProperties);
+			managedPlannerSpecification = this.createManagedGridPlannerSpecification(arc.getParameterConfiguration());
 		} else if (Specification.PLANNER_MTP_ID.equals(arc.getAlgorithmExecutionConfiguration().getAlgorithmExecutable())) {
-			OADRRTreeProperties plannerProperties = new OADRRTreeProperties();
-			plannerProperties.setCostPolicy(this.managedSession.getManager().getCostPolicy());
-			plannerProperties.setRiskPolicy(this.managedSession.getManager().getRiskPolicy());
-			plannerProperties.setMinDeliberation(this.managedSession.getManager().getMinDeliberation().getSeconds());
-			plannerProperties.setMaxDeliberation(this.managedSession.getManager().getMaxDeliberation().getSeconds());
-			// TODO: review track error basic types (long versus double)
-			plannerProperties.setMaxCrossTrackError((long) this.managedSession.getManager().getMaxTrackError().getCrossTrackError());
-			plannerProperties.setMaxTimingError(this.managedSession.getManager().getMaxTrackError().getTimingError().toSeconds());
-			// TODO: review track error basic types (long versus double)
-			plannerProperties.setMaxTakeOffHorizontalError((long) this.managedSession.getManager().getMaxTakeOffError().getHorizontalError());
-			plannerProperties.setMaxTakeOffTimingError(this.managedSession.getManager().getMaxTakeOffError().getTimingError().toSeconds());
-			// TODO: review track error basic types (long versus double)
-			plannerProperties.setMaxLandingHorizontalError((long) this.managedSession.getManager().getMaxLandingError().getHorizontalError());
-			plannerProperties.setMaxLandingTimingError(this.managedSession.getManager().getMaxLandingError().getTimingError().toSeconds());
-			// TODO: consider dynamic training
-			plannerProperties.setBias(Integer.parseInt(arc.getParameterConfiguration().get("bias")));
-			plannerProperties.setEpsilon(Double.parseDouble(arc.getParameterConfiguration().get("epsilon")));
-			plannerProperties.setExtension(Extension.valueOf(arc.getParameterConfiguration().get("extension")));
-			plannerProperties.setGoalThreshold(Double.parseDouble(arc.getParameterConfiguration().get("goalThreshold")));
-			plannerProperties.setMaxIterations(Integer.parseInt(arc.getParameterConfiguration().get("maxIterations")));
-			plannerProperties.setNeighborLimit(Integer.parseInt(arc.getParameterConfiguration().get("neighborLimit")));
-			plannerProperties.setSampling(Sampling.valueOf(arc.getParameterConfiguration().get("sampling")));
-			plannerProperties.setStrategy(Strategy.valueOf(arc.getParameterConfiguration().get("strategy")));
-			plannerProperties.setMinimumQuality(Double.parseDouble(arc.getParameterConfiguration().get("initialCostBias")));
-			plannerProperties.setMaximumQuality(1.0d/*Double.parseDouble(arc.getParameterConfiguration().get("finalCostBias"))*/);
-			plannerProperties.setQualityImprovement(Double.parseDouble(arc.getParameterConfiguration().get("improvementFactor")));
-			plannerProperties.setSignificantChange(0.5d);
-			plannerSpecification = new Specification<Planner>(Specification.PLANNER_MTP_ID, plannerProperties);
-		}
+			managedPlannerSpecification = this.createManagedTreePlannerSpecification(arc.getParameterConfiguration());
+		} // TODO: managed roadmap planner specification
 		
-		return plannerSpecification;
+		return managedPlannerSpecification;
+	}
+	
+	/**
+	 * Creates a managed grid planner specification for a parameter
+	 * configuration.
+	 * 
+	 * @param config the parameter configuration
+	 * 
+	 * @return the managed grid planner specification for the parameter
+	 *         configuration
+	 */
+	public Specification<Planner> createManagedGridPlannerSpecification(ParameterConfiguration config) {
+		OADStarProperties plannerProperties = new OADStarProperties();
+		plannerProperties.setCostPolicy(this.managedSession.getManager().getCostPolicy());
+		plannerProperties.setRiskPolicy(this.managedSession.getManager().getRiskPolicy());
+		plannerProperties.setMinDeliberation(this.managedSession.getManager().getMinDeliberation().getSeconds());
+		plannerProperties.setMaxDeliberation(this.managedSession.getManager().getMaxDeliberation().getSeconds());
+		// TODO: review track error basic types (long versus double)
+		plannerProperties.setMaxCrossTrackError((long) this.managedSession.getManager().getMaxTrackError().getCrossTrackError());
+		plannerProperties.setMaxTimingError(this.managedSession.getManager().getMaxTrackError().getTimingError().toSeconds());
+		// TODO: review track error basic types (long versus double)
+		plannerProperties.setMaxTakeOffHorizontalError((long) this.managedSession.getManager().getMaxTakeOffError().getHorizontalError());
+		plannerProperties.setMaxTakeOffTimingError(this.managedSession.getManager().getMaxTakeOffError().getTimingError().toSeconds());
+		// TODO: review track error basic types (long versus double)
+		plannerProperties.setMaxLandingHorizontalError((long) this.managedSession.getManager().getMaxLandingError().getHorizontalError());
+		plannerProperties.setMaxLandingTimingError(this.managedSession.getManager().getMaxLandingError().getTimingError().toSeconds());
+		// TODO: consider dynamic training
+		plannerProperties.setMinimumQuality(Double.parseDouble(config.get("minimumQuality")));
+		plannerProperties.setMaximumQuality(1.0d/*Double.parseDouble(arc.getParameterConfiguration().get("maximumQuality"))*/);
+		plannerProperties.setQualityImprovement(Double.parseDouble(config.get("qualityImprovement")));
+		plannerProperties.setSignificantChange(0.5d);
+		return new Specification<Planner>(Specification.PLANNER_MGP_ID, plannerProperties);
+	}
+	
+	/**
+	 * Creates a managed tree planner specification for a parameter
+	 * configuration.
+	 * 
+	 * @param config the parameter configuration
+	 * 
+	 * @return the managed tree planner specification for the parameter
+	 *         configuration
+	 */
+	public Specification<Planner> createManagedTreePlannerSpecification(ParameterConfiguration config) {
+		OADRRTreeProperties plannerProperties = new OADRRTreeProperties();
+		plannerProperties.setCostPolicy(this.managedSession.getManager().getCostPolicy());
+		plannerProperties.setRiskPolicy(this.managedSession.getManager().getRiskPolicy());
+		plannerProperties.setMinDeliberation(this.managedSession.getManager().getMinDeliberation().getSeconds());
+		plannerProperties.setMaxDeliberation(this.managedSession.getManager().getMaxDeliberation().getSeconds());
+		// TODO: review track error basic types (long versus double)
+		plannerProperties.setMaxCrossTrackError((long) this.managedSession.getManager().getMaxTrackError().getCrossTrackError());
+		plannerProperties.setMaxTimingError(this.managedSession.getManager().getMaxTrackError().getTimingError().toSeconds());
+		// TODO: review track error basic types (long versus double)
+		plannerProperties.setMaxTakeOffHorizontalError((long) this.managedSession.getManager().getMaxTakeOffError().getHorizontalError());
+		plannerProperties.setMaxTakeOffTimingError(this.managedSession.getManager().getMaxTakeOffError().getTimingError().toSeconds());
+		// TODO: review track error basic types (long versus double)
+		plannerProperties.setMaxLandingHorizontalError((long) this.managedSession.getManager().getMaxLandingError().getHorizontalError());
+		plannerProperties.setMaxLandingTimingError(this.managedSession.getManager().getMaxLandingError().getTimingError().toSeconds());
+		// TODO: consider dynamic training
+		plannerProperties.setBias(Integer.parseInt(config.get("bias")));
+		plannerProperties.setEpsilon(Double.parseDouble(config.get("epsilon")));
+		plannerProperties.setExtension(Extension.valueOf(config.get("extension")));
+		//plannerProperties.setGoalThreshold(Double.parseDouble(config.get("goalThreshold")));
+		plannerProperties.setGoalThreshold(this.managedSession.getManager().getMaxLandingError().getHorizontalError() / 2d);
+		plannerProperties.setMaxIterations(Integer.parseInt(config.get("maxIterations")));
+		plannerProperties.setNeighborLimit(Integer.parseInt(config.get("neighborLimit")));
+		plannerProperties.setSampling(Sampling.valueOf(config.get("sampling")));
+		plannerProperties.setStrategy(Strategy.valueOf(config.get("strategy")));
+		plannerProperties.setMinimumQuality(Double.parseDouble(config.get("initialCostBias")));
+		plannerProperties.setMaximumQuality(1.0d/*Double.parseDouble(config.get("finalCostBias"))*/);
+		plannerProperties.setQualityImprovement(Double.parseDouble(config.get("improvementFactor")));
+		plannerProperties.setSignificantChange(0.5d);
+		return new Specification<Planner>(Specification.PLANNER_MTP_ID, plannerProperties);
+	}
+	
+	/**
+	 * Converts a quality value to be maximized into quality value to be
+	 * minimized by this SMAC planner evaluator.
+	 * 
+	 * @param quality the quality value to be converted
+	 * 
+	 * @return the converted quality value
+	 */
+	public static double toResultQuality(double quality) {
+		// NOTE: 1d / quality leads to SMAC exception (Double.POSITIVE_INFINITY, Double.MAX_VALUE)
+		// (0d == quality) ? Double.MAX_VALUE : 1d / quality
+		return PlannerPerformance.MAX_VALUE - quality;
 	}
 	
 }

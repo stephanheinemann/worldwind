@@ -37,8 +37,11 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,6 +49,9 @@ import com.cfar.swim.worldwind.managers.AbstractAutonomicManager;
 import com.cfar.swim.worldwind.managers.AutonomicManager;
 import com.cfar.swim.worldwind.managers.heuristic.HeuristicPlannerTuning;
 import com.cfar.swim.worldwind.managing.Features;
+import com.cfar.swim.worldwind.managing.NumericPerformance;
+import com.cfar.swim.worldwind.managing.NumericQuality;
+import com.cfar.swim.worldwind.managing.NumericQuantity;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
@@ -106,7 +112,10 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	private SmacManagerMode managerMode = SmacManagerMode.EXECUTING;
 	
 	/** the SMACs of this SMAC autonomic manager */
-	private List<SequentialModelBasedAlgorithmConfiguration> smacs = new ArrayList<>();
+	private Map<String, SequentialModelBasedAlgorithmConfiguration> smacs = new HashMap<>();
+	
+	/** the SMAC planner evaluator of this SMAC autonomic manager */
+	private SmacPlannerEvaluator plannerEvaluator;
 	
 	/**
 	 * Gets the identifier of this SMAC autonomic manager.
@@ -226,18 +235,20 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	}
 	
 	/**
-	 * Creates managed planner SMAC options.
+	 * Creates managed planner SMAC options from a managed planner
+	 * specification.
 	 * 
-	 * @param plannerId the identifier of the managed planner
+	 * @param specification the managed planner specification
 	 * 
 	 * @return the managed planner SMAC options if supported, null otherwise
 	 */
-	private SMACOptions createManagedPlannerOptions(String plannerId) {
+	private SMACOptions createManagedPlannerOptions(
+			Specification<Planner> specification) {
 		SMACOptions smacOptions = null;
 		
-		if (Specification.PLANNER_MGP_ID.equals(plannerId)) {
+		if (Specification.PLANNER_MGP_ID.equals(specification.getId())) {
 			smacOptions = this.createManagedGridPlannerOptions();
-		} else if (Specification.PLANNER_MTP_ID.equals(plannerId)) {
+		} else if (Specification.PLANNER_MTP_ID.equals(specification.getId())) {
 			smacOptions = this.createManagedTreePlannerOptions();
 		} // TODO: managed roadmap planner
 		
@@ -424,7 +435,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 				+ "-maxIterations '" + Integer.toString(mtpProperties.getMaxIterations()) + "' "
 				+ "-epsilon '" + Double.toString(mtpProperties.getEpsilon()) + "' "
 				+ "-bias '" + Double.toString(mtpProperties.getBias()) + "' "
-				+ "-goalThreshold '" + Double.toString(mtpProperties.getGoalThreshold()) + "' "
+				//+ "-goalThreshold '" + Double.toString(mtpProperties.getGoalThreshold()) + "' "
 				+ "-neighborLimit '" + Double.toString(mtpProperties.getNeighborLimit()) + "' "
 				+ "-initialCostBias '" + Double.toString(mtpProperties.getMinimumQuality()) + "' "
 				+ "-improvementFactor '" + Double.toString(mtpProperties.getQualityImprovement()) + "'";
@@ -488,11 +499,10 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		
 		int instanceId = 1;
 		for (Scenario scenario : scenarios) {
-			Features features = new Features(scenario, this.getFeatureHorizon());
 			ProblemInstance problemInstance = new ProblemInstance(
 					scenario.getId(),
 					instanceId++,
-					features);
+					new Features(scenario, this.getFeatureHorizon()));
 			problemInstances.add(problemInstance);
 		}
 		
@@ -512,7 +522,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			SMACBuilder builder = new SMACBuilder();
 			
 			// TODO: check TargetAlgorithmEvaluatorBuilder
-			SmacPlannerEvaluator plannerEvaluator = new SmacPlannerEvaluator(managedSession);
+			this.plannerEvaluator = new SmacPlannerEvaluator(managedSession);
 			// TODO: register event handlers for run notifications
 			//EventManager eventManager = new EventManager();
 			
@@ -520,7 +530,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 				managedSession.getManagedPlannerSpecifications()) {
 				
 				// create managed planner SMAC context
-				SMACOptions options = this.createManagedPlannerOptions(managedPlannerSpec.getId());
+				SMACOptions options = this.createManagedPlannerOptions(managedPlannerSpec);
 				Set<Scenario> scenarios = this.getSupportedScenarios(managedSession, options);
 				
 				if (!scenarios.isEmpty()) {
@@ -538,16 +548,23 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 					Logging.logger().info(options.initialIncumbent);
 				
 					// create managed planner SMAC
-					this.smacs.add((SequentialModelBasedAlgorithmConfiguration) builder.getAutomaticConfigurator(
-							aec,
-							ilws,
-							options,
-							options.scenarioConfig.algoExecOptions.taeOpts.getAvailableTargetAlgorithmEvaluators(),
-							options.scenarioConfig.outputDirectory,
-							seeds,
-							new OutstandingEvaluationsTargetAlgorithmEvaluatorDecorator(plannerEvaluator),
-							null)); // run history created internally
+					this.smacs.put(managedPlannerSpec.getId(),
+							(SequentialModelBasedAlgorithmConfiguration) builder.getAutomaticConfigurator(
+									aec,
+									ilws,
+									options,
+									options.scenarioConfig.algoExecOptions.taeOpts.getAvailableTargetAlgorithmEvaluators(),
+									options.scenarioConfig.outputDirectory,
+									seeds,
+									new OutstandingEvaluationsTargetAlgorithmEvaluatorDecorator(this.plannerEvaluator),
+									null)); // run history created internally
 				}
+			}
+			
+			if (!this.smacs.isEmpty()) {
+				// load knowledge base
+				this.getKnowledgeBase().load(this.getKnowledgeBaseResource());
+				Logging.logger().info("loaded knowledge base\n" + this.getKnowledgeBase());
 			}
 		}
 	}
@@ -563,11 +580,39 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			super.run(managedSession);
 		} else if (SmacManagerMode.TRAINING == this.getManagerMode()) {
 			// run training session
-			for (SequentialModelBasedAlgorithmConfiguration smac : this.smacs) {
+			for (String plannerId : this.smacs.keySet()) {
+				SequentialModelBasedAlgorithmConfiguration smac = this.smacs.get(plannerId);
+				// run SMAC
 				smac.run();
 				ParameterConfiguration incumbent = smac.getIncumbent();
-				Logging.logger().info(incumbent.getFormattedParameterString(ParameterStringFormat.STATEFILE_SYNTAX));
-				Logging.logger().info("performance = " + smac.getEmpericalPerformance(incumbent));
+				Logging.logger().info("incumbent: " + incumbent.getFormattedParameterString(ParameterStringFormat.STATEFILE_SYNTAX));
+				Logging.logger().info("incumbent performance: " + smac.getEmpericalPerformance(incumbent));
+				
+				// extend knowledge base
+				Set<ProblemInstance> problems = smac.getRunHistory().getUniqueInstancesRan();
+				
+				for (ProblemInstance problem : problems) {
+					Specification<Planner> managedPlannerSpecification = null;
+					if (Specification.PLANNER_MGP_ID.equals(plannerId)) {
+						managedPlannerSpecification = this.plannerEvaluator
+								.createManagedGridPlannerSpecification(incumbent);
+					} else if (Specification.PLANNER_MTP_ID.equals(plannerId)) {
+						managedPlannerSpecification = this.plannerEvaluator
+								.createManagedTreePlannerSpecification(incumbent);
+					} // TODO: managed roadmap planner specification
+					
+					PlannerTuning tuning = this.createPlannerTuning(
+							managedPlannerSpecification, (Features) problem.getFeatures());
+					double cost = smac.getRunHistory().getEmpiricalCost(
+							incumbent,
+							Collections.singleton(problem),
+							this.getTrainingRunCutOff().toSeconds());
+					NumericPerformance performance = new NumericPerformance(
+							new NumericQuality(SmacPlannerEvaluator.toResultQuality(cost)),
+							new NumericQuantity(1));
+					this.getKnowledgeBase().getReputation().addTuningPerformance(tuning, performance);
+					Logging.logger().info("added performance " + performance.toString());
+				}
 			}
 		}
 	}
@@ -582,7 +627,12 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		if (SmacManagerMode.EXECUTING == this.getManagerMode()) {
 			super.cleanup(managedSession);
 		} else if (SmacManagerMode.TRAINING == this.getManagerMode()) {
-			this.smacs.clear();
+			if (!this.smacs.isEmpty()) {
+				// save knowledge base
+				this.getKnowledgeBase().save(this.getKnowledgeBaseResource());
+				Logging.logger().info("saved knowledge base\n" + this.getKnowledgeBase());
+				this.smacs.clear();
+			}
 		}
 	}
 	
