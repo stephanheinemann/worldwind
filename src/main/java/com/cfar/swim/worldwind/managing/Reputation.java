@@ -29,10 +29,8 @@
  */
 package com.cfar.swim.worldwind.managing;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.OptionalDouble;
 import java.util.Set;
 
@@ -44,20 +42,10 @@ import java.util.Set;
  * @see Tuning
  * @see Performance
  */
-public class Reputation implements Serializable {
+public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	
 	/** the default serial identification of this reputation */
 	private static final long serialVersionUID = 1L;
-	
-	/** the performance reputation of tunings */
-	private Map<Tuning<?>, Set<Performance>> reputation = new HashMap<>();
-	
-	/**
-	 * Clears this tunings reputation.
-	 */
-	public void clear() {
-		this.reputation.clear();
-	}
 	
 	/**
 	 * Adds a tuning performance to this reputation.
@@ -66,12 +54,12 @@ public class Reputation implements Serializable {
 	 * @param performance the performance of the tuning
 	 */
 	public void addTuningPerformance(Tuning<?> tuning, Performance performance) {
-		if (this.reputation.containsKey(tuning)) {
-			this.reputation.get(tuning).add(performance);
+		if (this.containsKey(tuning)) {
+			this.get(tuning).add(performance);
 		} else {
 			HashSet<Performance> performances = new HashSet<>();
 			performances.add(performance);
-			this.reputation.put(tuning, performances);
+			this.put(tuning, performances);
 		}
 	}
 	
@@ -81,7 +69,7 @@ public class Reputation implements Serializable {
 	 * @param tuning the tuning to be removed
 	 */
 	public void removeTuningPerformances(Tuning<?> tuning) {
-		this.reputation.remove(tuning);
+		this.remove(tuning);
 	}
 	
 	/**
@@ -95,8 +83,8 @@ public class Reputation implements Serializable {
 		OptionalDouble performance = OptionalDouble.empty();
 		
 		// TODO: filter for system information
-		if (this.reputation.containsKey(tuning)) {
-			performance = this.reputation.get(tuning).stream()
+		if (this.containsKey(tuning)) {
+			performance = this.get(tuning).stream()
 					.map(p -> p.get()).mapToDouble(Double::valueOf).average();
 		}
 		
@@ -114,8 +102,8 @@ public class Reputation implements Serializable {
 		OptionalDouble performance = OptionalDouble.empty();
 		
 		// TODO: filter for system information
-		if (this.reputation.containsKey(tuning)) {
-			performance = this.reputation.get(tuning).stream()
+		if (this.containsKey(tuning)) {
+			performance = this.get(tuning).stream()
 					.map(p -> p.get()).mapToDouble(Double::valueOf).max();
 		}
 		
@@ -133,8 +121,8 @@ public class Reputation implements Serializable {
 		OptionalDouble performance = OptionalDouble.empty();
 		
 		// TODO: filter for system information
-		if (this.reputation.containsKey(tuning)) {
-			performance = this.reputation.get(tuning).stream()
+		if (this.containsKey(tuning)) {
+			performance = this.get(tuning).stream()
 					.map(p -> p.get()).mapToDouble(Double::valueOf).min();
 		}
 		
@@ -152,9 +140,9 @@ public class Reputation implements Serializable {
 	public String toString() {
 		String reputation = "";
 		
-		for (Tuning<?> tuning : this.reputation.keySet()) {
+		for (Tuning<?> tuning : this.keySet()) {
 			reputation = reputation.concat(tuning.toString() + ": ");
-			for (Performance performance : this.reputation.get(tuning)) {
+			for (Performance performance : this.get(tuning)) {
 				reputation = reputation.concat(performance.toString() + " ");
 			}
 			reputation = reputation.trim().concat("\n");

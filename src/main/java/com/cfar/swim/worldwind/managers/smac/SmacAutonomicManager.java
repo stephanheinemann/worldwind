@@ -231,7 +231,8 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	@Override
 	public PlannerTuning createPlannerTuning(
 			Specification<Planner> specification, Features features) {
-		return new SmacPlannerTuning(specification, features);
+		return new SmacPlannerTuning(specification, features,
+				this.getKnowledgeBase(), null); // TODO: flight phases
 	}
 	
 	/**

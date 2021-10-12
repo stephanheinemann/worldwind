@@ -259,6 +259,9 @@
 						<exclude>src/main/resources/config/**/*.xml</exclude>
 						<exclude>src/main/java/com/binarydreamers/trees/**/*.java</exclude>
 					</excludes>
+					<mapping>
+						<pcs>SCRIPT_STYLE</pcs>
+					</mapping>
 				</configuration>
 			</plugin>
 			<plugin>
