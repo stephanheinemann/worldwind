@@ -41,8 +41,8 @@ import com.google.common.collect.Range;
  */
 public class FlightPhase implements FeatureCategory {
 	
-	/** the altitude range of this flight phase */
-	private final Range<Double> altitudeRange;
+	/** the distance tolerance of associable flight phases */
+	public static final double DISTANCE_TOLERANCE = 0.2d;
 	
 	/** the minimum POI distance range of this flight phase */
 	private final Range<Double> minPoiDistanceRange;
@@ -69,9 +69,8 @@ public class FlightPhase implements FeatureCategory {
 	private final Range<Double> obstacleSeverityRange;
 	
 	/**
-	 * Constructs a new flight phase based on certain feature ranges.
+	 * Constructs a new flight phase based on given feature ranges.
 	 * 
-	 * @param altitudeRange the altitude range
 	 * @param minPoiDistanceRange the minimum POI distance range
 	 * @param maxPoiDistanceRange the maximum POI distance range
 	 * @param minPoiVerticalRange the minimum POI vertical range
@@ -82,7 +81,6 @@ public class FlightPhase implements FeatureCategory {
 	 * @param obstacleSeverityRange the obstacle severity range
 	 */
 	public FlightPhase(
-			Range<Double> altitudeRange,
 			Range<Double> minPoiDistanceRange,
 			Range<Double> maxPoiDistanceRange,
 			Range<Double> minPoiVerticalRange,
@@ -91,7 +89,6 @@ public class FlightPhase implements FeatureCategory {
 			Range<Double> maxObstacleDistanceRange,
 			Range<Double> obstaclePenetrationRange,
 			Range<Double> obstacleSeverityRange) {
-		this.altitudeRange = altitudeRange;
 		this.minPoiDistanceRange = minPoiDistanceRange;
 		this.maxPoiDistanceRange = maxPoiDistanceRange;
 		this.minPoiVerticalRange = minPoiVerticalRange;
@@ -101,6 +98,63 @@ public class FlightPhase implements FeatureCategory {
 		this.obstaclePentrationRange = obstaclePenetrationRange;
 		this.obstacleSeverityRange = obstacleSeverityRange;
 		// TODO: extend as required
+	}
+	
+	/**
+	 * Constructs a new flight phase based on existing features and given
+	 * feature ranges
+	 * 
+	 * @param features the features
+	 * @param obstaclePenetrationRange the obstacle penetration range
+	 * @param obstacleSeverityRange the obstacle severity range
+	 */
+	public FlightPhase(
+			Features features,
+			Range<Double> obstaclePenetrationRange,
+			Range<Double> obstacleSeverityRange) {
+		this.minPoiDistanceRange = FlightPhase.createPoisDistanceMinRange(features);
+		this.maxPoiDistanceRange = FlightPhase.createPoisDistanceMaxRange(features);
+		this.minPoiVerticalRange = Range.all();
+		this.maxPoiVerticalRange = Range.all();
+		this.minObstacleDistanceRange = Range.all();
+		this.maxObstacleDistanceRange = Range.all();
+		this.obstaclePentrationRange = obstaclePenetrationRange;
+		this.obstacleSeverityRange = obstacleSeverityRange;
+		// TODO: extend and restrict as required
+	}
+	
+	/**
+	 * Creates a minimum POI distance range for associated flight phases of
+	 * given features.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return the minimum POI distance range for associated flight phases
+	 */
+	private static Range<Double> createPoisDistanceMinRange(Features features) {
+		double poisDistanceMinTolerance = FlightPhase.DISTANCE_TOLERANCE
+				* features.get(Features.FEATURE_POIS_DISTANCE_MIN);
+		Range<Double> poisDistanceMinRange = Range.closed(
+				features.get(Features.FEATURE_POIS_DISTANCE_MIN) - poisDistanceMinTolerance,
+				features.get(Features.FEATURE_POIS_DISTANCE_MIN) + poisDistanceMinTolerance);
+		return poisDistanceMinRange;
+	}
+	
+	/**
+	 * Creates a maximum POI distance range for associated flight phases of
+	 * given features.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return the maximum POI distance range for associated flight phases
+	 */
+	private static Range<Double> createPoisDistanceMaxRange(Features features) {
+		double poisDistanceMaxTolerance = FlightPhase.DISTANCE_TOLERANCE
+				* features.get(Features.FEATURE_POIS_DISTANCE_MAX);
+		Range<Double> poisDistanceMaxRange = Range.closed(
+				features.get(Features.FEATURE_POIS_DISTANCE_MAX) - poisDistanceMaxTolerance,
+				features.get(Features.FEATURE_POIS_DISTANCE_MAX) + poisDistanceMaxTolerance);
+		return poisDistanceMaxRange;
 	}
 	
 	/**
@@ -114,9 +168,7 @@ public class FlightPhase implements FeatureCategory {
 	 */
 	@Override
 	public boolean covers(Features features) {
-		// TODO: rather use POI elevations for altitude range (problem ASL versus AGL)
-		return /* this.altitudeRange.contains(features.get(Features.FEATURE_AIRCRAFT_ALTITUDE))
-				&& */ this.minPoiDistanceRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_MIN))
+		return this.minPoiDistanceRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_MIN))
 				&& this.maxPoiDistanceRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_MAX))
 				&& this.minPoiVerticalRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_VERTICAL_MIN))
 				&& this.maxPoiVerticalRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_VERTICAL_MAX))
@@ -124,7 +176,8 @@ public class FlightPhase implements FeatureCategory {
 				&& this.maxObstacleDistanceRange.contains(features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MAX))
 				&& this.obstaclePentrationRange.contains(features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
 				&& this.obstacleSeverityRange.contains(features.get(Features.FEATURE_POIS_OBSTACLES_COST_MIN))
-				&& this.obstacleSeverityRange.contains(features.get(Features.FEATURE_POIS_OBSTACLES_COST_MAX));
+				&& this.obstacleSeverityRange.contains(features.get(Features.FEATURE_POIS_OBSTACLES_COST_MAX))
+				&& this.obstacleSeverityRange.contains(features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES));
 	}
 	
 }

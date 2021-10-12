@@ -30,13 +30,14 @@
 package com.cfar.swim.worldwind.managers.smac;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.cfar.swim.worldwind.flight.FlightPhase;
 import com.cfar.swim.worldwind.managers.heuristic.HeuristicPlannerTuning;
+import com.cfar.swim.worldwind.managing.FeatureCategory;
 import com.cfar.swim.worldwind.managing.FeatureTuning;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.KnowledgeBase;
@@ -45,6 +46,8 @@ import com.cfar.swim.worldwind.managing.Reputation;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.registries.Properties;
 import com.cfar.swim.worldwind.registries.Specification;
+
+import gov.nasa.worldwind.util.Logging;
 
 /**
  * Realizes a SMAC planner tuning based on features.
@@ -61,8 +64,8 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 	/** the knowledge base of this SMAC planner tuning */
 	private transient final KnowledgeBase knowledgeBase;
 	
-	/** the flight phases of this SMAC planner tuning */
-	private transient final Set<FlightPhase> flightPhases;
+	/** the feature categories of this SMAC planner tuning */
+	private transient final Set<FeatureCategory> featureCategories;
 	
 	/**
 	 * Constructs a new SMAC planner tuning based on a planner specification
@@ -80,18 +83,18 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 			Specification<Planner> specification, Features features) {
 		super(specification, features);
 		this.knowledgeBase = null;
-		this.flightPhases = null;
+		this.featureCategories = null;
 	}
 	
 	/**
 	 * Constructs a new SMAC planner tuning based on a planner specification
-	 * and features as well as an existing knowledge base and associable flight
-	 * phases.
+	 * and features as well as an existing knowledge base and associable
+	 * feature categories.
 	 * 
 	 * @param specification the planner specification
 	 * @param features the features
 	 * @param knowledgeBase the existing knowledge base
-	 * @param flightPhases the associable flight phases
+	 * @param featureCategories the associable feature categories
 	 * 
 	 * @throws IllegalArgumentException if the planner specification or
 	 *         features are invalid
@@ -100,10 +103,11 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 	 */
 	public SmacPlannerTuning(
 			Specification<Planner> specification, Features features,
-			KnowledgeBase knowledgeBase, Set<FlightPhase> flightPhases) {
+			KnowledgeBase knowledgeBase,
+			Set<FeatureCategory> featureCategories) {
 		super(specification, features);
 		this.knowledgeBase = knowledgeBase;
-		this.flightPhases = flightPhases;
+		this.featureCategories = featureCategories;
 	}
 	
 	/**
@@ -121,7 +125,7 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 			Specification<Planner> specification, Features features) {
 		List<Properties<Planner>> properties = new ArrayList<>();
 		
-		if ((null == this.knowledgeBase) || (null == this.flightPhases)) {
+		if ((null == this.knowledgeBase) || (null == this.featureCategories)) {
 			// revert to heuristic tuning
 			properties = super.tune(specification, features);
 		} else {
@@ -131,42 +135,75 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 					.map(t -> (PlannerTuning) t)
 					.filter(t -> t.getSpecification().getId().equals(specification.getId()))
 					.collect(Collectors.toUnmodifiableList());
+			/*
 			Optional<PlannerTuning> tuning = tunings.stream()
 					.filter(t -> t.getFeatures().equals(features))
 					.findAny();
-			
-			// TODO: maybe do not use existing tuning to allow for improvements?
+					
 			if (tuning.isPresent()) {
 				// apply existing tuning
 				properties.add(tuning.get().getSpecification().getProperties());
 			} else {
-				// apply tuning for associated flight phases
-				List<FlightPhase> flightPhases = this.flightPhases.stream()
-						.filter(fp -> fp.covers(features))
-						.collect(Collectors.toUnmodifiableList());
-				if (flightPhases.isEmpty()) {
+			*/
+			// apply tuning for associated feature categories
+			List<FeatureCategory> categories = this.featureCategories.stream()
+					.filter(c -> c.covers(features))
+					.collect(Collectors.toUnmodifiableList());
+			if (categories.isEmpty()) {
+				// revert to heuristic tuning
+				properties = super.tune(specification, features);
+			} else {
+				// associated covered feature categories
+				List<PlannerTuning> categoryTunings = new ArrayList<>();
+				for (FeatureCategory category : categories) {
+					categoryTunings.addAll(tunings.stream()
+						.filter(t -> category.covers(t.getFeatures()))
+						.collect(Collectors.toUnmodifiableList()));
+				}
+				if (categoryTunings.isEmpty()) {
 					// revert to heuristic tuning
 					properties = super.tune(specification, features);
 				} else {
-					// associate covered flight phases
-					List<PlannerTuning> flightPhaseTunings = new ArrayList<>();
-					for (FlightPhase flightPhase : flightPhases) {
-						flightPhaseTunings.addAll(tunings.stream()
-							.filter(t -> flightPhase.covers(t.getFeatures()))
+					// apply feature category tunings
+					properties.addAll(categoryTunings
+							.stream()
+							.sorted(new Comparator<PlannerTuning>() {
+								/**
+								 * Compares planner tunings in terms of performance according to their
+								 * known reputation.
+								 * 
+								 * @param t1 the first planner tuning
+								 * @param t2 the second planner tuning
+								 * 
+								 * @return -1, 0, or 1, if the first planner tuning performs better than,
+								 *         equal, or worse than the second planner tuning, respectively
+								 * 
+								 */
+								@Override
+								public int compare(PlannerTuning t1, PlannerTuning t2) {
+									int result = 0;
+									
+									OptionalDouble p1 = reputation.getMaximumTuningPerformance(t1);
+									OptionalDouble p2 = reputation.getMaximumTuningPerformance(t2);
+									if (p1.isPresent() || p2.isPresent()) {
+										if (p1.isPresent() && p2.isEmpty()) {
+											result = -1;
+										} else if (p1.isEmpty() && p2.isPresent()) {
+											result = 1;
+										} else {
+											result = (p1.getAsDouble() < p2.getAsDouble()) ? 1 : -1;
+										}
+									}
+									
+									return result;
+								}})
+							.map(t -> t.getSpecification().getProperties())
 							.collect(Collectors.toUnmodifiableList()));
-					}
-					if (flightPhaseTunings.isEmpty()) {
-						// revert to heuristic tuning
-						properties = super.tune(specification, features);
-					} else {
-						// apply flight phase tunings
-						properties.addAll(flightPhaseTunings.stream()
-								.map(t -> t.getSpecification().getProperties())
-								.collect(Collectors.toUnmodifiableList()));
-					}
+					Logging.logger().info("applying SMAC tuning");
 				}
 			}
 		}
+		//}
 		
 		return properties;
 	}

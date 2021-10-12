@@ -45,9 +45,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.cfar.swim.worldwind.flight.FlightPhases;
 import com.cfar.swim.worldwind.managers.AbstractAutonomicManager;
 import com.cfar.swim.worldwind.managers.AutonomicManager;
 import com.cfar.swim.worldwind.managers.heuristic.HeuristicPlannerTuning;
+import com.cfar.swim.worldwind.managing.FeatureCategory;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.NumericPerformance;
 import com.cfar.swim.worldwind.managing.NumericQuality;
@@ -231,8 +233,13 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	@Override
 	public PlannerTuning createPlannerTuning(
 			Specification<Planner> specification, Features features) {
+		Set<FeatureCategory> categories = new HashSet<>();
+		categories.add(FlightPhases.createHazardPhase(features));
+		categories.add(FlightPhases.createAerodromePhase(features));
+		categories.add(FlightPhases.createTerminalPhase(features));
+		categories.add(FlightPhases.createEnroutePhase(features));
 		return new SmacPlannerTuning(specification, features,
-				this.getKnowledgeBase(), null); // TODO: flight phases
+				this.getKnowledgeBase(), categories);
 	}
 	
 	/**
