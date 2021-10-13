@@ -82,6 +82,8 @@ public class Features extends HashMap<String, Double> {
 	public static final String FEATURE_AIRCRAFT_SPEED_VERTICAL_CLIMB = "feature.aircraft.speed.vertical.climb";
 	/** the aircraft descent rate feature key of these features */
 	public static final String FEATURE_AIRCRAFT_SPEED_VERTICAL_DESCENT = "feature.aircraft.speed.vertical.descent";
+	/** the aircraft safety radius features key of these features */
+	public static final String FEATURE_AIRCRAFT_RADIUS_SAFETY = "feature.aircraft.radius.safety";
 	/** the aircraft safety volume feature key of these features */
 	public static final String FEATURE_AIRCRAFT_VOLUME_SAFETY = "feature.aircraft.volume.safety";
 	/** the aircraft obstacles average distance feature key of these features */
@@ -297,6 +299,8 @@ public class Features extends HashMap<String, Double> {
 				aircraft.getCapabilities().getCruiseRateOfClimb());
 		this.put(Features.FEATURE_AIRCRAFT_SPEED_VERTICAL_DESCENT,
 				aircraft.getCapabilities().getCruiseRateOfDescent());
+		this.put(Features.FEATURE_AIRCRAFT_RADIUS_SAFETY,
+				aircraft.getRadius());
 		this.put(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY,
 				aircraft.getVolume(env.getGlobe()));
 	
@@ -771,6 +775,7 @@ public class Features extends HashMap<String, Double> {
 		this.remove(Features.FEATURE_AIRCRAFT_SPEED_HORIZONTAL);
 		this.remove(Features.FEATURE_AIRCRAFT_SPEED_VERTICAL_CLIMB);
 		this.remove(Features.FEATURE_AIRCRAFT_SPEED_VERTICAL_DESCENT);
+		this.remove(Features.FEATURE_AIRCRAFT_RADIUS_SAFETY);
 		this.remove(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY);
 		this.remove(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_AVG);
 		this.remove(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MAX);
@@ -855,6 +860,12 @@ public class Features extends HashMap<String, Double> {
 			features = features.concat(this.dictionary.getString(
 					Features.FEATURE_AIRCRAFT_ALTITUDE) + " = "
 					+ this.get(Features.FEATURE_AIRCRAFT_ALTITUDE)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_RADIUS_SAFETY)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_RADIUS_SAFETY) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_RADIUS_SAFETY)
 					+ "\n");
 		}
 		if (this.containsKey(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)) {

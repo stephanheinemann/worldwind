@@ -42,8 +42,10 @@ import com.google.common.collect.Range;
 public class FlightPhases {
 	
 	// TODO: aircraft safety volume penetration: obstacle criticality range
+	// TODO: obstacle penetration is not discriminating (favored spaces)
 	// TODO: review minimum and maximum cost values (increased base cost)
 	// https://github.com/stephanheinemann/worldwind/issues/61
+	// TODO: emergency (hazardous), urgency (critical), normal
 	
 	/**
 	 * Creates a flight phase within a hazardous environment based on existing
@@ -54,7 +56,7 @@ public class FlightPhases {
 	 * @return a flight phase within a hazardous environment
 	 */
 	public static FlightPhase createHazardPhase(Features features) {
-		Range<Double> obstaclePenetrationRange = Range.closed(0.75d, 1.0d);
+		Range<Double> obstaclePenetrationRange = Range.closed(0.75d, Double.POSITIVE_INFINITY);
 		Range<Double> obstacleSeverityRange = Range.singleton(Double.POSITIVE_INFINITY);
 		return new FlightPhase(features, obstaclePenetrationRange, obstacleSeverityRange);
 	}
@@ -68,7 +70,7 @@ public class FlightPhases {
 	 * @return a flight phase within an aerodrome environment
 	 */
 	public static FlightPhase createAerodromePhase(Features features) {
-		Range<Double> obstaclePenetrationRange = Range.closedOpen(0.5d, 1.0d);
+		Range<Double> obstaclePenetrationRange = Range.closedOpen(0.5d, Double.POSITIVE_INFINITY);
 		Range<Double> obstacleSeverityRange = Range.closed(0d, Double.POSITIVE_INFINITY);
 		return new FlightPhase(features, obstaclePenetrationRange, obstacleSeverityRange);
 	}

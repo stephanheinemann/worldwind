@@ -862,6 +862,10 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 	 * @param managedSession the managed session
 	 */
 	protected void initialize(Session managedSession) {
+		// load knowledge base
+		this.getKnowledgeBase().load(this.getKnowledgeBaseResource());
+		Logging.logger().info("loaded knowledge base\n" + this.getKnowledgeBase());
+		
 		if (!this.hasSourceScenario()) {
 			this.setSourceScenario(managedSession.getActiveScenario());
 		}
@@ -980,9 +984,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		}
 		
 		if (this.hasManagedScenarios()) {
-			// load knowledge base
-			this.getKnowledgeBase().load(this.getKnowledgeBaseResource());
-			Logging.logger().info("loaded knowledge base\n" + this.getKnowledgeBase());
 			// execute managed planners in parallel
 			this.setActivePlanner((ManagedPlanner)
 					this.getManagedScenarios().stream().findFirst().get().getPlanner());
@@ -1047,10 +1048,11 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			this.plannerExecutor.shutdown();
 			this.setActivePlanner(null);
 			this.getSourceScenario().clearTrajectory();
-			// save knowledge base
-			this.getKnowledgeBase().save(this.getKnowledgeBaseResource());
-			Logging.logger().info("saved knowledge base\n" + this.getKnowledgeBase());
 		}
+		
+		// save knowledge base
+		this.getKnowledgeBase().save(this.getKnowledgeBaseResource());
+		Logging.logger().info("saved knowledge base\n" + this.getKnowledgeBase());
 	}
 	
 	// TODO: managed session versus training session
