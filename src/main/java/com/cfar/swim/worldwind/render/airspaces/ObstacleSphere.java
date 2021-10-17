@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.render.airspaces;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
@@ -333,9 +334,8 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	public Sphere getExtent(Globe globe) {
 		Vec4 centerPoint = globe.computePointFromPosition(
 				this.getLocation(), this.getAltitudes()[0]);
-        return new Sphere(centerPoint, this.getRadius());
-        // TODO: check available method
-		//return super.getExtent(globe, 1d);
+		return new Sphere(centerPoint, this.getRadius());
+		// TODO: return super.getExtent(globe, 1d);
 	}
 	
 	/**
@@ -353,6 +353,21 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 		Sphere sphere = this.getExtent(globe);
 		return (4d / 3d) * Math.PI
 				* sphere.getRadius() * sphere.getRadius() * sphere.getRadius();
+	}
+	
+	/**
+	 * Determines whether or not this obstacle sphere intersects another
+	 * obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param obstacle the other obstacle
+	 * 
+	 * @see Obstacle#intersects(Globe, Obstacle)
+	 */
+	@Override
+	public boolean intersects(Globe globe, Obstacle obstacle) {
+		return (this == obstacle) || Collisions.collide(
+				this.getExtent(globe), obstacle.getExtent(globe));
 	}
 	
 	// TODO: interpolation and geometric conversion methods

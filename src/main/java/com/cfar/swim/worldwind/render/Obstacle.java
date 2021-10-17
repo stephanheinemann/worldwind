@@ -80,4 +80,16 @@ public interface Obstacle extends Movable, TimedRenderable, ThresholdRenderable,
 	 */
 	public double getVolume(Globe globe);
 	
+	/**
+	 * Determines whether or not this obstacle intersects another obstacle for
+	 * a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param obstacle the other obstacle
+	 * 
+	 * @return true if this obstacle intersects the other obstacle,
+	 *         false otherwise
+	 */
+	public boolean intersects(Globe globe, Obstacle obstacle);
+	
 }

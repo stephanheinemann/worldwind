@@ -35,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
@@ -46,6 +47,7 @@ import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.geom.Cylinder;
+import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -403,7 +405,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 * @see AbstractAirspace#getExtent(Globe, double)
 	 */
 	@Override
-	public Cylinder getExtent(Globe globe) {
+	public Extent getExtent(Globe globe) {
 		Position bcp = new Position(this.getCenter(), this.getAltitudes()[0]);
 		Position tcp = new Position(this.getCenter(), this.getAltitudes()[1]);
 		Vec4 bottomCenter = globe.computePointFromPosition(bcp);
@@ -411,8 +413,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		double radius = this.getRadii()[1];
 		
 		return new Cylinder(bottomCenter, topCenter, radius);
-		// TODO: check available method, extend volume and intersection tests
-		//return super.computeExtent(globe, 1d);
+		// TODO: return super.computeExtent(globe, 1d);
 	}
 	
 	/**
@@ -427,9 +428,24 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 */
 	@Override
 	public double getVolume(Globe globe) {
-		Cylinder cylinder = this.getExtent(globe);
+		Cylinder cylinder = (Cylinder) this.getExtent(globe);
 		return Math.PI * cylinder.getCylinderRadius()
 				* cylinder.getCylinderRadius() * cylinder.getCylinderHeight();
+	}
+	
+	/**
+	 * Determines whether or not this obstacle cylinder intersects another
+	 * obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param obstacle the other obstacle
+	 * 
+	 * @see Obstacle#intersects(Globe, Obstacle)
+	 */
+	@Override
+	public boolean intersects(Globe globe, Obstacle obstacle) {
+		return (this == obstacle) || Collisions.collide(
+				this.getExtent(globe), obstacle.getExtent(globe));
 	}
 	
 	/**

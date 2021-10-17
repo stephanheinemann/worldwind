@@ -35,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
 import com.cfar.swim.worldwind.util.Depictable;
@@ -402,7 +403,8 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	 */
 	@Override
 	public Extent getExtent(Globe globe) {
-		return super.getExtent(globe, 1d);
+		return this.toGeometricCylinder(globe);
+		// TODO: return super.getExtent(globe, 1d);
 	}
 	
 	/**
@@ -419,6 +421,21 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	public double getVolume(Globe globe) {
 		// TODO: use globe extent?
 		return Math.PI * this.getRadius() * this.getRadius() * this.getHeight();
+	}
+	
+	/**
+	 * Determines whether or not this obstacle cylinder intersects another
+	 * obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param obstacle the other obstacle
+	 * 
+	 * @see Obstacle#intersects(Globe, Obstacle)
+	 */
+	@Override
+	public boolean intersects(Globe globe, Obstacle obstacle) {
+		return (this == obstacle) || Collisions.collide(
+				this.getExtent(globe), obstacle.getExtent(globe));
 	}
 	
 	/**

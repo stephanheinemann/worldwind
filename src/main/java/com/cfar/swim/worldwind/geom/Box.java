@@ -29,28 +29,14 @@
  */
 package com.cfar.swim.worldwind.geom;
 
-import javax.vecmath.AxisAngle4f;
-import javax.vecmath.Matrix4f;
-import javax.vecmath.Quat4f;
-import javax.vecmath.Vector3f;
-
-import com.bulletphysics.collision.narrowphase.GjkEpaSolver;
-import com.bulletphysics.collision.shapes.BoxShape;
-import com.bulletphysics.collision.shapes.CylinderShape;
-import com.bulletphysics.linearmath.Transform;
-import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
 import com.jogamp.opengl.GL2;
 
-import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Frustum;
-import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Matrix;
 import gov.nasa.worldwind.geom.Plane;
-import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.TransformationMatrix;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
@@ -668,66 +654,6 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Determines whether or not a line segment intersects this box.
-	 * 
-	 * @param pa one end of the line segment
-	 * @param pb the other end of the line segment
-	 *  
-	 * @return true if the line segment intersects or is contained in this box,
-	 *         false otherwise
-	 * 
-	 * @see Frustum#intersectsSegment(Vec4, Vec4)
-	 */
-	@Deprecated
-	public boolean intersectsSegment(Vec4 pa, Vec4 pb) {
-		// TODO: file bug report for worldwind 2.0 
-		// gov.nasa.worldwind.geom.Frustum#intersectsSegment(Vec4)
-		// detects false intersects since one successful plane clip is not sufficient
-		//return this.getFrustum().intersectsSegment(pa, pb);
-		return (null != Line.clipToFrustum(pa, pb, this.getFrustum()));
-	}
-	
-	/*
-	@Override
-	public Intersection[] intersect(Line line) {
-		Plane[] boxPlanes = new Plane[6];
-		
-		for (int index = 0; index < this.planes.length; index++) {
-			Vec4 planeNormal = this.planes[index].getNormal();
-			// expand box by epsilon for intersection		
-			boxPlanes[index] = new Plane(
-					planeNormal.x,
-					planeNormal.y,
-					planeNormal.z,
-					planeNormal.w - (PrecisionDouble.EPSILON * 0.001d));
-		}
-		
-		return WWMath.polytopeIntersect(line, boxPlanes);
-	}
-	*/
-	
-	/**
-	 * Determines whether or not (the bounding box of) a cylinder intersects
-	 * this box. 
-	 * 
-	 * @param cylinder the cylinder
-	 * 
-	 * @return true if the (bounding box of the) cylinder intersects this box,
-	 *         false otherwise
-	 */
-	@Deprecated
-	public boolean intersectsCylinderBoundingBox(Cylinder cylinder) {
-		// expand box by effective cylinder radii
-		double rx = cylinder.getEffectiveRadius(this.planes[0]); // r-min plane
-		double ry = cylinder.getEffectiveRadius(this.planes[2]); // s-min plane
-		double rz = cylinder.getEffectiveRadius(this.planes[4]); // t-min plane
-		// the expansion includes the bounding box of the cylinder
-		Vec4 expansion = new Vec4(rx, ry, rz);
-		// perform the conservatively approximate (cylinder bounding box) intersection check
-		return this.intersectsLineSegment(cylinder.getBottomCenter(), cylinder.getTopCenter(), expansion);
-	}
-	
-	/**
 	 * Gets a frustum representation of this box which is slightly expanded
 	 * to account for numerical inaccuracies.
 	 * 
@@ -772,93 +698,13 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	public boolean intersects(Extent extent) {
 		boolean intersects = false;
 		
-		if (extent.intersects(this.getFrustum())) {
-			if (extent instanceof Cylinder) {
-				intersects = this.intersectsCylinder((Cylinder) extent);
-			} else if (extent instanceof Sphere) {
-				// TODO: implemented shpere GJK intersection test
-				intersects = true;
-			} else {
-				// TODO: embed all relevant kinds of (airspace, aircraft) rigid shapes
-				intersects = true;
-			}
+		if (this == extent) {
+			intersects = true;
+		} else if (extent.intersects(this.getFrustum())) {
+			intersects = Collisions.collide(this, extent);
 		}
 		
 		return intersects;
-	}
-	
-	/**
-	 * Determines whether or not a cylinder intersects this box using a
-	 * narrow-phase GJK-EPA solver.
-	 * 
-	 * @param cylinder the cylinder
-	 * 
-	 * @return true if the cylinder intersects this box, false otherwise
-	 * 
-	 * @see GjkEpaSolver#collide(
-	 * 	com.bulletphysics.collision.shapes.ConvexShape, Transform,
-	 * 	com.bulletphysics.collision.shapes.ConvexShape, Transform,
-	 *  float, com.bulletphysics.collision.narrowphase.GjkEpaSolver.Results)
-	 */
-	public boolean intersectsCylinder(Cylinder cylinder) {
-		GjkEpaSolver solver = new GjkEpaSolver();
-		GjkEpaSolver.Results results = new GjkEpaSolver.Results();
-		
-		// jBullet uses a right-hand coordinate system with y as vertical axis
-		// assume t-axis as vertical reference axis for collision check
-		Vector3f boxHalfExtents = new Vector3f(
-				(float) (this.getRLength() / 2d),
-				(float) (this.getTLength() / 2d),
-				(float) (this.getSLength() / 2d));
-		BoxShape boxShape = new BoxShape(boxHalfExtents);
-		// this box is the reference and does not need to be transformed
-		Transform boxTransform = new Transform();
-		boxTransform.setIdentity(); // no translation or rotation
-		
-		// jBullet uses a right-hand coordinate system with y as vertical axis
-		Vector3f cylinderHalfExtents = new Vector3f(
-				(float) cylinder.getCylinderRadius(),
-				(float) (cylinder.getCylinderHeight() / 2d),
-				(float) cylinder.getCylinderRadius());
-		CylinderShape cylinderShape = new CylinderShape(cylinderHalfExtents);
-		
-		// obtain cylinder translation from box center reference
-		Vec4 translation = this.transformModelToBoxCenter(cylinder.getCenter());
-		// jBullet uses a right-hand coordinate system with y as vertical axis
-		Vector3f cylinderTranslation = new Vector3f(
-				(float) translation.getX(),
-				(float) translation.getZ(),
-				(float) translation.getY());
-		
-		// obtain cylinder rotation from box vertical reference (T-axis)
-		Vec4[] cylinderRotationAxis = new Vec4[] {Vec4.ZERO};
-		Angle cylinderRotationAngle = Vec4.axisAngle(
-				cylinder.getAxisUnitDirection(),
-				this.getUnitTAxis(),
-				cylinderRotationAxis);
-		// obtain cylinder rotation axis from box center reference
-		cylinderRotationAxis[0] = this.transformModelToBoxCenter(cylinderRotationAxis[0]);
-		// jBullet uses a right-hand coordinate system with y as vertical axis
-		AxisAngle4f cylinderAxisAngle = new AxisAngle4f(
-				(float) cylinderRotationAxis[0].getY(),
-				(float) cylinderRotationAxis[0].getZ(),
-				(float) cylinderRotationAxis[0].getX(),
-				(float) cylinderRotationAngle.getRadians());
-		// obtain cylinder rotation quaternion
-		Quat4f cylinderQuaternion = new Quat4f();
-		cylinderQuaternion.set(cylinderAxisAngle);
-			
-		// obtain cylinder transformation (translation and rotation)
-		Matrix4f ctm = new Matrix4f();
-		ctm.setIdentity(); // no translation or rotation
-		ctm.setTranslation(cylinderTranslation); // center translation
-		ctm.setRotation(cylinderQuaternion); // vertical rotation
-		Transform cylinderTransform = new Transform(ctm);
-		
-		// perform intersection GJK test
-		return solver.collide(
-				boxShape, boxTransform, cylinderShape, cylinderTransform,
-				(float) Precision.EPSILON, results);
 	}
 	
 	/**
