@@ -190,7 +190,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			}
 			
 			// goal bias
-			if (features.get(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)
+			if (features.get(Features.FEATURE_AIRCRAFT_SAFETY_RADIUS)
 					> features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MIN)) {
 				properties.setBias(1);
 			} else {

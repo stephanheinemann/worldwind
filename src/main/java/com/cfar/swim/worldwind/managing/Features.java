@@ -56,7 +56,8 @@ import gov.nasa.worldwind.geom.Box;
 import gov.nasa.worldwind.geom.Extent;
 
 /**
- * Realizes discriminating features of an autonomic context contained in a scenario.
+ * Realizes discriminating features of an autonomic context extracted from a
+ * scenario.
  * 
  * @author Stephan Heinemann
  *
@@ -82,10 +83,6 @@ public class Features extends HashMap<String, Double> {
 	public static final String FEATURE_AIRCRAFT_SPEED_VERTICAL_CLIMB = "feature.aircraft.speed.vertical.climb";
 	/** the aircraft descent rate feature key of these features */
 	public static final String FEATURE_AIRCRAFT_SPEED_VERTICAL_DESCENT = "feature.aircraft.speed.vertical.descent";
-	/** the aircraft safety radius features key of these features */
-	public static final String FEATURE_AIRCRAFT_RADIUS_SAFETY = "feature.aircraft.radius.safety";
-	/** the aircraft safety volume feature key of these features */
-	public static final String FEATURE_AIRCRAFT_VOLUME_SAFETY = "feature.aircraft.volume.safety";
 	/** the aircraft obstacles average distance feature key of these features */
 	public static final String FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_AVG = "feature.aircraft.obstacles.distance.avg";
 	/** the aircraft obstacles maximum distance feature key of these features */
@@ -100,6 +97,30 @@ public class Features extends HashMap<String, Double> {
 	public static final String FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME = "feature.aircraft.obstacles.nearest.volume";
 	/** the aircraft nearest obstacle volume ratio feature key of these features */
 	public static final String FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO = "feature.aircraft.obstacles.nearest.volume.ratio";
+	/** the aircraft safety sphere radius features key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_RADIUS = "feature.aircraft.safety.radius";
+	/** the aircraft safety sphere volume feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_VOLUME = "feature.aircraft.safety.volume";
+	/** the aircraft safety sphere obstacles count feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COUNT = "feature.aircraft.safety.obstacles.count";
+	/** the aircraft safety sphere obstacles policies cost feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES = "feature.aircraft.safety.obstacles.cost.policies";
+	/** the aircraft safety sphere obstacles average cost feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_AVG = "feature.aircraft.safety.obstacles.cost.avg";
+	/** the aircraft safety sphere obstacles maximum cost feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MAX = "feature.aircraft.safety.obstacles.cost.max";
+	/** the aircraft safety sphere obstacles minimum cost feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MIN = "feature.aircraft.safety.obstacles.cost.min";
+	/** the aircraft safety sphere obstacles accumulated cost feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM = "feature.aircraft.safety.obstacles.cost.sum";
+	/** the aircraft safety sphere obstacles average volume feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_AVG = "feature.aircraft.safety.obstacles.volume.avg";
+	/** the aircraft safety sphere obstacles maximum volume feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MAX = "feature.aircraft.safety.obstacles.volume.max";
+	/** the aircraft safety sphere obstacles minimum volume feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MIN = "feature.aircraft.safety.obstacles.volume.min";
+	/** the aircraft safety sphere obstacles accumulated volume feature key of these features */
+	public static final String FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_SUM = "feature.aircraft.safety.obstacles.volume.sum";
 	
 	/** the environment diameter feature key of these features */
 	public static final String FEATURE_ENVIRONMENT_DIAMETER = "feature.environment.diameter";
@@ -118,7 +139,7 @@ public class Features extends HashMap<String, Double> {
 	/** the environment obstacles accumulated cost feature key of these features */
 	public static final String FEATURE_ENVIRONMENT_OBSTACLES_COST_SUM = "feature.environment.obstacles.cost.sum";
 	/** the environment obstacles average volume feature key of these features */
-	public static final String FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_AVG = "feature.envrionment.obstacles.volume.avg";
+	public static final String FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_AVG = "feature.environment.obstacles.volume.avg";
 	/** the environment obstacles maximum volume feature key of these features */
 	public static final String FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_MAX = "feature.environment.obstacles.volume.max";
 	/** the environment obstacles minimum volume feature key of these features */
@@ -191,7 +212,6 @@ public class Features extends HashMap<String, Double> {
 	/** the POIs environment obstacles volume ratio feature key of these features */
 	public static final String FEATURE_POIS_ENVIRONMENT_OBSTACLES_VOLUME_RATIO = "feature.pois.environment.obstacles.volume.ratio";
 	// TODO: volume ratios: avg, max, min
-	
 	// TODO: aircraft position to next POI leg: distance, obstacles
 	
 	/** the cost policy feature key of these features */
@@ -299,9 +319,9 @@ public class Features extends HashMap<String, Double> {
 				aircraft.getCapabilities().getCruiseRateOfClimb());
 		this.put(Features.FEATURE_AIRCRAFT_SPEED_VERTICAL_DESCENT,
 				aircraft.getCapabilities().getCruiseRateOfDescent());
-		this.put(Features.FEATURE_AIRCRAFT_RADIUS_SAFETY,
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_RADIUS,
 				aircraft.getRadius());
-		this.put(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY,
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_VOLUME,
 				aircraft.getVolume(env.getGlobe()));
 	
 		// environment obstacles within the feature horizon
@@ -314,8 +334,7 @@ public class Features extends HashMap<String, Double> {
 			}
 		}
 		
-		
-		if (0 == featureObstacles.size()) {
+		if (featureObstacles.isEmpty()) {
 			this.resetAircraftObstacleFeatures();
 		} else {
 			List<Double> distances = featureObstacles.stream()
@@ -361,8 +380,88 @@ public class Features extends HashMap<String, Double> {
 			this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME,
 					nearest.getVolume(env.getGlobe()));
 			this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO,
-					this.get(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)
+					this.get(Features.FEATURE_AIRCRAFT_SAFETY_VOLUME)
 					/ this.get(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME));
+			
+			// distinct aircraft obstacles (movement interpolation)
+			Set<Obstacle> aircraftObstacles = new HashSet<>();
+			HashMap<String, Set<Obstacle>> distinctObstacles = new HashMap<>();
+			for (Obstacle featureObstacle : featureObstacles) {
+				if (aircraft.intersects(env.getGlobe(), featureObstacle)) {
+					aircraftObstacles.add(featureObstacle);
+					String key = featureObstacle.getCostInterval().getId();
+					if (distinctObstacles.containsKey(key)) {
+						distinctObstacles.get(key).add(featureObstacle);
+					} else {
+						HashSet<Obstacle> identicalObstacles = new HashSet<>();
+						identicalObstacles.add(featureObstacle);
+						distinctObstacles.put(key, identicalObstacles);
+					}
+				}
+			}
+			
+			if (aircraftObstacles.isEmpty()) {
+				this.resetAircraftSafetyObstacleFeatures();
+			} else {	
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COUNT,
+						(double) distinctObstacles.keySet().size());
+				
+				// distinct obstacles cost
+				ArrayList<Double> distinctCosts = new ArrayList<>();
+				for (String key : distinctObstacles.keySet()) {
+					distinctCosts.add(distinctObstacles.get(key).stream()
+							.mapToDouble(o -> o.getCostInterval().getCost())
+							.findFirst().getAsDouble());
+				}
+				
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_AVG,
+						distinctCosts.stream()
+						.mapToDouble(Double::valueOf).average().getAsDouble());
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MAX,
+						distinctCosts.stream()
+						.mapToDouble(Double::valueOf).max().getAsDouble());
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MIN,
+						distinctCosts.stream()
+						.mapToDouble(Double::valueOf).min().getAsDouble());
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM,
+						distinctCosts.stream()
+						.mapToDouble(Double::valueOf).sum());
+				
+				// TODO: this is more conservative than the environment sub-intervals
+				if (planner.getRiskPolicy().satisfies(
+						this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM))) {
+					this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES,
+							this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM));
+				} else {
+					this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES,
+							Double.POSITIVE_INFINITY);
+				}
+				
+				// distinct average obstacles volume
+				ArrayList<Double> distinctVolumes = new ArrayList<>();
+				for (String key : distinctObstacles.keySet()) {
+					distinctVolumes.add(distinctObstacles.get(key).stream()
+							.mapToDouble(o -> o.getVolume(env.getGlobe()))
+							.average().getAsDouble());
+				}
+				
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_AVG,
+						aircraftObstacles.stream()
+						.mapToDouble(o -> o.getVolume(env.getGlobe()))
+						.average().getAsDouble());
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MAX,
+						aircraftObstacles.stream()
+						.mapToDouble(o -> o.getVolume(env.getGlobe()))
+						.max().getAsDouble());
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MIN,
+						aircraftObstacles.stream()
+						.mapToDouble(o -> o.getVolume(env.getGlobe()))
+						.min().getAsDouble());
+				// ignore mutual time-dependent obstacle intersections
+				this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_SUM,
+						distinctVolumes.stream()
+						.mapToDouble(Double::valueOf).sum());
+			}
 		}
 	}
 	
@@ -397,7 +496,7 @@ public class Features extends HashMap<String, Double> {
 		}
 		
 		// environment obstacle features
-		if (0 == featureObstacles.size()) {
+		if (featureObstacles.isEmpty()) {
 			this.resetEnvironmentObstacleFeatures();
 		} else {
 			// distinct environment obstacles (movement interpolation)
@@ -575,7 +674,7 @@ public class Features extends HashMap<String, Double> {
 				}
 			}
 			
-			if (0 == poiObstacles.size()) {
+			if (poiObstacles.isEmpty()) {
 				this.resetPoisObstacleFeatures();
 			} else {
 				this.put(Features.FEATURE_POIS_OBSTACLES_COUNT,
@@ -714,6 +813,23 @@ public class Features extends HashMap<String, Double> {
 		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_COST_POLICIES, 0d);
 		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME, 0d);
 		this.put(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COUNT, 0d);
+		this.resetAircraftSafetyObstacleFeatures();
+	}
+	
+	/**
+	 * Resets the aircraft safety obstacle features.
+	 */
+	protected void resetAircraftSafetyObstacleFeatures() {
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_AVG, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MAX, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MIN, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_AVG, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MAX, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MIN, 0d);
+		this.put(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_SUM, 0d);
 	}
 	
 	/**
@@ -775,8 +891,6 @@ public class Features extends HashMap<String, Double> {
 		this.remove(Features.FEATURE_AIRCRAFT_SPEED_HORIZONTAL);
 		this.remove(Features.FEATURE_AIRCRAFT_SPEED_VERTICAL_CLIMB);
 		this.remove(Features.FEATURE_AIRCRAFT_SPEED_VERTICAL_DESCENT);
-		this.remove(Features.FEATURE_AIRCRAFT_RADIUS_SAFETY);
-		this.remove(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY);
 		this.remove(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_AVG);
 		this.remove(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MAX);
 		this.remove(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MIN);
@@ -784,6 +898,18 @@ public class Features extends HashMap<String, Double> {
 		this.remove(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_COST_POLICIES);
 		this.remove(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME);
 		this.remove(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_RADIUS);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_VOLUME);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COUNT);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_AVG);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MAX);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MIN);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_AVG);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MAX);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MIN);
+		this.remove(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_SUM);
 	}
 	
 	/**
@@ -862,18 +988,6 @@ public class Features extends HashMap<String, Double> {
 					+ this.get(Features.FEATURE_AIRCRAFT_ALTITUDE)
 					+ "\n");
 		}
-		if (this.containsKey(Features.FEATURE_AIRCRAFT_RADIUS_SAFETY)) {
-			features = features.concat(this.dictionary.getString(
-					Features.FEATURE_AIRCRAFT_RADIUS_SAFETY) + " = "
-					+ this.get(Features.FEATURE_AIRCRAFT_RADIUS_SAFETY)
-					+ "\n");
-		}
-		if (this.containsKey(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)) {
-			features = features.concat(this.dictionary.getString(
-					Features.FEATURE_AIRCRAFT_VOLUME_SAFETY) + " = "
-					+ this.get(Features.FEATURE_AIRCRAFT_VOLUME_SAFETY)
-					+ "\n");
-		}
 		if (this.containsKey(Features.FEATURE_AIRCRAFT_SPEED_HORIZONTAL)) {
 			features = features.concat(this.dictionary.getString(
 					Features.FEATURE_AIRCRAFT_SPEED_HORIZONTAL) + " = "
@@ -932,6 +1046,78 @@ public class Features extends HashMap<String, Double> {
 			features = features.concat(this.dictionary.getString(
 					Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO) + " = "
 					+ this.get(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_RADIUS)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_RADIUS) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_RADIUS)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_VOLUME)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_VOLUME) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_VOLUME)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COUNT)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COUNT) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COUNT)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_AVG)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_AVG) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_AVG)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MAX)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MAX) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MAX)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MIN)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MIN) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MIN)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_SUM)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_AVG)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_AVG) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_AVG)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MAX)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MAX) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MAX)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MIN)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MIN) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_MIN)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_SUM)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_SUM) + " = "
+					+ this.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_VOLUME_SUM)
 					+ "\n");
 		}
 		
