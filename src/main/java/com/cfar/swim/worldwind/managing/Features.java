@@ -517,7 +517,8 @@ public class Features extends HashMap<String, Double> {
 			this.put(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES, env.getCost(
 					env.getTime(),
 					env.getTime().plus(Features.FEATURE_HORIZON),
-					planner.getCostPolicy(), planner.getRiskPolicy()));
+					planner.getCostPolicy(), planner.getRiskPolicy())
+					- env.getBaseCost());
 			
 			// distinct obstacles cost
 			ArrayList<Double> distinctCosts = new ArrayList<>();
@@ -684,7 +685,8 @@ public class Features extends HashMap<String, Double> {
 								env.getTime(),
 								env.getTime().plus(Features.FEATURE_HORIZON),
 								planner.getCostPolicy(),
-								planner.getRiskPolicy()));
+								planner.getRiskPolicy())
+						- poiContinuum.getBaseCost());
 				
 				// distinct obstacles cost
 				ArrayList<Double> distinctCosts = new ArrayList<>();
