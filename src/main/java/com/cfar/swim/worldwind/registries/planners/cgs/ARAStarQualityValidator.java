@@ -52,7 +52,7 @@ public class ARAStarQualityValidator implements ConstraintValidator<ARAStarValid
 	 */
 	@Override
 	public boolean isValid(ARAStarProperties value, ConstraintValidatorContext context) {
-		return (1d <= value.getMinimumQuality())
+		return (1d <= value.getMaximumQuality())
 				&& (value.getMinimumQuality() >= value.getMaximumQuality())
 				&& (0d < value.getQualityImprovement());
 	}

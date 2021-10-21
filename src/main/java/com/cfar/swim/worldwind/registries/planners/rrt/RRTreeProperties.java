@@ -75,7 +75,7 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 	private double epsilon = 25d;
 	
 	/** the sampling bias towards the goal of this RRT planner properties bean */
-	@Min(value = 0, message = "{property.planner.rrt.bias.min}")
+	@Min(value = 1, message = "{property.planner.rrt.bias.min}")
 	@Max(value = 100, message = "{property.planner.rrt.bias.max}")
 	private int bias = 5;
 	
