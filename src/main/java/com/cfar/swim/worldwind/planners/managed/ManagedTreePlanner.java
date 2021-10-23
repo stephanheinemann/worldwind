@@ -424,8 +424,10 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	@Override
 	protected void revisePlan(Trajectory trajectory) {
 		this.performance = new PlannerPerformance(
+				this.planStartTime,
 				new TrajectoryQuality(trajectory),
-				new DurationQuantity(Duration.between(this.planStartTime, ZonedDateTime.now())));
+				new DurationQuantity(Duration.between(
+						this.planStartTime, ZonedDateTime.now())));
 		this.revisions.add(trajectory);
 		super.revisePlan(trajectory);
 	}

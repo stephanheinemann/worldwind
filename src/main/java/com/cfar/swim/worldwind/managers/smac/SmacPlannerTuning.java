@@ -167,6 +167,7 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 					// apply feature category tunings
 					properties.addAll(categoryTunings
 							.stream()
+							.filter(t -> reputation.hasPerformances(t, Reputation.PERFORMANCE_CONTEXT))
 							.sorted(new Comparator<PlannerTuning>() {
 								/**
 								 * Compares planner tunings in terms of performance according to their
@@ -183,8 +184,10 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 								public int compare(PlannerTuning t1, PlannerTuning t2) {
 									int result = 0;
 									
-									OptionalDouble p1 = reputation.getMaximumTuningPerformance(t1);
-									OptionalDouble p2 = reputation.getMaximumTuningPerformance(t2);
+									OptionalDouble p1 = reputation.getMaximumTuningPerformance(
+											t1, Reputation.PERFORMANCE_CONTEXT);
+									OptionalDouble p2 = reputation.getMaximumTuningPerformance(
+											t2, Reputation.PERFORMANCE_CONTEXT);
 									if (p1.isPresent() || p2.isPresent()) {
 										if (p1.isPresent() && p2.isEmpty()) {
 											result = -1;

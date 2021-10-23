@@ -27,54 +27,26 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.managing;
+package com.cfar.swim.worldwind.managers.smac;
 
-import java.io.Serializable;
-import java.time.ZonedDateTime;
+import com.cfar.swim.worldwind.managing.PlannerPerformance;
+
+import ca.ubc.cs.beta.aeatk.targetalgorithmevaluator.TargetAlgorithmEvaluatorRunObserver;
 
 /**
- * Describes a performance.
+ * Describes a SMAC planner evaluator observer of intermediate planner
+ * performances.
  * 
  * @author Stephan Heinemann
  *
- * @see Quality
- * @see Quantity
  */
-public interface Performance extends Comparable<Performance>, Serializable {
+public interface SmacPlannerEvaluatorObserver extends TargetAlgorithmEvaluatorRunObserver {
 	
 	/**
-	 * Gets the measure of this performance.
+	 * Report the current planner performance of a SMAC planner evaluator.
 	 * 
-	 * @return the measure of this performance
+	 * @param performance the planner performance
 	 */
-	public double get();
-	
-	/**
-	 * Gets the quality of this performance.
-	 * 
-	 * @return the quality of this performance
-	 */
-	public Quality getQuality();
-	
-	/**
-	 * Gets the quantity of this performance.
-	 * 
-	 * @return the quantity of this performance
-	 */
-	public Quantity getQuantity();
-	
-	/**
-	 * Gets the context of this performance.
-	 * 
-	 * @return the context of this performance
-	 */
-	public PerformanceContext getContext();
-	
-	/**
-	 * Gets the epoch of this performance.
-	 * 
-	 * @return the epoch of this performance
-	 */
-	public ZonedDateTime getEpoch();
+	public void currentPerformance(PlannerPerformance performance);
 	
 }

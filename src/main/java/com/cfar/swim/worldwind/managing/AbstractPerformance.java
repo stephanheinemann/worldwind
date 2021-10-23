@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.Objects;
 
@@ -58,19 +59,32 @@ public abstract class AbstractPerformance implements Performance {
 	/** the context of this abstract performance */
 	private final PerformanceContext context;
 	
+	/** the epoch of this abstract performance */
+	private final ZonedDateTime epoch;
+	
 	/**
-	 * Construct a new abstract performance based on a quality and quantity.
+	 * Construct a new abstract performance based on an epoch, a quality and
+	 * quantity.
 	 * 
+	 * @param epoch the performance epoch 
 	 * @param quality the performance quality
 	 * @param quantity the performance quantity
+	 * 
+	 * @throws IllegalArgumentException if the epoch, quality or quantity are
+	 *                                  invalid
 	 */
-	public AbstractPerformance(Quality quality, Quantity quantity) {
+	public AbstractPerformance(
+			ZonedDateTime epoch, Quality quality, Quantity quantity) {
+		if ((null == epoch) || epoch.isAfter(ZonedDateTime.now())) {
+			throw new IllegalArgumentException("epoch is invalid");
+		}
 		if (null == quality) {
 			throw new IllegalArgumentException("quality is invalid");
 		}
 		if ((null == quantity) || (0d >= quantity.get())) {
 			throw new IllegalArgumentException("quantity is invalid");
 		}
+		this.epoch = epoch;
 		this.quality = quality;
 		this.quantity = quantity;
 		this.context = new PerformanceContext();
@@ -123,6 +137,18 @@ public abstract class AbstractPerformance implements Performance {
 	@Override
 	public PerformanceContext getContext() {
 		return this.context;
+	}
+	
+	/**
+	 * Gets the epoch of this abstract performance.
+	 * 
+	 * @return the epoch of this abstract performance
+	 * 
+	 * @see Performance#getEpoch()
+	 */
+	@Override
+	public ZonedDateTime getEpoch() {
+		return this.epoch;
 	}
 	
 	/**

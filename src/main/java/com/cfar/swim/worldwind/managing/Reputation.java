@@ -47,6 +47,9 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	/** the default serial identification of this reputation */
 	private static final long serialVersionUID = 1L;
 	
+	/** the current performance context */
+	public static final PerformanceContext PERFORMANCE_CONTEXT = new PerformanceContext();
+	
 	/**
 	 * Adds a tuning performance to this reputation.
 	 * 
@@ -73,6 +76,33 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	}
 	
 	/**
+	 * Determines whether or not this reputation has performances for a tuning.
+	 * 
+	 * @param tuning the tuning
+	 * 
+	 * @return true if this reputation has performances for the tuning,
+	 *         false otherwise
+	 */
+	public boolean hasPerformances(Tuning<?> tuning) {
+		return this.containsKey(tuning) && !this.get(tuning).isEmpty();
+	}
+	
+	/**
+	 * Determines whether or not this reputation has performances for a tuning
+	 * given a performance context.
+	 * 
+	 * @param tuning the tuning
+	 * @param context the performance context
+	 * 
+	 * @return true if this reputation has performances for the tuning in the
+	 *         performance context, false otherwise
+	 */
+	public boolean hasPerformances(Tuning<?> tuning, PerformanceContext context) {
+		return this.containsKey(tuning) && this.get(tuning).stream()
+				.anyMatch(p -> p.getContext().equals(context));
+	}
+	
+	/**
 	 * Gets the average tuning performance of a tuning in this reputation.
 	 * 
 	 * @param tuning the tuning
@@ -82,9 +112,31 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	public OptionalDouble getAverageTuningPerformance(Tuning<?> tuning) {
 		OptionalDouble performance = OptionalDouble.empty();
 		
-		// TODO: filter for system information
 		if (this.containsKey(tuning)) {
 			performance = this.get(tuning).stream()
+					.map(p -> p.get()).mapToDouble(Double::valueOf).average();
+		}
+		
+		return performance;
+	}
+	
+	/**
+	 * Gets the average tuning performance of a tuning in this reputation
+	 * within a given performance context.
+	 * 
+	 * @param tuning the tuning
+	 * @param context the performance context
+	 * 
+	 * @return the average tuning performance within the performance context,
+	 *         if present
+	 */
+	public OptionalDouble getAverageTuningPerformance(
+			Tuning<?> tuning, PerformanceContext context) {
+		OptionalDouble performance = OptionalDouble.empty();
+		
+		if (this.containsKey(tuning)) {
+			performance = this.get(tuning).stream()
+					.filter(p -> p.getContext().equals(context))
 					.map(p -> p.get()).mapToDouble(Double::valueOf).average();
 		}
 		
@@ -101,9 +153,31 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	public OptionalDouble getMaximumTuningPerformance(Tuning<?> tuning) {
 		OptionalDouble performance = OptionalDouble.empty();
 		
-		// TODO: filter for system information
 		if (this.containsKey(tuning)) {
 			performance = this.get(tuning).stream()
+					.map(p -> p.get()).mapToDouble(Double::valueOf).max();
+		}
+		
+		return performance;
+	}
+	
+	/**
+	 * Gets the maximum tuning performance of a tuning in this reputation
+	 * within a given performance context.
+	 * 
+	 * @param tuning the tuning
+	 * @param context the performance context
+	 * 
+	 * @return the maximum tuning performance within the performance context,
+	 *         if present
+	 */
+	public OptionalDouble getMaximumTuningPerformance(
+			Tuning<?> tuning, PerformanceContext context) {
+		OptionalDouble performance = OptionalDouble.empty();
+		
+		if (this.containsKey(tuning)) {
+			performance = this.get(tuning).stream()
+					.filter(p -> p.getContext().equals(context))
 					.map(p -> p.get()).mapToDouble(Double::valueOf).max();
 		}
 		
@@ -120,9 +194,31 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	public OptionalDouble getMinimumTuningPerformance(Tuning<?> tuning) {
 		OptionalDouble performance = OptionalDouble.empty();
 		
-		// TODO: filter for system information
 		if (this.containsKey(tuning)) {
 			performance = this.get(tuning).stream()
+					.map(p -> p.get()).mapToDouble(Double::valueOf).min();
+		}
+		
+		return performance;
+	}
+	
+	/**
+	 * Gets the minimum tuning performance of a tuning in this reputation
+	 * within a given performance context.
+	 * 
+	 * @param tuning the tuning
+	 * @param context the performance context
+	 * 
+	 * @return the minimum tuning performance within the performance context,
+	 *         if present
+	 */
+	public OptionalDouble getMinimumTuningPerformance(
+			Tuning<?> tuning, PerformanceContext context) {
+		OptionalDouble performance = OptionalDouble.empty();
+		
+		if (this.containsKey(tuning)) {
+			performance = this.get(tuning).stream()
+					.filter(p -> p.getContext().equals(context))
 					.map(p -> p.get()).mapToDouble(Double::valueOf).min();
 		}
 		

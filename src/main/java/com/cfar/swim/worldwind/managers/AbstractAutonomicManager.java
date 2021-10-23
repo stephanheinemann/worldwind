@@ -46,10 +46,8 @@ import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
 import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.javafx.TrajectoryStylist;
-import com.cfar.swim.worldwind.managing.DurationQuantity;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.KnowledgeBase;
-import com.cfar.swim.worldwind.managing.PlannerPerformance;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.managing.TrajectoryQuality;
 import com.cfar.swim.worldwind.planners.DynamicObstacleListener;
@@ -1206,6 +1204,11 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			Scenario scenario, ManagedPlanner planner, Trajectory trajectory) {
 		Logging.logger().info("evaluating planner " + planner.getId());
 		
+		// extending knowledge base
+		PlannerTuning tuning = this.getPlannerTuning(scenario);
+		this.getKnowledgeBase().getReputation().addTuningPerformance(tuning, planner.getPerformance());
+		Logging.logger().info("added performance " + planner.getPerformance().toString());
+		
 		TrajectoryStylist.styleTrajectory(trajectory);
 		scenario.setTrajectory(trajectory);
 		Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
@@ -1223,13 +1226,6 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		TrajectoryQuality stq = new TrajectoryQuality(st);
 		Trajectory et = trajectory.getSubTrajectory(poiIndex);
 		TrajectoryQuality rtq = new TrajectoryQuality(et);
-		DurationQuantity rdq = (DurationQuantity) planner.getPerformance().getQuantity();
-		PlannerPerformance performance = new PlannerPerformance(rtq, rdq);
-		PlannerTuning tuning = this.getPlannerTuning(scenario);
-		
-		// extending knowledge base
-		this.getKnowledgeBase().getReputation().addTuningPerformance(tuning, performance);
-		Logging.logger().info("added performance " + performance.toString());
 		
 		Logging.logger().info("current source sub-trajectory = " + st);
 		Logging.logger().info("evaluated sub-trajectory = " + et);

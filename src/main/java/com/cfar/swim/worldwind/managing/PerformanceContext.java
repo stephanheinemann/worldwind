@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.managing;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 import oshi.SystemInfo;
 
@@ -151,6 +152,59 @@ public class PerformanceContext implements Serializable {
 	 */
 	public String getOsManufacturer() {
 		return this.osManufacturer;
+	}
+	
+	/**
+	 * Determines whether or not this performance context equals another
+	 * performance context based on their captured system information.
+	 * 
+	 * @param o the other performance context
+	 * 
+	 * @return true, if the captured system information of this performance
+	 *         context equals the captured system information of the other
+	 *         performance context, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+		
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			PerformanceContext pc = (PerformanceContext) o;
+			equals = (this.logicalProcessorCount == pc.logicalProcessorCount)
+					&& (this.maxFrequency == pc.maxFrequency)
+					&& (this.osManufacturer.equals(pc.osManufacturer))
+					&& (this.osPlatform.equals(pc.osPlatform))
+					&& (this.physicalProcessorCount == pc.physicalProcessorCount)
+					&& (this.processorName.equals(pc.processorName))
+					&& (this.totalMemory == pc.totalMemory);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this performance context based on its captured
+	 * system information.
+	 * 
+	 * @return the hash code of this performance context based on its captured
+	 *         system information
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(
+				this.logicalProcessorCount,
+				this.maxFrequency,
+				this.osManufacturer,
+				this.osPlatform,
+				this.physicalProcessorCount,
+				this.processorName,
+				this.totalMemory);
 	}
 	
 	/**

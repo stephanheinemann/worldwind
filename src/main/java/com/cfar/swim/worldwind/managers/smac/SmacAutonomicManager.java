@@ -36,6 +36,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -238,6 +239,13 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		categories.add(FlightPhases.createAerodromePhase(features));
 		categories.add(FlightPhases.createTerminalPhase(features));
 		categories.add(FlightPhases.createEnroutePhase(features));
+		/*
+		categories.add(Criticality.createLow(features));
+		categories.add(Criticality.createModerate(features));
+		categories.add(Criticality.createSubstantial(features));
+		categories.add(Criticality.createSevere(features));
+		categories.add(Criticality.createCritical(features));
+		*/
 		return new SmacPlannerTuning(specification, features,
 				this.getKnowledgeBase(), categories);
 	}
@@ -531,7 +539,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 			
 			// TODO: check TargetAlgorithmEvaluatorBuilder
 			this.plannerEvaluator = new SmacPlannerEvaluator(managedSession);
-			// TODO: register event handlers for run notifications
+			// TODO: register event handlers for run notifications?
 			//EventManager eventManager = new EventManager();
 			
 			for (Specification<Planner> managedPlannerSpec :
@@ -616,6 +624,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 							Collections.singleton(problem),
 							this.getTrainingRunCutOff().toSeconds());
 					NumericPerformance performance = new NumericPerformance(
+							ZonedDateTime.now(),
 							new NumericQuality(SmacPlannerEvaluator.toResultQuality(cost)),
 							new NumericQuantity(1));
 					this.getKnowledgeBase().getReputation().addTuningPerformance(tuning, performance);

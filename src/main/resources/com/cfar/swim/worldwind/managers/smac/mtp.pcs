@@ -29,9 +29,9 @@
 #
 
 # name type range default
-sampling ordinal {ELLIPSOIDAL, UNIFORM, GAUSSIAN} [UNIFORM] # categorical
+sampling categorical {ELLIPSOIDAL, UNIFORM, GAUSSIAN} [UNIFORM] # ordinal?
 strategy categorical {EXTEND, CONNECT} [EXTEND]
-extension categorical {LINEAR, FEASIBLE} [LINEAR]
+extension categorical {LINEAR, FEASIBLE} [LINEAR] # OPS constraint?
 maxIterations integer [1, 10000] [1500]
 epsilon real [1, 10000] [500]
 bias integer [0, 100] [5]

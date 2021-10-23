@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.time.ZonedDateTime;
+
 /**
  * Realizes a numeric performance consisting of numeric quality and numeric
  * quantity within a context.
@@ -44,20 +46,23 @@ public class NumericPerformance extends AbstractPerformance {
 	
 	/** the zero numeric performance */
 	public static final NumericPerformance ZERO = new NumericPerformance(
+			ZonedDateTime.now(),
 			new NumericQuality(Integer.valueOf(0)),
 			new NumericQuantity(Integer.valueOf(1)));
 	
 	/**
-	 * Construct a new numeric performance based on a numeric quality and a
-	 * numeric quantity.
+	 * Construct a new numeric performance based on an epoch, a numeric quality
+	 * and a numeric quantity.
 	 * 
+	 * @param epoch the numeric performance epoch
 	 * @param quality the numeric quality
 	 * @param quantity the numeric quantity
 	 * 
-	 * @see AbstractPerformance#AbstractPerformance(Quality, Quantity)
+	 * @see AbstractPerformance#AbstractPerformance(ZonedDateTime, Quality, Quantity)
 	 */
-	public NumericPerformance(NumericQuality quality, NumericQuantity quantity) {
-		super(quality, quantity);
+	public NumericPerformance(
+			ZonedDateTime epoch, NumericQuality quality, NumericQuantity quantity) {
+		super(epoch, quality, quantity);
 	}
 	
 	/**

@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.managing;
 
 import java.time.Duration;
+import java.time.ZonedDateTime;
 
 /**
  * Realizes a planner performance consisting of trajectory quality and
@@ -46,21 +47,23 @@ public class PlannerPerformance extends AbstractPerformance {
 	
 	/** the zero planning performance */
 	public static final PlannerPerformance ZERO = new PlannerPerformance(
+			ZonedDateTime.now(),
 			TrajectoryQuality.ZERO,
 			new DurationQuantity(Duration.ofSeconds(1l)));
 	
 	/**
-	 * Construct a new planner performance based on a trajectory quality and
-	 * a computational duration quantity.
+	 * Construct a new planner performance based on an epoch, a trajectory
+	 * quality and a computational duration quantity.
 	 * 
+	 * @param epoch the planner performance epoch
 	 * @param quality the trajectory quality
 	 * @param quantity the computational duration quantity
 	 * 
-	 * @see AbstractPerformance#AbstractPerformance(Quality, Quantity)
+	 * @see AbstractPerformance#AbstractPerformance(ZonedDateTime, Quality, Quantity)
 	 */
-	public PlannerPerformance(
+	public PlannerPerformance(ZonedDateTime epoch,
 			TrajectoryQuality quality, DurationQuantity quantity) {
-		super(quality, quantity);
+		super(epoch, quality, quantity);
 	}
 	
 	/**

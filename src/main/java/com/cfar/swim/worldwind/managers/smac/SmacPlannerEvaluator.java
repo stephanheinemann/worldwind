@@ -58,10 +58,18 @@ import ca.ubc.cs.beta.aeatk.algorithmrunresult.RunStatus;
 import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfiguration;
 import ca.ubc.cs.beta.aeatk.parameterconfigurationspace.ParameterConfiguration.ParameterStringFormat;
 import ca.ubc.cs.beta.aeatk.targetalgorithmevaluator.AbstractSyncTargetAlgorithmEvaluator;
+import ca.ubc.cs.beta.aeatk.targetalgorithmevaluator.AbstractTargetAlgorithmEvaluator;
+import ca.ubc.cs.beta.aeatk.targetalgorithmevaluator.TargetAlgorithmEvaluator;
 import ca.ubc.cs.beta.aeatk.targetalgorithmevaluator.TargetAlgorithmEvaluatorRunObserver;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.util.Logging;
 
+/**
+ * Realizes a SMAC planner evaluator.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 	
 	/** the managed session of this SMAC planner evaluator */
@@ -79,36 +87,55 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 	public SmacPlannerEvaluator(Session managedSession) {
 		this.managedSession = managedSession;
 	}
-
+	
+	/**
+	 * Determines whether or not SMAC planner evaluator runs are final.
+	 * 
+	 * @return true
+	 * 
+	 * @see TargetAlgorithmEvaluator#isRunFinal()
+	 */
 	@Override
 	public boolean isRunFinal() {
-		// TODO Auto-generated method stub
-		//return false;
-		return true; // true if deterministic
+		return true;
 	}
-
+	
+	/**
+	 * Determines whether or not SMAC planner evaluator runs are persisted.
+	 * 
+	 * @return false
+	 * 
+	 * @see TargetAlgorithmEvaluator#areRunsPersisted()
+	 */
 	@Override
 	public boolean areRunsPersisted() {
-		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
+	/**
+	 * Determines whether or not SMAC planner evaluator runs are observable.
+	 * 
+	 * @return false
+	 * 
+	 * @see TargetAlgorithmEvaluator#areRunsObservable()
+	 */
 	@Override
 	public boolean areRunsObservable() {
-		// TODO Auto-generated method stub
 		return false;
 	}
-
+	
+	/**
+	 * Shuts down the executor of this SMAC planner evaluator.
+	 */
 	@Override
 	protected void subtypeShutdown() {
-		// TODO Auto-generated method stub
-
+		this.executor.shutdown();
 	}
 	
 	/**
 	 * Evaluates run configurations.
 	 * 
-	 * @see AbstractSyncTargetAlgorithmEvaluator#evaluateRun(List, TargetAlgorithmEvaluatorRunObserver)
+	 * @see AbstractTargetAlgorithmEvaluator#evaluateRun(List, TargetAlgorithmEvaluatorRunObserver)
 	 */
 	@Override
 	public List<AlgorithmRunResult> evaluateRun(List<AlgorithmRunConfiguration> runConfigs,
@@ -139,7 +166,14 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 					TrajectoryStylist.styleTrajectory(trajectory);
 					managedScenario.setTrajectory(trajectory);
 					// TODO: first or specified revision could terminate
-					// TODO: report intermediate performance
+					if (null != runStatusObserver) {
+						//TODO: runStatusObserver.currentStatus(results);
+						if (runStatusObserver instanceof SmacPlannerEvaluatorObserver) {
+							// TODO: report intermediate performance?
+							((SmacPlannerEvaluatorObserver) runStatusObserver)
+								.currentPerformance(managedPlanner.getPerformance());
+						}
+					}
 				}
 			});
 			
@@ -173,8 +207,8 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 					managedPlanner.getPerformance().getQuantity().get(), // runtime
 					managedPlanner.getRevisions().size(), // number of quality improvements
 					SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().get()), // quality of solution
-					1l); // problem instance seed (automatically generated instead)
-			// TODO: additional run-data: trajectory.toString()
+					1l, // problem instance seed (automatically generated instead)
+					managedScenario.getTrajectory().toString()); // additional run-data
 			results.add(earr);
 			//runStatusObserver.currentStatus(results);
 		}
