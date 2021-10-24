@@ -29,10 +29,12 @@
  */
 package com.cfar.swim.worldwind.managing;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.OptionalDouble;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * Realizes a performance reputation of tunings.
@@ -234,14 +236,39 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	 */
 	@Override
 	public String toString() {
-		String reputation = "";
+		String reputation = Reputation.PERFORMANCE_CONTEXT.toString() + "\n\n";
 		
 		for (Tuning<?> tuning : this.keySet()) {
-			reputation = reputation.concat(tuning.toString() + ": ");
-			for (Performance performance : this.get(tuning)) {
-				reputation = reputation.concat(performance.toString() + " ");
+			reputation = reputation.concat(tuning.toString() + ":\n");
+			TreeSet<Performance> performances = new TreeSet<Performance>(
+					new Comparator<Performance>() {
+						/**
+						 * Compares two performances according to their epoch
+						 * (primary) and quantity (secondary) keys.
+						 * 
+						 * @param p1 the first performance
+						 * @param p2 the second performance
+						 * 
+						 * @return -1, 0, or 1, if the first performance is earlier,
+						 *         equal, or later than the second performance,
+						 *         respectively
+						 */
+						@Override
+						public int compare(Performance p1, Performance p2) {
+							int result = p1.getEpoch().compareTo(p2.getEpoch());
+							
+							if (0 == result) {
+								result = p1.getQuantity().compareTo(p2.getQuantity());
+							}
+							
+							return result;
+						}
+					});
+			performances.addAll(this.get(tuning));	
+			for (Performance performance : performances) {
+				reputation = reputation.concat(performance.toString() + "\n");
 			}
-			reputation = reputation.trim().concat("\n");
+			reputation = reputation.trim().concat("\n\n");
 		}
 		
 		return reputation;

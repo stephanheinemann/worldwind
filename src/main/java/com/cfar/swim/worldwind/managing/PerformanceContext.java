@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.managing;
 
 import java.io.Serializable;
 import java.util.Objects;
+import java.util.ResourceBundle;
+
+import com.cfar.swim.worldwind.util.ResourceBundleLoader;
 
 import oshi.SystemInfo;
 
@@ -44,7 +47,31 @@ public class PerformanceContext implements Serializable {
 
 	/** the default serial identification of this performance context */
 	private static final long serialVersionUID = 1L;
-
+	
+	/** the dictionary of this performance context */
+	protected transient final ResourceBundle dictionary = ResourceBundleLoader.getDictionaryBundle();
+	
+	/** the processor name property name of this performance context */
+	public static final String HW_PROCESSOR_NAME = "performance.hardware.processor.name";
+	
+	/** the physical processor count property name of this performance context */
+	public static final String HW_PROCESSOR_PHYSICAL_COUNT = "performance.hardware.processor.physical.count";
+	
+	/** the logical processor count property name of this performance context */
+	public static final String HW_PROCESSOR_LOGICAL_COUNT = "performance.hardware.processor.logical.count";
+	
+	/** the maximum processor frequency property name of this performance context */
+	public static final String HW_PROCESSOR_FREQUENCY_MAX = "performance.hardware.processor.frequency.max";
+	
+	/** the total memory property name of this performance context */
+	public static final String HW_MEMORY_TOTAL = "performance.hardware.memory.total";
+	
+	/** the operating system platform property name of this performance context */
+	public static final String OS_PLATFORM = "performance.operatingSystem.platform";
+	
+	/** the operating system manufacturer property name of this performance context */
+	public static final String OS_MANUFACTURER = "performance.operatingSystem.manufacturer";
+	
 	/** the system information interface of this performance context */
 	private static final SystemInfo systemInfo = new SystemInfo();
 	
@@ -216,13 +243,20 @@ public class PerformanceContext implements Serializable {
 	 */
 	@Override
 	public String toString() {
-		return "processor name  = " + this.getProcessorName() + "\n"
-				+ "physical processor count = " + this.getPhysicalProcessorCount() + "\n"
-				+ "logical processor count = " + this.getLogicalProcessorCount() + "\n"
-				+ "maximum logical processor frequency [Hz] = " + this.getMaxFrequency() + "\n"
-				+ "total physical memory [bytes] = " + this.getTotalMemory() + "\n"
-				+ "operating system platform = " + this.getOsPlatform() + "\n"
-				+ "operating system manufacturer = " + this.getOsManufacturer();
+		return this.dictionary.getString(PerformanceContext.HW_PROCESSOR_NAME)
+				+ " = " + this.getProcessorName() + "\n"
+				+ this.dictionary.getString(PerformanceContext.HW_PROCESSOR_PHYSICAL_COUNT)
+				+ " = " + this.getPhysicalProcessorCount() + "\n"
+				+ this.dictionary.getString(PerformanceContext.HW_PROCESSOR_LOGICAL_COUNT)
+				+ " = " + this.getLogicalProcessorCount() + "\n"
+				+ this.dictionary.getString(PerformanceContext.HW_PROCESSOR_FREQUENCY_MAX)
+				+ " = " + this.getMaxFrequency() + "\n"
+				+ this.dictionary.getString(PerformanceContext.HW_MEMORY_TOTAL)
+				+ " = " + this.getTotalMemory() + "\n"
+				+ this.dictionary.getString(PerformanceContext.OS_PLATFORM)
+				+ " = " + this.getOsPlatform() + "\n"
+				+ this.dictionary.getString(PerformanceContext.OS_MANUFACTURER)
+				+ " = " + this.getOsManufacturer();
 	}
 	
 }

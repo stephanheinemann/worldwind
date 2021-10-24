@@ -75,7 +75,10 @@ public class PlannerPerformance extends AbstractPerformance {
 	 */
 	@Override
 	public String toString() {
-		return String.valueOf(this.get());
+		return  this.getEpoch().toString() + ":"
+				+ String.valueOf(this.getQuality().get()) + " / "
+				+ String.valueOf(this.getQuantity().get()) + " = "
+				+ String.valueOf(this.get());
 	}
 	
 }
