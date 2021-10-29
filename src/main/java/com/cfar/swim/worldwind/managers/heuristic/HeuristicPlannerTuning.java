@@ -143,7 +143,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			properties.setEpsilon(features.get(Features.FEATURE_POIS_DISTANCE_MAX));
 			// extension strategy and technique
 			properties.setStrategy(Strategy.CONNECT);
-			properties.setExtension(Extension.LINEAR); // TODO: feasible
+			properties.setExtension(Extension.FEASIBLE); // TODO: LINEAR
 			// goal threshold
 			properties.setGoalThreshold(0d);
 			// maximum iterations
@@ -157,6 +157,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			properties.setSignificantChange(0.1d);
 		} else {
 			// sampling
+			// TODO: review Gaussian sampling condition (environment center point)
 			if (0.25d > features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
 				if ((0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
 						|| (0.25d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
@@ -165,7 +166,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 						|| (0.5d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.UNIFORM);
 				} else {
-					properties.setSampling(Sampling.GAUSSIAN);
+					properties.setSampling(Sampling.UNIFORM);
 				}
 			} else if (0.5d > features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
 				if ((0.25d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
@@ -175,7 +176,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 						|| (0.5d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.UNIFORM);
 				} else {
-					properties.setSampling(Sampling.GAUSSIAN);
+					properties.setSampling(Sampling.UNIFORM);
 				}
 			} else {
 				if ((0.25d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
@@ -185,7 +186,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 						|| (0.75d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
 					properties.setSampling(Sampling.UNIFORM);
 				} else {
-					properties.setSampling(Sampling.GAUSSIAN);
+					properties.setSampling(Sampling.UNIFORM);
 				}
 			}
 			
@@ -210,7 +211,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			} else {
 				properties.setStrategy(Strategy.EXTEND);
 			}
-			properties.setExtension(Extension.LINEAR); // TODO: feasible
+			properties.setExtension(Extension.FEASIBLE); // TODO: LINEAR
 			
 			// maximum iterations
 			if (0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {

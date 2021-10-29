@@ -41,6 +41,7 @@ import com.cfar.swim.worldwind.managing.FeatureCategory;
 import com.cfar.swim.worldwind.managing.FeatureTuning;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.KnowledgeBase;
+import com.cfar.swim.worldwind.managing.PerformanceContext;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.managing.Reputation;
 import com.cfar.swim.worldwind.planners.Planner;
@@ -167,7 +168,7 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 					// apply feature category tunings
 					properties.addAll(categoryTunings
 							.stream()
-							.filter(t -> reputation.hasPerformances(t, Reputation.PERFORMANCE_CONTEXT))
+							.filter(t -> reputation.hasPerformances(t, PerformanceContext.CURRENT))
 							.sorted(new Comparator<PlannerTuning>() {
 								/**
 								 * Compares planner tunings in terms of performance according to their
@@ -185,9 +186,9 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 									int result = 0;
 									
 									OptionalDouble p1 = reputation.getMaximumTuningPerformance(
-											t1, Reputation.PERFORMANCE_CONTEXT);
+											t1, PerformanceContext.CURRENT);
 									OptionalDouble p2 = reputation.getMaximumTuningPerformance(
-											t2, Reputation.PERFORMANCE_CONTEXT);
+											t2, PerformanceContext.CURRENT);
 									if (p1.isPresent() || p2.isPresent()) {
 										if (p1.isPresent() && p2.isEmpty()) {
 											result = -1;

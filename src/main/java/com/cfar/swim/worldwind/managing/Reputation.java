@@ -49,9 +49,6 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	/** the default serial identification of this reputation */
 	private static final long serialVersionUID = 1L;
 	
-	/** the current performance context */
-	public static final PerformanceContext PERFORMANCE_CONTEXT = new PerformanceContext();
-	
 	/**
 	 * Adds a tuning performance to this reputation.
 	 * 
@@ -236,7 +233,7 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	 */
 	@Override
 	public String toString() {
-		String reputation = Reputation.PERFORMANCE_CONTEXT.toString() + "\n\n";
+		String reputation = PerformanceContext.CURRENT.toString() + "\n\n";
 		
 		for (Tuning<?> tuning : this.keySet()) {
 			reputation = reputation.concat(tuning.toString() + ":\n");

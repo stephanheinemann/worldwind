@@ -48,6 +48,9 @@ public class PerformanceContext implements Serializable {
 	/** the default serial identification of this performance context */
 	private static final long serialVersionUID = 1L;
 	
+	/** the current performance context */
+	public static final PerformanceContext CURRENT = new PerformanceContext();
+	
 	/** the dictionary of this performance context */
 	protected transient final ResourceBundle dictionary = ResourceBundleLoader.getDictionaryBundle();
 	
