@@ -48,6 +48,9 @@ public class PerformanceContext implements Serializable {
 	/** the default serial identification of this performance context */
 	private static final long serialVersionUID = 1L;
 	
+	/** the system information interface of this performance context */
+	private static final SystemInfo systemInfo = new SystemInfo();
+	
 	/** the current performance context */
 	public static final PerformanceContext CURRENT = new PerformanceContext();
 	
@@ -74,9 +77,6 @@ public class PerformanceContext implements Serializable {
 	
 	/** the operating system manufacturer property name of this performance context */
 	public static final String OS_MANUFACTURER = "performance.operatingSystem.manufacturer";
-	
-	/** the system information interface of this performance context */
-	private static final SystemInfo systemInfo = new SystemInfo();
 	
 	/** the processor name of this performance context */
 	private final String processorName;
