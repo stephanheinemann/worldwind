@@ -178,16 +178,23 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * Initializes this scenario.
 	 */
 	public synchronized void init() {
-		// TODO: improve initial scenario
 		this.time = ZonedDateTime.now(ZoneId.of("UTC"));
 		this.timeController = new TimeController(0);
 		this.threshold = 0d;
 		this.globe = new Earth();
-		this.sector = new Sector(Angle.ZERO, Angle.POS90, Angle.ZERO, Angle.POS90);
-		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1d, this.sector, 0d, 500000d);
+		// --------------------- Greater Victoria Area ------------------------
+		this.sector = new Sector(
+				Angle.fromDegrees(48.3d), Angle.fromDegrees(48.8d),
+				Angle.fromDegrees(-124d), Angle.fromDegrees(-123d));
+		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(
+				this.globe, 1d, this.sector, 0d, 10000d);
 		Box envBox = new Box(sectorBox);
-		Cube planningCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), envBox.getRLength() / 10);
-		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
+		double side = sectorBox.getRLength() / 40d;
+		Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
+        int sCells = (int) Math.ceil(envBox.getSLength() / side);
+        int tCells = (int) Math.ceil(envBox.getTLength() / side);
+		this.environment = new PlanningGrid(envCube, 40, sCells, tCells);
+		// --------------------------------------------------------------------
 		this.environment.setThreshold(0d);
 		this.environment.setGlobe(this.globe);
 		((PlanningGrid) this.environment).addStructuralChangeListener(this);
