@@ -35,7 +35,7 @@ package com.cfar.swim.worldwind.data;
  * @author Stephan Heinemann
  * 
  */
-public enum SwimData {
+public enum SwimProtocol {
 	AIXM,
 	FIXM,
 	WXXM,

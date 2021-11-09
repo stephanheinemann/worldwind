@@ -53,7 +53,7 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	public static final String SWIM_RESOURCE_DIRECTORY = "swim/xml";
 	
 	/** the default update period of this simulated SWIM connection properties bean */
-	public static final int SWIM_UPDATE_PERIOD = 5000;
+	public static final long SWIM_UPDATE_PERIOD = 5000l;
 	
 	/** the default update probability of this simulated SWIM connection properties bean */
 	public static final float SWIM_UPDATE_PROBABILITY = 0.5f;

@@ -90,11 +90,31 @@ public class ObstacleBox extends Box implements Obstacle {
 	 * TODO: consider airspace Layer class
 	 */
 	
+	/**
+	 * Constructs a new obstacle box from a box.
+	 * 
+	 * @param box the box
+	 */
+	public ObstacleBox(Box box) {
+		super(box);
+	}
+	
+	/**
+	 * Constructs a new obstacle box from a track line specified by two
+	 * locations, a right and left width as well as a bottom and top altitude.
+	 * 
+	 * @param begin the begin location
+	 * @param end the end location
+	 * @param leftWidth the left width from the track line
+	 * @param rightWidth the right width from the tack line
+	 * @param bottom the bottom altitude
+	 * @param top the top altitude
+	 */
 	public ObstacleBox(
-			LatLon location1, LatLon location2,
+			LatLon begin, LatLon end,
 			double leftWidth, double rightWidth,
 			double bottom, double top) {
-		super(location1, location2, leftWidth, rightWidth);
+		super(begin, end, leftWidth, rightWidth);
 		this.setAltitudes(bottom, top);
 		this.getAttributes().setInteriorOpacity(0.25);
 		this.getAttributes().setDrawInterior(true);

@@ -39,6 +39,7 @@ import java.nio.file.Files;
 import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.Executors;
@@ -50,7 +51,7 @@ import javax.xml.bind.JAXBException;
 
 import org.xml.sax.InputSource;
 
-import com.cfar.swim.worldwind.data.SwimData;
+import com.cfar.swim.worldwind.data.SwimProtocol;
 import com.cfar.swim.worldwind.iwxxm.IwxxmLoader;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -88,7 +89,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 	private FileSystem resourceFileSystem;
 	
 	/** the update period of this simulated SWIM connection */
-	private long updatePeriod;
+	private Duration updatePeriod;
 	
 	/** the update probability of this simulated SWIM connection */
 	private float updateProbability;
@@ -104,7 +105,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 	 */
 	public SimulatedSwimConnection() {
 		this.resourceDirectory = SimulatedSwimConnectionProperties.SWIM_RESOURCE_DIRECTORY;
-		this.updatePeriod = SimulatedSwimConnectionProperties.SWIM_UPDATE_PERIOD;
+		this.updatePeriod = Duration.ofMillis(SimulatedSwimConnectionProperties.SWIM_UPDATE_PERIOD);
 		this.updateProbability = SimulatedSwimConnectionProperties.SWIM_UPDATE_PROBABILITY;
 		this.updateQuantity = SimulatedSwimConnectionProperties.SWIM_UPDATE_QUANTITY;
 		this.executor = null;
@@ -121,7 +122,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 	 */
 	public SimulatedSwimConnection(
 			String resourceDirectory,
-			long updatePeriod,
+			Duration updatePeriod,
 			float updateProbability,
 			int updateQuantity) {
 		
@@ -129,6 +130,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 		this.updatePeriod = updatePeriod;
 		this.updateProbability = updateProbability;
 		this.updateQuantity = updateQuantity;
+		this.executor = null;
 	}
 	
 	/**
@@ -141,6 +143,42 @@ public class SimulatedSwimConnection extends SwimConnection {
 	@Override
 	public String getId() {
 		return Specification.CONNECTION_SWIM_SIMULATED_ID;
+	}
+	
+	/**
+	 * Gets the resource directory of this simulated SWIM connection.
+	 * 
+	 * @return the resource directory of this simulated SWIM connection
+	 */
+	public String getResourceDirectory() {
+		return this.resourceDirectory;
+	}
+	
+	/**
+	 * Gets the update period of this simulated SWIM connection.
+	 * 
+	 * @return the update period of this simulated SWIM connection
+	 */
+	public Duration getUpdatePeriod() {
+		return this.updatePeriod;
+	}
+	
+	/**
+	 * Gets the update probability of this simulated SWIM connection.
+	 * 
+	 * @return the update probability of this simulated SWIM connection
+	 */
+	public float getUpdateProbability() {
+		return this.updateProbability;
+	}
+	
+	/**
+	 * Gets the update quantity of this simulated SWIM connection.
+	 * 
+	 * @return the update quantity of this simulated SWIM connection
+	 */
+	public int getUpdateQuantity() {
+		return this.updateQuantity;
 	}
 	
 	/**
@@ -177,7 +215,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 					this.executor = Executors.newSingleThreadScheduledExecutor();
 					this.executor.scheduleAtFixedRate(
 							new SimulatedSwimLoader(swimDirectory),
-							0, this.updatePeriod, TimeUnit.MILLISECONDS);
+							0, this.updatePeriod.toMillis(), TimeUnit.MILLISECONDS);
 				}
 			}
 		}
@@ -191,7 +229,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 		if (this.isConnected()) {
 			this.executor.shutdown();
 			try {
-				this.executor.awaitTermination(this.updatePeriod, TimeUnit.MILLISECONDS);
+				this.executor.awaitTermination(this.updatePeriod.toMillis(), TimeUnit.MILLISECONDS);
 			} catch (InterruptedException ie) {
 				ie.printStackTrace();
 			}
@@ -236,7 +274,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 			SimulatedSwimConnectionProperties properties =
 					(SimulatedSwimConnectionProperties) specification.getProperties();
 			matches = (this.resourceDirectory.equals(properties.getResourceDirectory())
-					&& (this.updatePeriod == properties.getUpdatePeriod())
+					&& (this.updatePeriod.equals(Duration.ofMillis(properties.getUpdatePeriod())))
 					&& (this.updateProbability == properties.getUpdateProbability())
 					&& (this.updateQuantity == properties.getUpdateQuantity()));
 		}
@@ -262,7 +300,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 			SimulatedSwimConnectionProperties properties =
 					(SimulatedSwimConnectionProperties) specification.getProperties();
 			this.resourceDirectory = properties.getResourceDirectory();
-			this.updatePeriod = properties.getUpdatePeriod();
+			this.updatePeriod = Duration.ofMillis(properties.getUpdatePeriod());
 			this.updateProbability = properties.getUpdateProbability();
 			this.updateQuantity = properties.getUpdateQuantity();
 		}
@@ -295,7 +333,7 @@ public class SimulatedSwimConnection extends SwimConnection {
 		 */
 		@Override
 		public void run() {
-			if (hasSubscribed(SwimData.IWXXM)) {
+			if (hasSubscribed(SwimProtocol.IWXXM)) {
 				Path iwxxmDirectory = swimDirectory.resolve(SimulatedSwimConnection.IWXXM_DIRECTORY);
 				try {
 					IwxxmLoader loader = new IwxxmLoader();

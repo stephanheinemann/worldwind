@@ -80,7 +80,7 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public class Scenario implements Identifiable, Enableable, StructuralChangeListener, ObstacleManager {
 	
-	// TODO: consider save / load scenario (persisting scenarios for reproducible tests)
+	// TODO: default scenario id from dictionary
 	
 	/** the default scenario identifier */
 	public static final String DEFAULT_SCENARIO_ID = "Default Scenario";
@@ -127,7 +127,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
 	
-	// TODO: alternates (A1, .., An)
+	// TODO: origin, destination, intermediates, alternates
 	
 	/** the planned trajectory of this scenario */
 	private Trajectory trajectory;
@@ -242,7 +242,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario is enabled.
+	 * Determines whether or not this scenario is enabled.
 	 * 
 	 * @return true if this scenario is enabled, false otherwise
 	 * 
@@ -526,7 +526,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario is tracking the real time.
+	 * Determines whether or not this scenario is tracking the real time.
 	 * 
 	 * @return true if this scenario is tracking the real time, false otherwise
 	 */
@@ -535,7 +535,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario is playing its current time.
+	 * Determines whether or not this scenario is playing its current time.
 	 * 
 	 * @return true if this scenario is playing its current time, false otherwise
 	 */
@@ -544,7 +544,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario is being timed.
+	 * Determines whether or not this scenario is being timed.
 	 *  
 	 * @return true if this scenario is being timed, false otherwise
 	 */
@@ -667,7 +667,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario has an aircraft.
+	 * Determines whether or not this scenario has an aircraft.
 	 * 
 	 * @return true if this scenario has an aircraft, false otherwise
 	 */
@@ -811,6 +811,23 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
+	 * Adds waypoints to this scenario and sequences their identifiers.
+	 * 
+	 * @param waypoints the waypoints to be added
+	 * 
+	 * @throws IllegalArgumentException if waypoints is null
+	 */
+	public synchronized void addWaypoints(List<Waypoint> waypoints) {
+		if (null != waypoints) {
+			for (Waypoint waypoint : waypoints) {
+				this.addWaypoint(waypoint);
+			}
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	/**
 	 * Adds a waypoint to this scenario and sequences its identifier.
 	 * 
 	 * @param waypoint the waypoint to be added
@@ -915,7 +932,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario has waypoints.
+	 * Determines whether or not this scenario has waypoints.
 	 * 
 	 * @return true if this scenario has waypoints, false otherwise
 	 */
@@ -1019,7 +1036,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 			throw new IllegalArgumentException();
 		}
 	}
-
+	
 	/**
 	 * Gets the planned trajectory of this scenario.
 	 * 
@@ -1057,7 +1074,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario has a computed trajectory.
+	 * Determines whether or not this scenario has a computed trajectory.
 	 * 
 	 * @return true if this scenario has a computed trajectory, false otherwise
 	 */
@@ -1133,6 +1150,15 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		}
 		
 		return leg;
+	}
+	
+	/**
+	 * Determines whether or not this scenario has obstacles.
+	 * 
+	 * @return true if this scenario has obstacles, false otherwise
+	 */
+	public synchronized boolean hasObstacles() {
+		return !this.obstacles.isEmpty();
 	}
 	
 	/**
