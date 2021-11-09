@@ -492,6 +492,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 					.collect(Collectors.toList());
 			
 			if ((null != managedPlanner)
+					&& !scenario.getId().equals(Scenario.DEFAULT_SCENARIO_ID)
 					&& managedPlanner.supports(scenario.getAircraft())
 					&& managedPlanner.supports(scenario.getEnvironment())
 					&& managedPlanner.supports(pois)
