@@ -340,14 +340,14 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		Position center = Position.interpolateGreatCircle(0.5d, this.getReferencePosition(), other.getReferencePosition());
 		LatLon location = new LatLon(center.getLatitude(), center.getLongitude());
 		
-		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5;
-		double top = (this.getAltitudes()[1] + other.getAltitudes()[1]) * 0.5;
-		double radius = (this.getRadii()[1] + other.getRadii()[1]) * 0.5;
+		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5d;
+		double top = (this.getAltitudes()[1] + other.getAltitudes()[1]) * 0.5d;
+		double radius = (this.getRadii()[1] + other.getRadii()[1]) * 0.5d;
 		
 		ObstacleCylinder interpolant = new ObstacleCylinder(location, bottom, top, radius);
 		
 		Duration startDuration = Duration.between(this.costInterval.getLower(), other.costInterval.getLower());
-		startDuration = startDuration.dividedBy(2);
+		startDuration = startDuration.dividedBy(2l);
 		ZonedDateTime start = this.costInterval.getLower().plus(startDuration);
 		
 		// ZonedDateTime end = this.costInterval.getUpper();
@@ -356,7 +356,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		
 		/*
 		Duration endDuration = Duration.between(this.costInterval.getUpper(), other.costInterval.getUpper());
-		endDuration = endDuration.dividedBy(2);
+		endDuration = endDuration.dividedBy(2l);
 		ZonedDateTime end = this.costInterval.getUpper().plus(endDuration);
 		*/
 		

@@ -29,8 +29,11 @@
  */
 package com.cfar.swim.worldwind.render.airspaces;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
@@ -346,6 +349,75 @@ public class ObstacleBox extends Box implements Obstacle {
 		if (null != this.depiction) {
 			this.depiction.render(dc);
 		}
+	}
+	
+	/**
+	 * Interpolates the midpoint obstacle box between this and another
+	 * obstacle box. The interpolation considers the spatial and temporal
+	 * attributes and modifies this obstacle box accordingly.
+	 * 
+	 * @param other the other obstacle box
+	 * @return the interpolated midpoint obstacle box between this and
+	 *         the other obstacle box
+	 */
+	public ObstacleBox interpolate(ObstacleBox other) {
+		LatLon beginLocation = (LatLon) Position.interpolateGreatCircle(0.5d, this.getLocations()[0], other.getLocations()[0]);
+		LatLon endLocation = (LatLon) Position.interpolateGreatCircle(0.5d, this.getLocations()[1], other.getLocations()[1]);
+		
+		double leftWidth = (this.getWidths()[0] + other.getWidths()[0]) * 0.5d;
+		double rightWdith = (this.getWidths()[1] + other.getWidths()[1]) * 0.5d;
+		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5d;
+		double top = (this.getAltitudes()[1] + other.getAltitudes()[1]) * 0.5d;
+		
+		ObstacleBox interpolant = new ObstacleBox(beginLocation, endLocation, leftWidth, rightWdith, bottom, top);
+		
+		Duration startDuration = Duration.between(this.costInterval.getLower(), other.costInterval.getLower());
+		startDuration = startDuration.dividedBy(2l);
+		ZonedDateTime start = this.costInterval.getLower().plus(startDuration);
+		
+		// ZonedDateTime end = this.costInterval.getUpper();
+		this.costInterval.setUpper(start);
+		ZonedDateTime end = other.costInterval.getLower();
+		
+		/*
+		Duration endDuration = Duration.between(this.costInterval.getUpper(), other.costInterval.getUpper());
+		endDuration = endDuration.dividedBy(2l);
+		ZonedDateTime end = this.costInterval.getUpper().plus(endDuration);
+		*/
+		
+		// TODO: rounding or conservative ceiling might be more appropriate
+		double cost = (this.costInterval.getCost() + other.costInterval.getCost()) / 2d;
+		
+		CostInterval costInterval = new CostInterval(this.costInterval.getId(), start, end, cost);
+		interpolant.setCostInterval(costInterval);
+		
+		return interpolant;
+	}
+	
+	/**
+	 * Interpolates the midpoint obstacle boxes between this and another
+	 * obstacle box. The interpolation considers the spatial and temporal
+	 * attributes and modifies this obstacle box accordingly. It is
+	 * performed recursively for the specified number of steps.
+	 * 
+	 * @param other the other obstacle box
+	 * @param steps the number of interpolation steps
+	 * @return the midpoint obstacle boxes between this and the other
+	 *         obstacle box
+	 */
+	public List<ObstacleBox> interpolate(ObstacleBox other, int steps) {
+		List<ObstacleBox> interpolants = new ArrayList<>();
+		
+		if (1 == steps) {
+			interpolants.add(this.interpolate(other));
+		} else if (1 < steps) {
+			ObstacleBox interpolant = this.interpolate(other);
+			interpolants.addAll(this.interpolate(interpolant, steps - 1));
+			interpolants.add(interpolant);
+			interpolants.addAll(interpolant.interpolate(other, steps - 1));
+		}
+		
+		return interpolants;
 	}
 	
 	/**
