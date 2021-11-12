@@ -91,7 +91,7 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 */
 	public ObstacleSphere(Position center, double radius) {
 		super(LatLon.fromDegrees(center.getLatitude().degrees, center.getLongitude().degrees), radius);
-		this.setAltitudes(center.getAltitude() - radius, center.getAltitude() + radius);
+		this.setAltitudes(center.getAltitude(), center.getAltitude() + radius);
 		this.getAttributes().setInteriorOpacity(0.25);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
@@ -334,7 +334,7 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 *         the other obstacle sphere
 	 */
 	public ObstacleSphere interpolate(ObstacleSphere other) {
-		Position center = Position.interpolateGreatCircle(0.5d, this.getReferencePosition(), other.getReferencePosition());
+		Position center = Position.interpolateGreatCircle(0.5d, this.getCenter(), other.getCenter());
 		double radius = (this.getRadius() + other.getRadius()) * 0.5d;
 		ObstacleSphere interpolant = new ObstacleSphere(center, radius);
 		
@@ -385,6 +385,17 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 		}
 		
 		return interpolants;
+	}
+	
+	/**
+	 * Gets the center of this obstacle sphere.
+	 * 
+	 * @return the center of this obstacle sphere
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		return this.getReferencePosition();
 	}
 	
 	/**

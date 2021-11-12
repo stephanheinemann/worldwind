@@ -361,6 +361,11 @@
 		</dependency>
 		<dependency>
 			<groupId>com.uvic-cfar.swim</groupId>
+			<artifactId>fixm-jaxb</artifactId>
+			<version>4.2.0-alpha1</version>
+		</dependency>
+		<dependency>
+			<groupId>com.uvic-cfar.swim</groupId>
 			<artifactId>droneconnect</artifactId>
 			<version>1.0.0-alpha3</version>
 		</dependency>

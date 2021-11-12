@@ -176,7 +176,7 @@ public class OmData {
 		for (Airspace airspace : airspaces) {
 			LatLon location = airspace.getGroundReference();
 			if (airspace instanceof CappedCylinder) {
-				location = ((CappedCylinder) airspace).getReferencePosition();
+				location = ((CappedCylinder) airspace).getCenter();
 			}
 			double bottom = airspace.getAltitudes()[0];
 			double top = airspace.getAltitudes()[1];

@@ -41,18 +41,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import javax.xml.bind.JAXBException;
-
-import org.xml.sax.InputSource;
-
+import com.cfar.swim.worldwind.data.SwimLoader;
 import com.cfar.swim.worldwind.data.SwimProtocol;
-import com.cfar.swim.worldwind.iwxxm.IwxxmLoader;
+import com.cfar.swim.worldwind.data.SwimResource;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionProperties;
@@ -66,21 +65,6 @@ import com.cfar.swim.worldwind.util.Identifiable;
  *
  */
 public class SimulatedSwimConnection extends SwimConnection {
-	
-	/** the AIXM directory name */
-	public static final String AIXM_DIRECTORY = "aixm";
-	
-	/** the AMXM directory name */
-	public static final String AMXM_DIRECTORY = "amxm";
-	
-	/** the FIXM directory name */
-	public static final String FIXM_DIRECTORY = "fixm";
-	
-	/** the IWXXM directory name */
-	public static final String IWXXM_DIRECTORY = "iwxxm";
-	
-	/** the WXXM directory name */
-	public static final String WXXM_DIRECTORY = "wxxm";
 	
 	/** the resource directory of this simulated SWIM connection */
 	private String resourceDirectory; 
@@ -314,7 +298,10 @@ public class SimulatedSwimConnection extends SwimConnection {
 	 * @author Stephan Heinemann
 	 */
 	private class SimulatedSwimLoader implements Runnable {
-
+		
+		/** the SWIM loader of this simulated SWIM loader */
+		private SwimLoader swimLoader = new SwimLoader();
+		
 		/** the SWIM resource directory of this simulated SWIM loader */
 		private Path swimDirectory;
 		
@@ -333,33 +320,46 @@ public class SimulatedSwimConnection extends SwimConnection {
 		 */
 		@Override
 		public void run() {
-			if (hasSubscribed(SwimProtocol.IWXXM)) {
-				Path iwxxmDirectory = swimDirectory.resolve(SimulatedSwimConnection.IWXXM_DIRECTORY);
-				try {
-					IwxxmLoader loader = new IwxxmLoader();
-					Set<Path> iwxxmFiles = Files.list(iwxxmDirectory).collect(Collectors.toSet());
-					for (Path iwxxmFile : iwxxmFiles) {
-						int updates = 0;
-						if ((0f != updateProbability)
-								&& (Math.random() <= updateProbability)
-								&& (updates < updateQuantity)) {
+			HashMap<SwimProtocol, List<Path>> swimFiles = new HashMap<>();
+			
+			try {
+				if (hasSubscribed(SwimProtocol.IWXXM)) {
+					swimFiles.put(SwimProtocol.IWXXM,
+							Files.list(this.swimDirectory.resolve(SwimProtocol.IWXXM.name().toLowerCase()))
+							.collect(Collectors.toList()));
+				}
+				if (hasSubscribed(SwimProtocol.FIXM)) {
+					swimFiles.put(SwimProtocol.FIXM,
+							Files.list(this.swimDirectory.resolve(SwimProtocol.FIXM.name().toLowerCase()))
+							.collect(Collectors.toList()));
+				}
+				// TODO: check other subscriptions
+			} catch (IOException ioe) {
+				ioe.printStackTrace();
+			}
+			
+			int updates = 0;
+			List<SwimProtocol> protocols = swimFiles.keySet().stream().collect(Collectors.toList());
+			Collections.shuffle(protocols);
+			for (SwimProtocol protocol : protocols) {
+				Collections.shuffle(swimFiles.get(protocol));
+				for (Path swimFile : swimFiles.get(protocol)) {
+					if ((0f != updateProbability)
+							&& (Math.random() <= updateProbability)
+							&& (updates < updateQuantity)) {
+						SwimResource resource = new SwimResource(swimFile.toUri(), protocol);
+						Set<Obstacle>obstacles = this.swimLoader.load(resource);
+						if (!obstacles.isEmpty()) {
 							updates++;
-							Set<Obstacle>obstacles = loader.load(new InputSource(Files.newInputStream(iwxxmFile)));
-							if (null != obstacles) {
-								// TODO: obstacle manager access should be atomic
-								if (hasObstacleManager()) {
-									getObstacleManager().submitAddObstacles(obstacles);
-								}
+							// TODO: obstacle manager access should be atomic
+							if (hasObstacleManager()) {
+								getObstacleManager().submitAddObstacles(obstacles);
 							}
 						}
 					}
-				} catch (IOException | JAXBException e) {
-					e.printStackTrace();
 				}
 			}
-			// TODO: check other subscriptions
 		}
-		
 	}
 	
 }

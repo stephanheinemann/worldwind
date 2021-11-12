@@ -27,30 +27,4 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.weather;
-
-import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
-import com.cfar.swim.worldwind.util.Depiction;
-
-import gov.nasa.worldwind.geom.LatLon;
-import gov.nasa.worldwind.symbology.milstd2525.MilStd2525TacticalSymbol;
-
-public class TropicalCyclone extends ObstacleCylinder {
-
-	public static final String SIDC_WX_TC = "WAS-WSTSS-P----";
-	
-	public TropicalCyclone(LatLon location, double bottom, double top, double radius) {
-		super(location, bottom, top, radius);
-		this.depiction = new Depiction(new MilStd2525TacticalSymbol(TropicalCyclone.SIDC_WX_TC, this.getCenter()));
-	}
-	
-	public TropicalCyclone(ObstacleCylinder obstacleCylinder) {
-		super(
-			obstacleCylinder.getCenter(),
-			obstacleCylinder.getAltitudes()[0],
-			obstacleCylinder.getAltitudes()[1],
-			obstacleCylinder.getRadii()[1]);
-		this.depiction = new Depiction(new MilStd2525TacticalSymbol(TropicalCyclone.SIDC_WX_TC, this.getCenter()));
-	}
-
-}
+package com.cfar.swim.worldwind.data.fixm;

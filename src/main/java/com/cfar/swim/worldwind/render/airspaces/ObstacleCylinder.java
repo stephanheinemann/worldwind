@@ -337,7 +337,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 *         the other obstacle cylinder
 	 */
 	public ObstacleCylinder interpolate(ObstacleCylinder other) {
-		Position center = Position.interpolateGreatCircle(0.5d, this.getReferencePosition(), other.getReferencePosition());
+		Position center = Position.interpolateGreatCircle(0.5d, this.getCenter(), other.getCenter());
 		LatLon location = new LatLon(center.getLatitude(), center.getLongitude());
 		
 		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5d;
@@ -393,6 +393,20 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		}
 		
 		return interpolants;
+	}
+	
+	/**
+	 * Gets the center of this obstacle cylinder.
+	 * 
+	 * @return the center of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		LatLon centerLocation = super.getCenter();
+		double centerAltitude = this.getAltitudes()[0]
+				+ ((this.getAltitudes()[1] - this.getAltitudes()[0]) * 0.5d);
+		return new Position(centerLocation, centerAltitude);
 	}
 	
 	/**

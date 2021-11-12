@@ -421,6 +421,21 @@ public class ObstacleBox extends Box implements Obstacle {
 	}
 	
 	/**
+	 * Gets the center of this obstacle box disregarding its width.
+	 * 
+	 * @return the center of this obstacle box disregarding its width
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		LatLon centerLocation = Position.interpolateGreatCircle(
+				0.5d, this.getLocations()[0], this.getLocations()[1]);
+		double centerAltitude = this.getAltitudes()[0]
+				+ ((this.getAltitudes()[1] - this.getAltitudes()[0]) * 0.5d);
+		return new Position(centerLocation, centerAltitude);
+	}
+	
+	/**
 	 * Gets the geometric extent of this obstacle box for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion

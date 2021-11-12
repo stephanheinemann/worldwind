@@ -359,7 +359,7 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 			if (interpolant.getDepiction().hasAnnotation()) {
 				interpolant.getDepiction().getAnnotation().setText(costInterval.getId());
 			} else {
-				interpolant.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), interpolant.getReferencePosition()));
+				interpolant.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), interpolant.getCenter()));
 			}
 		}
 		
@@ -390,6 +390,17 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 		}
 		
 		return interpolants;
+	}
+	
+	/**
+	 * Gets the center of this obstacle cylinder.
+	 * 
+	 * @return the center of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		return this.centerPosition;
 	}
 	
 	/**

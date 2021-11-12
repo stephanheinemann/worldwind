@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.data;
 
 import java.net.URI;
+import java.util.Optional;
 
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -45,17 +46,41 @@ public class SwimResource implements Identifiable {
 	private final URI resource;
 	
 	/** the protocol of this SWIM resource */
-	private final SwimProtocol protocol;
+	private final Optional<SwimProtocol> protocol;
+	
+	/**
+	 * Constructs a new SWIM resource
+	 * 
+	 * @param resource the resource URI
+	 * 
+	 * @throws IllegalArgumentException if the resource is null
+	 */
+	public SwimResource(URI resource) {
+		if (null == resource) {
+			throw new IllegalArgumentException();
+		}
+		this.resource = resource;
+		this.protocol = Optional.empty();
+	}
 	
 	/**
 	 * Constructs a new SWIM resource.
 	 * 
 	 * @param resource the resource URI
 	 * @param protocol the resource protocol
+	 * 
+	 * @throws IllegalArgumentException if the resource is null
 	 */
 	public SwimResource(URI resource, SwimProtocol protocol) {
+		if (null == resource) {
+			throw new IllegalArgumentException();
+		}
 		this.resource = resource;
-		this.protocol = protocol;
+		if (null == protocol) {
+			this.protocol = Optional.empty();
+		} else {
+			this.protocol = Optional.of(protocol);
+		}
 	}
 	
 	/**
@@ -84,7 +109,7 @@ public class SwimResource implements Identifiable {
 	 * 
 	 * @return the protocol of this SWIM resource
 	 */
-	public SwimProtocol getProtocol() {
+	public Optional<SwimProtocol> getProtocol() {
 		return this.protocol;
 	}
 	

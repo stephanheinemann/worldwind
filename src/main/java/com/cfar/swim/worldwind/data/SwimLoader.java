@@ -27,21 +27,64 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.iwxxm;
+package com.cfar.swim.worldwind.data;
 
-import javax.xml.stream.StreamFilter;
-import javax.xml.stream.XMLStreamReader;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
-public class IwxxmPositionFilter implements StreamFilter {
+import javax.xml.bind.JAXBException;
 
-	@Override
-	public boolean accept(XMLStreamReader reader) {
-		
-		// maybe use a filter to filter out only relevant messages
-		// on the other hand, pre-filtering does not really reduce
-		// the effort...
-		
-		return false;
+import com.cfar.swim.worldwind.data.fixm.FixmLoader;
+import com.cfar.swim.worldwind.data.iwxxm.IwxxmLoader;
+import com.cfar.swim.worldwind.render.Obstacle;
+
+/**
+ * Realizes a SWIM obstacle loader.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
+public class SwimLoader implements ObstacleLoader {
+	
+	/** the supported SWIM loaders of this SWIM loader */
+	private HashMap<SwimProtocol, ObstacleLoader> loaders = new HashMap<>();
+	
+	/**
+	 * Constructs a new SWIM obstacle loader.
+	 */
+	public SwimLoader() {
+		try {
+			loaders.put(SwimProtocol.FIXM, new FixmLoader());
+			loaders.put(SwimProtocol.IWXXM, new IwxxmLoader());
+			// TODO: add more protocols
+		} catch (JAXBException e) {
+			e.printStackTrace();
+		}
 	}
-
+	
+	/**
+	 * Loads SWIM obstacles from a SWIM resource.
+	 * 
+	 * @param resource the SWIM resource
+	 * 
+	 * @return the loaded obstacles
+	 * 
+	 * @see ObstacleLoader#load(SwimResource)
+	 */
+	@Override
+	public Set<Obstacle> load(SwimResource resource) {
+		Set<Obstacle> obstacles = new HashSet<>();
+		
+		if (resource.getProtocol().isPresent()) {
+			obstacles.addAll(this.loaders.get(resource.getProtocol().get()).load(resource));
+		} else {
+			for (ObstacleLoader loader : loaders.values()) {
+				obstacles.addAll(loader.load(resource));
+			}
+		}
+		
+		return obstacles;
+	}
+	
 }

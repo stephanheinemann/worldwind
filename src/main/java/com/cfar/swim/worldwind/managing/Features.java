@@ -312,7 +312,7 @@ public class Features extends HashMap<String, Double> {
 		
 		// aircraft capabilities features
 		this.put(Features.FEATURE_AIRCRAFT_ALTITUDE,
-				aircraft.getReferencePosition().getAltitude());
+				aircraft.getCenter().getAltitude());
 		this.put(Features.FEATURE_AIRCRAFT_SPEED_HORIZONTAL,
 				aircraft.getCapabilities().getCruiseSpeed());
 		this.put(Features.FEATURE_AIRCRAFT_SPEED_VERTICAL_CLIMB,
@@ -339,8 +339,8 @@ public class Features extends HashMap<String, Double> {
 		} else {
 			List<Double> distances = featureObstacles.stream()
 					.map(o -> env.getGreatCircleDistance(
-							o.getReferencePosition(),
-							aircraft.getReferencePosition()))
+							o.getCenter(),
+							aircraft.getCenter()))
 					.collect(Collectors.toList());
 			
 			// aircraft obstacle distance features
@@ -360,11 +360,11 @@ public class Features extends HashMap<String, Double> {
 				public int compare(Obstacle o1, Obstacle o2) {
 					return Double.compare(
 							env.getGreatCircleDistance(
-									o1.getReferencePosition(),
-									aircraft.getReferencePosition()),
+									o1.getCenter(),
+									aircraft.getCenter()),
 							env.getGreatCircleDistance(
-									o2.getReferencePosition(),
-									aircraft.getReferencePosition()));
+									o2.getCenter(),
+									aircraft.getCenter()));
 				}}).get();
 			
 			// aircraft nearest obstacle features
