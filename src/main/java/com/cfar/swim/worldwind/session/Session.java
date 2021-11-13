@@ -47,6 +47,7 @@ import com.cfar.swim.worldwind.registries.Registry;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.aircraft.A320Properties;
 import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
+import com.cfar.swim.worldwind.registries.aircraft.H135Properties;
 import com.cfar.swim.worldwind.registries.aircraft.IrisProperties;
 import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
@@ -198,6 +199,7 @@ public class Session implements Identifiable {
 		this.aircraftRegistry.clearSpecifications();
 		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_IRIS_ID, Specification.AIRCRAFT_IRIS_DESCRIPTION, new IrisProperties()));
 		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_A320_ID, Specification.AIRCRAFT_A320_DESCRIPTION, new A320Properties()));
+		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_H135_ID, Specification.AIRCRAFT_H135_DESCRIPTION, new H135Properties()));
 		
 		// environments
 		this.environmentRegistry.clearSpecifications();

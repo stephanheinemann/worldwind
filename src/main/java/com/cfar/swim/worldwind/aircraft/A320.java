@@ -44,8 +44,6 @@ import gov.nasa.worldwind.symbology.SymbologyConstants;
  *
  */
 public class A320 extends FixedWingCivilAircraft {
-
-	// TODO: use environment AirDataIntervals (otherwise very simplified)
 	
 	/** the maximum angle of climb speed of this A320 in m/s */
 	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 113d; // m/s = 220 KTAS

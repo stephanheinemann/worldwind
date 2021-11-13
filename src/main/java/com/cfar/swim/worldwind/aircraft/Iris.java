@@ -44,8 +44,6 @@ import gov.nasa.worldwind.symbology.SymbologyConstants;
  *
  */
 public class Iris extends Quadcopter {
-
-	// TODO: use environment AirDataIntervals
 	
 	/** the maximum angle of climb speed of this Iris in m/s */
 	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 10d;

@@ -43,6 +43,8 @@ import org.xml.sax.InputSource;
 import com.cfar.swim.fixm.bind.FixmUnmarshaller;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
+import com.cfar.swim.worldwind.aircraft.H135;
+import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.data.Conversions;
 import com.cfar.swim.worldwind.data.ObstacleLoader;
 import com.cfar.swim.worldwind.data.SwimProtocol;
@@ -161,6 +163,7 @@ public class FixmLoader implements ObstacleLoader {
 				
 				double distance = Position.ellipsoidalDistance(current, next, Earth.WGS84_EQUATORIAL_RADIUS, Earth.WGS84_POLAR_RADIUS);
 				int steps = (int) Math.round((Math.log(distance / aircraft.getRadius()) / Math.log(2d)));
+				steps = Math.max(steps, 1);
 				
 				// current aircraft obstacle sphere (to be modified by interpolation)
 				obstacles.add(aircraft);
@@ -223,7 +226,13 @@ public class FixmLoader implements ObstacleLoader {
 							if (null != aircraftType.getType().getValue().getIcaoAircraftTypeDesignator()) {
 								String designator = aircraftType.getType().getValue().getIcaoAircraftTypeDesignator();
 								if (Specification.AIRCRAFT_A320_ID.equals(designator)) {
-									aircraft = new A320(Position.ZERO, A320.SEPARATION_RADIUS, CombatIdentification.FRIEND);
+									aircraft = new A320(Position.ZERO, A320.SEPARATION_RADIUS, CombatIdentification.NEUTRAL);
+								}
+								if (Specification.AIRCRAFT_H135_ID.equals(designator)) {
+									aircraft = new H135(Position.ZERO, H135.SEPARATION_RADIUS, CombatIdentification.NEUTRAL);
+								}
+								if (Specification.AIRCRAFT_IRIS_ID.equals(designator)) {
+									aircraft = new Iris(Position.ZERO, Iris.SEPARATION_RADIUS, CombatIdentification.NEUTRAL);
 								}
 							}
 						}
