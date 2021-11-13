@@ -162,6 +162,7 @@ public class FixmLoader implements ObstacleLoader {
 				nextAircraft.setCostInterval(new CostInterval(flightId, next.getEto(), next.getEto(), 100d));
 				
 				double distance = Position.ellipsoidalDistance(current, next, Earth.WGS84_EQUATORIAL_RADIUS, Earth.WGS84_POLAR_RADIUS);
+				// TODO: potential memory issue for long distances or small radii
 				int steps = (int) Math.round((Math.log(distance / aircraft.getRadius()) / Math.log(2d)));
 				steps = Math.max(steps, 1);
 				

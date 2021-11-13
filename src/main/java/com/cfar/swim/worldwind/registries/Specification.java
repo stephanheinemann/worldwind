@@ -71,7 +71,7 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getString("specification.aircraft.h135.description");
 	
 	/** the identifier of an Iris aircraft specification */
-	public static final String AIRCRAFT_IRIS_ID = "Iris";
+	public static final String AIRCRAFT_IRIS_ID = "IRIS";
 	
 	/** the description of an Iris aircraft specification */
 	public static final String AIRCRAFT_IRIS_DESCRIPTION = ResourceBundleLoader
