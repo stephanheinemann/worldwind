@@ -334,6 +334,9 @@ public class Collisions {
 	 * @return true if the two geometric boxes collide, false otherwise
 	 */
 	public static boolean collide(Box box1, Box box2) {
+		// TODO: solve collision bugs (transformation?)
+		return box1.intersects(new com.cfar.swim.worldwind.geom.Box(box2).getFrustum());
+		/*
 		GjkEpaSolver.Results results = new GjkEpaSolver.Results();
 		
 		BoxShape boxShape1 = Collisions.createBoxShape(box1);
@@ -346,6 +349,7 @@ public class Collisions {
 		return Collisions.SOLVER.collide(
 				boxShape1, boxTransform1, boxShape2, boxTransform2,
 				(float) Precision.EPSILON, results);
+		*/
 	}
 	
 	/**

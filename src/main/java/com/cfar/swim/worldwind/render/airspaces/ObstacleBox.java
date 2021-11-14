@@ -46,9 +46,12 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.avlist.AVKey;
+import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
@@ -445,8 +448,30 @@ public class ObstacleBox extends Box implements Obstacle {
 	 * @see AbstractAirspace#getExtent(Globe, double)
 	 */
 	@Override
-	public Extent getExtent(Globe globe) {
-		return super.getExtent(globe, 1d);
+	public com.cfar.swim.worldwind.geom.Box getExtent(Globe globe) {
+		Angle b2e = Position.greatCircleAzimuth(this.getLocations()[0], this.getLocations()[1]);
+		Angle e2b = Position.greatCircleAzimuth(this.getLocations()[1], this.getLocations()[0]);
+		Angle lwa = Angle.fromRadians(this.getWidths()[0] / globe.getRadiusAt(this.getCenter()));
+		Angle rwa = Angle.fromRadians(this.getWidths()[1] / globe.getRadiusAt(this.getCenter()));
+		LatLon lb = Position.greatCircleEndPosition(this.getLocations()[0], Angle.POS90.add(b2e).normalize(), lwa);
+		LatLon re = Position.greatCircleEndPosition(this.getLocations()[1], Angle.POS90.add(e2b).normalize(), rwa);
+		Sector bs = Sector.boundingSector(lb, re);
+		double la = this.getAltitudes()[0];
+		double ua = this.getAltitudes()[1];
+		
+		// TODO: consider high resolution terrain for sector minimum and maximum elevations
+		double lbe = globe.getElevation(lb.getLatitude(), lb.getLongitude());
+		double ree = globe.getElevation(re.getLatitude(), re.getLongitude());
+		
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[0])) {
+			la += Math.min(lbe, ree);
+		}
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[1])) {
+			ua += Math.max(lbe, ree);
+		}
+		
+		return new com.cfar.swim.worldwind.geom.Box(Sector.computeBoundingBox(globe, 1d, bs, la, ua));
+		// TODO: return super.getExtent(globe, 1d);
 	}
 	
 	/**

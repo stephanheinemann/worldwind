@@ -46,6 +46,7 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
@@ -422,9 +423,20 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	public Extent getExtent(Globe globe) {
 		Position bcp = new Position(this.getCenter(), this.getAltitudes()[0]);
 		Position tcp = new Position(this.getCenter(), this.getAltitudes()[1]);
+		
+		double bce = globe.getElevation(bcp.getLatitude(), bcp.getLongitude());
+		double tce = globe.getElevation(tcp.getLatitude(), tcp.getLongitude());
+		
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[0])) {
+			bcp = new Position(bcp, bcp.getAltitude() + bce);
+		}
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[1])) {
+			tcp = new Position(tcp, tcp.getAltitude() + tce);
+		}
+		
 		Vec4 bottomCenter = globe.computePointFromPosition(bcp);
 		Vec4 topCenter = globe.computePointFromPosition(tcp);
-		double radius = this.getRadii()[1];
+		double radius = Math.max(this.getRadii()[0], this.getRadii()[1]);
 		
 		return new Cylinder(bottomCenter, topCenter, radius);
 		// TODO: return super.computeExtent(globe, 1d);

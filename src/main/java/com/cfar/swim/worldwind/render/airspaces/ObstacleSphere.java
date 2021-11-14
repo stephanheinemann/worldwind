@@ -46,6 +46,7 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sphere;
@@ -409,8 +410,15 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 */
 	@Override
 	public Sphere getExtent(Globe globe) {
-		Vec4 centerPoint = globe.computePointFromPosition(
-				this.getLocation(), this.getAltitudes()[0]);
+		Position cp = new Position(this.getLocation(), this.getAltitudes()[0]);
+		
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[0])) {
+			double ce = globe.getElevation(cp.getLatitude(), cp.getLongitude());
+			cp = new Position(this.getLocation(), this.getAltitudes()[0] + ce) ;
+		}
+		
+		Vec4 centerPoint = globe.computePointFromPosition(cp);
+		
 		return new Sphere(centerPoint, this.getRadius());
 		// TODO: return super.getExtent(globe, 1d);
 	}

@@ -71,6 +71,8 @@ import net.opengis.om.OMObservationType;
  */
 public class IwxxmLoader implements ObstacleLoader {
 	
+	// NOTE: this is only a very limited, specialized and rudimentary loader
+	
 	/** the IWXXM unmarshaller of this IWXXM loader */
 	private IwxxmUnmarshaller unmarshaller;
 	
@@ -109,7 +111,7 @@ public class IwxxmLoader implements ObstacleLoader {
 			try {
 				obstacles = this.load(new InputSource(resource.getResource().toURL().openStream()));
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		
@@ -126,7 +128,7 @@ public class IwxxmLoader implements ObstacleLoader {
 	 * @throws JAXBException if the IWXXM obstacles cannot be loaded
 	 */
 	public Set<Obstacle> load(InputSource source) throws JAXBException {
-		Set<Obstacle> obstacles = null;
+		Set<Obstacle> obstacles = new HashSet<>();
 		JAXBElement<?> iwxxmElement = (JAXBElement<?>) this.unmarshaller.unmarshal(source);
 		
 		if (iwxxmElement.getValue() instanceof SIGMETType) {

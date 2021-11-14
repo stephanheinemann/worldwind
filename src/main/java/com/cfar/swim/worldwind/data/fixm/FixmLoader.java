@@ -77,6 +77,8 @@ import gov.nasa.worldwind.globes.Earth;
  */
 public class FixmLoader implements ObstacleLoader {
 	
+	// NOTE: this is only a very limited, specialized and rudimentary loader
+	
 	/** the FIXM unmarshaller of this FIXM loader */
 	private FixmUnmarshaller unmarshaller;
 	
@@ -108,7 +110,7 @@ public class FixmLoader implements ObstacleLoader {
 			try {
 				obstacles = this.load(new InputSource(resource.getResource().toURL().openStream()));
 			} catch (Exception e) {
-				e.printStackTrace();
+				//e.printStackTrace();
 			}
 		}
 		
