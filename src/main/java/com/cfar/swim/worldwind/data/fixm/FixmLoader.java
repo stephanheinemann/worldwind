@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.data.fixm;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -163,7 +164,15 @@ public class FixmLoader implements ObstacleLoader {
 				nextAircraft.moveTo(next);
 				nextAircraft.setCostInterval(new CostInterval(flightId, next.getEto(), next.getEto(), 100d));
 				
+				Duration duration = Duration.between(current.getEto(), next.getEto());
 				double distance = Position.ellipsoidalDistance(current, next, Earth.WGS84_EQUATORIAL_RADIUS, Earth.WGS84_POLAR_RADIUS);
+				double speed = 0d;
+				if (!duration.isZero() && !duration.isNegative()) {
+					speed = distance / duration.getSeconds();
+				}
+				
+				aircraft.setRadius(10d * speed); // 10s safety radius
+				nextAircraft.setRadius(10d * speed);
 				// TODO: potential memory issue for long distances or small radii
 				int steps = (int) Math.round((Math.log(distance / aircraft.getRadius()) / Math.log(2d)));
 				steps = Math.max(steps, 1);
