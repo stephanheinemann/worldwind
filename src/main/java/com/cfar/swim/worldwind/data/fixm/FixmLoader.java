@@ -78,7 +78,16 @@ import gov.nasa.worldwind.globes.Earth;
  */
 public class FixmLoader implements ObstacleLoader {
 	
-	// NOTE: this is only a very limited, specialized and rudimentary loader
+	// NOTE: this is only a very simplified, specialized and rudimentary loader
+	
+	// TODO: cost and separation could be part of FIXM:
+	// Dangerous Goods, Special Handling, ATC requirements, Aircraft Cost Map
+	
+	/** the default cost of an aircraft obstacle */
+	private static final double DEFAULT_AIRCRAFT_COST = 100d;
+	
+	/** the default separation of aircraft obstacles (determines sphere radius) */
+	private static final Duration DEFAULT_AIRCRAFT_SEPARATION = Duration.ofSeconds(10l);
 	
 	/** the FIXM unmarshaller of this FIXM loader */
 	private FixmUnmarshaller unmarshaller;
@@ -157,12 +166,12 @@ public class FixmLoader implements ObstacleLoader {
 			while (wpi.hasNext()) {
 				ObstacleSphere aircraft = this.loadAircraft(flight.getAircraft());
 				aircraft.moveTo(current);
-				aircraft.setCostInterval(new CostInterval(flightId, current.getEto(), current.getEto(), 100d));
+				aircraft.setCostInterval(new CostInterval(flightId, current.getEto(), current.getEto(), FixmLoader.DEFAULT_AIRCRAFT_COST));
 				
 				Waypoint next = wpi.next();
 				ObstacleSphere nextAircraft = this.loadAircraft(flight.getAircraft());
 				nextAircraft.moveTo(next);
-				nextAircraft.setCostInterval(new CostInterval(flightId, next.getEto(), next.getEto(), 100d));
+				nextAircraft.setCostInterval(new CostInterval(flightId, next.getEto(), next.getEto(), FixmLoader.DEFAULT_AIRCRAFT_COST));
 				
 				Duration duration = Duration.between(current.getEto(), next.getEto());
 				double distance = Position.ellipsoidalDistance(current, next, Earth.WGS84_EQUATORIAL_RADIUS, Earth.WGS84_POLAR_RADIUS);
@@ -171,8 +180,9 @@ public class FixmLoader implements ObstacleLoader {
 					speed = distance / duration.getSeconds();
 				}
 				
-				aircraft.setRadius(10d * speed); // 10s safety radius
-				nextAircraft.setRadius(10d * speed);
+				// aircraft safety radius
+				aircraft.setRadius(FixmLoader.DEFAULT_AIRCRAFT_SEPARATION.toSeconds() * speed);
+				nextAircraft.setRadius(FixmLoader.DEFAULT_AIRCRAFT_SEPARATION.toSeconds() * speed);
 				// TODO: potential memory issue for long distances or small radii
 				int steps = (int) Math.round((Math.log(distance / aircraft.getRadius()) / Math.log(2d)));
 				steps = Math.max(steps, 1);

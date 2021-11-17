@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <safcs:scenario
 	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
-	id="Scenario 1" time="2021-11-12T18:01:17.497Z"
-	threshold="11.518324607329845" globe="Earth">
+	id="Scenario 1" time="2021-11-12T18:01:41.497Z"
+	threshold="2.7397260273972677" globe="Earth">
 	<safcs:environment>
-		<safcs:grid division="50" bottom="1.0116771060748683E-6"
-			top="157.04278119766903">
-			<safcs:southWest latitude="48.55447382033871"
-				longitude="-123.38587626721065" />
-			<safcs:northEast latitude="48.558004439177466"
-				longitude="-123.37827844459106" />
+		<safcs:grid division="50" bottom="9.662722429625967E-7"
+			top="168.26390804642853">
+			<safcs:southWest latitude="48.55447370425059"
+				longitude="-123.38587626720192" />
+			<safcs:northEast latitude="48.558105277138175"
+				longitude="-123.37827827273274" />
 		</safcs:grid>
 	</safcs:environment>
 	<safcs:obstacles>
@@ -58,15 +58,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
 		</safcs:sphere>
-		<safcs:sphere radius="100.0">
-			<safcs:center altitude="30.48000000012192"
-				latitude="48.55698120613266" longitude="-123.38325116264346" />
-			<safcs:costInterval id="CFAR002" cost="100.0"
-				enabled="true" start="2021-11-12T18:02:00.000Z"
-				end="2021-11-12T18:02:45.000Z" />
-			<safcs:depiction symbology="TacticalSymbol"
-				sidc="SNAPCH---------" text="CFAR002" />
-		</safcs:sphere>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="54.29250000021716"
 				latitude="48.556886648154084" longitude="-123.37905877693872" />
@@ -75,6 +66,15 @@
 				end="2021-11-12T18:01:45.000Z" />
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
+		</safcs:sphere>
+		<safcs:sphere radius="100.0">
+			<safcs:center altitude="76.2000000003048"
+				latitude="48.55561582282362" longitude="-123.38671317341465" />
+			<safcs:costInterval id="CFAR002" cost="100.0"
+				enabled="true" start="2021-11-12T18:00:30.000Z"
+				end="2021-11-12T18:01:00.000Z" />
+			<safcs:depiction symbology="TacticalSymbol"
+				sidc="SNAPCH---------" text="CFAR002" />
 		</safcs:sphere>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="125.73000000050291"
@@ -104,11 +104,11 @@
 				sidc="SNGPUCVUR------" text="CFAR001" />
 		</safcs:sphere>
 		<safcs:sphere radius="100.0">
-			<safcs:center altitude="76.2000000003048"
-				latitude="48.55561582282362" longitude="-123.38671317341465" />
+			<safcs:center altitude="30.48000000012192"
+				latitude="48.55698120613266" longitude="-123.38325116264346" />
 			<safcs:costInterval id="CFAR002" cost="100.0"
-				enabled="true" start="2021-11-12T18:00:30.000Z"
-				end="2021-11-12T18:01:00.000Z" />
+				enabled="true" start="2021-11-12T18:02:00.000Z"
+				end="2021-11-12T18:02:45.000Z" />
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR002" />
 		</safcs:sphere>
@@ -121,6 +121,15 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
 		</safcs:sphere>
+		<safcs:sphere radius="100.0">
+			<safcs:center altitude="45.72000000018288"
+				latitude="48.55652608989511" longitude="-123.38440518699733" />
+			<safcs:costInterval id="CFAR002" cost="100.0"
+				enabled="true" start="2021-11-12T18:01:30.000Z"
+				end="2021-11-12T18:02:00.000Z" />
+			<safcs:depiction symbology="TacticalSymbol"
+				sidc="SNAPCH---------" text="CFAR002" />
+		</safcs:sphere>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="99.06000000039623"
 				latitude="48.55251765143215" longitude="-123.37840924751072" />
@@ -129,15 +138,6 @@
 				end="2021-11-12T18:03:41.250Z" />
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
-		</safcs:sphere>
-		<safcs:sphere radius="100.0">
-			<safcs:center altitude="60.96000000024384"
-				latitude="48.55607096212529" longitude="-123.38555919058767" />
-			<safcs:costInterval id="CFAR002" cost="100.0"
-				enabled="true" start="2021-11-12T18:01:00.000Z"
-				end="2021-11-12T18:01:30.000Z" />
-			<safcs:depiction symbology="TacticalSymbol"
-				sidc="SNAPCH---------" text="CFAR002" />
 		</safcs:sphere>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="77.1525000003086"
@@ -184,6 +184,14 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
 		</safcs:sphere>
+		<safcs:box leftWidth="50.0" rightWidth="50.0" bottom="50.0"
+			top="100.0">
+			<safcs:begin latitude="48.55687" longitude="-123.38291" />
+			<safcs:end latitude="48.55753" longitude="-123.38211" />
+			<safcs:costInterval id="airspace3" cost="20.0"
+				enabled="true" start="2021-11-12T18:00:00.000Z"
+				end="2022-11-12T18:00:00.000Z" />
+		</safcs:box>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="85.72500000034289"
 				latitude="48.55329775336514" longitude="-123.37839999868947" />
@@ -238,15 +246,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
 		</safcs:sphere>
-		<safcs:sphere radius="100.0">
-			<safcs:center altitude="45.72000000018288"
-				latitude="48.55652608989511" longitude="-123.38440518699733" />
-			<safcs:costInterval id="CFAR002" cost="100.0"
-				enabled="true" start="2021-11-12T18:01:30.000Z"
-				end="2021-11-12T18:02:00.000Z" />
-			<safcs:depiction symbology="TacticalSymbol"
-				sidc="SNAPCH---------" text="CFAR002" />
-		</safcs:sphere>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="132.3975000005296"
 				latitude="48.55056739659642" longitude="-123.37843236831614" />
@@ -265,6 +264,24 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
 		</safcs:sphere>
+		<safcs:sphere radius="100.0">
+			<safcs:center altitude="60.96000000024384"
+				latitude="48.55637364625943" longitude="-123.38161536757954" />
+			<safcs:costInterval id="CFAR002" cost="100.0"
+				enabled="true" start="2021-11-12T18:02:45.000Z"
+				end="2021-11-12T18:03:30.000Z" />
+			<safcs:depiction symbology="TacticalSymbol"
+				sidc="SNAPCH---------" text="CFAR002" />
+		</safcs:sphere>
+		<safcs:sphere radius="100.0">
+			<safcs:center altitude="91.44000000036576"
+				latitude="48.55576606321547" longitude="-123.37997961180552" />
+			<safcs:costInterval id="CFAR002" cost="100.0"
+				enabled="true" start="2021-11-12T18:03:30.000Z"
+				end="2021-11-12T18:04:15.000Z" />
+			<safcs:depiction symbology="TacticalSymbol"
+				sidc="SNAPCH---------" text="CFAR002" />
+		</safcs:sphere>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="51.43500000020573"
 				latitude="48.5564704522761" longitude="-123.37882993103206" />
@@ -274,6 +291,14 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
 		</safcs:sphere>
+		<safcs:box leftWidth="20.0" rightWidth="20.0" bottom="40.0"
+			top="60.0">
+			<safcs:begin latitude="48.55705" longitude="-123.37975" />
+			<safcs:end latitude="48.55669" longitude="-123.37975" />
+			<safcs:costInterval id="airspace2" cost="10.0"
+				enabled="true" start="2021-11-12T18:00:00.000Z"
+				end="2022-11-12T18:00:00.000Z" />
+		</safcs:box>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="80.01000000032003"
 				latitude="48.56063239064631" longitude="-123.38111855955567" />
@@ -282,6 +307,24 @@
 				end="2021-11-12T18:00:37.500Z" />
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
+		</safcs:sphere>
+		<safcs:sphere radius="100.0">
+			<safcs:center altitude="91.44000000036576"
+				latitude="48.55516067199049" longitude="-123.38786713547844" />
+			<safcs:costInterval id="CFAR002" cost="100.0"
+				enabled="true" start="2021-11-12T18:00:00.000Z"
+				end="2021-11-12T18:00:30.000Z" />
+			<safcs:depiction symbology="TacticalSymbol"
+				sidc="SNAPCH---------" text="CFAR002" />
+		</safcs:sphere>
+		<safcs:sphere radius="100.0">
+			<safcs:center altitude="121.92000000048768"
+				latitude="48.55515845700184" longitude="-123.37834389532112" />
+			<safcs:costInterval id="CFAR002" cost="100.0"
+				enabled="true" start="2021-11-12T18:04:15.000Z"
+				end="2021-11-12T18:05:00.000Z" />
+			<safcs:depiction symbology="TacticalSymbol"
+				sidc="SNAPCH---------" text="CFAR002" />
 		</safcs:sphere>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="48.577500000194306"
@@ -309,15 +352,6 @@
 				end="2021-11-12T18:02:33.750Z" />
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR001" />
-		</safcs:sphere>
-		<safcs:sphere radius="100.0">
-			<safcs:center altitude="60.96000000024384"
-				latitude="48.55637364625943" longitude="-123.38161536757954" />
-			<safcs:costInterval id="CFAR002" cost="100.0"
-				enabled="true" start="2021-11-12T18:02:45.000Z"
-				end="2021-11-12T18:03:30.000Z" />
-			<safcs:depiction symbology="TacticalSymbol"
-				sidc="SNAPCH---------" text="CFAR002" />
 		</safcs:sphere>
 		<safcs:sphere radius="50.0">
 			<safcs:center altitude="57.150000000228594"
@@ -356,24 +390,6 @@
 				sidc="SNGPUCVUR------" text="CFAR001" />
 		</safcs:sphere>
 		<safcs:sphere radius="100.0">
-			<safcs:center altitude="91.44000000036576"
-				latitude="48.55516067199049" longitude="-123.38786713547844" />
-			<safcs:costInterval id="CFAR002" cost="100.0"
-				enabled="true" start="2021-11-12T18:00:00.000Z"
-				end="2021-11-12T18:00:30.000Z" />
-			<safcs:depiction symbology="TacticalSymbol"
-				sidc="SNAPCH---------" text="CFAR002" />
-		</safcs:sphere>
-		<safcs:sphere radius="100.0">
-			<safcs:center altitude="121.92000000048768"
-				latitude="48.55515845700184" longitude="-123.37834389532112" />
-			<safcs:costInterval id="CFAR002" cost="100.0"
-				enabled="true" start="2021-11-12T18:04:15.000Z"
-				end="2021-11-12T18:05:00.000Z" />
-			<safcs:depiction symbology="TacticalSymbol"
-				sidc="SNAPCH---------" text="CFAR002" />
-		</safcs:sphere>
-		<safcs:sphere radius="100.0">
 			<safcs:center altitude="152.4000000006096"
 				latitude="48.554550827619586" longitude="-123.3767082181261" />
 			<safcs:costInterval id="CFAR002" cost="100.0"
@@ -383,11 +399,11 @@
 				sidc="SNAPCH---------" text="CFAR002" />
 		</safcs:sphere>
 		<safcs:sphere radius="100.0">
-			<safcs:center altitude="91.44000000036576"
-				latitude="48.55576606321547" longitude="-123.37997961180552" />
+			<safcs:center altitude="60.96000000024384"
+				latitude="48.55607096212529" longitude="-123.38555919058767" />
 			<safcs:costInterval id="CFAR002" cost="100.0"
-				enabled="true" start="2021-11-12T18:03:30.000Z"
-				end="2021-11-12T18:04:15.000Z" />
+				enabled="true" start="2021-11-12T18:01:00.000Z"
+				end="2021-11-12T18:01:30.000Z" />
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR002" />
 		</safcs:sphere>

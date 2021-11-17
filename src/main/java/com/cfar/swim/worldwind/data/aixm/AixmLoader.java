@@ -69,7 +69,13 @@ import net.opengis.gml.TimePeriodType;
  */
 public class AixmLoader implements ObstacleLoader {
 	
-	// NOTE: this is only a very limited, specialized and rudimentary loader
+	// NOTE: this is only a very simplified, specialized and rudimentary loader
+	
+	// TODO: cost and separation could be part of FIXM extension
+	// Special Use Airspace, Restricted Airspace, Airspace Classification, Airspace Cost Map
+	
+	/** the default cost of an aircraft obstacle */
+	private static final double DEFAULT_AIRSPACE_COST = 100d;
 	
 	/** the AIXM unmarshaller of this AIXM loader */
 	private AixmUnmarshaller unmarshaller;
@@ -185,6 +191,16 @@ public class AixmLoader implements ObstacleLoader {
 									}
 									obstacleBox.setAltitudeDatum(lowerLimitReference, upperLimitReference);
 									
+									/*
+									AviationZone zone = new AviationZone("GFGPAAR----AUSX");
+									zone.setPositions();
+									zone.setText("");
+									zone.setModifier(SymbologyConstants.DATE_TIME_GROUP, Arrays.asList("180500Z", "180615Z"));
+									zone.setModifier(SymbologyConstants.ALTITUDE_DEPTH, Arrays.asList("2000 FT AGL", "3000 FT AGL"));
+									obstacleBox.setDepiction(new Depiction(zone));
+									obstacleBox.getDepiction().setAnnotation(new DepictionAnnotation("", obstacleBox.getCenter()));
+									*/
+									
 									obstacles.add(obstacleBox);
 								}
 							}
@@ -195,8 +211,15 @@ public class AixmLoader implements ObstacleLoader {
 			
 			TimeInterval timeInterval = this.loadValidTime(
 					airspaceTimeSlice.getAirspaceTimeSlice().getValidTime().getAbstractTimePrimitive());
-			// TODO: symbol and cost assignment (map)
-			CostInterval costInterval = new CostInterval(airspaceTimeSlice.getAirspaceTimeSlice().getId(), timeInterval, 50d);
+			double cost = AixmLoader.DEFAULT_AIRSPACE_COST;
+			if (null != airspaceTimeSlice.getAirspaceTimeSlice().getLocalType()) {
+				try {
+				 cost = Double.parseDouble(airspaceTimeSlice.getAirspaceTimeSlice().getLocalType().getValue().getValue());
+				} catch (NumberFormatException nfe) {
+				}
+			}
+			CostInterval costInterval = new CostInterval(airspace.getId(), timeInterval, cost);
+			// CostInterval costInterval = new CostInterval(airspaceTimeSlice.getAirspaceTimeSlice().getId(), timeInterval, cost);
 			obstacles.stream().forEach(o -> o.setCostInterval(costInterval));
 		}
 		

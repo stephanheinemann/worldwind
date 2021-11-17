@@ -33,7 +33,9 @@ import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
@@ -52,6 +54,7 @@ import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
+import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Material;
@@ -439,6 +442,23 @@ public class ObstacleBox extends Box implements Obstacle {
 	}
 	
 	/**
+	 * Gets the sector of this obstacle box for a specified globe.
+	 * 
+	 * @param globe the globe to compute the sector
+	 * 
+	 * @return the sector of this obstacle box
+	 */
+	public Sector getSector(Globe globe) {
+		Angle b2e = Position.greatCircleAzimuth(this.getLocations()[0], this.getLocations()[1]);
+		Angle e2b = Position.greatCircleAzimuth(this.getLocations()[1], this.getLocations()[0]);
+		Angle lwa = Angle.fromRadians(this.getWidths()[0] / globe.getRadiusAt(this.getCenter()));
+		Angle rwa = Angle.fromRadians(this.getWidths()[1] / globe.getRadiusAt(this.getCenter()));
+		LatLon lb = Position.greatCircleEndPosition(this.getLocations()[0], Angle.POS90.add(b2e).normalize(), lwa);
+		LatLon re = Position.greatCircleEndPosition(this.getLocations()[1], Angle.POS90.add(e2b).normalize(), rwa);
+		return Sector.boundingSector(lb, re);
+	}
+	
+	/**
 	 * Gets the geometric extent of this obstacle box for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
@@ -448,30 +468,41 @@ public class ObstacleBox extends Box implements Obstacle {
 	 * @see AbstractAirspace#getExtent(Globe, double)
 	 */
 	@Override
-	public com.cfar.swim.worldwind.geom.Box getExtent(Globe globe) {
+	public gov.nasa.worldwind.geom.Box getExtent(Globe globe) {
 		Angle b2e = Position.greatCircleAzimuth(this.getLocations()[0], this.getLocations()[1]);
 		Angle e2b = Position.greatCircleAzimuth(this.getLocations()[1], this.getLocations()[0]);
 		Angle lwa = Angle.fromRadians(this.getWidths()[0] / globe.getRadiusAt(this.getCenter()));
 		Angle rwa = Angle.fromRadians(this.getWidths()[1] / globe.getRadiusAt(this.getCenter()));
-		LatLon lb = Position.greatCircleEndPosition(this.getLocations()[0], Angle.POS90.add(b2e).normalize(), lwa);
-		LatLon re = Position.greatCircleEndPosition(this.getLocations()[1], Angle.POS90.add(e2b).normalize(), rwa);
-		Sector bs = Sector.boundingSector(lb, re);
+		LatLon rb = Position.greatCircleEndPosition(this.getLocations()[0], Angle.POS90.add(b2e).normalize(), rwa);
+		LatLon lb = Position.greatCircleEndPosition(this.getLocations()[0], Angle.NEG90.add(b2e).normalize(), lwa);
+		LatLon re = Position.greatCircleEndPosition(this.getLocations()[1], Angle.NEG90.add(e2b).normalize(), rwa);
+		LatLon le = Position.greatCircleEndPosition(this.getLocations()[1], Angle.POS90.add(e2b).normalize(), lwa);
+		LatLon[] locations = {rb, lb, re, le};
+		
+		// TODO: consider high resolution terrain for sector minimum and maximum elevations
+		List<Double> elevations = Arrays.stream(locations)
+			.map(l -> globe.getElevation(l.getLatitude(), l.getLongitude()))
+			.collect(Collectors.toList());
+		
 		double la = this.getAltitudes()[0];
 		double ua = this.getAltitudes()[1];
 		
-		// TODO: consider high resolution terrain for sector minimum and maximum elevations
-		double lbe = globe.getElevation(lb.getLatitude(), lb.getLongitude());
-		double ree = globe.getElevation(re.getLatitude(), re.getLongitude());
-		
 		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[0])) {
-			la += Math.min(lbe, ree);
+			la += elevations.stream().min(Double::compareTo).get();
 		}
 		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[1])) {
-			ua += Math.max(lbe, ree);
+			ua += elevations.stream().max(Double::compareTo).get();
 		}
 		
-		return new com.cfar.swim.worldwind.geom.Box(Sector.computeBoundingBox(globe, 1d, bs, la, ua));
-		// TODO: return super.getExtent(globe, 1d);
+		List<Vec4> points = new ArrayList<>();
+		points.add(globe.computePointFromPosition(rb, la));
+		points.add(globe.computePointFromPosition(lb, la));
+		points.add(globe.computePointFromPosition(re, la));
+		points.add(globe.computePointFromPosition(le, la));
+		points.add(globe.computePointFromPosition(this.getCenter(), ua));
+		
+		return gov.nasa.worldwind.geom.Box.computeBoundingBox(points);
+		// TODO: super.getExtent(globe, 1d);
 	}
 	
 	/**

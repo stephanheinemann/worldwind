@@ -48,7 +48,6 @@ import com.cfar.swim.worldwind.util.Enableable;
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Cylinder;
-import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -420,7 +419,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 * @see AbstractAirspace#getExtent(Globe, double)
 	 */
 	@Override
-	public Extent getExtent(Globe globe) {
+	public Cylinder getExtent(Globe globe) {
 		Position bcp = new Position(this.getCenter(), this.getAltitudes()[0]);
 		Position tcp = new Position(this.getCenter(), this.getAltitudes()[1]);
 		
@@ -439,7 +438,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		double radius = Math.max(this.getRadii()[0], this.getRadii()[1]);
 		
 		return new Cylinder(bottomCenter, topCenter, radius);
-		// TODO: return super.computeExtent(globe, 1d);
+		// TODO: return super.getExtent(globe, 1d);
 	}
 	
 	/**

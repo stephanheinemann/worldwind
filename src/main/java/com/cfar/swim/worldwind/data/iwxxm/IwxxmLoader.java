@@ -71,7 +71,7 @@ import net.opengis.om.OMObservationType;
  */
 public class IwxxmLoader implements ObstacleLoader {
 	
-	// NOTE: this is only a very limited, specialized and rudimentary loader
+	// NOTE: this is only a very simplified, specialized and rudimentary loader
 	
 	/** the IWXXM unmarshaller of this IWXXM loader */
 	private IwxxmUnmarshaller unmarshaller;
