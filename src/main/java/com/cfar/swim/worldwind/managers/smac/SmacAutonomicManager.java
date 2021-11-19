@@ -50,11 +50,13 @@ import com.cfar.swim.worldwind.flight.FlightPhases;
 import com.cfar.swim.worldwind.managers.AbstractAutonomicManager;
 import com.cfar.swim.worldwind.managers.AutonomicManager;
 import com.cfar.swim.worldwind.managers.heuristic.HeuristicPlannerTuning;
+import com.cfar.swim.worldwind.managing.Severity;
 import com.cfar.swim.worldwind.managing.FeatureCategory;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.NumericPerformance;
 import com.cfar.swim.worldwind.managing.NumericQuality;
 import com.cfar.swim.worldwind.managing.NumericQuantity;
+import com.cfar.swim.worldwind.managing.Difficulty;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
@@ -235,17 +237,23 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	public PlannerTuning createPlannerTuning(
 			Specification<Planner> specification, Features features) {
 		Set<FeatureCategory> categories = new HashSet<>();
+		/*
 		categories.add(FlightPhases.createHazardPhase(features));
 		categories.add(FlightPhases.createAerodromePhase(features));
 		categories.add(FlightPhases.createTerminalPhase(features));
 		categories.add(FlightPhases.createEnroutePhase(features));
-		/*
-		categories.add(Criticality.createLow(features));
-		categories.add(Criticality.createModerate(features));
-		categories.add(Criticality.createSubstantial(features));
-		categories.add(Criticality.createSevere(features));
-		categories.add(Criticality.createCritical(features));
+		categories.add(Severity.createLow(features));
+		categories.add(Severity.createModerate(features));
+		categories.add(Severity.createSubstantial(features));
+		categories.add(Severity.createSevere(features));
+		categories.add(Severity.createCritical(features));
+		categories.add(Severity.createFatal(features));
 		*/
+		categories.add(Difficulty.createLow(features));
+		categories.add(Difficulty.createModerate(features));
+		categories.add(Difficulty.createSubstantial(features));
+		categories.add(Difficulty.createSevere(features));
+		categories.add(Difficulty.createCritical(features));
 		return new SmacPlannerTuning(specification, features,
 				this.getKnowledgeBase(), categories);
 	}

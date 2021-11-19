@@ -65,7 +65,10 @@ import gov.nasa.worldwind.geom.Extent;
  * @see AutonomicManager
  */
 public class Features extends HashMap<String, Double> {
-
+	
+	// TODO: direct versus indirect (derived) features: ratios
+	// TODO: used versus unused features and effect on SMAC
+	
 	/** the default serial identification of these features */
 	private static final long serialVersionUID = 1L;
 	
