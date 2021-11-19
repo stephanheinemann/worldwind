@@ -502,7 +502,7 @@ public class ObstacleBox extends Box implements Obstacle {
 		points.add(globe.computePointFromPosition(this.getCenter(), ua));
 		
 		return gov.nasa.worldwind.geom.Box.computeBoundingBox(points);
-		// TODO: super.getExtent(globe, 1d);
+		// TODO: return super.getExtent(globe, 1d);
 	}
 	
 	/**
@@ -517,16 +517,8 @@ public class ObstacleBox extends Box implements Obstacle {
 	 */
 	@Override
 	public double getVolume(Globe globe) {
-		double volume = 0d;
-		
-		Extent extent = this.getExtent(globe);
-		if ((null != extent) && (extent instanceof Box)) {
-			gov.nasa.worldwind.geom.Box box =
-					(gov.nasa.worldwind.geom.Box) extent;
-			volume = box.getRLength() * box.getSLength() * box.getTLength();
-		}
-		
-		return volume;
+		gov.nasa.worldwind.geom.Box box = this.getExtent(globe);
+		return box.getRLength() * box.getSLength() * box.getTLength();
 	}
 	
 	/**

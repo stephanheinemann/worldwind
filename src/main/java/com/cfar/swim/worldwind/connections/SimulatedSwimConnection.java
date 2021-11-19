@@ -323,14 +323,19 @@ public class SimulatedSwimConnection extends SwimConnection {
 			HashMap<SwimProtocol, List<Path>> swimFiles = new HashMap<>();
 			
 			try {
-				if (hasSubscribed(SwimProtocol.IWXXM)) {
-					swimFiles.put(SwimProtocol.IWXXM,
-							Files.list(this.swimDirectory.resolve(SwimProtocol.IWXXM.name().toLowerCase()))
+				if (hasSubscribed(SwimProtocol.AIXM)) {
+					swimFiles.put(SwimProtocol.AIXM,
+							Files.list(this.swimDirectory.resolve(SwimProtocol.AIXM.name().toLowerCase()))
 							.collect(Collectors.toList()));
 				}
 				if (hasSubscribed(SwimProtocol.FIXM)) {
 					swimFiles.put(SwimProtocol.FIXM,
 							Files.list(this.swimDirectory.resolve(SwimProtocol.FIXM.name().toLowerCase()))
+							.collect(Collectors.toList()));
+				}
+				if (hasSubscribed(SwimProtocol.IWXXM)) {
+					swimFiles.put(SwimProtocol.IWXXM,
+							Files.list(this.swimDirectory.resolve(SwimProtocol.IWXXM.name().toLowerCase()))
 							.collect(Collectors.toList()));
 				}
 				// TODO: check other subscriptions
