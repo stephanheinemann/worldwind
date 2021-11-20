@@ -129,6 +129,8 @@ public class Features extends HashMap<String, Double> {
 	public static final String FEATURE_ENVIRONMENT_DIAMETER = "feature.environment.diameter";
 	/** the environment volume key of these features */
 	public static final String FEATURE_ENVIRONMENT_VOLUME = "feature.environment.volume";
+	/** the environment base cost key of these features */
+	public static final String FEATURE_ENVIRONMENT_COST_BASE = "feature.environment.cost.base";
 	/** the environment obstacles count feature key of these features */
 	public static final String FEATURE_ENVIRONMENT_OBSTACLES_COUNT = "feature.environment.obstacles.count";
 	/** the environment obstacles policies cost feature key of these features */
@@ -487,6 +489,7 @@ public class Features extends HashMap<String, Double> {
 		// environment space features
 		this.put(Features.FEATURE_ENVIRONMENT_DIAMETER, env.getDiameter());
 		this.put(Features.FEATURE_ENVIRONMENT_VOLUME, env.getVolume());
+		this.put(Features.FEATURE_ENVIRONMENT_COST_BASE, env.getBaseCost());
 		
 		// environment obstacles within the feature horizon
 		Set<Obstacle> featureObstacles = new HashSet<>();
@@ -923,6 +926,7 @@ public class Features extends HashMap<String, Double> {
 	public void removeEnvironmentFeatures() {
 		this.remove(Features.FEATURE_ENVIRONMENT_DIAMETER);
 		this.remove(Features.FEATURE_ENVIRONMENT_VOLUME);
+		this.remove(Features.FEATURE_ENVIRONMENT_COST_BASE);
 		this.remove(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT);
 		this.remove(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES);
 		this.remove(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_AVG);
@@ -1138,6 +1142,12 @@ public class Features extends HashMap<String, Double> {
 			features = features.concat(this.dictionary.getString(
 					Features.FEATURE_ENVIRONMENT_VOLUME) + " = "
 					+ this.get(Features.FEATURE_ENVIRONMENT_VOLUME)
+					+ "\n");
+		}
+		if (this.containsKey(Features.FEATURE_ENVIRONMENT_COST_BASE)) {
+			features = features.concat(this.dictionary.getString(
+					Features.FEATURE_ENVIRONMENT_COST_BASE) + " = "
+					+ this.get(Features.FEATURE_ENVIRONMENT_COST_BASE)
 					+ "\n");
 		}
 		if (this.containsKey(Features.FEATURE_ENVIRONMENT_OBSTACLES_COUNT)) {

@@ -239,6 +239,7 @@ public class Severity extends Criticality {
 		this.environmentObstaclesCostPolicyRange = environmentObstaclesCostPolicyRange;
 	}
 	
+	// TODO: passed POIs are not relevant
 	/* ASS	... Aircraft Safety Sphere
 	 * POI	... Points Of Interest Bounding Box
 	 * ENV	... Environment
@@ -270,6 +271,21 @@ public class Severity extends Criticality {
 	 * 0, P, P -> MOD, SUB
 	 * P, 0, P -> SUB (aircraft outside POI bounding box)
 	 * P, P, P -> SUB
+	 * 
+	 * The severity has an influence on the expansion of A* since higher costs
+	 * in less difficult cost areas reduce the effect of the heuristic and may
+	 * lead to a longer search if the heuristic is not inflated accordingly.
+	 * Similarly it increases the effect of the heuristic and may lead to a
+	 * faster search in more difficult high cost areas if the heuristic remains
+	 * deflated. For RRT it affects the choice of biases in particular and
+	 * sampling distribution. Nearby and expensive obstacles may require a
+	 * lower goal bias, more scattered sampling, and higher cost bias. In a low
+	 * severity scenario a higher goal bias, more focused sampling, and higher
+	 * distance bias may be the better choices.
+	 * 
+	 * Critical and fatal cases may be solvable if the scenario is difficult as
+	 * opposed to simple if the explained approach is taken. A critical and fatal
+	 * severity with a simple scenario may be impossible to solve.
 	 */
 	
 	/**

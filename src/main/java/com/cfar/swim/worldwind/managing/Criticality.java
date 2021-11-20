@@ -62,7 +62,6 @@ public abstract class Criticality implements FeatureCategory {
 	public Criticality(Features features) {
 		this.poiDistanceMinRange = Criticality.createPoisDistanceMinRange(features);
 		this.poiDistanceMaxRange = Criticality.createPoisDistanceMaxRange(features);
-		// TODO: vertical distance ranges
 	}
 	
 	/**

@@ -112,17 +112,21 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 	private void tuneManagedGridPlanner(OADStarProperties properties, Features features) {
 		if (0d == features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
 			// quality
-			properties.setMinimumQuality(1.0d);
-			properties.setMaximumQuality(1.0d);
-			properties.setQualityImprovement(0.1d);
+			properties.setMinimumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
+			properties.setMaximumQuality(1d);
+			properties.setQualityImprovement(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
 			properties.setSignificantChange(0.1d);
 		} else {
 			// quality
-			properties.setMinimumQuality(1d
-					+ features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO));
-			properties.setMaximumQuality(1.0d);
-			properties.setQualityImprovement(
-					Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d);
+			properties.setMinimumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE)
+					+ features.get(Features.FEATURE_POIS_OBSTACLES_COST_AVG));
+			properties.setMaximumQuality(1d);
+			double qi = Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d;
+			if (0d < qi) {
+				properties.setQualityImprovement(qi);
+			} else {
+				properties.setQualityImprovement(0.1d);
+			}
 			properties.setSignificantChange(0.5d);
 		}
 	}
@@ -228,9 +232,13 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			// quality
 			properties.setMinimumQuality(1d - Math.min(0.9d,
 					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)));
-			properties.setMaximumQuality(1.0d);
-			properties.setQualityImprovement(
-					Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d);
+			properties.setMaximumQuality(1d);
+			double qi = Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d;
+			if (0d < qi) {
+				properties.setQualityImprovement(qi);
+			} else {
+				properties.setQualityImprovement(0.1d);
+			}
 			properties.setSignificantChange(0.5d);
 		}
 	}

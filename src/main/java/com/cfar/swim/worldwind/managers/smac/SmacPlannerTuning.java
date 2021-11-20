@@ -156,6 +156,7 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 			} else {
 				// associated covered feature categories
 				List<PlannerTuning> categoryTunings = new ArrayList<>();
+				// TODO: consider finding tunings covered by maximum number of feature categories
 				for (FeatureCategory category : categories) {
 					categoryTunings.addAll(tunings.stream()
 						.filter(t -> category.covers(t.getFeatures()))

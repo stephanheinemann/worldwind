@@ -50,7 +50,6 @@ import com.cfar.swim.worldwind.util.Enableable;
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;

@@ -72,10 +72,12 @@ public class Difficulty extends Criticality {
 	}
 	
 	// TODO: direct versus indirect (derived) features
+	// TODO: passed POIs are not relevant
 	/*
 	 * OSR ... Obstacle Scatter Range
 	 * 
 	 * OSR = FEATURE_POIS_OBSTACLES_VOLUME_AVG / FEATURE_POIS_VOLUME / FEATURE_POIS_OBSTACLES_VOLUME_RATIO
+	 *     = FEATURE_POIS_OBSTACLES_VOLUME_AVG_RATIO / FEATURE_POIS_OBSTACLES_VOLUME_SUM_RATIO
 	 * 
 	 * 				OSR
 	 * LOW			(0.8, INF)
@@ -83,7 +85,24 @@ public class Difficulty extends Criticality {
 	 * SUBSTANTIAL	(0.4, 0.6]
 	 * SEVERE		(0.2, 0.4]
 	 * CRITICAL		(0.0, 0,2]
+	 * 
+	 * A single large and non-expensive obstacle is indeed less difficult than
+	 * a higher number of smaller obstacles. For simple A*, the heuristic will
+	 * underestimate significantly in this case leading to a longer search.
+	 * However, if the heuristic is inflated by the cost of the obstacle then
+	 * a first solution is found quickly and the situation becomes equivalent
+	 * to a no-obstacle, non-inflated scenario. In both cases the initial
+	 * inflation could be set to the maximum or average obstacle cost by the
+	 * heuristic autonomic manager and improved by the SMAC autonomic manager
+	 * based on the sensed difficulty.
+	 * 
+	 * For RRT within a single large and expensive obstacle, new samples will
+	 * unlikely permit to improve an existing shorter solution. Therefore, the
+	 * distance bias becomes more important than the cost bias which is
+	 * equivalent to the high initial inflation of ARA*.
+	 * 
 	 */
+	
 	/** the low difficulty obstacle scattered range */
 	private static final Range<Double> OSR_LOW = Range.greaterThan(0.8d);
 	/** the moderate difficulty obstacle scattered range */

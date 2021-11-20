@@ -29,155 +29,171 @@
  */
 package com.cfar.swim.worldwind.flight;
 
-import com.cfar.swim.worldwind.managing.FeatureCategory;
+import java.util.HashSet;
+import java.util.Set;
+
+import com.cfar.swim.worldwind.managing.Criticality;
+import com.cfar.swim.worldwind.managing.Difficulty;
 import com.cfar.swim.worldwind.managing.Features;
-import com.google.common.collect.Range;
+import com.cfar.swim.worldwind.managing.Severity;
 
 /**
- * Realizes a flight phase that covers certain feature ranges.
+ * Realizes a flight phase that covers certain difficulties and severities.
  * 
  * @author Stephan Heinemann
  *
+ * @see Difficulty
+ * @see Severity
+ * @see Criticality
  */
-public class FlightPhase implements FeatureCategory {
+public class FlightPhase extends Criticality {
 	
-	/** the distance tolerance of associable flight phases */
-	public static final double DISTANCE_TOLERANCE = 0.2d;
+	/** the possible difficulties of this flight phase */
+	private final Set<Difficulty> difficulties = new HashSet<>();
 	
-	/** the minimum POI distance range of this flight phase */
-	private final Range<Double> minPoiDistanceRange;
-	
-	/** the maximum POI distance range of this flight phase */
-	private final Range<Double> maxPoiDistanceRange;
-	
-	/** the minimum POI vertical range of this flight phase */
-	private final Range<Double> minPoiVerticalRange;
-	
-	/** the maximum POI vertical range of this flight phase */
-	private final Range<Double> maxPoiVerticalRange;
-	
-	/** the minimum obstacle distance range of this flight phase */
-	private final Range<Double> minObstacleDistanceRange;
-	
-	/** the maximum obstacle distance range of this flight phase */
-	private final Range<Double> maxObstacleDistanceRange;
-	
-	/** the obstacle penetration range of this flight phase */
-	private final Range<Double> obstaclePentrationRange;
-	
-	/** the obstacle severity range of this flight phase */
-	private final Range<Double> obstacleSeverityRange;
+	/** the possible severities of this flight phase */
+	private final Set<Severity> severities = new HashSet<>();
 	
 	/**
-	 * Constructs a new flight phase based on given feature ranges.
+	 * Constructs a new flight phase limiting only POI distance ranges.
 	 * 
-	 * @param minPoiDistanceRange the minimum POI distance range
-	 * @param maxPoiDistanceRange the maximum POI distance range
-	 * @param minPoiVerticalRange the minimum POI vertical range
-	 * @param maxPoiVerticalRange the maximum POI vertical range
-	 * @param minObstacleDistanceRange the minimum obstacle range
-	 * @param maxObstacleDistanceRange the maximum obstacle range
-	 * @param obstaclePenetrationRange the obstacle penetration range
-	 * @param obstacleSeverityRange the obstacle severity range
+	 * @param features the features containing the POI distances
+	 * 
+	 * @see Criticality#Criticality(Features)
 	 */
-	public FlightPhase(
-			Range<Double> minPoiDistanceRange,
-			Range<Double> maxPoiDistanceRange,
-			Range<Double> minPoiVerticalRange,
-			Range<Double> maxPoiVerticalRange,
-			Range<Double> minObstacleDistanceRange,
-			Range<Double> maxObstacleDistanceRange,
-			Range<Double> obstaclePenetrationRange,
-			Range<Double> obstacleSeverityRange) {
-		this.minPoiDistanceRange = minPoiDistanceRange;
-		this.maxPoiDistanceRange = maxPoiDistanceRange;
-		this.minPoiVerticalRange = minPoiVerticalRange;
-		this.maxPoiVerticalRange = maxPoiVerticalRange;
-		this.minObstacleDistanceRange = minObstacleDistanceRange;
-		this.maxObstacleDistanceRange = maxObstacleDistanceRange;
-		this.obstaclePentrationRange = obstaclePenetrationRange;
-		this.obstacleSeverityRange = obstacleSeverityRange;
-		// TODO: extend as required
+	public FlightPhase(Features features) {
+		super(features);
 	}
 	
-	/**
-	 * Constructs a new flight phase based on existing features and given
-	 * feature ranges
-	 * 
-	 * @param features the features
-	 * @param obstaclePenetrationRange the obstacle penetration range
-	 * @param obstacleSeverityRange the obstacle severity range
+	/*				Difficulties	Severities
+	 * Cruise		*				LOW, MOD
+	 * Transition	LOW, MOD, SUB	SUB, SEV
+	 * Terminal		SEV, CRT        SUB, SEV
+	 * Urgency		*				CRT
+	 * Emergency	*				FAT
 	 */
-	public FlightPhase(
-			Features features,
-			Range<Double> obstaclePenetrationRange,
-			Range<Double> obstacleSeverityRange) {
-		this.minPoiDistanceRange = FlightPhase.createPoisDistanceMinRange(features);
-		this.maxPoiDistanceRange = FlightPhase.createPoisDistanceMaxRange(features);
-		this.minPoiVerticalRange = Range.all();
-		this.maxPoiVerticalRange = Range.all();
-		this.minObstacleDistanceRange = Range.all();
-		this.maxObstacleDistanceRange = Range.all();
-		this.obstaclePentrationRange = obstaclePenetrationRange;
-		this.obstacleSeverityRange = obstacleSeverityRange;
-		// TODO: extend and restrict as required
-	}
 	
 	/**
-	 * Creates a minimum POI distance range for associated flight phases of
-	 * given features.
+	 * Creates a cruise flight phase based on features.
 	 * 
 	 * @param features the features
 	 * 
-	 * @return the minimum POI distance range for associated flight phases
+	 * @return a cruise flight phase based on features
 	 */
-	private static Range<Double> createPoisDistanceMinRange(Features features) {
-		double poisDistanceMinTolerance = FlightPhase.DISTANCE_TOLERANCE
-				* features.get(Features.FEATURE_POIS_DISTANCE_MIN);
-		Range<Double> poisDistanceMinRange = Range.closed(
-				features.get(Features.FEATURE_POIS_DISTANCE_MIN) - poisDistanceMinTolerance,
-				features.get(Features.FEATURE_POIS_DISTANCE_MIN) + poisDistanceMinTolerance);
-		return poisDistanceMinRange;
+	public static FlightPhase createCruise(Features features) {
+		FlightPhase cruise = new FlightPhase(features);
+		
+		cruise.difficulties.add(Difficulty.createLow(features));
+		cruise.difficulties.add(Difficulty.createModerate(features));
+		cruise.difficulties.add(Difficulty.createSubstantial(features));
+		cruise.difficulties.add(Difficulty.createSevere(features));
+		cruise.difficulties.add(Difficulty.createCritical(features));
+		cruise.severities.add(Severity.createLow(features));
+		cruise.severities.add(Severity.createModerate(features));
+		
+		return cruise;
 	}
 	
 	/**
-	 * Creates a maximum POI distance range for associated flight phases of
-	 * given features.
+	 * Creates a transition (departure, arrival) flight phase based on
+	 * features.
 	 * 
 	 * @param features the features
 	 * 
-	 * @return the maximum POI distance range for associated flight phases
+	 * @return a transition flight phase based on features
 	 */
-	private static Range<Double> createPoisDistanceMaxRange(Features features) {
-		double poisDistanceMaxTolerance = FlightPhase.DISTANCE_TOLERANCE
-				* features.get(Features.FEATURE_POIS_DISTANCE_MAX);
-		Range<Double> poisDistanceMaxRange = Range.closed(
-				features.get(Features.FEATURE_POIS_DISTANCE_MAX) - poisDistanceMaxTolerance,
-				features.get(Features.FEATURE_POIS_DISTANCE_MAX) + poisDistanceMaxTolerance);
-		return poisDistanceMaxRange;
+	public static FlightPhase createTransition(Features features) {
+		FlightPhase transition = new FlightPhase(features);
+		
+		transition.difficulties.add(Difficulty.createLow(features));
+		transition.difficulties.add(Difficulty.createModerate(features));
+		transition.difficulties.add(Difficulty.createSubstantial(features));
+		transition.severities.add(Severity.createSubstantial(features));
+		transition.severities.add(Severity.createSevere(features));
+		
+		return transition;
 	}
 	
 	/**
-	 * Determines whether or not this flight phase covers features.
+	 * Creates a terminal (aerodrome) flight phase based on
+	 * features.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return a terminal flight phase based on features
+	 */
+	public static FlightPhase createTerminal(Features features) {
+		FlightPhase terminal = new FlightPhase(features);
+		
+		terminal.difficulties.add(Difficulty.createSevere(features));
+		terminal.difficulties.add(Difficulty.createCritical(features));
+		terminal.severities.add(Severity.createSubstantial(features));
+		terminal.severities.add(Severity.createSevere(features));
+		
+		return terminal;
+	}
+	
+	/**
+	 * Creates an urgency flight phase based on features.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return an urgency flight phase based on features
+	 */
+	public static FlightPhase createUrgency(Features features) {
+		FlightPhase urgency = new FlightPhase(features);
+		
+		urgency.difficulties.add(Difficulty.createLow(features));
+		urgency.difficulties.add(Difficulty.createModerate(features));
+		urgency.difficulties.add(Difficulty.createSubstantial(features));
+		urgency.difficulties.add(Difficulty.createSevere(features));
+		urgency.difficulties.add(Difficulty.createCritical(features));
+		urgency.severities.add(Severity.createCritical(features));
+		urgency.severities.add(Severity.createSevere(features));
+		
+		return urgency;
+	}
+	
+	/**
+	 * Creates an emergency flight phase based on features.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return an emergency flight phase based on features
+	 */
+	public static FlightPhase createEmergency(Features features) {
+		FlightPhase emergency = new FlightPhase(features);
+		
+		emergency.difficulties.add(Difficulty.createLow(features));
+		emergency.difficulties.add(Difficulty.createModerate(features));
+		emergency.difficulties.add(Difficulty.createSubstantial(features));
+		emergency.difficulties.add(Difficulty.createSevere(features));
+		emergency.difficulties.add(Difficulty.createCritical(features));
+		emergency.severities.add(Severity.createFatal(features));
+		
+		return emergency;
+	}
+	
+	/**
+	 * Determines whether or not this flight phase covers given features.
 	 * 
 	 * @param features the features
 	 * 
 	 * @return true if this flight phase covers the features, false otherwise
 	 * 
-	 * @see FeatureCategory#covers(Features)
+	 * @see Criticality#covers(Features)
 	 */
-	@Override
 	public boolean covers(Features features) {
-		return this.minPoiDistanceRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_MIN))
-				&& this.maxPoiDistanceRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_MAX))
-				&& this.minPoiVerticalRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_VERTICAL_MIN))
-				&& this.maxPoiVerticalRange.contains(features.get(Features.FEATURE_POIS_DISTANCE_VERTICAL_MAX))
-				&& this.minObstacleDistanceRange.contains(features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MIN))
-				&& this.maxObstacleDistanceRange.contains(features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MAX))
-				&& this.obstaclePentrationRange.contains(features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-				&& this.obstacleSeverityRange.contains(features.get(Features.FEATURE_POIS_OBSTACLES_COST_MIN))
-				&& this.obstacleSeverityRange.contains(features.get(Features.FEATURE_POIS_OBSTACLES_COST_MAX))
-				&& this.obstacleSeverityRange.contains(features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES));
+		boolean covers = super.covers(features);
+		
+		if (covers) {
+			covers = (0 < this.severities.stream()
+					.filter(s -> s.covers(features)).count())
+					&& (0 < this.difficulties.stream()
+					.filter(d -> d.covers(features)).count());
+		}
+		
+		return covers;
 	}
 	
 }
