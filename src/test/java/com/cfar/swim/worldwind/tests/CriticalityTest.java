@@ -33,6 +33,7 @@ import java.net.URI;
 
 import org.junit.Test;
 
+import com.cfar.swim.worldwind.flight.FlightPhase;
 import com.cfar.swim.worldwind.managing.Difficulty;
 import com.cfar.swim.worldwind.managing.FeatureTuning;
 import com.cfar.swim.worldwind.managing.Features;
@@ -107,6 +108,36 @@ public class CriticalityTest {
 				+ ", substantial = " + subCount
 				+ ", severe = " + sevCount
 				+ ", critical = " + crtCount);
+	}
+	
+	@Test
+	public void testFlightPhase() {
+		int cruiseCount = 0, transCount = 0, termCount = 0, urgCount =0, emgCount = 0;
+		
+		KnowledgeBase knowledgeBase = new KnowledgeBase();
+		knowledgeBase.load(URI.create(AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE));
+		//System.out.println(knowledgeBase.toString());
+		
+		for (Tuning<?>  tuning : knowledgeBase.getReputation().keySet()) {
+			if (tuning instanceof FeatureTuning) {
+				Features features = ((FeatureTuning<?>) tuning).getFeatures();
+				FlightPhase cruise = FlightPhase.createCruise(features);
+				FlightPhase transition = FlightPhase.createTransition(features);
+				FlightPhase terminal = FlightPhase.createTerminal(features);
+				FlightPhase urgency = FlightPhase.createUrgency(features);
+				FlightPhase emergency = FlightPhase.createEmergency(features);
+				if (cruise.covers(features)) cruiseCount++;
+				if (transition.covers(features)) transCount++;
+				if (terminal.covers(features)) termCount++;
+				if (urgency.covers(features)) urgCount++;
+				if (emergency.covers(features)) emgCount++;
+			}
+		}
+		System.out.println("flight phase: cruise = " + cruiseCount
+				+ ", transition = " + transCount
+				+ ", terminal = " + termCount
+				+ ", urgency = " + urgCount
+				+ ", emergency = " + emgCount);
 	}
 	
 }

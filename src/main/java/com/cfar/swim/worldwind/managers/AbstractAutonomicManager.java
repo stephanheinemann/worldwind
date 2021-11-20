@@ -45,6 +45,7 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
 import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.flight.FlightPhase;
 import com.cfar.swim.worldwind.javafx.TrajectoryStylist;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.KnowledgeBase;
@@ -966,6 +967,8 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 							// managed scenario features and initial tuning
 							// TODO: environment versus scenario obstacles
 							Features features = new Features(managedScenario, this.getFeatureHorizon());
+							Logging.logger().info(FlightPhase.report(features));
+							
 							PlannerTuning tuning = this.createPlannerTuning(plannerSpec, features);
 							List<Properties<Planner>> candidates = tuning.tune();
 							// TODO: default candidate

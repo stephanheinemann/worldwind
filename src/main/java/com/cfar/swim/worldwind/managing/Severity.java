@@ -309,6 +309,17 @@ public class Severity extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features are of low severity.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of low severity, false otherwise
+	 */
+	public static boolean areLow(Features features) {
+		return Severity.createLow(features).covers(features);
+	}
+	
+	/**
 	 * Creates a moderate severity based on features.
 	 * 
 	 * @param features the features
@@ -327,6 +338,17 @@ public class Severity extends Criticality {
 		moderate.setEnvironmentObstaclesCostPolicyRange(Range.lessThan(Double.POSITIVE_INFINITY));
 		
 		return moderate;
+	}
+	
+	/**
+	 * Determines whether or not features are of moderate severity.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of moderate severity, false otherwise
+	 */
+	public static boolean areModerate(Features features) {
+		return Severity.createModerate(features).covers(features);
 	}
 	
 	/**
@@ -353,6 +375,18 @@ public class Severity extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features are of substantial severity.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of substantial severity,
+	 *         false otherwise
+	 */
+	public static boolean areSubstantial(Features features) {
+		return Severity.createSubstantial(features).covers(features);
+	}
+	
+	/**
 	 * Creates a severe severity based on features.
 	 * 
 	 * @param features the features
@@ -373,6 +407,17 @@ public class Severity extends Criticality {
 		severe.setEnvironmentObstaclesCostPolicyRange(Range.singleton(Double.POSITIVE_INFINITY));
 		
 		return severe;
+	}
+	
+	/**
+	 * Determines whether or not features are of severe severity.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of severe severity, false otherwise
+	 */
+	public static boolean areSevere(Features features) {
+		return Severity.createSevere(features).covers(features);
 	}
 	
 	/**
@@ -398,6 +443,17 @@ public class Severity extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features are of critical severity.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of critical severity, false otherwise
+	 */
+	public static boolean areCritical(Features features) {
+		return Severity.createCritical(features).covers(features);
+	}
+	
+	/**
 	 * Creates a fatal severity based on features
 	 * 
 	 * @param features the features
@@ -411,6 +467,17 @@ public class Severity extends Criticality {
 		fatal.setAircraftSafetyObstaclesPolicyRange(Range.singleton(Double.POSITIVE_INFINITY));
 		
 		return fatal;
+	}
+	
+	/**
+	 * Determines whether or not features are of fatal severity.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of fatal severity, false otherwise
+	 */
+	public static boolean areFatal(Features features) {
+		return Severity.createFatal(features).covers(features);
 	}
 	
 	/**
@@ -439,6 +506,45 @@ public class Severity extends Criticality {
 		}
 		
 		return covers;
+	}
+	
+	/**
+	 * Reports the severity of features.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return the severity report of the features
+	 */
+	public static String report(Features features) {
+		String report =
+				"ASS MAX: " + features.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MAX)
+				+ ", ASS MIN: " + features.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_MIN)
+				+ ", ASS POL: " + features.get(Features.FEATURE_AIRCRAFT_SAFETY_OBSTACLES_COST_POLICIES)
+				+ "\n" 
+				+ "POI MAX: " + features.get(Features.FEATURE_POIS_OBSTACLES_COST_MAX)
+				+ ", POI MIN: " + features.get(Features.FEATURE_POIS_OBSTACLES_COST_MIN)
+				+ ", POI POL: " + features.get(Features.FEATURE_POIS_OBSTACLES_COST_POLICIES)
+				+ "\n"
+				+ "ENV MAX: " + features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MAX)
+				+ ", ENV MIN: " + features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_MIN)
+				+ ", ENV POL: " + features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_COST_POLICIES)
+				+ "\n";
+				
+		// potentially multiple severities
+		if (Severity.areLow(features))
+			report = report.concat("-> low severity\n");
+		if (Severity.areModerate(features))
+			report = report.concat("-> moderate severity\n");
+		if (Severity.areSubstantial(features))
+			report = report.concat("-> substantial severity\n");
+		if (Severity.areSevere(features))
+			report = report.concat("-> severe severity\n");
+		if (Severity.areCritical(features))
+			report = report.concat("-> critical severity\n");
+		if (Severity.areFatal(features))
+			report = report.concat("-> fatal severity\n");
+		
+		return report;
 	}
 	
 }

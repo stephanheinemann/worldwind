@@ -130,6 +130,17 @@ public class Difficulty extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features are of low difficulty.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of low difficulty, false otherwise
+	 */
+	public static boolean areLow(Features features) {
+		return Difficulty.createLow(features).covers(features);
+	}
+	
+	/**
 	 * Creates a moderate difficulty based on features.
 	 * 
 	 * @param features the features
@@ -142,6 +153,17 @@ public class Difficulty extends Criticality {
 		moderate.setObstacleScatterRange(Difficulty.OSR_MODERATE);
 		
 		return moderate;
+	}
+	
+	/**
+	 * Determines whether or not features are of moderate difficulty.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of moderate difficulty, false otherwise
+	 */
+	public static boolean areModerate(Features features) {
+		return Difficulty.createModerate(features).covers(features);
 	}
 	
 	/**
@@ -160,6 +182,18 @@ public class Difficulty extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features are of substantial difficulty.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of substantial difficulty,
+	 *         false otherwise
+	 */
+	public static boolean areSubstantial(Features features) {
+		return Difficulty.createSubstantial(features).covers(features);
+	}
+	
+	/**
 	 * Creates a severe difficulty based on features.
 	 * 
 	 * @param features the features
@@ -172,6 +206,17 @@ public class Difficulty extends Criticality {
 		severe.setObstacleScatterRange(Difficulty.OSR_SEVERE);
 		
 		return severe;
+	}
+	
+	/**
+	 * Determines whether or not features are of severe difficulty.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of severe difficulty, false otherwise
+	 */
+	public static boolean areSevere(Features features) {
+		return Difficulty.createSevere(features).covers(features);
 	}
 	
 	/**
@@ -190,6 +235,17 @@ public class Difficulty extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features are of critical difficulty.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features are of critical difficulty, false otherwise
+	 */
+	public static boolean areCritical(Features features) {
+		return Difficulty.createCritical(features).covers(features);
+	}
+	
+	/**
 	 * Determines whether or not this difficulty covers given features.
 	 * 
 	 * @param features the features
@@ -202,13 +258,50 @@ public class Difficulty extends Criticality {
 		boolean covers = super.covers(features);
 		
 		if (covers) {
-			covers = this.getObstacleScatterRange().contains(
+			if (0d == features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_AVG)) {
+				covers = this.getObstacleScatterRange().contains(Double.POSITIVE_INFINITY);
+			} else {
+				covers = this.getObstacleScatterRange().contains(
 					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_AVG) /
 					features.get(Features.FEATURE_POIS_VOLUME) /
 					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO));
+			}
 		}
 		
 		return covers;
+	}
+	
+	/**
+	 * Reports the difficulty of features.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return the difficulty report of the features
+	 */
+	public static String report(Features features) {
+		double difficulty = Double.POSITIVE_INFINITY;
+		
+		if (0d != features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_AVG)) {
+			difficulty = features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_AVG) /
+			features.get(Features.FEATURE_POIS_VOLUME) /
+			features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO);
+		}
+		
+		String report = Double.toString(difficulty);
+		
+		if (Difficulty.areLow(features)) {
+			report = report.concat(" -> low difficulty\n");
+		} else if (Difficulty.areModerate(features)) {
+			report = report.concat(" -> moderate difficulty\n");
+		} else if (Difficulty.areSubstantial(features)) {
+			report = report.concat(" -> substantial difficulty\n");
+		} else if (Difficulty.areSevere(features)) {
+			report = report.concat(" -> severe difficulty\n");
+		} else if (Difficulty.areCritical(features)) {
+			report = report.concat(" -> critical difficulty\n");
+		}
+		
+		return report;
 	}
 	
 }

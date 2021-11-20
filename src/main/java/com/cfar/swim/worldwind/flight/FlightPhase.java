@@ -95,6 +95,18 @@ public class FlightPhase extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features reflect a cruise flight phase.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features reflect a cruise flight phase,
+	 *         false otherwise
+	 */
+	public static boolean areCruise(Features features) {
+		return FlightPhase.createCruise(features).covers(features);
+	}
+	
+	/**
 	 * Creates a transition (departure, arrival) flight phase based on
 	 * features.
 	 * 
@@ -115,6 +127,18 @@ public class FlightPhase extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features reflect a transition flight phase.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features reflect a transition flight phase,
+	 *         false otherwise
+	 */
+	public static boolean areTransition(Features features) {
+		return FlightPhase.createTransition(features).covers(features);
+	}
+	
+	/**
 	 * Creates a terminal (aerodrome) flight phase based on
 	 * features.
 	 * 
@@ -131,6 +155,18 @@ public class FlightPhase extends Criticality {
 		terminal.severities.add(Severity.createSevere(features));
 		
 		return terminal;
+	}
+	
+	/**
+	 * Determines whether or not features reflect a terminal flight phase.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features reflect a terminal flight phase,
+	 *         false otherwise
+	 */
+	public static boolean areTerminal(Features features) {
+		return FlightPhase.createTerminal(features).covers(features);
 	}
 	
 	/**
@@ -155,6 +191,18 @@ public class FlightPhase extends Criticality {
 	}
 	
 	/**
+	 * Determines whether or not features reflect an urgency flight phase.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features reflect an urgency flight phase,
+	 *         false otherwise
+	 */
+	public static boolean areUrgency(Features features) {
+		return FlightPhase.createUrgency(features).covers(features);
+	}
+	
+	/**
 	 * Creates an emergency flight phase based on features.
 	 * 
 	 * @param features the features
@@ -172,6 +220,18 @@ public class FlightPhase extends Criticality {
 		emergency.severities.add(Severity.createFatal(features));
 		
 		return emergency;
+	}
+	
+	/**
+	 * Determines whether or not features reflect an emergency flight phase.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return true if the features reflect an emergency flight phase,
+	 *         false otherwise
+	 */
+	public static boolean areEmergency(Features features) {
+		return FlightPhase.createEmergency(features).covers(features);
 	}
 	
 	/**
@@ -194,6 +254,31 @@ public class FlightPhase extends Criticality {
 		}
 		
 		return covers;
+	}
+	
+	/**
+	 * Reports the flight phase of features.
+	 * 
+	 * @param features the features
+	 * 
+	 * @return the flight phase report of the features
+	 */
+	public static String report(Features features) {
+		String report = Difficulty.report(features) + Severity.report(features);
+		
+		if (FlightPhase.areCruise(features)) {
+			report = report.concat("-> cruise\n");
+		} else if (FlightPhase.areTransition(features)) {
+			report = report.concat("-> transition\n");
+		} else if (FlightPhase.areTerminal(features)) {
+			report = report.concat("-> terminal");
+		} else if (FlightPhase.areUrgency(features)) {
+			report = report.concat("-> urgency");
+		} else if (FlightPhase.areEmergency(features)) {
+			report = report.concat("-> emergency");
+		}
+		
+		return report;
 	}
 	
 }
