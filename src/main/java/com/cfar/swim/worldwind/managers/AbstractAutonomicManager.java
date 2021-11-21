@@ -967,6 +967,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 							// managed scenario features and initial tuning
 							// TODO: environment versus scenario obstacles
 							Features features = new Features(managedScenario, this.getFeatureHorizon());
+							Logging.logger().info(features.toString());
 							Logging.logger().info(FlightPhase.report(features));
 							
 							PlannerTuning tuning = this.createPlannerTuning(plannerSpec, features);
@@ -1136,6 +1137,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 						tuning.getFeatures().extractFeatures(getSourceScenario());
 						Logging.logger().info("tuning " + tuning.getSpecification().getId());
 						Logging.logger().info(tuning.getFeatures().toString());
+						Logging.logger().info(FlightPhase.report(tuning.getFeatures()));
 						List<Properties<Planner>> candidates = tuning.tune();
 						// TODO: default candidate
 						tuning.getSpecification().setProperties(candidates.get(0));
