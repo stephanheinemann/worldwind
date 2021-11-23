@@ -29,7 +29,7 @@
 		</fx:aerodrome>
 	</fx:departure>
 	<fx:flightIdentification>
-		<fx:aircraftIdentification>CFAR002</fx:aircraftIdentification>
+		<fx:aircraftIdentification>CFAR003</fx:aircraftIdentification>
 	</fx:flightIdentification>
 	<fx:operator>
 		<fb:designatorIcao>UVC</fb:designatorIcao>

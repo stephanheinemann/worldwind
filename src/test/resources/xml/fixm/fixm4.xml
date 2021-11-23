@@ -6,7 +6,7 @@
 	<fx:aircraft>
 		<fx:aircraftType>
 			<fx:type>
-				<fx:icaoAircraftTypeDesignator>IRIS</fx:icaoAircraftTypeDesignator>
+				<fx:icaoAircraftTypeDesignator>H135</fx:icaoAircraftTypeDesignator>
 			</fx:type>
 		</fx:aircraftType>
 	</fx:aircraft>
@@ -29,7 +29,7 @@
 		</fx:aerodrome>
 	</fx:departure>
 	<fx:flightIdentification>
-		<fx:aircraftIdentification>CFAR002</fx:aircraftIdentification>
+		<fx:aircraftIdentification>CFAR004</fx:aircraftIdentification>
 	</fx:flightIdentification>
 	<fx:operator>
 		<fb:designatorIcao>UVC</fb:designatorIcao>
@@ -39,39 +39,26 @@
 			<fx:element>
 				<fx:point4D>
 					<fx:level>
-						<fb:altitude uom="FT">300</fb:altitude>
+						<fb:altitude uom="M">60</fb:altitude>
 					</fx:level>
 					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
-						<fb:pos>48.5622971532934 -123.38203411641872</fb:pos>
+						<fb:pos>48.55821998077949 -123.3754553095237</fb:pos>
 					</fx:position>
 					<fx:time>
-						<fx:absoluteTime>2021-11-12T18:00:00Z</fx:absoluteTime>
+						<fx:absoluteTime>2021-12-01T18:00:00Z</fx:absoluteTime>
 					</fx:time>
 				</fx:point4D>
 			</fx:element>
 			<fx:element>
 				<fx:point4D>
 					<fx:level>
-						<fb:altitude uom="FT">150</fb:altitude>
+						<fb:altitude uom="M">60</fb:altitude>
 					</fx:level>
 					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
-						<fb:pos>48.555638059159676 -123.37837225051449</fb:pos>
+						<fb:pos>48.554225130711494 -123.38721812784367</fb:pos>
 					</fx:position>
 					<fx:time>
-						<fx:absoluteTime>2021-11-12T18:02:00Z</fx:absoluteTime>
-					</fx:time>
-				</fx:point4D>
-			</fx:element>
-			<fx:element>
-				<fx:point4D>
-					<fx:level>
-						<fb:altitude uom="FT">500</fb:altitude>
-					</fx:level>
-					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
-						<fb:pos>48.549397243692745 -123.37844623994394</fb:pos>
-					</fx:position>
-					<fx:time>
-						<fx:absoluteTime>2021-11-12T18:05:00Z</fx:absoluteTime>
+						<fx:absoluteTime>2021-12-01T18:08:00Z</fx:absoluteTime>
 					</fx:time>
 				</fx:point4D>
 			</fx:element>
