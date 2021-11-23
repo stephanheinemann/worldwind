@@ -261,7 +261,9 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 							return result;
 						}
 					});
-			performances.addAll(this.get(tuning));	
+			if (this.hasPerformances(tuning)) {
+				performances.addAll(this.get(tuning));
+			}
 			for (Performance performance : performances) {
 				reputation = reputation.concat(performance.toString() + "\n");
 			}

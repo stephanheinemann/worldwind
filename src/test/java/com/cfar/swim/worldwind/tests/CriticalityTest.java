@@ -30,6 +30,11 @@
 package com.cfar.swim.worldwind.tests;
 
 import java.net.URI;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.TreeSet;
 
 import org.junit.Test;
 
@@ -38,6 +43,7 @@ import com.cfar.swim.worldwind.managing.Difficulty;
 import com.cfar.swim.worldwind.managing.FeatureTuning;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.KnowledgeBase;
+import com.cfar.swim.worldwind.managing.Performance;
 import com.cfar.swim.worldwind.managing.Severity;
 import com.cfar.swim.worldwind.managing.Tuning;
 import com.cfar.swim.worldwind.registries.managers.AbstractManagerProperties;
@@ -138,6 +144,75 @@ public class CriticalityTest {
 				+ ", terminal = " + termCount
 				+ ", urgency = " + urgCount
 				+ ", emergency = " + emgCount);
+	}
+	
+	@Test
+	public void testPlot() {
+		KnowledgeBase knowledgeBase = new KnowledgeBase();
+		knowledgeBase.load(URI.create(AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE));
+		
+		ZonedDateTime epoch = ZonedDateTime.parse("2021-11-14T16:23:51.594821-08:00[America/Vancouver]");//ZonedDateTime.now();
+		Duration tolerance = Duration.ofMinutes(5);
+		
+		HashMap<ZonedDateTime, TreeSet<Performance>> epochPerformances = new HashMap<>();
+		HashMap<ZonedDateTime, Tuning<?>> epochTuning = new HashMap<>();
+		
+		// filter
+		for (Tuning<?> tuning : knowledgeBase.getReputation().keySet()) {
+			if (knowledgeBase.getReputation().hasPerformances(tuning)) {
+				for (Performance performance : knowledgeBase.getReputation().get(tuning)) {
+					if (performance.getEpoch().isAfter(epoch.minus(tolerance))
+						&& performance.getEpoch().isBefore(epoch.plus(tolerance))) {
+						
+						if (epochPerformances.containsKey(performance.getEpoch())) {
+							epochPerformances.get(performance.getEpoch()).add(performance);
+						} else {
+							TreeSet<Performance> orderedPerformnces = new TreeSet<>(
+									new Comparator<Performance>() {
+										@Override
+										public int compare(Performance p1, Performance p2) {
+											return p1.getQuantity().compareTo(p2.getQuantity());
+										}});
+							orderedPerformnces.add(performance);
+							epochPerformances.put(performance.getEpoch(), orderedPerformnces);
+							epochTuning.put(performance.getEpoch(), tuning);
+						}
+					}
+				}
+			}
+		}
+		
+		// plot
+		for (ZonedDateTime performanceEpoch : epochPerformances.keySet()) {
+			System.out.println("________________________________________________________________________________");
+			System.out.println("# gnuplot quality");
+			System.out.println("set title \"Performance Epoch: "
+					+ performanceEpoch + "\"\n"
+					+ "set xlabel \"Duration Quantity [s]\"\n"
+					+ "set ylabel \"Trajectory Quality\"\n"
+					+ "set style line 1 lt 1 lc rgb \"#0000A0\" lw 1 pt 7 ps 2\n"
+					+ "plot \"plot.dat\" using 1:2 with lp ls 1 title \""
+					+ epochTuning.get(performanceEpoch).getSpecification().getId()
+					+ "\" at end"
+					);
+			System.out.println("# gnuplot performance");
+			System.out.println("set title \"Performance Epoch: "
+					+ performanceEpoch + "\"\n"
+					+ "set xlabel \"Duration Quantity [s]\"\n"
+					+ "set ylabel \"Planner Performance\"\n"
+					+ "set style line 1 lt 1 lc rgb \"#0000A0\" lw 1 pt 7 ps 2\n"
+					+ "plot \"plot.dat\" using 1:3 with lp ls 1 title \""
+					+ epochTuning.get(performanceEpoch).getSpecification().getId()
+					+ "\" at end"
+					);
+			
+			System.out.println("# gnuplot plot.dat");
+			for (Performance epochPerformance : epochPerformances.get(performanceEpoch)) {
+				System.out.println(epochPerformance.getQuantity().get()
+						+ "\t" + epochPerformance.getQuality().get()
+						+ "\t" + epochPerformance.get());
+			}
+		}
 	}
 	
 }
