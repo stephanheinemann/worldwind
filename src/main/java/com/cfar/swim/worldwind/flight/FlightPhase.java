@@ -271,11 +271,11 @@ public class FlightPhase extends Criticality {
 		} else if (FlightPhase.areTransition(features)) {
 			report = report.concat("-> transition\n");
 		} else if (FlightPhase.areTerminal(features)) {
-			report = report.concat("-> terminal");
+			report = report.concat("-> terminal\n");
 		} else if (FlightPhase.areUrgency(features)) {
-			report = report.concat("-> urgency");
+			report = report.concat("-> urgency\n");
 		} else if (FlightPhase.areEmergency(features)) {
-			report = report.concat("-> emergency");
+			report = report.concat("-> emergency\n");
 		}
 		
 		return report;

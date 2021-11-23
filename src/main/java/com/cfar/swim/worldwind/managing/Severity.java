@@ -368,7 +368,7 @@ public class Severity extends Criticality {
 		substantial.setPoiObstaclesCostMinRange(Range.atLeast(0d));
 		substantial.setPoiObstaclesCostPolicyRange(Range.lessThan(Double.POSITIVE_INFINITY));
 		
-		// positive up to risk-exceeding obstacle cost inside environment; or
+		// positive up to risk-exceeding obstacle cost inside environment
 		substantial.setEnvironmentObstaclesCostMinRange(Range.greaterThan(0d));
 		
 		return substantial;
@@ -403,7 +403,7 @@ public class Severity extends Criticality {
 		// positive up to risk-exceeding obstacle cost inside POI bounding box, and
 		severe.setPoiObstaclesCostMinRange(Range.greaterThan(0d));
 		
-		// risk-exceeding obstacle cost inside environment; or
+		// risk-exceeding obstacle cost inside environment
 		severe.setEnvironmentObstaclesCostPolicyRange(Range.singleton(Double.POSITIVE_INFINITY));
 		
 		return severe;
@@ -436,7 +436,7 @@ public class Severity extends Criticality {
 		// risk-exceeding obstacle cost inside POI bounding box, and
 		critical.setPoiObstaclesCostPolicyRange(Range.singleton(Double.POSITIVE_INFINITY));
 		
-		// risk-exceeding obstacle cost inside environment; or
+		// risk-exceeding obstacle cost inside environment
 		critical.setEnvironmentObstaclesCostPolicyRange(Range.singleton(Double.POSITIVE_INFINITY));
 		
 		return critical;
