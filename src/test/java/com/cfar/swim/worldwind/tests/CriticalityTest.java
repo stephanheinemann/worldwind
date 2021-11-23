@@ -46,7 +46,10 @@ import com.cfar.swim.worldwind.managing.KnowledgeBase;
 import com.cfar.swim.worldwind.managing.Performance;
 import com.cfar.swim.worldwind.managing.Severity;
 import com.cfar.swim.worldwind.managing.Tuning;
+import com.cfar.swim.worldwind.registries.Properties;
 import com.cfar.swim.worldwind.registries.managers.AbstractManagerProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 
 /**
  * Performs criticality tests.
@@ -151,8 +154,9 @@ public class CriticalityTest {
 		KnowledgeBase knowledgeBase = new KnowledgeBase();
 		knowledgeBase.load(URI.create(AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE));
 		
-		ZonedDateTime epoch = ZonedDateTime.parse("2021-11-14T16:23:51.594821-08:00[America/Vancouver]");//ZonedDateTime.now();
-		Duration tolerance = Duration.ofMinutes(5);
+		ZonedDateTime epoch = // ZonedDateTime.parse("2021-11-14T16:23:51.594821-08:00[America/Vancouver]");
+				ZonedDateTime.now();
+		Duration tolerance = Duration.ofMinutes(2);
 		
 		HashMap<ZonedDateTime, TreeSet<Performance>> epochPerformances = new HashMap<>();
 		HashMap<ZonedDateTime, Tuning<?>> epochTuning = new HashMap<>();
@@ -184,6 +188,35 @@ public class CriticalityTest {
 		
 		// plot
 		for (ZonedDateTime performanceEpoch : epochPerformances.keySet()) {
+			Properties<?> properties = epochTuning.get(performanceEpoch).getSpecification().getProperties();
+			if (properties instanceof OADStarProperties) {
+				OADStarProperties oadsp = (OADStarProperties) properties;
+				System.out.println("OAD* Properties:\n"
+						+ "cost policy = " + oadsp.getCostPolicy() + "\n"
+						+ "risk policy = " + oadsp.getRiskPolicy() + "\n"
+						+ "min quality = " + oadsp.getMinimumQuality() + "\n"
+						+ "max quality = " + oadsp.getMaximumQuality() + "\n"
+						+ "quality imp = " + oadsp.getQualityImprovement() + "\n"
+						+ "sig change  = " + oadsp.getSignificantChange());
+			} else if (properties instanceof OADRRTreeProperties) {
+				OADRRTreeProperties oadrrtp = (OADRRTreeProperties) properties;
+				System.out.println("OADRRT Properties:\n"
+						+ "cost policy    = " + oadrrtp.getCostPolicy() + "\n"
+						+ "risk policy    = " + oadrrtp.getRiskPolicy() + "\n"
+						+ "max iterations = " + oadrrtp.getMaxIterations() + "\n"
+						+ "goal bias      = " + oadrrtp.getBias() + "\n"
+						+ "epsilon        = " + oadrrtp.getEpsilon() + "\n"
+						+ "neighbor limit = " + oadrrtp.getNeighborLimit() + "\n"
+						+ "goal threshold = " + oadrrtp.getGoalThreshold() + "\n"
+						+ "extension      = " + oadrrtp.getExtension() + "\n"
+						+ "strategy       = " + oadrrtp.getStrategy() + "\n"
+				        + "sampling       = " + oadrrtp.getSampling() + "\n"
+				        + "min quality    = " + oadrrtp.getMinimumQuality() + "\n"
+				        + "max quality    = " + oadrrtp.getMaximumQuality() + "\n"
+				        + "quality imp    = " + oadrrtp.getQualityImprovement() + "\n"
+				        + "sig change     = " + oadrrtp.getSignificantChange());
+			}
+			
 			System.out.println("________________________________________________________________________________");
 			System.out.println("# gnuplot quality");
 			System.out.println("set title \"Performance Epoch: "

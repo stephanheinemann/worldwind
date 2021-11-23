@@ -99,8 +99,8 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 	            Box envBox = new Box(bb);
 	            double side = envBox.getRLength() / properties.getDivision();
 	            Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
-	            int sCells = (int) Math.ceil(envBox.getSLength() / side);
-	            int tCells = (int) Math.ceil(envBox.getTLength() / side);
+	            int sCells = (int) Math.round(envBox.getSLength() / side);
+	            int tCells = (int) Math.round(envBox.getTLength() / side);
 	            environment = new PlanningGrid(envCube, properties.getDivision(), sCells, tCells);
 	            environment.setThreshold(this.getScenario().getThreshold());
 	            environment.setGlobe(this.getScenario().getGlobe());
