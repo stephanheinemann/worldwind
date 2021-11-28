@@ -233,9 +233,9 @@ public class RegularGrid extends Box {
 	 */
 	public void addChildren(double rLength, double sLength, double tLength) {
 		if ((this.rLength >= rLength) && (this.sLength >= sLength) && (this.tLength >= tLength)) {
-			int rCells = (int) Math.round(this.rLength / rLength);
-			int sCells = (int) Math.round(this.sLength / sLength);
-			int tCells = (int) Math.round(this.tLength / tLength);
+			int rCells = Math.max(1, (int) Math.round(this.rLength / rLength));
+			int sCells = Math.max(1, (int) Math.round(this.sLength / sLength));
+			int tCells = Math.max(1, (int) Math.round(this.tLength / tLength));
 			
 			this.addChildren(rCells, sCells, tCells);
 		} else {

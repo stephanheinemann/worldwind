@@ -182,18 +182,18 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		this.timeController = new TimeController(0);
 		this.threshold = 0d;
 		this.globe = new Earth();
-		// --------------------- Greater Victoria Area ------------------------
+		// --------------------- CfAR Flight Test Area ------------------------
 		this.sector = new Sector(
-				Angle.fromDegrees(48.3d), Angle.fromDegrees(48.8d),
-				Angle.fromDegrees(-124d), Angle.fromDegrees(-123d));
+				Angle.fromDegrees(48.55482499606862d), Angle.fromDegrees(48.55735635871107d),
+				Angle.fromDegrees(-123.38536485472143d), Angle.fromDegrees(-123.37733705729399d));
 		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(
-				this.globe, 1d, this.sector, 0d, 10000d);
+				this.globe, 1d, this.sector, 55.00000149932466d, 114.26047673211076d);
 		Box envBox = new Box(sectorBox);
-		double side = sectorBox.getRLength() / 40d;
+		double side = sectorBox.getRLength() / 30d;
 		Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
-        int sCells = (int) Math.ceil(envBox.getSLength() / side);
-        int tCells = (int) Math.ceil(envBox.getTLength() / side);
-		this.environment = new PlanningGrid(envCube, 40, sCells, tCells);
+		int sCells = Math.max(1, (int) Math.round(envBox.getSLength() / side));
+		int tCells = Math.max(1, (int) Math.round(envBox.getTLength() / side));
+		this.environment = new PlanningGrid(envCube, 30, sCells, tCells);
 		// --------------------------------------------------------------------
 		this.environment.setThreshold(0d);
 		this.environment.setGlobe(this.globe);
