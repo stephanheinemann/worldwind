@@ -135,6 +135,7 @@
 				<directory>src/main/resources</directory>
 				<includes>
 					<include>com/cfar/swim/worldwind/managers/smac/*.pcs</include>
+					<include>com/cfar/swim/worldwind/terrain/*.tif</include>
 					<include>com/cfar/swim/worldwind/**/*.properties</include>
 					<include>config/*.xml</include>
 					<include>logback.xml</include>
@@ -323,6 +324,11 @@
 			<artifactId>junit</artifactId>
 			<version>4.13.2</version>
 			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.gdal</groupId>
+			<artifactId>gdal</artifactId>
+			<version>3.2.0</version>
 		</dependency>
 		<dependency>
 			<groupId>com.uvic-cfar.swim.nasa.worldwind</groupId>

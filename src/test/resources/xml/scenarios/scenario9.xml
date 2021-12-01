@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <safcs:scenario
 	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
-	id="Scenario 9" time="2021-12-01T18:00:50.993Z"
-	threshold="-2.7397260273972535" globe="Earth">
+	id="Scenario 9" time="2021-12-01T18:01:52.992Z"
+	threshold="-2.617801047120423" globe="Earth">
 	<safcs:environment>
-		<safcs:grid division="40" bottom="55.00000149932466"
-			top="114.26047673211076">
-			<safcs:southWest latitude="48.55482499606862"
-				longitude="-123.38536485472143" />
-			<safcs:northEast latitude="48.55735635871107"
-				longitude="-123.37733705729399" />
+		<safcs:grid division="40" bottom="35.00000029272232"
+			top="109.07664008214404">
+			<safcs:southWest latitude="48.554824905209415"
+				longitude="-123.38536485471425" />
+			<safcs:northEast latitude="48.5573563183491"
+				longitude="-123.37733690357688" />
 		</safcs:grid>
 	</safcs:environment>
 	<safcs:obstacles>
@@ -206,16 +206,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
-		<safcs:box leftWidth="200.0" rightWidth="200.0"
-			bottom="85.0" top="100.0" bottomDatum="AGL" topDatum="AGL">
-			<safcs:begin latitude="48.55615"
-				longitude="-123.38642665730919" />
-			<safcs:end latitude="48.55615"
-				longitude="-123.37631556429177" />
-			<safcs:costInterval id="airspace11" cost="20.0"
-				enabled="true" start="2021-11-12T18:00:00.000Z"
-				end="2022-11-12T18:00:00.000Z" />
-		</safcs:box>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.558372302859254" longitude="-123.38170290334992" />
@@ -734,6 +724,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
+		<safcs:box leftWidth="200.0" rightWidth="200.0"
+			bottom="85.0" top="100.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace11" cost="20.0"
+				enabled="false" start="2021-11-12T18:00:00.000Z"
+				end="2022-11-12T18:00:00.000Z" />
+		</safcs:box>
 		<safcs:sphere radius="26.195861487537844"
 			centerDatum="ASL">
 			<safcs:center altitude="80.0"
@@ -964,16 +964,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
-		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="3.0"
-			top="85.0" bottomDatum="AGL" topDatum="AGL">
-			<safcs:begin latitude="48.55615"
-				longitude="-123.38642665730919" />
-			<safcs:end latitude="48.55615"
-				longitude="-123.37631556429177" />
-			<safcs:costInterval id="airspace12" cost="5.0"
-				enabled="true" start="2021-11-12T18:00:00.000Z"
-				end="2022-11-12T18:00:00.000Z" />
-		</safcs:box>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.55736969340824" longitude="-123.38166276272074" />
@@ -1211,6 +1201,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
+		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="3.0"
+			top="85.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace12" cost="5.0"
+				enabled="false" start="2021-11-12T18:00:00.000Z"
+				end="2022-11-12T18:00:00.000Z" />
+		</safcs:box>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"

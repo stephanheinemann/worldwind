@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.session;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -63,6 +64,7 @@ import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.terrain.Terrain;
 import com.cfar.swim.worldwind.util.Enableable;
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -71,6 +73,7 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.terrain.CompoundElevationModel;
 
 /**
  * Realizes a planning scenario.
@@ -84,6 +87,9 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	
 	/** the default scenario identifier */
 	public static final String DEFAULT_SCENARIO_ID = "Default Scenario";
+	
+	/** the new scenario identifier */
+	public static final String NEW_SCENARIO_ID = "New Scenario";
 	
 	/** the property change support of this scenario */
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -105,6 +111,9 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	
 	/** the globe of this scenario */
 	private Globe globe;
+	
+	/** the terrain of this scenario */
+	private Terrain terrain;
 	
 	/** the planning sector on the globe of this scenario */
 	private Sector sector;
@@ -182,6 +191,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		this.timeController = new TimeController(0);
 		this.threshold = 0d;
 		this.globe = new Earth();
+		this.terrain = new Terrain();
 		// --------------------- CfAR Flight Test Area ------------------------
 		this.sector = new Sector(
 				Angle.fromDegrees(48.55482499606862d), Angle.fromDegrees(48.55735635871107d),
@@ -357,6 +367,15 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 */
 	public synchronized void addObstaclesChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("obstacles", listener);
+	}
+	
+	/**
+	 * Adds a terrain change listener to this scenario.
+	 * 
+	 * @param listener the terrain change listener to be added
+	 */
+	public synchronized void addTerrainChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("terrain", listener);
 	}
 	
 	// TODO: be more conservative with firing property change listeners
@@ -610,6 +629,92 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		} else {
 			throw new IllegalArgumentException();
 		}
+	}
+	
+	/**
+	 * Adds a terrain tile to the elevation model of the globe of this
+	 * scenario.
+	 * 
+	 * @param terrain the terrain file containing the terrain tile to be added
+	 */
+	public synchronized void addTerrain(File terrain) {
+		if (this.globe.getElevationModel() instanceof CompoundElevationModel) {
+			CompoundElevationModel elevations =
+					(CompoundElevationModel) this.globe.getElevationModel();
+			// remove and add to sort
+			elevations.removeElevationModel(this.terrain);
+			boolean added = this.terrain.add(terrain);
+			elevations.addElevationModel(this.terrain);
+			
+			if (added) {
+				this.pcs.firePropertyChange("terrain", null, this.terrain);
+				// obstacles with reference to AGL may be affected
+				Set<Obstacle> obstacles = this.getObstacles();
+				this.submitClearObstacles();
+				this.commitObstacleChange();
+				this.submitAddObstacles(obstacles);
+				// NOTE: aircraft, waypoints and trajectory may become invalid
+			}
+		}
+	}
+	
+	/**
+	 * Removes a terrain tile from the elevation model of the globe of this
+	 * scenario.
+	 * 
+	 * @param terrain the name of the terrain tile to be removed
+	 */
+	public synchronized void removeTerrain(String terrain) {
+		if (this.globe.getElevationModel() instanceof CompoundElevationModel) {
+			CompoundElevationModel elevations =
+					(CompoundElevationModel) this.globe.getElevationModel();
+			// remove and add to sort
+			elevations.removeElevationModel(this.terrain);
+			boolean removed = this.terrain.remove(terrain);
+			elevations.addElevationModel(this.terrain);
+			
+			if (removed) {
+				this.pcs.firePropertyChange("terrain", null, this.terrain);
+				// obstacles with reference to AGL may be affected
+				Set<Obstacle> obstacles = this.getObstacles();
+				this.submitClearObstacles();
+				this.commitObstacleChange();
+				this.submitAddObstacles(obstacles);
+				// NOTE: aircraft, waypoints and trajectory may become invalid
+			}
+		}
+	}
+	
+	/**
+	 * Removes all added terrain tiles from the elevation model of the globe of
+	 * this scenario.
+	 */
+	public synchronized void clearTerrain() {
+		if (this.globe.getElevationModel() instanceof CompoundElevationModel) {
+			CompoundElevationModel elevations =
+					(CompoundElevationModel) this.globe.getElevationModel();
+			elevations.removeElevationModel(this.terrain);
+			if (!this.terrain.isEmpty()) {
+				this.terrain.clear();
+				this.pcs.firePropertyChange("terrain", null, this.terrain);
+				// obstacles with reference to AGL may be affected
+				Set<Obstacle> obstacles = this.getObstacles();
+				this.submitClearObstacles();
+				this.commitObstacleChange();
+				this.submitAddObstacles(obstacles);
+				// NOTE: aircraft, waypoints and trajectory may become invalid
+			}
+		}
+	}
+	
+	/**
+	 * Gets the names of the terrain tiles that have been added to the
+	 * elevation model of the globe of this scenario.
+	 * 
+	 * @return the names of the terrain tiles that have been added
+	 */
+	public synchronized Set<String> getTerrainNames() {
+		return this.terrain.getNames();
 	}
 	
 	/**
