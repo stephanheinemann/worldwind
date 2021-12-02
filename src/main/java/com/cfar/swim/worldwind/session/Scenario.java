@@ -232,7 +232,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Identifiable#getId()
 	 */
 	@Override
-	public synchronized String getId() {
+	public String getId() {
 		return this.id;
 	}
 	
@@ -242,7 +242,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Enableable#enable()
 	 */
 	@Override
-	public synchronized void enable() {
+	public void enable() {
 		this.isEnabled = true;
 		this.pcs.firePropertyChange("isEnabled", null, this.isEnabled);
 	}
@@ -253,7 +253,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Enableable#disable()
 	 */
 	@Override
-	public synchronized void disable() {
+	public void disable() {
 		this.isEnabled = false;
 		this.pcs.firePropertyChange("isEnabled", null, this.isEnabled);
 	}
@@ -266,7 +266,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Enableable#isEnabled()
 	 */
 	@Override
-	public synchronized boolean isEnabled() {
+	public boolean isEnabled() {
 		return this.isEnabled;
 	}
 	
@@ -1757,7 +1757,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public synchronized final boolean equals(Object o) {
+	public final boolean equals(Object o) {
 		boolean equals = false;
 		
 		if (this == o) {
@@ -1777,7 +1777,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public synchronized final int hashCode() {
+	public final int hashCode() {
 		return this.id.hashCode();
 	}
 	
