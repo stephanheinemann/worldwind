@@ -799,6 +799,7 @@ implements DynamicPlanner, LifelongPlanner {
 	protected synchronized void suspend() {
 		try {
 			this.wait();
+			this.updateDynamicObstacles();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}
