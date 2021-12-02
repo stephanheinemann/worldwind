@@ -67,6 +67,7 @@ import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.terrain.Terrain;
 import com.cfar.swim.worldwind.util.Enableable;
 import com.cfar.swim.worldwind.util.Identifiable;
+import com.cfar.swim.worldwind.util.ResourceBundleLoader;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -83,13 +84,13 @@ import gov.nasa.worldwind.terrain.CompoundElevationModel;
  */
 public class Scenario implements Identifiable, Enableable, StructuralChangeListener, ObstacleManager {
 	
-	// TODO: default scenario id from dictionary
-	
 	/** the default scenario identifier */
-	public static final String DEFAULT_SCENARIO_ID = "Default Scenario";
+	public static final String DEFAULT_SCENARIO_ID = ResourceBundleLoader
+			.getDictionaryBundle().getString("scenario.id.default");
 	
 	/** the new scenario identifier */
-	public static final String NEW_SCENARIO_ID = "New Scenario";
+	public static final String NEW_SCENARIO_ID = ResourceBundleLoader
+			.getDictionaryBundle().getString("scenario.id.new");
 	
 	/** the property change support of this scenario */
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);

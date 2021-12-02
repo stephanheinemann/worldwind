@@ -135,7 +135,7 @@
 				<directory>src/main/resources</directory>
 				<includes>
 					<include>com/cfar/swim/worldwind/managers/smac/*.pcs</include>
-					<include>com/cfar/swim/worldwind/terrain/*.tif</include>
+					<!--include>com/cfar/swim/worldwind/terrain/*.tif</include-->
 					<include>com/cfar/swim/worldwind/**/*.properties</include>
 					<include>config/*.xml</include>
 					<include>logback.xml</include>
