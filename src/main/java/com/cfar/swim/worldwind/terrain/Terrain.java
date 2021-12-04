@@ -54,11 +54,21 @@ import gov.nasa.worldwind.terrain.LocalElevationModel;
  */
 public class Terrain extends LocalElevationModel {
 	
+	/** the cache of terrain names and their associated tiles */
+	private static Map<String, LocalTile> terrainCache = new HashMap<>();
+	
 	/** the terrain names and their associated tiles of this terrain */
 	private Map<String, LocalTile> terrain = new HashMap<>();
 	
 	/** the last added tile of this terrain */
 	private LocalTile addedTile = null;
+	
+	/**
+	 * Empties the terrain cache.
+	 */
+	public static void emptyCache() {
+		Terrain.terrainCache.clear();
+	}
 	
 	/**
 	 * Adds a terrain tile to this terrain.
@@ -71,14 +81,23 @@ public class Terrain extends LocalElevationModel {
 		boolean added = false;
 		
 		if (!this.terrain.containsKey(terrain.getName())) {
-			try {
-				this.addElevations(terrain);
-				if (null != this.addedTile) {
-					this.terrain.put(terrain.getName(), this.addedTile);
-					added = true;
+			if (Terrain.terrainCache.containsKey(terrain.getName())) {
+				this.tiles.add(Terrain.terrainCache.get(terrain.getName()));
+				this.adjustMinMax(Terrain.terrainCache.get(terrain.getName()));
+				this.terrain.put(terrain.getName(),
+						Terrain.terrainCache.get(terrain.getName()));
+				added = true;
+			} else {
+				try {
+					this.addElevations(terrain);
+					if (null != this.addedTile) {
+						Terrain.terrainCache.put(terrain.getName(), this.addedTile);
+						this.terrain.put(terrain.getName(), this.addedTile);
+						added = true;
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
 		
