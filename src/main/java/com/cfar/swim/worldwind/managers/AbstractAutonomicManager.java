@@ -891,7 +891,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 				managedScenario.setGlobe(this.getSourceScenario().getGlobe());
 				
 				// managed scenario aircraft
-				if (sourceScenario.hasAircraft()) {
+				if (this.getSourceScenario().hasAircraft()) {
 					AircraftFactory aircraftFactory = new AircraftFactory(
 							managedSession.getSetup().getAircraftSpecification());
 					managedScenario.setAircraft(aircraftFactory.createInstance());
@@ -1050,6 +1050,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			this.plannerExecutor.shutdown();
 			this.setActivePlanner(null);
 			this.getSourceScenario().clearTrajectory();
+			this.setSourceScenario(null);
 		}
 		
 		// save knowledge base
@@ -1216,7 +1217,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		
 		TrajectoryStylist.styleTrajectory(trajectory);
 		scenario.setTrajectory(trajectory);
-		Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
+		Trajectory sourceTrajectory = this.getSourceScenario().getTrajectory();
 		Logging.logger().info("current source trajectory = "  + sourceTrajectory);
 		Logging.logger().info("evaluated trajectory = " + trajectory);
 		
