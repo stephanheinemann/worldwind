@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <safcs:scenario
 	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
-	id="Cruise 2 Planning Grid" time="2021-12-01T18:00:00.000Z"
+	id="Cruise 4 Planning Grid" time="2021-12-01T18:00:00.000Z"
 	threshold="0.0" globe="Earth">
 	<safcs:environment>
 		<safcs:grid division="40"
 			bottom="35.000000284555874" top="109.07377677196438">
-			<safcs:southWest latitude="48.5548249915215"
-				longitude="-123.38536485472099" />
-			<safcs:northEast latitude="48.557356352848856"
-				longitude="-123.37733706660025" />
+			<safcs:southWest latitude="48.554824902616254"
+				longitude="-123.38536485471394" />
+			<safcs:northEast latitude="48.55735631241543"
+				longitude="-123.37733691288348" />
 		</safcs:grid>
 	</safcs:environment>
 	<safcs:obstacles>
@@ -20,6 +20,30 @@
 			<safcs:end latitude="48.55615"
 				longitude="-123.37631556429177" />
 			<safcs:costInterval id="airspace10" cost="100.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:box leftWidth="20.0" rightWidth="20.0" bottom="40.0"
+			top="60.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55705" longitude="-123.37975" />
+			<safcs:end latitude="48.55669" longitude="-123.37975" />
+			<safcs:costInterval id="airspace2" cost="10.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:box leftWidth="50.0" rightWidth="50.0" bottom="50.0"
+			top="100.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55687" longitude="-123.38291" />
+			<safcs:end latitude="48.55753" longitude="-123.38211" />
+			<safcs:costInterval id="airspace3" cost="20.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:box leftWidth="20.0" rightWidth="20.0" bottom="40.0"
+			top="60.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.5564" longitude="-123.37975" />
+			<safcs:end latitude="48.556" longitude="-123.37975" />
+			<safcs:costInterval id="airspace4" cost="40.0"
 				enabled="true" start="2021-11-01T18:00:00.000Z"
 				end="2022-11-01T18:00:00.000Z" />
 		</safcs:box>

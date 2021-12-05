@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <safcs:scenario
 	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
-	id="Cruise 2 Planning Grid" time="2021-12-01T18:00:00.000Z"
+	id="Cruise 3 Planning Grid" time="2021-12-01T18:00:00.000Z"
 	threshold="0.0" globe="Earth">
 	<safcs:environment>
 		<safcs:grid division="40"
 			bottom="35.000000284555874" top="109.07377677196438">
-			<safcs:southWest latitude="48.5548249915215"
-				longitude="-123.38536485472099" />
-			<safcs:northEast latitude="48.557356352848856"
-				longitude="-123.37733706660025" />
+			<safcs:southWest latitude="48.554824902616254"
+				longitude="-123.38536485471394" />
+			<safcs:northEast latitude="48.55735631241543"
+				longitude="-123.37733691288348" />
 		</safcs:grid>
 	</safcs:environment>
 	<safcs:obstacles>
@@ -20,6 +20,16 @@
 			<safcs:end latitude="48.55615"
 				longitude="-123.37631556429177" />
 			<safcs:costInterval id="airspace10" cost="100.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="3.0"
+			top="85.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace12" cost="5.0"
 				enabled="true" start="2021-11-01T18:00:00.000Z"
 				end="2022-11-01T18:00:00.000Z" />
 		</safcs:box>
@@ -46,8 +56,8 @@
 	</safcs:obstacles>
 	<safcs:aircraft type="IRIS" cid="FRIEND" radius="10.0"
 		centerDatum="ASL">
-		<safcs:center altitude="50.0"
-			latitude="48.55699624493378" longitude="-123.37787495017074" />
+		<safcs:center altitude="40.0"
+			latitude="48.55513582047792" longitude="-123.37785220079859" />
 		<safcs:costInterval id="IRIS" cost="100.0"
 			enabled="true" start="2011-12-04T01:08:03.566Z"
 			end="2031-12-04T01:08:03.566Z" />
@@ -63,22 +73,28 @@
 	</safcs:aircraft>
 	<safcs:waypoints>
 		<safcs:waypoint designator="0" cost="INF" dtg="INF"
-			altitude="50.0" latitude="48.55699624493378"
-			longitude="-123.37787495017074">
+			altitude="40.0" latitude="48.55513582047792"
+			longitude="-123.37785220079859">
 			<safcs:depiction symbology="TacticalPoint"
 				sidc="GFGPGPRI------X" text="0" image="symbols/waypoint-64x64.png" />
 		</safcs:waypoint>
 		<safcs:waypoint designator="1" cost="INF" dtg="INF"
-			altitude="60.0" latitude="48.555197299038525"
-			longitude="-123.38154097361758">
+			altitude="50.0" latitude="48.55686699981003"
+			longitude="-123.38015773758055">
 			<safcs:depiction symbology="TacticalPoint"
 				sidc="GFGPGPRI------X" text="1" image="symbols/waypoint-64x64.png" />
 		</safcs:waypoint>
 		<safcs:waypoint designator="2" cost="INF" dtg="INF"
-			altitude="50.0" latitude="48.55697404210403"
-			longitude="-123.38480194298893">
+			altitude="50.0" latitude="48.55516898702187"
+			longitude="-123.3828067610814">
 			<safcs:depiction symbology="TacticalPoint"
 				sidc="GFGPGPRI------X" text="2" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+		<safcs:waypoint designator="3" cost="INF" dtg="INF"
+			altitude="40.0" latitude="48.556960206248"
+			longitude="-123.3845870713142">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="3" image="symbols/waypoint-64x64.png" />
 		</safcs:waypoint>
 	</safcs:waypoints>
 	<safcs:planner riskPolicy="SAFETY" costPolicy="AVERAGE">

@@ -9,13 +9,13 @@
     http://def.wmo.int/metce/2013 http://schemas.wmo.int/metce/1.1/metce.xsd
     http://www.opengis.net/samplingSpatial/2.0 http://schemas.opengis.net/samplingSpatial/2.0/spatialSamplingFeature.xsd"
 
-    gml:id="sigmet1"
+    gml:id="sigmet2"
     status="NORMAL">
 
     <iwxxm:issuingAirTrafficServicesUnit>
         <aixm:Unit gml:id="fic-YVR">
             <aixm:timeSlice>
-                <aixm:UnitTimeSlice gml:id="fic-YVR-tc">
+                <aixm:UnitTimeSlice gml:id="fic-YVR-ts">
                     <gml:validTime/>
                     <aixm:interpretation>BASELINE</aixm:interpretation>
                     <aixm:name>YVR FIC</aixm:name>
@@ -28,7 +28,7 @@
     <iwxxm:originatingMeteorologicalWatchOffice>
         <aixm:Unit gml:id="wmo-YVRO">
             <aixm:timeSlice>
-                <aixm:UnitTimeSlice gml:id="mwo-YVRO-tc">
+                <aixm:UnitTimeSlice gml:id="mwo-YVRO-ts">
                     <gml:validTime/>
                     <aixm:interpretation>BASELINE</aixm:interpretation>
                     <aixm:name>YVRO MWO</aixm:name>
@@ -48,7 +48,7 @@
         </gml:TimePeriod>
     </iwxxm:validPeriod>
 
-    <iwxxm:phenomenon xlink:href="http://codes.wmo.int/49-2/SigWxPhenomena/TC"/>
+    <iwxxm:phenomenon xlink:href="http://codes.wmo.int/49-2/SigWxPhenomena/OBSC_TS"/>
 
     <iwxxm:analysis>
         <om:OM_Observation gml:id="analysis-20211201T1800Z">
@@ -72,7 +72,7 @@
                     <sf:sampledFeature>
                         <aixm:Airspace gml:id="fir-YVR">
                             <aixm:timeSlice>
-                                <aixm:AirspaceTimeSlice gml:id="fir-YVR-tc">
+                                <aixm:AirspaceTimeSlice gml:id="fir-YVR-ts">
                                     <gml:validTime/>
                                     <aixm:interpretation>BASELINE</aixm:interpretation>
                                     <aixm:type>OTHER:FIR_UIR</aixm:type>
@@ -102,7 +102,7 @@
                                                         <gml:Curve gml:id="curve01">
                                                             <gml:segments>
                                                                 <gml:CircleByCenterPoint numArc="1">
-                                                                    <gml:pos>48.55581767467488 -123.376022210136</gml:pos>
+                                                                    <gml:pos>48.55581767467488 -123.380022210136</gml:pos>
                                                                     <gml:radius uom="M">100</gml:radius>
                                                                 </gml:CircleByCenterPoint>
                                                             </gml:segments>

@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <safcs:scenario
 	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
-	id="Cruise 1 Planning Grid" time="2021-11-22T18:47:12.673Z"
-	threshold="-3.6529680365296855" globe="Earth">
+	id="Cruise 1 Planning Grid" time="2021-12-01T18:00:00.000Z"
+	threshold="0.0" globe="Earth">
 	<safcs:environment>
-		<safcs:grid division="40" bottom="55.00000099331658"
-			top="114.25806952663919">
-			<safcs:southWest latitude="48.554825164775515"
-				longitude="-123.38536485473473" />
-			<safcs:northEast latitude="48.557356424611534"
-				longitude="-123.37733738332179" />
+		<safcs:grid division="40"
+			bottom="35.000000284555874" top="109.07377677196438">
+			<safcs:southWest latitude="48.55482507557635"
+				longitude="-123.38536485472768" />
+			<safcs:northEast latitude="48.55735638556209"
+				longitude="-123.37733722961721" />
 		</safcs:grid>
 	</safcs:environment>
 	<safcs:obstacles>
@@ -20,8 +20,8 @@
 			<safcs:end latitude="48.55615"
 				longitude="-123.37631556429177" />
 			<safcs:costInterval id="airspace10" cost="100.0"
-				enabled="true" start="2021-11-12T18:00:00.000Z"
-				end="2022-11-12T18:00:00.000Z" />
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
 		</safcs:box>
 		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="0.0"
 			top="3.0" bottomDatum="AGL" topDatum="AGL">
@@ -30,10 +30,41 @@
 			<safcs:end latitude="48.55615"
 				longitude="-123.37631556429177" />
 			<safcs:costInterval id="airspace1" cost="100.0"
-				enabled="false" start="2021-11-12T18:00:00.000Z"
-				end="2022-11-12T18:00:00.000Z" />
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
 		</safcs:box>
 	</safcs:obstacles>
+	<safcs:aircraft type="IRIS" cid="FRIEND" radius="10.0"
+		centerDatum="ASL">
+		<safcs:center altitude="50.0"
+			latitude="48.55698912946972" longitude="-123.38486410151151" />
+		<safcs:costInterval id="IRIS" cost="100.0"
+			enabled="true" start="2011-12-04T01:08:03.566Z"
+			end="2031-12-04T01:08:03.566Z" />
+		<safcs:depiction symbology="TacticalSymbol"
+			sidc="SFGPUCVUR------" />
+		<safcs:capabilities approachRateOfDescent="1.0"
+			approachSpeed="1.0" cruiseClimbSpeed="1.0" cruiseDescentSpeed="1.0"
+			cruiseRateOfClimb="1.0" cruiseRateOfDescent="1.0" cruiseSpeed="1.0"
+			maximumAngleOfClimb="90.0" maximumAngleOfClimbSpeed="1.0"
+			maximumGlideSpeed="1.0" maximumRateOfClimb="1.0"
+			maximumRateOfClimbSpeed="1.0" maximumRateOfDescent="1.0"
+			maximumRateOfDescentSpeed="1.0" maximumSpeed="1.0" />
+	</safcs:aircraft>
+	<safcs:waypoints>
+		<safcs:waypoint designator="0" cost="INF" dtg="INF"
+			altitude="50.0" latitude="48.55698912946972"
+			longitude="-123.38486410151151">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="0" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+		<safcs:waypoint designator="1" cost="INF" dtg="INF"
+			altitude="50.0" latitude="48.55515452645689"
+			longitude="-123.37778259792564">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="1" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+	</safcs:waypoints>
 	<safcs:planner riskPolicy="SAFETY" costPolicy="AVERAGE">
 		<safcs:astar />
 	</safcs:planner>

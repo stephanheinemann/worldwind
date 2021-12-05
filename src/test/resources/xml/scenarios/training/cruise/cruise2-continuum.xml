@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <safcs:scenario
 	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
-	id="Cruise 2 Planning Continuum" time="2021-11-22T18:47:12.673Z"
-	threshold="-8.219178082191775" globe="Earth">
+	id="Cruise 2 Planning Continuum" time="2021-12-01T18:00:00.000Z"
+	threshold="0.0" globe="Earth">
 	<safcs:environment>
-		<safcs:continuum resolution="2.0"
-			bottom="55.00000150074355" top="114.2735339004914">
+		<safcs:continuum resolution="1.0"
+			bottom="35.000000284555874" top="109.07377677196438">
 			<safcs:southWest latitude="48.5548249960666"
 				longitude="-123.3853648547214" />
 			<safcs:northEast latitude="48.557356406293216"
@@ -20,8 +20,8 @@
 			<safcs:end latitude="48.55615"
 				longitude="-123.37631556429177" />
 			<safcs:costInterval id="airspace1" cost="100.0"
-				enabled="false" start="2021-11-12T18:00:00.000Z"
-				end="2022-11-12T18:00:00.000Z" />
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
 		</safcs:box>
 		<safcs:box leftWidth="200.0" rightWidth="200.0"
 			bottom="85.0" top="100.0" bottomDatum="AGL" topDatum="AGL">
@@ -30,8 +30,8 @@
 			<safcs:end latitude="48.55615"
 				longitude="-123.37631556429177" />
 			<safcs:costInterval id="airspace11" cost="20.0"
-				enabled="true" start="2021-11-12T18:00:00.000Z"
-				end="2022-11-12T18:00:00.000Z" />
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
 		</safcs:box>
 		<safcs:box leftWidth="200.0" rightWidth="200.0"
 			bottom="100.0" top="140.0" bottomDatum="AGL" topDatum="AGL">
@@ -40,10 +40,47 @@
 			<safcs:end latitude="48.55615"
 				longitude="-123.37631556429177" />
 			<safcs:costInterval id="airspace10" cost="100.0"
-				enabled="true" start="2021-11-12T18:00:00.000Z"
-				end="2022-11-12T18:00:00.000Z" />
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
 		</safcs:box>
 	</safcs:obstacles>
+	<safcs:aircraft type="IRIS" cid="FRIEND" radius="10.0"
+		centerDatum="ASL">
+		<safcs:center altitude="50.0"
+			latitude="48.55699624493378" longitude="-123.37787495017074" />
+		<safcs:costInterval id="IRIS" cost="100.0"
+			enabled="true" start="2011-12-04T01:08:03.566Z"
+			end="2031-12-04T01:08:03.566Z" />
+		<safcs:depiction symbology="TacticalSymbol"
+			sidc="SFGPUCVUR------" />
+		<safcs:capabilities approachRateOfDescent="1.0"
+			approachSpeed="1.0" cruiseClimbSpeed="1.0" cruiseDescentSpeed="1.0"
+			cruiseRateOfClimb="1.0" cruiseRateOfDescent="1.0" cruiseSpeed="1.0"
+			maximumAngleOfClimb="90.0" maximumAngleOfClimbSpeed="1.0"
+			maximumGlideSpeed="1.0" maximumRateOfClimb="1.0"
+			maximumRateOfClimbSpeed="1.0" maximumRateOfDescent="1.0"
+			maximumRateOfDescentSpeed="1.0" maximumSpeed="1.0" />
+	</safcs:aircraft>
+	<safcs:waypoints>
+		<safcs:waypoint designator="0" cost="INF" dtg="INF"
+			altitude="50.0" latitude="48.55699624493378"
+			longitude="-123.37787495017074">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="0" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+		<safcs:waypoint designator="1" cost="INF" dtg="INF"
+			altitude="60.0" latitude="48.555197299038525"
+			longitude="-123.38154097361758">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="1" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+		<safcs:waypoint designator="2" cost="INF" dtg="INF"
+			altitude="50.0" latitude="48.55697404210403"
+			longitude="-123.38480194298893">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="2" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+	</safcs:waypoints>
 	<safcs:planner riskPolicy="SAFETY" costPolicy="AVERAGE">
 		<safcs:astar />
 	</safcs:planner>
@@ -63,7 +100,7 @@
 	</safcs:datalink>
 	<safcs:swim>
 		<safcs:simulated updatePeriod="PT5S"
-			updateProbability="1.0" updateQuantity="5"
+			updateProbability="0.5" updateQuantity="1"
 			resourceDirectory="swim/xml" />
 	</safcs:swim>
 </safcs:scenario>
