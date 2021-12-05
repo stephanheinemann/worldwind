@@ -66,9 +66,9 @@ public class FlightPhase extends Criticality {
 	}
 	
 	/*				Difficulties	Severities
-	 * Cruise		*				LOW, MOD
-	 * Transition	LOW, MOD, SUB	SUB, SEV
-	 * Terminal		SEV, CRT        SUB, SEV
+	 * Cruise		LOW, MOD, SUB	LOW, MOD, SUB
+	 * Transition	LOW, MOD, SUB	SEV
+	 * Terminal		SEV, CRT        LOW, MOD, SUB, SEV
 	 * Urgency		*				CRT
 	 * Emergency	*				FAT
 	 */
@@ -86,10 +86,9 @@ public class FlightPhase extends Criticality {
 		cruise.difficulties.add(Difficulty.createLow(features));
 		cruise.difficulties.add(Difficulty.createModerate(features));
 		cruise.difficulties.add(Difficulty.createSubstantial(features));
-		cruise.difficulties.add(Difficulty.createSevere(features));
-		cruise.difficulties.add(Difficulty.createCritical(features));
 		cruise.severities.add(Severity.createLow(features));
 		cruise.severities.add(Severity.createModerate(features));
+		cruise.severities.add(Severity.createSubstantial(features));
 		
 		return cruise;
 	}
@@ -120,7 +119,6 @@ public class FlightPhase extends Criticality {
 		transition.difficulties.add(Difficulty.createLow(features));
 		transition.difficulties.add(Difficulty.createModerate(features));
 		transition.difficulties.add(Difficulty.createSubstantial(features));
-		transition.severities.add(Severity.createSubstantial(features));
 		transition.severities.add(Severity.createSevere(features));
 		
 		return transition;
@@ -151,6 +149,8 @@ public class FlightPhase extends Criticality {
 		
 		terminal.difficulties.add(Difficulty.createSevere(features));
 		terminal.difficulties.add(Difficulty.createCritical(features));
+		terminal.severities.add(Severity.createLow(features));
+		terminal.severities.add(Severity.createModerate(features));
 		terminal.severities.add(Severity.createSubstantial(features));
 		terminal.severities.add(Severity.createSevere(features));
 		
@@ -185,7 +185,6 @@ public class FlightPhase extends Criticality {
 		urgency.difficulties.add(Difficulty.createSevere(features));
 		urgency.difficulties.add(Difficulty.createCritical(features));
 		urgency.severities.add(Severity.createCritical(features));
-		urgency.severities.add(Severity.createSevere(features));
 		
 		return urgency;
 	}
