@@ -1,28 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <safcs:scenario
 	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
-	id="Urgency 3 Planning Grid" time="2021-12-01T18:00:00.000Z"
+	id="Emergency 3 Planning Continuum" time="2021-12-01T18:02:00.000Z"
 	threshold="0.0" globe="Earth">
 	<safcs:environment>
-		<safcs:grid division="40"
+		<safcs:continuum resolution="1.0"
 			bottom="35.000000284555874" top="109.07377677196438">
-			<safcs:southWest latitude="48.5548247247969"
-				longitude="-123.38536485469984" />
-			<safcs:northEast latitude="48.5573562315451"
-				longitude="-123.37733660543228" />
-		</safcs:grid>
+			<safcs:southWest latitude="48.554824635882774"
+				longitude="-123.38536485469277" />
+			<safcs:northEast latitude="48.55735619110841"
+				longitude="-123.37733645169793" />
+		</safcs:continuum>
 	</safcs:environment>
 	<safcs:obstacles>
-		<safcs:cylinder radius="100.0" bottom="0.0" top="80.0"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55581767467488"
-				longitude="-123.380022210136" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:00:00.000Z"
-				end="2021-12-01T18:00:37.500Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.557441308369484" longitude="-123.38166562985577" />
@@ -41,25 +31,15 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
-		<safcs:cylinder radius="93.75" bottom="0.0" top="77.5"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55582215784313"
-				longitude="-123.38091776006779" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:01:15.000Z"
-				end="2021-12-01T18:01:52.500Z" />
+		<safcs:cylinder radius="65.625" bottom="0.0"
+			top="66.25" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555842314355075"
+				longitude="-123.38369773611628" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:06:52.500Z"
+				end="2021-12-01T18:07:30.000Z" />
 			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
-		<safcs:cylinder radius="68.75" bottom="0.0" top="67.5"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55584002106599"
-				longitude="-123.3844999613784" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:06:15.000Z"
-				end="2021-12-01T18:06:52.500Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
 		</safcs:cylinder>
 		<safcs:sphere radius="26.195861487537844"
 			centerDatum="ASL">
@@ -91,16 +71,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
-		<safcs:cylinder radius="81.25" bottom="0.0" top="72.5"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.555831103344595"
-				longitude="-123.3827088604069" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:03:45.000Z"
-				end="2021-12-01T18:04:22.500Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -130,16 +100,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
-		<safcs:cylinder radius="84.375" bottom="0.0"
-			top="73.75" bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.5558288695736"
-				longitude="-123.38226108526275" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:03:07.500Z"
-				end="2021-12-01T18:03:45.000Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.5544334799357" longitude="-123.38154521717314" />
@@ -179,15 +139,15 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
-		<safcs:cylinder radius="65.625" bottom="0.0"
-			top="66.25" bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55584224615571"
-				longitude="-123.38494773671985" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:06:52.500Z"
-				end="2021-12-01T18:07:30.000Z" />
+		<safcs:cylinder radius="75.0" bottom="0.0" top="70.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55583564503706"
+				longitude="-123.38160441010862" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:05:00.000Z"
+				end="2021-12-01T18:05:37.500Z" />
 			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
 		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
@@ -217,16 +177,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
-		<safcs:cylinder radius="53.125" bottom="0.0"
-			top="61.25" bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55585112915199"
-				longitude="-123.38673883847913" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:09:22.500Z"
-				end="2021-12-01T18:10:00.000Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -257,6 +207,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
+		<safcs:cylinder radius="50.0" bottom="0.0" top="60.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555853345560415"
+				longitude="-123.38718661401715" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:10:00.000Z"
+				end="2021-12-01T18:10:00.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -304,6 +264,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
+		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="3.0"
+			top="85.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace12" cost="5.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -364,16 +334,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
-		<safcs:cylinder radius="59.375" bottom="0.0"
-			top="63.75" bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55584669112636"
-				longitude="-123.38584328752088" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:08:07.500Z"
-				end="2021-12-01T18:08:45.000Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -479,16 +439,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
-		<safcs:cylinder radius="56.25" bottom="0.0" top="62.5"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.5558489110073"
-				longitude="-123.38629106298035" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:08:45.000Z"
-				end="2021-12-01T18:09:22.500Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -520,13 +470,23 @@
 		</safcs:sphere>
 		<safcs:cylinder radius="96.875" bottom="0.0"
 			top="78.75" bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55581991712714"
-				longitude="-123.38046998508206" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
+			<safcs:location latitude="48.555819935726944"
+				longitude="-123.37671998491531" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
 				enabled="true" start="2021-12-01T18:00:37.500Z"
 				end="2021-12-01T18:01:15.000Z" />
 			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="100.0" bottom="0.0" top="80.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55581767467488"
+				longitude="-123.376022210136" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:00:00.000Z"
+				end="2021-12-01T18:00:37.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
 		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
@@ -603,6 +563,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
+		<safcs:cylinder radius="56.25" bottom="0.0" top="62.5"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555848945726986"
+				longitude="-123.38579106267429" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:08:45.000Z"
+				end="2021-12-01T18:09:22.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="26.195861487537844"
 			centerDatum="ASL">
 			<safcs:center altitude="80.0"
@@ -613,16 +583,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
-		<safcs:cylinder radius="50.0" bottom="0.0" top="60.0"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.555853345560415"
-				longitude="-123.38718661401715" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:10:00.000Z"
-				end="2021-12-01T18:10:00.000Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.55421863504279" longitude="-123.3815366168151" />
@@ -708,16 +668,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
-		<safcs:cylinder radius="87.5" bottom="0.0" top="75.0"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55582663406637"
-				longitude="-123.38181331015815" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:02:30.000Z"
-				end="2021-12-01T18:03:07.500Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="26.195861487537844"
 			centerDatum="ASL">
 			<safcs:center altitude="80.0"
@@ -728,16 +678,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
-		<safcs:cylinder radius="62.5" bottom="0.0" top="65.0"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55584446950917"
-				longitude="-123.3853955121007" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:07:30.000Z"
-				end="2021-12-01T18:08:07.500Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.55672515875379" longitude="-123.38163695887071" />
@@ -834,6 +774,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
+		<safcs:cylinder radius="93.75" bottom="0.0" top="77.5"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555822192562786"
+				longitude="-123.37741775975691" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:01:15.000Z"
+				end="2021-12-01T18:01:52.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -854,6 +804,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
+		<safcs:cylinder radius="68.75" bottom="0.0" top="67.5"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.5558400954653"
+				longitude="-123.38299996071909" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:06:15.000Z"
+				end="2021-12-01T18:06:52.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="26.195861487537844"
 			centerDatum="ASL">
 			<safcs:center altitude="80.0"
@@ -959,6 +919,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
+		<safcs:cylinder radius="53.125" bottom="0.0"
+			top="61.25" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555851147751824"
+				longitude="-123.38648883831537" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:09:22.500Z"
+				end="2021-12-01T18:10:00.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.554719939791966" longitude="-123.38155668443085" />
@@ -1235,6 +1205,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
+		<safcs:cylinder radius="62.5" bottom="0.0" top="65.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55584452902861"
+				longitude="-123.38439551157462" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:07:30.000Z"
+				end="2021-12-01T18:08:07.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -1245,16 +1225,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
-		<safcs:cylinder radius="71.875" bottom="0.0"
-			top="68.75" bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.555837794240034"
-				longitude="-123.38405218607635" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:05:37.500Z"
-				end="2021-12-01T18:06:15.000Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -1303,16 +1273,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
-		<safcs:cylinder radius="75.0" bottom="0.0" top="70.0"
-			bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.5558355656778"
-				longitude="-123.38360441081372" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:05:00.000Z"
-				end="2021-12-01T18:05:37.500Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="26.195861487537844"
 			centerDatum="ASL">
 			<safcs:center altitude="80.0"
@@ -1332,6 +1292,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
+		<safcs:cylinder radius="84.375" bottom="0.0"
+			top="73.75" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555828937772944"
+				longitude="-123.37951108465447" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:03:07.500Z"
+				end="2021-12-01T18:03:45.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.55450509489989" longitude="-123.38154808397539" />
@@ -1371,6 +1341,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
+		<safcs:cylinder radius="87.5" bottom="0.0" top="75.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55582669358579"
+				longitude="-123.37881330962661" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:02:30.000Z"
+				end="2021-12-01T18:03:07.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.55708323356252" longitude="-123.38165129426179" />
@@ -1505,6 +1485,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
+		<safcs:cylinder radius="90.625" bottom="0.0"
+			top="76.25" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55582444518241"
+				longitude="-123.37811553466072" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:01:52.500Z"
+				end="2021-12-01T18:02:30.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -1553,16 +1543,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCH---------" text="CFAR004" />
 		</safcs:sphere>
-		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="3.0"
-			top="85.0" bottomDatum="AGL" topDatum="AGL">
-			<safcs:begin latitude="48.55615"
-				longitude="-123.38642665730919" />
-			<safcs:end latitude="48.55615"
-				longitude="-123.37631556429177" />
-			<safcs:costInterval id="airspace20" cost="50.0"
-				enabled="true" start="2021-11-01T18:00:00.000Z"
-				end="2022-11-01T18:00:00.000Z" />
-		</safcs:box>
 		<safcs:sphere radius="26.195861487537844"
 			centerDatum="ASL">
 			<safcs:center altitude="80.0"
@@ -1573,6 +1553,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
+		<safcs:cylinder radius="59.375" bottom="0.0"
+			top="63.75" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55584673948592"
+				longitude="-123.38509328709398" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:08:07.500Z"
+				end="2021-12-01T18:08:45.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -1593,6 +1583,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
+		<safcs:cylinder radius="71.875" bottom="0.0"
+			top="68.75" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55583787235929"
+				longitude="-123.38230218538317" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:05:37.500Z"
+				end="2021-12-01T18:06:15.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.55815745797807" longitude="-123.38169430165257" />
@@ -1622,16 +1622,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
-		<safcs:cylinder radius="78.125" bottom="0.0"
-			top="71.25" bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55583333537932"
-				longitude="-123.38315663559054" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:04:22.500Z"
-				end="2021-12-01T18:05:00.000Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.55715484852406" longitude="-123.38165416136434" />
@@ -1641,6 +1631,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
+		<safcs:cylinder radius="81.25" bottom="0.0" top="72.5"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55583117774388"
+				longitude="-123.38020885974414" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:03:45.000Z"
+				end="2021-12-01T18:04:22.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="8.49757506382818" centerDatum="ASL">
 			<safcs:center altitude="55.0"
 				latitude="48.55758453829178" longitude="-123.38167136415021" />
@@ -1699,6 +1699,16 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
+		<safcs:cylinder radius="78.125" bottom="0.0"
+			top="71.25" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555833413498576"
+				longitude="-123.38090663489558" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:04:22.500Z"
+				end="2021-12-01T18:05:00.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
@@ -1719,16 +1729,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNAPCF---------" text="CFAR005" />
 		</safcs:sphere>
-		<safcs:cylinder radius="90.625" bottom="0.0"
-			top="76.25" bottomDatum="ASL" topDatum="ASL">
-			<safcs:location latitude="48.55582439682287"
-				longitude="-123.38136553509315" />
-			<safcs:costInterval id="sigmet2" cost="40.0"
-				enabled="true" start="2021-12-01T18:01:52.500Z"
-				end="2021-12-01T18:02:30.000Z" />
-			<safcs:depiction symbology="TacticalPoint"
-				sidc="WAS-WST-NPP----" text="sigmet2" />
-		</safcs:cylinder>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"

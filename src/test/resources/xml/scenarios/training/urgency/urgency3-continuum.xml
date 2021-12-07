@@ -304,16 +304,6 @@
 			<safcs:depiction symbology="TacticalSymbol"
 				sidc="SNGPUCVUR------" text="CFAR006" />
 		</safcs:sphere>
-		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="3.0"
-			top="85.0" bottomDatum="AGL" topDatum="AGL">
-			<safcs:begin latitude="48.55615"
-				longitude="-123.38642665730919" />
-			<safcs:end latitude="48.55615"
-				longitude="-123.37631556429177" />
-			<safcs:costInterval id="airspace12" cost="5.0"
-				enabled="false" start="2021-11-01T18:00:00.000Z"
-				end="2022-11-01T18:00:00.000Z" />
-		</safcs:box>
 		<safcs:sphere radius="20.320072969500373"
 			centerDatum="ASL">
 			<safcs:center altitude="60.0"
