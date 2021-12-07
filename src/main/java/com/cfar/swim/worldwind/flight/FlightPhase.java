@@ -265,17 +265,17 @@ public class FlightPhase extends Criticality {
 	public static String report(Features features) {
 		String report = Difficulty.report(features) + Severity.report(features);
 		
-		if (FlightPhase.areCruise(features)) {
+		// potentially multiple flight phases
+		if (FlightPhase.areCruise(features))
 			report = report.concat("-> cruise\n");
-		} else if (FlightPhase.areTransition(features)) {
+		if (FlightPhase.areTransition(features))
 			report = report.concat("-> transition\n");
-		} else if (FlightPhase.areTerminal(features)) {
+		if (FlightPhase.areTerminal(features))
 			report = report.concat("-> terminal\n");
-		} else if (FlightPhase.areUrgency(features)) {
+		if (FlightPhase.areUrgency(features))
 			report = report.concat("-> urgency\n");
-		} else if (FlightPhase.areEmergency(features)) {
+		if (FlightPhase.areEmergency(features))
 			report = report.concat("-> emergency\n");
-		}
 		
 		return report;
 	}

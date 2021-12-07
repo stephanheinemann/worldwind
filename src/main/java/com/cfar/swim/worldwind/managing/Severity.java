@@ -254,7 +254,7 @@ public class Severity extends Criticality {
 	 * MODERATE		<=0		<=P		(0, P]
 	 * SUBSTANTIAL	<=P		[0, P]	(0, E]
 	 * SEVERE		[0, P]	(0, E]	E
-	 * CRITICAL		(0, E]	E		E
+	 * CRITICAL		P		E		E
 	 * FATAL		E		*		*
 	 * 
 	 * 0, 0, E -> SUB
@@ -430,8 +430,9 @@ public class Severity extends Criticality {
 	public static Severity createCritical(Features features) {
 		Severity critical = new Severity(features);
 		
-		// positive up to risk-exceeding obstacle cost inside aircraft safety radius, and
-		critical.setAircraftSafetyObstaclesCostMinRange(Range.greaterThan(0d));
+		// maximum no risk-exceeding obstacle cost inside aircraft safety radius, and
+		critical.setAircraftSafetyObstaclesCostMinRange(Range.singleton(features.get(Features.FEATURE_POLICY_RISK)));
+		critical.setAircraftSafetyObstaclesPolicyRange(Range.lessThan(Double.POSITIVE_INFINITY));
 		
 		// risk-exceeding obstacle cost inside POI bounding box, and
 		critical.setPoiObstaclesCostPolicyRange(Range.singleton(Double.POSITIVE_INFINITY));
