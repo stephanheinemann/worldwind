@@ -249,13 +249,13 @@ public class Severity extends Criticality {
 	 * Containment: ASS (= ENV and POI (= ENV
 	 * Costs:		ASS <= ENV and POI <= ENV
 	 * 
-	 * 				ASS		POI		ENV
-	 * LOW			<=0		<=0		<=P
-	 * MODERATE		<=0		<=P		(0, P]
-	 * SUBSTANTIAL	<=P		[0, P]	(0, E]
-	 * SEVERE		[0, P]	(0, E]	E
-	 * CRITICAL		P		E		E
-	 * FATAL		E		*		*
+	 *              ASS     POI     ENV
+	 * LOW          <=0     <=0     <=P
+	 * MODERATE     <=0     <=P     (0, P]
+	 * SUBSTANTIAL  <=P     [0, P]  (0, E]
+	 * SEVERE       [0, P]  (0, E]  E
+	 * CRITICAL     P       E       E
+	 * FATAL        E       *       *
 	 * 
 	 * 0, 0, E -> SUB
 	 * 0, P, E -> SUB, SEV
@@ -280,8 +280,8 @@ public class Severity extends Criticality {
 	 * deflated. For RRT it affects the choice of biases in particular and
 	 * sampling distribution. Nearby and expensive obstacles may require a
 	 * lower goal bias, more scattered sampling, and higher cost bias. In a low
-	 * severity scenario a higher goal bias, more focused sampling, and higher
-	 * distance bias may be the better choices.
+	 * severity scenario a higher goal bias, more focused sampling, and lower
+	 * cost bias may be the better choices.
 	 * 
 	 * Critical and fatal cases may be solvable if the scenario is difficult as
 	 * opposed to simple if the explained approach is taken. A critical and fatal

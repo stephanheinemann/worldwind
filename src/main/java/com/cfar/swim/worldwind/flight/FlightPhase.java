@@ -65,12 +65,12 @@ public class FlightPhase extends Criticality {
 		super(features);
 	}
 	
-	/*				Difficulties	Severities
-	 * Cruise		LOW, MOD, SUB	LOW, MOD, SUB
-	 * Transition	LOW, MOD, SUB	SEV
-	 * Terminal		SEV, CRT        LOW, MOD, SUB, SEV
-	 * Urgency		*				CRT
-	 * Emergency	*				FAT
+	/*              Difficulties    Severities
+	 * Cruise       LOW, MOD, SUB   LOW, MOD, SUB
+	 * Transition   LOW, MOD, SUB   SEV
+	 * Terminal     SEV, CRT        LOW, MOD, SUB, SEV
+	 * Urgency      *               CRT
+	 * Emergency    *               FAT
 	 */
 	
 	/**

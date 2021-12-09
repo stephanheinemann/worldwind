@@ -79,12 +79,12 @@ public class Difficulty extends Criticality {
 	 * OSR = FEATURE_POIS_OBSTACLES_VOLUME_AVG / FEATURE_POIS_VOLUME / FEATURE_POIS_OBSTACLES_VOLUME_RATIO
 	 *     = FEATURE_POIS_OBSTACLES_VOLUME_AVG_RATIO / FEATURE_POIS_OBSTACLES_VOLUME_SUM_RATIO
 	 * 
-	 * 				OSR
-	 * LOW			(0.8, INF)
-	 * MODERATE		(0.6, 0.8]
-	 * SUBSTANTIAL	(0.4, 0.6]
-	 * SEVERE		(0.2, 0.4]
-	 * CRITICAL		(0.0, 0,2]
+	 *              OSR
+	 * LOW          (0.8, INF)
+	 * MODERATE     (0.6, 0.8]
+	 * SUBSTANTIAL  (0.4, 0.6]
+	 * SEVERE       (0.2, 0.4]
+	 * CRITICAL     (0.0, 0,2]
 	 * 
 	 * A single large and non-expensive obstacle is indeed less difficult than
 	 * a higher number of smaller obstacles. For simple A*, the heuristic will
