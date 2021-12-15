@@ -69,7 +69,7 @@ public class AircraftTest {
 		LatLon location = new LatLon(Angle.fromDegrees(0d), Angle.fromDegrees(1d));
 		Position goal = start.add(new Position(location, 0d));
 		Duration duration = iris.getCapabilities().getEstimatedDuration(start, goal, earth);
-		double totalSeconds = ((double) duration.getSeconds()) + ((double) duration.getNano() * 10E-9);
+		double totalSeconds = ((double) duration.getSeconds()) + ((double) duration.getNano() * 1E-9d);
 		assertEquals(iris.getCapabilities().getCruiseSpeed(), 111120d / totalSeconds, 0.1d);
 		
 		Path leg = new Path(start, goal);
@@ -80,17 +80,17 @@ public class AircraftTest {
 		// climb 50 meters
 		goal = new Position(start, start.getElevation() + 50d);
 		duration = iris.getCapabilities().getEstimatedDuration(start, goal, earth);
-		assertEquals(5d, duration.getSeconds() + (duration.getNano() * 10E-9), PrecisionDouble.EPSILON);
+		assertEquals(5d, duration.getSeconds() + (duration.getNano() * 1E-9d), PrecisionDouble.EPSILON);
 		
 		// descent 100 meters
 		goal = new Position(start, start.getElevation() - 100d);
 		duration = iris.getCapabilities().getEstimatedDuration(start, goal, earth);
-		assertEquals(10d, duration.getSeconds() + (duration.getNano() * 10E-9), PrecisionDouble.EPSILON);
+		assertEquals(10d, duration.getSeconds() + (duration.getNano() * 1E-9d), PrecisionDouble.EPSILON);
 		
 		// descent 1000 meters and level off
 		goal = new Position(location, start.getElevation() - 1000d);
 		duration = iris.getCapabilities().getEstimatedDuration(start, goal, earth);
-		assertNotEquals(totalSeconds, duration.getSeconds() + (duration.getNano() * 10E-9), PrecisionDouble.EPSILON);
+		assertNotEquals(totalSeconds, duration.getSeconds() + (duration.getNano() * 1E-9d), PrecisionDouble.EPSILON);
 	}
 	
 }

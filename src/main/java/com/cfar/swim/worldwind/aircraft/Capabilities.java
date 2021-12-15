@@ -391,7 +391,7 @@ public class Capabilities {
 	 */
 	public Duration getEstimatedDuration(double distance) {
 		double seconds = Math.floor(distance / this.cruiseSpeed);
-		double nanos = Math.floor(((distance / this.cruiseSpeed) - seconds) / 10E-9);
+		double nanos = Math.floor(((distance / this.cruiseSpeed) - seconds) / 1E-9d);
 		return Duration.ofSeconds((long) seconds, (long) nanos);
 	}
 	

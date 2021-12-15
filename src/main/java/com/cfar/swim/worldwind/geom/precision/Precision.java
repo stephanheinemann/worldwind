@@ -44,7 +44,7 @@ public interface Precision {
 	/**
 	 * the default epsilon used to compensate for numerical inaccuracies
 	 */
-	public static final double EPSILON = 1E-5;
+	public static final double EPSILON = 1E-5d;
 	
 	/**
 	 * Gets the precision of this numerical object.
