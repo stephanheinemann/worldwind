@@ -282,7 +282,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		boolean hasMaximumQuality = false;
 		
 		if (this.hasGoal()) {
-			hasMaximumQuality = (this.getStart().getH() == this.getGoal().getCost())
+			hasMaximumQuality = (this.getStart().getF() == this.getGoal().getCost())
 					|| ((this.getCostBound() < this.getGoal().getCost())
 							&& (this.getCostBias() >= this.getMaximumQuality()));
 		}
@@ -382,7 +382,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		// delta cost bias
 		double dq = this.getMaximumQuality() - this.getMinimumQuality();
 		// optimal cost fraction
-		double fc = this.getStart().getH() / this.getCostBound();
+		double fc = this.getStart().getF() / this.getCostBound();
 		
 		// adjust cost bias to current cost bound
 		double minCostBias = fc * dq;
@@ -425,8 +425,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		double costBound = (1d - this.getQualityImprovement())
 				* this.getGoal().getCost();
 		
-		if (this.getStart().getH() > costBound) {
-			this.setCostBound(this.getStart().getH());
+		if (this.getStart().getF() > costBound) {
+			this.setCostBound(this.getStart().getF());
 		} else {
 			this.setCostBound(costBound);
 		}
@@ -784,6 +784,13 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	protected Trajectory planPart(int partIndex) {
 		Trajectory trajectory = super.planPart(partIndex);
 		this.revisePlan(trajectory);
+		
+		// update cost bound and biases based on the first solution
+		if (!trajectory.isEmpty()) {
+			this.updateCostBound();
+			this.updateBiases();
+		}
+		
 		this.elaborate(partIndex);
 		return this.createTrajectory();
 	}
