@@ -49,36 +49,50 @@ public class TrajectoryQuality implements Quality {
 	private static final long serialVersionUID = 1L;
 	
 	/** the zero trajectory quality */
-	public static final TrajectoryQuality ZERO = new TrajectoryQuality(new Trajectory());
-	
-	/** the quality of this trajectory quality */
-	transient final Trajectory quality;
+	public static final TrajectoryQuality ZERO = new TrajectoryQuality(new Trajectory(), 1d);
 	
 	/** the quality measure of this trajectory quality */
 	private final double measure;
 	
+	/** the quality normalizer of this trajectory quality */
+	private final double normalizer;
+	
 	/**
 	 * Constructs a new trajectory quality based on a trajectory.
 	 * 
-	 * @param quality the trajectory
+	 * @param trajectory the trajectory
 	 * 
-	 * @throws IllegalArgumentException if the quality is invalid
+	 * @throws IllegalArgumentException if the trajectory is invalid
 	 */
-	public TrajectoryQuality(Trajectory quality) {
-		if (null == quality) {
-			throw new IllegalArgumentException("quality is invalid");
-		}	
-		this.quality = quality;
+	public TrajectoryQuality(Trajectory trajectory) {
+		this(trajectory, 1d);
+	}
+	
+	/**
+	 * Constructs a new trajectory quality based on a trajectory and a quality
+	 * normalizer.
+	 * 
+	 * @param trajectory the trajectory
+	 * @param normalizer the normalizer to be applied to the quality measure
+	 * 
+	 * @throws IllegalArgumentException if the trajectory is invalid
+	 */
+	public TrajectoryQuality(Trajectory trajectory, double normalizer) {
+		if (null == trajectory) {
+			throw new IllegalArgumentException("trajectory is invalid");
+		}
 		
-		if (quality.isEmpty()) {
-			measure = 0d;
+		if (trajectory.isEmpty()) {
+			this.measure = 0d;
 		} else {
-			measure = 1d / quality.getCost();
+			this.measure = 1d / trajectory.getCost();
 			// TODO: weighted quality
 			// TODO: number of legs / edges (heading changes)
 			// TODO: horizontal versus vertical distance (cost calculation)
 			// TODO: ETE, ETA
 		}
+		
+		this.normalizer = normalizer;
 	}
 	
 	/**
@@ -94,19 +108,32 @@ public class TrajectoryQuality implements Quality {
 	}
 	
 	/**
+	 * Gets the normalized trajectory quality in overall cost.
+	 * 
+	 * @return the normalized trajectory quality in overall cost
+	 * 
+	 * @see Quality#getNormalized()
+	 */
+	@Override
+	public double getNormalized() {
+		return this.get() * this.normalizer;
+	}
+	
+	/**
 	 * Compares this trajectory quality to another quality.
 	 * 
 	 * @param quality the other quality
 	 * 
 	 * @return a negative integer, zero, or a positive integer as this
-	 *         trajectory quality is less than, equal to, or greater than the
-	 *         other quality, respectively
+	 *         normalized trajectory quality is less than, equal to, or greater
+	 *         than the other normalized quality, respectively
 	 * 
 	 * @see Comparator#compare(Object, Object)
 	 */
 	@Override
 	public int compareTo(Quality quality) {
-		return Comparator.comparingDouble(Quality::get).compare(this, quality);
+		return Comparator.comparingDouble(
+				Quality::getNormalized).compare(this, quality);
 	}
 	
 	/**
@@ -115,8 +142,8 @@ public class TrajectoryQuality implements Quality {
 	 * 
 	 * @param o the other trajectory quality
 	 * 
-	 * @return true, if this trajectory quality equals the other trajectory
-	 *         quality, false otherwise
+	 * @return true, if this normalized trajectory quality equals the other
+	 *         normalized trajectory quality, false otherwise
 	 * 
 	 * @see Object#equals(Object)
 	 */
@@ -127,7 +154,8 @@ public class TrajectoryQuality implements Quality {
 		if (this == o) {
 			equals = true;
 		} else if ((null != o) && (this.getClass() == o.getClass())) {
-			equals = this.get() == ((TrajectoryQuality) o).get();
+			equals = (this.getNormalized()
+					== ((TrajectoryQuality) o).getNormalized());
 		}
 
 		return equals;
@@ -142,7 +170,7 @@ public class TrajectoryQuality implements Quality {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(this.get());
+		return Objects.hash(this.getNormalized());
 	}
 	
 }

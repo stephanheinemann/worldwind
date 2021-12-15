@@ -45,4 +45,11 @@ public interface Quantity extends Comparable<Quantity>, Serializable {
 	 */
 	public double get();
 	
+	/**
+	 * Gets the normalized performance quantity measure.
+	 * 
+	 * @return the normalized performance quantity measure
+	 */
+	public double getNormalized();
+	
 }

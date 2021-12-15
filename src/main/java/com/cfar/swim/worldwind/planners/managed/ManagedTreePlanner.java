@@ -34,6 +34,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -63,6 +64,9 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	
 	/** the goals of this managed tree planner */
 	private ManagedGoals goals = null;
+	
+	/** the total Euclidean POI distance from start to goal of this managed tree planner */
+	private double poiDistance = 0d;
 	
 	/** the standby status of this managed tree planner */
 	private boolean isStandby = false;
@@ -423,19 +427,85 @@ public class ManagedTreePlanner extends OADRRTreePlanner implements ManagedPlann
 	 */
 	@Override
 	protected void revisePlan(Trajectory trajectory) {
-		this.performance = new PlannerPerformance(
-				this.planStartTime,
-				new TrajectoryQuality(trajectory),
-				new DurationQuantity(Duration.between(
-						this.planStartTime, ZonedDateTime.now())));
-		this.revisions.add(trajectory);
-		super.revisePlan(trajectory);
+		if (!trajectory.isEmpty() && !this.revisions.contains(trajectory)) {
+			double normalizer = this.computePoiDistance(trajectory)
+					/ this.poiDistance;
+			this.performance = new PlannerPerformance(
+					this.planStartTime,
+					new TrajectoryQuality(trajectory, normalizer),
+					new DurationQuantity(Duration.between(
+							this.planStartTime, ZonedDateTime.now()),
+							1d / normalizer));
+			this.revisions.add(trajectory);
+			super.revisePlan(trajectory);
+		}
+	}
+	
+	/**
+	 * Computes the total Euclidean POI distance from start to goal of this
+	 * managed tree planner. The total Euclidean POI distance is used to
+	 * normalize performance values.
+	 * 
+	 * @return the total Euclidean POI distance from start to goal of this
+	 *         managed tree planner
+	 */
+	protected double computePoiDistance() {
+		double poiDistance = 0d;
+		
+		if (this.getGoals().getPois().isEmpty()) {
+			poiDistance = this.getEnvironment().getNormalizedDistance(
+					this.getGoals().getOrigin(),
+					this.getGoals().getDestination());
+		} else {
+			Iterator<Position> pois = this.getGoals().getPois().iterator();
+			Position current = pois.next();
+			poiDistance = this.getEnvironment().getNormalizedDistance(
+					this.getGoals().getOrigin(), current);
+			while (pois.hasNext()) {
+				Position next = pois.next();
+				poiDistance += this.getEnvironment().getNormalizedDistance(
+						current, next);
+				current = next;
+			}
+			poiDistance += this.getEnvironment().getNormalizedDistance(
+					current, this.getGoals().getDestination());
+		}
+		
+		return poiDistance;
+	}
+	
+	/**
+	 * Computes the Euclidean POI distance of a trajectory computed by this
+	 * managed tree planner. The Euclidean POI distance is used to normalize
+	 * performance values.
+	 * 
+	 * @param trajectory the trajectory
+	 * 
+	 * @return the Euclidean POI distance of the trajectory computed by this
+	 *         managed tree planner
+	 */
+	protected double computePoiDistance(Trajectory trajectory) {
+		double poiDistance = 0d;
+		
+		if (1 < trajectory.getPois().size()) {
+			Iterator<Waypoint> pois = trajectory.getPois().iterator();
+			Waypoint current = pois.next();
+			while (pois.hasNext()) {
+				Waypoint next = pois.next();
+				poiDistance += this.getEnvironment()
+						.getNormalizedDistance(current, next);
+				current = next;
+			}
+		}
+		
+		return poiDistance;
 	}
 	
 	/**
 	 * Resets the performance of this managed tree planner.
 	 */
 	protected void resetPerformance() {
+		this.poiDistance = this.computePoiDistance();
 		this.performance = PlannerPerformance.ZERO;
 		this.revisions.clear();
 		this.planStartTime = ZonedDateTime.now();

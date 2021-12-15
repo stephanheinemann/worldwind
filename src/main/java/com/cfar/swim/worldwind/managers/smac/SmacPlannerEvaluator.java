@@ -206,7 +206,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 						? RunStatus.UNSAT : RunStatus.SAT, // TODO: versus TIMEOUT
 					managedPlanner.getPerformance().getQuantity().get(), // runtime
 					managedPlanner.getRevisions().size(), // number of quality improvements
-					SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().get()), // quality of solution
+					SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().getNormalized()), // quality of solution
 					1l, // problem instance seed (automatically generated instead)
 					managedScenario.getTrajectory().toString()); // additional run-data
 			results.add(earr);
