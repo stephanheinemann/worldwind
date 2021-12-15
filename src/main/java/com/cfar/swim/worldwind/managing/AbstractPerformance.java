@@ -48,7 +48,7 @@ public abstract class AbstractPerformance implements Performance {
 	private static final long serialVersionUID = 1L;
 	
 	/** the maximum performance (cap) value of this abstract performance */
-	public static final double MAX_VALUE = 1000d;
+	public static final double MAX_VALUE = 1_000_000d;
 	
 	/** the quality of this abstract performance */
 	private final Quality quality;

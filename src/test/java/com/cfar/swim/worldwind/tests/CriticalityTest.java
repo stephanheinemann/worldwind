@@ -157,7 +157,7 @@ public class CriticalityTest {
 		
 		ZonedDateTime epoch = // ZonedDateTime.parse("2021-11-14T16:23:51.594821-08:00[America/Vancouver]");
 				ZonedDateTime.now();
-		Duration tolerance = Duration.ofMinutes(5);
+		Duration tolerance = Duration.ofMinutes(2);
 		
 		HashMap<ZonedDateTime, TreeSet<Performance>> epochPerformances = new HashMap<>();
 		HashMap<ZonedDateTime, Tuning<?>> epochTuning = new HashMap<>();
