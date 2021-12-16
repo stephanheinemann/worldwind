@@ -32,6 +32,8 @@ package com.cfar.swim.worldwind.managers.heuristic;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cfar.swim.worldwind.flight.FlightPhase;
+import com.cfar.swim.worldwind.managing.Difficulty;
 import com.cfar.swim.worldwind.managing.FeatureTuning;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
@@ -113,14 +115,25 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 		if (0d == features.get(Features.FEATURE_POIS_OBSTACLES_COUNT)) {
 			// quality
 			properties.setMinimumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
-			properties.setMaximumQuality(1d);
+			properties.setMaximumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
 			properties.setQualityImprovement(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
-			properties.setSignificantChange(0.1d);
+			properties.setSignificantChange(0.01d);
 		} else {
 			// quality
 			properties.setMinimumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE)
 					+ features.get(Features.FEATURE_POIS_OBSTACLES_COST_AVG));
-			properties.setMaximumQuality(1d);
+			
+			// reduce search time in less critical situations for multi-part problems
+			if (FlightPhase.areCruise(features)) {
+				properties.setMaximumQuality(Math.max(1d, 0.75d * properties.getMinimumQuality()));
+			} else if (FlightPhase.areTransition(features)) {
+				properties.setMaximumQuality(Math.max(1d, 0.50d * properties.getMinimumQuality()));
+			} else if (FlightPhase.areTerminal(features)) {
+				properties.setMaximumQuality(Math.max(1d, 0.25d * properties.getMinimumQuality()));
+			} else {
+				properties.setMaximumQuality(1.0d);
+			}
+			
 			double qi = Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d;
 			if (0d < qi) {
 				properties.setQualityImprovement(qi);
@@ -142,65 +155,40 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			// sampling
 			properties.setSampling(Sampling.ELLIPSOIDAL);
 			// goal bias
-			properties.setBias(75); // possible terrain
+			properties.setBias(100); // ignore terrain and capabilities
 			// epsilon - extension distance
 			properties.setEpsilon(features.get(Features.FEATURE_POIS_DISTANCE_MAX));
 			// extension strategy and technique
 			properties.setStrategy(Strategy.CONNECT);
-			properties.setExtension(Extension.FEASIBLE); // TODO: LINEAR
+			properties.setExtension(Extension.FEASIBLE);
 			// goal threshold
 			properties.setGoalThreshold(0d);
 			// maximum iterations
-			properties.setMaxIterations(50);
+			properties.setMaxIterations(1); // ignore terrain and capabilities
 			// neighborhood
 			properties.setNeighborLimit(1);
 			// quality
-			properties.setMinimumQuality(1.0d);
-			properties.setMaximumQuality(1.0d);
+			properties.setMinimumQuality(0.0d);
+			properties.setMaximumQuality(0.0d);
 			properties.setQualityImprovement(0.1d);
-			properties.setSignificantChange(0.1d);
+			properties.setSignificantChange(0.01d);
 		} else {
 			// sampling
-			// TODO: review Gaussian sampling condition (environment center point)
-			if (0.25d > features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
-				if ((0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.25d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
-					properties.setSampling(Sampling.ELLIPSOIDAL);
-				} else if ((0.75d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.5d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
-					properties.setSampling(Sampling.UNIFORM);
-				} else {
-					properties.setSampling(Sampling.UNIFORM);
-				}
-			} else if (0.5d > features.get(Features.FEATURE_POIS_ENVIRONMENT_VOLUME_RATIO)) {
-				if ((0.25d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.25d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
-					properties.setSampling(Sampling.ELLIPSOIDAL);
-				} else if ((0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.5d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
-					properties.setSampling(Sampling.UNIFORM);
-				} else {
-					properties.setSampling(Sampling.UNIFORM);
-				}
+			if (FlightPhase.areCruise(features) || FlightPhase.areTransition(features)) {
+				properties.setSampling(Sampling.ELLIPSOIDAL);
 			} else {
-				if ((0.25d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.5d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
-					properties.setSampling(Sampling.ELLIPSOIDAL);
-				} else if ((0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))
-						|| (0.75d > features.get(Features.FEATURE_ENVIRONMENT_OBSTACLES_VOLUME_RATIO))) {
-					properties.setSampling(Sampling.UNIFORM);
-				} else {
-					properties.setSampling(Sampling.UNIFORM);
-				}
+				properties.setSampling(Sampling.UNIFORM);
 			}
 			
 			// goal bias
-			if (features.get(Features.FEATURE_AIRCRAFT_SAFETY_RADIUS)
-					> features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_DISTANCE_MIN)) {
-				properties.setBias(1);
+			if (FlightPhase.areCruise(features)) {
+				properties.setBias(10);
+			} else if (FlightPhase.areTransition(features)) {
+				properties.setBias(5);
+			} else if (FlightPhase.areTerminal(features)) {
+				properties.setBias(3);
 			} else {
-				properties.setBias((int) Math.round(3d
-						+ features.get(Features.FEATURE_AIRCRAFT_OBSTACLES_NEAREST_VOLUME_RATIO)));
+				properties.setBias(1);
 			}
 			
 			// epsilon - extension distance
@@ -210,29 +198,51 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			properties.setGoalThreshold(properties.getMaxLandingHorizontalError() / 2d);
 			
 			// extension strategy and technique
-			if (0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {
+			if (Difficulty.areLow(features) || Difficulty.areModerate(features)) {
 				properties.setStrategy(Strategy.CONNECT);
 			} else {
 				properties.setStrategy(Strategy.EXTEND);
 			}
-			properties.setExtension(Extension.FEASIBLE); // TODO: LINEAR
+			properties.setExtension(Extension.FEASIBLE);
 			
 			// maximum iterations
-			if (0.5d > features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)) {
+			// reduce search time in less critical situations for multi-part problems
+			if (FlightPhase.areCruise(features)) {
+				properties.setMaxIterations(500);
+			} else if (FlightPhase.areTransition(features)) {
+				properties.setMaxIterations(1000);
+			} else if (FlightPhase.areTerminal(features)) {
 				properties.setMaxIterations(1500);
 			} else {
-				properties.setMaxIterations(1500 + (int) (Math.round(1500d
-						* features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))));
+				properties.setMaxIterations(2000);
 			}
 			
 			// neighborhood
-			properties.setNeighborLimit(5 + (int) (Math.round(5d
-					* features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO))));
+			if (Difficulty.areLow(features)) {
+				properties.setNeighborLimit(1);
+			} else if (Difficulty.areModerate(features)) {
+				properties.setNeighborLimit(2);
+			} else if (Difficulty.areSubstantial(features)) {
+				properties.setNeighborLimit(3);
+			} else if (Difficulty.areSevere(features)) {
+				properties.setNeighborLimit(4);
+			} else {
+				properties.setNeighborLimit(5);
+			}
 			
 			// quality
-			properties.setMinimumQuality(1d - Math.min(0.9d,
-					features.get(Features.FEATURE_POIS_OBSTACLES_VOLUME_RATIO)));
-			properties.setMaximumQuality(1d);
+			properties.setMinimumQuality(0d);
+			// reduce search time in less critical situations for multi-part problems
+			if (FlightPhase.areCruise(features)) {
+				properties.setMaximumQuality(0.25d);
+			} else if (FlightPhase.areTransition(features)) {
+				properties.setMaximumQuality(0.50d);
+			} else if (FlightPhase.areTerminal(features)) {
+				properties.setMaximumQuality(0.75d);
+			} else {
+				properties.setMaximumQuality(1.0d);
+			}
+			
 			double qi = Math.abs(properties.getMinimumQuality() - properties.getMaximumQuality()) / 5d;
 			if (0d < qi) {
 				properties.setQualityImprovement(qi);
