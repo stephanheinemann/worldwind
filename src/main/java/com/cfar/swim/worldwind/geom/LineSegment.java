@@ -40,6 +40,7 @@ import com.jogamp.opengl.GL2;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Intersection;
 import gov.nasa.worldwind.geom.Line;
+import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Renderable;
@@ -211,6 +212,41 @@ public class LineSegment /* extends Line */ implements Renderable {
 	}
 	
 	/**
+	 * Determines whether or not this line segment intersects a sphere.
+	 * 
+	 * @param sphere the sphere
+	 * 
+	 * @return true if this line segment intersects the sphere, false otherwise
+	 */
+	protected boolean intersects(Sphere sphere) {
+		// sphere
+		double r = sphere.getRadius();
+		double sx = sphere.getCenter().x;
+        double sy = sphere.getCenter().y;
+        double sz = sphere.getCenter().z;
+        
+        // line segment
+        double px = this.getFirst().x;
+        double py = this.getFirst().y;
+        double pz = this.getFirst().z;
+        
+        // line segment vector
+        double vx = this.getSecond().x - px;
+        double vy = this.getSecond().y - py;
+        double vz = this.getSecond().z - pz;
+        
+        double A = vx * vx + vy * vy + vz * vz;
+        double B = 2.0 * (px * vx + py * vy + pz * vz - vx * sx - vy * sy - vz * sz);
+        // NOTE: the C value is computed differently in gov.nasa.worldwind.geom.Sphere
+        double C = px * px - 2 * px * sx + sx * sx + py * py - 2 * py * sy + sy * sy +
+                   pz * pz - 2 * pz * sz + sz * sz - r * r;
+        
+        // discriminant
+        double D = B * B - 4 * A * C;
+		return (0 <= D);
+	}
+	
+	/**
 	 * Gets the intersections of the line of this line segment with an extent
 	 * in both directions.
 	 * 
@@ -277,6 +313,11 @@ public class LineSegment /* extends Line */ implements Renderable {
 			if (!intersects) {
 				intersects = this.isContained(extent, epsilon);
 			}
+		}
+		// NOTE: there appears to be a gov.nasa.worldwind.geom.Sphere bug when
+		// calculating the discriminant for the sphere-line intersection
+		if (extent instanceof Sphere) {
+			intersects = this.intersects((Sphere) extent);
 		}
 		
 		return intersects;

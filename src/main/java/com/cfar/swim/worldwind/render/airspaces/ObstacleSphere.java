@@ -455,8 +455,6 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 				this.getExtent(globe), obstacle.getExtent(globe));
 	}
 	
-	// TODO: interpolation and geometric conversion methods
-	
 	/**
 	 * Determines whether or not this obstacle sphere equals another one based
 	 * on their cost intervals.
