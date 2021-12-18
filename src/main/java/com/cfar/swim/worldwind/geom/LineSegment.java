@@ -222,27 +222,29 @@ public class LineSegment /* extends Line */ implements Renderable {
 		// sphere
 		double r = sphere.getRadius();
 		double sx = sphere.getCenter().x;
-        double sy = sphere.getCenter().y;
-        double sz = sphere.getCenter().z;
-        
-        // line segment
-        double px = this.getFirst().x;
-        double py = this.getFirst().y;
-        double pz = this.getFirst().z;
-        
-        // line segment vector
-        double vx = this.getSecond().x - px;
-        double vy = this.getSecond().y - py;
-        double vz = this.getSecond().z - pz;
-        
-        double A = vx * vx + vy * vy + vz * vz;
-        double B = 2.0 * (px * vx + py * vy + pz * vz - vx * sx - vy * sy - vz * sz);
-        // NOTE: the C value is computed differently in gov.nasa.worldwind.geom.Sphere
-        double C = px * px - 2 * px * sx + sx * sx + py * py - 2 * py * sy + sy * sy +
-                   pz * pz - 2 * pz * sz + sz * sz - r * r;
-        
-        // discriminant
-        double D = B * B - 4 * A * C;
+		double sy = sphere.getCenter().y;
+		double sz = sphere.getCenter().z;
+		
+		// line segment
+		double px = this.getFirst().x;
+		double py = this.getFirst().y;
+		double pz = this.getFirst().z;
+		
+		// line segment vector
+		double vx = this.getSecond().x - px;
+		double vy = this.getSecond().y - py;
+		double vz = this.getSecond().z - pz;
+		
+		double A = vx * vx + vy * vy + vz * vz;
+		double B = 2.0 * (px * vx + py * vy + pz * vz - vx * sx - vy * sy - vz * sz);
+		// NOTE: the C value is computed differently in gov.nasa.worldwind.geom.Sphere
+		double C = px * px - 2 * px * sx + sx * sx +
+		           py * py - 2 * py * sy + sy * sy +
+		           pz * pz - 2 * pz * sz + sz * sz -
+		           r * r;
+		
+		// discriminant
+		double D = B * B - 4 * A * C;
 		return (0 <= D);
 	}
 	
