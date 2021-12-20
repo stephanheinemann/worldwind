@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.cfar.swim.worldwind.geom.precision.Precision;
+import com.google.common.collect.Range;
 import com.jogamp.opengl.GL2;
 
 import gov.nasa.worldwind.geom.Extent;
@@ -212,15 +213,19 @@ public class LineSegment /* extends Line */ implements Renderable {
 	}
 	
 	/**
-	 * Determines whether or not this line segment intersects a sphere.
+	 * Determines whether or not this line segment intersects a sphere applying
+	 * a maximum radius tolerance.
 	 * 
 	 * @param sphere the sphere
+	 * @param epsilon the maximum radius tolerance
 	 * 
 	 * @return true if this line segment intersects the sphere, false otherwise
+	 * 
+	 * @see Sphere#intersect(Line)
 	 */
-	protected boolean intersects(Sphere sphere) {
+	protected boolean intersects(Sphere sphere, double epsilon) {
 		// sphere
-		double r = sphere.getRadius();
+		double r = sphere.getRadius() + epsilon;
 		double sx = sphere.getCenter().x;
 		double sy = sphere.getCenter().y;
 		double sz = sphere.getCenter().z;
@@ -235,9 +240,9 @@ public class LineSegment /* extends Line */ implements Renderable {
 		double vy = this.getSecond().y - py;
 		double vz = this.getSecond().z - pz;
 		
+		// NOTE: the discriminant is computed erroneously in gov.nasa.worldwind.geom.Sphere
 		double A = vx * vx + vy * vy + vz * vz;
 		double B = 2.0 * (px * vx + py * vy + pz * vz - vx * sx - vy * sy - vz * sz);
-		// NOTE: the C value is computed differently in gov.nasa.worldwind.geom.Sphere
 		double C = px * px - 2 * px * sx + sx * sx +
 		           py * py - 2 * py * sy + sy * sy +
 		           pz * pz - 2 * pz * sz + sz * sz -
@@ -245,7 +250,11 @@ public class LineSegment /* extends Line */ implements Renderable {
 		
 		// discriminant
 		double D = B * B - 4 * A * C;
-		return (0 <= D);
+		double t1 = (-B - Math.sqrt(D)) / (2.0 * A);
+		double t2 = (-B + Math.sqrt(D)) / (2.0 * A);
+		Range<Double> tr = Range.closed(0d,  1d);
+		
+		return (0 <= D) && (tr.contains(t1) || tr.contains(t2));
 	}
 	
 	/**
@@ -316,10 +325,11 @@ public class LineSegment /* extends Line */ implements Renderable {
 				intersects = this.isContained(extent, epsilon);
 			}
 		}
-		// NOTE: there appears to be a gov.nasa.worldwind.geom.Sphere bug when
-		// calculating the discriminant for the sphere-line intersection
+		// NOTE: there is a gov.nasa.worldwind.geom.Sphere bug in the
+		// calculation of the discriminant for the sphere-line intersection
 		if (extent instanceof Sphere) {
-			intersects = this.intersects((Sphere) extent);
+			intersects = this.intersects((Sphere) extent, epsilon)
+					|| this.isContained(extent, epsilon);
 		}
 		
 		return intersects;
@@ -362,6 +372,15 @@ public class LineSegment /* extends Line */ implements Renderable {
 			// ...contains this line segment
 			isContained = extentSegment.contains(this.first, epsilon)
 					&& extentSegment.contains(this.second, epsilon);
+		}
+		// NOTE: there is a gov.nasa.worldwind.geom.Sphere bug in the
+		// calculation of the discriminant for the sphere-line intersection
+		if (extent instanceof Sphere) {
+			Sphere sphere = (Sphere) extent;
+			isContained = (sphere.getCenter().distanceTo3(this.getFirst())
+						<= (sphere.getRadius() + epsilon))
+					&& (sphere.getCenter().distanceTo3(this.getSecond())
+						<= (sphere.getRadius() + epsilon));
 		}
 		
 		return isContained;

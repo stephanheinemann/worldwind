@@ -29,12 +29,14 @@
  */
 package com.cfar.swim.worldwind.tests;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
+import com.cfar.swim.worldwind.geom.LineSegment;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
 import gov.nasa.worldwind.avlist.AVKey;
@@ -42,6 +44,8 @@ import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Box;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
+import gov.nasa.worldwind.geom.Sphere;
+import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 
 /**
@@ -51,7 +55,36 @@ import gov.nasa.worldwind.globes.Earth;
  *
  */
 public class ObstaclesTest {
-
+	
+	/**
+	 * Tests line segment intersections.
+	 */
+	@Test
+	public void testLineSegment() {
+		Vec4 a = new Vec4(1d, 0d, 0d);
+		Vec4 b = new Vec4(-1d, 0d, 0d);
+		Vec4 c = new Vec4(0d, 1d, 0d);
+		
+		LineSegment segment = new LineSegment(a, b);
+		Sphere sphere1 = new Sphere(Vec4.ZERO, 1d);
+		assertTrue(segment.intersects(sphere1));
+		
+		Sphere sphere2 = new Sphere(Vec4.ZERO, 0.5d);
+		assertTrue(segment.intersects(sphere2));
+		
+		Sphere sphere3 = new Sphere(Vec4.ZERO, 1.5d);
+		assertTrue(segment.intersects(sphere3));
+		
+		Sphere sphere4 = new Sphere(c, 0.5d);
+		assertFalse(segment.intersects(sphere4));
+		
+		Sphere sphere5 = new Sphere(c, 1d);
+		assertTrue(segment.intersects(sphere5));
+		
+		Sphere sphere6 = new Sphere(c, 1.5d);
+		assertTrue(segment.intersects(sphere6));
+	}
+	
 	/**
 	 * Tests obstacle sphere intersections.
 	 */
