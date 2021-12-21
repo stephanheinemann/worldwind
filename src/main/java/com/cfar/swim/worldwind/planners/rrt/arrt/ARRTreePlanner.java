@@ -613,7 +613,8 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 			if (extension.isPresent()) {
 				// ensure all extensions satisfy the current cost bound
 				ARRTreeWaypoint newest = this.getNewestWaypoint();
-				if (newest.getF() <= this.getCostBound()) {
+				if (!newest.hasInfiniteCost()
+						&& (newest.getF() <= this.getCostBound())) {
 					if (newest.equals(target)) {
 						return Status.REACHED;
 					} else {
@@ -1051,8 +1052,9 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		
 		if (updated && (specification.getProperties() instanceof ARRTreeProperties)) {
 			ARRTreeProperties properties = (ARRTreeProperties) specification.getProperties();
-			this.setMaximumQuality(properties.getMaximumQuality());
+			this.setMaximumQuality(1d);
 			this.setMinimumQuality(properties.getMinimumQuality());
+			this.setMaximumQuality(properties.getMaximumQuality());
 			this.setNeighborLimit(properties.getNeighborLimit());
 			this.setQualityImprovement(properties.getQualityImprovement());
 		}
