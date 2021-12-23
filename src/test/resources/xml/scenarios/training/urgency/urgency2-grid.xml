@@ -94,7 +94,7 @@
 		</safcs:waypoint>
 		<safcs:waypoint designator="1" cost="INF" dtg="INF"
 			altitude="60.0" latitude="48.555197299038525"
-			longitude="-123.38154097361758">
+			longitude="-123.38254097361758">
 			<safcs:depiction symbology="TacticalPoint"
 				sidc="GFGPGPRI------X" text="1" image="symbols/waypoint-64x64.png" />
 		</safcs:waypoint>
