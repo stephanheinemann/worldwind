@@ -409,6 +409,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		HeuristicPlannerTuning mgpTuning = new HeuristicPlannerTuning(mgpSpec, defaultFeatures);
 		OADStarProperties mgpProperties = (OADStarProperties) mgpTuning.tune().get(0);
 		mgpOptions.initialIncumbent = "-minimumQuality '" + Double.toString(mgpProperties.getMinimumQuality()) + "' "
+				+ "-maximumQuality '" + Double.toString(mgpProperties.getMaximumQuality()) + "' "
 				+ "-qualityImprovement '" + Double.toString(mgpProperties.getQualityImprovement()) + "'";
 		
 		// create MGP AEC
@@ -456,13 +457,14 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		OADRRTreeProperties mtpProperties = (OADRRTreeProperties) mtpTuning.tune().get(0);
 		mtpOptions.initialIncumbent = "-sampling '" + mtpProperties.getSampling().name() + "' "
 				+ "-strategy '" + mtpProperties.getStrategy().name() + "' "
-				+ "-extension '" + mtpProperties.getExtension().name() + "' "
+				//+ "-extension '" + mtpProperties.getExtension().name() + "' "
 				+ "-maxIterations '" + Integer.toString(mtpProperties.getMaxIterations()) + "' "
 				+ "-epsilon '" + Double.toString(mtpProperties.getEpsilon()) + "' "
 				+ "-bias '" + Double.toString(mtpProperties.getBias()) + "' "
 				//+ "-goalThreshold '" + Double.toString(mtpProperties.getGoalThreshold()) + "' "
 				+ "-neighborLimit '" + Double.toString(mtpProperties.getNeighborLimit()) + "' "
 				+ "-initialCostBias '" + Double.toString(mtpProperties.getMinimumQuality()) + "' "
+				+ "-finalCostBias '" + Double.toString(mtpProperties.getMaximumQuality()) + "' "
 				+ "-improvementFactor '" + Double.toString(mtpProperties.getQualityImprovement()) + "'";
 		
 		// create MTP AEC
@@ -610,6 +612,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 				SequentialModelBasedAlgorithmConfiguration smac = this.smacs.get(plannerId);
 				// run SMAC
 				smac.run();
+				this.plannerEvaluator.recycle();
 				ParameterConfiguration incumbent = smac.getIncumbent();
 				Logging.logger().info("incumbent: " + incumbent.getFormattedParameterString(ParameterStringFormat.STATEFILE_SYNTAX));
 				Logging.logger().info("incumbent performance: " + smac.getEmpericalPerformance(incumbent));

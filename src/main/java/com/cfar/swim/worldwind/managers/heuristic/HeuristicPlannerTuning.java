@@ -116,7 +116,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			// quality
 			properties.setMinimumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
 			properties.setMaximumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
-			properties.setQualityImprovement(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
+			properties.setQualityImprovement(0d);
 			properties.setSignificantChange(0.01d);
 		} else {
 			// quality
@@ -138,7 +138,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			if (0d < qi) {
 				properties.setQualityImprovement(qi);
 			} else {
-				properties.setQualityImprovement(0.1d);
+				properties.setQualityImprovement(0d);
 			}
 			properties.setSignificantChange(0.5d);
 		}
@@ -170,7 +170,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			// quality
 			properties.setMinimumQuality(0.0d);
 			properties.setMaximumQuality(0.0d);
-			properties.setQualityImprovement(0.1d);
+			properties.setQualityImprovement(0d);
 			properties.setSignificantChange(0.01d);
 		} else {
 			// sampling
@@ -247,7 +247,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			if (0d < qi) {
 				properties.setQualityImprovement(qi);
 			} else {
-				properties.setQualityImprovement(0.1d);
+				properties.setQualityImprovement(0d);
 			}
 			properties.setSignificantChange(0.5d);
 		}

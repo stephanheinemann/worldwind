@@ -31,15 +31,16 @@
 # name type range default
 sampling categorical {ELLIPSOIDAL, UNIFORM, GAUSSIAN} [UNIFORM] # ordinal?
 strategy categorical {EXTEND, CONNECT} [EXTEND]
-extension categorical {LINEAR, FEASIBLE} [LINEAR] # OPS constraint?
-maxIterations integer [1, 10000] [1500]
-epsilon real [1, 10000] [500]
+#extension categorical {LINEAR, FEASIBLE} [LINEAR] # OPS constraint?
+maxIterations integer [1, 2000] [1000]
+epsilon real [1, 1000] [500]
 bias integer [0, 100] [5]
 #goalThreshold real [0.0, 500] [50]
-neighborLimit integer [1, 50] [5]
+neighborLimit integer [1, 10] [5]
 initialCostBias real [0.0, 1.0] [0.0]
-#finalCostBias real [1.0, 1.0] [1.0]
-improvementFactor real [0.01, 1.0] [0.05]
+finalCostBias real [0.0, 1.0] [1.0]
+improvementFactor real [0.0, 1.0] [0.2]
 
 # forbidden clauses
 #{epsilon < goalThreshold}
+{(initialCostBias > finalCostBias) || (improvementFactor > (finalCostBias - initialCostBias))}
