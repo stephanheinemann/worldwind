@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.cfar.swim.worldwind.javafx.TrajectoryStylist;
@@ -200,30 +201,32 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 			managedPlanner.setGoals(managedGoals);
 			
 			// execute managed planner
+			Future<Trajectory>  trajectory = this.executor.submit(managedPlanner);
 			try {
-				this.executor.submit(managedPlanner);
 				// execute managed planner until cut-off time
-				this.executor.awaitTermination(
-						(long) arc.getAlgorithmExecutionConfiguration().getAlgorithmMaximumCutoffTime(),
-						TimeUnit.SECONDS);
+				trajectory.get((long) arc.getAlgorithmExecutionConfiguration().getAlgorithmMaximumCutoffTime(), TimeUnit.SECONDS);
+			} catch (Exception coe) {
 				// terminate managed planner
 				managedPlanner.terminate();
-				// recycle executor if managed planner cannot be terminated in time
-				boolean terminated = this.executor.awaitTermination(
-						SmacPlannerEvaluator.MAX_TERMINATION_DELAY.getSeconds(),
-						TimeUnit.SECONDS);
-				if (!terminated) {
-					this.recycle();
+				try {
+					trajectory.get(SmacPlannerEvaluator.MAX_TERMINATION_DELAY.getSeconds(), TimeUnit.SECONDS);
+				} catch (Exception tde) {
+					tde.printStackTrace();
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
+			}
+			
+			// recycle executor if managed planner cannot be terminated in time
+			if (!trajectory.isDone()) {
+				trajectory.cancel(true);
+				this.recycle();
 			}
 			
 			// TODO: use intermediate results and quality improvements
 			ExistingAlgorithmRunResult earr = new ExistingAlgorithmRunResult(
 					arc,
-					managedScenario.getTrajectory().isEmpty()
-						? RunStatus.UNSAT : RunStatus.SAT, // TODO: versus TIMEOUT
+					//!managedScenario.getTrajectory().isEmpty()
+					managedScenario.getTrajectory().getPois().contains(managedPlanner.getGoals().getDestination())
+						? RunStatus.SAT : RunStatus.UNSAT, // TODO: versus TIMEOUT
 					managedPlanner.getPerformance().getQuantity().get(), // runtime
 					managedPlanner.getRevisions().size(), // number of quality improvements
 					//SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().getNormalized()), // performance of solution
