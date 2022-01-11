@@ -282,8 +282,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		boolean hasMaximumQuality = false;
 		
 		if (this.hasGoal()) {
-			hasMaximumQuality = (0d == this.getQualityImprovement())
-					|| (this.getStart().getF() == this.getGoal().getCost())
+			hasMaximumQuality = (this.getStart().getF() == this.getGoal().getCost())
 					|| ((this.getCostBound() < this.getGoal().getCost())
 							&& (this.getCostBias() >= this.getMaximumQuality()));
 		}
@@ -314,7 +313,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 	 */
 	@Override
 	public synchronized void setQualityImprovement(double improvementFactor) {
-		if ((0d <= improvementFactor) && (1d >= improvementFactor)) {
+		if ((0d < improvementFactor) && (1d >= improvementFactor)) {
 			this.improvementFactor = improvementFactor;
 		} else {
 			throw new IllegalArgumentException("improvement factor is invalid");

@@ -221,16 +221,21 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 				this.recycle();
 			}
 			
+			if (!managedScenario.getTrajectory().getPois().contains(managedGoals.getDestination())) {
+				Logging.logger().info("unsatisfactory evaluation run");
+			}
+			
 			// TODO: use intermediate results and quality improvements
 			ExistingAlgorithmRunResult earr = new ExistingAlgorithmRunResult(
 					arc,
 					//!managedScenario.getTrajectory().isEmpty()
-					managedScenario.getTrajectory().getPois().contains(managedPlanner.getGoals().getDestination())
-						? RunStatus.SAT : RunStatus.UNSAT, // TODO: versus TIMEOUT
+					managedScenario.getTrajectory().getPois().contains(managedGoals.getDestination())
+						? RunStatus.SAT : RunStatus.UNSAT,
 					managedPlanner.getPerformance().getQuantity().get(), // runtime
 					managedPlanner.getRevisions().size(), // number of quality improvements
-					//SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().getNormalized()), // performance of solution
-					SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().getQuality().getNormalized()), // quality of solution
+					managedScenario.getTrajectory().getPois().contains(managedGoals.getDestination())
+						? //SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().getNormalized()) : 0d, // performance of solution
+						SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().getQuality().getNormalized()) : 0d, // quality of solution
 					1l, // problem instance seed (automatically generated instead)
 					managedScenario.getTrajectory().toString()); // additional run-data
 			results.add(earr);

@@ -211,7 +211,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 	 */
 	@Override
 	public synchronized void setQualityImprovement(double deflationAmount) {
-		if (0d <= deflationAmount) {
+		if (0d < deflationAmount) {
 			this.deflationAmount = deflationAmount;
 		} else {
 			throw new IllegalArgumentException("deflation amount is invalid");

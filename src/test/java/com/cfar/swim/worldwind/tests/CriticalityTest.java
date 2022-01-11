@@ -34,6 +34,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.TreeSet;
 
 import org.junit.Test;
@@ -157,7 +158,7 @@ public class CriticalityTest {
 		
 		ZonedDateTime epoch = // ZonedDateTime.parse("2021-11-14T16:23:51.594821-08:00[America/Vancouver]");
 				ZonedDateTime.now();
-		Duration tolerance = Duration.ofMinutes(2);
+		Duration tolerance = Duration/*.ofHours(3)*/.ofMinutes(2);
 		
 		HashMap<ZonedDateTime, TreeSet<Performance>> epochPerformances = new HashMap<>();
 		HashMap<ZonedDateTime, Tuning<?>> epochTuning = new HashMap<>();
@@ -231,6 +232,23 @@ public class CriticalityTest {
 			}
 			System.out.println("________________________________________________________________________________");
 		}
+	}
+	
+	@Test
+	public void cleanupKnowledgeBase() {
+		KnowledgeBase knowledgeBase = new KnowledgeBase();
+		knowledgeBase.load(URI.create(AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE));
+		
+		Iterator<Tuning<?>> tunings = knowledgeBase.getReputation().keySet().iterator();
+		while (tunings.hasNext()) {
+			Tuning<?> tuning = tunings.next();
+			knowledgeBase.getReputation().get(tuning).removeIf(p -> 0d >= p.get());
+			if (knowledgeBase.getReputation().get(tuning).isEmpty()) {
+				tunings.remove();
+			}
+		}
+		
+		knowledgeBase.save(URI.create(AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE));
 	}
 	
 }

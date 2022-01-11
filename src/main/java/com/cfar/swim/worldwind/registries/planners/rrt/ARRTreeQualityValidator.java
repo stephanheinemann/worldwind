@@ -54,7 +54,7 @@ public class ARRTreeQualityValidator implements ConstraintValidator<ARRTreeValid
 	public boolean isValid(ARRTreeProperties value, ConstraintValidatorContext context) {
 		return (0d <= value.getMinimumQuality()) && (1d >= value.getMaximumQuality())
 				&& (value.getMinimumQuality() <= value.getMaximumQuality())
-				&& (0d <= value.getQualityImprovement());
+				&& (0d < value.getQualityImprovement());
 	}
 	
 }

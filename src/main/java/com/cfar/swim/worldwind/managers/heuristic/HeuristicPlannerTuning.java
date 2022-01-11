@@ -116,7 +116,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			// quality
 			properties.setMinimumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
 			properties.setMaximumQuality(features.get(Features.FEATURE_ENVIRONMENT_COST_BASE));
-			properties.setQualityImprovement(0d);
+			properties.setQualityImprovement(0.1d);
 			properties.setSignificantChange(0.01d);
 		} else {
 			// quality
@@ -124,6 +124,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 					+ features.get(Features.FEATURE_POIS_OBSTACLES_COST_AVG));
 			
 			// reduce search time in less critical situations for multi-part problems
+			// TODO: consider lower final inflation to improve quality
 			if (FlightPhase.areCruise(features)) {
 				properties.setMaximumQuality(Math.max(1d, 0.75d * properties.getMinimumQuality()));
 			} else if (FlightPhase.areTransition(features)) {
@@ -138,7 +139,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			if (0d < qi) {
 				properties.setQualityImprovement(qi);
 			} else {
-				properties.setQualityImprovement(0d);
+				properties.setQualityImprovement(0.01d);
 			}
 			properties.setSignificantChange(0.5d);
 		}
@@ -155,6 +156,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			// sampling
 			properties.setSampling(Sampling.ELLIPSOIDAL);
 			// goal bias
+			// TODO: consider lower bias (feature horizon may not cover all obstacles)
 			properties.setBias(100); // ignore terrain and capabilities
 			// epsilon - extension distance
 			properties.setEpsilon(features.get(Features.FEATURE_POIS_DISTANCE_MAX));
@@ -164,13 +166,14 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			// goal threshold
 			properties.setGoalThreshold(0d);
 			// maximum iterations
+			// TODO: consider more iterations (feature horizon may not cover all obstacles)
 			properties.setMaxIterations(1); // ignore terrain and capabilities
 			// neighborhood
 			properties.setNeighborLimit(1);
 			// quality
 			properties.setMinimumQuality(0.0d);
 			properties.setMaximumQuality(0.0d);
-			properties.setQualityImprovement(0d);
+			properties.setQualityImprovement(0.001d);
 			properties.setSignificantChange(0.01d);
 		} else {
 			// sampling
@@ -231,6 +234,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			}
 			
 			// quality
+			// TODO: consider higher cost bias to improve quality
 			properties.setMinimumQuality(0d);
 			// reduce search time in less critical situations for multi-part problems
 			if (FlightPhase.areCruise(features)) {
@@ -247,7 +251,7 @@ public class HeuristicPlannerTuning extends PlannerTuning {
 			if (0d < qi) {
 				properties.setQualityImprovement(qi);
 			} else {
-				properties.setQualityImprovement(0d);
+				properties.setQualityImprovement(0.001d);
 			}
 			properties.setSignificantChange(0.5d);
 		}

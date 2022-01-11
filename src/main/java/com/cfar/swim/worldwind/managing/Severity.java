@@ -257,15 +257,15 @@ public class Severity extends Criticality {
 	 * CRITICAL     P       E       E
 	 * FATAL        E       *       *
 	 * 
-	 * 0, 0, E -> SUB
+	 * 0, 0, E -> SUB (requires closed range for 0)
 	 * 0, P, E -> SUB, SEV
-	 * 0, E, E -> SEV
+	 * 0, E, E -> SEV (requires closed range for 0)
 	 * P, 0, E -> SUB (aircraft outside POI bounding box)
 	 * P, P, E -> SUB, SEV
 	 * P, E, E -> SEV, CRT
 	 * E, 0, E -> FAT (aircraft outside POI bounding box)
 	 * E, P, E -> FAT (aircraft outside POI bounding box)
-	 * E, E, E -> CRT, FAT
+	 * E, E, E -> FAT
 	 * 
 	 * 0, 0, P -> LOW, MOD, SUB
 	 * 0, P, P -> MOD, SUB
