@@ -382,5 +382,25 @@ public class OADStarProperties extends ADStarProperties implements OnlinePlanner
 				this.maxLandingHorizontalError,
 				this.maxLandingTimingError);
 	}
-
+	
+	/**
+	 * Gets the string representation of this OAD* planner properties bean.
+	 * 
+	 * @return the string representation of this OAD* planner properties bean
+	 * 
+	 * @see ADStarProperties#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + ", "
+				+ "minDeliberation=" + this.getMinDeliberation() + ", "
+				+ "maxDeliberation=" + this.getMaxDeliberation() + ", "
+				+ "maxCrossTrackError=" + this.getMaxCrossTrackError() + ", "
+				+ "maxTimingError=" + this.getMaxTimingError() + ", "
+				+ "maxTakeOffHorizontalError=" + this.getMaxTakeOffHorizontalError() + ", "
+				+ "maxTakeOffTimingError=" + this.getMaxTimingError() + ", "
+				+ "maxLandingHorizontalError=" + this.getMaxLandingHorizontalError() + ", "
+				+ "maxLandingTimingError" + this.getMaxLandingTimingError();
+	}
+	
 }

@@ -102,6 +102,24 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	}
 	
 	/**
+	 * Determines whether or not this reputation has performances of a
+	 * performance class for a tuning given a performance context.
+	 * 
+	 * @param tuning the tuning
+	 * @param context the performance context
+	 * @param performanceClass the performance class
+	 * 
+	 * @return true if this reputation has performances of the given class for
+	 *         the tuning in the performance context, false otherwise
+	 */
+	public boolean hasPerformances(Tuning<?> tuning,
+			PerformanceContext context, Class<? extends Performance> performanceClass) {
+		return this.containsKey(tuning) && this.get(tuning).stream()
+				.anyMatch(p -> (p.getClass() == performanceClass)
+						&& p.getContext().equals(context));
+	}
+	
+	/**
 	 * Gets the average tuning performance of a tuning in this reputation.
 	 * 
 	 * @param tuning the tuning
@@ -184,6 +202,33 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 	}
 	
 	/**
+	 * Gets the maximum tuning performance of a performance class for a tuning
+	 * in this reputation within a given performance context.
+	 * 
+	 * @param tuning the tuning
+	 * @param context the performance context
+	 * @param performanceClass the performance class
+	 * 
+	 * @return the maximum tuning performance of the performance class within
+	 *         the performance context, if present
+	 */
+	public OptionalDouble getMaximumTuningPerformance(
+			Tuning<?> tuning,
+			PerformanceContext context,
+			Class<? extends Performance> performanceClass) {
+		OptionalDouble performance = OptionalDouble.empty();
+		
+		if (this.containsKey(tuning)) {
+			performance = this.get(tuning).stream()
+					.filter(p -> (p.getClass() == performanceClass)
+							&& (p.getContext().equals(context)))
+					.map(p -> p.get()).mapToDouble(Double::valueOf).max();
+		}
+		
+		return performance;
+	}
+	
+	/**
 	 * Gets the minimum tuning performance of a tuning in this reputation.
 	 * 
 	 * @param tuning the tuning
@@ -255,7 +300,8 @@ public class Reputation extends HashMap<Tuning<?>, Set<Performance>> {
 							int result = p1.getEpoch().compareTo(p2.getEpoch());
 							
 							if (0 == result) {
-								result = p1.getQuantity().compareTo(p2.getQuantity());
+								result = Comparator.comparingDouble(Quantity::get)
+										.compare(p1.getQuantity(), p2.getQuantity());
 							}
 							
 							return result;

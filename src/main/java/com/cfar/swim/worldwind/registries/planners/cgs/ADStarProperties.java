@@ -188,4 +188,17 @@ public class ADStarProperties extends ARAStarProperties
 				this.significantChange);
 	}
 	
+	/**
+	 * Gets the string representation of this AD* planner properties bean.
+	 * 
+	 * @return the string representation of this AD* planner properties bean
+	 * 
+	 * @see ARAStarProperties#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + ", "
+				+ "significantChange=" + this.getSignificantChange();
+	}
+	
 }

@@ -38,6 +38,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.cfar.swim.worldwind.javafx.TrajectoryStylist;
+import com.cfar.swim.worldwind.managing.PlannerPerformance;
 import com.cfar.swim.worldwind.planners.PlanRevisionListener;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGoals;
@@ -177,6 +178,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 				public void revisePlan(Trajectory trajectory) {
 					TrajectoryStylist.styleTrajectory(trajectory);
 					managedScenario.setTrajectory(trajectory);
+					
 					// TODO: first or specified revision could terminate
 					if (null != runStatusObserver) {
 						//TODO: runStatusObserver.currentStatus(results);
@@ -221,7 +223,13 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 				this.recycle();
 			}
 			
-			if (!managedScenario.getTrajectory().getPois().contains(managedGoals.getDestination())) {
+			// collect managed planner results
+			int improvements = managedPlanner.getRevisions().size();
+			Trajectory solution = managedPlanner.getRevisions().get(improvements - 1);
+			PlannerPerformance performance = managedPlanner.getPerformance();
+			boolean satisfactory = solution.getPois().contains(managedGoals.getDestination());
+			
+			if (!satisfactory) {
 				Logging.logger().info("unsatisfactory evaluation run");
 			}
 			
@@ -229,15 +237,14 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 			ExistingAlgorithmRunResult earr = new ExistingAlgorithmRunResult(
 					arc,
 					//!managedScenario.getTrajectory().isEmpty()
-					managedScenario.getTrajectory().getPois().contains(managedGoals.getDestination())
-						? RunStatus.SAT : RunStatus.UNSAT,
-					managedPlanner.getPerformance().getQuantity().get(), // runtime
-					managedPlanner.getRevisions().size(), // number of quality improvements
-					managedScenario.getTrajectory().getPois().contains(managedGoals.getDestination())
-						? //SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().getNormalized()) : 0d, // performance of solution
-						SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().getQuality().getNormalized()) : 0d, // quality of solution
+					satisfactory ? RunStatus.SAT : RunStatus.UNSAT,
+					performance.getQuantity().get(), // runtime
+					improvements, // number of quality improvements
+					satisfactory ?
+						//SmacPlannerEvaluator.toResultQuality(performance.getNormalized()) : 0d, // performance of solution
+						SmacPlannerEvaluator.toResultQuality(performance.getQuality().getNormalized()) : 0d, // quality of solution
 					1l, // problem instance seed (automatically generated instead)
-					managedScenario.getTrajectory().toString()); // additional run-data
+					solution.toString()); // additional run-data
 			results.add(earr);
 			//runStatusObserver.currentStatus(results);
 		}

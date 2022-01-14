@@ -717,14 +717,18 @@ implements DynamicPlanner, LifelongPlanner {
 	 */ 
 	@Override
 	protected Trajectory planPart(int partIndex) {
+		Trajectory trajectory = new Trajectory();
+		
 		if (this.hasBackup(partIndex)) {
 			// repair and improve existing plan after dynamic changes
 			this.elaborate(partIndex);
-			return this.createTrajectory();
-		} else {
+			trajectory = this.createTrajectory();
+		} else if (!this.hasTerminated()) {
 			// plan from scratch
-			return super.planPart(partIndex);
+			trajectory = super.planPart(partIndex);
 		}
+		
+		return trajectory;
 	}
 	
 	/**

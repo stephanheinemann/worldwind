@@ -416,13 +416,13 @@ implements DynamicPlanner, LifelongPlanner {
 	 */ 
 	@Override
 	protected Trajectory planPart(int partIndex) {
-		Trajectory trajectory = null;
+		Trajectory trajectory = new Trajectory();
 		
 		if (this.hasBackup(partIndex)) {
 			// repair an existing plan after dynamic changes
 			this.elaborate(partIndex);
 			trajectory = this.createTrajectory();
-		} else {
+		} else if (!this.hasTerminated()) {
 			// plan from scratch
 			trajectory = super.planPart(partIndex);
 		}

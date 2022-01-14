@@ -41,6 +41,7 @@ import com.cfar.swim.worldwind.managing.FeatureCategory;
 import com.cfar.swim.worldwind.managing.FeatureTuning;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.KnowledgeBase;
+import com.cfar.swim.worldwind.managing.NumericPerformance;
 import com.cfar.swim.worldwind.managing.PerformanceContext;
 import com.cfar.swim.worldwind.managing.PlannerTuning;
 import com.cfar.swim.worldwind.managing.Reputation;
@@ -128,6 +129,7 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 		
 		if ((null == this.knowledgeBase) || (null == this.featureCategories)) {
 			// revert to heuristic tuning
+			Logging.logger().info("missing knowledge base or feature categories: reverting to heuristic tuning");
 			properties = super.tune(specification, features);
 		} else {
 			Reputation reputation = this.knowledgeBase.getReputation();
@@ -152,6 +154,7 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 					.collect(Collectors.toUnmodifiableList());
 			if (categories.isEmpty()) {
 				// revert to heuristic tuning
+				Logging.logger().info("no matching feature categories: reverting to heuristic tuning");
 				properties = super.tune(specification, features);
 			} else {
 				// associated covered feature categories
@@ -164,12 +167,14 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 				}
 				if (categoryTunings.isEmpty()) {
 					// revert to heuristic tuning
+					Logging.logger().info("no matching feature category tunings: reverting to heuristic tuning");
 					properties = super.tune(specification, features);
 				} else {
 					// apply feature category tunings
 					properties.addAll(categoryTunings
 							.stream()
-							.filter(t -> reputation.hasPerformances(t, PerformanceContext.CURRENT))
+							.filter(t -> reputation.hasPerformances(
+									t, PerformanceContext.CURRENT, NumericPerformance.class))
 							.sorted(new Comparator<PlannerTuning>() {
 								/**
 								 * Compares planner tunings in terms of performance according to their
@@ -187,9 +192,9 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 									int result = 0;
 									
 									OptionalDouble p1 = reputation.getMaximumTuningPerformance(
-											t1, PerformanceContext.CURRENT);
+											t1, PerformanceContext.CURRENT, NumericPerformance.class);
 									OptionalDouble p2 = reputation.getMaximumTuningPerformance(
-											t2, PerformanceContext.CURRENT);
+											t2, PerformanceContext.CURRENT, NumericPerformance.class);
 									if (p1.isPresent() || p2.isPresent()) {
 										if (p1.isPresent() && p2.isEmpty()) {
 											result = -1;
@@ -204,7 +209,14 @@ public class SmacPlannerTuning extends HeuristicPlannerTuning {
 								}})
 							.map(t -> t.getSpecification().getProperties())
 							.collect(Collectors.toUnmodifiableList()));
-					Logging.logger().info("applying SMAC tuning");
+					
+					if (properties.isEmpty()) {
+						// revert to heuristic tuning
+						Logging.logger().info("no matching SMAC tunings: reverting to heuristic tuning");
+						properties = super.tune(specification, features);
+					} else {
+						Logging.logger().info("applying SMAC tunings " + properties);
+					}
 				}
 			}
 		}

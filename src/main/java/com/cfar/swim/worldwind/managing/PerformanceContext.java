@@ -210,7 +210,8 @@ public class PerformanceContext implements Serializable {
 					&& (this.osPlatform.equals(pc.osPlatform))
 					&& (this.physicalProcessorCount == pc.physicalProcessorCount)
 					&& (this.processorName.equals(pc.processorName))
-					&& (this.totalMemory == pc.totalMemory);
+					// TODO: total memory appears to be inconsistent on the byte level
+					&& ((this.totalMemory / 1000000l) == (pc.totalMemory / 1000000l));
 		}
 		
 		return equals;

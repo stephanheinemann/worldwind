@@ -140,4 +140,17 @@ public class ADRRTreeProperties extends ARRTreeProperties implements DynamicPlan
 				this.significantChange);
 	}
 	
+	/**
+	 * Gets the string representation of this ADRRT planner properties bean.
+	 * 
+	 * @return the string representation of this ADRRT planner properties bean
+	 * 
+	 * @see ARRTreeProperties#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + ", "
+				+ "significantChange=" + this.getSignificantChange();
+	}
+	
 }

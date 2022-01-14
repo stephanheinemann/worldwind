@@ -33,6 +33,7 @@ import java.util.Objects;
 
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
+import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
 import com.cfar.swim.worldwind.registries.planners.AnytimePlannerProperties;
 
 /**
@@ -229,5 +230,20 @@ public class ARAStarProperties extends ForwardAStarProperties implements Anytime
 				this.finalInflation,
 				this.initialInflation);
 	}
-
+	
+	/**
+	 * Gets the string representation of this ARA* planner properties bean.
+	 * 
+	 * @return the string representation of this ARA* planner properties bean
+	 * 
+	 * @see AbstractPlannerProperties#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + ", "
+				+ "initialInflation=" + this.getMinimumQuality() + ", "
+				+ "finalInflation=" + this.getMaximumQuality() + ", "
+				+ "deflationAmount=" + this.getQualityImprovement();
+	}
+	
 }

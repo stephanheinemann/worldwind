@@ -32,7 +32,6 @@ package com.cfar.swim.worldwind.planners.managed;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -546,7 +545,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * @see ManagedPlanner#getRevisions()
 	 */
 	@Override
-	public Collection<Trajectory> getRevisions() {
+	public List<Trajectory> getRevisions() {
 		return Collections.unmodifiableList(this.revisions);
 	}
 	
