@@ -225,7 +225,12 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 			
 			// collect managed planner results
 			int improvements = managedPlanner.getRevisions().size();
-			Trajectory solution = managedPlanner.getRevisions().get(improvements - 1);
+			Trajectory solution;
+			if (0 < improvements) {
+				solution = managedPlanner.getRevisions().get(improvements - 1);
+			} else {
+				solution = new Trajectory();
+			}
 			PlannerPerformance performance = managedPlanner.getPerformance();
 			boolean satisfactory = solution.getPois().contains(managedGoals.getDestination());
 			
