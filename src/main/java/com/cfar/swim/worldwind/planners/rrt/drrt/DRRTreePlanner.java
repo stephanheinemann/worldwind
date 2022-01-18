@@ -360,7 +360,7 @@ implements DynamicPlanner, LifelongPlanner {
 					this.getStart().setParent(partStart.getParent());
 					// propagate potential cost change
 					double deltaCost = partStart.getCost() - this.getStart().getCost();
-					if (0 != deltaCost) {
+					if (0d != deltaCost) {
 						for (Position vertex : this.getPlanningContinuum().getVertices()) {
 							DRRTreeWaypoint waypoint = (DRRTreeWaypoint) vertex;
 							waypoint.setCost(waypoint.getCost() + deltaCost);
