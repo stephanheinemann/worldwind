@@ -470,13 +470,12 @@ implements DynamicPlanner, LifelongPlanner {
 				this.getGoal().setInfiniteCost();
 				repaired = false;
 			} else if (this.getStart().getEto().equals(partStart.getEto())) {
-				// connect current to previous part
 				// TODO: consider departure slots to avoid planning from scratch
 				// TODO: consider early arrivals with holding / loitering
 				
 				// propagate potential cost change
 				double deltaCost = partStart.getCost() - this.getStart().getCost();
-				if (0 != deltaCost) {
+				if (0d != deltaCost) {
 					for (AStarWaypoint waypoint : this.visited) {
 						ADStarWaypoint adswp = (ADStarWaypoint) waypoint;
 						adswp.setG(adswp.getG() + deltaCost);
@@ -484,6 +483,7 @@ implements DynamicPlanner, LifelongPlanner {
 					}
 				}
 				
+				// connect current to previous part
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
 				}
