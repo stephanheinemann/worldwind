@@ -40,6 +40,7 @@ import java.util.TreeSet;
 import org.junit.Test;
 
 import com.cfar.swim.worldwind.flight.FlightPhase;
+import com.cfar.swim.worldwind.managers.smac.SmacPlannerTuning;
 import com.cfar.swim.worldwind.managing.Difficulty;
 import com.cfar.swim.worldwind.managing.FeatureTuning;
 import com.cfar.swim.worldwind.managing.Features;
@@ -49,6 +50,7 @@ import com.cfar.swim.worldwind.managing.Quantity;
 import com.cfar.swim.worldwind.managing.Severity;
 import com.cfar.swim.worldwind.managing.Tuning;
 import com.cfar.swim.worldwind.registries.Properties;
+import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.managers.AbstractManagerProperties;
 import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
@@ -158,7 +160,7 @@ public class CriticalityTest {
 		
 		ZonedDateTime epoch = // ZonedDateTime.parse("2021-11-14T16:23:51.594821-08:00[America/Vancouver]");
 				ZonedDateTime.now();
-		Duration tolerance = Duration/*.ofHours(3)*/.ofMinutes(2);
+		Duration tolerance = Duration/*.ofHours(1)*/.ofMinutes(2);
 		
 		HashMap<ZonedDateTime, TreeSet<Performance>> epochPerformances = new HashMap<>();
 		HashMap<ZonedDateTime, Tuning<?>> epochTuning = new HashMap<>();
@@ -192,18 +194,22 @@ public class CriticalityTest {
 		// plot
 		for (ZonedDateTime performanceEpoch : epochPerformances.keySet()) {
 			Properties<?> properties = epochTuning.get(performanceEpoch).getSpecification().getProperties();
+			
 			if (properties instanceof OADStarProperties) {
-				OADStarProperties oadsp = (OADStarProperties) properties;
-				System.out.println("OAD* Properties:\n"
+				//OADStarProperties oadsp = (OADStarProperties) properties;
+				System.out.println("OAD* Properties:");
+				/*
 						+ "cost policy = " + oadsp.getCostPolicy() + "\n"
 						+ "risk policy = " + oadsp.getRiskPolicy() + "\n"
 						+ "min quality = " + oadsp.getMinimumQuality() + "\n"
 						+ "max quality = " + oadsp.getMaximumQuality() + "\n"
 						+ "quality imp = " + oadsp.getQualityImprovement() + "\n"
 						+ "sig change  = " + oadsp.getSignificantChange());
+				*/
 			} else if (properties instanceof OADRRTreeProperties) {
-				OADRRTreeProperties oadrrtp = (OADRRTreeProperties) properties;
-				System.out.println("OADRRT Properties:\n"
+				//OADRRTreeProperties oadrrtp = (OADRRTreeProperties) properties;
+				System.out.println("OADRRT Properties:");
+				/*
 						+ "cost policy    = " + oadrrtp.getCostPolicy() + "\n"
 						+ "risk policy    = " + oadrrtp.getRiskPolicy() + "\n"
 						+ "max iterations = " + oadrrtp.getMaxIterations() + "\n"
@@ -218,7 +224,9 @@ public class CriticalityTest {
 				        + "max quality    = " + oadrrtp.getMaximumQuality() + "\n"
 				        + "quality imp    = " + oadrrtp.getQualityImprovement() + "\n"
 				        + "sig change     = " + oadrrtp.getSignificantChange());
+				*/
 			}
+			System.out.println(properties);
 			
 			System.out.println("________________________________________________________________________________");
 			System.out.println("# gnuplot " + performanceEpoch + "\n");
@@ -244,8 +252,26 @@ public class CriticalityTest {
 			Tuning<?> tuning = tunings.next();
 			knowledgeBase.getReputation().get(tuning).removeIf(p -> 0d >= p.get());
 			if (knowledgeBase.getReputation().get(tuning).isEmpty()) {
-				tunings.remove();
+				//tunings.remove();
 			}
+			
+			/*
+			if (tuning instanceof SmacPlannerTuning && tuning.getSpecification().getId().equals(Specification.PLANNER_MTP_ID)) {
+				if (165.30671252005916 == ((OADRRTreeProperties) tuning.getSpecification().getProperties()).getEpsilon()) {
+					System.out.println(tuning.getSpecification().getProperties());
+					//tunings.remove();
+				}
+			}
+			*/
+			
+			/*
+			if (tuning instanceof SmacPlannerTuning && tuning.getSpecification().getId().equals(Specification.PLANNER_MGP_ID)) {
+				if (62.25 == ((OADStarProperties) tuning.getSpecification().getProperties()).getMinimumQuality()) {
+					System.out.println(tuning.getSpecification().getProperties());
+					//tunings.remove();
+				}
+			}
+			*/
 		}
 		
 		knowledgeBase.save(URI.create(AbstractManagerProperties.KNOWLEDGE_BASE_RESOURCE));
