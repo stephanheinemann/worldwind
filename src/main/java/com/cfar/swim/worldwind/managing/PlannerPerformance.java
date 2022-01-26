@@ -66,19 +66,4 @@ public class PlannerPerformance extends AbstractPerformance {
 		super(epoch, quality, quantity);
 	}
 	
-	/**
-	 * Gets the string representation of this planner performance.
-	 * 
-	 * @return the string representation of this planner performance
-	 * 
-	 * @see Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return  this.getEpoch().toString() + ":"
-				+ String.valueOf(this.getQuality().get()) + " / "
-				+ String.valueOf(this.getQuantity().get()) + " = "
-				+ String.valueOf(this.get());
-	}
-	
 }

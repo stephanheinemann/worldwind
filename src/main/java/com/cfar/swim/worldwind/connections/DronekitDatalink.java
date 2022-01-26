@@ -136,6 +136,24 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
+	 * Gets the host of this dronekit datalink.
+	 * 
+	 * @return the host of this dronekit datalink
+	 */
+	public String getHost() {
+		return this.host;
+	}
+	
+	/**
+	 * Gets the port of this dronekit datalink.
+	 * 
+	 * @return the port of this dronekit datalink
+	 */
+	public int getPort() {
+		return this.port;
+	}
+	
+	/**
 	 * Connects this dronekit datalink.
 	 * 
 	 * @see Datalink#connect()

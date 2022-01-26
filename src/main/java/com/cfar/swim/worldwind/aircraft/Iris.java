@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.aircraft;
 
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -43,8 +44,6 @@ import gov.nasa.worldwind.symbology.SymbologyConstants;
  *
  */
 public class Iris extends Quadcopter {
-
-	// TODO: use environment AirDataIntervals
 	
 	/** the maximum angle of climb speed of this Iris in m/s */
 	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 10d;
@@ -141,6 +140,26 @@ public class Iris extends Quadcopter {
 	@Override
 	public String getId() {
 		return Specification.AIRCRAFT_IRIS_ID;
+	}
+	
+	/**
+	 * Interpolates the midpoint Iris between this and another Iris. The
+	 * interpolation considers the spatial and temporal attributes and modifies
+	 * this Iris accordingly.
+	 * 
+	 * @param other the other Iris
+	 * 
+	 * @return the interpolated midpoint Iris between this and the other Iris
+	 * 
+	 * @see ObstacleSphere#interpolate(ObstacleSphere)
+	 */
+	@Override
+	public Iris interpolate(ObstacleSphere other) {
+		ObstacleSphere interpolant = super.interpolate(other);
+		Iris iris = new Iris(interpolant.getCenter(),
+				interpolant.getRadius(), this.getCombatIdentification());
+		iris.setCostInterval(interpolant.getCostInterval());
+		return iris;
 	}
 	
 }

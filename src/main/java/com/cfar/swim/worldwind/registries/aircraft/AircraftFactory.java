@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.registries.aircraft;
 
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.aircraft.H135;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -91,6 +92,8 @@ public class AircraftFactory extends AbstractFactory<Aircraft> {
 				aircraft = new Iris(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
 			} else if (this.getSpecification().getId().equals(Specification.AIRCRAFT_A320_ID)) {
 				aircraft = new A320(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
+			} else if (this.getSpecification().getId().equals(Specification.AIRCRAFT_H135_ID)) {
+				aircraft = new H135(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
 			}
 			
 			aircraft.getCapabilities().setApproachRateOfDescent(properties.getApproachRateOfDescent());

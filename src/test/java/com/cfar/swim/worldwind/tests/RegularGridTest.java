@@ -48,9 +48,9 @@ import org.xml.sax.InputSource;
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.data.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.geom.Cube;
-import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
 import com.cfar.swim.worldwind.javafx.PlanningTimePicker;
 import com.cfar.swim.worldwind.javafx.SwimDataListView;
 import com.cfar.swim.worldwind.javafx.ThresholdCostSlider;
@@ -202,7 +202,7 @@ public class RegularGridTest {
             				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
             				70));
             iris.getDepiction().setDesignation("Iris");
-            //iris.getDepiction().setAnnotation(new DepictionAnnotation("Iris", iris.getReferencePosition()));
+            //iris.getDepiction().setAnnotation(new DepictionAnnotation("Iris", iris.getCenter()));
             renderableLayer.addRenderable(iris);
             
             A320 a320 = new A320(new Position(ts.getCorners()[0], 50000), 5000, CombatIdentification.FRIEND);
@@ -212,7 +212,7 @@ public class RegularGridTest {
     				ZonedDateTime.now(ZoneId.of("UTC")).plusYears(10),
     				70));
             a320.getDepiction().setDesignation("A320");
-            //a320.getDepiction().setAnnotation(new DepictionAnnotation("A320", iris.getReferencePosition()));
+            //a320.getDepiction().setAnnotation(new DepictionAnnotation("A320", iris.getCenter()));
             renderableLayer.addRenderable(a320);
             
             // TODO: add time slider with steps between min and max time (set using calender-like input)
@@ -304,8 +304,8 @@ public class RegularGridTest {
 		// TODO: this seems to be the expected rst versus xyz bug
 		/*
 		System.out.println("iris location " + iris.getLocation());
-		System.out.println("checking position " + iris.getReferencePosition());
-		Vec4 point = tsGrid.getGlobe().computePointFromPosition(iris.getReferencePosition());
+		System.out.println("checking position " + iris.getCenter());
+		Vec4 point = tsGrid.getGlobe().computePointFromPosition(iris.getCenter());
 		System.out.println("cartesian point " + point);
 		System.out.println("grid contains point " + tsGrid.contains(point));
 		System.out.println("grid contains center " + tsGrid.contains(tsGrid.getCenter()));
@@ -326,10 +326,10 @@ public class RegularGridTest {
 		Sphere sphere = new Sphere(point, 5000);
     	((RenderableLayer) layer).addRenderable(sphere);
 		
-		Set<? extends NonUniformCostIntervalGrid> cells = tsGrid.lookupCells(iris.getReferencePosition());
+		Set<? extends NonUniformCostIntervalGrid> cells = tsGrid.lookupCells(iris.getCenter());
 		System.out.println("found iris cells " + cells.size());
 		*/
-		//Set<Position> neighbors = tsGrid.getNeighbors(iris.getReferencePosition());
+		//Set<Position> neighbors = tsGrid.getNeighbors(iris.getCenter());
 		//Set<Position> neighbors = tsGrid.getNeighbors(model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 2, 2).getBottomCenter()));
 		/*
 		Position position = model.getGlobe().computePositionFromPoint(tsGrid.getChild(2, 5, 1).getCorners()[0]);
@@ -370,7 +370,7 @@ public class RegularGridTest {
         	System.out.println("first cost = " + firstCost + ", second cost = " + secondCost);
         }
         
-        NonUniformCostIntervalGrid irisCell = tsGrid.lookupCells(iris.getReferencePosition()).iterator().next();
+        NonUniformCostIntervalGrid irisCell = tsGrid.lookupCells(iris.getCenter()).iterator().next();
         Set<? extends RegularGrid> irisNeighbors = irisCell.getNeighbors();
         for (RegularGrid irisNeighbor : irisNeighbors) {
         	((NonUniformCostIntervalGrid) irisNeighbor).addCostInterval(new CostInterval(
@@ -389,7 +389,7 @@ public class RegularGridTest {
         */
         
 		/*
-        Cube cube = new Cube(model.getGlobe().computePointFromPosition(iris.getReferencePosition()), axes, 500000);
+        Cube cube = new Cube(model.getGlobe().computePointFromPosition(iris.getCenter()), axes, 500000);
         ((RenderableLayer) layer).addRenderable(cube);
         */
         /*

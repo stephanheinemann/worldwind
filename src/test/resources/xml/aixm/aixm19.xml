@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aixm:Airspace gml:id="airspace19"
+	xmlns:aixm="http://www.aixm.aero/schema/5.1"
+	xmlns:gco="http://www.isotc211.org/2005/gco"
+	xmlns:gmd="http://www.isotc211.org/2005/gmd"
+	xmlns:gml="http://www.opengis.net/gml/3.2"
+	xmlns:gsr="http://www.isotc211.org/2005/gsr"
+	xmlns:gss="http://www.isotc211.org/2005/gss"
+	xmlns:gts="http://www.isotc211.org/2005/gts"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.aixm.aero/schema/5.1 ../../main/resources/xsd/AIXM_Features.xsd ">
+	<aixm:timeSlice>
+		<aixm:AirspaceTimeSlice
+			gml:id="airsapcetimeslice1">
+			<gml:validTime>
+				<gml:TimePeriod gml:id="timeperiod1">
+					<gml:beginPosition>2021-11-01T18:00:00.000Z</gml:beginPosition>
+					<gml:endPosition>2022-11-01T18:00:00.000Z</gml:endPosition>
+				</gml:TimePeriod>
+			</gml:validTime>
+			<aixm:interpretation>BASELINE</aixm:interpretation>
+			<aixm:localType>50</aixm:localType>
+			<aixm:class>
+				<aixm:AirspaceLayerClass
+					gml:id="airspacelayerclass1">
+					<aixm:classification>F</aixm:classification>
+				</aixm:AirspaceLayerClass>
+			</aixm:class>
+			<aixm:geometryComponent>
+				<aixm:AirspaceGeometryComponent
+					gml:id="airspacegeometrycomponent1">
+					<aixm:theAirspaceVolume>
+						<aixm:AirspaceVolume gml:id="airspacevolume1">
+							<aixm:upperLimit uom="M">50</aixm:upperLimit>
+							<aixm:upperLimitReference>SFC</aixm:upperLimitReference>
+							<aixm:lowerLimit uom="M">0</aixm:lowerLimit>
+							<aixm:lowerLimitReference>SFC</aixm:lowerLimitReference>
+							<aixm:width uom="M">20.0</aixm:width>
+							<aixm:centreline>
+								<aixm:Curve gml:id="curve1">
+									<gml:segments>
+										<gml:GeodesicString>
+											<gml:posList srsDimension="2">
+												48.55532 -123.38494
+												48.55600 -123.38492
+											</gml:posList>
+										</gml:GeodesicString>
+									</gml:segments>
+								</aixm:Curve>
+							</aixm:centreline>
+						</aixm:AirspaceVolume>
+					</aixm:theAirspaceVolume>
+				</aixm:AirspaceGeometryComponent>
+			</aixm:geometryComponent>
+		</aixm:AirspaceTimeSlice>
+	</aixm:timeSlice>
+</aixm:Airspace>

@@ -247,4 +247,20 @@ public class ARRTreeProperties extends RRTreeProperties implements AnytimePlanne
 				this.improvementFactor);
 	}
 	
+	/**
+	 * Gets the string representation of this ARRT planner properties bean.
+	 * 
+	 * @return the string representation of this ARRT planner properties bean
+	 * 
+	 * @see RRTreeProperties#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + ", "
+				+ "neighborLimit=" + this.getNeighborLimit() + ", "
+				+ "initialCostBias=" + this.getMinimumQuality() + ", "
+				+ "finalCostBias=" + this.getMaximumQuality() + ", "
+				+ "improvementFactor=" + this.getQualityImprovement();
+	}
+	
 }

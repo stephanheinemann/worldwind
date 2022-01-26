@@ -187,4 +187,18 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 		return Objects.hash(this.costPolicy, this.riskPolicy);
 	}
 	
+	/**
+	 * Gets the string representation of this abstract planner properties bean.
+	 * 
+	 * @return the string representation of this abstract planner properties
+	 *         bean
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "costPolicy=" + this.getCostPolicy() + ", "
+				+ "riskPolicy=" + this.getRiskPolicy();
+	}
+	
 }

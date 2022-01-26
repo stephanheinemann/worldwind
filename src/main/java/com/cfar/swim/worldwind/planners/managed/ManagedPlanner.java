@@ -29,7 +29,7 @@
  */
 package com.cfar.swim.worldwind.planners.managed;
 
-import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import com.cfar.swim.worldwind.managing.PlannerPerformance;
@@ -103,6 +103,6 @@ Callable<Trajectory> {
 	 * 
 	 * @return the revisions of this managed planner
 	 */
-	public Collection<Trajectory> getRevisions();
+	public List<Trajectory> getRevisions();
 	
 }

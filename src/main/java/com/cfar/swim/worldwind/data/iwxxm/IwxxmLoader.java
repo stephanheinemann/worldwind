@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.iwxxm;
+package com.cfar.swim.worldwind.data.iwxxm;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -45,6 +45,8 @@ import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
 import com.cfar.swim.worldwind.data.IwxxmData;
 import com.cfar.swim.worldwind.data.ObstacleLoader;
 import com.cfar.swim.worldwind.data.OmData;
+import com.cfar.swim.worldwind.data.SwimProtocol;
+import com.cfar.swim.worldwind.data.SwimResource;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostMap;
 import com.cfar.swim.worldwind.planning.TimeInterval;
@@ -61,14 +63,28 @@ import icao.iwxxm.SIGMETReportStatusType;
 import icao.iwxxm.SIGMETType;
 import net.opengis.om.OMObservationType;
 
+/**
+ * Realizes an IWXXM obstacle loader.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class IwxxmLoader implements ObstacleLoader {
-
+	
+	// NOTE: this is only a very simplified, specialized and rudimentary loader
+	
+	/** the IWXXM unmarshaller of this IWXXM loader */
 	private IwxxmUnmarshaller unmarshaller;
 	
 	private CostMap costMap;
 	private WeatherSymbolMap wxSymbolMap;
 	private MilStd2525GraphicFactory symbolFactory;
 	
+	/**
+	 * Constructs a new IWXXM obstacle loader.
+	 * 
+	 * @throws JAXBException if the IWXXM obstacle loader cannot be constructed
+	 */
 	public IwxxmLoader() throws JAXBException {
 		this.unmarshaller = new IwxxmUnmarshaller();
 		this.costMap = new CostMap();
@@ -76,9 +92,43 @@ public class IwxxmLoader implements ObstacleLoader {
 		this.symbolFactory = new MilStd2525GraphicFactory();
 	}
 	
+	/**
+	 * Loads IWXXM obstacles from a SWIM resource.
+	 * 
+	 * @param resource the SWIM resource
+	 * 
+	 * @return the loaded obstacles
+	 * 
+	 * @see ObstacleLoader#load(SwimResource)
+	 */
 	@Override
+	public Set<Obstacle> load(SwimResource resource) {
+		Set<Obstacle> obstacles = new HashSet<>();
+		
+		if (resource.getProtocol().isEmpty()
+				|| (resource.getProtocol().isPresent()
+				&& resource.getProtocol().get().equals(SwimProtocol.IWXXM))) {
+			try {
+				obstacles = this.load(new InputSource(resource.getResource().toURL().openStream()));
+			} catch (Exception e) {
+				//e.printStackTrace();
+			}
+		}
+		
+		return obstacles;
+	}
+	
+	/**
+	 * Loads IWXXM obstacles from an input source.
+	 * 
+	 * @param source the input source
+	 * 
+	 * @return the lodaded IWXXM obstacles
+	 * 
+	 * @throws JAXBException if the IWXXM obstacles cannot be loaded
+	 */
 	public Set<Obstacle> load(InputSource source) throws JAXBException {
-		Set<Obstacle> obstacles = null;
+		Set<Obstacle> obstacles = new HashSet<>();
 		JAXBElement<?> iwxxmElement = (JAXBElement<?>) this.unmarshaller.unmarshal(source);
 		
 		if (iwxxmElement.getValue() instanceof SIGMETType) {
@@ -146,8 +196,8 @@ public class IwxxmLoader implements ObstacleLoader {
 					obstacle.setCostInterval(costInterval);
 					
 					obstacle.setDepiction(new Depiction(
-							symbolFactory.createPoint(sidc, obstacle.getReferencePosition(), null)));
-					obstacle.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), obstacle.getReferencePosition()));
+							symbolFactory.createPoint(sidc, obstacle.getCenter(), null)));
+					obstacle.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), obstacle.getCenter()));
 				}
 			}
 			
@@ -179,9 +229,9 @@ public class IwxxmLoader implements ObstacleLoader {
 				for (ObstacleCylinder interpolant : interpolants) {
 					//this.addSigmetObstacle(sigmetReference, interpolant);
 					interpolant.setDepiction(
-							new Depiction(symbolFactory.createPoint(sidc, interpolant.getReferencePosition(), null)));
+							new Depiction(symbolFactory.createPoint(sidc, interpolant.getCenter(), null)));
 					interpolant.getDepiction().setAnnotation(
-							new DepictionAnnotation(interpolant.getCostInterval().getId(), interpolant.getReferencePosition()));
+							new DepictionAnnotation(interpolant.getCostInterval().getId(), interpolant.getCenter()));
 				}
 			}
 			current = next;

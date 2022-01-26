@@ -27,7 +27,7 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.iwxxm;
+package com.cfar.swim.worldwind.data.iwxxm;
 
 import java.io.InputStream;
 import java.time.ZonedDateTime;
@@ -187,7 +187,7 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 							intersectionObstacle.getDepiction().getAnnotation().setText(intersectionInterval.getId());
 						} else {
 							intersectionObstacle.getDepiction().setAnnotation(
-								new DepictionAnnotation(intersectionInterval.getId(), intersectionObstacle.getReferencePosition()));
+								new DepictionAnnotation(intersectionInterval.getId(), intersectionObstacle.getCenter()));
 						}
 					}
 					
@@ -251,9 +251,9 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 					obstacle.setCostInterval(costInterval);
 					
 					obstacle.setDepiction(
-							new Depiction(symbolFactory.createPoint(sidc, obstacle.getReferencePosition(), null)));
+							new Depiction(symbolFactory.createPoint(sidc, obstacle.getCenter(), null)));
 					obstacle.getDepiction().setAnnotation(
-							new DepictionAnnotation(costInterval.getId(), obstacle.getReferencePosition()));
+							new DepictionAnnotation(costInterval.getId(), obstacle.getCenter()));
 				}
 			}
 			
@@ -294,9 +294,9 @@ public class IwxxmUpdater implements DataActivationListener, Runnable {
 					this.addSigmetObstacle(sigmetReference, interpolant);
 					
 					interpolant.setDepiction(
-							new Depiction(symbolFactory.createPoint(sidc, interpolant.getReferencePosition(), null)));
+							new Depiction(symbolFactory.createPoint(sidc, interpolant.getCenter(), null)));
 					interpolant.getDepiction().setAnnotation(
-							new DepictionAnnotation(interpolant.getCostInterval().getId(), interpolant.getReferencePosition()));
+							new DepictionAnnotation(interpolant.getCostInterval().getId(), interpolant.getCenter()));
 				}
 			}
 			current = next;

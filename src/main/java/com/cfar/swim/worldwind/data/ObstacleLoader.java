@@ -31,14 +31,23 @@ package com.cfar.swim.worldwind.data;
 
 import java.util.Set;
 
-import javax.xml.bind.JAXBException;
-
-import org.xml.sax.InputSource;
-
 import com.cfar.swim.worldwind.render.Obstacle;
 
+/**
+ * Describes an obstacle loader.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public interface ObstacleLoader {
-
-	public Set<Obstacle> load(InputSource source) throws JAXBException;
+	
+	/**
+	 * Loads obstacles from a SWIM resource.
+	 * 
+	 * @param resource the SWIM resource
+	 * 
+	 * @return the loaded obstacles
+	 */
+	public Set<Obstacle> load(SwimResource resource);
 	
 }

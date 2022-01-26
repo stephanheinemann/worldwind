@@ -49,6 +49,9 @@ public class NumericQuantity implements Quantity {
 	/** the numeric value of this numeric quantity */
 	private final Number value; 
 	
+	/** the normalizer of this numeric quantity */
+	private final Number normalizer;
+	
 	/**
 	 * Constructs a new numeric quantity based on a numeric value.
 	 * 
@@ -57,10 +60,24 @@ public class NumericQuantity implements Quantity {
 	 * @throws IllegalArgumentException if the numeric value is invalid
 	 */
 	public NumericQuantity(Number value) {
+		this(value, 1);
+	}
+	
+	/**
+	 * Constructs a new numeric quantity based on a numeric value and a
+	 * quantity normalizer.
+	 * 
+	 * @param value the numeric value
+	 * @param normalizer the normalizer to be applied to the quantity measure
+	 * 
+	 * @throws IllegalArgumentException if the numeric value is invalid
+	 */
+	public NumericQuantity(Number value, Number normalizer) {
 		if ((null == value) || (0d >= value.doubleValue())) {
 			throw new IllegalArgumentException("numeric value is invalid");
 		}
 		this.value = value;
+		this.normalizer = normalizer;
 	}
 	
 	/**
@@ -76,19 +93,32 @@ public class NumericQuantity implements Quantity {
 	}
 	
 	/**
+	 * Gets the normalized numeric value of this numeric quantity.
+	 * 
+	 * @return the normalized numeric value of this numeric quantity
+	 * 
+	 * @see Quantity#getNormalized()
+	 */
+	@Override
+	public double getNormalized() {
+		return this.get() * this.normalizer.doubleValue();
+	}
+	
+	/**
 	 * Compares this numeric quantity to another quantity.
 	 * 
 	 * @param quantity the other quantity
 	 * 
-	 * @return a negative integer, zero, or a positive integer as this numeric
-	 *         quantity is less than, equal to, or greater than the other
-	 *         quantity, respectively
+	 * @return a negative integer, zero, or a positive integer as this
+	 *         normalized numeric quantity is less than, equal to, or greater
+	 *         than the other normalized quantity, respectively
 	 * 
 	 * @see Comparator#compare(Object, Object)
 	 */
 	@Override
 	public int compareTo(Quantity quantity) {
-		return Comparator.comparingDouble(Quantity::get).compare(this, quantity);
+		return Comparator.comparingDouble(
+				Quantity::getNormalized).compare(this, quantity);
 	}
 	
 	/**
@@ -97,8 +127,8 @@ public class NumericQuantity implements Quantity {
 	 * 
 	 * @param o the other numeric quantity
 	 * 
-	 * @return true, if this numeric quantity equals the other numeric
-	 *         quantity, false otherwise
+	 * @return true, if this normalized numeric quantity equals the other
+	 *         normalized numeric quantity, false otherwise
 	 * 
 	 * @see Object#equals(Object)
 	 */
@@ -109,7 +139,8 @@ public class NumericQuantity implements Quantity {
 		if (this == o) {
 			equals = true;
 		} else if ((null != o) && (this.getClass() == o.getClass())) {
-			equals = this.get() == ((NumericQuantity) o).get();
+			equals = (this.getNormalized()
+					== ((NumericQuantity) o).getNormalized());
 		}
 
 		return equals;
@@ -124,7 +155,7 @@ public class NumericQuantity implements Quantity {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(this.get());
+		return Objects.hash(this.getNormalized());
 	}
 	
 }

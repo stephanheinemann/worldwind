@@ -29,10 +29,12 @@
  */
 package com.cfar.swim.worldwind.managers.smac;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import com.cfar.swim.worldwind.javafx.TrajectoryStylist;
@@ -71,6 +73,9 @@ import gov.nasa.worldwind.util.Logging;
  *
  */
 public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
+	
+	/** the maximum termination delay of a SMAC planner evaluator */
+	private static final Duration MAX_TERMINATION_DELAY = Duration.ofSeconds(10l);
 	
 	/** the managed session of this SMAC planner evaluator */
 	private final Session managedSession;
@@ -133,6 +138,14 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 	}
 	
 	/**
+	 * Recycles the executor of this SMAC planner evaluator.
+	 */
+	protected void recycle() {
+		this.executor.shutdownNow();
+		this.executor = Executors.newSingleThreadExecutor();
+	}
+	
+	/**
 	 * Evaluates run configurations.
 	 * 
 	 * @see AbstractTargetAlgorithmEvaluator#evaluateRun(List, TargetAlgorithmEvaluatorRunObserver)
@@ -165,6 +178,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 				public void revisePlan(Trajectory trajectory) {
 					TrajectoryStylist.styleTrajectory(trajectory);
 					managedScenario.setTrajectory(trajectory);
+					
 					// TODO: first or specified revision could terminate
 					if (null != runStatusObserver) {
 						//TODO: runStatusObserver.currentStatus(results);
@@ -189,26 +203,53 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 			managedPlanner.setGoals(managedGoals);
 			
 			// execute managed planner
+			Future<Trajectory>  trajectory = this.executor.submit(managedPlanner);
 			try {
-				this.executor.submit(managedPlanner);
-				this.executor.awaitTermination(
-						(long) arc.getAlgorithmExecutionConfiguration().getAlgorithmMaximumCutoffTime(),
-						TimeUnit.SECONDS);
+				// execute managed planner until cut-off time
+				trajectory.get((long) arc.getAlgorithmExecutionConfiguration().getAlgorithmMaximumCutoffTime(), TimeUnit.SECONDS);
+			} catch (Exception coe) {
+				// terminate managed planner
 				managedPlanner.terminate();
-			} catch (Exception e) {
-				e.printStackTrace();
+				try {
+					trajectory.get(SmacPlannerEvaluator.MAX_TERMINATION_DELAY.getSeconds(), TimeUnit.SECONDS);
+				} catch (Exception tde) {
+					tde.printStackTrace();
+				}
+			}
+			
+			// recycle executor if managed planner cannot be terminated in time
+			if (!trajectory.isDone()) {
+				trajectory.cancel(true);
+				this.recycle();
+			}
+			
+			// collect managed planner results
+			int improvements = managedPlanner.getRevisions().size();
+			Trajectory solution;
+			if (0 < improvements) {
+				solution = managedPlanner.getRevisions().get(improvements - 1);
+			} else {
+				solution = new Trajectory();
+			}
+			PlannerPerformance performance = managedPlanner.getPerformance();
+			boolean satisfactory = solution.getPois().contains(managedGoals.getDestination());
+			
+			if (!satisfactory) {
+				Logging.logger().info("unsatisfactory evaluation run");
 			}
 			
 			// TODO: use intermediate results and quality improvements
 			ExistingAlgorithmRunResult earr = new ExistingAlgorithmRunResult(
 					arc,
-					managedScenario.getTrajectory().isEmpty()
-						? RunStatus.UNSAT : RunStatus.SAT, // TODO: versus TIMEOUT
-					managedPlanner.getPerformance().getQuantity().get(), // runtime
-					managedPlanner.getRevisions().size(), // number of quality improvements
-					SmacPlannerEvaluator.toResultQuality(managedPlanner.getPerformance().get()), // quality of solution
+					//!managedScenario.getTrajectory().isEmpty()
+					satisfactory ? RunStatus.SAT : RunStatus.UNSAT,
+					performance.getQuantity().get(), // runtime
+					improvements, // number of quality improvements
+					satisfactory ?
+						//SmacPlannerEvaluator.toResultQuality(performance.getNormalized()) : 0d, // performance of solution
+						SmacPlannerEvaluator.toResultQuality(performance.getQuality().getNormalized()) : 0d, // quality of solution
 					1l, // problem instance seed (automatically generated instead)
-					managedScenario.getTrajectory().toString()); // additional run-data
+					solution.toString()); // additional run-data
 			results.add(earr);
 			//runStatusObserver.currentStatus(results);
 		}
@@ -263,7 +304,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 		plannerProperties.setMaxLandingTimingError(this.managedSession.getManager().getMaxLandingError().getTimingError().toSeconds());
 		// TODO: consider dynamic training
 		plannerProperties.setMinimumQuality(Double.parseDouble(config.get("minimumQuality")));
-		plannerProperties.setMaximumQuality(1.0d/*Double.parseDouble(arc.getParameterConfiguration().get("maximumQuality"))*/);
+		plannerProperties.setMaximumQuality(Double.parseDouble(config.get("maximumQuality")));
 		plannerProperties.setQualityImprovement(Double.parseDouble(config.get("qualityImprovement")));
 		plannerProperties.setSignificantChange(0.5d);
 		return new Specification<Planner>(Specification.PLANNER_MGP_ID, plannerProperties);
@@ -296,7 +337,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 		// TODO: consider dynamic training
 		plannerProperties.setBias(Integer.parseInt(config.get("bias")));
 		plannerProperties.setEpsilon(Double.parseDouble(config.get("epsilon")));
-		plannerProperties.setExtension(Extension.valueOf(config.get("extension")));
+		plannerProperties.setExtension(Extension.FEASIBLE/*Extension.valueOf(config.get("extension"))*/);
 		//plannerProperties.setGoalThreshold(Double.parseDouble(config.get("goalThreshold")));
 		plannerProperties.setGoalThreshold(this.managedSession.getManager().getMaxLandingError().getHorizontalError() / 2d);
 		plannerProperties.setMaxIterations(Integer.parseInt(config.get("maxIterations")));
@@ -304,7 +345,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 		plannerProperties.setSampling(Sampling.valueOf(config.get("sampling")));
 		plannerProperties.setStrategy(Strategy.valueOf(config.get("strategy")));
 		plannerProperties.setMinimumQuality(Double.parseDouble(config.get("initialCostBias")));
-		plannerProperties.setMaximumQuality(1.0d/*Double.parseDouble(config.get("finalCostBias"))*/);
+		plannerProperties.setMaximumQuality(Double.parseDouble(config.get("finalCostBias")));
 		plannerProperties.setQualityImprovement(Double.parseDouble(config.get("improvementFactor")));
 		plannerProperties.setSignificantChange(0.5d);
 		return new Specification<Planner>(Specification.PLANNER_MTP_ID, plannerProperties);
@@ -321,7 +362,7 @@ public class SmacPlannerEvaluator extends AbstractSyncTargetAlgorithmEvaluator {
 	public static double toResultQuality(double quality) {
 		// NOTE: 1d / quality leads to SMAC exception (Double.POSITIVE_INFINITY, Double.MAX_VALUE)
 		// (0d == quality) ? Double.MAX_VALUE : 1d / quality
-		return PlannerPerformance.MAX_VALUE - quality;
+		return -quality;
 	}
 	
 }

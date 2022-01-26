@@ -336,4 +336,23 @@ public class RRTreeProperties extends AbstractPlannerProperties {
 				this.strategy);
 	}
 	
+	/**
+	 * Gets the string representation of this RRT planner properties bean.
+	 * 
+	 * @return the string representation of this RRT planner properties bean
+	 * 
+	 * @see AbstractPlannerProperties#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + ", "
+				+ "bias=" + this.getBias() + ", "
+				+ "epsilon=" + this.getEpsilon() + ", "
+				+ "extension=" + this.getExtension() + ", "
+				+ "goalThreshold=" + this.getGoalThreshold() + ", "
+				+ "maxIterations=" + this.getMaxIterations() + ", "
+				+ "sampling=" + this.getSampling() + ", "
+				+ "strategy=" + this.getStrategy();
+	}
+	
 }

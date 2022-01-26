@@ -141,4 +141,17 @@ public abstract class FeatureTuning<Tunable> extends AbstractTuning<Tunable> {
 		return Objects.hash(super.hashCode(), this.features.hashCode());
 	}
 	
+	/**
+	 * Gets the string representation of this feature tuning.
+	 * 
+	 * @return the string representation of this feature tuning
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.getSpecification().getId()
+				+ "(" + this.getFeatures().hashCode() + ")";
+	}
+	
 }

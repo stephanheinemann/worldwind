@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.aircraft;
 
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -43,8 +44,6 @@ import gov.nasa.worldwind.symbology.SymbologyConstants;
  *
  */
 public class A320 extends FixedWingCivilAircraft {
-
-	// TODO: use environment AirDataIntervals (otherwise very simplified)
 	
 	/** the maximum angle of climb speed of this A320 in m/s */
 	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 113d; // m/s = 220 KTAS
@@ -140,6 +139,26 @@ public class A320 extends FixedWingCivilAircraft {
 	@Override
 	public String getId() {
 		return Specification.AIRCRAFT_A320_ID;
+	}
+	
+	/**
+	 * Interpolates the midpoint A320 between this and another A320. The
+	 * interpolation considers the spatial and temporal attributes and modifies
+	 * this A320 accordingly.
+	 * 
+	 * @param other the other A320
+	 * 
+	 * @return the interpolated midpoint A320 between this and the other A320
+	 * 
+	 * @see ObstacleSphere#interpolate(ObstacleSphere)
+	 */
+	@Override
+	public A320 interpolate(ObstacleSphere other) {
+		ObstacleSphere interpolant = super.interpolate(other);
+		A320 a320 = new A320(interpolant.getCenter(),
+				interpolant.getRadius(), this.getCombatIdentification());
+		a320.setCostInterval(interpolant.getCostInterval());
+		return a320;
 	}
 	
 }

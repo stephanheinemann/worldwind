@@ -97,6 +97,15 @@ public class Depiction implements Renderable, Movable {
 	}
 	
 	/**
+	 * Gets the tactical depiction of this depiction.
+	 * 
+	 * @return the tactical depiction of this depiction
+	 */
+	public Renderable getTacticalDepiction() {
+		return this.depiction;
+	}
+	
+	/**
 	 * Renders this depiction.
 	 * 
 	 * @see Renderable#render(DrawContext)
@@ -201,6 +210,23 @@ public class Depiction implements Renderable, Movable {
 	 */
 	public boolean hasAnnotation() {
 		return (null != this.annotation);
+	}
+	
+	/**
+	 * Gets the symbol identifier of this depiction.
+	 * 
+	 * @return the symbol identifier of this depiction
+	 */
+	public String getSymbolIdentifier() {
+		String sidc = null;
+		
+		if (this.depiction instanceof TacticalGraphic) {
+			sidc = ((TacticalGraphic) this.depiction).getIdentifier();
+		} else if (this.depiction instanceof TacticalSymbol) {
+			sidc = ((TacticalSymbol) this.depiction).getIdentifier();
+		}
+		
+		return sidc;
 	}
 	
 	/**

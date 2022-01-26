@@ -29,8 +29,11 @@
  */
 package com.cfar.swim.worldwind.render.airspaces;
 
+import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
@@ -43,6 +46,7 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sphere;
@@ -88,7 +92,7 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 */
 	public ObstacleSphere(Position center, double radius) {
 		super(LatLon.fromDegrees(center.getLatitude().degrees, center.getLongitude().degrees), radius);
-		this.setAltitudes(center.getAltitude() - radius, center.getAltitude() + radius);
+		this.setAltitudes(center.getAltitude(), center.getAltitude() + radius);
 		this.getAttributes().setInteriorOpacity(0.25);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
@@ -322,6 +326,80 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	}
 	
 	/**
+	 * Interpolates the midpoint obstacle sphere between this and another
+	 * obstacle sphere. The interpolation considers the spatial and temporal
+	 * attributes and modifies this obstacle sphere accordingly.
+	 * 
+	 * @param other the other obstacle sphere
+	 * @return the interpolated midpoint obstacle sphere between this and
+	 *         the other obstacle sphere
+	 */
+	public ObstacleSphere interpolate(ObstacleSphere other) {
+		Position center = Position.interpolateGreatCircle(0.5d, this.getCenter(), other.getCenter());
+		double radius = (this.getRadius() + other.getRadius()) * 0.5d;
+		ObstacleSphere interpolant = new ObstacleSphere(center, radius);
+		
+		Duration startDuration = Duration.between(this.costInterval.getLower(), other.costInterval.getLower());
+		startDuration = startDuration.dividedBy(2l);
+		ZonedDateTime start = this.costInterval.getLower().plus(startDuration);
+		
+		// ZonedDateTime end = this.costInterval.getUpper();
+		this.costInterval.setUpper(start);
+		ZonedDateTime end = other.costInterval.getLower();
+		
+		/*
+		Duration endDuration = Duration.between(this.costInterval.getUpper(), other.costInterval.getUpper());
+		endDuration = endDuration.dividedBy(2l);
+		ZonedDateTime end = this.costInterval.getUpper().plus(endDuration);
+		*/
+		
+		// TODO: rounding or conservative ceiling might be more appropriate
+		double cost = (this.costInterval.getCost() + other.costInterval.getCost()) / 2d;
+		
+		CostInterval costInterval = new CostInterval(this.costInterval.getId(), start, end, cost);
+		interpolant.setCostInterval(costInterval);
+		
+		return interpolant;
+	}
+	
+	/**
+	 * Interpolates the midpoint obstacle spheres between this and another
+	 * obstacle sphere. The interpolation considers the spatial and temporal
+	 * attributes and modifies this obstacle sphere accordingly. It is
+	 * performed recursively for the specified number of steps.
+	 * 
+	 * @param other the other obstacle sphere
+	 * @param steps the number of interpolation steps
+	 * @return the midpoint obstacle spheres between this and the other
+	 *         obstacle sphere
+	 */
+	public List<ObstacleSphere> interpolate(ObstacleSphere other, int steps) {
+		List<ObstacleSphere> interpolants = new ArrayList<>();
+		
+		if (1 == steps) {
+			interpolants.add(this.interpolate(other));
+		} else if (1 < steps) {
+			ObstacleSphere interpolant = this.interpolate(other);
+			interpolants.addAll(this.interpolate(interpolant, steps - 1));
+			interpolants.add(interpolant);
+			interpolants.addAll(interpolant.interpolate(other, steps - 1));
+		}
+		
+		return interpolants;
+	}
+	
+	/**
+	 * Gets the center of this obstacle sphere.
+	 * 
+	 * @return the center of this obstacle sphere
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		return this.getReferencePosition();
+	}
+	
+	/**
 	 * Gets the geometric extent of this obstacle sphere for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
@@ -332,8 +410,15 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 	 */
 	@Override
 	public Sphere getExtent(Globe globe) {
-		Vec4 centerPoint = globe.computePointFromPosition(
-				this.getLocation(), this.getAltitudes()[0]);
+		Position cp = new Position(this.getLocation(), this.getAltitudes()[0]);
+		
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[0])) {
+			double ce = globe.getElevation(cp.getLatitude(), cp.getLongitude());
+			cp = new Position(this.getLocation(), this.getAltitudes()[0] + ce) ;
+		}
+		
+		Vec4 centerPoint = globe.computePointFromPosition(cp);
+		
 		return new Sphere(centerPoint, this.getRadius());
 		// TODO: return super.getExtent(globe, 1d);
 	}
@@ -369,8 +454,6 @@ public class ObstacleSphere extends SphereAirspace implements Obstacle {
 		return (this == obstacle) || Collisions.collide(
 				this.getExtent(globe), obstacle.getExtent(globe));
 	}
-	
-	// TODO: interpolation and geometric conversion methods
 	
 	/**
 	 * Determines whether or not this obstacle sphere equals another one based

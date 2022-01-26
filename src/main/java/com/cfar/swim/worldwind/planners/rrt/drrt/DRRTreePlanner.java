@@ -360,7 +360,7 @@ implements DynamicPlanner, LifelongPlanner {
 					this.getStart().setParent(partStart.getParent());
 					// propagate potential cost change
 					double deltaCost = partStart.getCost() - this.getStart().getCost();
-					if (0 != deltaCost) {
+					if (0d != deltaCost) {
 						for (Position vertex : this.getPlanningContinuum().getVertices()) {
 							DRRTreeWaypoint waypoint = (DRRTreeWaypoint) vertex;
 							waypoint.setCost(waypoint.getCost() + deltaCost);
@@ -416,13 +416,13 @@ implements DynamicPlanner, LifelongPlanner {
 	 */ 
 	@Override
 	protected Trajectory planPart(int partIndex) {
-		Trajectory trajectory = null;
+		Trajectory trajectory = new Trajectory();
 		
 		if (this.hasBackup(partIndex)) {
 			// repair an existing plan after dynamic changes
 			this.elaborate(partIndex);
 			trajectory = this.createTrajectory();
-		} else {
+		} else if (!this.hasTerminated()) {
 			// plan from scratch
 			trajectory = super.planPart(partIndex);
 		}

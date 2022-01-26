@@ -65,16 +65,4 @@ public class NumericPerformance extends AbstractPerformance {
 		super(epoch, quality, quantity);
 	}
 	
-	/**
-	 * Gets the string representation of this numeric performance.
-	 * 
-	 * @return the string representation of this numeric performance
-	 * 
-	 * @see Object#toString()
-	 */
-	@Override
-	public String toString() {
-		return String.valueOf(this.get());
-	}
-	
 }

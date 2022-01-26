@@ -29,8 +29,8 @@
 #
 
 # name type range default
-minimumQuality real [1.0, 10.0] [2.5]
-#maximumQuality real [1.0, 1.0] [1.0]
-qualityImprovement real [0.1, 10.0] [0.5]
+minimumQuality real [1.0, 100.0] [100.0]
+maximumQuality real [1.0, 100.0] [1.0]
+qualityImprovement real [0.1, 100.0] [20.0]
 # forbidden clauses
-#{}
+{(minimumQuality < maximumQuality) || ((qualityImprovement - 0.1) > (minimumQuality - maximumQuality))}

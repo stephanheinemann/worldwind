@@ -62,8 +62,16 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getDictionaryBundle()
 			.getString("specification.aircraft.a320.description");
 	
+	/** the identifier of an H135 aircraft specification */
+	public static final String AIRCRAFT_H135_ID = "H135";
+	
+	/** the description of an H135 aircraft specification */
+	public static final String AIRCRAFT_H135_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.aircraft.h135.description");
+	
 	/** the identifier of an Iris aircraft specification */
-	public static final String AIRCRAFT_IRIS_ID = "Iris";
+	public static final String AIRCRAFT_IRIS_ID = "IRIS";
 	
 	/** the description of an Iris aircraft specification */
 	public static final String AIRCRAFT_IRIS_DESCRIPTION = ResourceBundleLoader

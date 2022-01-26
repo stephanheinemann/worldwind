@@ -45,6 +45,7 @@ import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
 import com.cfar.swim.worldwind.connections.DatalinkTracker;
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.flight.FlightPhase;
 import com.cfar.swim.worldwind.javafx.TrajectoryStylist;
 import com.cfar.swim.worldwind.managing.Features;
 import com.cfar.swim.worldwind.managing.KnowledgeBase;
@@ -890,7 +891,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 				managedScenario.setGlobe(this.getSourceScenario().getGlobe());
 				
 				// managed scenario aircraft
-				if (sourceScenario.hasAircraft()) {
+				if (this.getSourceScenario().hasAircraft()) {
 					AircraftFactory aircraftFactory = new AircraftFactory(
 							managedSession.getSetup().getAircraftSpecification());
 					managedScenario.setAircraft(aircraftFactory.createInstance());
@@ -966,6 +967,9 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 							// managed scenario features and initial tuning
 							// TODO: environment versus scenario obstacles
 							Features features = new Features(managedScenario, this.getFeatureHorizon());
+							Logging.logger().info(features.toString());
+							Logging.logger().info(FlightPhase.report(features));
+							
 							PlannerTuning tuning = this.createPlannerTuning(plannerSpec, features);
 							List<Properties<Planner>> candidates = tuning.tune();
 							// TODO: default candidate
@@ -1046,6 +1050,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			this.plannerExecutor.shutdown();
 			this.setActivePlanner(null);
 			this.getSourceScenario().clearTrajectory();
+			this.setSourceScenario(null);
 		}
 		
 		// save knowledge base
@@ -1133,6 +1138,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 						tuning.getFeatures().extractFeatures(getSourceScenario());
 						Logging.logger().info("tuning " + tuning.getSpecification().getId());
 						Logging.logger().info(tuning.getFeatures().toString());
+						Logging.logger().info(FlightPhase.report(tuning.getFeatures()));
 						List<Properties<Planner>> candidates = tuning.tune();
 						// TODO: default candidate
 						tuning.getSpecification().setProperties(candidates.get(0));
@@ -1211,7 +1217,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		
 		TrajectoryStylist.styleTrajectory(trajectory);
 		scenario.setTrajectory(trajectory);
-		Trajectory sourceTrajectory = getSourceScenario().getTrajectory();
+		Trajectory sourceTrajectory = this.getSourceScenario().getTrajectory();
 		Logging.logger().info("current source trajectory = "  + sourceTrajectory);
 		Logging.logger().info("evaluated trajectory = " + trajectory);
 		

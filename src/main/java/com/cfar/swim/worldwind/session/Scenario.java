@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.session;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.io.File;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -63,14 +64,17 @@ import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.terrain.Terrain;
 import com.cfar.swim.worldwind.util.Enableable;
 import com.cfar.swim.worldwind.util.Identifiable;
+import com.cfar.swim.worldwind.util.ResourceBundleLoader;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.globes.Globe;
+import gov.nasa.worldwind.terrain.CompoundElevationModel;
 
 /**
  * Realizes a planning scenario.
@@ -80,10 +84,13 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public class Scenario implements Identifiable, Enableable, StructuralChangeListener, ObstacleManager {
 	
-	// TODO: consider save / load scenario (persisting scenarios for reproducible tests)
-	
 	/** the default scenario identifier */
-	public static final String DEFAULT_SCENARIO_ID = "Default Scenario";
+	public static final String DEFAULT_SCENARIO_ID = ResourceBundleLoader
+			.getDictionaryBundle().getString("scenario.id.default");
+	
+	/** the new scenario identifier */
+	public static final String NEW_SCENARIO_ID = ResourceBundleLoader
+			.getDictionaryBundle().getString("scenario.id.new");
 	
 	/** the property change support of this scenario */
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
@@ -106,6 +113,9 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	/** the globe of this scenario */
 	private Globe globe;
 	
+	/** the terrain of this scenario */
+	private Terrain terrain;
+	
 	/** the planning sector on the globe of this scenario */
 	private Sector sector;
 	
@@ -127,7 +137,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	/** the waypoints to be visited in the trajectory of this scenario */
 	private ArrayList<Waypoint> waypoints;
 	
-	// TODO: alternates (A1, .., An)
+	// TODO: origin, destination, intermediates, alternates
 	
 	/** the planned trajectory of this scenario */
 	private Trajectory trajectory;
@@ -178,16 +188,24 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * Initializes this scenario.
 	 */
 	public synchronized void init() {
-		// TODO: improve initial scenario
 		this.time = ZonedDateTime.now(ZoneId.of("UTC"));
 		this.timeController = new TimeController(0);
 		this.threshold = 0d;
 		this.globe = new Earth();
-		this.sector = new Sector(Angle.ZERO, Angle.POS90, Angle.ZERO, Angle.POS90);
-		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(this.globe, 1d, this.sector, 0d, 500000d);
+		this.terrain = new Terrain();
+		// --------------------- CfAR Flight Test Area ------------------------
+		this.sector = new Sector(
+				Angle.fromDegrees(48.55482499606862d), Angle.fromDegrees(48.55735635871107d),
+				Angle.fromDegrees(-123.38536485472143d), Angle.fromDegrees(-123.37733705729399d));
+		gov.nasa.worldwind.geom.Box sectorBox = Sector.computeBoundingBox(
+				this.globe, 1d, this.sector, 55.00000149932466d, 114.26047673211076d);
 		Box envBox = new Box(sectorBox);
-		Cube planningCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), envBox.getRLength() / 10);
-		this.environment = new PlanningGrid(planningCube, 10, 10, 5);
+		double side = sectorBox.getRLength() / 30d;
+		Cube envCube = new Cube(envBox.getOrigin(), envBox.getUnitAxes(), side);
+		int sCells = Math.max(1, (int) Math.round(envBox.getSLength() / side));
+		int tCells = Math.max(1, (int) Math.round(envBox.getTLength() / side));
+		this.environment = new PlanningGrid(envCube, 30, sCells, tCells);
+		// --------------------------------------------------------------------
 		this.environment.setThreshold(0d);
 		this.environment.setGlobe(this.globe);
 		((PlanningGrid) this.environment).addStructuralChangeListener(this);
@@ -215,7 +233,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Identifiable#getId()
 	 */
 	@Override
-	public synchronized String getId() {
+	public String getId() {
 		return this.id;
 	}
 	
@@ -225,7 +243,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Enableable#enable()
 	 */
 	@Override
-	public synchronized void enable() {
+	public void enable() {
 		this.isEnabled = true;
 		this.pcs.firePropertyChange("isEnabled", null, this.isEnabled);
 	}
@@ -236,20 +254,20 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Enableable#disable()
 	 */
 	@Override
-	public synchronized void disable() {
+	public void disable() {
 		this.isEnabled = false;
 		this.pcs.firePropertyChange("isEnabled", null, this.isEnabled);
 	}
 	
 	/**
-	 * Indicates whether or not this scenario is enabled.
+	 * Determines whether or not this scenario is enabled.
 	 * 
 	 * @return true if this scenario is enabled, false otherwise
 	 * 
 	 * @see Enableable#isEnabled()
 	 */
 	@Override
-	public synchronized boolean isEnabled() {
+	public boolean isEnabled() {
 		return this.isEnabled;
 	}
 	
@@ -350,6 +368,15 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 */
 	public synchronized void addObstaclesChangeListener(PropertyChangeListener listener) {
 		this.pcs.addPropertyChangeListener("obstacles", listener);
+	}
+	
+	/**
+	 * Adds a terrain change listener to this scenario.
+	 * 
+	 * @param listener the terrain change listener to be added
+	 */
+	public synchronized void addTerrainChangeListener(PropertyChangeListener listener) {
+		this.pcs.addPropertyChangeListener("terrain", listener);
 	}
 	
 	// TODO: be more conservative with firing property change listeners
@@ -526,7 +553,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario is tracking the real time.
+	 * Determines whether or not this scenario is tracking the real time.
 	 * 
 	 * @return true if this scenario is tracking the real time, false otherwise
 	 */
@@ -535,7 +562,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario is playing its current time.
+	 * Determines whether or not this scenario is playing its current time.
 	 * 
 	 * @return true if this scenario is playing its current time, false otherwise
 	 */
@@ -544,7 +571,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario is being timed.
+	 * Determines whether or not this scenario is being timed.
 	 *  
 	 * @return true if this scenario is being timed, false otherwise
 	 */
@@ -603,6 +630,92 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		} else {
 			throw new IllegalArgumentException();
 		}
+	}
+	
+	/**
+	 * Adds a terrain tile to the elevation model of the globe of this
+	 * scenario.
+	 * 
+	 * @param terrain the terrain file containing the terrain tile to be added
+	 */
+	public synchronized void addTerrain(File terrain) {
+		if (this.globe.getElevationModel() instanceof CompoundElevationModel) {
+			CompoundElevationModel elevations =
+					(CompoundElevationModel) this.globe.getElevationModel();
+			// remove and add to sort
+			elevations.removeElevationModel(this.terrain);
+			boolean added = this.terrain.add(terrain);
+			elevations.addElevationModel(this.terrain);
+			
+			if (added) {
+				this.pcs.firePropertyChange("terrain", null, this.terrain);
+				// obstacles with reference to AGL may be affected
+				Set<Obstacle> obstacles = this.getObstacles();
+				this.submitClearObstacles();
+				this.commitObstacleChange();
+				this.submitAddObstacles(obstacles);
+				// NOTE: aircraft, waypoints and trajectory may become invalid
+			}
+		}
+	}
+	
+	/**
+	 * Removes a terrain tile from the elevation model of the globe of this
+	 * scenario.
+	 * 
+	 * @param terrain the name of the terrain tile to be removed
+	 */
+	public synchronized void removeTerrain(String terrain) {
+		if (this.globe.getElevationModel() instanceof CompoundElevationModel) {
+			CompoundElevationModel elevations =
+					(CompoundElevationModel) this.globe.getElevationModel();
+			// remove and add to sort
+			elevations.removeElevationModel(this.terrain);
+			boolean removed = this.terrain.remove(terrain);
+			elevations.addElevationModel(this.terrain);
+			
+			if (removed) {
+				this.pcs.firePropertyChange("terrain", null, this.terrain);
+				// obstacles with reference to AGL may be affected
+				Set<Obstacle> obstacles = this.getObstacles();
+				this.submitClearObstacles();
+				this.commitObstacleChange();
+				this.submitAddObstacles(obstacles);
+				// NOTE: aircraft, waypoints and trajectory may become invalid
+			}
+		}
+	}
+	
+	/**
+	 * Removes all added terrain tiles from the elevation model of the globe of
+	 * this scenario.
+	 */
+	public synchronized void clearTerrain() {
+		if (this.globe.getElevationModel() instanceof CompoundElevationModel) {
+			CompoundElevationModel elevations =
+					(CompoundElevationModel) this.globe.getElevationModel();
+			elevations.removeElevationModel(this.terrain);
+			if (!this.terrain.isEmpty()) {
+				this.terrain.clear();
+				this.pcs.firePropertyChange("terrain", null, this.terrain);
+				// obstacles with reference to AGL may be affected
+				Set<Obstacle> obstacles = this.getObstacles();
+				this.submitClearObstacles();
+				this.commitObstacleChange();
+				this.submitAddObstacles(obstacles);
+				// NOTE: aircraft, waypoints and trajectory may become invalid
+			}
+		}
+	}
+	
+	/**
+	 * Gets the names of the terrain tiles that have been added to the
+	 * elevation model of the globe of this scenario.
+	 * 
+	 * @return the names of the terrain tiles that have been added
+	 */
+	public synchronized Set<String> getTerrainNames() {
+		return this.terrain.getNames();
 	}
 	
 	/**
@@ -667,7 +780,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario has an aircraft.
+	 * Determines whether or not this scenario has an aircraft.
 	 * 
 	 * @return true if this scenario has an aircraft, false otherwise
 	 */
@@ -811,6 +924,23 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
+	 * Adds waypoints to this scenario and sequences their identifiers.
+	 * 
+	 * @param waypoints the waypoints to be added
+	 * 
+	 * @throws IllegalArgumentException if waypoints is null
+	 */
+	public synchronized void addWaypoints(List<Waypoint> waypoints) {
+		if (null != waypoints) {
+			for (Waypoint waypoint : waypoints) {
+				this.addWaypoint(waypoint);
+			}
+		} else {
+			throw new IllegalArgumentException();
+		}
+	}
+	
+	/**
 	 * Adds a waypoint to this scenario and sequences its identifier.
 	 * 
 	 * @param waypoint the waypoint to be added
@@ -915,7 +1045,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario has waypoints.
+	 * Determines whether or not this scenario has waypoints.
 	 * 
 	 * @return true if this scenario has waypoints, false otherwise
 	 */
@@ -1019,7 +1149,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 			throw new IllegalArgumentException();
 		}
 	}
-
+	
 	/**
 	 * Gets the planned trajectory of this scenario.
 	 * 
@@ -1057,7 +1187,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	}
 	
 	/**
-	 * Indicates whether or not this scenario has a computed trajectory.
+	 * Determines whether or not this scenario has a computed trajectory.
 	 * 
 	 * @return true if this scenario has a computed trajectory, false otherwise
 	 */
@@ -1133,6 +1263,15 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 		}
 		
 		return leg;
+	}
+	
+	/**
+	 * Determines whether or not this scenario has obstacles.
+	 * 
+	 * @return true if this scenario has obstacles, false otherwise
+	 */
+	public synchronized boolean hasObstacles() {
+		return !this.obstacles.isEmpty();
 	}
 	
 	/**
@@ -1619,7 +1758,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Object#equals(Object)
 	 */
 	@Override
-	public synchronized final boolean equals(Object o) {
+	public final boolean equals(Object o) {
 		boolean equals = false;
 		
 		if (this == o) {
@@ -1639,7 +1778,7 @@ public class Scenario implements Identifiable, Enableable, StructuralChangeListe
 	 * @see Object#hashCode()
 	 */
 	@Override
-	public synchronized final int hashCode() {
+	public final int hashCode() {
 		return this.id.hashCode();
 	}
 	

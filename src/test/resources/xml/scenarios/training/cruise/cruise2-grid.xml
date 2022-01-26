@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<safcs:scenario
+	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
+	id="Cruise 2 Planning Grid" time="2021-12-01T18:00:00.000Z"
+	threshold="0.0" globe="Earth">
+	<safcs:environment>
+		<safcs:grid division="40"
+			bottom="35.000000284555874" top="109.07377677196438">
+			<safcs:southWest latitude="48.5548249915215"
+				longitude="-123.38536485472099" />
+			<safcs:northEast latitude="48.557356352848856"
+				longitude="-123.37733706660025" />
+		</safcs:grid>
+	</safcs:environment>
+	<safcs:obstacles>
+		<safcs:box leftWidth="200.0" rightWidth="200.0"
+			bottom="100.0" top="140.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace10" cost="100.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:box leftWidth="200.0" rightWidth="200.0"
+			bottom="85.0" top="100.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace11" cost="20.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="0.0"
+			top="3.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace1" cost="100.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+	</safcs:obstacles>
+	<safcs:aircraft type="IRIS" cid="FRIEND" radius="10.0"
+		centerDatum="ASL">
+		<safcs:center altitude="50.0"
+			latitude="48.55699624493378" longitude="-123.37787495017074" />
+		<safcs:costInterval id="IRIS" cost="100.0"
+			enabled="true" start="2011-12-04T01:08:03.566Z"
+			end="2031-12-04T01:08:03.566Z" />
+		<safcs:depiction symbology="TacticalSymbol"
+			sidc="SFGPUCVUR------" />
+		<safcs:capabilities approachRateOfDescent="1.0"
+			approachSpeed="1.0" cruiseClimbSpeed="1.0" cruiseDescentSpeed="1.0"
+			cruiseRateOfClimb="1.0" cruiseRateOfDescent="1.0" cruiseSpeed="1.0"
+			maximumAngleOfClimb="90.0" maximumAngleOfClimbSpeed="1.0"
+			maximumGlideSpeed="1.0" maximumRateOfClimb="1.0"
+			maximumRateOfClimbSpeed="1.0" maximumRateOfDescent="1.0"
+			maximumRateOfDescentSpeed="1.0" maximumSpeed="1.0" />
+	</safcs:aircraft>
+	<safcs:waypoints>
+		<safcs:waypoint designator="0" cost="INF" dtg="INF"
+			altitude="50.0" latitude="48.55699624493378"
+			longitude="-123.37787495017074">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="0" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+		<safcs:waypoint designator="1" cost="INF" dtg="INF"
+			altitude="60.0" latitude="48.555197299038525"
+			longitude="-123.38154097361758">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="1" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+		<safcs:waypoint designator="2" cost="INF" dtg="INF"
+			altitude="50.0" latitude="48.55697404210403"
+			longitude="-123.38480194298893">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="2" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+	</safcs:waypoints>
+	<safcs:planner riskPolicy="SAFETY" costPolicy="AVERAGE">
+		<safcs:astar />
+	</safcs:planner>
+	<safcs:datalink downlinkPeriod="PT1S">
+		<safcs:simulated uplinkDelay="PT0.5S"
+			errorProbability="0.0">
+			<safcs:errors>
+				<safcs:maxTrackError crossTrackError="0.0"
+					altitudeError="0.0" openingBearingError="0.0"
+					closingBearingError="0.0" timingError="PT0S" />
+				<safcs:maxTakeOffError horizontalError="0.0"
+					verticalError="0.0" timingError="PT0S" />
+				<safcs:maxLandingError horizontalError="0.0"
+					verticalError="0.0" timingError="PT0S" />
+			</safcs:errors>
+		</safcs:simulated>
+	</safcs:datalink>
+	<safcs:swim>
+		<safcs:simulated updatePeriod="PT5S"
+			updateProbability="0.5" updateQuantity="1"
+			resourceDirectory="swim/xml" />
+	</safcs:swim>
+</safcs:scenario>

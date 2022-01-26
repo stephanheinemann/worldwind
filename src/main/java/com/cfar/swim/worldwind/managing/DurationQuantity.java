@@ -50,6 +50,9 @@ public class DurationQuantity implements Quantity {
 	/** the quantity of this duration quantity */
 	private final Duration quantity;
 	
+	/** the quantity normalizer of this duration quantity */
+	private final double normalizer;
+	
 	/**
 	 * Constructs a new duration quantity based on a duration.
 	 * 
@@ -58,10 +61,24 @@ public class DurationQuantity implements Quantity {
 	 * @throws IllegalArgumentException if the quantity is invalid
 	 */
 	public DurationQuantity(Duration quantity) {
+		this(quantity, 1d);
+	}
+	
+	/**
+	 * Constructs a new duration quantity based on a duration and a quantity
+	 * normalizer.
+	 * 
+	 * @param quantity the duration
+	 * @param normalizer the normalizer to be applied to the quantity measure
+	 * 
+	 * @throws IllegalArgumentException if the quantity is invalid
+	 */
+	public DurationQuantity(Duration quantity, double normalizer) {
 		if ((null == quantity) || quantity.isNegative() || quantity.isZero()) {
 			throw new IllegalArgumentException("quantity is invalid");
 		}
 		this.quantity = quantity;
+		this.normalizer = normalizer;
 	}
 	
 	/**
@@ -73,7 +90,19 @@ public class DurationQuantity implements Quantity {
 	 */
 	@Override
 	public double get() {
-		return quantity.getSeconds() + (quantity.getNano() * 10E-9d);
+		return this.quantity.getSeconds() + (this.quantity.getNano() * 1E-9d);
+	}
+	
+	/**
+	 * Gets the normalized duration quantity in seconds.
+	 * 
+	 * @return the normalized duration quantity in seconds
+	 * 
+	 * @see Quantity#getNormalized()
+	 */
+	@Override
+	public double getNormalized() {
+		return this.get() * this.normalizer;
 	}
 	
 	/**
@@ -82,14 +111,15 @@ public class DurationQuantity implements Quantity {
 	 * @param quantity the other quantity
 	 * 
 	 * @return a negative integer, zero, or a positive integer as this
-	 *         duration quantity is less than, equal to, or greater than the
-	 *         other quantity, respectively
+	 *         normalized duration quantity is less than, equal to, or greater
+	 *         than the other normalized quantity, respectively
 	 * 
 	 * @see Comparator#compare(Object, Object)
 	 */
 	@Override
 	public int compareTo(Quantity quantity) {
-		return Comparator.comparingDouble(Quantity::get).compare(this, quantity);
+		return Comparator.comparingDouble(
+				Quantity::getNormalized).compare(this, quantity);
 	}
 	
 	/**
@@ -98,7 +128,7 @@ public class DurationQuantity implements Quantity {
 	 * 
 	 * @param o the other duration quantity
 	 * 
-	 * @return true, if this trajectory quantity equals the other trajectory
+	 * @return true, if this duration quantity equals the other duration
 	 *         quantity, false otherwise
 	 * 
 	 * @see Object#equals(Object)
@@ -110,7 +140,8 @@ public class DurationQuantity implements Quantity {
 		if (this == o) {
 			equals = true;
 		} else if ((null != o) && (this.getClass() == o.getClass())) {
-			equals = this.get() == ((DurationQuantity) o).get();
+			equals = (this.getNormalized()
+					== ((DurationQuantity) o).getNormalized());
 		}
 
 		return equals;
@@ -125,7 +156,7 @@ public class DurationQuantity implements Quantity {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(this.get());
+		return Objects.hash(this.getNormalized());
 	}
 	
 }

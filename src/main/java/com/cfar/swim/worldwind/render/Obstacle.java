@@ -35,6 +35,7 @@ import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 
 /**
@@ -47,6 +48,13 @@ import gov.nasa.worldwind.globes.Globe;
 public interface Obstacle extends Movable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
 	
 	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
+	
+	/**
+	 * Gets the center of this obstacle.
+	 * 
+	 * @return the center of this obstacle
+	 */
+	public Position getCenter();
 	
 	/**
 	 * Gets the cost interval of this obstacle.

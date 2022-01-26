@@ -45,6 +45,7 @@ import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Box;
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.geom.Quaternion;
 import gov.nasa.worldwind.geom.Sphere;
 import gov.nasa.worldwind.geom.Vec4;
 
@@ -61,6 +62,34 @@ public class Collisions {
 	public static final GjkEpaSolver SOLVER = new GjkEpaSolver();
 	
 	/**
+	 * Determines the closest angle body axis with respect to a reference axis.
+	 * 
+	 * @param axes the body axes
+	 * @param axis the reference axis
+	 * 
+	 * @return the closest angle body axis
+	 */
+	private static Vec4 closestAngleBodyAxis(Vec4[] axes, Vec4 axis) {
+		Vec4 closestAxis = axes[0];
+		
+		Angle rr = axis.angleBetween3(axes[0]);
+		Angle rs = axis.angleBetween3(axes[1]);
+		Angle rt = axis.angleBetween3(axes[2]);
+		
+		Angle closestAngle = rr;
+		
+		if (Math.abs(closestAngle.getDegrees()) > Math.abs(rs.getDegrees())) {
+			closestAxis = axes[1];
+			closestAngle = rs;
+		}
+		if (Math.abs(closestAngle.getDegrees()) > Math.abs(rt.getDegrees())) {
+			closestAxis = axes[2];
+		}
+		
+		return closestAxis;
+	}
+	
+	/**
 	 * Creates a box shape from a box.
 	 * 
 	 * @param box the box
@@ -68,12 +97,45 @@ public class Collisions {
 	 * @return the box shape of the box
 	 */
 	private static BoxShape createBoxShape(Box box) {
+		Vec4[] boxAxes = {box.getRAxis(), box.getSAxis(), box.getTAxis()};
+		Vec4[] boxRotationAxis = {Vec4.ZERO};
+		Angle boxRotationAngle = Angle.ZERO;
+		
+		// determine x-axis length
+		Vec4 boxXAxis = Collisions.closestAngleBodyAxis(boxAxes, Vec4.UNIT_X);
+		double boxXLength = boxXAxis.getLength3();
+		
+		Quaternion boxXRotation = Quaternion.IDENTITY;
+		if (!Angle.ZERO.equals(Vec4.UNIT_X.angleBetween3(boxXAxis))) {
+			boxRotationAngle = Vec4.axisAngle(
+					Vec4.UNIT_X, boxXAxis, boxRotationAxis);
+			boxXRotation = Quaternion.fromAxisAngle(
+					boxRotationAngle, boxRotationAxis[0]);
+		}
+		
+		boxAxes[0] = boxAxes[0].transformBy3(boxXRotation);
+		boxAxes[1] = boxAxes[1].transformBy3(boxXRotation);
+		boxAxes[2] = boxAxes[2].transformBy3(boxXRotation);
+		
+		// determine y-axis length
+		Vec4 boxYAxis = Collisions.closestAngleBodyAxis(boxAxes, Vec4.UNIT_Y);
+		double boxYLength = boxYAxis.getLength3();
+		
+		// determine z-axis length
+		double boxZLength = box.getTLength();
+		if ((!boxXAxis.equals(box.getRAxis()))
+				&& (!boxYAxis.equals(box.getRAxis().transformBy3(boxXRotation)))) {
+			boxZLength = box.getRLength();
+		} else if ((!boxXAxis.equals(box.getSAxis()))
+				&& (!boxYAxis.equals(box.getSAxis().transformBy3(boxXRotation)))) {
+			boxZLength = box.getSLength();
+		}
+		
 		// jBullet uses a right-hand coordinate system with y as vertical axis
-		// assume t-axis as vertical reference axis for collision check
 		Vector3f boxHalfExtents = new Vector3f(
-				(float) (box.getRLength() / 2d),
-				(float) (box.getTLength() / 2d),
-				(float) (box.getSLength() / 2d));
+				(float) (boxXLength / 2d),  // X
+				(float) (boxZLength / 2d),  // Z
+				(float) (boxYLength / 2d)); // Y
 		return new BoxShape(boxHalfExtents);
 	}
 	
@@ -86,37 +148,57 @@ public class Collisions {
 	 */
 	private static Transform createBoxTransform(Box box) {
 		// box translation
-		Vec4 translation = box.getCenter();
+		Vec4 boxTranslation = box.getCenter();
 		// jBullet uses a right-hand coordinate system with y as vertical axis
-		Vector3f boxTranslation = new Vector3f(
-				(float) translation.getX(),
-				(float) translation.getZ(),
-				(float) translation.getY());
+		Vector3f translation = new Vector3f(
+				(float) boxTranslation.getX(),
+				(float) boxTranslation.getZ(),
+				(float) boxTranslation.getY());
 		
 		// box rotation
-		Vec4[] boxRotationAxis = new Vec4[] {Vec4.ZERO};
+		Vec4[] boxAxes = {box.getRAxis(), box.getSAxis(), box.getTAxis()};
+		Vec4[] boxRotationAxis = {Vec4.ZERO};
 		Angle boxRotationAngle = Angle.ZERO;
 		
-		if (!Angle.ZERO.equals(Vec4.UNIT_Z.angleBetween3(box.getTAxis()))) {
+		// first rotation
+		Vec4 boxXAxis = Collisions.closestAngleBodyAxis(boxAxes, Vec4.UNIT_X);
+		Quaternion boxXRotation = Quaternion.IDENTITY;
+		if (!Angle.ZERO.equals(Vec4.UNIT_X.angleBetween3(boxXAxis))) {
 			boxRotationAngle = Vec4.axisAngle(
-					Vec4.UNIT_Z, box.getTAxis(), boxRotationAxis);
+					Vec4.UNIT_X, boxXAxis, boxRotationAxis);
+			boxXRotation = Quaternion.fromAxisAngle(
+					boxRotationAngle, boxRotationAxis[0]);
 		}
 		
+		boxAxes[0] = boxAxes[0].transformBy3(boxXRotation);
+		boxAxes[1] = boxAxes[1].transformBy3(boxXRotation);
+		boxAxes[2] = boxAxes[2].transformBy3(boxXRotation);
+		
+		// second rotation
+		Vec4 boxYAxis = Collisions.closestAngleBodyAxis(boxAxes, Vec4.UNIT_Y);
+		Quaternion boxYRotation = Quaternion.IDENTITY;
+		if (!Angle.ZERO.equals(Vec4.UNIT_Y.angleBetween3(boxYAxis))) {
+			boxRotationAngle = Vec4.axisAngle(
+					Vec4.UNIT_Y, boxYAxis, boxRotationAxis);
+			boxYRotation = Quaternion.fromAxisAngle(
+					boxRotationAngle, boxRotationAxis[0]);
+		}
+		
+		// sequence second rotation after first rotation
+		Quaternion boxRotation = boxYRotation.multiply(boxXRotation);
+		
 		// jBullet uses a right-hand coordinate system with y as vertical axis
-		AxisAngle4f boxAxisAngle = new AxisAngle4f(
-				(float) boxRotationAxis[0].getX(),
-				(float) boxRotationAxis[0].getZ(),
-				(float) boxRotationAxis[0].getY(),
-				(float) boxRotationAngle.getRadians());
-		// obtain box rotation quaternion
-		Quat4f boxQuaternion = new Quat4f();
-		boxQuaternion.set(boxAxisAngle);
+		Quat4f rotation = new Quat4f(
+				(float) boxRotation.getX(),
+				(float) boxRotation.getZ(),
+				(float) boxRotation.getY(),
+				(float) boxRotation.getW());
 		
 		// obtain box transformation (translation and rotation)
 		Matrix4f btm = new Matrix4f();
 		btm.setIdentity(); // no translation or rotation
-		btm.setTranslation(boxTranslation); // center translation
-		btm.setRotation(boxQuaternion); // vertical rotation
+		btm.setTranslation(translation); // center translation
+		btm.setRotation(rotation); // sequenced rotation
 		
 		return new Transform(btm);
 	}
@@ -146,12 +228,12 @@ public class Collisions {
 	 */
 	private static Transform createCylinderTransform(Cylinder cylinder) {
 		// cylinder translation
-		Vec4 translation = cylinder.getCenter();
+		Vec4 cylinderTranslation = cylinder.getCenter();
 		// jBullet uses a right-hand coordinate system with y as vertical axis
-		Vector3f cylinderTranslation = new Vector3f(
-				(float) translation.getX(),
-				(float) translation.getZ(),
-				(float) translation.getY());
+		Vector3f translation = new Vector3f(
+				(float) cylinderTranslation.getX(),
+				(float) cylinderTranslation.getZ(),
+				(float) cylinderTranslation.getY());
 		
 		// cylinder rotation
 		Vec4[] cylinderRotationAxis = new Vec4[] {Vec4.ZERO};
@@ -166,20 +248,20 @@ public class Collisions {
 		}
 		
 		// jBullet uses a right-hand coordinate system with y as vertical axis
-		AxisAngle4f cylinderAxisAngle = new AxisAngle4f(
+		AxisAngle4f rotationAxisAngle = new AxisAngle4f(
 				(float) cylinderRotationAxis[0].getX(),
 				(float) cylinderRotationAxis[0].getZ(),
 				(float) cylinderRotationAxis[0].getY(),
 				(float) cylinderRotationAngle.getRadians());
 		// obtain cylinder rotation quaternion
-		Quat4f cylinderQuaternion = new Quat4f();
-		cylinderQuaternion.set(cylinderAxisAngle);
+		Quat4f rotation = new Quat4f();
+		rotation.set(rotationAxisAngle);
 		
 		// obtain cylinder transformation (translation and rotation)
 		Matrix4f ctm = new Matrix4f();
 		ctm.setIdentity(); // no translation or rotation
-		ctm.setTranslation(cylinderTranslation); // center translation
-		ctm.setRotation(cylinderQuaternion); // vertical rotation
+		ctm.setTranslation(translation); // center translation
+		ctm.setRotation(rotation); // vertical rotation
 		
 		return new Transform(ctm);
 	}
@@ -205,17 +287,17 @@ public class Collisions {
 	 */
 	private static Transform createSphereTransform(Sphere sphere) {
 		// sphere translation
-		Vec4 translation = sphere.getCenter();
+		Vec4 sphereTranslation = sphere.getCenter();
 		// jBullet uses a right-hand coordinate system with y as vertical axis
-		Vector3f sphereTranslation = new Vector3f(
-				(float) translation.getX(),
-				(float) translation.getZ(),
-				(float) translation.getY());
+		Vector3f translation = new Vector3f(
+				(float) sphereTranslation.getX(),
+				(float) sphereTranslation.getZ(),
+				(float) sphereTranslation.getY());
 		
 		// obtain sphere transformation (translation without rotation)
 		Matrix4f stm = new Matrix4f();
 		stm.setIdentity(); // no translation or rotation
-		stm.setTranslation(sphereTranslation); // center translation
+		stm.setTranslation(translation); // center translation
 		
 		return new Transform(stm);
 	}

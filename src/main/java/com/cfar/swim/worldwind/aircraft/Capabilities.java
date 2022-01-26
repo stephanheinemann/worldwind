@@ -51,8 +51,6 @@ import gov.nasa.worldwind.render.Path;
 public class Capabilities {
 
 	// all capabilities are stored in SI units
-	// TODO: maximum rate of turn
-	// TODO: ensure maximum angles correspond to maximum speeds and rates
 	
 	/** the maximum angle of climb speed of this capabilities bean in m/s */
 	private double maximumAngleOfClimbSpeed = 0d; // m/s
@@ -102,6 +100,10 @@ public class Capabilities {
 	// TODO: climb-speed-distance performance
 	// TODO: possibly feature parameterization for air movement (horizontal / vertical)
 	// TODO: possibly feature parameterization for air density (temperature / pressure / humidity)
+	// TODO: maximum rate of turn
+	// TODO: ensure maximum angles correspond to maximum speeds and rates
+	// TODO: maximum and service ceilings
+	// TODO: dynamic air data intervals (lambdas instead of constants)
 	// TODO: create a new AirDataInterval class which aggregates AirData class
 	// TODO: AirData, Surface/GroundData extends EnvironmentData
 	// TODO: environment would have to store air property intervals
@@ -389,7 +391,7 @@ public class Capabilities {
 	 */
 	public Duration getEstimatedDuration(double distance) {
 		double seconds = Math.floor(distance / this.cruiseSpeed);
-		double nanos = Math.floor(((distance / this.cruiseSpeed) - seconds) / 10E-9);
+		double nanos = Math.floor(((distance / this.cruiseSpeed) - seconds) / 1E-9d);
 		return Duration.ofSeconds((long) seconds, (long) nanos);
 	}
 	

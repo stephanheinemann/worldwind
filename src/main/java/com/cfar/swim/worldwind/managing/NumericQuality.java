@@ -52,6 +52,9 @@ public class NumericQuality implements Quality {
 	/** the numeric value of this numeric quality */
 	private final Number value; 
 	
+	/** the normalizer of this numeric quality */
+	private final Number normalizer;
+	
 	/**
 	 * Constructs a new numeric quality based on a numeric value.
 	 * 
@@ -60,10 +63,24 @@ public class NumericQuality implements Quality {
 	 * @throws IllegalArgumentException if the numeric value is invalid
 	 */
 	public NumericQuality(Number value) {
+		this(value, 1);
+	}
+	
+	/**
+	 * Constructs a new numeric quality based on a numeric value and a quality
+	 * normalizer.
+	 * 
+	 * @param value the numeric value
+	 * @param normalizer the the normalizer to be applied to the quality measure
+	 * 
+	 * @throws IllegalArgumentException if the numeric value is invalid
+	 */
+	public NumericQuality(Number value, Number normalizer) {
 		if ((null == value) || (0d > value.doubleValue())) {
 			throw new IllegalArgumentException("numeric value is invalid");
 		}
 		this.value = value;
+		this.normalizer = normalizer;
 	}
 	
 	/**
@@ -79,19 +96,32 @@ public class NumericQuality implements Quality {
 	}
 	
 	/**
+	 * Gets the normalized numeric value of this numeric quality.
+	 * 
+	 * @return the normalized numeric value of this numeric quality
+	 * 
+	 * @see Quality#getNormalized()
+	 */
+	@Override
+	public double getNormalized() {
+		return this.get() * this.normalizer.doubleValue();
+	}
+	
+	/**
 	 * Compares this numeric quality to another quality.
 	 * 
 	 * @param quality the other quality
 	 * 
-	 * @return a negative integer, zero, or a positive integer as this numeric
-	 *         quality is less than, equal to, or greater than the other
-	 *         quality, respectively
+	 * @return a negative integer, zero, or a positive integer as this
+	 *         normalized numeric quality is less than, equal to, or greater
+	 *         than the other normalized quality, respectively
 	 * 
 	 * @see Comparator#compare(Object, Object)
 	 */
 	@Override
 	public int compareTo(Quality quality) {
-		return Comparator.comparingDouble(Quality::get).compare(this, quality);
+		return Comparator.comparingDouble(
+				Quality::getNormalized).compare(this, quality);
 	}
 	
 	/**
@@ -100,8 +130,8 @@ public class NumericQuality implements Quality {
 	 * 
 	 * @param o the other numeric quality
 	 * 
-	 * @return true, if this numeric quality equals the other numeric quality,
-	 *         false otherwise
+	 * @return true, if this normalized numeric quality equals the other
+	 *         normalized numeric quality, false otherwise
 	 * 
 	 * @see Object#equals(Object)
 	 */
@@ -112,7 +142,8 @@ public class NumericQuality implements Quality {
 		if (this == o) {
 			equals = true;
 		} else if ((null != o) && (this.getClass() == o.getClass())) {
-			equals = this.get() == ((NumericQuality) o).get();
+			equals = (this.getNormalized()
+					== ((NumericQuality) o).getNormalized());
 		}
 
 		return equals;
@@ -127,7 +158,7 @@ public class NumericQuality implements Quality {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(this.get());
+		return Objects.hash(this.getNormalized());
 	}
 	
 }

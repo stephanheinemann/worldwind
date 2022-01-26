@@ -90,9 +90,9 @@ public class PoliciesTest {
 		minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost() + 10d, minCost, 1E-4);
-		assertEquals(continuum.getBaseCost() + 10d, avgCost, 1E-4);
-		assertEquals(continuum.getBaseCost() + 10d, maxCost, 1E-4);
+		assertEquals(continuum.getBaseCost() + 10d, minCost, 1E-4d);
+		assertEquals(continuum.getBaseCost() + 10d, avgCost, 1E-4d);
+		assertEquals(continuum.getBaseCost() + 10d, maxCost, 1E-4d);
 		
 		CostInterval enclosingInterval = new CostInterval("enclosing",
 				firstEto.minusHours(1l), secondEto.plusHours(1l), 10d);
@@ -100,9 +100,9 @@ public class PoliciesTest {
 		minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost() + 20d, minCost, 1E-4);
-		assertEquals(continuum.getBaseCost() + 20d, avgCost, 1E-4);
-		assertEquals(continuum.getBaseCost() + 20d, maxCost, 1E-4);
+		assertEquals(continuum.getBaseCost() + 20d, minCost, 1E-4d);
+		assertEquals(continuum.getBaseCost() + 20d, avgCost, 1E-4d);
+		assertEquals(continuum.getBaseCost() + 20d, maxCost, 1E-4d);
 		
 		// overlapping costs
 		CostInterval overlappingInterval1 = new CostInterval("overlapping1",

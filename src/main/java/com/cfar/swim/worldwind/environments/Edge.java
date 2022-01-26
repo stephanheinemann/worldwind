@@ -564,13 +564,13 @@ public class Edge extends LineSegment implements TimedRenderable, ThresholdRende
 			} else {
 				Duration duration = Duration.between(start, end);
 				double intervalSeconds = duration.getSeconds()
-						+ (duration.getNano() * 10E-9);
+						+ (duration.getNano() * 1E-9d);
 				double subIntervalSeconds;
 				for (CostInterval subCostInterval : subCostIntervals) {
 					duration = Duration.between(subCostInterval.getLower(),
 							subCostInterval.getUpper());
 					subIntervalSeconds = duration.getSeconds()
-							+ (duration.getNano() * 10E-9);
+							+ (duration.getNano() * 1E-9d);
 					cost += subCostInterval.getCost()
 							* subIntervalSeconds / intervalSeconds;
 				}

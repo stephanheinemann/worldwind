@@ -891,6 +891,7 @@ public class ARAStarPlanner extends ForwardAStarPlanner implements AnytimePlanne
 		
 		if (updated && (specification.getProperties() instanceof ARAStarProperties)) {
 			ARAStarProperties properties = (ARAStarProperties) specification.getProperties();
+			this.setMaximumQuality(1d);
 			this.setMinimumQuality(properties.getMinimumQuality());
 			this.setMaximumQuality(properties.getMaximumQuality());
 			this.setQualityImprovement(properties.getQualityImprovement());

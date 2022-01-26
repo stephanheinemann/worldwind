@@ -45,4 +45,11 @@ public interface Quality extends Comparable<Quality>, Serializable {
 	 */
 	public double get();
 	
+	/**
+	 * Gets the normalized performance quality measure.
+	 * 
+	 * @return the normalized performance quality measure
+	 */
+	public double getNormalized();
+	
 }

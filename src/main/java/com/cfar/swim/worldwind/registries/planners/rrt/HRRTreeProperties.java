@@ -211,4 +211,20 @@ public class HRRTreeProperties extends RRTreeProperties {
 				this.qualityBound);
 	}
 	
+	/**
+	 * Gets the string representation of this hRRT planner properties bean.
+	 * 
+	 * @return the string representation of this hRRT planner properties bean
+	 * 
+	 * @see RRTreeProperties#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + ", "
+				+ "algorithm=" + this.getAlgorithm() + ", "
+				+ "variant=" + this.getVariant() + ", "
+				+ "neighborLimit=" + this.getNeighborLimit() + ", "
+				+ "qualityBound=" + this.getQualityBound();
+	}
+	
 }

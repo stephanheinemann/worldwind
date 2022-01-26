@@ -31,7 +31,7 @@ package com.cfar.swim.worldwind.connections;
 
 import java.util.HashSet;
 
-import com.cfar.swim.worldwind.data.SwimData;
+import com.cfar.swim.worldwind.data.SwimProtocol;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.SwimConnectionProperties;
@@ -47,7 +47,7 @@ import com.cfar.swim.worldwind.session.ObstacleProvider;
 public abstract class SwimConnection implements Connection, ObstacleProvider {
 	
 	/** the SWIM subscriptions of this SWIM connection */
-	private HashSet<SwimData> subscriptions = new HashSet<SwimData>();
+	private HashSet<SwimProtocol> subscriptions = new HashSet<>();
 	
 	/** this obstacle manager of this SWIM connection */
 	private ObstacleManager obstacleManager = null;
@@ -78,7 +78,7 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	 * 
 	 * @param protocol the SWIM data protocol to be subscribed to
 	 */
-	public synchronized void subscribe(SwimData protocol) {
+	public synchronized void subscribe(SwimProtocol protocol) {
 		this.subscriptions.add(protocol);
 	}
 	
@@ -87,7 +87,7 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	 * 
 	 * @param protocol the SWIM data protocol to be unsubscribed from
 	 */
-	public synchronized void unsubscribe(SwimData protocol) {
+	public synchronized void unsubscribe(SwimProtocol protocol) {
 		this.subscriptions.remove(protocol);
 	}
 	
@@ -100,8 +100,17 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	 * @return true if this SWIM connection has subscribed to the specified
 	 *         SWIM data protocol
 	 */
-	public synchronized boolean hasSubscribed(SwimData protocol) {
+	public synchronized boolean hasSubscribed(SwimProtocol protocol) {
 		return this.subscriptions.contains(protocol);
+	}
+	
+	/**
+	 * Determines whether or not this SWIM connection has subscriptions.
+	 * 
+	 * @return true if this SWIM connection has subscriptions, false otherwise
+	 */
+	public synchronized boolean hasSubscriptions() {
+		return !this.subscriptions.isEmpty();
 	}
 	
 	/**
@@ -160,11 +169,11 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 				&& (specification.getProperties() instanceof SwimConnectionProperties)) {
 			
 			SwimConnectionProperties properties = (SwimConnectionProperties) specification.getProperties();
-			matches = (this.hasSubscribed(SwimData.AIXM) == properties.getSubscribesAIXM()
-					&& (this.hasSubscribed(SwimData.AMXM) == properties.getSubscribesAMXM())
-					&& (this.hasSubscribed(SwimData.FIXM) == properties.getSubscribesFIXM())
-					&& (this.hasSubscribed(SwimData.IWXXM) == properties.getSubscribesIWXXM())
-					&& (this.hasSubscribed(SwimData.WXXM) == properties.getSubscribesWXXM()));
+			matches = (this.hasSubscribed(SwimProtocol.AIXM) == properties.getSubscribesAIXM()
+					&& (this.hasSubscribed(SwimProtocol.AMXM) == properties.getSubscribesAMXM())
+					&& (this.hasSubscribed(SwimProtocol.FIXM) == properties.getSubscribesFIXM())
+					&& (this.hasSubscribed(SwimProtocol.IWXXM) == properties.getSubscribesIWXXM())
+					&& (this.hasSubscribed(SwimProtocol.WXXM) == properties.getSubscribesWXXM()));
 		}
 		
 		return matches;
@@ -190,15 +199,15 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 			
 			SwimConnectionProperties properties = (SwimConnectionProperties) specification.getProperties();
 			if (properties.getSubscribesAIXM())
-				this.subscribe(SwimData.AIXM);
+				this.subscribe(SwimProtocol.AIXM);
 			if (properties.getSubscribesFIXM())
-				this.subscribe(SwimData.FIXM);
+				this.subscribe(SwimProtocol.FIXM);
 			if (properties.getSubscribesWXXM())
-				this.subscribe(SwimData.WXXM);
+				this.subscribe(SwimProtocol.WXXM);
 			if (properties.getSubscribesIWXXM())
-				this.subscribe(SwimData.IWXXM);
+				this.subscribe(SwimProtocol.IWXXM);
 			if (properties.getSubscribesAMXM())
-				this.subscribe(SwimData.AMXM);
+				this.subscribe(SwimProtocol.AMXM);
 			updated = true;
 		}
 		

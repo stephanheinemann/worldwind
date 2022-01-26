@@ -32,8 +32,8 @@ package com.cfar.swim.worldwind.planners.managed;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -63,6 +63,9 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	
 	/** the goals of this managed grid planner */
 	private ManagedGoals goals = null;
+	
+	/** the total Euclidean POI distance from start to goal of this managed grid planner */
+	private double poiDistance = 0d;
 	
 	/** the standby status of this managed grid planner */
 	private boolean isStandby = false;
@@ -349,9 +352,11 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 			while (!this.hasTerminated() && !this.needsRepair() && this.isOnTrack()) {
 				this.progress(this.backups.size() - 1);
 				this.wait();
-				this.resetPerformance();
 				this.updateDynamicObstacles();
-				this.joinAssociate();
+				if (this.needsRepair() || !this.isOnTrack()) {
+					this.resetPerformance();
+					this.joinAssociate();
+				}
 			}
 		} catch (InterruptedException e) {
 			e.printStackTrace();
@@ -436,19 +441,85 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 */
 	@Override
 	protected void revisePlan(Trajectory trajectory) {
-		this.performance = new PlannerPerformance(
-				this.planStartTime,
-				new TrajectoryQuality(trajectory),
-				new DurationQuantity(Duration.between(
-						this.planStartTime, ZonedDateTime.now())));
-		this.revisions.add(trajectory);
-		super.revisePlan(trajectory);
+		if (!trajectory.isEmpty() && !this.revisions.contains(trajectory)) {
+			double normalizer = this.computePoiDistance(trajectory)
+					/ this.poiDistance;
+			this.performance = new PlannerPerformance(
+					this.planStartTime,
+					new TrajectoryQuality(trajectory, normalizer),
+					new DurationQuantity(Duration.between(
+							this.planStartTime, ZonedDateTime.now()),
+							1d / normalizer));
+			this.revisions.add(trajectory);
+			super.revisePlan(trajectory);
+		}
+	}
+	
+	/**
+	 * Computes the total Euclidean POI distance from start to goal of this
+	 * managed grid planner. The total Euclidean POI distance is used to
+	 * normalize performance values.
+	 * 
+	 * @return the total Euclidean POI distance from start to goal of this
+	 *         managed grid planner
+	 */
+	protected double computePoiDistance() {
+		double poiDistance = 0d;
+		
+		if (this.getGoals().getPois().isEmpty()) {
+			poiDistance = this.getEnvironment().getNormalizedDistance(
+					this.getGoals().getOrigin(),
+					this.getGoals().getDestination());
+		} else {
+			Iterator<Position> pois = this.getGoals().getPois().iterator();
+			Position current = pois.next();
+			poiDistance = this.getEnvironment().getNormalizedDistance(
+					this.getGoals().getOrigin(), current);
+			while (pois.hasNext()) {
+				Position next = pois.next();
+				poiDistance += this.getEnvironment().getNormalizedDistance(
+						current, next);
+				current = next;
+			}
+			poiDistance += this.getEnvironment().getNormalizedDistance(
+					current, this.getGoals().getDestination());
+		}
+		
+		return poiDistance;
+	}
+	
+	/**
+	 * Computes the Euclidean POI distance of a trajectory computed by this
+	 * managed grid planner. The Euclidean POI distance is used to normalize
+	 * performance values.
+	 * 
+	 * @param trajectory the trajectory
+	 * 
+	 * @return the Euclidean POI distance of the trajectory computed by this
+	 *         managed grid planner
+	 */
+	protected double computePoiDistance(Trajectory trajectory) {
+		double poiDistance = 0d;
+		
+		if (1 < trajectory.getPois().size()) {
+			Iterator<Waypoint> pois = trajectory.getPois().iterator();
+			Waypoint current = pois.next();
+			while (pois.hasNext()) {
+				Waypoint next = pois.next();
+				poiDistance += this.getEnvironment()
+						.getNormalizedDistance(current, next);
+				current = next;
+			}
+		}
+		
+		return poiDistance;
 	}
 	
 	/**
 	 * Resets the performance of this managed grid planner.
 	 */
 	protected void resetPerformance() {
+		this.poiDistance = this.computePoiDistance();
 		this.performance = PlannerPerformance.ZERO;
 		this.revisions.clear();
 		this.planStartTime = ZonedDateTime.now();
@@ -474,7 +545,7 @@ public class ManagedGridPlanner extends OADStarPlanner implements ManagedPlanner
 	 * @see ManagedPlanner#getRevisions()
 	 */
 	@Override
-	public Collection<Trajectory> getRevisions() {
+	public List<Trajectory> getRevisions() {
 		return Collections.unmodifiableList(this.revisions);
 	}
 	

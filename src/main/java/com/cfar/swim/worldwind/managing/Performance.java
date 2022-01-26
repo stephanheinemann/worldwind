@@ -50,6 +50,13 @@ public interface Performance extends Comparable<Performance>, Serializable {
 	public double get();
 	
 	/**
+	 * Gets the normalized measure of this performance.
+	 * 
+	 * @return the normalized measure of this performance
+	 */
+	public double getNormalized();
+	
+	/**
 	 * Gets the quality of this performance.
 	 * 
 	 * @return the quality of this performance

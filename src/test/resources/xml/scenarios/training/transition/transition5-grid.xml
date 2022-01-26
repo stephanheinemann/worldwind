@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<safcs:scenario
+	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
+	id="Transition 5 Planning Grid" time="2021-12-01T18:00:00.000Z"
+	threshold="0.0" globe="Earth">
+	<safcs:environment>
+		<safcs:grid division="40"
+			bottom="35.000000284555874" top="109.07377677196438">
+			<safcs:southWest latitude="48.554824724796795"
+				longitude="-123.38536485469982" />
+			<safcs:northEast latitude="48.557356231545235"
+				longitude="-123.37733660543198" />
+		</safcs:grid>
+	</safcs:environment>
+	<safcs:obstacles>
+		<safcs:cylinder radius="96.875" bottom="0.0"
+			top="78.75" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555819935726944"
+				longitude="-123.37671998491531" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:00:37.500Z"
+				end="2021-12-01T18:01:15.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="84.375" bottom="0.0"
+			top="73.75" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555828937772944"
+				longitude="-123.37951108465447" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:03:07.500Z"
+				end="2021-12-01T18:03:45.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="59.375" bottom="0.0"
+			top="63.75" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55584673948592"
+				longitude="-123.38509328709398" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:08:07.500Z"
+				end="2021-12-01T18:08:45.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="100.0" bottom="0.0" top="80.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55581767467488"
+				longitude="-123.376022210136" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:00:00.000Z"
+				end="2021-12-01T18:00:37.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="65.625" bottom="0.0"
+			top="66.25" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555842314355075"
+				longitude="-123.38369773611628" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:06:52.500Z"
+				end="2021-12-01T18:07:30.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="71.875" bottom="0.0"
+			top="68.75" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55583787235929"
+				longitude="-123.38230218538317" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:05:37.500Z"
+				end="2021-12-01T18:06:15.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:box leftWidth="20.0" rightWidth="20.0" bottom="40.0"
+			top="60.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55673" longitude="-123.38385" />
+			<safcs:end latitude="48.55746" longitude="-123.38322" />
+			<safcs:costInterval id="airspace13" cost="3.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:cylinder radius="50.0" bottom="0.0" top="60.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555853345560415"
+				longitude="-123.38718661401715" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:10:00.000Z"
+				end="2021-12-01T18:10:00.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="87.5" bottom="0.0" top="75.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55582669358579"
+				longitude="-123.37881330962661" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:02:30.000Z"
+				end="2021-12-01T18:03:07.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:box leftWidth="200.0" rightWidth="200.0" bottom="0.0"
+			top="3.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace1" cost="100.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:cylinder radius="93.75" bottom="0.0" top="77.5"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555822192562786"
+				longitude="-123.37741775975691" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:01:15.000Z"
+				end="2021-12-01T18:01:52.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="81.25" bottom="0.0" top="72.5"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55583117774388"
+				longitude="-123.38020885974414" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:03:45.000Z"
+				end="2021-12-01T18:04:22.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="56.25" bottom="0.0" top="62.5"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555848945726986"
+				longitude="-123.38579106267429" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:08:45.000Z"
+				end="2021-12-01T18:09:22.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="68.75" bottom="0.0" top="67.5"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.5558400954653"
+				longitude="-123.38299996071909" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:06:15.000Z"
+				end="2021-12-01T18:06:52.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:box leftWidth="200.0" rightWidth="200.0"
+			bottom="100.0" top="140.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55615"
+				longitude="-123.38642665730919" />
+			<safcs:end latitude="48.55615"
+				longitude="-123.37631556429177" />
+			<safcs:costInterval id="airspace10" cost="100.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:box leftWidth="20.0" rightWidth="20.0" bottom="40.0"
+			top="60.0" bottomDatum="AGL" topDatum="AGL">
+			<safcs:begin latitude="48.55705" longitude="-123.37975" />
+			<safcs:end latitude="48.55669" longitude="-123.37975" />
+			<safcs:costInterval id="airspace14" cost="7.0"
+				enabled="true" start="2021-11-01T18:00:00.000Z"
+				end="2022-11-01T18:00:00.000Z" />
+		</safcs:box>
+		<safcs:cylinder radius="90.625" bottom="0.0"
+			top="76.25" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55582444518241"
+				longitude="-123.37811553466072" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:01:52.500Z"
+				end="2021-12-01T18:02:30.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="78.125" bottom="0.0"
+			top="71.25" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555833413498576"
+				longitude="-123.38090663489558" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:04:22.500Z"
+				end="2021-12-01T18:05:00.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="62.5" bottom="0.0" top="65.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55584452902861"
+				longitude="-123.38439551157462" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:07:30.000Z"
+				end="2021-12-01T18:08:07.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="75.0" bottom="0.0" top="70.0"
+			bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.55583564503706"
+				longitude="-123.38160441010862" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:05:00.000Z"
+				end="2021-12-01T18:05:37.500Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+		<safcs:cylinder radius="53.125" bottom="0.0"
+			top="61.25" bottomDatum="ASL" topDatum="ASL">
+			<safcs:location latitude="48.555851147751824"
+				longitude="-123.38648883831537" />
+			<safcs:costInterval id="sigmet1" cost="60.0"
+				enabled="true" start="2021-12-01T18:09:22.500Z"
+				end="2021-12-01T18:10:00.000Z" />
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="WAS-WSTSS-P----" text="sigmet1" />
+		</safcs:cylinder>
+	</safcs:obstacles>
+	<safcs:aircraft type="IRIS" cid="FRIEND" radius="10.0"
+		centerDatum="ASL">
+		<safcs:center altitude="60.0"
+			latitude="48.55566958975513" longitude="-123.38474505020461" />
+		<safcs:costInterval id="IRIS" cost="100.0"
+			enabled="true" start="2011-12-05T01:30:47.203Z"
+			end="2031-12-05T01:30:47.203Z" />
+		<safcs:depiction symbology="TacticalSymbol"
+			sidc="SFGPUCVUR------" />
+		<safcs:capabilities approachRateOfDescent="1.0"
+			approachSpeed="1.0" cruiseClimbSpeed="1.0" cruiseDescentSpeed="1.0"
+			cruiseRateOfClimb="1.0" cruiseRateOfDescent="1.0" cruiseSpeed="1.0"
+			maximumAngleOfClimb="90.0" maximumAngleOfClimbSpeed="1.0"
+			maximumGlideSpeed="1.0" maximumRateOfClimb="1.0"
+			maximumRateOfClimbSpeed="1.0" maximumRateOfDescent="1.0"
+			maximumRateOfDescentSpeed="1.0" maximumSpeed="1.0" />
+	</safcs:aircraft>
+	<safcs:waypoints>
+		<safcs:waypoint designator="0" cost="INF" dtg="INF"
+			altitude="60.0" latitude="48.55566958975513"
+			longitude="-123.38474505020461">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="0" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+		<safcs:waypoint designator="1" cost="INF" dtg="INF"
+			altitude="40.0" latitude="48.555851331633335"
+			longitude="-123.37804048580153">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="1" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+		<safcs:waypoint designator="2" cost="INF" dtg="INF"
+			altitude="50.0" latitude="48.557148028545384"
+			longitude="-123.38385885888678">
+			<safcs:depiction symbology="TacticalPoint"
+				sidc="GFGPGPRI------X" text="2" image="symbols/waypoint-64x64.png" />
+		</safcs:waypoint>
+	</safcs:waypoints>
+	<safcs:planner riskPolicy="SAFETY" costPolicy="AVERAGE">
+		<safcs:astar />
+	</safcs:planner>
+	<safcs:datalink downlinkPeriod="PT1S">
+		<safcs:simulated uplinkDelay="PT0.5S"
+			errorProbability="0.0">
+			<safcs:errors>
+				<safcs:maxTrackError crossTrackError="0.0"
+					altitudeError="0.0" openingBearingError="0.0"
+					closingBearingError="0.0" timingError="PT0S" />
+				<safcs:maxTakeOffError horizontalError="0.0"
+					verticalError="0.0" timingError="PT0S" />
+				<safcs:maxLandingError horizontalError="0.0"
+					verticalError="0.0" timingError="PT0S" />
+			</safcs:errors>
+		</safcs:simulated>
+	</safcs:datalink>
+	<safcs:swim>
+		<safcs:simulated updatePeriod="PT5S"
+			updateProbability="0.5" updateQuantity="1"
+			resourceDirectory="swim/xml" />
+	</safcs:swim>
+</safcs:scenario>

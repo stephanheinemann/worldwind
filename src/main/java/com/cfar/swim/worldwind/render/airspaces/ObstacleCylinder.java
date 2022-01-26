@@ -46,8 +46,8 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Cylinder;
-import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -337,17 +337,17 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 *         the other obstacle cylinder
 	 */
 	public ObstacleCylinder interpolate(ObstacleCylinder other) {
-		Position center = Position.interpolateGreatCircle(0.5d, this.getReferencePosition(), other.getReferencePosition());
+		Position center = Position.interpolateGreatCircle(0.5d, this.getCenter(), other.getCenter());
 		LatLon location = new LatLon(center.getLatitude(), center.getLongitude());
 		
-		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5;
-		double top = (this.getAltitudes()[1] + other.getAltitudes()[1]) * 0.5;
-		double radius = (this.getRadii()[1] + other.getRadii()[1]) * 0.5;
+		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5d;
+		double top = (this.getAltitudes()[1] + other.getAltitudes()[1]) * 0.5d;
+		double radius = (this.getRadii()[1] + other.getRadii()[1]) * 0.5d;
 		
 		ObstacleCylinder interpolant = new ObstacleCylinder(location, bottom, top, radius);
 		
 		Duration startDuration = Duration.between(this.costInterval.getLower(), other.costInterval.getLower());
-		startDuration = startDuration.dividedBy(2);
+		startDuration = startDuration.dividedBy(2l);
 		ZonedDateTime start = this.costInterval.getLower().plus(startDuration);
 		
 		// ZonedDateTime end = this.costInterval.getUpper();
@@ -356,7 +356,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		
 		/*
 		Duration endDuration = Duration.between(this.costInterval.getUpper(), other.costInterval.getUpper());
-		endDuration = endDuration.dividedBy(2);
+		endDuration = endDuration.dividedBy(2l);
 		ZonedDateTime end = this.costInterval.getUpper().plus(endDuration);
 		*/
 		
@@ -396,6 +396,20 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	}
 	
 	/**
+	 * Gets the center of this obstacle cylinder.
+	 * 
+	 * @return the center of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		LatLon centerLocation = super.getCenter();
+		double centerAltitude = this.getAltitudes()[0]
+				+ ((this.getAltitudes()[1] - this.getAltitudes()[0]) * 0.5d);
+		return new Position(centerLocation, centerAltitude);
+	}
+	
+	/**
 	 * Gets the geometric extent of this obstacle cylinder for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
@@ -405,15 +419,26 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 * @see AbstractAirspace#getExtent(Globe, double)
 	 */
 	@Override
-	public Extent getExtent(Globe globe) {
+	public Cylinder getExtent(Globe globe) {
 		Position bcp = new Position(this.getCenter(), this.getAltitudes()[0]);
 		Position tcp = new Position(this.getCenter(), this.getAltitudes()[1]);
+		
+		double bce = globe.getElevation(bcp.getLatitude(), bcp.getLongitude());
+		double tce = globe.getElevation(tcp.getLatitude(), tcp.getLongitude());
+		
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[0])) {
+			bcp = new Position(bcp, bcp.getAltitude() + bce);
+		}
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[1])) {
+			tcp = new Position(tcp, tcp.getAltitude() + tce);
+		}
+		
 		Vec4 bottomCenter = globe.computePointFromPosition(bcp);
 		Vec4 topCenter = globe.computePointFromPosition(tcp);
-		double radius = this.getRadii()[1];
+		double radius = Math.max(this.getRadii()[0], this.getRadii()[1]);
 		
 		return new Cylinder(bottomCenter, topCenter, radius);
-		// TODO: return super.computeExtent(globe, 1d);
+		// TODO: return super.getExtent(globe, 1d);
 	}
 	
 	/**

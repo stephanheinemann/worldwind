@@ -46,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.cfar.swim.worldwind.flight.FlightPhases;
+import com.cfar.swim.worldwind.flight.FlightPhase;
 import com.cfar.swim.worldwind.managers.AbstractAutonomicManager;
 import com.cfar.swim.worldwind.managers.AutonomicManager;
 import com.cfar.swim.worldwind.managers.heuristic.HeuristicPlannerTuning;
@@ -235,16 +235,25 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 	public PlannerTuning createPlannerTuning(
 			Specification<Planner> specification, Features features) {
 		Set<FeatureCategory> categories = new HashSet<>();
-		categories.add(FlightPhases.createHazardPhase(features));
-		categories.add(FlightPhases.createAerodromePhase(features));
-		categories.add(FlightPhases.createTerminalPhase(features));
-		categories.add(FlightPhases.createEnroutePhase(features));
+		categories.add(FlightPhase.createCruise(features));
+		categories.add(FlightPhase.createTransition(features));
+		categories.add(FlightPhase.createTerminal(features));
+		categories.add(FlightPhase.createUrgency(features));
+		categories.add(FlightPhase.createEmergency(features));
 		/*
-		categories.add(Criticality.createLow(features));
-		categories.add(Criticality.createModerate(features));
-		categories.add(Criticality.createSubstantial(features));
-		categories.add(Criticality.createSevere(features));
-		categories.add(Criticality.createCritical(features));
+		categories.add(Severity.createLow(features));
+		categories.add(Severity.createModerate(features));
+		categories.add(Severity.createSubstantial(features));
+		categories.add(Severity.createSevere(features));
+		categories.add(Severity.createCritical(features));
+		categories.add(Severity.createFatal(features));
+		*/
+		/*
+		categories.add(Difficulty.createLow(features));
+		categories.add(Difficulty.createModerate(features));
+		categories.add(Difficulty.createSubstantial(features));
+		categories.add(Difficulty.createSevere(features));
+		categories.add(Difficulty.createCritical(features));
 		*/
 		return new SmacPlannerTuning(specification, features,
 				this.getKnowledgeBase(), categories);
@@ -400,6 +409,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		HeuristicPlannerTuning mgpTuning = new HeuristicPlannerTuning(mgpSpec, defaultFeatures);
 		OADStarProperties mgpProperties = (OADStarProperties) mgpTuning.tune().get(0);
 		mgpOptions.initialIncumbent = "-minimumQuality '" + Double.toString(mgpProperties.getMinimumQuality()) + "' "
+				+ "-maximumQuality '" + Double.toString(mgpProperties.getMaximumQuality()) + "' "
 				+ "-qualityImprovement '" + Double.toString(mgpProperties.getQualityImprovement()) + "'";
 		
 		// create MGP AEC
@@ -447,13 +457,14 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 		OADRRTreeProperties mtpProperties = (OADRRTreeProperties) mtpTuning.tune().get(0);
 		mtpOptions.initialIncumbent = "-sampling '" + mtpProperties.getSampling().name() + "' "
 				+ "-strategy '" + mtpProperties.getStrategy().name() + "' "
-				+ "-extension '" + mtpProperties.getExtension().name() + "' "
+				//+ "-extension '" + mtpProperties.getExtension().name() + "' "
 				+ "-maxIterations '" + Integer.toString(mtpProperties.getMaxIterations()) + "' "
 				+ "-epsilon '" + Double.toString(mtpProperties.getEpsilon()) + "' "
 				+ "-bias '" + Double.toString(mtpProperties.getBias()) + "' "
 				//+ "-goalThreshold '" + Double.toString(mtpProperties.getGoalThreshold()) + "' "
 				+ "-neighborLimit '" + Double.toString(mtpProperties.getNeighborLimit()) + "' "
 				+ "-initialCostBias '" + Double.toString(mtpProperties.getMinimumQuality()) + "' "
+				+ "-finalCostBias '" + Double.toString(mtpProperties.getMaximumQuality()) + "' "
 				+ "-improvementFactor '" + Double.toString(mtpProperties.getQualityImprovement()) + "'";
 		
 		// create MTP AEC
@@ -492,6 +503,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 					.collect(Collectors.toList());
 			
 			if ((null != managedPlanner)
+					&& !scenario.getId().equals(Scenario.DEFAULT_SCENARIO_ID)
 					&& managedPlanner.supports(scenario.getAircraft())
 					&& managedPlanner.supports(scenario.getEnvironment())
 					&& managedPlanner.supports(pois)
@@ -600,6 +612,7 @@ public class SmacAutonomicManager extends AbstractAutonomicManager implements Au
 				SequentialModelBasedAlgorithmConfiguration smac = this.smacs.get(plannerId);
 				// run SMAC
 				smac.run();
+				this.plannerEvaluator.recycle();
 				ParameterConfiguration incumbent = smac.getIncumbent();
 				Logging.logger().info("incumbent: " + incumbent.getFormattedParameterString(ParameterStringFormat.STATEFILE_SYNTAX));
 				Logging.logger().info("incumbent performance: " + smac.getEmpericalPerformance(incumbent));

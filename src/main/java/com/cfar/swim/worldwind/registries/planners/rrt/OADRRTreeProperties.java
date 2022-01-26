@@ -383,4 +383,24 @@ public class OADRRTreeProperties extends ADRRTreeProperties implements OnlinePla
 				this.maxLandingTimingError);
 	}
 	
+	/**
+	 * Gets the string representation of this OADRRT planner properties bean.
+	 * 
+	 * @return the string representation of this OADRRT planner properties bean
+	 * 
+	 * @see ADRRTreeProperties#toString()
+	 */
+	@Override
+	public String toString() {
+		return super.toString() + ", "
+				+ "minDeliberation=" + this.getMinDeliberation() + ", "
+				+ "maxDeliberation=" + this.getMaxDeliberation() + ", "
+				+ "maxCrossTrackError=" + this.getMaxCrossTrackError() + ", "
+				+ "maxTimingError=" + this.getMaxTimingError() + ", "
+				+ "maxTakeOffHorizontalError=" + this.getMaxTakeOffHorizontalError() + ", "
+				+ "maxTakeOffTimingError=" + this.getMaxTimingError() + ", "
+				+ "maxLandingHorizontalError=" + this.getMaxLandingHorizontalError() + ", "
+				+ "maxLandingTimingError" + this.getMaxLandingTimingError();
+	}
+	
 }

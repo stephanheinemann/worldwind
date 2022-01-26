@@ -43,7 +43,9 @@ import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Box;
 import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.DrawContext;
@@ -314,6 +316,27 @@ public class ObstaclePath extends Path implements Obstacle {
 		if (null != this.depiction) {
 			this.depiction.render(dc);
 		}
+	}
+	
+	/**
+	 * Gets the center of this obstacle path.
+	 * 
+	 * @return the center of this obstacle path
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		LatLon centerLocation = Sector.boundingSector(this.getPositions()).getCentroid();
+		double centerAltitude = 0d;
+		int positions = 0;
+		for (Position position : this.getPositions()) {
+			centerAltitude += position.getAltitude();
+			positions++;
+		}
+		if (0 < positions) {
+			centerAltitude = centerAltitude / positions;
+		}
+		return new Position(centerLocation, centerAltitude);
 	}
 	
 	/**

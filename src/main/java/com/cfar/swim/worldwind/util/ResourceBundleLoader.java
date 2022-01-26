@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.util;
 
 import java.util.Locale;
+import java.util.Optional;
 import java.util.ResourceBundle;
 
 import gov.nasa.worldwind.Configuration;
@@ -48,14 +49,40 @@ public final class ResourceBundleLoader {
 	/** the dictionary bundle */
 	public static final String DICTIONARY_BUNDLE = "com.cfar.swim.worldwind.dictionaries.Dictionary";
 	
+	/** the cached bundle of this resource bundle loader */
+	private static Optional<ResourceBundle> cachedBundle = Optional.empty();
+	
 	/**
 	 * Gets the dictionary bundle for the configured locale.
 	 * 
 	 * @return the dictionary bundle for the configured locale
 	 */
 	public static ResourceBundle getDictionaryBundle() {
-		Locale locale = new Locale(Configuration.getStringValue(ResourceBundleLoader.LOCALE_KEY));
-		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
+		return ResourceBundleLoader.getDictionaryBundle(ResourceBundleLoader.DICTIONARY_BUNDLE);
+	}
+	
+	/**
+	 * Gets a dictionary bundle for the configured locale.
+	 * 
+	 * @param bundle the dictionary bundle
+	 * 
+	 * @return the dictionary bundle for the configured locale
+	 */
+	public static ResourceBundle getDictionaryBundle(String bundle) {
+		ResourceBundle dictionary = null;
+		
+		if (cachedBundle.isPresent()
+				&& cachedBundle.get().getBaseBundleName().equals(bundle)
+				&& cachedBundle.get().getLocale().getLanguage()
+				.equals(Configuration.getStringValue(ResourceBundleLoader.LOCALE_KEY))) {
+			dictionary = cachedBundle.get();
+		} else {
+			Locale locale = new Locale(Configuration.getStringValue(ResourceBundleLoader.LOCALE_KEY));
+			dictionary = ResourceBundle.getBundle(bundle, locale);
+			cachedBundle = Optional.of(dictionary);
+		}
+		
+		return dictionary;
 	}
 	
 	/**
@@ -66,7 +93,30 @@ public final class ResourceBundleLoader {
 	 * @return the dictionary bundle for the specified locale
 	 */
 	public static ResourceBundle getDictionaryBundle(Locale locale) {
-		return ResourceBundle.getBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
+		return ResourceBundleLoader.getDictionaryBundle(ResourceBundleLoader.DICTIONARY_BUNDLE, locale);
+	}
+	
+	/**
+	 * Gets a dictionary bundle for a specified locale.
+	 * 
+	 * @param bundle the dictionary bundle
+	 * @param locale the dictionary locale
+	 * 
+	 * @return the dictionary bundle for the specified locale
+	 */
+	public static ResourceBundle getDictionaryBundle(String bundle, Locale locale) {
+		ResourceBundle dictionary = null;
+		
+		if (cachedBundle.isPresent()
+				&& cachedBundle.get().getBaseBundleName().equals(bundle)
+				&& cachedBundle.get().getLocale().equals(locale)) {
+			dictionary = cachedBundle.get();
+		} else {
+			dictionary = ResourceBundle.getBundle(bundle, locale);
+			cachedBundle = Optional.of(dictionary);
+		}
+		
+		return dictionary;
 	}
 	
 }

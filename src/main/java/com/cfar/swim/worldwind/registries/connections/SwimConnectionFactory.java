@@ -29,10 +29,12 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
+import java.time.Duration;
+
 import com.cfar.swim.worldwind.connections.LiveSwimConnection;
 import com.cfar.swim.worldwind.connections.SimulatedSwimConnection;
 import com.cfar.swim.worldwind.connections.SwimConnection;
-import com.cfar.swim.worldwind.data.SwimData;
+import com.cfar.swim.worldwind.data.SwimProtocol;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
 
@@ -87,33 +89,33 @@ public class SwimConnectionFactory extends AbstractFactory<SwimConnection> {
 				SimulatedSwimConnectionProperties properties = (SimulatedSwimConnectionProperties) this.getSpecification().getProperties();
 				connection = new SimulatedSwimConnection(
 						properties.getResourceDirectory(),
-						properties.getUpdatePeriod(),
+						Duration.ofMillis(properties.getUpdatePeriod()),
 						properties.getUpdateProbability(),
 						properties.getUpdateQuantity());
 				if (properties.getSubscribesAIXM())
-					connection.subscribe(SwimData.AIXM);
+					connection.subscribe(SwimProtocol.AIXM);
 				if (properties.getSubscribesFIXM())
-					connection.subscribe(SwimData.FIXM);
+					connection.subscribe(SwimProtocol.FIXM);
 				if (properties.getSubscribesWXXM())
-					connection.subscribe(SwimData.WXXM);
+					connection.subscribe(SwimProtocol.WXXM);
 				if (properties.getSubscribesIWXXM())
-					connection.subscribe(SwimData.IWXXM);
+					connection.subscribe(SwimProtocol.IWXXM);
 				if (properties.getSubscribesAMXM())
-					connection.subscribe(SwimData.AMXM);
+					connection.subscribe(SwimProtocol.AMXM);
 			} else if (this.getSpecification().getId().equals(Specification.CONNECTION_SWIM_LIVE_ID)) {
 				LiveSwimConnectionProperties properties = (LiveSwimConnectionProperties) this.getSpecification().getProperties();
 				connection = new LiveSwimConnection();
 				// TODO: set properties for live SWIM connection
 				if (properties.getSubscribesAIXM())
-					connection.subscribe(SwimData.AIXM);
+					connection.subscribe(SwimProtocol.AIXM);
 				if (properties.getSubscribesFIXM())
-					connection.subscribe(SwimData.FIXM);
+					connection.subscribe(SwimProtocol.FIXM);
 				if (properties.getSubscribesWXXM())
-					connection.subscribe(SwimData.WXXM);
+					connection.subscribe(SwimProtocol.WXXM);
 				if (properties.getSubscribesIWXXM())
-					connection.subscribe(SwimData.IWXXM);
+					connection.subscribe(SwimProtocol.IWXXM);
 				if (properties.getSubscribesAMXM())
-					connection.subscribe(SwimData.AMXM);
+					connection.subscribe(SwimProtocol.AMXM);
 			}
 		}
 		

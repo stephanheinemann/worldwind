@@ -41,7 +41,7 @@ public class TropicalCyclone extends ObstacleCylinder {
 	
 	public TropicalCyclone(LatLon location, double bottom, double top, double radius) {
 		super(location, bottom, top, radius);
-		this.depiction = new Depiction(new MilStd2525TacticalSymbol(TropicalCyclone.SIDC_WX_TC, this.getReferencePosition()));
+		this.depiction = new Depiction(new MilStd2525TacticalSymbol(TropicalCyclone.SIDC_WX_TC, this.getCenter()));
 	}
 	
 	public TropicalCyclone(ObstacleCylinder obstacleCylinder) {
@@ -50,7 +50,7 @@ public class TropicalCyclone extends ObstacleCylinder {
 			obstacleCylinder.getAltitudes()[0],
 			obstacleCylinder.getAltitudes()[1],
 			obstacleCylinder.getRadii()[1]);
-		this.depiction = new Depiction(new MilStd2525TacticalSymbol(TropicalCyclone.SIDC_WX_TC, this.getReferencePosition()));
+		this.depiction = new Depiction(new MilStd2525TacticalSymbol(TropicalCyclone.SIDC_WX_TC, this.getCenter()));
 	}
 
 }

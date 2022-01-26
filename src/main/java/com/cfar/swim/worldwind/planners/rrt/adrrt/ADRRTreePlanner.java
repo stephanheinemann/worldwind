@@ -326,19 +326,19 @@ implements DynamicPlanner, LifelongPlanner {
 				this.getGoal().setInfiniteCost();
 				repaired = false;
 			} else if (this.getStart().getEto().equals(partStart.getEto())) {
-				// connect current to previous part
 				// TODO: consider departure slots to avoid planning from scratch
 				// TODO: consider early arrivals with holding / loitering
 				
 				// propagate potential cost change
 				double deltaCost = partStart.getCost() - this.getStart().getCost();
-				if (0 != deltaCost) {
+				if (0d != deltaCost) {
 					for (Position vertex : this.getPlanningContinuum().getVertices()) {
 						ADRRTreeWaypoint waypoint = (ADRRTreeWaypoint) vertex;
 						waypoint.setCost(waypoint.getCost() + deltaCost);
 					}
 				}
 				
+				// connect current to previous part
 				if (partStart.hasParent()) {
 					this.getStart().setParent(partStart.getParent());
 				}
@@ -411,13 +411,13 @@ implements DynamicPlanner, LifelongPlanner {
 	 */ 
 	@Override
 	protected Trajectory planPart(int partIndex) {
-		Trajectory trajectory = null;
+		Trajectory trajectory = new Trajectory();
 		
 		if (this.hasBackup(partIndex)) {
 			// repair an existing plan after dynamic changes
 			this.elaborate(partIndex);
 			trajectory = this.createTrajectory();
-		} else {
+		} else if (!this.hasTerminated()) {
 			// plan from scratch
 			trajectory = super.planPart(partIndex);
 		}
@@ -501,6 +501,7 @@ implements DynamicPlanner, LifelongPlanner {
 	protected synchronized void suspend() {
 		try {
 			this.wait();
+			this.updateDynamicObstacles();
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

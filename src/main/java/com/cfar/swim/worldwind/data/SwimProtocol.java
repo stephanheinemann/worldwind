@@ -27,4 +27,18 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.iwxxm;
+package com.cfar.swim.worldwind.data;
+
+/**
+ * Enumerates available SWIM data protocols.
+ * 
+ * @author Stephan Heinemann
+ * 
+ */
+public enum SwimProtocol {
+	AIXM,
+	FIXM,
+	WXXM,
+	IWXXM,
+	AMXM
+}

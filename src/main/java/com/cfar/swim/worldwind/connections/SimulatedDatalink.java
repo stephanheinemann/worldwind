@@ -261,7 +261,7 @@ public class SimulatedDatalink extends Datalink {
 	 */
 	@Override
 	public synchronized Angle getAircraftHeading() {
-		return Position.linearAzimuth(this.iris.getReferencePosition(), this.nextPosition);
+		return Position.linearAzimuth(this.iris.getCenter(), this.nextPosition);
 	}
 	
 	/**
@@ -309,7 +309,7 @@ public class SimulatedDatalink extends Datalink {
 	 */
 	@Override
 	public synchronized Position getAircraftPosition() {
-		Position currentPosition = this.iris.getReferencePosition();
+		Position currentPosition = this.iris.getCenter();
 		this.reportingTime = ZonedDateTime.now(ZoneId.of("UTC"));
 		
 		if ((null != this.flightPath) && this.isAirborne) {
@@ -566,7 +566,7 @@ public class SimulatedDatalink extends Datalink {
 	public synchronized void land() {
 		if (this.isAirborne) {
 			this.setAircraftMode(SimulatedDatalink.MODE_LAND);
-			this.nextPosition = this.iris.getReferencePosition();
+			this.nextPosition = this.iris.getCenter();
 			try {
 				Thread.sleep(this.getUplinkDelay().toMillis());
 			} catch (InterruptedException e) {

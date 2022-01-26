@@ -36,7 +36,7 @@ import java.util.List;
 import javax.xml.bind.JAXBException;
 
 import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
-import com.cfar.swim.worldwind.iwxxm.IwxxmSigmetReference;
+import com.cfar.swim.worldwind.data.iwxxm.IwxxmSigmetReference;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 
 import aero.aixm.AirspaceTimeSlicePropertyType;

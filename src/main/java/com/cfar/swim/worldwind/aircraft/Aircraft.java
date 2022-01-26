@@ -70,12 +70,30 @@ public abstract class Aircraft extends ObstacleSphere implements FactoryProduct 
 	}
 	
 	/**
+	 * Gets the combat identification of this aircraft.
+	 * 
+	 * @return the combat identification of this aircraft
+	 */
+	public CombatIdentification getCombatIdentification() {
+		return this.cid;
+	}
+	
+	/**
 	 * Gets the capabilities of this aircraft.
 	 * 
 	 * @return the capabilities of this aircraft
 	 */
 	public Capabilities getCapabilities() {
 		return this.capabilities;
+	}
+	
+	/**
+	 * Sets the capabilities of this aircraft.
+	 * 
+	 * @param capabilities the capabilities to be set
+	 */
+	public void setCapabililities(Capabilities capabilities) {
+		this.capabilities = capabilities;
 	}
 	
 	/**
@@ -131,7 +149,7 @@ public abstract class Aircraft extends ObstacleSphere implements FactoryProduct 
 			
 			AircraftProperties properties = (AircraftProperties) specification.getProperties();
 			if (this.getRadius() == properties.getSeparationRadius()
-					&& (this.cid.equals(properties.getCombatIdentification()))) {
+					&& (this.getCombatIdentification() == properties.getCombatIdentification())) {
 				Capabilities capabilities = new Capabilities();
 				capabilities.setApproachRateOfDescent(properties.getApproachRateOfDescent());
 				capabilities.setApproachSpeed(properties.getApproachSpeed());

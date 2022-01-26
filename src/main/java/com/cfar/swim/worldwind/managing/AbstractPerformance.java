@@ -47,9 +47,6 @@ public abstract class AbstractPerformance implements Performance {
 	/** the default serial identification of this abstract performance */
 	private static final long serialVersionUID = 1L;
 	
-	/** the maximum performance (cap) value of this abstract performance */
-	public static final double MAX_VALUE = 1000d;
-	
 	/** the quality of this abstract performance */
 	private final Quality quality;
 	
@@ -99,8 +96,20 @@ public abstract class AbstractPerformance implements Performance {
 	 */
 	@Override
 	public double get() {
-		return Math.min(this.quality.get() / this.quantity.get(),
-				AbstractPerformance.MAX_VALUE);
+		return this.quality.get() / this.quantity.get();
+	}
+	
+	/**
+	 * Gets the normalized abstract performance measure dividing normalized
+	 * quality by normalized quantity.
+	 * 
+	 * @return the normalized abstract performance measure
+	 * 
+	 * @see Performance#getNormalized()
+	 */
+	@Override
+	public double getNormalized() {
+		return this.quality.getNormalized() / this.quantity.getNormalized();
 	}
 	
 	/**
@@ -157,14 +166,15 @@ public abstract class AbstractPerformance implements Performance {
 	 * @param performance the other performance
 	 * 
 	 * @return a negative integer, zero, or a positive integer as this
-	 *         abstract performance is less than, equal to, or greater than
-	 *         the other performance, respectively
+	 *         normalized abstract performance is less than, equal to, or
+	 *         greater than the other normalized performance, respectively
 	 * 
 	 * @see Comparator#compare(Object, Object)
 	 */
 	@Override
 	public int compareTo(Performance performance) {
-		return Comparator.comparingDouble(Performance::get).compare(this, performance);
+		return Comparator.comparingDouble(
+				Performance::getNormalized).compare(this, performance);
 	}
 	
 	/**
@@ -173,8 +183,8 @@ public abstract class AbstractPerformance implements Performance {
 	 * 
 	 * @param o the other abstract performance
 	 * 
-	 * @return true, if this abstract performance equals the other abstract
-	 *         performance, false otherwise
+	 * @return true, if this normalized abstract performance equals the other
+	 *         normalized abstract performance, false otherwise
 	 * 
 	 * @see Object#equals(Object)
 	 */
@@ -185,7 +195,8 @@ public abstract class AbstractPerformance implements Performance {
 		if (this == o) {
 			equals = true;
 		} else if ((null != o) && (this.getClass() == o.getClass())) {
-			equals = this.get() == ((AbstractPerformance) o).get();
+			equals = (this.getNormalized()
+					== ((AbstractPerformance) o).getNormalized());
 		}
 
 		return equals;
@@ -200,7 +211,24 @@ public abstract class AbstractPerformance implements Performance {
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(this.get());
+		return Objects.hash(this.getNormalized());
+	}
+	
+	/**
+	 * Gets the string representation of this abstract performance.
+	 * 
+	 * @return the string representation of this abstract performance
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return  this.getEpoch().toString() + ": ["
+				+ String.valueOf(this.getQuality().get()) + ", "
+				+ String.valueOf(this.getQuantity().get()) + "] "
+				+ String.valueOf(this.getQuality().getNormalized()) + " / "
+				+ String.valueOf(this.getQuantity().getNormalized()) + " = "
+				+ String.valueOf(this.getNormalized());
 	}
 	
 }
