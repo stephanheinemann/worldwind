@@ -37,6 +37,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DatalinkProperties;
@@ -46,6 +47,7 @@ import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
+import gov.nasa.worldwind.util.Logging;
 
 /**
  * Abstracts a datalink connection to connect to and communicate with aircraft.
@@ -271,7 +273,10 @@ public abstract class Datalink implements Connection {
 			Iterator<? extends Position> dpi = downloaded.getPositions().iterator();
 			Iterator<? extends Position> ppi = mission.getPositions().iterator();
 			while (hasMission && dpi.hasNext() && ppi.hasNext()) {
-				if (!(new Position(dpi.next())).equals(new Position(ppi.next()))) {
+				PrecisionPosition dpp = new PrecisionPosition(dpi.next());
+				PrecisionPosition ppp = new PrecisionPosition(ppi.next());
+				Logging.logger().info("downloaded = " + dpp + ", prepared = " + ppp);
+				if (!dpp.equals(ppp)) {
 					hasMission = false;
 				}
 			}
@@ -407,15 +412,18 @@ public abstract class Datalink implements Connection {
 		@Override
 		public void run() {
 			// clean up old track points
-			if (!track.isEmpty() && track.peekFirst().isOld()) {
+			while (!track.isEmpty() && track.peekFirst().isOld()) {
 				track.removeFirst();
 			}
 			
 			// add new track point
 			AircraftTrackPoint trackPoint = getAircraftTrackPoint();
-			track.add(trackPoint);
-			pcs.firePropertyChange("track", null, track);
+			if (null != trackPoint) {
+				track.add(trackPoint);
+				pcs.firePropertyChange("track", null, track);
+			}
 			// TODO: extend monitored properties
+			// TODO: possibly emit own heartbeat
 		}
 	}
 	
