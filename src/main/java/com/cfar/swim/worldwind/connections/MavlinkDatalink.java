@@ -2,8 +2,12 @@ package com.cfar.swim.worldwind.connections;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.Socket;
 import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -25,10 +29,12 @@ import io.dronefleet.mavlink.common.Attitude;
 import io.dronefleet.mavlink.common.CommandAck;
 import io.dronefleet.mavlink.common.CommandInt;
 import io.dronefleet.mavlink.common.CommandLong;
+import io.dronefleet.mavlink.common.ExtendedSysState;
 import io.dronefleet.mavlink.common.GlobalPositionInt;
 import io.dronefleet.mavlink.common.Heartbeat;
 import io.dronefleet.mavlink.common.MavCmd;
 import io.dronefleet.mavlink.common.MavFrame;
+import io.dronefleet.mavlink.common.MavLandedState;
 import io.dronefleet.mavlink.common.MavMissionResult;
 import io.dronefleet.mavlink.common.MavMissionType;
 import io.dronefleet.mavlink.common.MavMode;
@@ -42,10 +48,9 @@ import io.dronefleet.mavlink.common.MissionItemInt;
 import io.dronefleet.mavlink.common.MissionRequest;
 import io.dronefleet.mavlink.common.MissionRequestInt;
 import io.dronefleet.mavlink.common.MissionRequestList;
+import io.dronefleet.mavlink.common.Ping;
 import io.dronefleet.mavlink.common.SetMode;
-import io.dronefleet.mavlink.common.UtmDataAvailFlags;
-import io.dronefleet.mavlink.common.UtmFlightState;
-import io.dronefleet.mavlink.common.UtmGlobalPosition;
+import io.dronefleet.mavlink.common.SystemTime;
 import io.dronefleet.mavlink.util.EnumValue;
 
 
@@ -62,10 +67,11 @@ public class MavlinkDatalink extends Datalink {
 	/** the remote port of this mavlink datalink */
 	private int port = 14550;
 	
-	// TODO: system id (254 - different from QGC), component id (1 - in general)
-	
+	/** the identifier of this mavlink datalink target */
 	private int targetId = 1;
-	private int sourceId = 255;
+	
+	/** the identifier of this mavlink datalink source */
+	private int sourceId = 254;
 	
 	private boolean isConnected = false;
 	
@@ -132,7 +138,7 @@ public class MavlinkDatalink extends Datalink {
 	}
 	
 	@Override
-	public void connect() {
+	public synchronized void connect() {
 		Logging.logger().info("connecting mavlink...");
 		try {
 			this.tcp = new Socket(this.getHost(), this.getPort());
@@ -140,6 +146,11 @@ public class MavlinkDatalink extends Datalink {
 		            this.tcp.getInputStream(), 
 		            this.tcp.getOutputStream());
 			this.isConnected = true;
+			
+			Duration delay = this.getRoundtripDelay();
+			Logging.logger().info("system delay " + delay);
+			this.setUplinkDelay(delay);
+			
 		} catch (Exception e) {
 			e.printStackTrace();
 			this.disconnect();
@@ -147,7 +158,7 @@ public class MavlinkDatalink extends Datalink {
 	}
 	
 	@Override
-	public void disconnect() {
+	public synchronized void disconnect() {
 		Logging.logger().info("disconnecting mavlink...");
 		try {
 			this.tcp.close();
@@ -159,7 +170,7 @@ public class MavlinkDatalink extends Datalink {
 	}
 	
 	@Override
-	public boolean isConnected() {
+	public synchronized boolean isConnected() {
 		return this.isConnected;
 	}
 	
@@ -299,6 +310,68 @@ public class MavlinkDatalink extends Datalink {
 		}
 		
 		return ack;
+	}
+	
+	public synchronized Duration getRoundtripDelay() {
+		Duration delay = Duration.ZERO;
+		
+		if (this.isConnected()) {
+			ZonedDateTime pingTime = ZonedDateTime.now();
+			Ping ping = Ping.builder()
+					.targetSystem(0)
+					.seq(0l)
+					.timeUsec(BigInteger.valueOf((long)
+							(pingTime.toInstant().toEpochMilli() * 1E3d)))
+					.build();
+			this.sendCommand(ping);
+			
+			Optional<?> payload = this.receiveMessage(
+					Collections.singleton(Ping.class),
+					false, false, MavlinkDatalink.MESSAGE_SCAN_LIMIT * 5);
+			ZonedDateTime pongTime = ZonedDateTime.now();
+			
+			if (payload.isPresent()) {
+				Ping pong = (Ping) payload.get();
+				
+				if ((this.getSourceId() == pong.targetSystem())
+						&& (0l == pong.seq())) {
+					/*
+					Instant instant = Instant.ofEpochMilli(Math.round(
+							pong.timeUsec().longValueExact() * 1E-3d));
+					ZonedDateTime pongTime = ZonedDateTime.ofInstant(
+							instant, ZoneOffset.UTC);
+					*/
+					delay = Duration.between(pingTime, pongTime);
+				} 
+			} else {
+				Logging.logger().warning("mavlink datalink received no pong");
+			}
+		}
+		
+		return delay;
+	}
+	
+	public synchronized ZonedDateTime getSystemTime() {
+		ZonedDateTime time = ZonedDateTime.now();
+		
+		if (this.isConnected()) {
+			Optional<?> payload = this.receiveMessage(
+					Collections.singleton(SystemTime.class),
+					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+			
+			if (payload.isPresent()) {
+				SystemTime systime = (SystemTime) payload.get();
+				Instant instant = Instant.ofEpochMilli(Math.round(
+						systime.timeUnixUsec().longValue() * 1E-3d));
+				time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
+			} else {
+				Logging.logger().warning("mavlink datalink received no system time");
+			}
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected");
+		}
+		
+		return time;
 	}
 	
 	@Override
@@ -503,6 +576,7 @@ public class MavlinkDatalink extends Datalink {
 	public synchronized AircraftTrackPoint getAircraftTrackPoint() {
 		AircraftTrackPoint trackPoint = null;
 		
+		/*
 		Position position = this.getAircraftPosition();
 		AircraftAttitude attitude = this.getAircraftAttitude();
 		
@@ -511,13 +585,14 @@ public class MavlinkDatalink extends Datalink {
 		} else if ((null != position)) {
 			trackPoint = new AircraftTrackPoint(position);
 		}
+		*/
 		
-		/*
 		ArrayList<Class<?>> payloadClasses = new ArrayList<>();
 		payloadClasses.add(CommandAck.class);
 		payloadClasses.add(CommandInt.class);
 		payloadClasses.add(CommandLong.class);
 		payloadClasses.add(SetMode.class);
+		/*
 		payloadClasses.add(MissionRequest.class);
 		payloadClasses.add(MissionRequestInt.class);
 		payloadClasses.add(MissionAck.class);
@@ -525,8 +600,8 @@ public class MavlinkDatalink extends Datalink {
 		payloadClasses.add(MissionRequestList.class);
 		payloadClasses.add(MissionItem.class);
 		payloadClasses.add(MissionItemInt.class);
-		this.sniff(255, 0, payloadClasses, 1000);
 		*/
+		this.sniff(255, 0, payloadClasses, 1000);
 		
 		//Logging.logger().info("next mission position index = " + this.getNextMissionPositionIndex());
 		//Logging.logger().info("next mission position = " + this.getNextMissionPosition());
@@ -599,40 +674,54 @@ public class MavlinkDatalink extends Datalink {
 		return !this.isAircraftSafetyEnabled();
 	}
 	
+	/**
+	 * Gets the next position of the mission flight path from the aircraft
+	 * connected via this mavlink datalink.
+	 * 
+	 * @return the next position of the mission flight path, null otherwise
+	 * 
+	 * @see Datalink#getNextMissionPosition()
+	 */
 	@Override
 	public synchronized Position getNextMissionPosition() {
 		Position next = null;
 		
-		if (this.isConnected()) {
-			// TODO: another option is to download the mission (or use the cache)
-			// in combination with the sequence number
-			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(UtmGlobalPosition.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
-			if (payload.isPresent()) {
-				UtmGlobalPosition ugp = (UtmGlobalPosition) payload.get();
-				if (ugp.flags().flagsEnabled(
-						UtmDataAvailFlags.UTM_DATA_AVAIL_FLAGS_NEXT_WAYPOINT_AVAILABLE)
-						//&& this.getAircraftMode().contains(
-						//		MavModeFlag.MAV_MODE_FLAG_GUIDED_ENABLED.name())
-						) {
-					next = Position.fromDegrees(
-							ugp.nextLat() * 1E-7d,
-							ugp.nextLon() * 1E-7d,
-							ugp.nextAlt() * 1E-3d);
-				} else {
-					Logging.logger().warning("mavlink datalink received invalid next mission position");
-				}
+		int index = this.getNextMissionPositionIndex();
+		
+		if (-1 < index) {
+			Path mission = this.downloadMission(true);
+			Iterable<? extends Position> positions = mission.getPositions();
+			
+			if ((null != positions) && (index < Iterables.size(positions))) {
+				// use cached mission
+				next = Iterables.get(mission.getPositions(), index);
 			} else {
-				Logging.logger().warning("mavlink datlink received no next mission position");
+				// use downloaded mission
+				mission = this.downloadMission(false);
+				positions = mission.getPositions();
+				
+				if ((null != positions) && (index < Iterables.size(positions))) {
+					next = Iterables.get(mission.getPositions(), index);
+				} else {
+					Logging.logger().warning("mavlink datalink received invalid mission index");
+				}
 			}
 		} else {
-			Logging.logger().warning("mavlink datalink is disconnected");
+			Logging.logger().warning("mavlink datalink received no next mission position");
 		}
 		
 		return next;
 	}
 	
+	/**
+	 * Gets the index of the next position of the mission flight path from
+	 * the aircraft connected via this mavlink datalink.
+	 * 
+	 * @return the index of the next position of the mission flight path,
+	 *         -1 otherwise
+	 * 
+	 * @see Datalink#getNextMissionPositionIndex()
+	 */
 	@Override
 	public synchronized int getNextMissionPositionIndex() {
 		int seq = -1;
@@ -645,8 +734,7 @@ public class MavlinkDatalink extends Datalink {
 			if (payload.isPresent()) {
 				seq = ((MissionCurrent) payload.get()).seq();
 			} else {
-				Logging.logger().warning(
-						"mavlink datlink received no next mission index");
+				Logging.logger().warning("mavlink datlink received no next mission index");
 			}
 		} else {
 			Logging.logger().warning("mavlink datalink is disconnected");
@@ -655,21 +743,39 @@ public class MavlinkDatalink extends Datalink {
 		return seq;
 	}
 	
+	/**
+	 * Initiates a take-off for the aircraft connected via this mavlink
+	 * datalink.
+	 * 
+	 * @see Datalink#takeOff()
+	 */
 	@Override
 	public synchronized void takeOff() {
-		/*
 		if (this.isConnected() && !this.isAirborne()) {
 			Logging.logger().info("taking off...");
 			
+			this.disableAircraftSafety();
+			this.armAircraft();
+			
+			/*
 			CommandLong takeoff = CommandLong.builder()
+					.targetSystem(this.getTargetId())
 					.command(MavCmd.MAV_CMD_NAV_TAKEOFF)
 					.build();
 			this.sendCommand(takeoff);
-			this.receiveAck(MavCmd.MAV_CMD_NAV_TAKEOFF);
+			this.receiveCommandAck(MavCmd.MAV_CMD_NAV_TAKEOFF);
+			*/
+		} else {
+			Logging.logger().warning("mavlink datalink is not connected or aircraft airborne");
 		}
-		*/
 	}
 	
+	/**
+	 * Initiates a landing for the aircraft connected via this mavlink
+	 * datalink.
+	 * 
+	 * @see Datalink#land()
+	 */
 	@Override
 	public synchronized void land() {
 		if (this.isConnected() && this.isAirborne()) {
@@ -678,31 +784,32 @@ public class MavlinkDatalink extends Datalink {
 			//SetMode{targetSystem=1, baseMode=EnumValue{value=157, entry=null}, customMode=100925440}
 			EnumValue<MavMode> baseMode = EnumValue.create(157);
 			SetMode landMode = SetMode.builder()
-				.baseMode(baseMode)
-				.customMode(100925440l)
-				.build();
+					.targetSystem(this.getTargetId())
+					.baseMode(baseMode)
+					.customMode(100925440l)
+					.build();
 			this.sendCommand(landMode);
 			this.receiveCommandAck(MavCmd.MAV_CMD_DO_SET_MODE);
 			
 			/*
-			this.setAircraftMode(MavMode.MAV_MODE_AUTO_ARMED.name());
 			CommandLong land = CommandLong.builder()
-					.command(MavCmd.MAV_CMD_NAV_LAND)
-					.param1(0f)
-					.param2(PrecisionLandMode.PRECISION_LAND_MODE_OPPORTUNISTIC.ordinal())
-					.build();
-			this.receiveAck(MavCmd.MAV_CMD_NAV_LAND);
-			*/
-			/*
-			CommandLong land = CommandLong.builder()
+					.targetSystem(this.getTargetId())
 					.command(MavCmd.MAV_CMD_DO_LAND_START)
 					.build();
 			this.sendCommand(land);
-			this.receiveAck(MavCmd.MAV_CMD_DO_LAND_START);
+			this.receiveCommandAck(MavCmd.MAV_CMD_DO_LAND_START);
 			*/
+		} else {
+			Logging.logger().warning("mavlink datalink is not connected or aircraft not airborne");
 		}
 	}
 	
+	/**
+	 * Initiates a return to and landing at the launch position for the
+	 * aircraft connected via this mavlink datalink.
+	 * 
+	 * @see Datalink#returnToLaunch()
+	 */
 	@Override
 	public synchronized void returnToLaunch() {
 		if (this.isConnected() && this.isAirborne()) {
@@ -711,50 +818,53 @@ public class MavlinkDatalink extends Datalink {
 			//SetMode{targetSystem=1, baseMode=EnumValue{value=157, entry=null}, customMode=84148224}
 			EnumValue<MavMode> baseMode = EnumValue.create(157);
 			SetMode returnMode = SetMode.builder()
-				.baseMode(baseMode)
-				.customMode(84148224l)
-				.build();
+					.targetSystem(this.getTargetId())
+					.baseMode(baseMode)
+					.customMode(84148224l)
+					.build();
 			this.sendCommand(returnMode);
 			this.receiveCommandAck(MavCmd.MAV_CMD_DO_SET_MODE);
 			
 			/*
 			CommandLong rtl = CommandLong.builder()
-					.command(MavCmd.MAV_CMD_DO_SET_MODE)
-					.param1(157f)
-					.param2(84148224f)
-					.build();
-			this.sendCommand(rtl);
-			this.receiveAck(MavCmd.MAV_CMD_DO_SET_MODE);
-			*/
-			/*
-			this.setAircraftMode(MavMode.MAV_MODE_AUTO_ARMED.name());
-			CommandLong rtl = CommandLong.builder()
+					.targetSystem(this.getTargetId())
 					.command(MavCmd.MAV_CMD_NAV_RETURN_TO_LAUNCH)
 					.build();
 			this.sendCommand(rtl);
-			this.receiveAck(MavCmd.MAV_CMD_NAV_RETURN_TO_LAUNCH);
+			this.receiveCommandAck(MavCmd.MAV_CMD_NAV_RETURN_TO_LAUNCH);
 			*/
+		} else {
+			Logging.logger().warning("mavlink datalink is not connected or aircraft not airborne");
 		}
 	}
 	
+	/**
+	 * Determines whether or not the aircraft connected via this mavlink
+	 * datalink is airborne.
+	 * 
+	 * @return true if the aircraft is airborne, false otherwise
+	 * 
+	 * @see Datalink#isAirborne()
+	 */
 	@Override
 	public synchronized boolean isAirborne() {
 		boolean airborne = false;
 		
-		//ExtendedSysState.class
-		//MavLandedState.MAV_LANDED_STATE_IN_AIR
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(UtmGlobalPosition.class),
+					Collections.singleton(ExtendedSysState.class),
 					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+			
 			if (payload.isPresent()) {
-				UtmGlobalPosition ugp = (UtmGlobalPosition) payload.get();
-				if (UtmFlightState.UTM_FLIGHT_STATE_AIRBORNE == ugp.flightState().entry()) {
-					airborne = true;
-				}
+				ExtendedSysState ess = (ExtendedSysState) payload.get();
+				airborne = ess.landedState().flagsEnabled(
+						MavLandedState.MAV_LANDED_STATE_IN_AIR)
+						|| ess.landedState().flagsEnabled(
+								MavLandedState.MAV_LANDED_STATE_TAKEOFF)
+						|| ess.landedState().flagsEnabled(
+								MavLandedState.MAV_LANDED_STATE_LANDING);
 			} else {
-				Logging.logger().warning(
-						"mavlink datlink received no flight state");
+				Logging.logger().warning("mavlink datalink received no extended system state");
 			}
 		} else {
 			Logging.logger().warning("mavlink datalink is disconnected");
@@ -764,8 +874,8 @@ public class MavlinkDatalink extends Datalink {
 	}
 	
 	/**
-	 * Uploads a mission flight path to the aircraft connected via this
-	 * mavlink datalink.
+	 * Uploads a mission flight path to the aircraft connected via this mavlink
+	 * datalink.
 	 * 
 	 * @param mission the mission flight path to be uploaded
 	 *
@@ -773,110 +883,116 @@ public class MavlinkDatalink extends Datalink {
 	 */
 	@Override
 	public synchronized void uploadMission(Path mission) {
-		ArrayList<Position> positions = new ArrayList<>();
-		Iterables.addAll(positions, mission.getPositions());
-		int size = positions.size();
-		
-		// send mission count
-		MissionCount count = MissionCount.builder()
-				.targetSystem(this.getTargetId())
-				.count(size)
-				.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-				.build();
-		this.sendCommand(count);
-		
-		// uploading mission
-		HashSet<Class<?>> payloads = new HashSet<>();
-		payloads.add(MissionAck.class);
-		payloads.add(MissionRequest.class);
-		payloads.add(MissionRequestInt.class);
-		
-		boolean uploading = true;
-		while (uploading) {	
-			Optional<?> payload = this.receiveMessage(payloads, true, false,
-					MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+		if (this.isConnected()) {
+			Logging.logger().info("uploading mission...");
 			
-			if (payload.isPresent()) {
-				if (payload.get() instanceof MissionAck) {
-					MissionAck ack = (MissionAck) payload.get();
-					
-					if ((this.getSourceId() == ack.targetSystem())
-							&& (MavMissionResult.MAV_MISSION_ACCEPTED
-									== ack.type().entry())) {
-						super.uploadMission(mission);
-						uploading = false;
-						Logging.logger().info("mavlink datalink successfully uploaded mission");
-					} else if (this.getSourceId() == ack.targetSystem()) {
-						MissionAck cancel = MissionAck.builder()
-								.targetSystem(this.getTargetId())
-								.type(MavMissionResult.MAV_MISSION_OPERATION_CANCELLED)
-								.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-								.build();
-						this.sendCommand(cancel);
-						uploading = false;
-						Logging.logger().warning("mavlink datalink failed to upload mission: " + ack);
-					}
-				} else if (payload.get() instanceof MissionRequest) {
-					MissionRequest request = (MissionRequest) payload.get();
-					
-					if ((this.getSourceId() == request.targetSystem())
-							&& (MavMissionType.MAV_MISSION_TYPE_MISSION
-									== request.missionType().entry())) {
-						Position position = positions.get(request.seq());
-						int current = (0 == request.seq()) ? 1 : 0;
-						int autocontinue = ((size - 1) == request.seq()) ? 0 : 1;
+			ArrayList<Position> positions = new ArrayList<>();
+			Iterables.addAll(positions, mission.getPositions());
+			int size = positions.size();
+			
+			// send mission count
+			MissionCount count = MissionCount.builder()
+					.targetSystem(this.getTargetId())
+					.count(size)
+					.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+					.build();
+			this.sendCommand(count);
+			
+			// uploading mission
+			HashSet<Class<?>> payloads = new HashSet<>();
+			payloads.add(MissionAck.class);
+			payloads.add(MissionRequest.class);
+			payloads.add(MissionRequestInt.class);
+			
+			boolean uploading = true;
+			while (uploading) {	
+				Optional<?> payload = this.receiveMessage(payloads, true, false,
+						MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+				
+				if (payload.isPresent()) {
+					if (payload.get() instanceof MissionAck) {
+						MissionAck ack = (MissionAck) payload.get();
 						
-						MissionItemInt item = MissionItemInt.builder()
-								.targetSystem(this.getTargetId())
-								.seq(request.seq())
-								.frame(MavFrame.MAV_FRAME_GLOBAL_INT)
-								.command(MavCmd.MAV_CMD_NAV_WAYPOINT)
-								.current(current)
-								.autocontinue(autocontinue)
-								.param4(Float.NaN) // default yaw / heading angle
-								.x((int) Math.round(position.getLatitude().getDegrees() * 1E7d))
-								.y((int) Math.round(position.getLongitude().getDegrees() * 1E7d))
-								.z((float) position.getAltitude())
-								.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-								.build();
-						this.sendCommand(item);
-					}
-				} else if (payload.get() instanceof MissionRequestInt) {
-					MissionRequestInt request = (MissionRequestInt) payload.get();
-					
-					if ((this.getSourceId() == request.targetSystem())
-							&& (MavMissionType.MAV_MISSION_TYPE_MISSION
-									== request.missionType().entry())) {
-						Position position = positions.get(request.seq());
-						int current = (0 == request.seq()) ? 1 : 0;
-						int autocontinue = ((size - 1) == request.seq()) ? 0 : 1;
+						if ((this.getSourceId() == ack.targetSystem())
+								&& (MavMissionResult.MAV_MISSION_ACCEPTED
+										== ack.type().entry())) {
+							super.uploadMission(mission);
+							uploading = false;
+							Logging.logger().info("mavlink datalink successfully uploaded mission");
+						} else if (this.getSourceId() == ack.targetSystem()) {
+							MissionAck cancel = MissionAck.builder()
+									.targetSystem(this.getTargetId())
+									.type(MavMissionResult.MAV_MISSION_OPERATION_CANCELLED)
+									.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+									.build();
+							this.sendCommand(cancel);
+							uploading = false;
+							Logging.logger().warning("mavlink datalink failed to upload mission: " + ack);
+						}
+					} else if (payload.get() instanceof MissionRequest) {
+						MissionRequest request = (MissionRequest) payload.get();
 						
-						MissionItemInt item = MissionItemInt.builder()
-								.targetSystem(this.getTargetId())
-								.seq(request.seq())
-								.frame(MavFrame.MAV_FRAME_GLOBAL_INT)
-								.command(MavCmd.MAV_CMD_NAV_WAYPOINT)
-								.current(current)
-								.autocontinue(autocontinue)
-								.param4(Float.NaN) // default yaw / heading angle
-								.x((int) Math.round(position.getLatitude().getDegrees() * 1E7d))
-								.y((int) Math.round(position.getLongitude().getDegrees() * 1E7d))
-								.z((float) position.getAltitude())
-								.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-								.build();
-						this.sendCommand(item);
+						if ((this.getSourceId() == request.targetSystem())
+								&& (MavMissionType.MAV_MISSION_TYPE_MISSION
+										== request.missionType().entry())) {
+							Position position = positions.get(request.seq());
+							int current = (0 == request.seq()) ? 1 : 0;
+							int autocontinue = ((size - 1) == request.seq()) ? 0 : 1;
+							
+							MissionItemInt item = MissionItemInt.builder()
+									.targetSystem(this.getTargetId())
+									.seq(request.seq())
+									.frame(MavFrame.MAV_FRAME_GLOBAL_INT)
+									.command(MavCmd.MAV_CMD_NAV_WAYPOINT)
+									.current(current)
+									.autocontinue(autocontinue)
+									.param4(Float.NaN) // default yaw / heading angle
+									.x((int) Math.round(position.getLatitude().getDegrees() * 1E7d))
+									.y((int) Math.round(position.getLongitude().getDegrees() * 1E7d))
+									.z((float) position.getAltitude())
+									.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+									.build();
+							this.sendCommand(item);
+						}
+					} else if (payload.get() instanceof MissionRequestInt) {
+						MissionRequestInt request = (MissionRequestInt) payload.get();
+						
+						if ((this.getSourceId() == request.targetSystem())
+								&& (MavMissionType.MAV_MISSION_TYPE_MISSION
+										== request.missionType().entry())) {
+							Position position = positions.get(request.seq());
+							int current = (0 == request.seq()) ? 1 : 0;
+							int autocontinue = ((size - 1) == request.seq()) ? 0 : 1;
+							
+							MissionItemInt item = MissionItemInt.builder()
+									.targetSystem(this.getTargetId())
+									.seq(request.seq())
+									.frame(MavFrame.MAV_FRAME_GLOBAL_INT)
+									.command(MavCmd.MAV_CMD_NAV_WAYPOINT)
+									.current(current)
+									.autocontinue(autocontinue)
+									.param4(Float.NaN) // default yaw / heading angle
+									.x((int) Math.round(position.getLatitude().getDegrees() * 1E7d))
+									.y((int) Math.round(position.getLongitude().getDegrees() * 1E7d))
+									.z((float) position.getAltitude())
+									.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+									.build();
+							this.sendCommand(item);
+						}
 					}
+				} else {
+					MissionAck cancel = MissionAck.builder()
+							.targetSystem(this.getTargetId())
+							.type(MavMissionResult.MAV_MISSION_OPERATION_CANCELLED)
+							.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+							.build();
+					this.sendCommand(cancel);
+					uploading = false;
+					Logging.logger().warning("mavlink datalink received no mission PDU");
 				}
-			} else {
-				MissionAck cancel = MissionAck.builder()
-						.targetSystem(this.getTargetId())
-						.type(MavMissionResult.MAV_MISSION_OPERATION_CANCELLED)
-						.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-						.build();
-				this.sendCommand(cancel);
-				uploading = false;
-				Logging.logger().warning("mavlink datalink received no mission PDU");
 			}
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected");
 		}
 	}
 	
@@ -895,152 +1011,146 @@ public class MavlinkDatalink extends Datalink {
 		Path mission = super.downloadMission(cached);
 		
 		if (!cached) {
-			ArrayList<Position> positions = new ArrayList<>();
-			// request mission
-			MissionRequestList requestList = MissionRequestList.builder()
-				.targetSystem(this.getTargetId())
-				.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-				.build();
-			this.sendCommand(requestList);
-			
-			// downloading mission
-			HashSet<Class<?>> payloads = new HashSet<>();
-			payloads.add(MissionAck.class);
-			payloads.add(MissionCount.class);
-			payloads.add(MissionItem.class);
-			payloads.add(MissionItemInt.class);
-			
-			int seq = 0, size = 0;
-			boolean downloading = true;
-			while (downloading) {	
-				Optional<?> payload = this.receiveMessage(payloads, true, false,
-						MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+			if (this.isConnected()) {
+				Logging.logger().info("downloading mission...");
 				
-				if (payload.isPresent()) {
-					if (payload.get() instanceof MissionAck) {
-						Logging.logger().info("received mission ack");
-						MissionAck ack = (MissionAck) payload.get();
-						
-						if ((this.getSourceId() == ack.targetSystem())
-								&& (MavMissionResult.MAV_MISSION_ACCEPTED
-										!= ack.type().entry())) {
-							MissionAck cancel = MissionAck.builder()
-									.targetSystem(this.getTargetId())
-									.type(MavMissionResult.MAV_MISSION_OPERATION_CANCELLED)
-									.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-									.build();
-							this.sendCommand(cancel);
-							downloading = false;
-							Logging.logger().warning("mavlink datalink failed to download mission: " + ack);
-						}
-					} else if (payload.get() instanceof MissionCount) {
-						Logging.logger().info("received mission count");
-						MissionCount count = (MissionCount) payload.get();
-						
-						if ((this.getSourceId() == count.targetSystem())
-								&& (MavMissionType.MAV_MISSION_TYPE_MISSION
-										== count.missionType().entry())) {
-							Logging.logger().info("correct source id and mission type");
-							size = count.count();
-							positions.ensureCapacity(size);
+				ArrayList<Position> positions = new ArrayList<>();
+				// request mission
+				MissionRequestList requestList = MissionRequestList.builder()
+					.targetSystem(this.getTargetId())
+					.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+					.build();
+				this.sendCommand(requestList);
+				
+				// downloading mission
+				HashSet<Class<?>> payloads = new HashSet<>();
+				payloads.add(MissionAck.class);
+				payloads.add(MissionCount.class);
+				payloads.add(MissionItem.class);
+				payloads.add(MissionItemInt.class);
+				
+				int seq = 0, size = 0;
+				boolean downloading = true;
+				while (downloading) {	
+					Optional<?> payload = this.receiveMessage(payloads, true, false,
+							MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					
+					if (payload.isPresent()) {
+						if (payload.get() instanceof MissionAck) {
+							MissionAck ack = (MissionAck) payload.get();
 							
-							if (seq < size) {
-								Logging.logger().info("seq = " + seq + ", size = " + size);
-								MissionRequestInt request = MissionRequestInt.builder()
+							if ((this.getSourceId() == ack.targetSystem())
+									&& (MavMissionResult.MAV_MISSION_ACCEPTED
+											!= ack.type().entry())) {
+								MissionAck cancel = MissionAck.builder()
 										.targetSystem(this.getTargetId())
-										.seq(seq)
+										.type(MavMissionResult.MAV_MISSION_OPERATION_CANCELLED)
 										.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
 										.build();
-								this.sendCommand(request);
-							}
-						}
-					} else if (payload.get() instanceof MissionItem) {
-						Logging.logger().info("received mission item");
-						MissionItem item = (MissionItem) payload.get();
-						
-						if ((this.getSourceId() == item.targetSystem())
-								&& (MavFrame.MAV_FRAME_GLOBAL_INT == item.frame().entry())
-								&& (MavMissionType.MAV_MISSION_TYPE_MISSION
-										== item.missionType().entry())) {
-							Logging.logger().info("correct source id and mission type");
-							
-							// TODO: check nav waypoint
-							Position position = Position.fromDegrees(
-									item.x() * 1E-7d,
-									item.y() * 1E-7d,
-									item.z());
-							positions.add(item.seq(), position);
-							
-							seq++;
-							if (seq < size) {
-								Logging.logger().info("seq = " + seq + ", size = " + size);
-								MissionRequestInt request = MissionRequestInt.builder()
-										.targetSystem(this.getTargetId())
-										.seq(seq)
-										.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-										.build();
-								this.sendCommand(request);
-							} else {
-								MissionAck ack = MissionAck.builder()
-										.targetComponent(this.getTargetId())
-										.type(MavMissionResult.MAV_MISSION_ACCEPTED)
-										.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-										.build();
-								this.sendCommand(ack);
+								this.sendCommand(cancel);
 								downloading = false;
-								Logging.logger().info("mavlink datalink successfully downloaded mission");
+								Logging.logger().warning("mavlink datalink failed to download mission: " + ack);
+							}
+						} else if (payload.get() instanceof MissionCount) {
+							MissionCount count = (MissionCount) payload.get();
+							
+							if ((this.getSourceId() == count.targetSystem())
+									&& (MavMissionType.MAV_MISSION_TYPE_MISSION
+											== count.missionType().entry())) {
+								size = count.count();
+								positions.ensureCapacity(size);
+								
+								if (seq < size) {
+									MissionRequestInt request = MissionRequestInt.builder()
+											.targetSystem(this.getTargetId())
+											.seq(seq)
+											.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+											.build();
+									this.sendCommand(request);
+								}
+							}
+						} else if (payload.get() instanceof MissionItem) {
+							MissionItem item = (MissionItem) payload.get();
+							
+							if ((this.getSourceId() == item.targetSystem())
+									&& (MavFrame.MAV_FRAME_GLOBAL_INT == item.frame().entry())
+									&& (MavMissionType.MAV_MISSION_TYPE_MISSION
+											== item.missionType().entry())) {
+								// TODO: check waypoint type and actions
+								Position position = Position.fromDegrees(
+										item.x() * 1E-7d,
+										item.y() * 1E-7d,
+										item.z());
+								positions.add(item.seq(), position);
+								
+								seq++;
+								if (seq < size) {
+									MissionRequestInt request = MissionRequestInt.builder()
+											.targetSystem(this.getTargetId())
+											.seq(seq)
+											.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+											.build();
+									this.sendCommand(request);
+								} else {
+									MissionAck ack = MissionAck.builder()
+											.targetComponent(this.getTargetId())
+											.type(MavMissionResult.MAV_MISSION_ACCEPTED)
+											.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+											.build();
+									this.sendCommand(ack);
+									downloading = false;
+									Logging.logger().info("mavlink datalink successfully downloaded mission");
+								}
+							}
+						} else if (payload.get() instanceof MissionItemInt) {
+							MissionItemInt item = (MissionItemInt) payload.get();
+							
+							if ((this.getSourceId() == item.targetSystem())
+									&& (MavFrame.MAV_FRAME_GLOBAL_INT == item.frame().entry())
+									&& (MavMissionType.MAV_MISSION_TYPE_MISSION
+											== item.missionType().entry())) {
+								// TODO: check waypoint type and actions
+								Position position = Position.fromDegrees(
+										item.x() * 1E-7d,
+										item.y() * 1E-7d,
+										item.z());
+								positions.add(item.seq(), position);
+								
+								seq++;
+								if (seq < size) {
+									MissionRequestInt request = MissionRequestInt.builder()
+											.targetSystem(this.getTargetId())
+											.seq(seq)
+											.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+											.build();
+									this.sendCommand(request);
+								} else {
+									MissionAck ack = MissionAck.builder()
+											.targetComponent(this.getTargetId())
+											.type(MavMissionResult.MAV_MISSION_ACCEPTED)
+											.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+											.build();
+									this.sendCommand(ack);
+									downloading = false;
+									Logging.logger().info("mavlink datalink successfully downloaded mission");
+								}
 							}
 						}
-					} else if (payload.get() instanceof MissionItemInt) {
-						Logging.logger().info("received mission item int");
-						MissionItemInt item = (MissionItemInt) payload.get();
-						
-						if ((this.getSourceId() == item.targetSystem())
-								&& (MavFrame.MAV_FRAME_GLOBAL_INT == item.frame().entry())
-								&& (MavMissionType.MAV_MISSION_TYPE_MISSION
-										== item.missionType().entry())) {
-							Logging.logger().info("correct source id and mission type");
-							
-							// TODO: check nav waypoint
-							Position position = Position.fromDegrees(
-									item.x() * 1E-7d,
-									item.y() * 1E-7d,
-									item.z());
-							positions.add(item.seq(), position);
-							
-							seq++;
-							if (seq < size) {
-								Logging.logger().info("seq = " + seq + ", size = " + size);
-								MissionRequestInt request = MissionRequestInt.builder()
-										.targetSystem(this.getTargetId())
-										.seq(seq)
-										.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-										.build();
-								this.sendCommand(request);
-							} else {
-								MissionAck ack = MissionAck.builder()
-										.targetComponent(this.getTargetId())
-										.type(MavMissionResult.MAV_MISSION_ACCEPTED)
-										.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-										.build();
-								this.sendCommand(ack);
-								downloading = false;
-								Logging.logger().info("mavlink datalink successfully downloaded mission");
-							}
-						}
+					} else {
+						MissionAck cancel = MissionAck.builder()
+								.targetSystem(this.getTargetId())
+								.type(MavMissionResult.MAV_MISSION_OPERATION_CANCELLED)
+								.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
+								.build();
+						this.sendCommand(cancel);
+						downloading = false;
+						Logging.logger().warning("mavlink datalink received no mission PDU");
 					}
-				} else {
-					MissionAck cancel = MissionAck.builder()
-							.targetSystem(this.getTargetId())
-							.type(MavMissionResult.MAV_MISSION_OPERATION_CANCELLED)
-							.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
-							.build();
-					this.sendCommand(cancel);
-					downloading = false;
-					Logging.logger().warning("mavlink datalink received no mission PDU");
+				
+					mission = new Path(positions);
 				}
-			
-				mission = new Path(positions);
+			} else {
+				Logging.logger().warning("mavlink datalink is disconnected");
 			}
 		}
 		
