@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.connections;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
@@ -42,6 +43,7 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DatalinkProperties;
+import com.cfar.swim.worldwind.tracks.AircraftAttitude;
 import com.cfar.swim.worldwind.tracks.AircraftTrack;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
 import com.google.common.collect.Iterables;
@@ -86,7 +88,7 @@ public abstract class Datalink implements Connection {
 	/**
 	 * Disconnect this datalink.
 	 * 
-	 * @see Connection#connect()
+	 * @see Connection#disconnect()
 	 */
 	@Override
 	public abstract void disconnect();
@@ -102,9 +104,30 @@ public abstract class Datalink implements Connection {
 	public abstract boolean isConnected();
 	
 	/**
+	 * Gets the roundtrip delay of this datalink.
+	 * 
+	 * @return the roundtrip delay of this datalink
+	 * 
+	 * @see Connection#getRoundtripDelay()
+	 */
+	@Override
+	public Duration getRoundtripDelay() {
+		return Duration.ZERO;
+	}
+	
+	/**
+	 * Gets the aircraft system time via this datalink.
+	 * 
+	 * @return the aircraft system time obtained via this datalink
+	 */
+	public ZonedDateTime getSystemTime() {
+		return ZonedDateTime.now();
+	}
+	
+	/**
 	 * Emits a heart beat via this datalink.
 	 */
-	public abstract void emitHeartbeat();
+	public void emitHeartbeat() {}
 	
 	/**
 	 * Gets the aircraft status via this datalink.
@@ -133,6 +156,26 @@ public abstract class Datalink implements Connection {
 	 * @return the aircraft heading obtained via this datalink
 	 */
 	public abstract Angle getAircraftHeading();
+	
+	/**
+	 * Gets the aircraft attitude via this datalink.
+	 * 
+	 * @return the aircraft attitude obtianed via this datalink,
+	 *         null otherwise
+	 */
+	public AircraftAttitude getAircraftAttitude() {
+		AircraftAttitude attitude = null;
+		
+		Angle pitch = this.getAircraftPitch();
+		Angle bank = this.getAircraftBank();
+		Angle yaw = this.getAircraftYaw();
+		
+		if ((null != pitch) && (null != bank) && (null != yaw)) {
+			attitude = new AircraftAttitude(pitch, bank, yaw);
+		}
+		
+		return attitude;
+	}
 	
 	/**
 	 * Gets the aircraft pitch via this datalink.
@@ -336,10 +379,10 @@ public abstract class Datalink implements Connection {
 	 */
 	public abstract boolean isAirborne();
 	
+	// TODO: consider Optional framework for null returning methods
 	// TODO: take-off specification / setup
 	// flight envelope (initial altitude, vertical speed, horizontal speed)
 	// isAutonomous (mode)
-	// getAttitude (Pitch, Roll, Yaw)
 	// getGroundSpeed
 	// getAirSpeed (True, Equivalent, Calibrated, Indicated)
 	// TODO: have Scenario listen for track changes towards the next position

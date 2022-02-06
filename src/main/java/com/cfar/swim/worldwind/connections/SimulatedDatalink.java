@@ -218,15 +218,6 @@ public class SimulatedDatalink extends Datalink {
 	// TODO: check isConnected for entire logic!
 	
 	/**
-	 * Emits a heart beat via this simulated datalink.
-	 * 
-	 * @see Datalink#emitHeartbeat()
-	 */
-	@Override
-	public void emitHeartbeat() {
-	}
-	
-	/**
 	 * Gets the aircraft status via this simulated datalink.
 	 * 
 	 * @return the aircraft status obtained via this simulated datalink

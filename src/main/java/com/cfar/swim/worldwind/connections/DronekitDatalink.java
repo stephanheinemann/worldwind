@@ -191,15 +191,6 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Emits a heart beat via this dronekit datalink.
-	 * 
-	 * @see Datalink#emitHeartbeat()
-	 */
-	@Override
-	public void emitHeartbeat() {
-	}
-	
-	/**
 	 * Gets the aircraft status via this dronekit datalink.
 	 * 
 	 * @return the aircraft status obtained via this dronekit datalink

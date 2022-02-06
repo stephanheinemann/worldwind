@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.Duration;
 import java.util.HashSet;
 
 import com.cfar.swim.worldwind.data.SwimProtocol;
@@ -72,6 +73,16 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	 */
 	@Override
 	public abstract boolean isConnected();
+	
+	/**
+	 * Gets the roundtrip delay of this SWIM connection.
+	 * 
+	 * @return the roundtrip delay of this SWIM connection
+	 */
+	@Override
+	public Duration getRoundtripDelay() {
+		return Duration.ZERO;
+	}
 	
 	/**
 	 * Subscribes this connection to a specified SWIM data protocol.

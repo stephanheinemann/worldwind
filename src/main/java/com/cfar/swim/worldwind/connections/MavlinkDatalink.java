@@ -118,36 +118,10 @@ public class MavlinkDatalink extends Datalink {
 	}
 	
 	/**
-	 * Gets the uplink delay of this mavlink datalink.
+	 * Connects this mavlink datalink.
 	 * 
-	 * @return the uplink delay of this mavlink datalink
+	 * @see Datalink#connect()
 	 */
-	public Duration getUplinkDelay() {
-		return this.uplinkDelay;
-	}
-	
-	/**
-	 * Sets the uplink delay of this mavlink datalink.
-	 * 
-	 * @param uplinkDelay the uplink delay to be set
-	 * 
-	 * @throws IllegalArgumentException if the uplink delay is invalid
-	 */
-	public void setUplinkDelay(Duration uplinkDelay) {
-		if ((null == uplinkDelay) || uplinkDelay.isNegative()
-				|| uplinkDelay.isZero()) {
-			throw new IllegalArgumentException("uplink delay is invalid");
-		}
-		this.uplinkDelay = uplinkDelay;
-	}
-	
-	private void determineUplinkDelay() {
-		Duration roundtrip = this.getRoundtripDelay();
-		if (!roundtrip.isNegative() && !roundtrip.isZero()) {
-			this.setUplinkDelay(roundtrip.dividedBy(2l));
-		}
-	}
-	
 	@Override
 	public synchronized void connect() {
 		Logging.logger().info("connecting mavlink...");
@@ -164,6 +138,11 @@ public class MavlinkDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Disconnect this mavlink datalink.
+	 * 
+	 * @see Datalink#disconnect()
+	 */
 	@Override
 	public synchronized void disconnect() {
 		Logging.logger().info("disconnecting mavlink...");
@@ -176,19 +155,34 @@ public class MavlinkDatalink extends Datalink {
 		this.isConnected = false;
 	}
 	
+	/**
+	 * Determines whether or not this mavlink datalink is connected.
+	 * 
+	 * @return true if this mavlink datalink is connected, false otherwise
+	 * 
+	 * @see Datalink#isConnected()
+	 */
 	@Override
 	public synchronized boolean isConnected() {
 		return this.isConnected;
 	}
 	
-	private void sniff(int systemId, int componentId, Collection<Class<?>> payloadClasses, int messageLimit) {
+	/**
+	 * Sniffs this mavlink datalink.
+	 * 
+	 * @param systemId the system identifier of sniffed mavlink messages
+	 * @param componentId the component identifier of sniffed mavlink messages
+	 * @param payloadClasses the possible payloads of sniffed mavlink messages
+	 * @param messageLimit the limit of mavlink messages to scan
+	 */
+	protected synchronized void sniff(int systemId, int componentId,
+			Collection<Class<?>> payloadClasses, int messageLimit) {
 		int receivedMessages = 0;
 		
 		while (receivedMessages < messageLimit) {
 			try {
 				MavlinkMessage<?> message = this.mavlink.next();
-			
-				// TODO: possibly forward QGC traffic
+				
 				if ((null != message)
 						//&& (message.getOriginSystemId() == systemId)
 						//&& (message.getOriginComponentId() == componentId)
@@ -207,7 +201,12 @@ public class MavlinkDatalink extends Datalink {
 		}
 	}
 	
-	private void sendCommand(Object command) {
+	/**
+	 * Sends a mavlink datalink command.
+	 * 
+	 * @param command the command to be sent
+	 */
+	protected synchronized void sendCommand(Object command) {
 		try {
 			this.mavlink.send1(this.getSourceId(),
 					MavComponent.MAV_COMP_ID_PATHPLANNER.ordinal(), command);
@@ -216,7 +215,17 @@ public class MavlinkDatalink extends Datalink {
 		}
 	}
 	
-	private Optional<?> receiveMessage(
+	/**
+	 * Receives a mavlink datalink message payload.
+	 * 
+	 * @param payloadClasses the possible payloads of the mavlink message
+	 * @param delay delay before receiving the mavlink message
+	 * @param skip skip all messages before receiving the mavlink message 
+	 * @param messageLimit the limit of mavlink messages to scan
+	 * 
+	 * @return the received mavlink message payload, if any
+	 */
+	protected synchronized Optional<?> receiveMessage(
 			Collection<Class<?>> payloadClasses, boolean delay,
 			boolean skip, int messageLimit) {
 		Optional<?> payload = Optional.empty();
@@ -261,7 +270,14 @@ public class MavlinkDatalink extends Datalink {
 		return payload;
 	}
 	
-	private Optional<CommandAck> receiveCommandAck(MavCmd command) {
+	/**
+	 * Receives a mavlink datalink command protocol acknowledgement.
+	 * 
+	 * @param command the command to be acknowledged
+	 * 
+	 * @return the command protocol acknowledgment, if any 
+	 */
+	protected synchronized Optional<CommandAck> receiveCommandAck(MavCmd command) {
 		Optional<CommandAck> ack = Optional.empty();
 		
 		Optional<?> payload = this.receiveMessage(
@@ -273,27 +289,29 @@ public class MavlinkDatalink extends Datalink {
 			if ((this.getSourceId() == commandAck.targetSystem())
 					&& (command == commandAck.command().entry())) {
 				ack = Optional.of(commandAck);
-				Logging.logger().info(
-						"mavlink datalink received command ack result "
+				Logging.logger().info("mavlink datalink received command ack result "
 						+ commandAck.result().entry().name() + " for "
 						+ command.name());
 			} else {
 				// TODO: possibly retry for correct command ack
-				Logging.logger().warning(
-						"mavlink datalink received incorrect command ack for "
+				Logging.logger().warning("mavlink datalink received incorrect command ack for "
 						+ command.name() + ": "
 						+ commandAck.command().entry().name());
 			}
 		} else {
-			Logging.logger().warning(
-					"mavlink datalink received no command ack for "
+			Logging.logger().warning("mavlink datalink received no command ack for "
 					+ command.name());
 		}
 		
 		return ack;
 	}
 	
-	private Optional<MissionAck> receiveMissionAck() {
+	/**
+	 * Receives a mavlink datalink mission protocol acknowledgement.
+	 * 
+	 * @return the mission protocol acknowledgment, if any 
+	 */
+	protected synchronized Optional<MissionAck> receiveMissionAck() {
 		Optional<MissionAck> ack = Optional.empty();
 		
 		Optional<?> payload = this.receiveMessage(
@@ -304,24 +322,28 @@ public class MavlinkDatalink extends Datalink {
 			MissionAck missionAck = (MissionAck) payload.get();
 			if ((this.getSourceId() == missionAck.targetSystem())) {
 				ack = Optional.of(missionAck);
-				Logging.logger().info(
-						"mavlink datalink received mission ack "
+				Logging.logger().info("mavlink datalink received mission ack "
 						+ missionAck.type().entry().name());
 			} else {
 				// TODO: possibly retry for correct mission ack
-				Logging.logger().warning(
-						"mavlink datalink received incorrect misison ack");
+				Logging.logger().warning("mavlink datalink received incorrect misison ack");
 			}
 		} else {
-			Logging.logger().warning(
-					"mavlink datalink received no mission ack");
+			Logging.logger().warning("mavlink datalink received no mission ack");
 		}
 		
 		return ack;
 	}
 	
+	/**
+	 * Gets the roundtrip delay of this mavlink datalink.
+	 * 
+	 * @return the roundtrip delay of this mavlink datalink, null otherwise
+	 * 
+	 * @see Datalink#getRoundtripDelay()
+	 */
 	public synchronized Duration getRoundtripDelay() {
-		Duration delay = Duration.ZERO;
+		Duration delay = null;
 		
 		if (this.isConnected()) {
 			ZonedDateTime pingTime = ZonedDateTime.now();
@@ -343,14 +365,8 @@ public class MavlinkDatalink extends Datalink {
 				
 				if ((this.getSourceId() == pong.targetSystem())
 						&& (0l == pong.seq())) {
-					/*
-					Instant instant = Instant.ofEpochMilli(Math.round(
-							pong.timeUsec().longValueExact() * 1E-3d));
-					ZonedDateTime pongTime = ZonedDateTime.ofInstant(
-							instant, ZoneOffset.UTC);
-					*/
 					delay = Duration.between(pingTime, pongTime);
-				} 
+				}
 			} else {
 				Logging.logger().warning("mavlink datalink received no pong");
 			}
@@ -359,8 +375,51 @@ public class MavlinkDatalink extends Datalink {
 		return delay;
 	}
 	
+	/**
+	 * Gets the uplink delay of this mavlink datalink.
+	 * 
+	 * @return the uplink delay of this mavlink datalink
+	 */
+	protected synchronized Duration getUplinkDelay() {
+		return this.uplinkDelay;
+	}
+	
+	/**
+	 * Sets the uplink delay of this mavlink datalink.
+	 * 
+	 * @param uplinkDelay the uplink delay to be set
+	 * 
+	 * @throws IllegalArgumentException if the uplink delay is invalid
+	 */
+	protected synchronized void setUplinkDelay(Duration uplinkDelay) {
+		if ((null == uplinkDelay) || uplinkDelay.isNegative()
+				|| uplinkDelay.isZero()) {
+			throw new IllegalArgumentException("uplink delay is invalid");
+		}
+		this.uplinkDelay = uplinkDelay;
+	}
+	
+	/**
+	 * Determines the uplink delay of this mavlink datalink.
+	 */
+	protected synchronized void determineUplinkDelay() {
+		Duration roundtrip = this.getRoundtripDelay();
+		if ((null != roundtrip) && !roundtrip.isNegative()
+				&& !roundtrip.isZero()) {
+			this.setUplinkDelay(roundtrip.dividedBy(2l));
+		}
+	}
+	
+	/**
+	 * Gets the aircraft system time via this mavlink datalink.
+	 * 
+	 * @return the aircraft system time obtained via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getSystemTime()
+	 */
 	public synchronized ZonedDateTime getSystemTime() {
-		ZonedDateTime time = ZonedDateTime.now();
+		ZonedDateTime time = null;
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
@@ -401,6 +460,14 @@ public class MavlinkDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Gets the aircraft status via this mavlink datalink.
+	 * 
+	 * @return the aircraft status obtained via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getAircraftStatus()
+	 */
 	@Override
 	public synchronized String getAircraftStatus() {
 		String status = null;
@@ -415,8 +482,7 @@ public class MavlinkDatalink extends Datalink {
 						((Heartbeat) payload.get()).systemStatus();
 				status = mavState.entry().name();
 			} else {
-				Logging.logger().warning(
-						"mavlink datalink received no status");
+				Logging.logger().warning("mavlink datalink received no status");
 			}
 		} else {
 			Logging.logger().warning("mavlink datalink is disconnected");
@@ -425,6 +491,14 @@ public class MavlinkDatalink extends Datalink {
 		return status;
 	}
 	
+	/**
+	 * Gets the aircraft mode via this mavlink datalink.
+	 * 
+	 * @return the aircraft mode obtained via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getAircraftMode()
+	 */
 	@Override
 	public synchronized String getAircraftMode() {
 		String mode = null;
@@ -496,6 +570,14 @@ public class MavlinkDatalink extends Datalink {
 		}
 	}
 	
+	/**
+	 * Gets the aircraft attitude via this mavlink datalink.
+	 * 
+	 * @return the aircraft attitude obtianed via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getAircraftAttitude()
+	 */
 	public synchronized AircraftAttitude getAircraftAttitude() {
 		AircraftAttitude attitude = null;
 		
@@ -511,8 +593,7 @@ public class MavlinkDatalink extends Datalink {
 						Angle.fromRadians(att.roll()),
 						Angle.fromRadians(att.yaw()));
 			} else {
-				Logging.logger().warning(
-						"mavlink datalink received no attitude");
+				Logging.logger().warning("mavlink datalink received no attitude");
 			}
 		} else {
 			Logging.logger().warning("mavlink datalink is disconnected");
@@ -521,6 +602,14 @@ public class MavlinkDatalink extends Datalink {
 		return attitude;
 	}
 	
+	/**
+	 * Gets the aircraft pitch via this datalink.
+	 * 
+	 * @return the aircraft pitch obtained via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getAircraftPitch()
+	 */
 	@Override
 	public synchronized Angle getAircraftPitch() {
 		Angle pitch = null;
@@ -533,6 +622,14 @@ public class MavlinkDatalink extends Datalink {
 		return pitch;
 	}
 	
+	/**
+	 * Gets the aircraft bank via this mavlink datalink.
+	 * 
+	 * @return the aircraft bank obtained via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getAircraftBank()
+	 */
 	@Override
 	public synchronized Angle getAircraftBank() {
 		Angle bank = null;
@@ -545,6 +642,13 @@ public class MavlinkDatalink extends Datalink {
 		return bank;
 	}
 	
+	/**
+	 * Gets the aircraft yaw via this mavlink datalink.
+	 * 
+	 * @return the aircraft yaw obtained via this datalink, null otherise
+	 * 
+	 * @see Datalink#getAircraftYaw()
+	 */
 	@Override
 	public synchronized Angle getAircraftYaw() {
 		Angle yaw = null;
@@ -557,6 +661,14 @@ public class MavlinkDatalink extends Datalink {
 		return yaw;
 	}
 	
+	/**
+	 * Gets the aircraft heading via this mavlink datalink.
+	 * 
+	 * @return the aircraft heading obtained via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getAircraftHeading()
+	 */
 	@Override
 	public synchronized Angle getAircraftHeading() {
 		Angle heading = null;
@@ -579,6 +691,14 @@ public class MavlinkDatalink extends Datalink {
 		return heading;
 	}
 	
+	/**
+	 * Gets the aircraft position via this mavlink datalink.
+	 * 
+	 * @return the aircraft position obtained via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getAircraftPosition()
+	 */
 	@Override
 	public synchronized Position getAircraftPosition() {
 		Position position = null;
@@ -604,6 +724,14 @@ public class MavlinkDatalink extends Datalink {
 		return position;
 	}
 	
+	/**
+	 * Gets an aircraft track point via this mavlink datalink.
+	 * 
+	 * @return an aircraft track point obtained via this mavlink datalink,
+	 *         null otherwise
+	 * 
+	 * @see Datalink#getAircraftTrackPoint()
+	 */
 	@Override
 	public synchronized AircraftTrackPoint getAircraftTrackPoint() {
 		AircraftTrackPoint trackPoint = null;
