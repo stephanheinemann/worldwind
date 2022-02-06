@@ -105,9 +105,9 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 			connection.setDownlinkPeriod(Duration.ofMillis(properties.getDownlinkPeriod()));
 		} else if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_MAVLINK_ID)) {
 			MavlinkDatalinkProperties properties = (MavlinkDatalinkProperties) this.getSpecification().getProperties();
-			connection = new MavlinkDatalink();
+			connection = new MavlinkDatalink(properties.getHost(), properties.getPort(),
+					properties.getSourceId(), properties.getTargetId());
 			connection.setDownlinkPeriod(Duration.ofMillis(properties.getDownlinkPeriod()));
-			// TODO: define and assign properties
 		}
 		
 		return connection;

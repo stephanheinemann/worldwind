@@ -1,3 +1,32 @@
+/**
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors
+ * may be used to endorse or promote products derived from this software without
+ * specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 package com.cfar.swim.worldwind.connections;
 
 import java.io.EOFException;
@@ -14,9 +43,12 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
+import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.connections.MavlinkDatalinkProperties;
 import com.cfar.swim.worldwind.tracks.AircraftAttitude;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
+import com.cfar.swim.worldwind.util.Identifiable;
 import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -56,36 +88,64 @@ import io.dronefleet.mavlink.common.SetMode;
 import io.dronefleet.mavlink.common.SystemTime;
 import io.dronefleet.mavlink.util.EnumValue;
 
-
+/**
+ * Realizes a mavlink datalink.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 @SuppressWarnings("deprecation")
 public class MavlinkDatalink extends Datalink {
 	
-	private static final int MESSAGE_SCAN_LIMIT = 1000;
+	/** the host of this mavlink datalink */
+	private String host = MavlinkDatalinkProperties.MAVLINK_DEFAULT_HOST;
 	
-	private Duration uplinkDelay = Duration.ofMillis(100l);
+	/** the port of this mavlink datalink */
+	private int port = MavlinkDatalinkProperties.MAVLINK_DEFAULT_PORT;
 	
-	/** the remote host of this mavlink datalink */
-	private String host = "172.16.104.128";
+	/** the source identifier of this mavlink datalink (GCS) */
+	private int sourceId = MavlinkDatalinkProperties.MAVLINK_DEFAULT_SOURCE_ID;
 	
-	/** the remote port of this mavlink datalink */
-	private int port = 14550;
+	/** the target identifier of this mavlink datalink (vehicle) */
+	private int targetId = MavlinkDatalinkProperties.MAVLINK_DEFAULT_TARGET_ID;
 	
-	/** the identifier of this mavlink datalink target */
-	private int targetId = 1;
-	
-	/** the identifier of this mavlink datalink source */
-	private int sourceId = 254;
-	
+	/** indicates whether or not this mavlink datalink is connected */
 	private boolean isConnected = false;
 	
+	/** the TCP client socket of this mavlink datalink */
 	private Socket tcp = new Socket();
 	
+	/** the mavlink connection of this mavlink datalink */
 	MavlinkConnection mavlink = null;
 	
-	public MavlinkDatalink(/* host, port, id */) {
-		this.getAircraftTrack().setName(this.getHost() + ":" + this.getPort());
+	/** the uplink delay of this mavlink datalink */
+	private Duration uplinkDelay = Duration.ofMillis(100l);
+	
+	
+	/**
+	 * Constructs a new mavlink datalink.
+	 * 
+	 * @param host the host of the mavlink service
+	 * @param port the port of the mavlink service
+	 * @param sourceId the source identifier of this mavlink source (GCS)
+	 * @param targetId the target identifier of the mavlink target (vehicle)
+	 */
+	public MavlinkDatalink(String host, int port, int sourceId, int targetId) {
+		this.host = host;
+		this.port = port;
+		this.sourceId = sourceId;
+		this.targetId = targetId;
+		this.getAircraftTrack().setName(this.getTargetId()
+				+ "@" + this.getHost() + ":" + this.getPort());
 	}
 	
+	/**
+	 * Gets the identifier of this mavlink datalink.
+	 * 
+	 * @return the identifier of this mavlink datalink
+	 * 
+	 * @see Identifiable#getId()
+	 */
 	@Override
 	public String getId() {
 		return Specification.CONNECTION_DATALINK_MAVLINK_ID;
@@ -109,10 +169,20 @@ public class MavlinkDatalink extends Datalink {
 		return this.port;
 	}
 	
+	/**
+	 * Gets the source identifier of this mavlink datalink (GCS).
+	 * 
+	 * @return the source identifier of this mavlink datalink
+	 */
 	public int getSourceId() {
 		return this.sourceId;
 	}
 	
+	/**
+	 * Gets the target identifier of this mavlink datalink (vehicle).
+	 * 
+	 * @return the target identifier of this mavlink datalink
+	 */
 	public int getTargetId() {
 		return this.targetId;
 	}
@@ -282,7 +352,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		Optional<?> payload = this.receiveMessage(
 				Collections.singleton(CommandAck.class), true, false,
-				MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+				MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 		
 		if (payload.isPresent()) {
 			CommandAck commandAck = (CommandAck) payload.get();
@@ -316,7 +386,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		Optional<?> payload = this.receiveMessage(
 				Collections.singleton(MissionAck.class), true, false,
-				MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+				MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 		
 		if (payload.isPresent()) {
 			MissionAck missionAck = (MissionAck) payload.get();
@@ -356,8 +426,8 @@ public class MavlinkDatalink extends Datalink {
 			this.sendCommand(ping);
 			
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(Ping.class),
-					false, false, MavlinkDatalink.MESSAGE_SCAN_LIMIT * 5);
+					Collections.singleton(Ping.class), false, false,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			ZonedDateTime pongTime = ZonedDateTime.now();
 			
 			if (payload.isPresent()) {
@@ -423,8 +493,8 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(SystemTime.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					Collections.singleton(SystemTime.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
 				SystemTime systime = (SystemTime) payload.get();
@@ -474,8 +544,8 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(Heartbeat.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					Collections.singleton(Heartbeat.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
 				EnumValue<MavState> mavState =
@@ -505,8 +575,8 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(Heartbeat.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					Collections.singleton(Heartbeat.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
 				EnumValue<MavModeFlag> baseMode =
@@ -583,8 +653,8 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(Attitude.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					Collections.singleton(Attitude.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
 				Attitude att = (Attitude) payload.get();
@@ -675,8 +745,8 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(GlobalPositionInt.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					Collections.singleton(GlobalPositionInt.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
 				heading = Angle.fromDegrees(
@@ -705,8 +775,8 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(GlobalPositionInt.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					Collections.singleton(GlobalPositionInt.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
 				GlobalPositionInt gpi = (GlobalPositionInt) payload.get();
@@ -744,26 +814,6 @@ public class MavlinkDatalink extends Datalink {
 		} else if ((null != position)) {
 			trackPoint = new AircraftTrackPoint(position);
 		}
-		
-		/*
-		ArrayList<Class<?>> payloadClasses = new ArrayList<>();
-		payloadClasses.add(CommandAck.class);
-		payloadClasses.add(CommandInt.class);
-		payloadClasses.add(CommandLong.class);
-		payloadClasses.add(SetMode.class);
-		payloadClasses.add(MissionRequest.class);
-		payloadClasses.add(MissionRequestInt.class);
-		payloadClasses.add(MissionAck.class);
-		payloadClasses.add(MissionCount.class);
-		payloadClasses.add(MissionRequestList.class);
-		payloadClasses.add(MissionItem.class);
-		payloadClasses.add(MissionItemInt.class);
-		this.sniff(255, 0, payloadClasses, 1000);
-		*/
-		
-		//Logging.logger().info("next mission position index = " + this.getNextMissionPositionIndex());
-		//Logging.logger().info("next mission position = " + this.getNextMissionPosition());
-		//Logging.logger().info("airborne = " + this.isAirborne());
 		
 		return trackPoint;
 	}
@@ -934,8 +984,8 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(MissionCurrent.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					Collections.singleton(MissionCurrent.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
 				seq = ((MissionCurrent) payload.get()).seq();
@@ -1058,8 +1108,8 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(ExtendedSysState.class),
-					false, true, MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+					Collections.singleton(ExtendedSysState.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
 				ExtendedSysState ess = (ExtendedSysState) payload.get();
@@ -1113,7 +1163,7 @@ public class MavlinkDatalink extends Datalink {
 			boolean uploading = true;
 			while (uploading) {	
 				Optional<?> payload = this.receiveMessage(payloads, true, false,
-						MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+						MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 				
 				if (payload.isPresent()) {
 					if (payload.get() instanceof MissionAck) {
@@ -1239,7 +1289,7 @@ public class MavlinkDatalink extends Datalink {
 				boolean downloading = true;
 				while (downloading) {	
 					Optional<?> payload = this.receiveMessage(payloads, true, false,
-							MavlinkDatalink.MESSAGE_SCAN_LIMIT);
+							MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 					
 					if (payload.isPresent()) {
 						if (payload.get() instanceof MissionAck) {
@@ -1367,6 +1417,63 @@ public class MavlinkDatalink extends Datalink {
 		}
 		
 		return mission;
+	}
+	
+	/**
+	 * Determines whether or not this mavlink datalink matches a specification.
+	 * 
+	 * @param specification the specification to be matched
+	 * 
+	 * @return true if the this mavlink datalink matches the specification,
+	 *         false otherwise
+	 * 
+	 * @see Datalink#matches(Specification)
+	 */
+	@Override
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
+		boolean matches = super.matches(specification);
+		
+		if (matches && (specification.getProperties() instanceof MavlinkDatalinkProperties)) {
+			MavlinkDatalinkProperties properties =
+					(MavlinkDatalinkProperties) specification.getProperties();
+			matches = this.getHost().equals(properties.getHost())
+					&& (this.getPort() == properties.getPort())
+					&& (this.getSourceId() == properties.getSourceId())
+					&& (this.getTargetId() == properties.getTargetId());
+		}
+	
+		return matches;
+	}
+	
+	/**
+	 * Updates this mavlink datalink according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this mavlink datalink has been updated, false otherwise
+	 * 
+	 * @see Datalink#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof MavlinkDatalinkProperties)) {
+			MavlinkDatalinkProperties properties =
+					(MavlinkDatalinkProperties) specification.getProperties();
+			if (!this.isConnected()) {
+				this.host = properties.getHost();
+				this.port = properties.getPort();
+				this.sourceId = properties.getSourceId();
+				this.targetId = properties.getTargetId();
+				this.getAircraftTrack().setName(this.getTargetId()
+						+ "@" + this.getHost() + ":" + this.getPort());
+			} else {
+				updated = false;
+			}
+		}
+		
+		return updated;
 	}
 	
 }

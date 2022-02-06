@@ -38,8 +38,6 @@ import org.junit.Test;
 
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DronekitDatalink;
-import com.cfar.swim.worldwind.planning.Trajectory;
-import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
@@ -49,9 +47,6 @@ import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.util.Logging;
-import io.dronefleet.mavlink.common.MavMode;
-import io.dronefleet.mavlink.common.MavModeFlag;
-import io.dronefleet.mavlink.util.EnumValue;
 
 /**
  * Performs datalink tests.
@@ -100,12 +95,14 @@ public class DatalinkTest {
 		datalink.setAircraftMode(DronekitDatalink.MODE_STABILIZE);
 		Logging.logger().info(datalink.getAircraftPosition().toString());
 		
-		// set safety
-		datalink.disableAircraftSafety();
-		while (datalink.isAircraftSafetyEnabled()) {
+		// set guidance
+		/*
+		datalink.enableAircraftGuidance();
+		while (!datalink.isAircraftGuidanceEnabled()) {
 			Thread.sleep(1000);
 		}
-		assertFalse(datalink.isAircraftSafetyEnabled());
+		assertFalse(datalink.isAircraftGuidanceEnabled());
+		*/
 		
 		// arm
 		datalink.armAircraft();
@@ -116,7 +113,7 @@ public class DatalinkTest {
 		
 		// cleanup
 		datalink.disarmAircraft();
-		datalink.enableAircraftSafety();
+		//datalink.disableAircraftGuidance();
 		datalink.disconnect();
 		assertFalse(datalink.isConnected());
 	}
@@ -173,14 +170,18 @@ public class DatalinkTest {
 		datalink.connect();
 		assertTrue(datalink.isConnected());
 		
-		
+		//datalink.disableAircraftGuidance();
+		//datalink.disarmAircraft();
 		//assertFalse(datalink.isAircraftArmed());
-		//datalink.disableAircraftSafety();
+		//assertFalse(datalink.isAircraftGuidanceEnabled());
+		//datalink.enableAircraftGuidance();
 		//datalink.armAircraft();
 		//assertTrue(datalink.isAircraftArmed());
-		//assertTrue(datalink.isAircraftSafetyEnabled());
-		//datalink.disableAircraftSafety();
-		//assertFalse(datalink.isAircraftSafetyEnabled());
+		//assertTrue(datalink.isAircraftGuidanceEnabled());
+		//datalink.disarmAircraft();
+		//datalink.disableAircraftGuidance();
+		//assertFalse(datalink.isAircraftArmed());
+		//assertFalse(datalink.isAircraftGuidanceEnabled());
 		
 		//Thread.sleep(5000);
 		
@@ -189,10 +190,16 @@ public class DatalinkTest {
 		
 		//Trajectory trajectory = new Trajectory(new Waypoint(Position.ZERO), new Waypoint(Position.ZERO));
 		//datalink.uploadMission(trajectory);
-		Path mission = datalink.downloadMission(false);
-		mission.getPositions().forEach(p -> System.out.println(p));
+		//Path mission = datalink.downloadMission(false);
+		//mission.getPositions().forEach(p -> System.out.println(p));
 		//datalink.downloadMission(false);
-		
+		/*
+		if (datalink.isAirborne())
+			Logging.logger().info("airborne...");
+		else
+			Logging.logger().info("not airborne...");
+		*/
+		//Logging.logger().info("next mission position = " + datalink.getNextMissionPosition());
 		
 		datalink.disconnect();
 		assertFalse(datalink.isConnected());

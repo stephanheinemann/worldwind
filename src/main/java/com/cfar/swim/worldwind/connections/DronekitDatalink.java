@@ -60,7 +60,6 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
-
 /**
  * Realizes a dronekit datalink.
  * 
@@ -711,7 +710,7 @@ public class DronekitDatalink extends Datalink {
 		if (matches && (specification.getProperties() instanceof DronekitDatalinkProperties)) {
 			DronekitDatalinkProperties properties =
 					(DronekitDatalinkProperties) specification.getProperties();
-			matches = (this.host.equals(properties.getHost()))
+			matches = this.host.equals(properties.getHost())
 					&& (this.port == properties.getPort());
 		}
 	
@@ -734,8 +733,13 @@ public class DronekitDatalink extends Datalink {
 		if (updated && (specification.getProperties() instanceof DronekitDatalinkProperties)) {
 			DronekitDatalinkProperties properties =
 					(DronekitDatalinkProperties) specification.getProperties();
-			this.host = properties.getHost();
-			this.port = properties.getPort();
+			if (!this.isConnected()) {
+				this.host = properties.getHost();
+				this.port = properties.getPort();
+				this.getAircraftTrack().setName(host + ":" + port);
+			} else {
+				updated = false;
+			}
 		}
 		
 		return updated;
