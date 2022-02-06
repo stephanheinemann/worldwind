@@ -125,8 +125,8 @@ public class SimulatedDatalink extends Datalink {
 	/** indicates whether or not the source of this simulated datalink is armed */
 	private boolean isArmed = false;
 	
-	/** indicates whether or not the source of this simulated datalink is safe */
-	private boolean isAircraftSafetyEnabled = true;
+	/** indicates whether or not the source of this simulated datalink is guided */
+	private boolean isAircraftGuidanceEnabled = true;
 	
 	/** the aircraft status of this simulated datalink source */
 	private String aircraftStatus = SimulatedDatalink.STATUS_UNKNOWN;
@@ -176,7 +176,8 @@ public class SimulatedDatalink extends Datalink {
 	 * @throws IllegalArgumentException if the uplink delay is invalid
 	 */
 	public void setUplinkDelay(Duration uplinkDelay) {
-		if ((null == uplinkDelay) ||  uplinkDelay.isZero()) {
+		if ((null == uplinkDelay) || uplinkDelay.isNegative()
+				|| uplinkDelay.isZero()) {
 			throw new IllegalArgumentException("uplink delay is invalid");
 		}
 		this.uplinkDelay = uplinkDelay;
@@ -215,6 +216,15 @@ public class SimulatedDatalink extends Datalink {
 	}
 	
 	// TODO: check isConnected for entire logic!
+	
+	/**
+	 * Emits a heart beat via this simulated datalink.
+	 * 
+	 * @see Datalink#emitHeartbeat()
+	 */
+	@Override
+	public void emitHeartbeat() {
+	}
 	
 	/**
 	 * Gets the aircraft status via this simulated datalink.
@@ -390,36 +400,36 @@ public class SimulatedDatalink extends Datalink {
 	}
 	
 	/**
-	 * Enables the aircraft safety via this simulated datalink.
+	 * Enables the aircraft guidance via this simulated datalink.
 	 * 
-	 * @see Datalink#enableAircraftSafety()
+	 * @see Datalink#enableAircraftGuidance()
 	 */
 	@Override
-	public synchronized void enableAircraftSafety() {
-		this.isAircraftSafetyEnabled = true;
+	public synchronized void enableAircraftGuidance() {
+		this.isAircraftGuidanceEnabled = true;
 	}
 	
 	/**
-	 * Disables the aircraft safety via this simulated datalink.
+	 * Disables the aircraft guidance via this simulated datalink.
 	 * 
-	 * @see Datalink#disableAircraftSafety()
+	 * @see Datalink#disableAircraftGuidance()
 	 */
 	@Override
-	public synchronized void disableAircraftSafety() {
-		this.isAircraftSafetyEnabled = false;
+	public synchronized void disableAircraftGuidance() {
+		this.isAircraftGuidanceEnabled = false;
 	}
 	
 	/**
-	 * Determines whether or not the aircraft safety is enabled for the aircraft
-	 * connected via this simulated datalink.
+	 * Determines whether or not the aircraft guidance is enabled for the
+	 * aircraft connected via this simulated datalink.
 	 * 
-	 * @return true if the aircraft safety is enabled, false otherwise
+	 * @return true if the aircraft guidance is enabled, false otherwise
 	 * 
-	 * @see Datalink#isAircraftSafetyEnabled()
+	 * @see Datalink#isAircraftGuidanceEnabled()
 	 */
 	@Override
-	public synchronized boolean isAircraftSafetyEnabled() {
-		return this.isAircraftSafetyEnabled;
+	public synchronized boolean isAircraftGuidanceEnabled() {
+		return this.isAircraftGuidanceEnabled;
 	}
 	
 	/**

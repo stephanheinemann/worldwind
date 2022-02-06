@@ -191,6 +191,15 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
+	 * Emits a heart beat via this dronekit datalink.
+	 * 
+	 * @see Datalink#emitHeartbeat()
+	 */
+	@Override
+	public void emitHeartbeat() {
+	}
+	
+	/**
 	 * Gets the aircraft status via this dronekit datalink.
 	 * 
 	 * @return the aircraft status obtained via this dronekit datalink
@@ -400,27 +409,12 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Enables the aircraft safety via this dronekit datalink.
+	 * Enables the aircraft guidance via this dronekit datalink.
 	 * 
-	 * @see Datalink#enableAircraftSafety()
+	 * @see Datalink#enableAircraftGuidance()
 	 */
 	@Override
-	public void enableAircraftSafety() {
-		if (this.isConnected()) {
-			Safety safety = Safety.newBuilder().setSafety(true).build();
-			blockingStub.setSafety(safety);
-		} else {
-			throw new IllegalStateException("dronekit is not connected");
-		}
-	}
-	
-	/**
-	 * Disables the aircraft safety via this dronekit datalink.
-	 * 
-	 * @see Datalink#disableAircraftSafety()
-	 */
-	@Override
-	public void disableAircraftSafety() {
+	public void enableAircraftGuidance() {
 		if (this.isConnected()) {
 			Safety safety = Safety.newBuilder().setSafety(false).build();
 			blockingStub.setSafety(safety);
@@ -430,25 +424,40 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Determines whether or not the aircraft safety is enabled for the
-	 * aircraft connected via this dronekit datalink.
+	 * Disables the aircraft guidance via this dronekit datalink.
 	 * 
-	 * @return true if the aircraft safety is enabled, false otherwise
-	 * 
-	 * @see Datalink#isAircraftSafetyEnabled()
+	 * @see Datalink#disableAircraftGuidance()
 	 */
 	@Override
-	public boolean isAircraftSafetyEnabled() {
-		boolean isAircraftSafetyEnabled = false;
+	public void disableAircraftGuidance() {
+		if (this.isConnected()) {
+			Safety safety = Safety.newBuilder().setSafety(true).build();
+			blockingStub.setSafety(safety);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+	}
+	
+	/**
+	 * Determines whether or not the aircraft guidance is enabled for the
+	 * aircraft connected via this dronekit datalink.
+	 * 
+	 * @return true if the aircraft guidance is enabled, false otherwise
+	 * 
+	 * @see Datalink#isAircraftGuidanceEnabled()
+	 */
+	@Override
+	public boolean isAircraftGuidanceEnabled() {
+		boolean isAircraftGuidanceEnabled = false;
 		
 		if (this.isConnected()) {
 			Null request = Null.newBuilder().build();
-			isAircraftSafetyEnabled = blockingStub.getSafety(request).getSafety();
+			isAircraftGuidanceEnabled = !blockingStub.getSafety(request).getSafety();
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
 		
-		return isAircraftSafetyEnabled;
+		return isAircraftGuidanceEnabled;
 	}
 	
 	/**

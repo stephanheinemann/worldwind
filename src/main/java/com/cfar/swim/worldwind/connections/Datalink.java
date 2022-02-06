@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.connections;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -43,6 +44,7 @@ import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DatalinkProperties;
 import com.cfar.swim.worldwind.tracks.AircraftTrack;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
+import com.google.common.collect.Iterables;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -64,7 +66,7 @@ public abstract class Datalink implements Connection {
 	private Duration downlinkPeriod = Duration.ofMillis(1000);
 	
 	/** the cached mission of this datalink */
-	private Path mission = new Path();
+	private Path mission = new Path(new ArrayList<>());
 	
 	/** the track of the source of this datalink */
 	private AircraftTrack track = new AircraftTrack();
@@ -98,6 +100,11 @@ public abstract class Datalink implements Connection {
 	 */
 	@Override
 	public abstract boolean isConnected();
+	
+	/**
+	 * Emits a heart beat via this datalink.
+	 */
+	public abstract void emitHeartbeat();
 	
 	/**
 	 * Gets the aircraft status via this datalink.
@@ -180,22 +187,22 @@ public abstract class Datalink implements Connection {
 	}
 	
 	/**
-	 * Enables the aircraft safety via this datalink.
+	 * Enables the aircraft guidance via this datalink.
 	 */
-	public abstract void enableAircraftSafety();
+	public abstract void enableAircraftGuidance();
 	
 	/**
-	 * Disables the aircraft safety via this datalink.
+	 * Disables the aircraft guidance via this datalink.
 	 */
-	public abstract void disableAircraftSafety();
+	public abstract void disableAircraftGuidance();
 	
 	/**
-	 * Determines whether or not the aircraft safety is enabled for the
+	 * Determines whether or not the aircraft guidance is enabled for the
 	 * aircraft connected via this datalink.
 	 * 
-	 * @return true if the aircraft safety is enabled, false otherwise
+	 * @return true if the aircraft guidance is enabled, false otherwise
 	 */
-	public abstract boolean isAircraftSafetyEnabled();
+	public abstract boolean isAircraftGuidanceEnabled();
 	
 	/**
 	 * Arms the aircraft via this datalink.
@@ -224,8 +231,8 @@ public abstract class Datalink implements Connection {
 	 * @throws IllegalArgumentException if the mission is null
 	 */
 	public void uploadMission(Path mission) {
-		if (null == mission) {
-			throw new IllegalArgumentException();
+		if ((null == mission) || (null == mission.getPositions())) {
+			throw new IllegalArgumentException("invalid mission");
 		}
 		this.mission = mission;
 	}
@@ -239,7 +246,7 @@ public abstract class Datalink implements Connection {
 	 * @return the downloaded mission flight path
 	 */
 	public Path downloadMission(boolean cached) {
-		return cached ? this.mission : new Path();
+		return cached ? this.mission : new Path(new ArrayList<>());
 	}
 	
 	/**
@@ -251,8 +258,8 @@ public abstract class Datalink implements Connection {
 	 *         false otherwise
 	 */
 	public boolean hasMission(boolean cached) {
-		return cached ? (null != this.mission.getPositions())
-				: (null != this.downloadMission(cached).getPositions());
+		return cached ? (!Iterables.isEmpty(this.mission.getPositions()))
+				: (!Iterables.isEmpty(this.downloadMission(cached).getPositions()));
 	}
 	
 	/**
@@ -268,7 +275,7 @@ public abstract class Datalink implements Connection {
 		boolean hasMission = false;
 		Path downloaded = this.downloadMission(cached);
 		
-		if (null != mission) {
+		if ((null != mission) && (null != mission.getPositions())) {
 			hasMission = true;
 			Iterator<? extends Position> dpi = downloaded.getPositions().iterator();
 			Iterator<? extends Position> ppi = mission.getPositions().iterator();
@@ -411,6 +418,8 @@ public abstract class Datalink implements Connection {
 		 */
 		@Override
 		public void run() {
+			emitHeartbeat();
+			
 			// clean up old track points
 			while (!track.isEmpty() && track.peekFirst().isOld()) {
 				track.removeFirst();
@@ -423,7 +432,6 @@ public abstract class Datalink implements Connection {
 				pcs.firePropertyChange("track", null, track);
 			}
 			// TODO: extend monitored properties
-			// TODO: possibly emit own heartbeat
 		}
 	}
 	

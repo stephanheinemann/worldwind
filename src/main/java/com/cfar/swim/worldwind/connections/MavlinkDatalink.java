@@ -32,7 +32,9 @@ import io.dronefleet.mavlink.common.CommandLong;
 import io.dronefleet.mavlink.common.ExtendedSysState;
 import io.dronefleet.mavlink.common.GlobalPositionInt;
 import io.dronefleet.mavlink.common.Heartbeat;
+import io.dronefleet.mavlink.common.MavAutopilot;
 import io.dronefleet.mavlink.common.MavCmd;
+import io.dronefleet.mavlink.common.MavComponent;
 import io.dronefleet.mavlink.common.MavFrame;
 import io.dronefleet.mavlink.common.MavLandedState;
 import io.dronefleet.mavlink.common.MavMissionResult;
@@ -40,6 +42,7 @@ import io.dronefleet.mavlink.common.MavMissionType;
 import io.dronefleet.mavlink.common.MavMode;
 import io.dronefleet.mavlink.common.MavModeFlag;
 import io.dronefleet.mavlink.common.MavState;
+import io.dronefleet.mavlink.common.MavType;
 import io.dronefleet.mavlink.common.MissionAck;
 import io.dronefleet.mavlink.common.MissionCount;
 import io.dronefleet.mavlink.common.MissionCurrent;
@@ -131,10 +134,18 @@ public class MavlinkDatalink extends Datalink {
 	 * @throws IllegalArgumentException if the uplink delay is invalid
 	 */
 	public void setUplinkDelay(Duration uplinkDelay) {
-		if ((null == uplinkDelay) ||  uplinkDelay.isZero()) {
+		if ((null == uplinkDelay) || uplinkDelay.isNegative()
+				|| uplinkDelay.isZero()) {
 			throw new IllegalArgumentException("uplink delay is invalid");
 		}
 		this.uplinkDelay = uplinkDelay;
+	}
+	
+	private void determineUplinkDelay() {
+		Duration roundtrip = this.getRoundtripDelay();
+		if (!roundtrip.isNegative() && !roundtrip.isZero()) {
+			this.setUplinkDelay(roundtrip.dividedBy(2l));
+		}
 	}
 	
 	@Override
@@ -145,12 +156,8 @@ public class MavlinkDatalink extends Datalink {
 			this.mavlink = MavlinkConnection.create(
 		            this.tcp.getInputStream(), 
 		            this.tcp.getOutputStream());
+			this.determineUplinkDelay();
 			this.isConnected = true;
-			
-			Duration delay = this.getRoundtripDelay();
-			Logging.logger().info("system delay " + delay);
-			this.setUplinkDelay(delay);
-			
 		} catch (Exception e) {
 			e.printStackTrace();
 			this.disconnect();
@@ -202,7 +209,8 @@ public class MavlinkDatalink extends Datalink {
 	
 	private void sendCommand(Object command) {
 		try {
-			this.mavlink.send1(this.getSourceId(), 0, command);
+			this.mavlink.send1(this.getSourceId(),
+					MavComponent.MAV_COMP_ID_PATHPLANNER.ordinal(), command);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -374,6 +382,25 @@ public class MavlinkDatalink extends Datalink {
 		return time;
 	}
 	
+	/**
+	 * Emits a heart beat via this mavlink datalink.
+	 * 
+	 * @see Datalink#emitHeartbeat()
+	 */
+	@Override
+	public void emitHeartbeat() {
+		if (this.isConnected()) {
+			Heartbeat heartbeat = Heartbeat.builder()
+					.type(MavType.MAV_TYPE_GCS)
+					.autopilot(MavAutopilot.MAV_AUTOPILOT_INVALID)
+					.build();
+			this.sendCommand(heartbeat);
+			this.determineUplinkDelay();
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected");
+		}
+	}
+	
 	@Override
 	public synchronized String getAircraftStatus() {
 		String status = null;
@@ -446,6 +473,13 @@ public class MavlinkDatalink extends Datalink {
 		return mode;
 	}
 	
+	/**
+	 * Sets the aircraft mode via this mavlink datalink.
+	 * 
+	 * @param aircraftMode the aircraft mode to be set
+	 * 
+	 * @see Datalink#setAircraftMode(String)
+	 */
 	@Override
 	public synchronized void setAircraftMode(String aircraftMode) {
 		if (this.isConnected()) {
@@ -536,8 +570,7 @@ public class MavlinkDatalink extends Datalink {
 				heading = Angle.fromDegrees(
 						((GlobalPositionInt) payload.get()).hdg() * 1E-2d);
 			} else {
-				Logging.logger().warning(
-						"mavlink datlink received no heading");
+				Logging.logger().warning("mavlink datlink received no heading");
 			}
 		} else {
 			Logging.logger().warning("mavlink datalink is disconnected");
@@ -562,8 +595,7 @@ public class MavlinkDatalink extends Datalink {
 						gpi.lon() * 1E-7d,
 						gpi.alt() * 1E-3d);
 			} else {
-				Logging.logger().warning(
-						"mavlink datlink received no position");
+				Logging.logger().warning("mavlink datlink received no position");
 			}
 		} else {
 			Logging.logger().warning("mavlink datalink is disconnected");
@@ -576,7 +608,6 @@ public class MavlinkDatalink extends Datalink {
 	public synchronized AircraftTrackPoint getAircraftTrackPoint() {
 		AircraftTrackPoint trackPoint = null;
 		
-		/*
 		Position position = this.getAircraftPosition();
 		AircraftAttitude attitude = this.getAircraftAttitude();
 		
@@ -585,14 +616,13 @@ public class MavlinkDatalink extends Datalink {
 		} else if ((null != position)) {
 			trackPoint = new AircraftTrackPoint(position);
 		}
-		*/
 		
+		/*
 		ArrayList<Class<?>> payloadClasses = new ArrayList<>();
 		payloadClasses.add(CommandAck.class);
 		payloadClasses.add(CommandInt.class);
 		payloadClasses.add(CommandLong.class);
 		payloadClasses.add(SetMode.class);
-		/*
 		payloadClasses.add(MissionRequest.class);
 		payloadClasses.add(MissionRequestInt.class);
 		payloadClasses.add(MissionAck.class);
@@ -600,8 +630,8 @@ public class MavlinkDatalink extends Datalink {
 		payloadClasses.add(MissionRequestList.class);
 		payloadClasses.add(MissionItem.class);
 		payloadClasses.add(MissionItemInt.class);
-		*/
 		this.sniff(255, 0, payloadClasses, 1000);
+		*/
 		
 		//Logging.logger().info("next mission position index = " + this.getNextMissionPositionIndex());
 		//Logging.logger().info("next mission position = " + this.getNextMissionPosition());
@@ -610,38 +640,61 @@ public class MavlinkDatalink extends Datalink {
 		return trackPoint;
 	}
 	
+	/**
+	 * Enables the aircraft guidance via this mavlink datalink.
+	 * 
+	 * @see Datalink#enableAircraftGuidance()
+	 */
 	@Override
-	public synchronized void enableAircraftSafety() {
-		if (!this.isAircraftSafetyEnabled()) {
-			Logging.logger().info("enabling safety...");
-			this.setAircraftMode(MavMode.MAV_MODE_GUIDED_DISARMED.name());
-		}
-	}
-	
-	@Override
-	public synchronized void disableAircraftSafety() {
-		//if (this.isAircraftSafetyEnabled()) {
-			Logging.logger().info("disabling safety...");
+	public synchronized void enableAircraftGuidance() {
+		//if (!this.isAircraftGuidanceEnabled()) {
+			Logging.logger().info("enabling guidance...");
 			this.setAircraftMode(MavMode.MAV_MODE_GUIDED_ARMED.name());
 		//}
 	}
 	
+	/**
+	 * Disables the aircraft guidance via this mavlink datalink.
+	 * 
+	 * @see Datalink#disableAircraftGuidance()
+	 */
 	@Override
-	public synchronized boolean isAircraftSafetyEnabled() {
-		boolean safetyEnabled = false;
+	public synchronized void disableAircraftGuidance() {
+		//if (this.isAircraftGuidanceEnabled()) {
+			Logging.logger().info("disabling guidance...");
+			this.setAircraftMode(MavMode.MAV_MODE_GUIDED_DISARMED.name());
+		//}
+	}
+	
+	/**
+	 * Determines whether or not the aircraft guidance is enabled for the
+	 * aircraft connected via this mavlink datalink.
+	 * 
+	 * @return true if the aircraft guidance is enabled, false otherwise
+	 * 
+	 * @see Datalink#isAircraftGuidanceEnabled()
+	 */
+	@Override
+	public synchronized boolean isAircraftGuidanceEnabled() {
+		boolean isGuided = false;
 		
 		String mode = this.getAircraftMode();
 		if (null != mode) {
-			safetyEnabled = mode.contains(
-					MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED.name());
+			isGuided = mode.contains(
+					MavModeFlag.MAV_MODE_FLAG_GUIDED_ENABLED.name());
 		}
 		
-		return safetyEnabled;
+		return isGuided;
 	}
 	
+	/**
+	 * Arms the aircraft via this mavlink datalink.
+	 * 
+	 * @see Datalink#armAircraft()
+	 */
 	@Override
 	public synchronized void armAircraft() {
-		if (this.isConnected() /*&& !this.isAircraftArmed()*/) {
+		if (this.isConnected() && !this.isAircraftArmed() && !this.isAirborne()) {
 			Logging.logger().info("arming...");
 			
 			CommandInt arm = CommandInt.builder()
@@ -652,9 +705,16 @@ public class MavlinkDatalink extends Datalink {
 				.build();
 			this.sendCommand(arm);
 			this.receiveCommandAck(MavCmd.MAV_CMD_COMPONENT_ARM_DISARM);
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected, or aircraft disarmed or airborne");
 		}
 	}
 	
+	/**
+	 * Disarms the aircraft via this mavlink datalink.
+	 * 
+	 * @see Datalink#disarmAircraft()
+	 */
 	@Override
 	public synchronized void disarmAircraft() {
 		if (this.isConnected() && this.isAircraftArmed() && !this.isAirborne()) {
@@ -666,12 +726,30 @@ public class MavlinkDatalink extends Datalink {
 					.build();
 			this.sendCommand(disarm);
 			this.receiveCommandAck(MavCmd.MAV_CMD_COMPONENT_ARM_DISARM);
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected, or aircraft armed or airborne");
 		}
 	}
 	
+	/**
+	 * Determines whether or not the aircraft connected via this mavlink
+	 * datalink is armed.
+	 * 
+	 * @return true if the aircraft is armed, false otherwise
+	 * 
+	 * @see Datalink#isAircraftArmed()
+	 */
 	@Override
 	public synchronized boolean isAircraftArmed() {
-		return !this.isAircraftSafetyEnabled();
+		boolean isArmed = false;
+		
+		String mode = this.getAircraftMode();
+		if (null != mode) {
+			isArmed = mode.contains(
+					MavModeFlag.MAV_MODE_FLAG_SAFETY_ARMED.name());
+		}
+		
+		return isArmed;
 	}
 	
 	/**
@@ -692,7 +770,7 @@ public class MavlinkDatalink extends Datalink {
 			Path mission = this.downloadMission(true);
 			Iterable<? extends Position> positions = mission.getPositions();
 			
-			if ((null != positions) && (index < Iterables.size(positions))) {
+			if (index < Iterables.size(positions)) {
 				// use cached mission
 				next = Iterables.get(mission.getPositions(), index);
 			} else {
@@ -700,7 +778,7 @@ public class MavlinkDatalink extends Datalink {
 				mission = this.downloadMission(false);
 				positions = mission.getPositions();
 				
-				if ((null != positions) && (index < Iterables.size(positions))) {
+				if (index < Iterables.size(positions)) {
 					next = Iterables.get(mission.getPositions(), index);
 				} else {
 					Logging.logger().warning("mavlink datalink received invalid mission index");
@@ -754,7 +832,7 @@ public class MavlinkDatalink extends Datalink {
 		if (this.isConnected() && !this.isAirborne()) {
 			Logging.logger().info("taking off...");
 			
-			this.disableAircraftSafety();
+			this.enableAircraftGuidance();
 			this.armAircraft();
 			
 			/*
@@ -883,7 +961,7 @@ public class MavlinkDatalink extends Datalink {
 	 */
 	@Override
 	public synchronized void uploadMission(Path mission) {
-		if (this.isConnected()) {
+		if (this.isConnected() && (null != mission) && (null != mission.getPositions())) {
 			Logging.logger().info("uploading mission...");
 			
 			ArrayList<Position> positions = new ArrayList<>();
@@ -992,7 +1070,7 @@ public class MavlinkDatalink extends Datalink {
 				}
 			}
 		} else {
-			Logging.logger().warning("mavlink datalink is disconnected");
+			Logging.logger().warning("mavlink datalink is disconnected or mission invalid");
 		}
 	}
 	
@@ -1049,6 +1127,8 @@ public class MavlinkDatalink extends Datalink {
 										.build();
 								this.sendCommand(cancel);
 								downloading = false;
+								positions.clear();
+								Iterables.addAll(positions, this.downloadMission(true).getPositions());
 								Logging.logger().warning("mavlink datalink failed to download mission: " + ack);
 							}
 						} else if (payload.get() instanceof MissionCount) {
@@ -1073,6 +1153,7 @@ public class MavlinkDatalink extends Datalink {
 							MissionItem item = (MissionItem) payload.get();
 							
 							if ((this.getSourceId() == item.targetSystem())
+									&& (seq == item.seq())
 									&& (MavFrame.MAV_FRAME_GLOBAL_INT == item.frame().entry())
 									&& (MavMissionType.MAV_MISSION_TYPE_MISSION
 											== item.missionType().entry())) {
@@ -1106,6 +1187,7 @@ public class MavlinkDatalink extends Datalink {
 							MissionItemInt item = (MissionItemInt) payload.get();
 							
 							if ((this.getSourceId() == item.targetSystem())
+									&& (seq == item.seq())
 									&& (MavFrame.MAV_FRAME_GLOBAL_INT == item.frame().entry())
 									&& (MavMissionType.MAV_MISSION_TYPE_MISSION
 											== item.missionType().entry())) {
@@ -1144,6 +1226,8 @@ public class MavlinkDatalink extends Datalink {
 								.build();
 						this.sendCommand(cancel);
 						downloading = false;
+						positions.clear();
+						Iterables.addAll(positions, this.downloadMission(true).getPositions());
 						Logging.logger().warning("mavlink datalink received no mission PDU");
 					}
 				
