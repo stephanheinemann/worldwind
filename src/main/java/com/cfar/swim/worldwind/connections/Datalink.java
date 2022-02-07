@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -51,7 +52,6 @@ import com.google.common.collect.Iterables;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
-import gov.nasa.worldwind.util.Logging;
 
 /**
  * Abstracts a datalink connection to connect to and communicate with aircraft.
@@ -321,16 +321,19 @@ public abstract class Datalink implements Connection {
 		if ((null != mission) && (null != mission.getPositions())) {
 			hasMission = true;
 			Iterator<? extends Position> dpi = downloaded.getPositions().iterator();
-			Iterator<? extends Position> ppi = mission.getPositions().iterator();
-			while (hasMission && dpi.hasNext() && ppi.hasNext()) {
-				PrecisionPosition dpp = new PrecisionPosition(dpi.next());
-				PrecisionPosition ppp = new PrecisionPosition(ppi.next());
-				Logging.logger().info("downloaded = " + dpp + ", prepared = " + ppp);
-				if (!dpp.equals(ppp)) {
+			Iterator<? extends Position> upi = mission.getPositions().iterator();
+			
+			while (hasMission && dpi.hasNext() && upi.hasNext()) {
+				PrecisionPosition dpp = new PrecisionPosition(
+						dpi.next(), Precision.PRECISION, 2);
+				PrecisionPosition upp = new PrecisionPosition(
+						upi.next(), Precision.PRECISION, 2);
+				
+				if (!dpp.equals(upp)) {
 					hasMission = false;
 				}
 			}
-			if (!hasMission || dpi.hasNext() || ppi.hasNext()) {
+			if (!hasMission || dpi.hasNext() || upi.hasNext()) {
 				hasMission = false;
 			}
 		
@@ -346,6 +349,30 @@ public abstract class Datalink implements Connection {
 	 * @return the next position of the mission flight path
 	 */
 	public abstract Position getNextMissionPosition();
+	
+	/**
+	 * Determines whether or not a position is the next mission position.
+	 * 
+	 * @param position the position
+	 * 
+	 * @return true if the position is the next mission position,
+	 *         false otherwise
+	 */
+	public boolean isNextMissionPosition(Position position) {
+		boolean isNext = false;
+		
+		Position next = this.getNextMissionPosition();
+		
+		if ((null != position) && (null != next)) {
+			PrecisionPosition cpp = new PrecisionPosition(
+					position, Precision.PRECISION, 2);
+			PrecisionPosition npp = new PrecisionPosition(
+					next, Precision.PRECISION, 2);
+			isNext = cpp.equals(npp);
+		}
+		
+		return isNext;
+	}
 	
 	/**
 	 * Gets the index of the next position of the mission flight path from
@@ -464,7 +491,7 @@ public abstract class Datalink implements Connection {
 			emitHeartbeat();
 			
 			// clean up old track points
-			while (!track.isEmpty() && track.peekFirst().isOld()) {
+			if (!track.isEmpty() && track.peekFirst().isOld()) {
 				track.removeFirst();
 			}
 			

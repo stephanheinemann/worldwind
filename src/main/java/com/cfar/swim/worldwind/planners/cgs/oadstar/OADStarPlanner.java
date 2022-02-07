@@ -500,29 +500,32 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 		if (this.hasDatalink() && this.getDatalink().isConnected()
 				&& this.getDatalink().isMonitoring()) {
 			AircraftTrack track = this.getDatalink().getAircraftTrack();
-			AircraftTrackPoint last = track.getLastTrackPoint();
-			Position start = this.getStart().getPrecisionPosition().getOriginal();
 			
-			// horizontal error
-			Position spos = new Position(start, 0d);
-			Position lpos = new Position(last.getPosition(), 0d);
-			double dhor = this.getEnvironment().getGreatCircleDistance(spos, lpos);
-			
-			// vertical error
-			double dver = Math.abs(start.getElevation()
-					- last.getPosition().getElevation());
-			
-			// position error
-			Angle dlat = start.getLatitude()
-					.angularDistanceTo(last.getPosition().getLatitude());
-			Angle dlon = start.getLongitude()
-					.angularDistanceTo(last.getPosition().getLongitude());
-			
-			isInTakeOffZone = (this.getMaxTakeOffError().getHorizontalError() >= dhor)
-					&& (this.getMaxTakeOffError().getVerticalError() >= dver)
-					&& (this.getMaxTakeOffError().getPositionError().getElevation() >= dver)
-					&& (0 >= dlat.compareTo(this.getMaxTakeOffError().getPositionError().getLatitude()))
-					&& (0 >= dlon.compareTo(this.getMaxTakeOffError().getPositionError().getLongitude()));
+			if (!track.isEmpty()) {
+				AircraftTrackPoint last = track.getLastTrackPoint();
+				Position start = this.getStart().getPrecisionPosition().getOriginal();
+				
+				// horizontal error
+				Position spos = new Position(start, 0d);
+				Position lpos = new Position(last.getPosition(), 0d);
+				double dhor = this.getEnvironment().getGreatCircleDistance(spos, lpos);
+				
+				// vertical error
+				double dver = Math.abs(start.getElevation()
+						- last.getPosition().getElevation());
+				
+				// position error
+				Angle dlat = start.getLatitude()
+						.angularDistanceTo(last.getPosition().getLatitude());
+				Angle dlon = start.getLongitude()
+						.angularDistanceTo(last.getPosition().getLongitude());
+				
+				isInTakeOffZone = (this.getMaxTakeOffError().getHorizontalError() >= dhor)
+						&& (this.getMaxTakeOffError().getVerticalError() >= dver)
+						&& (this.getMaxTakeOffError().getPositionError().getElevation() >= dver)
+						&& (0 >= dlat.compareTo(this.getMaxTakeOffError().getPositionError().getLatitude()))
+						&& (0 >= dlon.compareTo(this.getMaxTakeOffError().getPositionError().getLongitude()));
+			}
 		}
 		
 		return isInTakeOffZone;
@@ -545,17 +548,20 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 				&& this.getDatalink().isMonitoring()
 				&& this.getStart().hasEto()) {
 			AircraftTrack track = this.getDatalink().getAircraftTrack();
-			AircraftTrackPoint last = track.getLastTrackPoint();
 			
-			// calculate take-off window with take-off error margin
-			ZonedDateTime takeOffTime = this.getStart().getEto();
-			TimeInterval takeOffWindow = new TimeInterval(
-					takeOffTime.minus(this.getMaxTakeOffError()
-							.getTimingError().getSeconds(), ChronoUnit.SECONDS),
-					takeOffTime.plus(this.getMaxTakeOffError()
-							.getTimingError().getSeconds(), ChronoUnit.SECONDS));
-			
-			isInTakeOffWindow = takeOffWindow.contains(last.getAto());
+			if (!track.isEmpty()) {
+				AircraftTrackPoint last = track.getLastTrackPoint();
+				
+				// calculate take-off window with take-off error margin
+				ZonedDateTime takeOffTime = this.getStart().getEto();
+				TimeInterval takeOffWindow = new TimeInterval(
+						takeOffTime.minus(this.getMaxTakeOffError()
+								.getTimingError().getSeconds(), ChronoUnit.SECONDS),
+						takeOffTime.plus(this.getMaxTakeOffError()
+								.getTimingError().getSeconds(), ChronoUnit.SECONDS));
+				
+				isInTakeOffWindow = takeOffWindow.contains(last.getAto());
+			}
 		}
 		
 		return isInTakeOffWindow;
@@ -609,29 +615,32 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 		if (this.hasDatalink() && this.getDatalink().isConnected()
 				&& this.getDatalink().isMonitoring()) {
 			AircraftTrack track = this.getDatalink().getAircraftTrack();
-			AircraftTrackPoint last = track.getLastTrackPoint();
-			Position goal = this.getGoal().getPrecisionPosition().getOriginal();
 			
-			// horizontal error
-			Position gpos = new Position(goal, 0d);
-			Position lpos = new Position(last.getPosition(), 0d);
-			double dhor = this.getEnvironment().getGreatCircleDistance(gpos, lpos);
-			
-			// vertical error
-			double dver = Math.abs(goal.getElevation()
-					- last.getPosition().getElevation());
-			
-			// position error
-			Angle dlat = goal.getLatitude()
-					.angularDistanceTo(last.getPosition().getLatitude());
-			Angle dlon = goal.getLongitude()
-					.angularDistanceTo(last.getPosition().getLongitude());
-			
-			isInLandingZone = (this.getMaxLandingError().getHorizontalError() >= dhor)
-					&& (this.getMaxLandingError().getVerticalError() >= dver)
-					&& (this.getMaxLandingError().getPositionError().getElevation() >= dver)
-					&& (0 >= dlat.compareTo(this.getMaxLandingError().getPositionError().getLatitude()))
-					&& (0 >= dlon.compareTo(this.getMaxLandingError().getPositionError().getLongitude()));
+			if (!track.isEmpty()) {
+				AircraftTrackPoint last = track.getLastTrackPoint();
+				Position goal = this.getGoal().getPrecisionPosition().getOriginal();
+				
+				// horizontal error
+				Position gpos = new Position(goal, 0d);
+				Position lpos = new Position(last.getPosition(), 0d);
+				double dhor = this.getEnvironment().getGreatCircleDistance(gpos, lpos);
+				
+				// vertical error
+				double dver = Math.abs(goal.getElevation()
+						- last.getPosition().getElevation());
+				
+				// position error
+				Angle dlat = goal.getLatitude()
+						.angularDistanceTo(last.getPosition().getLatitude());
+				Angle dlon = goal.getLongitude()
+						.angularDistanceTo(last.getPosition().getLongitude());
+				
+				isInLandingZone = (this.getMaxLandingError().getHorizontalError() >= dhor)
+						&& (this.getMaxLandingError().getVerticalError() >= dver)
+						&& (this.getMaxLandingError().getPositionError().getElevation() >= dver)
+						&& (0 >= dlat.compareTo(this.getMaxLandingError().getPositionError().getLatitude()))
+						&& (0 >= dlon.compareTo(this.getMaxLandingError().getPositionError().getLongitude()));
+			}
 		}
 		
 		return isInLandingZone;
@@ -654,16 +663,19 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 				&& this.getDatalink().isMonitoring()
 				&& this.getGoal().hasEto()) {
 			AircraftTrack track = this.getDatalink().getAircraftTrack();
-			AircraftTrackPoint last = track.getLastTrackPoint();
-		
-			// calculate landing window with landing error margin
-			ZonedDateTime landingTime = this.getGoal().getEto();
-			TimeInterval landingWindow = new TimeInterval(
-					landingTime.minus(this.getMaxLandingError()
-							.getTimingError().getSeconds(), ChronoUnit.SECONDS),
-					landingTime.plus(this.getMaxLandingError()
-							.getTimingError().getSeconds(), ChronoUnit.SECONDS));
-			isInLandingWindow = landingWindow.contains(last.getAto());
+			
+			if (!track.isEmpty()) {
+				AircraftTrackPoint last = track.getLastTrackPoint();
+			
+				// calculate landing window with landing error margin
+				ZonedDateTime landingTime = this.getGoal().getEto();
+				TimeInterval landingWindow = new TimeInterval(
+						landingTime.minus(this.getMaxLandingError()
+								.getTimingError().getSeconds(), ChronoUnit.SECONDS),
+						landingTime.plus(this.getMaxLandingError()
+								.getTimingError().getSeconds(), ChronoUnit.SECONDS));
+				isInLandingWindow = landingWindow.contains(last.getAto());
+			}
 		}
 		
 		return isInLandingWindow;
@@ -741,65 +753,70 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 				&& this.getDatalink().isAirborne()) {
 			
 			AircraftTrack track = this.getDatalink().getAircraftTrack();
-			AircraftTrackPoint last = track.getLastTrackPoint();
-			AircraftTrackPoint first = track.getFirstTrackPoint();
 			
-			// ensure sufficient track points for on-track assessment
-			long maxAge = last.getMaxAge().toMillis();
-			long period = this.getDatalink().getDownlinkPeriod().toMillis();
-			long maxTrackPoints = maxAge / period;
-			
-			if (track.size() >= (maxTrackPoints - 1)) {
-				DirectedEdge leg = this.getActiveLeg().get();
-				ADStarWaypoint next = (ADStarWaypoint) leg.getSecondPosition();
+			if (!track.isEmpty()) {
+				AircraftTrackPoint last = track.getLastTrackPoint();
+				AircraftTrackPoint first = track.getFirstTrackPoint();
 				
-				// cross track check
-				ADStarWaypoint lastPosition = new ADStarWaypoint(last.getPosition());
-				double hced = leg.getHorizontalCrossEdgeDistance(lastPosition);
-				double vced = leg.getVerticalCrossEdgeDistance(lastPosition);
-				Angle ob = leg.getOpeningBearing(lastPosition);
-				Angle cb = leg.getClosingBearing(lastPosition);
-				Logging.logger().info("xtd = " + hced + ", ob = " + ob + ", cb = " + cb);
+				// ensure sufficient track points for on-track assessment
+				long maxAge = last.getMaxAge().toMillis();
+				long period = this.getDatalink().getDownlinkPeriod().toMillis();
+				long maxTrackPoints = maxAge / period;
 				
-				// ground speed check
-				Duration dt = Duration.between(first.getAto(), last.getAto());
-				double s = this.getEnvironment().getDistance(first.getPosition(), last.getPosition());
-				double gs = s / dt.getSeconds();
-				Logging.logger().info("dt = " + dt + ", s = " + s + ", gs =" + gs);
-				
-				// ETO update
-				Duration deto = Duration.ZERO;
-				if (0 != gs) {
-					double dtg = this.getEnvironment().getDistance(lastPosition, next);
-					Duration ttg = Duration.ofSeconds((long) (dtg / gs));
-					Logging.logger().info("dtg = " + dtg + ", ttg = " + ttg);
-					ZonedDateTime eto = last.getAto().plus(ttg);
-					deto = Duration.between(next.getEto(), eto).abs();
-					Logging.logger().info("eto = " + eto + ", deto = " + deto);
-				} else {
-					deto = this.getMaxTrackError().getTimingError().plusSeconds(1);
-				}
-				
-				isOnTrack = (this.getMaxTrackError().getCrossTrackError() >= hced)
-						&& (this.getMaxTrackError().getAltitudeError() >= vced)
-						&& (0 <= this.getMaxTrackError().getOpeningBearingError().compareTo(ob))
-						&& (0 <= this.getMaxTrackError().getClosingBearingError().compareTo(cb))
-						&& (0 <= this.getMaxTrackError().getTimingError().compareTo(deto));
-				
-				// determine off-track situation based on all relevant track points
-				if (isOnTrack) {
-					this.offTrackCount = 0;
-				} else {
-					this.offTrackCount++;
-					if (maxTrackPoints > this.offTrackCount) {
-						isOnTrack = true;
+				if (track.size() >= (maxTrackPoints - 1)) {
+					DirectedEdge leg = this.getActiveLeg().get();
+					ADStarWaypoint next = (ADStarWaypoint) leg.getSecondPosition();
+					
+					// cross track check
+					ADStarWaypoint lastPosition = new ADStarWaypoint(last.getPosition());
+					double hced = leg.getHorizontalCrossEdgeDistance(lastPosition);
+					double vced = leg.getVerticalCrossEdgeDistance(lastPosition);
+					Angle ob = leg.getOpeningBearing(lastPosition);
+					Angle cb = leg.getClosingBearing(lastPosition);
+					Logging.logger().info("xtd = " + hced + ", ob = " + ob + ", cb = " + cb);
+					
+					// ground speed check
+					Duration dt = Duration.between(first.getAto(), last.getAto());
+					double s = this.getEnvironment().getDistance(first.getPosition(), last.getPosition());
+					double gs = s / dt.getSeconds();
+					Logging.logger().info("dt = " + dt + ", s = " + s + ", gs =" + gs);
+					
+					// ETO update
+					Duration deto = Duration.ZERO;
+					if (0 != gs) {
+						double dtg = this.getEnvironment().getDistance(lastPosition, next);
+						Duration ttg = Duration.ofSeconds((long) (dtg / gs));
+						Logging.logger().info("dtg = " + dtg + ", ttg = " + ttg);
+						ZonedDateTime eto = last.getAto().plus(ttg);
+						deto = Duration.between(next.getEto(), eto).abs();
+						Logging.logger().info("eto = " + eto + ", deto = " + deto);
 					} else {
-						Logging.logger().warning("the aircraft is off-track...");
+						deto = this.getMaxTrackError().getTimingError().plusSeconds(1);
 					}
+					
+					isOnTrack = (this.getMaxTrackError().getCrossTrackError() >= hced)
+							&& (this.getMaxTrackError().getAltitudeError() >= vced)
+							&& (0 <= this.getMaxTrackError().getOpeningBearingError().compareTo(ob))
+							&& (0 <= this.getMaxTrackError().getClosingBearingError().compareTo(cb))
+							&& (0 <= this.getMaxTrackError().getTimingError().compareTo(deto));
+					
+					// determine off-track situation based on all relevant track points
+					if (isOnTrack) {
+						this.offTrackCount = 0;
+					} else {
+						this.offTrackCount++;
+						if (maxTrackPoints > this.offTrackCount) {
+							isOnTrack = true;
+						} else {
+							Logging.logger().warning("the aircraft is off-track...");
+						}
+					}
+					
+				} else {
+					Logging.logger().info("insufficient datalink track points = " + track.size());
 				}
-				
 			} else {
-				Logging.logger().info("insufficient track points = " + track.size());
+				Logging.logger().info("empty datalink track points...");
 			}
 		}
 		
@@ -929,15 +946,22 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			this.restore(partIndex);
 		} else {
 			// naively re-plan based on aircraft capabilities
-			AircraftTrackPoint trackPoint = this.getDatalink().getAircraftTrack().getLastTrackPoint();
-			ADStarWaypoint offTrackWaypoint = new ADStarWaypoint(trackPoint.getPosition());
+			AircraftTrack track = this.getDatalink().getAircraftTrack();
 			
-			if (!this.getStart().equals(offTrackWaypoint)) {
-				offTrackWaypoint.setEto(trackPoint.getAto());
-				this.computeEto(offTrackWaypoint, this.getStart());
-				this.setActiveLeg(Optional.of(new DirectedEdge(
-						this.getEnvironment(), offTrackWaypoint, this.getStart())));
+			if (!track.isEmpty()) {
+				AircraftTrackPoint trackPoint = track.getLastTrackPoint();
+				ADStarWaypoint offTrackWaypoint = new ADStarWaypoint(trackPoint.getPosition());
+				
+				if (!this.getStart().equals(offTrackWaypoint)) {
+					offTrackWaypoint.setEto(trackPoint.getAto());
+					this.computeEto(offTrackWaypoint, this.getStart());
+					this.setActiveLeg(Optional.of(new DirectedEdge(
+							this.getEnvironment(), offTrackWaypoint, this.getStart())));
+				} else {
+					this.setActiveLeg(Optional.empty());
+				}
 			} else {
+				Logging.logger().warning("empty datalink track...");
 				this.setActiveLeg(Optional.empty());
 			}
 			
