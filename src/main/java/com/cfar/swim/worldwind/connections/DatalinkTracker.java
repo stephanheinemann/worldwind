@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
 
@@ -39,7 +40,14 @@ import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
  *
  */
 public interface DatalinkTracker extends DatalinkCommunicator {
-
+	
+	/**
+	 * Gets the aircraft this datalink tracker is tracking.
+	 * 
+	 * @return the aircraft this datalink tracker is tracking
+	 */
+	public Aircraft getAircraft();
+	
 	/**
 	 * Gets the maximum acceptable track error of this datalink tracker to
 	 * consider the aircraft on track.
