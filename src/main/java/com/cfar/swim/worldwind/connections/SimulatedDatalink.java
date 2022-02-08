@@ -611,6 +611,112 @@ public class SimulatedDatalink extends Datalink {
 	}
 	
 	/**
+	 * Gets the airspeed of the aircraft connected via this simulated datalink.
+	 * 
+	 * @return the airspeed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getAirspeed()
+	 */
+	@Override
+	public int getAirspeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseSpeed());
+	}
+	
+	/**
+	 * Sets the airspeed of the aircraft connected via this simulated datalink.
+	 * 
+	 * @param airspeed the airspeed to be set
+	 * 
+	 * @see Datalink#setAirspeed(int)
+	 */
+	@Override
+	public void setAirspeed(int airspeed) {
+		this.iris.getCapabilities().setCruiseSpeed(airspeed);
+	}
+	
+	/**
+	 * Gets the ground speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the ground speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getGroundSpeed()
+	 */
+	@Override
+	public int getGroundSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseSpeed());
+	}
+	
+	/**
+	 * Sets the ground speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param groundSpeed the ground speed to be set
+	 * 
+	 * @see Datalink#setGroundSpeed(int)
+	 */
+	@Override
+	public void setGroundSpeed(int groundSpeed) {
+		this.iris.getCapabilities().setCruiseSpeed(groundSpeed);
+	}
+	
+	/**
+	 * Gets the climb speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the climb speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getClimbSpeed()
+	 */
+	@Override
+	public int getClimbSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseClimbSpeed());
+	}
+	
+	/**
+	 * Sets the climb speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param climbSpeed the climb speed to be set
+	 * 
+	 * @see Datalink#setClimbSpeed(int)
+	 */
+	@Override
+	public void setClimbSpeed(int climbSpeed) {
+		this.iris.getCapabilities().setCruiseClimbSpeed(climbSpeed);
+	}
+	
+	/**
+	 * Gets the descent speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the descent speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getDescentSpeed()
+	 */
+	@Override
+	public int getDescentSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseDescentSpeed());
+	}
+	
+	/**
+	 * Sets the descent speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param descentSpeed the descent speed to be set
+	 * 
+	 * @see Datalink#setDescentSpeed(int)
+	 */
+	@Override
+	public void setDescentSpeed(int descentSpeed) {
+		this.iris.getCapabilities().setCruiseDescentSpeed(descentSpeed);
+	}
+	
+	/**
 	 * Gets the maximum track error of this simulated datalink.
 	 * 
 	 * @return the maximum track error of this simulated datalink

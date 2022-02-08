@@ -658,6 +658,7 @@ public class DronekitDatalink extends Datalink {
 	 * 
 	 * @see Datalink#isAirborne()
 	 */
+	@Override
 	public boolean isAirborne() {
 		boolean isAirborne = false;
 		
@@ -670,6 +671,112 @@ public class DronekitDatalink extends Datalink {
 		}
 		
 		return isAirborne;
+	}
+	
+	/**
+	 * Gets the airspeed of the aircraft connected via this dronekit datalink.
+	 * 
+	 * @return the airspeed of the aircraft connected via this dronekit
+	 *         datalink, -1 otherwise
+	 * 
+	 * @see Datalink#getAirspeed()
+	 */
+	@Override
+	public int getAirspeed() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Sets the airspeed of the aircraft connected via this dronekit datalink.
+	 * 
+	 * @param airspeed the airspeed to be set
+	 * 
+	 * @see Datalink#setAirspeed(int)
+	 */
+	@Override
+	public void setAirspeed(int airspeed) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Gets the ground speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @return the ground speed of the aircraft connected via this dronekit
+	 *         datalink, -1 otherwise
+	 * 
+	 * @see Datalink#getGroundSpeed()
+	 */
+	@Override
+	public int getGroundSpeed() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Sets the ground speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @param groundSpeed the ground speed to be set
+	 * 
+	 * @see Datalink#setGroundSpeed(int)
+	 */
+	@Override
+	public void setGroundSpeed(int groundSpeed) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Gets the climb speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @return the climb speed of the aircraft connected via this dronekit
+	 *         datalink, 0 otherwise
+	 * 
+	 * @see Datalink#getClimbSpeed()
+	 */
+	@Override
+	public int getClimbSpeed() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Sets the climb speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @param climbSpeed the climb speed to be set
+	 * 
+	 * @see Datalink#setClimbSpeed(int)
+	 */
+	@Override
+	public void setClimbSpeed(int climbSpeed) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Gets the descent speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @return the descent speed of the aircraft connected via this dronekit
+	 *         datalink, 0 otherwise
+	 * 
+	 * @see Datalink#getDescentSpeed()
+	 */
+	@Override
+	public int getDescentSpeed() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Sets the descent speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @param descentSpeed the descent speed to be set
+	 * 
+	 * @see Datalink#setDescentSpeed(int)
+	 */
+	@Override
+	public void setDescentSpeed(int descentSpeed) {
+		throw new UnsupportedOperationException();
 	}
 	
 	/**

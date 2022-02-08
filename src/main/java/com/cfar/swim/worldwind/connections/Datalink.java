@@ -325,9 +325,9 @@ public abstract class Datalink implements Connection {
 			
 			while (hasMission && dpi.hasNext() && upi.hasNext()) {
 				PrecisionPosition dpp = new PrecisionPosition(
-						dpi.next(), Precision.PRECISION, 2);
+						dpi.next(), Precision.DECA_MICRO, Precision.CENTI);
 				PrecisionPosition upp = new PrecisionPosition(
-						upi.next(), Precision.PRECISION, 2);
+						upi.next(), Precision.DECA_MICRO, Precision.CENTI);
 				
 				if (!dpp.equals(upp)) {
 					hasMission = false;
@@ -365,9 +365,9 @@ public abstract class Datalink implements Connection {
 		
 		if ((null != position) && (null != next)) {
 			PrecisionPosition cpp = new PrecisionPosition(
-					position, Precision.PRECISION, 2);
+					position, Precision.DECA_MICRO, Precision.CENTI);
 			PrecisionPosition npp = new PrecisionPosition(
-					next, Precision.PRECISION, 2);
+					next, Precision.DECA_MICRO, Precision.CENTI);
 			isNext = cpp.equals(npp);
 		}
 		
@@ -406,12 +406,65 @@ public abstract class Datalink implements Connection {
 	 */
 	public abstract boolean isAirborne();
 	
+	/**
+	 * Gets the airspeed of the aircraft connected via this datalink.
+	 * 
+	 * @return the airspeed of the aircraft connected via this datalink
+	 */
+	public abstract int getAirspeed();
+	
+	/**
+	 * Sets the airspeed of the aircraft connected via this datalink.
+	 * 
+	 * @param airspeed the airspeed to be set
+	 */
+	public abstract void setAirspeed(int airspeed);
+	
+	/**
+	 * Gets the ground speed of the aircraft connected via this datalink.
+	 * 
+	 * @return the ground speed of the aircraft connected via this datalink
+	 */
+	public abstract int getGroundSpeed();
+	
+	/**
+	 * Sets the ground speed of the aircraft connected via this datalink.
+	 * 
+	 * @param groundSpeed the ground speed to be set
+	 */
+	public abstract void setGroundSpeed(int groundSpeed);
+	
+	/**
+	 * Gets the climb speed of the aircraft connected via this datalink.
+	 * 
+	 * @return the climb speed of the aircraft connected via this datalink
+	 */
+	public abstract int getClimbSpeed();
+	
+	/**
+	 * Sets the climb speed of the aircraft connected via this datalink.
+	 * 
+	 * @param climbSpeed the climb speed to be set
+	 */
+	public abstract void setClimbSpeed(int climbSpeed);
+	
+	/**
+	 * Gets the descent speed of the aircraft connected via this datalink.
+	 * 
+	 * @return the descent speed of the aircraft connected via this datalink
+	 */
+	public abstract int getDescentSpeed();
+	
+	/**
+	 * Sets the descent speed of the aircraft connected via this datalink.
+	 * 
+	 * @param descentSpeed the descent speed to be set
+	 */
+	public abstract void setDescentSpeed(int descentSpeed);
+	
 	// TODO: consider Optional framework for null returning methods
 	// TODO: take-off specification / setup
-	// flight envelope (initial altitude, vertical speed, horizontal speed)
-	// isAutonomous (mode)
-	// getGroundSpeed
-	// getAirSpeed (True, Equivalent, Calibrated, Indicated)
+	// TODO: flight envelope (initial altitude, vertical speed, horizontal speed)
 	// TODO: have Scenario listen for track changes towards the next position
 	// if airborne and update ATO accordingly
 	

@@ -125,7 +125,7 @@ public class MissionLoader implements PlanRevisionListener {
 							+ ": uploading mission: " + trajectory);
 					this.planner.getDatalink().uploadMission(trajectory);
 					// confirm the consistent upload
-					if (!this.planner.getDatalink().hasMission(trajectory, true/*false*/)) {
+					if (!this.planner.getDatalink().hasMission(trajectory, true)) {
 						Logging.logger().severe(this.planner.getId()
 								+ ": uploaded mission is not consistent...");
 					}

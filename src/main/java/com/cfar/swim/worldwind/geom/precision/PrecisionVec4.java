@@ -42,7 +42,7 @@ public class PrecisionVec4 extends Vec4 implements Precision {
 	/**
 	 * the precision of this precision vector
 	 */
-	private int precision = Precision.PRECISION;
+	private int precision = Precision.DECA_MICRO;
 	
 	/**
 	 * the original vector of this precision vector
@@ -55,15 +55,16 @@ public class PrecisionVec4 extends Vec4 implements Precision {
 	 * 
 	 * @param vector the vector
 	 * 
-	 * @see Precision#PRECISION
+	 * @see PrecisionDouble
+	 * @see Vec4
 	 */
 	public PrecisionVec4(Vec4 vector) {
 		// TODO: the correct default precision should probably be a function (percentage) of the value
 		super(
-			new PrecisionDouble(vector.x, Precision.PRECISION).doubleValue(),
-			new PrecisionDouble(vector.y, Precision.PRECISION).doubleValue(),
-			new PrecisionDouble(vector.z, Precision.PRECISION).doubleValue(),
-			new PrecisionDouble(vector.w, Precision.PRECISION).doubleValue());
+			new PrecisionDouble(vector.x, Precision.DECA_MICRO).doubleValue(),
+			new PrecisionDouble(vector.y, Precision.DECA_MICRO).doubleValue(),
+			new PrecisionDouble(vector.z, Precision.DECA_MICRO).doubleValue(),
+			new PrecisionDouble(vector.w, Precision.DECA_MICRO).doubleValue());
 			this.original = vector;
 	}
 	
@@ -73,6 +74,9 @@ public class PrecisionVec4 extends Vec4 implements Precision {
 	 * 
 	 * @param vector the vector
 	 * @param precision the precision
+	 * 
+	 * @see PrecisionDouble
+	 * @see Vec4
 	 */
 	public PrecisionVec4(Vec4 vector, int precision) {
 		super(

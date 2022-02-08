@@ -119,11 +119,11 @@ public class PlanningGridTest {
         PlanningGrid planningGrid = new PlanningGrid(cube, 10, 5, 5);
         planningGrid.setGlobe(new Earth());
         assertEquals(planningGrid.getBaseCost(),
-        		planningGrid.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
+        		planningGrid.getCost(ZonedDateTime.now()), PrecisionDouble.UNIT_DECA_MICRO);
         
         PlanningGrid child = planningGrid.getChild(0, 0, 0);
         assertEquals(child.getBaseCost(),
-        		child.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
+        		child.getCost(ZonedDateTime.now()), PrecisionDouble.UNIT_DECA_MICRO);
         assertEquals(child.getBaseCost() / child.getNormalizer(),
         		child.getLegCost(
         				child.getCornerPositions()[0],
@@ -131,7 +131,7 @@ public class PlanningGridTest {
         				ZonedDateTime.now().minusYears(10),
         				ZonedDateTime.now().plusYears(10),
         				CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE),
-        		PrecisionDouble.EPSILON);
+        		PrecisionDouble.UNIT_DECA_MICRO);
         
         child.addCostInterval(new CostInterval("obstacle1",
         		ZonedDateTime.now(), ZonedDateTime.now(), 50d));
@@ -142,7 +142,7 @@ public class PlanningGridTest {
         				ZonedDateTime.now().minusYears(10),
         				ZonedDateTime.now().plusYears(10),
         				CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE),
-        		PrecisionDouble.EPSILON);
+        		PrecisionDouble.UNIT_DECA_MICRO);
         assertEquals(child.getBaseCost() / child.getNormalizer(),
         		child.getLegCost(
         				child.getCornerPositions()[0],
@@ -150,7 +150,7 @@ public class PlanningGridTest {
         				ZonedDateTime.now().minusYears(10),
         				ZonedDateTime.now().plusYears(10),
         				CostPolicy.AVERAGE, RiskPolicy.SAFETY),
-        		PrecisionDouble.EPSILON);
+        		PrecisionDouble.UNIT_DECA_MICRO);
         assertEquals(child.getBaseCost() + 50d / child.getNormalizer(),
         		child.getLegCost(
         				child.getCornerPositions()[0],
@@ -172,7 +172,7 @@ public class PlanningGridTest {
         				ZonedDateTime.now().minusYears(10),
         				ZonedDateTime.now().plusYears(10),
         				CostPolicy.AVERAGE, RiskPolicy.EFFECTIVENESS),
-        		PrecisionDouble.EPSILON);
+        		PrecisionDouble.UNIT_DECA_MICRO);
         assertEquals(child.getBaseCost() + 80d / child.getNormalizer(),
         		child.getLegCost(
         				child.getCornerPositions()[0],
@@ -185,7 +185,7 @@ public class PlanningGridTest {
         		child.getNormalizedDistance(
         				child.getCornerPositions()[0],
         				child.getCornerPositions()[1]),
-        		PrecisionDouble.EPSILON);
+        		PrecisionDouble.UNIT_DECA_MICRO);
         
         child.addChildren(2);
         assertEquals(true, child.hasChildren());
@@ -196,7 +196,7 @@ public class PlanningGridTest {
         		grandChild.getNormalizedDistance(
         				grandChild.getCornerPositions()[0],
         				grandChild.getCornerPositions()[1]),
-        		PrecisionDouble.EPSILON);
+        		PrecisionDouble.UNIT_DECA_MICRO);
         
 	}
 

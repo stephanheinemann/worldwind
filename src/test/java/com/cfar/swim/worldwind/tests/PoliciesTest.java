@@ -39,6 +39,7 @@ import org.junit.Test;
 import com.cfar.swim.worldwind.environments.Edge;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.geom.Box;
+import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
@@ -80,9 +81,9 @@ public class PoliciesTest {
 		double minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		double avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		double maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost(), minCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost(), avgCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost(), maxCost, PrecisionDouble.EPSILON);
+		assertEquals(continuum.getBaseCost(), minCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost(), avgCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost(), maxCost, PrecisionDouble.UNIT_DECA_MICRO);
 		
 		// enclosing costs
 		CostInterval matchingInterval = new CostInterval("matching", firstEto, secondEto, 10d);
@@ -90,9 +91,9 @@ public class PoliciesTest {
 		minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost() + 10d, minCost, 1E-4d);
-		assertEquals(continuum.getBaseCost() + 10d, avgCost, 1E-4d);
-		assertEquals(continuum.getBaseCost() + 10d, maxCost, 1E-4d);
+		assertEquals(continuum.getBaseCost() + 10d, minCost, Precision.UNIT_HECTO_MICRO);
+		assertEquals(continuum.getBaseCost() + 10d, avgCost, Precision.UNIT_HECTO_MICRO);
+		assertEquals(continuum.getBaseCost() + 10d, maxCost, Precision.UNIT_HECTO_MICRO);
 		
 		CostInterval enclosingInterval = new CostInterval("enclosing",
 				firstEto.minusHours(1l), secondEto.plusHours(1l), 10d);
@@ -100,9 +101,9 @@ public class PoliciesTest {
 		minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost() + 20d, minCost, 1E-4d);
-		assertEquals(continuum.getBaseCost() + 20d, avgCost, 1E-4d);
-		assertEquals(continuum.getBaseCost() + 20d, maxCost, 1E-4d);
+		assertEquals(continuum.getBaseCost() + 20d, minCost, Precision.UNIT_HECTO_MICRO);
+		assertEquals(continuum.getBaseCost() + 20d, avgCost, Precision.UNIT_HECTO_MICRO);
+		assertEquals(continuum.getBaseCost() + 20d, maxCost, Precision.UNIT_HECTO_MICRO);
 		
 		// overlapping costs
 		CostInterval overlappingInterval1 = new CostInterval("overlapping1",
@@ -111,9 +112,9 @@ public class PoliciesTest {
 		minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost() + 20d, minCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost() + 25d, avgCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost() + 30d, maxCost, PrecisionDouble.EPSILON);
+		assertEquals(continuum.getBaseCost() + 20d, minCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost() + 25d, avgCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost() + 30d, maxCost, PrecisionDouble.UNIT_DECA_MICRO);
 		
 		CostInterval overlappingInterval2 = new CostInterval("overlapping2",
 				firstEto.plusHours(5l), secondEto.plusHours(1l), 10d);
@@ -121,9 +122,9 @@ public class PoliciesTest {
 		minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost() + 30d, minCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost() + 30d, avgCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost() + 30d, maxCost, PrecisionDouble.EPSILON);
+		assertEquals(continuum.getBaseCost() + 30d, minCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost() + 30d, avgCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost() + 30d, maxCost, PrecisionDouble.UNIT_DECA_MICRO);
 		
 		CostInterval overlappingInterval3 = new CostInterval("overlapping3",
 				firstEto.plusMinutes(150l), secondEto.minusMinutes(150l), 10d);
@@ -131,9 +132,9 @@ public class PoliciesTest {
 		minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost() + 30d, minCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost() + 35d, avgCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost() + 40d, maxCost, PrecisionDouble.EPSILON);
+		assertEquals(continuum.getBaseCost() + 30d, minCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost() + 35d, avgCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost() + 40d, maxCost, PrecisionDouble.UNIT_DECA_MICRO);
 		
 		CostInterval overlappingInterval4 = new CostInterval("overlapping4",
 				firstEto.plusHours(1l), secondEto.minusHours(5l), 10d);
@@ -141,9 +142,9 @@ public class PoliciesTest {
 		minCost = edge.getCost(firstEto, secondEto, CostPolicy.MINIMUM, RiskPolicy.IGNORANCE);
 		avgCost = edge.getCost(firstEto, secondEto, CostPolicy.AVERAGE, RiskPolicy.IGNORANCE);
 		maxCost = edge.getCost(firstEto, secondEto, CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE);
-		assertEquals(continuum.getBaseCost() + 30d, minCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost() + 39d, avgCost, PrecisionDouble.EPSILON);
-		assertEquals(continuum.getBaseCost() + 50d, maxCost, PrecisionDouble.EPSILON);
+		assertEquals(continuum.getBaseCost() + 30d, minCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost() + 39d, avgCost, PrecisionDouble.UNIT_DECA_MICRO);
+		assertEquals(continuum.getBaseCost() + 50d, maxCost, PrecisionDouble.UNIT_DECA_MICRO);
 	
 		// TODO: grid voxels
 	}

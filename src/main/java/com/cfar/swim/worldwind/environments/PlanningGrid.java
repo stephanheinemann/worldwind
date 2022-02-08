@@ -54,6 +54,7 @@ import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.CubicGrid;
 import com.cfar.swim.worldwind.geom.RegularGrid;
+import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
@@ -648,13 +649,13 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 			} else {
 				Duration duration = Duration.between(start, end);
 				double intervalSeconds = duration.getSeconds()
-						+ (duration.getNano() * 1E-9d);
+						+ (duration.getNano() * Precision.UNIT_NANO);
 				double subIntervalSeconds;
 				for (CostInterval subCostInterval : subCostIntervals) {
 					duration = Duration.between(subCostInterval.getLower(),
 							subCostInterval.getUpper());
 					subIntervalSeconds = duration.getSeconds()
-							+ (duration.getNano() * 1E-9d);
+							+ (duration.getNano() * Precision.UNIT_NANO);
 					cost += subCostInterval.getCost()
 							* subIntervalSeconds / intervalSeconds;
 				}

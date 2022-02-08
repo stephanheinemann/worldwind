@@ -195,7 +195,7 @@ public class BoxTest {
         Vec4 hd = ld.multiply3(0.5d);
         Vec4 nhd = hd.getNegative3();
         Vec4 gd = box.getRAxis().add3(box.getSAxis()).add3(box.getTAxis());
-        assertEquals(ld.getLength3(), box.getDiameter(), PrecisionDouble.EPSILON);
+        assertEquals(ld.getLength3(), box.getDiameter(), PrecisionDouble.UNIT_DECA_MICRO);
         assertEquals(new PrecisionVec4(box.getOrigin().add3(gd)), new PrecisionVec4(corners[6]));
         assertEquals(new PrecisionVec4(Vec4.ZERO), new PrecisionVec4(box.transformModelToBoxCenter(box.getCenter())));
         assertEquals(new PrecisionVec4(nhd) , new PrecisionVec4(box.transformModelToBoxCenter(box.getOrigin())));

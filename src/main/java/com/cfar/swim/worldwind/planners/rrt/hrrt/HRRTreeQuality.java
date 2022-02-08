@@ -192,7 +192,7 @@ public class HRRTreeQuality implements ToDoubleFunction<HRRTreeWaypoint> {
 		double quality = 1d;
 		
 		// prevent numerical imprecision
-		if (Math.abs(diff) > PrecisionDouble.EPSILON) {
+		if (Math.abs(diff) > PrecisionDouble.UNIT_DECA_MICRO) {
 			if (this.isOriginal()) {
 				// original implementation of HRRT
 				relativeCost = (waypoint.getF() - this.optimalCost)

@@ -40,12 +40,13 @@ import java.math.RoundingMode;
  */
 public class PrecisionDouble extends BigDecimal implements Precision {
 	
+	/** the default serial version identifier  */
 	private static final long serialVersionUID = 1L;
 	
 	/**
 	 * the precision of this precision double
 	 */
-	private int precision = Precision.PRECISION;
+	private int precision = Precision.DECA_MICRO;
 	
 	/**
 	 * the original double of this precision double
@@ -58,11 +59,12 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 * 
 	 * @param d the double value
 	 * 
-	 * @see Precision#PRECISION
+	 * @see Precision
+	 * @see BigDecimal
 	 */
 	public PrecisionDouble(double d) {
 		// TODO: the correct default precision should probably be a function (percentage) of the value
-		this(new BigDecimal(d).setScale(Precision.PRECISION, RoundingMode.HALF_UP));
+		this(new BigDecimal(d).setScale(Precision.DECA_MICRO, RoundingMode.HALF_UP));
 		this.original = d;
 	}
 	
@@ -72,6 +74,9 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 * 
 	 * @param d the double value
 	 * @param precision the precision
+	 * 
+	 * @see Precision
+	 * @see BigDecimal
 	 */
 	public PrecisionDouble(double d, int precision) {
 		this(new BigDecimal(d).setScale(precision, RoundingMode.HALF_UP));
@@ -83,6 +88,9 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 * Construct a new precision double from a big decimal (base class).
 	 * 
 	 * @param d the big decimal
+	 * 
+	 * @see Precision
+	 * @see BigDecimal
 	 */
 	protected PrecisionDouble(BigDecimal d) {
 		super(d.doubleValue());

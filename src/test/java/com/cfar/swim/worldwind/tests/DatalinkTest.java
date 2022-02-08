@@ -123,37 +123,9 @@ public class DatalinkTest {
 	 * 
 	 * @throws InterruptedException 
 	 */
-	//@Ignore
+	@Ignore
 	@Test
 	public void testMavlink() throws InterruptedException {
-		/*int a = 29;
-		int b = 157;
-		EnumValue<MavMode> modeA = EnumValue.create(a);
-		EnumValue<MavMode> modeB = EnumValue.create(b);
-		
-		modeA.flagsEnabled(MavMode.MAV_MODE_AUTO_ARMED);
-		modeA.flagsEnabled(MavMode.MAV_MODE_AUTO_DISARMED);
-		modeA.flagsEnabled(MavMode.MAV_MODE_GUIDED_ARMED);
-		modeA.flagsEnabled(MavMode.MAV_MODE_GUIDED_DISARMED);
-		modeA.flagsEnabled(MavMode.MAV_MODE_MANUAL_ARMED);
-		modeA.flagsEnabled(MavMode.MAV_MODE_MANUAL_DISARMED);
-		modeA.flagsEnabled(MavMode.MAV_MODE_PREFLIGHT);
-		modeA.flagsEnabled(MavMode.MAV_MODE_STABILIZE_ARMED);
-		modeA.flagsEnabled(MavMode.MAV_MODE_TEST_ARMED);
-		modeA.flagsEnabled(MavMode.MAV_MODE_TEST_DISARMED);
-		
-		modeB.flagsEnabled(MavMode.MAV_MODE_AUTO_ARMED);
-		modeB.flagsEnabled(MavMode.MAV_MODE_AUTO_DISARMED);
-		modeB.flagsEnabled(MavMode.MAV_MODE_GUIDED_ARMED);
-		modeB.flagsEnabled(MavMode.MAV_MODE_GUIDED_DISARMED);
-		modeB.flagsEnabled(MavMode.MAV_MODE_MANUAL_ARMED);
-		modeB.flagsEnabled(MavMode.MAV_MODE_MANUAL_DISARMED);
-		modeB.flagsEnabled(MavMode.MAV_MODE_PREFLIGHT);
-		modeB.flagsEnabled(MavMode.MAV_MODE_STABILIZE_ARMED);
-		modeB.flagsEnabled(MavMode.MAV_MODE_TEST_ARMED);
-		modeB.flagsEnabled(MavMode.MAV_MODE_TEST_DISARMED);
-		*/
-		
 		Specification<Datalink> datalinkSpecification = new Specification<>(
 				Specification.CONNECTION_DATALINK_MAVLINK_ID,
 				new MavlinkDatalinkProperties());
@@ -200,6 +172,9 @@ public class DatalinkTest {
 			Logging.logger().info("not airborne...");
 		*/
 		//Logging.logger().info("next mission position = " + datalink.getNextMissionPosition());
+		datalink.setGroundSpeed(1);
+		datalink.setClimbSpeed(1);
+		datalink.setDescentSpeed(1);
 		
 		datalink.disconnect();
 		assertFalse(datalink.isConnected());

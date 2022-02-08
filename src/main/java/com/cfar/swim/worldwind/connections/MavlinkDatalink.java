@@ -43,6 +43,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 
+import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.MavlinkDatalinkProperties;
@@ -86,6 +87,7 @@ import io.dronefleet.mavlink.common.MissionRequestList;
 import io.dronefleet.mavlink.common.Ping;
 import io.dronefleet.mavlink.common.SetMode;
 import io.dronefleet.mavlink.common.SystemTime;
+import io.dronefleet.mavlink.common.VfrHud;
 import io.dronefleet.mavlink.util.EnumValue;
 
 /**
@@ -421,7 +423,7 @@ public class MavlinkDatalink extends Datalink {
 					.targetSystem(0)
 					.seq(0l)
 					.timeUsec(BigInteger.valueOf((long)
-							(pingTime.toInstant().toEpochMilli() * 1E3d)))
+							(pingTime.toInstant().toEpochMilli() / Precision.UNIT_MILLI)))
 					.build();
 			this.sendCommand(ping);
 			
@@ -488,6 +490,7 @@ public class MavlinkDatalink extends Datalink {
 	 * 
 	 * @see Datalink#getSystemTime()
 	 */
+	@Override
 	public synchronized ZonedDateTime getSystemTime() {
 		ZonedDateTime time = null;
 		
@@ -499,7 +502,7 @@ public class MavlinkDatalink extends Datalink {
 			if (payload.isPresent()) {
 				SystemTime systime = (SystemTime) payload.get();
 				Instant instant = Instant.ofEpochMilli(Math.round(
-						systime.timeUnixUsec().longValue() * 1E-3d));
+						systime.timeUnixUsec().longValue() * Precision.UNIT_MILLI));
 				time = ZonedDateTime.ofInstant(instant, ZoneOffset.UTC);
 			} else {
 				Logging.logger().warning("mavlink datalink received no system time");
@@ -629,8 +632,8 @@ public class MavlinkDatalink extends Datalink {
 		if (this.isConnected()) {
 			Logging.logger().info("setting mode " + aircraftMode + "...");
 			CommandLong mode = CommandLong.builder()
-					.command(MavCmd.MAV_CMD_DO_SET_MODE)
 					.targetSystem(this.getTargetId())
+					.command(MavCmd.MAV_CMD_DO_SET_MODE)
 					.param1(MavMode.valueOf(aircraftMode).ordinal())
 					.build();
 			this.sendCommand(mode);
@@ -648,6 +651,7 @@ public class MavlinkDatalink extends Datalink {
 	 * 
 	 * @see Datalink#getAircraftAttitude()
 	 */
+	@Override
 	public synchronized AircraftAttitude getAircraftAttitude() {
 		AircraftAttitude attitude = null;
 		
@@ -673,7 +677,7 @@ public class MavlinkDatalink extends Datalink {
 	}
 	
 	/**
-	 * Gets the aircraft pitch via this datalink.
+	 * Gets the aircraft pitch via this mavlink datalink.
 	 * 
 	 * @return the aircraft pitch obtained via this mavlink datalink,
 	 *         null otherwise
@@ -715,7 +719,7 @@ public class MavlinkDatalink extends Datalink {
 	/**
 	 * Gets the aircraft yaw via this mavlink datalink.
 	 * 
-	 * @return the aircraft yaw obtained via this datalink, null otherise
+	 * @return the aircraft yaw obtained via this mavlink datalink, null otherise
 	 * 
 	 * @see Datalink#getAircraftYaw()
 	 */
@@ -750,7 +754,7 @@ public class MavlinkDatalink extends Datalink {
 			
 			if (payload.isPresent()) {
 				heading = Angle.fromDegrees(
-						((GlobalPositionInt) payload.get()).hdg() * 1E-2d);
+						((GlobalPositionInt) payload.get()).hdg() * Precision.UNIT_CENTI);
 			} else {
 				Logging.logger().warning("mavlink datlink received no heading");
 			}
@@ -781,9 +785,9 @@ public class MavlinkDatalink extends Datalink {
 			if (payload.isPresent()) {
 				GlobalPositionInt gpi = (GlobalPositionInt) payload.get();
 				position = Position.fromDegrees(
-						gpi.lat() * 1E-7d,
-						gpi.lon() * 1E-7d,
-						gpi.alt() * 1E-3d);
+						gpi.lat() * Precision.UNIT_HECTO_NANO,
+						gpi.lon() * Precision.UNIT_HECTO_NANO,
+						gpi.alt() * Precision.UNIT_MILLI);
 			} else {
 				Logging.logger().warning("mavlink datlink received no position");
 			}
@@ -876,8 +880,8 @@ public class MavlinkDatalink extends Datalink {
 			Logging.logger().info("arming...");
 			
 			CommandInt arm = CommandInt.builder()
-				.command(MavCmd.MAV_CMD_COMPONENT_ARM_DISARM)
 				.targetSystem(this.getTargetId())
+				.command(MavCmd.MAV_CMD_COMPONENT_ARM_DISARM)
 				.param1(1f) // arm
 				.param2(0f) // perform safety checks
 				.build();
@@ -897,8 +901,8 @@ public class MavlinkDatalink extends Datalink {
 	public synchronized void disarmAircraft() {
 		if (this.isConnected() && this.isAircraftArmed() && !this.isAirborne()) {
 			CommandInt disarm = CommandInt.builder()
-					.command(MavCmd.MAV_CMD_COMPONENT_ARM_DISARM)
 					.targetSystem(this.getTargetId())
+					.command(MavCmd.MAV_CMD_COMPONENT_ARM_DISARM)
 					.param1(0f) // disarm
 					.param2(0f) // perform safety checks
 					.build();
@@ -1130,6 +1134,220 @@ public class MavlinkDatalink extends Datalink {
 	}
 	
 	/**
+	 * Gets the airspeed of the aircraft connected via this mavlink datalink.
+	 * 
+	 * @return the airspeed of the aircraft connected via this mavlink
+	 *         datalink, -1 otherwise
+	 * 
+	 * @see Datalink#getAirspeed()
+	 */
+	@Override
+	public int getAirspeed() {
+		int airspeed = -1;
+		
+		if (this.isConnected()) {
+			Optional<?> payload = this.receiveMessage(
+					Collections.singleton(VfrHud.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
+			
+			if (payload.isPresent()) {
+				airspeed = Math.round(((VfrHud) payload.get()).airspeed());
+			} else {
+				Logging.logger().warning("mavlink datalink received no airspeed");
+			}
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected");
+		}
+		
+		return airspeed;
+	}
+	
+	/**
+	 * Sets the airspeed of the aircraft connected via this mavlink datalink.
+	 * 
+	 * @param airspeed the airspeed to be set
+	 * 
+	 * @see Datalink#setAirspeed(int)
+	 */
+	@Override
+	public void setAirspeed(int airspeed) {
+		if (this.isConnected() && (-1 < airspeed)) {
+			CommandLong setAirspeed = CommandLong.builder()
+					.targetSystem(this.getTargetId())
+					.command(MavCmd.MAV_CMD_DO_CHANGE_SPEED)
+					.param1(0f) // airspeed
+					.param2(airspeed)
+					.build();
+			this.sendCommand(setAirspeed);
+			this.receiveCommandAck(MavCmd.MAV_CMD_DO_CHANGE_SPEED);
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected or airspeed invalid");
+		}
+	}
+	
+	/**
+	 * Gets the ground speed of the aircraft connected via this mavlink
+	 * datalink.
+	 * 
+	 * @return the ground speed of the aircraft connected via this mavlink
+	 *         datalink, -1 otherwise
+	 * 
+	 * @see Datalink#getGroundSpeed()
+	 */
+	@Override
+	public int getGroundSpeed() {
+		int groundSpeed = -1;
+		
+		if (this.isConnected()) {
+			Optional<?> payload = this.receiveMessage(
+					Collections.singleton(VfrHud.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
+			
+			if (payload.isPresent()) {
+				groundSpeed = Math.round(((VfrHud) payload.get()).groundspeed());
+			} else {
+				Logging.logger().warning("mavlink datalink received no ground speed");
+			}
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected");
+		}
+		
+		return groundSpeed;
+	}
+	
+	/**
+	 * Sets the ground speed of the aircraft connected via this mavlink
+	 * datalink.
+	 * 
+	 * @param groundSpeed the ground speed to be set
+	 * 
+	 * @see Datalink#setGroundSpeed(int)
+	 */
+	@Override
+	public void setGroundSpeed(int groundSpeed) {
+		if (this.isConnected() && (-1 < groundSpeed)) {
+			CommandLong setGroundSpeed = CommandLong.builder()
+					.targetSystem(this.getTargetId())
+					.command(MavCmd.MAV_CMD_DO_CHANGE_SPEED)
+					.param1(1f) // ground speed
+					.param2(groundSpeed)
+					.build();
+			this.sendCommand(setGroundSpeed);
+			this.receiveCommandAck(MavCmd.MAV_CMD_DO_CHANGE_SPEED);
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected or ground speed invalid");
+		}
+	}
+	
+	/**
+	 * Gets the climb speed of the aircraft connected via this mavlink
+	 * datalink.
+	 * 
+	 * @return the climb speed of the aircraft connected via this mavlink
+	 *         datalink, 0 otherwise
+	 * 
+	 * @see Datalink#getClimbSpeed()
+	 */
+	@Override
+	public int getClimbSpeed() {
+		int climbSpeed = 0;
+		
+		if (this.isConnected()) {
+			Optional<?> payload = this.receiveMessage(
+					Collections.singleton(VfrHud.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
+			
+			if (payload.isPresent()) {
+				climbSpeed = Math.round(((VfrHud) payload.get()).climb());
+			} else {
+				Logging.logger().warning("mavlink datalink received no climb speed");
+			}
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected");
+		}
+		
+		return climbSpeed;
+	}
+	
+	/**
+	 * Sets the climb speed of the aircraft connected via this mavlink
+	 * datalink.
+	 * 
+	 * @param climbSpeed the climb speed to be set
+	 * 
+	 * @see Datalink#setClimbSpeed(int)
+	 */
+	@Override
+	public void setClimbSpeed(int climbSpeed) {
+		if (this.isConnected() && (-1 < climbSpeed)) {
+			CommandLong setClimbSpeed = CommandLong.builder()
+					.targetSystem(this.getTargetId())
+					.command(MavCmd.MAV_CMD_DO_CHANGE_SPEED)
+					.param1(2f) // climb speed
+					.param2(climbSpeed)
+					.build();
+			this.sendCommand(setClimbSpeed);
+			this.receiveCommandAck(MavCmd.MAV_CMD_DO_CHANGE_SPEED);
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected or climb speed invalid");
+		}
+	}
+	
+	/**
+	 * Gets the descent speed of the aircraft connected via this mavlink
+	 * datalink.
+	 * 
+	 * @return the descent speed of the aircraft connected via this mavlink
+	 *         datalink, 0 otherwise
+	 * 
+	 * @see Datalink#getDescentSpeed()
+	 */
+	@Override
+	public int getDescentSpeed() {
+		int descentSpeed = 0;
+		
+		if (this.isConnected()) {
+			Optional<?> payload = this.receiveMessage(
+					Collections.singleton(VfrHud.class), false, true,
+					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
+			
+			if (payload.isPresent()) {
+				descentSpeed = -Math.round(((VfrHud) payload.get()).climb());
+			} else {
+				Logging.logger().warning("mavlink datalink received no airspeed");
+			}
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected");
+		}
+		
+		return descentSpeed;
+	}
+	
+	/**
+	 * Sets the descent speed of the aircraft connected via this mavlink
+	 * datalink.
+	 * 
+	 * @param descentSpeed the descent speed to be set
+	 * 
+	 * @see Datalink#setDescentSpeed(int)
+	 */
+	@Override
+	public void setDescentSpeed(int descentSpeed) {
+		if (this.isConnected() && (-1 < descentSpeed)) {
+			CommandLong setDescentSpeed = CommandLong.builder()
+					.targetSystem(this.getTargetId())
+					.command(MavCmd.MAV_CMD_DO_CHANGE_SPEED)
+					.param1(3f) // descent speed
+					.param2(descentSpeed)
+					.build();
+			this.sendCommand(setDescentSpeed);
+			this.receiveCommandAck(MavCmd.MAV_CMD_DO_CHANGE_SPEED);
+		} else {
+			Logging.logger().warning("mavlink datalink is disconnected or descent speed invalid");
+		}
+	}
+	
+	/**
 	 * Uploads a mission flight path to the aircraft connected via this mavlink
 	 * datalink.
 	 * 
@@ -1203,8 +1421,8 @@ public class MavlinkDatalink extends Datalink {
 									.current(current)
 									.autocontinue(autocontinue)
 									.param4(Float.NaN) // default yaw / heading angle
-									.x((int) Math.round(position.getLatitude().getDegrees() * 1E7d))
-									.y((int) Math.round(position.getLongitude().getDegrees() * 1E7d))
+									.x((int) Math.round(position.getLatitude().getDegrees() / Precision.UNIT_HECTO_NANO))
+									.y((int) Math.round(position.getLongitude().getDegrees() / Precision.UNIT_HECTO_NANO))
 									.z((float) position.getAltitude())
 									.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
 									.build();
@@ -1228,8 +1446,8 @@ public class MavlinkDatalink extends Datalink {
 									.current(current)
 									.autocontinue(autocontinue)
 									.param4(Float.NaN) // default yaw / heading angle
-									.x((int) Math.round(position.getLatitude().getDegrees() * 1E7d))
-									.y((int) Math.round(position.getLongitude().getDegrees() * 1E7d))
+									.x((int) Math.round(position.getLatitude().getDegrees() / Precision.UNIT_HECTO_NANO))
+									.y((int) Math.round(position.getLongitude().getDegrees() / Precision.UNIT_HECTO_NANO))
 									.z((float) position.getAltitude())
 									.missionType(MavMissionType.MAV_MISSION_TYPE_MISSION)
 									.build();
@@ -1337,8 +1555,8 @@ public class MavlinkDatalink extends Datalink {
 											== item.missionType().entry())) {
 								// TODO: check waypoint type and actions
 								Position position = Position.fromDegrees(
-										item.x() * 1E-7d,
-										item.y() * 1E-7d,
+										item.x() * Precision.UNIT_HECTO_NANO,
+										item.y() * Precision.UNIT_HECTO_NANO,
 										item.z());
 								positions.add(item.seq(), position);
 								
@@ -1371,8 +1589,8 @@ public class MavlinkDatalink extends Datalink {
 											== item.missionType().entry())) {
 								// TODO: check waypoint type and actions
 								Position position = Position.fromDegrees(
-										item.x() * 1E-7d,
-										item.y() * 1E-7d,
+										item.x() * Precision.UNIT_HECTO_NANO,
+										item.y() * Precision.UNIT_HECTO_NANO,
 										item.z());
 								positions.add(item.seq(), position);
 								
