@@ -41,6 +41,7 @@ import com.cfar.swim.worldwind.connections.DronekitDatalink;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
+import com.cfar.swim.worldwind.registries.connections.MavlinkDatalinkProperties;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -48,12 +49,12 @@ import gov.nasa.worldwind.render.Path;
 import gov.nasa.worldwind.util.Logging;
 
 /**
- * Performs dronekit datalink tests.
+ * Performs datalink tests.
  * 
  * @author Stephan Heinemann
  *
  */
-public class DronekitTest {
+public class DatalinkTest {
 
 	/**
 	 * Tests the dronekit datalink connection.
@@ -62,9 +63,12 @@ public class DronekitTest {
 	 */
 	@Ignore
 	@Test
-	public void testConnection() throws InterruptedException {
-		Specification<Datalink> datalinkSpecification = new Specification<>(Specification.CONNECTION_DATALINK_DRONEKIT_ID, new DronekitDatalinkProperties());
-		DronekitDatalinkProperties properties = (DronekitDatalinkProperties) datalinkSpecification.getProperties();
+	public void testDronekit() throws InterruptedException {
+		Specification<Datalink> datalinkSpecification = new Specification<>(
+				Specification.CONNECTION_DATALINK_DRONEKIT_ID,
+				new DronekitDatalinkProperties());
+		DronekitDatalinkProperties properties = (DronekitDatalinkProperties)
+				datalinkSpecification.getProperties();
 		properties.setHost("206.87.166.221");
 		properties.setPort(50051);
 		DatalinkFactory datalinkFactory = new DatalinkFactory();
@@ -91,12 +95,14 @@ public class DronekitTest {
 		datalink.setAircraftMode(DronekitDatalink.MODE_STABILIZE);
 		Logging.logger().info(datalink.getAircraftPosition().toString());
 		
-		// set safety
-		datalink.disableAircraftSafety();
-		while (datalink.isAircraftSafetyEnabled()) {
+		// set guidance
+		/*
+		datalink.enableAircraftGuidance();
+		while (!datalink.isAircraftGuidanceEnabled()) {
 			Thread.sleep(1000);
 		}
-		assertFalse(datalink.isAircraftSafetyEnabled());
+		assertFalse(datalink.isAircraftGuidanceEnabled());
+		*/
 		
 		// arm
 		datalink.armAircraft();
@@ -107,9 +113,71 @@ public class DronekitTest {
 		
 		// cleanup
 		datalink.disarmAircraft();
-		datalink.enableAircraftSafety();
+		//datalink.disableAircraftGuidance();
 		datalink.disconnect();
 		assertFalse(datalink.isConnected());
 	}
-
+	
+	/**
+	 * Tests the mavlink datalink connection.
+	 * 
+	 * @throws InterruptedException 
+	 */
+	@Ignore
+	@Test
+	public void testMavlink() throws InterruptedException {
+		Specification<Datalink> datalinkSpecification = new Specification<>(
+				Specification.CONNECTION_DATALINK_MAVLINK_ID,
+				new MavlinkDatalinkProperties());
+		MavlinkDatalinkProperties properties = (MavlinkDatalinkProperties)
+				datalinkSpecification.getProperties();
+		//properties.setHost("172.16.104.128");
+		//properties.setPort(14550);
+		// target and source identifiers
+		DatalinkFactory datalinkFactory = new DatalinkFactory();
+		datalinkFactory.setSpecification(datalinkSpecification);
+		Datalink datalink = datalinkFactory.createInstance();
+		
+		assertFalse(datalink.isConnected());
+		datalink.connect();
+		assertTrue(datalink.isConnected());
+		
+		//datalink.disableAircraftGuidance();
+		//datalink.disarmAircraft();
+		//assertFalse(datalink.isAircraftArmed());
+		//assertFalse(datalink.isAircraftGuidanceEnabled());
+		//datalink.enableAircraftGuidance();
+		//datalink.armAircraft();
+		//assertTrue(datalink.isAircraftArmed());
+		//assertTrue(datalink.isAircraftGuidanceEnabled());
+		//datalink.disarmAircraft();
+		//datalink.disableAircraftGuidance();
+		//assertFalse(datalink.isAircraftArmed());
+		//assertFalse(datalink.isAircraftGuidanceEnabled());
+		
+		//Thread.sleep(5000);
+		
+		//datalink.enableAircraftSafety();
+		//assertTrue(datalink.isAircraftSafetyEnabled());
+		
+		//Trajectory trajectory = new Trajectory(new Waypoint(Position.ZERO), new Waypoint(Position.ZERO));
+		//datalink.uploadMission(trajectory);
+		//Path mission = datalink.downloadMission(false);
+		//mission.getPositions().forEach(p -> System.out.println(p));
+		//datalink.downloadMission(false);
+		/*
+		if (datalink.isAirborne())
+			Logging.logger().info("airborne...");
+		else
+			Logging.logger().info("not airborne...");
+		*/
+		//Logging.logger().info("next mission position = " + datalink.getNextMissionPosition());
+		datalink.setGroundSpeed(1);
+		datalink.setClimbSpeed(1);
+		datalink.setDescentSpeed(1);
+		
+		datalink.disconnect();
+		assertFalse(datalink.isConnected());
+	}
+	
 }

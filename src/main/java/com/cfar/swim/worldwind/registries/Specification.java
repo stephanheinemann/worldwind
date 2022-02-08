@@ -207,6 +207,14 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getDictionaryBundle()
 			.getString("specification.connection.datalink.dronekit.description");
 	
+	/** the identifier of a mavlink datalink specification */
+	public static final String CONNECTION_DATALINK_MAVLINK_ID = "Mavlink Datalink";
+	
+	/** the description of a mavlink datalink specification */
+	public static final String CONNECTION_DATALINK_MAVLINK_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.connection.datalink.mavlink.description");
+	
 	/** the identifier of a simulated datalink specification */
 	public static final String CONNECTION_DATALINK_SIMULATED_ID = "Simulated Datalink";
 	

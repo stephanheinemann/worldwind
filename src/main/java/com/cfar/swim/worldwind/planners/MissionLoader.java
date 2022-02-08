@@ -111,9 +111,9 @@ public class MissionLoader implements PlanRevisionListener {
 			if (this.planner.hasDatalink()
 					&& this.planner.getDatalink().isConnected()) {
 				// warn if mission is obsolete
-				if (this.planner.hasNextWaypoint() &&
-						!this.planner.getNextWaypoint().getPrecisionPosition().getOriginal()
-						.equals(this.planner.getDatalink().getNextMissionPosition())) {
+				if (this.planner.hasNextWaypoint()
+						&& !this.planner.getDatalink().isNextMissionPosition(
+								this.planner.getNextWaypoint())) {
 					Logging.logger().warning(this.planner.getId()
 							+ ": obsolete next mission position "
 							+ this.planner.getDatalink().getNextMissionPosition());
@@ -125,7 +125,7 @@ public class MissionLoader implements PlanRevisionListener {
 							+ ": uploading mission: " + trajectory);
 					this.planner.getDatalink().uploadMission(trajectory);
 					// confirm the consistent upload
-					if (!this.planner.getDatalink().hasMission(trajectory, false)) {
+					if (!this.planner.getDatalink().hasMission(trajectory, true)) {
 						Logging.logger().severe(this.planner.getId()
 								+ ": uploaded mission is not consistent...");
 					}

@@ -34,6 +34,7 @@ import java.time.ZonedDateTime;
 import java.util.Iterator;
 import java.util.Objects;
 
+import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 
 import gov.nasa.worldwind.geom.Angle;
@@ -391,7 +392,7 @@ public class Capabilities {
 	 */
 	public Duration getEstimatedDuration(double distance) {
 		double seconds = Math.floor(distance / this.cruiseSpeed);
-		double nanos = Math.floor(((distance / this.cruiseSpeed) - seconds) / 1E-9d);
+		double nanos = Math.floor(((distance / this.cruiseSpeed) - seconds) / Precision.UNIT_NANO);
 		return Duration.ofSeconds((long) seconds, (long) nanos);
 	}
 	
@@ -418,17 +419,17 @@ public class Capabilities {
 		if (this.cruiseRateOfClimb <= height) {
 			// climb for at least one second
 			// compute cruise climb duration
-			Duration climbDuration = Duration.ofMillis((long) (1000d * height / this.cruiseRateOfClimb));
+			Duration climbDuration = Duration.ofMillis((long) (height / this.cruiseRateOfClimb / Precision.UNIT_MILLI));
 			// compute cruise slant distance in still air
-			double slantDistance = this.cruiseClimbSpeed * climbDuration.toMillis() / 1000d;
+			double slantDistance = this.cruiseClimbSpeed * climbDuration.toMillis() * Precision.UNIT_MILLI;
 			
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 				// compute minimum climb duration
-				climbDuration = Duration.ofMillis((long) (1000d * height / this.maximumRateOfClimb));
+				climbDuration = Duration.ofMillis((long) (height / this.maximumRateOfClimb / Precision.UNIT_MILLI));
 				// compute minimum slant distance in still air
-				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.toMillis() / 1000d;
+				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.toMillis() * Precision.UNIT_MILLI;
 				
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 					throw new CapabilitiesException("incapable to travel directly from " + start + " to " + goal);
@@ -448,17 +449,17 @@ public class Capabilities {
 			// descent for at least one second
 			height = Math.abs(height);
 			// compute cruise descent duration
-			Duration descentDuration = Duration.ofMillis((long) (1000d * height / this.cruiseRateOfDescent));
+			Duration descentDuration = Duration.ofMillis((long) (height / this.cruiseRateOfDescent / Precision.UNIT_MILLI));
 			// compute cruise slant distance in still air
-			double slantDistance = this.cruiseDescentSpeed * descentDuration.toMillis() / 1000d;
+			double slantDistance = this.cruiseDescentSpeed * descentDuration.toMillis() * Precision.UNIT_MILLI;
 			
 			// perform feasibility check
 			double maxSlantDistance = Math.sqrt(Math.pow(distance, 2) + Math.pow(height, 2));
 			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 				// compute minimum descent duration
-				descentDuration = Duration.ofMillis((long) (1000d * height / this.maximumRateOfDescent));
+				descentDuration = Duration.ofMillis((long) (height / this.maximumRateOfDescent / Precision.UNIT_MILLI));
 				// compute minimum slant distance in still air
-				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.toMillis() / 1000d;
+				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.toMillis() * Precision.UNIT_MILLI;
 				
 				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
 					throw new CapabilitiesException("incapable to travel directly from " + start + " to " + goal);

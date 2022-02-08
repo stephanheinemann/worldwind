@@ -196,7 +196,7 @@ public class LineSegment /* extends Line */ implements Renderable {
 	 * @return true if this line segment contains the point, false otherwise
 	 */
 	public boolean contains(Vec4 point) {
-		return this.contains(point, Precision.EPSILON);
+		return this.contains(point, Precision.UNIT_DECA_MICRO);
 	}
 	
 	/**
@@ -296,7 +296,7 @@ public class LineSegment /* extends Line */ implements Renderable {
 	 * @return true if this line segment intersects the extent, false otherwise
 	 */
 	public boolean intersects(Extent extent) {
-		return this.intersects(extent, Precision.EPSILON);
+		return this.intersects(extent, Precision.UNIT_DECA_MICRO);
 	}
 	
 	/**
@@ -347,7 +347,7 @@ public class LineSegment /* extends Line */ implements Renderable {
 	 *         false otherwise
 	 */
 	public boolean isContained(Extent extent) {
-		return this.isContained(extent, Precision.EPSILON);
+		return this.isContained(extent, Precision.UNIT_DECA_MICRO);
 	}
 	
 	/**

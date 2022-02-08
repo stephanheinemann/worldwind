@@ -52,6 +52,7 @@ import com.cfar.swim.worldwind.registries.aircraft.IrisProperties;
 import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
 import com.cfar.swim.worldwind.registries.connections.LiveSwimConnectionProperties;
+import com.cfar.swim.worldwind.registries.connections.MavlinkDatalinkProperties;
 import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
 import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionProperties;
 import com.cfar.swim.worldwind.registries.connections.SwimConnectionFactory;
@@ -231,6 +232,7 @@ public class Session implements Identifiable {
 		
 		// datalinks
 		this.datalinkRegistry.clearSpecifications();
+		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_MAVLINK_ID, Specification.CONNECTION_DATALINK_MAVLINK_DESCRIPTION, new MavlinkDatalinkProperties()));
 		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_DRONEKIT_ID, Specification.CONNECTION_DATALINK_DRONEKIT_DESCRIPTION, new DronekitDatalinkProperties()));
 		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_SIMULATED_ID, Specification.CONNECTION_DATALINK_SIMULATED_DESCRIPTION, new SimulatedDatalinkProperties()));
 		

@@ -125,8 +125,8 @@ public class SimulatedDatalink extends Datalink {
 	/** indicates whether or not the source of this simulated datalink is armed */
 	private boolean isArmed = false;
 	
-	/** indicates whether or not the source of this simulated datalink is safe */
-	private boolean isAircraftSafetyEnabled = true;
+	/** indicates whether or not the source of this simulated datalink is guided */
+	private boolean isAircraftGuidanceEnabled = true;
 	
 	/** the aircraft status of this simulated datalink source */
 	private String aircraftStatus = SimulatedDatalink.STATUS_UNKNOWN;
@@ -176,7 +176,8 @@ public class SimulatedDatalink extends Datalink {
 	 * @throws IllegalArgumentException if the uplink delay is invalid
 	 */
 	public void setUplinkDelay(Duration uplinkDelay) {
-		if ((null == uplinkDelay) ||  uplinkDelay.isZero()) {
+		if ((null == uplinkDelay) || uplinkDelay.isNegative()
+				|| uplinkDelay.isZero()) {
 			throw new IllegalArgumentException("uplink delay is invalid");
 		}
 		this.uplinkDelay = uplinkDelay;
@@ -390,36 +391,36 @@ public class SimulatedDatalink extends Datalink {
 	}
 	
 	/**
-	 * Enables the aircraft safety via this simulated datalink.
+	 * Enables the aircraft guidance via this simulated datalink.
 	 * 
-	 * @see Datalink#enableAircraftSafety()
+	 * @see Datalink#enableAircraftGuidance()
 	 */
 	@Override
-	public synchronized void enableAircraftSafety() {
-		this.isAircraftSafetyEnabled = true;
+	public synchronized void enableAircraftGuidance() {
+		this.isAircraftGuidanceEnabled = true;
 	}
 	
 	/**
-	 * Disables the aircraft safety via this simulated datalink.
+	 * Disables the aircraft guidance via this simulated datalink.
 	 * 
-	 * @see Datalink#disableAircraftSafety()
+	 * @see Datalink#disableAircraftGuidance()
 	 */
 	@Override
-	public synchronized void disableAircraftSafety() {
-		this.isAircraftSafetyEnabled = false;
+	public synchronized void disableAircraftGuidance() {
+		this.isAircraftGuidanceEnabled = false;
 	}
 	
 	/**
-	 * Determines whether or not the aircraft safety is enabled for the aircraft
-	 * connected via this simulated datalink.
+	 * Determines whether or not the aircraft guidance is enabled for the
+	 * aircraft connected via this simulated datalink.
 	 * 
-	 * @return true if the aircraft safety is enabled, false otherwise
+	 * @return true if the aircraft guidance is enabled, false otherwise
 	 * 
-	 * @see Datalink#isAircraftSafetyEnabled()
+	 * @see Datalink#isAircraftGuidanceEnabled()
 	 */
 	@Override
-	public synchronized boolean isAircraftSafetyEnabled() {
-		return this.isAircraftSafetyEnabled;
+	public synchronized boolean isAircraftGuidanceEnabled() {
+		return this.isAircraftGuidanceEnabled;
 	}
 	
 	/**
@@ -607,6 +608,112 @@ public class SimulatedDatalink extends Datalink {
 	@Override
 	public synchronized boolean isAirborne() {
 		return this.isAirborne;
+	}
+	
+	/**
+	 * Gets the airspeed of the aircraft connected via this simulated datalink.
+	 * 
+	 * @return the airspeed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getAirspeed()
+	 */
+	@Override
+	public int getAirspeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseSpeed());
+	}
+	
+	/**
+	 * Sets the airspeed of the aircraft connected via this simulated datalink.
+	 * 
+	 * @param airspeed the airspeed to be set
+	 * 
+	 * @see Datalink#setAirspeed(int)
+	 */
+	@Override
+	public void setAirspeed(int airspeed) {
+		this.iris.getCapabilities().setCruiseSpeed(airspeed);
+	}
+	
+	/**
+	 * Gets the ground speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the ground speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getGroundSpeed()
+	 */
+	@Override
+	public int getGroundSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseSpeed());
+	}
+	
+	/**
+	 * Sets the ground speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param groundSpeed the ground speed to be set
+	 * 
+	 * @see Datalink#setGroundSpeed(int)
+	 */
+	@Override
+	public void setGroundSpeed(int groundSpeed) {
+		this.iris.getCapabilities().setCruiseSpeed(groundSpeed);
+	}
+	
+	/**
+	 * Gets the climb speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the climb speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getClimbSpeed()
+	 */
+	@Override
+	public int getClimbSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseClimbSpeed());
+	}
+	
+	/**
+	 * Sets the climb speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param climbSpeed the climb speed to be set
+	 * 
+	 * @see Datalink#setClimbSpeed(int)
+	 */
+	@Override
+	public void setClimbSpeed(int climbSpeed) {
+		this.iris.getCapabilities().setCruiseClimbSpeed(climbSpeed);
+	}
+	
+	/**
+	 * Gets the descent speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the descent speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getDescentSpeed()
+	 */
+	@Override
+	public int getDescentSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseDescentSpeed());
+	}
+	
+	/**
+	 * Sets the descent speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param descentSpeed the descent speed to be set
+	 * 
+	 * @see Datalink#setDescentSpeed(int)
+	 */
+	@Override
+	public void setDescentSpeed(int descentSpeed) {
+		this.iris.getCapabilities().setCruiseDescentSpeed(descentSpeed);
 	}
 	
 	/**

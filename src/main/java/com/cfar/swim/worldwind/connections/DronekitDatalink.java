@@ -60,7 +60,6 @@ import io.grpc.netty.NegotiationType;
 import io.grpc.netty.NettyChannelBuilder;
 import io.grpc.stub.StreamObserver;
 
-
 /**
  * Realizes a dronekit datalink.
  * 
@@ -400,27 +399,12 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Enables the aircraft safety via this dronekit datalink.
+	 * Enables the aircraft guidance via this dronekit datalink.
 	 * 
-	 * @see Datalink#enableAircraftSafety()
+	 * @see Datalink#enableAircraftGuidance()
 	 */
 	@Override
-	public void enableAircraftSafety() {
-		if (this.isConnected()) {
-			Safety safety = Safety.newBuilder().setSafety(true).build();
-			blockingStub.setSafety(safety);
-		} else {
-			throw new IllegalStateException("dronekit is not connected");
-		}
-	}
-	
-	/**
-	 * Disables the aircraft safety via this dronekit datalink.
-	 * 
-	 * @see Datalink#disableAircraftSafety()
-	 */
-	@Override
-	public void disableAircraftSafety() {
+	public void enableAircraftGuidance() {
 		if (this.isConnected()) {
 			Safety safety = Safety.newBuilder().setSafety(false).build();
 			blockingStub.setSafety(safety);
@@ -430,25 +414,40 @@ public class DronekitDatalink extends Datalink {
 	}
 	
 	/**
-	 * Determines whether or not the aircraft safety is enabled for the
-	 * aircraft connected via this dronekit datalink.
+	 * Disables the aircraft guidance via this dronekit datalink.
 	 * 
-	 * @return true if the aircraft safety is enabled, false otherwise
-	 * 
-	 * @see Datalink#isAircraftSafetyEnabled()
+	 * @see Datalink#disableAircraftGuidance()
 	 */
 	@Override
-	public boolean isAircraftSafetyEnabled() {
-		boolean isAircraftSafetyEnabled = false;
+	public void disableAircraftGuidance() {
+		if (this.isConnected()) {
+			Safety safety = Safety.newBuilder().setSafety(true).build();
+			blockingStub.setSafety(safety);
+		} else {
+			throw new IllegalStateException("dronekit is not connected");
+		}
+	}
+	
+	/**
+	 * Determines whether or not the aircraft guidance is enabled for the
+	 * aircraft connected via this dronekit datalink.
+	 * 
+	 * @return true if the aircraft guidance is enabled, false otherwise
+	 * 
+	 * @see Datalink#isAircraftGuidanceEnabled()
+	 */
+	@Override
+	public boolean isAircraftGuidanceEnabled() {
+		boolean isAircraftGuidanceEnabled = false;
 		
 		if (this.isConnected()) {
 			Null request = Null.newBuilder().build();
-			isAircraftSafetyEnabled = blockingStub.getSafety(request).getSafety();
+			isAircraftGuidanceEnabled = !blockingStub.getSafety(request).getSafety();
 		} else {
 			throw new IllegalStateException("dronekit is not connected");
 		}
 		
-		return isAircraftSafetyEnabled;
+		return isAircraftGuidanceEnabled;
 	}
 	
 	/**
@@ -659,6 +658,7 @@ public class DronekitDatalink extends Datalink {
 	 * 
 	 * @see Datalink#isAirborne()
 	 */
+	@Override
 	public boolean isAirborne() {
 		boolean isAirborne = false;
 		
@@ -671,6 +671,112 @@ public class DronekitDatalink extends Datalink {
 		}
 		
 		return isAirborne;
+	}
+	
+	/**
+	 * Gets the airspeed of the aircraft connected via this dronekit datalink.
+	 * 
+	 * @return the airspeed of the aircraft connected via this dronekit
+	 *         datalink, -1 otherwise
+	 * 
+	 * @see Datalink#getAirspeed()
+	 */
+	@Override
+	public int getAirspeed() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Sets the airspeed of the aircraft connected via this dronekit datalink.
+	 * 
+	 * @param airspeed the airspeed to be set
+	 * 
+	 * @see Datalink#setAirspeed(int)
+	 */
+	@Override
+	public void setAirspeed(int airspeed) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Gets the ground speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @return the ground speed of the aircraft connected via this dronekit
+	 *         datalink, -1 otherwise
+	 * 
+	 * @see Datalink#getGroundSpeed()
+	 */
+	@Override
+	public int getGroundSpeed() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Sets the ground speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @param groundSpeed the ground speed to be set
+	 * 
+	 * @see Datalink#setGroundSpeed(int)
+	 */
+	@Override
+	public void setGroundSpeed(int groundSpeed) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Gets the climb speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @return the climb speed of the aircraft connected via this dronekit
+	 *         datalink, 0 otherwise
+	 * 
+	 * @see Datalink#getClimbSpeed()
+	 */
+	@Override
+	public int getClimbSpeed() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Sets the climb speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @param climbSpeed the climb speed to be set
+	 * 
+	 * @see Datalink#setClimbSpeed(int)
+	 */
+	@Override
+	public void setClimbSpeed(int climbSpeed) {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Gets the descent speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @return the descent speed of the aircraft connected via this dronekit
+	 *         datalink, 0 otherwise
+	 * 
+	 * @see Datalink#getDescentSpeed()
+	 */
+	@Override
+	public int getDescentSpeed() {
+		throw new UnsupportedOperationException();
+	}
+	
+	/**
+	 * Sets the descent speed of the aircraft connected via this dronekit
+	 * datalink.
+	 * 
+	 * @param descentSpeed the descent speed to be set
+	 * 
+	 * @see Datalink#setDescentSpeed(int)
+	 */
+	@Override
+	public void setDescentSpeed(int descentSpeed) {
+		throw new UnsupportedOperationException();
 	}
 	
 	/**
@@ -711,7 +817,7 @@ public class DronekitDatalink extends Datalink {
 		if (matches && (specification.getProperties() instanceof DronekitDatalinkProperties)) {
 			DronekitDatalinkProperties properties =
 					(DronekitDatalinkProperties) specification.getProperties();
-			matches = (this.host.equals(properties.getHost()))
+			matches = this.host.equals(properties.getHost())
 					&& (this.port == properties.getPort());
 		}
 	
@@ -734,8 +840,13 @@ public class DronekitDatalink extends Datalink {
 		if (updated && (specification.getProperties() instanceof DronekitDatalinkProperties)) {
 			DronekitDatalinkProperties properties =
 					(DronekitDatalinkProperties) specification.getProperties();
-			this.host = properties.getHost();
-			this.port = properties.getPort();
+			if (!this.isConnected()) {
+				this.host = properties.getHost();
+				this.port = properties.getPort();
+				this.getAircraftTrack().setName(host + ":" + port);
+			} else {
+				updated = false;
+			}
 		}
 		
 		return updated;

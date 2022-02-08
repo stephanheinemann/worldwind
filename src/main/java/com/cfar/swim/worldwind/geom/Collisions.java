@@ -427,7 +427,7 @@ public class Collisions {
 		// perform intersection GJK test
 		return Collisions.SOLVER.collide(
 				boxShape1, boxTransform1, boxShape2, boxTransform2,
-				(float) Precision.EPSILON, results);
+				(float) Precision.UNIT_DECA_MICRO, results);
 	}
 	
 	/**
@@ -450,7 +450,7 @@ public class Collisions {
 		// perform intersection GJK test
 		return Collisions.SOLVER.collide(
 				boxShape, boxTransform, cylinderShape, cylinderTransform,
-				(float) Precision.EPSILON, results);
+				(float) Precision.UNIT_DECA_MICRO, results);
 	}
 	
 	/**
@@ -473,7 +473,7 @@ public class Collisions {
 		// perform intersection GJK test
 		return Collisions.SOLVER.collide(
 				boxShape, boxTransform, sphereShape, sphereTransform,
-				(float) Precision.EPSILON, results);
+				(float) Precision.UNIT_DECA_MICRO, results);
 	}
 	
 	/**
@@ -496,7 +496,7 @@ public class Collisions {
 		// perform intersection GJK test
 		return Collisions.SOLVER.collide(
 				cylinderShape1, cylinderTransform1, cylinderShape2, cylinderTransform2,
-				(float) Precision.EPSILON, results);
+				(float) Precision.UNIT_DECA_MICRO, results);
 	}
 	
 	/**
@@ -520,7 +520,7 @@ public class Collisions {
 		// perform intersection GJK test
 		return Collisions.SOLVER.collide(
 				cylinderShape, cylinderTransform, sphereShape, sphereTransform,
-				(float) Precision.EPSILON, results);
+				(float) Precision.UNIT_DECA_MICRO, results);
 	}
 	
 	/**
@@ -543,7 +543,7 @@ public class Collisions {
 		// perform intersection GJK test
 		return Collisions.SOLVER.collide(
 				sphereShape1, sphereTransform1, sphereShape2, sphereTransform2,
-				(float) Precision.EPSILON, results);
+				(float) Precision.UNIT_DECA_MICRO, results);
 	}
 	
 }

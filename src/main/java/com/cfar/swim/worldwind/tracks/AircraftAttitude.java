@@ -116,4 +116,15 @@ public class AircraftAttitude {
 		this.heading = heading;
 	}
 	
+	/**
+	 * Gets the string representation of this aircraft attitude.
+	 * 
+	 * @return the string representation of this aircraft attitude
+	 */
+	public String toString() {
+		return "(" + this.getPitch() + ", "
+				+ this.getBank() + ", "
+				+ this.getHeading() + ")";
+	}
+	
 }

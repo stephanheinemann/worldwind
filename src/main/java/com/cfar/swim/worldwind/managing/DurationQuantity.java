@@ -33,6 +33,8 @@ import java.time.Duration;
 import java.util.Comparator;
 import java.util.Objects;
 
+import com.cfar.swim.worldwind.geom.precision.Precision;
+
 /**
  * Realizes a duration quantity.
  * 
@@ -90,7 +92,7 @@ public class DurationQuantity implements Quantity {
 	 */
 	@Override
 	public double get() {
-		return this.quantity.getSeconds() + (this.quantity.getNano() * 1E-9d);
+		return this.quantity.getSeconds() + (this.quantity.getNano() * Precision.UNIT_NANO);
 	}
 	
 	/**

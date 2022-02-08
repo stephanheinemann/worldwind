@@ -623,9 +623,9 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			return false; // segment cannot intersect on z axis
 		
 		halfSegmentLength = halfSegmentLength.add3(
-			PrecisionDouble.EPSILON,
-			PrecisionDouble.EPSILON,
-			PrecisionDouble.EPSILON);
+			PrecisionDouble.UNIT_DECA_MICRO,
+			PrecisionDouble.UNIT_DECA_MICRO,
+			PrecisionDouble.UNIT_DECA_MICRO);
 		
 		// cross products of segment direction vector with coordinate axes
 		if (Math.abs((midpoint.y * halfSegment.z) - (midpoint.z * halfSegment.y)) >
@@ -674,7 +674,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 					-planeNormal.x,
 					-planeNormal.y,
 					-planeNormal.z,
-					-planeNormal.w + (PrecisionDouble.EPSILON * 0.001d));
+					-planeNormal.w + PrecisionDouble.UNIT_DECA_NANO);
 		}
 		
 	    return new Frustum(

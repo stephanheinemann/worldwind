@@ -33,6 +33,8 @@ import java.util.Objects;
 
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 /**
  * Realizes the properties bean of a dronekit datalink.
@@ -52,6 +54,8 @@ public class DronekitDatalinkProperties extends DatalinkProperties {
 	public static final int DATALINK_GRPCPORT = 50051;
 	
 	/** the remote host of this dronekit datalink properties bean */
+	@NotNull(message = "{property.connection.datalink.dronekit.host.null}")
+	@NotEmpty(message = "{property.connection.datalink.dronekit.host.empty}")
 	private String host;
 	
 	/** the remote port of this dronekit datalink properties bean */

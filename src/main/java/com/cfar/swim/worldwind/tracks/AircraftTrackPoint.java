@@ -52,12 +52,6 @@ import gov.nasa.worldwind.tracks.TrackPoint;
  *
  */
 public class AircraftTrackPoint extends BasicMarker implements TrackPoint {
-
-	/** default marker attributes of an aircraft track point */
-	protected static final BasicMarkerAttributes DEFAULT_MARKER_ATTRIBUTES =
-			new BasicMarkerAttributes(
-					Material.GREEN,
-					BasicMarkerShape.ORIENTED_SPHERE, 1d);
 	
 	/** the time at this aircraft track point */
 	private ZonedDateTime time = ZonedDateTime.now(ZoneId.of("UTC"));
@@ -73,8 +67,10 @@ public class AircraftTrackPoint extends BasicMarker implements TrackPoint {
 	 * @see BasicMarker#BasicMarker(Position, MarkerAttributes)
 	 */
 	public AircraftTrackPoint(Position position) {
-		super(position, AircraftTrackPoint.DEFAULT_MARKER_ATTRIBUTES);
-		this.getAttributes().setHeadingMaterial(Material.GREEN);
+		super(position, new BasicMarkerAttributes(
+				Material.GREEN,
+				BasicMarkerShape.ORIENTED_SPHERE, 1d));
+		this.getAttributes().setHeadingMaterial(Material.RED);
 		this.setPitch(Angle.ZERO);
 		this.setRoll(Angle.ZERO);
 		this.setHeading(Angle.ZERO);
@@ -90,8 +86,10 @@ public class AircraftTrackPoint extends BasicMarker implements TrackPoint {
 	 * @see BasicMarker#BasicMarker(Position, MarkerAttributes, Angle)
 	 */
 	public AircraftTrackPoint(Position position, AircraftAttitude attitude) {
-		super(position, AircraftTrackPoint.DEFAULT_MARKER_ATTRIBUTES);
-		this.getAttributes().setHeadingMaterial(Material.GREEN);
+		super(position, new BasicMarkerAttributes(
+				Material.GREEN,
+				BasicMarkerShape.ORIENTED_SPHERE, 1d));
+		this.getAttributes().setHeadingMaterial(Material.RED);
 		this.setPitch(attitude.getPitch());
 		this.setRoll(attitude.getBank());
 		this.setHeading(attitude.getHeading());

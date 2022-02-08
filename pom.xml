@@ -265,7 +265,7 @@
 					</mapping>
 				</configuration>
 			</plugin>
-			<plugin>
+			<!--plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-gpg-plugin</artifactId>
 				<version>1.6</version>
@@ -278,7 +278,7 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
+			</plugin-->
 		</plugins>
 	</build>
 
@@ -379,6 +379,11 @@
 			<groupId>com.uvic-cfar.swim</groupId>
 			<artifactId>droneconnect</artifactId>
 			<version>1.0.0-alpha3</version>
+		</dependency>
+		<dependency>
+			<groupId>io.dronefleet.mavlink</groupId>
+			<artifactId>mavlink</artifactId>
+			<version>1.1.9</version>
 		</dependency>
 	</dependencies>
 

@@ -95,25 +95,25 @@ public class CubicGridTest {
         CubicGrid cubicGrid = new CubicGrid(cube, 10, 5, 5);
         
         for (CubicGrid grid : cubicGrid.getAll()) {
-        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
+        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.UNIT_DECA_MICRO);
         }
         
         cubicGrid.getChild(0, 0, 0).addChildren(0.5d);
         
         for (CubicGrid grid : cubicGrid.getAll()) {
-        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
+        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.UNIT_DECA_MICRO);
         }
         
         cubicGrid.getChild(0, 0, 1).addChildren(2);
         
         for (CubicGrid grid : cubicGrid.getAll()) {
-        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
+        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.UNIT_DECA_MICRO);
         }
 		
         cubicGrid.removeChildren();
         
         for (CubicGrid grid : cubicGrid.getAll()) {
-        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
+        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.UNIT_DECA_MICRO);
         }
 	}
 	

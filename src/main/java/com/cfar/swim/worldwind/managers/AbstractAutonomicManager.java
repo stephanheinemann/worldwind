@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Communication;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DatalinkCommunicator;
@@ -657,6 +658,25 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			throw new IllegalArgumentException();
 		}
 		this.maxDeliberation = maxDeliberation;
+	}
+	
+	/**
+	 * Gets the aircraft this abstract autonomic manager is tracking.
+	 * 
+	 * @return the aircraft this abstract autonomic manager is tracking,
+	 *         null otherwise
+	 * 
+	 * @see DatalinkTracker#getAircraft()
+	 */
+	@Override
+	public Aircraft getAircraft() {
+		Aircraft aircraft = null;
+		
+		if (this.hasActivePlanner()) {
+			this.getActivePlanner().getAircraft();
+		}
+		
+		return aircraft;
 	}
 	
 	/**
