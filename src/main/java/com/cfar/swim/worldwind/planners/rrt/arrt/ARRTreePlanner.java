@@ -282,7 +282,7 @@ public class ARRTreePlanner extends RRTreePlanner implements AnytimePlanner {
 		boolean hasMaximumQuality = false;
 		
 		if (this.hasGoal()) {
-			hasMaximumQuality = (this.getStart().getF() == this.getGoal().getCost())
+			hasMaximumQuality = (this.getStart().getF() >= this.getGoal().getCost())
 					|| ((this.getCostBound() < this.getGoal().getCost())
 							&& (this.getCostBias() >= this.getMaximumQuality()));
 		}
