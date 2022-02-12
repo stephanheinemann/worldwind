@@ -31,17 +31,19 @@ package com.cfar.swim.worldwind.aircraft;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Objects;
 
 import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 
+import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
+import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
  * Realizes the capabilities of an aircraft (or any moving agent).
@@ -50,7 +52,13 @@ import gov.nasa.worldwind.render.Path;
  *
  */
 public class Capabilities {
-
+	
+	/** the standard climb angle */
+	public static final Angle STANDARD_CLIMB_ANGLE = Angle.fromDegrees(3d);
+	
+	/** the standard descent angle */
+	public static final Angle STANDARD_DESCENT_ANGLE = Angle.fromDegrees(-3d);
+	
 	// all capabilities are stored in SI units
 	
 	/** the maximum angle of climb speed of this capabilities bean in m/s */
@@ -382,17 +390,30 @@ public class Capabilities {
 	}
 	
 	/**
-	 * Gets the estimated duration to travel a specified horizontal distance
-	 * at cruise speed in still air.
+	 * Gets the maximum of two durations.
 	 * 
-	 * @param distance the horizontal distance in meters
+	 * @param d1 the first duration
+	 * @param d2 the second duration
 	 * 
-	 * @return the estimated duration to travel the specified level distance
-	 *         at cruise speed
+	 * @return the maximum of the two durations
 	 */
-	public Duration getEstimatedDuration(double distance) {
-		double seconds = Math.floor(distance / this.cruiseSpeed);
-		double nanos = Math.floor(((distance / this.cruiseSpeed) - seconds) / Precision.UNIT_NANO);
+	public static Duration getMaximumDuration(Duration d1, Duration d2) {
+		return (0 < d1.compareTo(d2)) ? d1 : d2;
+	}
+	
+	/**
+	 * Gets the estimated duration to travel a specified distance at a given
+	 * speed in still air.
+	 * 
+	 * @param distance the distance in meters
+	 * @param speed the speed in meters per second
+	 * 
+	 * @return the estimated duration to travel the specified distance at the
+	 *         given speed
+	 */
+	public Duration getEstimatedDuration(double distance, double speed) {
+		double seconds = Math.floor(distance / speed);
+		double nanos = Math.floor(((distance / speed) - seconds) / Precision.UNIT_NANO);
 		return Duration.ofSeconds((long) seconds, (long) nanos);
 	}
 	
@@ -413,9 +434,97 @@ public class Capabilities {
 	 */
 	public Duration getEstimatedDuration(Position start, Position goal, Globe globe) {
 		Duration estimatedDuration = Duration.ZERO;
-		double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
-		double height = goal.getElevation() - start.getElevation();
 		
+		// slant, vertical (height) and (horizontal) distance
+		ArrayList<Position> positions = new ArrayList<Position>();
+		positions.add(start);
+		positions.add(goal);
+		LengthMeasurer measurer = new LengthMeasurer(positions);
+		measurer.setPathType(AVKey.LINEAR);
+		measurer.setFollowTerrain(false);
+		double maxSlantDistance = measurer.getLength(globe);
+		
+		// double distance = LatLon.linearDistance(start, goal).getRadians() * globe.getRadius();
+		double height = goal.getElevation() - start.getElevation();
+		double distance = Math.sqrt(Math.pow(maxSlantDistance, 2d) - Math.pow(height, 2d));
+		
+		// determine flight path angle
+		Angle angle = Angle.ZERO;
+		if (0d != distance) {
+			angle = Angle.fromDegrees(Math.atan(height / distance));
+		} else {
+			if (0d < height) {
+				angle = Angle.POS90;
+			} else if (0d > height) {
+				angle = Angle.NEG90;
+			}
+		}
+		
+		// determine durations without TOC and TOD
+		if (0 <= angle.compareTo(Capabilities.STANDARD_CLIMB_ANGLE)) {
+			// assume climb performance
+			// compute cruise climb duration
+			Duration climbDuration = Duration.ofMillis((long) (height / this.cruiseRateOfClimb / Precision.UNIT_MILLI));
+			// compute cruise slant distance in still air
+			double slantDistance = this.cruiseClimbSpeed * climbDuration.toMillis() * Precision.UNIT_MILLI;
+			
+			// perform feasibility check
+			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+				// compute minimum climb duration
+				climbDuration = Duration.ofMillis((long) (height / this.maximumRateOfClimb / Precision.UNIT_MILLI));
+				// compute minimum slant distance in still air
+				slantDistance = this.maximumRateOfClimbSpeed * climbDuration.toMillis() * Precision.UNIT_MILLI;
+				// apply maximum climb performance for horizontal speed
+				estimatedDuration = this.getEstimatedDuration(maxSlantDistance, this.getMaximumRateOfClimbSpeed());
+				//Duration levelDuration = this.getEstimatedDuration(distance, this.getMaximumRateOfClimbSpeed());
+				//estimatedDuration = Capabilities.getMaximumDuration(climbDuration, levelDuration);
+				
+				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+					throw new CapabilitiesException("incapable to travel directly from " + start + " to " + goal);
+				}
+			} else {
+				// apply cruise climb performance for horizontal speed
+				estimatedDuration = this.getEstimatedDuration(maxSlantDistance, this.getCruiseClimbSpeed());
+				//Duration levelDuration = this.getEstimatedDuration(distance, this.getCruiseClimbSpeed());
+				//estimatedDuration = Capabilities.getMaximumDuration(climbDuration, levelDuration);
+			}
+		} else if (0 >= angle.compareTo(Capabilities.STANDARD_DESCENT_ANGLE)) {
+			// assume descent performance
+			height = Math.abs(height);
+			// compute cruise descent duration
+			Duration descentDuration = Duration.ofMillis((long) (height / this.cruiseRateOfDescent / Precision.UNIT_MILLI));
+			// compute cruise slant distance in still air
+			double slantDistance = this.cruiseDescentSpeed * descentDuration.toMillis() * Precision.UNIT_MILLI;
+			
+			// perform feasibility check
+			if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+				// compute minimum descent duration
+				descentDuration = Duration.ofMillis((long) (height / this.maximumRateOfDescent / Precision.UNIT_MILLI));
+				// compute minimum slant distance in still air
+				slantDistance = this.maximumRateOfDescentSpeed * descentDuration.toMillis() * Precision.UNIT_MILLI;
+				// apply maximum descent performance for horizontal speed
+				estimatedDuration = this.getEstimatedDuration(maxSlantDistance, this.getMaximumRateOfDescentSpeed());
+				//Duration levelDuration = this.getEstimatedDuration(distance, this.getMaximumRateOfDescentSpeed());
+				//estimatedDuration = Capabilities.getMaximumDuration(descentDuration, levelDuration);
+				
+				if (-1 == new PrecisionDouble(maxSlantDistance).compareTo(new PrecisionDouble(slantDistance))) {
+					throw new CapabilitiesException("incapable to travel directly from " + start + " to " + goal);
+				}
+			} else {
+				// apply cruise descent performance for horizontal speed
+				estimatedDuration = this.getEstimatedDuration(maxSlantDistance, this.getCruiseDescentSpeed());
+				//Duration levelDuration = this.getEstimatedDuration(distance, this.getCruiseDescentSpeed());
+				//estimatedDuration = Capabilities.getMaximumDuration(descentDuration, levelDuration);
+				
+			}
+		} else if (0d != distance){
+			// assume level performance
+			estimatedDuration = this.getEstimatedDuration(maxSlantDistance, this.getCruiseSpeed());
+			//estimatedDuration = this.getEstimatedDuration(distance, this.getCruiseSpeed());
+		}
+		
+		// TODO: the following model assumes the automatic generation of TOC and TOD waypoints
+		/*
 		if (this.cruiseRateOfClimb <= height) {
 			// climb for at least one second
 			// compute cruise climb duration
@@ -437,13 +546,13 @@ public class Capabilities {
 			}
 			
 			// compute climb angle in still air
-			double climbAngle = Math.asin(height / slantDistance);
+			double climbAngle = Math.asin(Math.min(1d, (height / slantDistance))) * 180d / Math.PI;
 			// compute ground distance during climb in still air
-			double climbDistance = height / Math.tan(climbAngle);
+			double climbDistance = (90d > climbAngle) ? height / Math.tan(climbAngle) : 0d;
 			// compute ground distance during level in still air
 			double levelDistance = distance - climbDistance;
 			// compute complete estimated duration
-			estimatedDuration = climbDuration.plus(this.getEstimatedDuration(levelDistance));
+			estimatedDuration = climbDuration.plus(this.getEstimatedDuration(levelDistance, this.getCruiseSpeed()));
 			
 		} else if (this.cruiseRateOfDescent <= Math.abs(height)) {
 			// descent for at least one second
@@ -467,18 +576,19 @@ public class Capabilities {
 			}
 			
 			// compute descent angle in still air
-			double descentAngle = Math.asin(height / slantDistance);
+			double descentAngle = Math.asin(Math.min(1d, (height / slantDistance))) * 180d / Math.PI;
 			// compute ground distance during descent in still air
-			double descentDistance = height / Math.tan(descentAngle);
+			double descentDistance = (90d > descentAngle) ? height / Math.tan(descentAngle) : 0d;
 			// compute ground distance during level in still air
 			double levelDistance = distance - descentDistance;
 			// compute complete estimated duration
-			estimatedDuration = descentDuration.plus(this.getEstimatedDuration(levelDistance));
+			estimatedDuration = descentDuration.plus(this.getEstimatedDuration(levelDistance, this.getCruiseSpeed()));
 			
 		} else {
 			// horizontal movement
-			estimatedDuration = this.getEstimatedDuration(distance);
+			estimatedDuration = this.getEstimatedDuration(distance, this.getCruiseSpeed());
 		}
+		*/
 		
 		return estimatedDuration;
 	}
@@ -521,7 +631,7 @@ public class Capabilities {
 	 *         horizontal distance
 	 */
 	public ZonedDateTime getEstimatedTime(double distance, ZonedDateTime start) {
-		return start.plus(this.getEstimatedDuration(distance));
+		return start.plus(this.getEstimatedDuration(distance, this.getCruiseSpeed()));
 	}
 	
 	/**

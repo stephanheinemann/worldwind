@@ -520,7 +520,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#emitHeartbeat()
 	 */
 	@Override
-	public void emitHeartbeat() {
+	public synchronized void emitHeartbeat() {
 		if (this.isConnected()) {
 			Heartbeat heartbeat = Heartbeat.builder()
 					.type(MavType.MAV_TYPE_GCS)
@@ -810,7 +810,9 @@ public class MavlinkDatalink extends Datalink {
 	public synchronized AircraftTrackPoint getAircraftTrackPoint() {
 		AircraftTrackPoint trackPoint = null;
 		
+		// TODO: track point should be equipped with remote system time
 		Position position = this.getAircraftPosition();
+		// TODO: messages should not be skipped and close together
 		AircraftAttitude attitude = this.getAircraftAttitude();
 		
 		if ((null != position) && (null != attitude)) {
@@ -1142,7 +1144,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#getAirspeed()
 	 */
 	@Override
-	public int getAirspeed() {
+	public synchronized int getAirspeed() {
 		int airspeed = -1;
 		
 		if (this.isConnected()) {
@@ -1170,7 +1172,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#setAirspeed(int)
 	 */
 	@Override
-	public void setAirspeed(int airspeed) {
+	public synchronized void setAirspeed(int airspeed) {
 		if (this.isConnected() && (-1 < airspeed)) {
 			CommandLong setAirspeed = CommandLong.builder()
 					.targetSystem(this.getTargetId())
@@ -1195,7 +1197,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#getGroundSpeed()
 	 */
 	@Override
-	public int getGroundSpeed() {
+	public synchronized int getGroundSpeed() {
 		int groundSpeed = -1;
 		
 		if (this.isConnected()) {
@@ -1224,7 +1226,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#setGroundSpeed(int)
 	 */
 	@Override
-	public void setGroundSpeed(int groundSpeed) {
+	public synchronized void setGroundSpeed(int groundSpeed) {
 		if (this.isConnected() && (-1 < groundSpeed)) {
 			CommandLong setGroundSpeed = CommandLong.builder()
 					.targetSystem(this.getTargetId())
@@ -1249,7 +1251,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#getClimbSpeed()
 	 */
 	@Override
-	public int getClimbSpeed() {
+	public synchronized int getClimbSpeed() {
 		int climbSpeed = 0;
 		
 		if (this.isConnected()) {
@@ -1278,7 +1280,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#setClimbSpeed(int)
 	 */
 	@Override
-	public void setClimbSpeed(int climbSpeed) {
+	public synchronized void setClimbSpeed(int climbSpeed) {
 		if (this.isConnected() && (-1 < climbSpeed)) {
 			CommandLong setClimbSpeed = CommandLong.builder()
 					.targetSystem(this.getTargetId())
@@ -1303,7 +1305,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#getDescentSpeed()
 	 */
 	@Override
-	public int getDescentSpeed() {
+	public synchronized int getDescentSpeed() {
 		int descentSpeed = 0;
 		
 		if (this.isConnected()) {
@@ -1332,7 +1334,7 @@ public class MavlinkDatalink extends Datalink {
 	 * @see Datalink#setDescentSpeed(int)
 	 */
 	@Override
-	public void setDescentSpeed(int descentSpeed) {
+	public synchronized void setDescentSpeed(int descentSpeed) {
 		if (this.isConnected() && (-1 < descentSpeed)) {
 			CommandLong setDescentSpeed = CommandLong.builder()
 					.targetSystem(this.getTargetId())

@@ -619,7 +619,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAirspeed()
 	 */
 	@Override
-	public int getAirspeed() {
+	public synchronized int getAirspeed() {
 		return (int) Math.round(this.iris.getCapabilities().getCruiseSpeed());
 	}
 	
@@ -631,7 +631,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#setAirspeed(int)
 	 */
 	@Override
-	public void setAirspeed(int airspeed) {
+	public synchronized void setAirspeed(int airspeed) {
 		this.iris.getCapabilities().setCruiseSpeed(airspeed);
 	}
 	
@@ -645,7 +645,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getGroundSpeed()
 	 */
 	@Override
-	public int getGroundSpeed() {
+	public synchronized int getGroundSpeed() {
 		return (int) Math.round(this.iris.getCapabilities().getCruiseSpeed());
 	}
 	
@@ -658,7 +658,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#setGroundSpeed(int)
 	 */
 	@Override
-	public void setGroundSpeed(int groundSpeed) {
+	public synchronized void setGroundSpeed(int groundSpeed) {
 		this.iris.getCapabilities().setCruiseSpeed(groundSpeed);
 	}
 	
@@ -672,7 +672,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getClimbSpeed()
 	 */
 	@Override
-	public int getClimbSpeed() {
+	public synchronized int getClimbSpeed() {
 		return (int) Math.round(this.iris.getCapabilities().getCruiseClimbSpeed());
 	}
 	
@@ -685,7 +685,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#setClimbSpeed(int)
 	 */
 	@Override
-	public void setClimbSpeed(int climbSpeed) {
+	public synchronized void setClimbSpeed(int climbSpeed) {
 		this.iris.getCapabilities().setCruiseClimbSpeed(climbSpeed);
 	}
 	
@@ -699,7 +699,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getDescentSpeed()
 	 */
 	@Override
-	public int getDescentSpeed() {
+	public synchronized int getDescentSpeed() {
 		return (int) Math.round(this.iris.getCapabilities().getCruiseDescentSpeed());
 	}
 	
@@ -712,7 +712,7 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#setDescentSpeed(int)
 	 */
 	@Override
-	public void setDescentSpeed(int descentSpeed) {
+	public synchronized void setDescentSpeed(int descentSpeed) {
 		this.iris.getCapabilities().setCruiseDescentSpeed(descentSpeed);
 	}
 	
