@@ -784,11 +784,12 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 					// ETO update
 					Duration deto = Duration.ZERO;
 					if (0 != gs) {
+						// TODO: ground speed could be averaged along the leg
 						double dtg = this.getEnvironment().getDistance(lastPosition, next);
 						Duration ttg = Duration.ofSeconds((long) (dtg / gs));
 						Logging.logger().info("dtg = " + dtg + ", ttg = " + ttg);
 						ZonedDateTime eto = last.getAto().plus(ttg);
-						deto = Duration.between(next.getEto(), eto).abs();
+						deto = Duration.between(next.getEto(), eto);//.abs();
 						Logging.logger().info("eto = " + eto + ", deto = " + deto);
 					} else {
 						deto = this.getMaxTrackError().getTimingError().plusSeconds(1);
@@ -834,9 +835,11 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 	@Override
 	protected synchronized void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		super.initialize(origin, destination, etd);
-		this.setActiveLeg(Optional.empty());
-		this.setActivePart(0);
 		this.offTrackCount = 0;
+		if (!this.hasDatalink() || !this.getDatalink().isAirborne()) {
+			this.setActiveLeg(Optional.empty());
+			this.setActivePart(0);
+		}
 	}
 	
 	/**
@@ -897,6 +900,12 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 						this.setActivePart(partIndex + 1);
 						Logging.logger().info(this.getId() + " has an empty part " + partIndex);
 					}
+				}
+				
+				if (this.hasWaypoints()) {
+					Logging.logger().info("part " + partIndex + ": " + this.getWaypoints());
+				} else {
+					Logging.logger().warning("part " + partIndex + " has an empty plan");
 				}
 				
 				// check take-off and landing conditions
@@ -972,11 +981,13 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			this.backups.get(partIndex).clear();
 			this.planPart(partIndex);
 			partStart.setEto(this.getStart().getEto());
+			Logging.logger().info("replanned part " + partIndex + ": " + this.getWaypoints());
 		}
 		
 		if (partStart.hasInfiniteCost()) {
 			// invalid previous part
 			this.getGoal().setInfiniteCost();
+			Logging.logger().warning("replanning part " + partIndex + " was unsuccessful");
 		} else if (!this.getStart().getEto().equals(partStart.getEto())) {
 			// TODO: slots versus permissible aircraft track point error
 			// plan current part from scratch if start ETO has changed
@@ -987,6 +998,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			}
 			this.backups.get(partIndex).clear();
 			this.planPart(partIndex);
+			Logging.logger().info("replanned part " + partIndex + ": " + this.getWaypoints());
 		} else {
 			// propagate potential cost change
 			double deltaCost = partStart.getCost() - this.getStart().getCost();
@@ -1001,6 +1013,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 			if (partStart.hasParent()) {
 				this.getStart().setParent(partStart.getParent());
 			}
+			Logging.logger().info("adjusted part " + partIndex + ": " + this.getWaypoints());
 		}
 	}
 	

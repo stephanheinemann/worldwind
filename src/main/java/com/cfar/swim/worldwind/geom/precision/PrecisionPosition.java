@@ -48,7 +48,7 @@ public class PrecisionPosition extends Position implements Precision, Comparable
 	/**
 	 * the altitude precision of this precision position
 	 */
-	private int altPrecision = Precision.DECA_MICRO;
+	private int altPrecision = Precision.CENTI;
 	
 	/**
 	 * the original position of this precision position
@@ -69,7 +69,7 @@ public class PrecisionPosition extends Position implements Precision, Comparable
 		super(
 			Angle.fromDegrees((new PrecisionDouble(position.latitude.degrees, Precision.DECA_MICRO)).doubleValue()),
 			Angle.fromDegrees((new PrecisionDouble(position.longitude.degrees, Precision.DECA_MICRO)).doubleValue()),
-			(new PrecisionDouble(position.elevation, Precision.DECA_MICRO)).doubleValue());
+			(new PrecisionDouble(position.elevation, Precision.CENTI)).doubleValue());
 		this.original = position;
 	}
 

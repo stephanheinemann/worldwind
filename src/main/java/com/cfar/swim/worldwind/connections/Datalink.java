@@ -39,7 +39,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import com.cfar.swim.worldwind.geom.precision.Precision;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -324,10 +323,8 @@ public abstract class Datalink implements Connection {
 			Iterator<? extends Position> upi = mission.getPositions().iterator();
 			
 			while (hasMission && dpi.hasNext() && upi.hasNext()) {
-				PrecisionPosition dpp = new PrecisionPosition(
-						dpi.next(), Precision.DECA_MICRO, Precision.CENTI);
-				PrecisionPosition upp = new PrecisionPosition(
-						upi.next(), Precision.DECA_MICRO, Precision.CENTI);
+				PrecisionPosition dpp = new PrecisionPosition(dpi.next());
+				PrecisionPosition upp = new PrecisionPosition(upi.next());
 				
 				if (!dpp.equals(upp)) {
 					hasMission = false;
@@ -364,10 +361,8 @@ public abstract class Datalink implements Connection {
 		Position next = this.getNextMissionPosition();
 		
 		if ((null != position) && (null != next)) {
-			PrecisionPosition cpp = new PrecisionPosition(
-					position, Precision.DECA_MICRO, Precision.CENTI);
-			PrecisionPosition npp = new PrecisionPosition(
-					next, Precision.DECA_MICRO, Precision.CENTI);
+			PrecisionPosition cpp = new PrecisionPosition(position);
+			PrecisionPosition npp = new PrecisionPosition(next);
 			isNext = cpp.equals(npp);
 		}
 		

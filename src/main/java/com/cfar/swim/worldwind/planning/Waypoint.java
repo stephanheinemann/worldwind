@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
@@ -39,7 +40,6 @@ import com.cfar.swim.worldwind.util.Designatable;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Renderable;
-import java.time.Duration;
 
 /**
  * Realizes a waypoint of a trajectory featuring estimates for costs and time.
