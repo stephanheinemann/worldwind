@@ -200,10 +200,10 @@ public class MavlinkDatalink extends Datalink {
 		try {
 			this.tcp = new Socket(this.getHost(), this.getPort());
 			this.mavlink = MavlinkConnection.create(
-		            this.tcp.getInputStream(), 
+		            this.tcp.getInputStream(),
 		            this.tcp.getOutputStream());
-			this.determineUplinkDelay();
 			this.isConnected = true;
+			this.determineUplinkDelay();
 		} catch (Exception e) {
 			e.printStackTrace();
 			this.disconnect();
