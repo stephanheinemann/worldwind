@@ -673,7 +673,7 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 		Aircraft aircraft = null;
 		
 		if (this.hasActivePlanner()) {
-			this.getActivePlanner().getAircraft();
+			aircraft = this.getActivePlanner().getAircraft();
 		}
 		
 		return aircraft;

@@ -812,6 +812,7 @@ public class OADStarPlanner extends ADStarPlanner implements OnlinePlanner {
 							Logging.logger().warning("the aircraft is off-track...");
 						}
 					}
+					Logging.logger().info("off-track count is " + this.offTrackCount + " of " + maxTrackPoints);
 					
 				} else {
 					Logging.logger().info("insufficient datalink track points = " + track.size());
