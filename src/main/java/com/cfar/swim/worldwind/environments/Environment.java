@@ -174,6 +174,16 @@ public interface Environment extends TimedRenderable, ThresholdRenderable {
 	public double getDistance(Position position1, Position position2);
 	
 	/**
+	 * Gets the cumulative distance between positions in this environment.
+	 * 
+	 * @param positions the positions
+	 * 
+	 * @return the cumulative distance between the positions in this
+	 *         environment
+	 */
+	public double getDistance(List<Position> positions);
+	
+	/**
 	 * Gets the great circle distance between two positions in this
 	 * environment.
 	 * 

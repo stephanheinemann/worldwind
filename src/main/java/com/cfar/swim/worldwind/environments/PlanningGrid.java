@@ -1501,11 +1501,28 @@ implements DynamicHierarchicalEnvironment, MultiResolutionEnvironment {
 	 */
 	@Override
 	public double getDistance(Position position1, Position position2) {
+		ArrayList<Position> positions = new ArrayList<Position>();
+		positions.add(position1);
+		positions.add(position2);
+		return this.getDistance(positions);
+	}
+	
+	/**
+	 * Gets the cumulative distance between positions in this planning grid.
+	 * 
+	 * @param positions the positions in globe coordinates
+	 * 
+	 * @return the cumulative distance between the positions in this planning
+	 *         grid
+	 * 
+	 * @throws IllegalStateException if this planning grid has no globe
+	 * 
+	 * @see Environment#getDistance(List)
+	 */
+	@Override
+	public double getDistance(List<Position> positions) {
 		if (this.hasGlobe()) {
-			ArrayList<Position> positions = new ArrayList<Position>();
-			positions.add(position1);
-			positions.add(position2);
-			LengthMeasurer measurer = new LengthMeasurer(positions);
+			LengthMeasurer measurer = new LengthMeasurer(new ArrayList<>(positions));
 			measurer.setPathType(AVKey.LINEAR);
 			measurer.setFollowTerrain(false);
 			return measurer.getLength(this.getGlobe());

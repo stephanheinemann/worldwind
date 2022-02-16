@@ -195,7 +195,8 @@ public abstract class AbstractPlanner implements Planner {
 	 * @param target the target waypoint with unknown ETO
 	 */
 	protected void computeEto(Waypoint source, Waypoint target) {
-		Path leg = new Path(source, target);
+		Path leg = new Path(source.getPrecisionPosition().getOriginal(),
+				target.getPrecisionPosition().getOriginal());
 		Capabilities capabilities = this.getAircraft().getCapabilities();
 		Globe globe = this.getEnvironment().getGlobe();
 		target.setEto(capabilities.getEstimatedTime(leg, globe, source.getEto()));

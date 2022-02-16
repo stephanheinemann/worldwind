@@ -776,15 +776,19 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 					
 					// cross track check
 					ADRRTreeWaypoint lastPosition = new ADRRTreeWaypoint(last.getPosition());
-					double hced = leg.getHorizontalCrossEdgeDistance(lastPosition);
-					double vced = leg.getVerticalCrossEdgeDistance(lastPosition);
-					Angle ob = leg.getOpeningBearing(lastPosition);
-					Angle cb = leg.getClosingBearing(lastPosition);
+					double hced = leg.getHorizontalCrossEdgeDistance(
+							lastPosition.getPrecisionPosition().getOriginal());
+					double vced = leg.getVerticalCrossEdgeDistance(
+							lastPosition.getPrecisionPosition().getOriginal());
+					Angle ob = leg.getOpeningBearing(
+							lastPosition.getPrecisionPosition().getOriginal());
+					Angle cb = leg.getClosingBearing(
+							lastPosition.getPrecisionPosition().getOriginal());
 					Logging.logger().info("xtd = " + hced + ", ob = " + ob + ", cb = " + cb);
 					
 					// ground speed check
 					Duration dt = Duration.between(first.getAto(), last.getAto());
-					double s = this.getEnvironment().getDistance(first.getPosition(), last.getPosition());
+					double s = this.getEnvironment().getDistance(track.getPositions());
 					double gs = s / dt.getSeconds();
 					Logging.logger().info("dt = " + dt + ", s = " + s + ", gs =" + gs);
 					
@@ -792,7 +796,9 @@ public class OADRRTreePlanner extends ADRRTreePlanner implements OnlinePlanner {
 					Duration deto = Duration.ZERO;
 					if (0 != gs) {
 						// TODO: ground speed could be averaged along the leg
-						double dtg = this.getEnvironment().getDistance(lastPosition, next);
+						double dtg = this.getEnvironment().getDistance(
+								lastPosition.getPrecisionPosition().getOriginal(),
+								next.getPrecisionPosition().getOriginal());
 						Duration ttg = Duration.ofSeconds((long) (dtg / gs));
 						Logging.logger().info("dtg = " + dtg + ", ttg = " + ttg);
 						ZonedDateTime eto = last.getAto().plus(ttg);

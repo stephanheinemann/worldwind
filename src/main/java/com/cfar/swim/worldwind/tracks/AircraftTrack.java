@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.tracks.Track;
 import gov.nasa.worldwind.tracks.TrackSegment;
 
@@ -143,6 +144,26 @@ public class AircraftTrack extends ConcurrentLinkedDeque<AircraftTrackPoint> imp
 		}
 		
 		return previousTrackPoint;
+	}
+	
+	/**
+	 * Gets the track points of this aircraft track.
+	 * 
+	 * @return the track points of this aircraft track
+	 */
+	public List<AircraftTrackPoint> getTrackPoints() {
+		return this.stream().collect(Collectors.toUnmodifiableList());
+	}
+	
+	/**
+	 * Gets the positions of this aircraft track.
+	 * 
+	 * @return the positions of this aircraft track
+	 */
+	public List<Position> getPositions() {
+		return this.getTrackPoints().stream()
+				.map(t -> t.getPosition())
+				.collect(Collectors.toUnmodifiableList());
 	}
 	
 }

@@ -1261,16 +1261,19 @@ public abstract class AbstractAutonomicManager implements AutonomicManager {
 			commonStart = st.getFirstWaypoint().equals(et.getFirstWaypoint());
 		}
 		
+		boolean isActivePlanner = (getActivePlanner() == planner);
+		boolean isImprovedRevised = (0 > stq.compareTo(rtq));
+		boolean isLongerRevised = (0 == stq.compareTo(rtq)) && (rpois.size() >= poiIndex);
+		
 		// TODO: multiple parts / uploading versus showing
 		// consider non-empty, improved, or longer revised trajectory
-		if (!trajectory.isEmpty() && commonStart && (sourceTrajectory.isEmpty()
-				|| (0 > stq.compareTo(rtq))
-				|| ((0 == stq.compareTo(rtq)) && (rpois.size() >= poiIndex)))) {
+		if (!trajectory.isEmpty() && (isActivePlanner || (commonStart &&
+				(sourceTrajectory.isEmpty() || isImprovedRevised || isLongerRevised)))) {
 			getSourceScenario().setTrajectory(trajectory);
 			Logging.logger().info("new source trajectory = " + trajectory);
 			
 			// select improved planner if necessary
-			if (getActivePlanner() !=  planner) {
+			if (!isActivePlanner) {
 				getActivePlanner().setStandby(true);
 				setActivePlanner(planner);
 				getActivePlanner().setStandby(false);
