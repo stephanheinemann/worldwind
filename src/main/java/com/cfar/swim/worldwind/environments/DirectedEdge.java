@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.environments;
 
+import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
+
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
@@ -67,7 +69,11 @@ public class DirectedEdge extends Edge {
 	public Angle getOpeningBearing(Position position) {
 		Angle ob = Angle.ZERO;
 		
-		if (!this.getFirstPosition().equals(position)) {
+		// reduce precision for comparison
+		PrecisionPosition first = new PrecisionPosition(this.getFirstPosition());
+		PrecisionPosition second = new PrecisionPosition(position);
+		
+		if (!first.equals(second)) {
 			DirectedEdge oe = new DirectedEdge(
 					this.getEnvironment(), this.getFirstPosition(), position);
 			Vec4 ov = oe.getSecond().subtract3(oe.getFirst());
@@ -90,7 +96,11 @@ public class DirectedEdge extends Edge {
 	public Angle getClosingBearing(Position position) {
 		Angle cb = Angle.ZERO;
 		
-		if (!this.getSecondPosition().equals(position)) {
+		// reduce precision for comparison
+		PrecisionPosition first = new PrecisionPosition(position);
+		PrecisionPosition second = new PrecisionPosition(this.getSecondPosition());
+		
+		if (!second.equals(first)) {
 			DirectedEdge ce = new DirectedEdge(
 					this.getEnvironment(), position, this.getSecondPosition());
 			Vec4 cv = ce.getSecond().subtract3(ce.getFirst());

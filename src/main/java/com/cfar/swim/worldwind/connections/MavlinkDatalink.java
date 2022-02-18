@@ -292,14 +292,15 @@ public class MavlinkDatalink extends Datalink {
 	 * 
 	 * @param payloadClasses the possible payloads of the mavlink message
 	 * @param delay delay before receiving the mavlink message
-	 * @param skip skip all messages before receiving the mavlink message 
+	 * @param preskip skip all messages before receiving the mavlink message
+	 * @param postskip skip all messages after receiving the mavlink message
 	 * @param messageLimit the limit of mavlink messages to scan
 	 * 
 	 * @return the received mavlink message payload, if any
 	 */
 	protected synchronized Optional<?> receiveMessage(
 			Collection<Class<?>> payloadClasses, boolean delay,
-			boolean skip, int messageLimit) {
+			boolean preskip, boolean postskip, int messageLimit) {
 		Optional<?> payload = Optional.empty();
 		int receivedMessages = 0;
 		
@@ -312,8 +313,8 @@ public class MavlinkDatalink extends Datalink {
 			}
 		}
 		
-		// skip old messages
-		if (skip) {
+		// skip messages before receiving
+		if (preskip) {
 			try {
 				this.tcp.getInputStream().skip(
 						this.tcp.getInputStream().available() - 1);
@@ -339,6 +340,16 @@ public class MavlinkDatalink extends Datalink {
 			}
 		}
 		
+		// skip messages after receiving
+		if (postskip) {
+			try {
+				this.tcp.getInputStream().skip(
+						this.tcp.getInputStream().available() - 1);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		return payload;
 	}
 	
@@ -353,7 +364,7 @@ public class MavlinkDatalink extends Datalink {
 		Optional<CommandAck> ack = Optional.empty();
 		
 		Optional<?> payload = this.receiveMessage(
-				Collections.singleton(CommandAck.class), true, false,
+				Collections.singleton(CommandAck.class), true, false, false,
 				MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 		
 		if (payload.isPresent()) {
@@ -387,7 +398,7 @@ public class MavlinkDatalink extends Datalink {
 		Optional<MissionAck> ack = Optional.empty();
 		
 		Optional<?> payload = this.receiveMessage(
-				Collections.singleton(MissionAck.class), true, false,
+				Collections.singleton(MissionAck.class), true, false, false,
 				MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 		
 		if (payload.isPresent()) {
@@ -428,7 +439,7 @@ public class MavlinkDatalink extends Datalink {
 			this.sendCommand(ping);
 			
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(Ping.class), false, false,
+					Collections.singleton(Ping.class), false, false, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			ZonedDateTime pongTime = ZonedDateTime.now();
 			
@@ -496,7 +507,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(SystemTime.class), false, true,
+					Collections.singleton(SystemTime.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -547,7 +558,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(Heartbeat.class), false, true,
+					Collections.singleton(Heartbeat.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -578,7 +589,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(Heartbeat.class), false, true,
+					Collections.singleton(Heartbeat.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -657,7 +668,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(Attitude.class), false, true,
+					Collections.singleton(Attitude.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -749,7 +760,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(GlobalPositionInt.class), false, true,
+					Collections.singleton(GlobalPositionInt.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -779,7 +790,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(GlobalPositionInt.class), false, true,
+					Collections.singleton(GlobalPositionInt.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -990,7 +1001,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(MissionCurrent.class), false, true,
+					Collections.singleton(MissionCurrent.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -1100,6 +1111,28 @@ public class MavlinkDatalink extends Datalink {
 		}
 	}
 	
+	// TODO: look into other solutions to deal with low frequency messages
+	/** the validity period of the airborne state */
+	private static final Duration AIRBORNE_STATE_VALIDITY = Duration.ofSeconds(1);
+	
+	/** the time stamp of the airborne state of this mavlink datalink */
+	private ZonedDateTime airborneStateTime = ZonedDateTime.now();
+	
+	/** the airborne state of this mavlink datalink */
+	private boolean airborne = false;
+	
+	/**
+	 * Determines whether or not the current airborne state is valid.
+	 * 
+	 * @return true if the current airborne state is valid, false otherwise
+	 */
+	protected boolean isAirborneStateValid() {
+		Duration airborneStateAge = Duration.between(
+				airborneStateTime, ZonedDateTime.now());
+		return (0 > airborneStateAge.compareTo(
+				MavlinkDatalink.AIRBORNE_STATE_VALIDITY));
+	}
+	
 	/**
 	 * Determines whether or not the aircraft connected via this mavlink
 	 * datalink is airborne.
@@ -1110,29 +1143,30 @@ public class MavlinkDatalink extends Datalink {
 	 */
 	@Override
 	public synchronized boolean isAirborne() {
-		boolean airborne = false;
-		
-		if (this.isConnected()) {
-			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(ExtendedSysState.class), false, true,
-					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
-			
-			if (payload.isPresent()) {
-				ExtendedSysState ess = (ExtendedSysState) payload.get();
-				airborne = ess.landedState().flagsEnabled(
-						MavLandedState.MAV_LANDED_STATE_IN_AIR)
-						|| ess.landedState().flagsEnabled(
-								MavLandedState.MAV_LANDED_STATE_TAKEOFF)
-						|| ess.landedState().flagsEnabled(
-								MavLandedState.MAV_LANDED_STATE_LANDING);
+		if (!this.isAirborneStateValid()) {
+			if (this.isConnected()) {
+				Optional<?> payload = this.receiveMessage(
+						Collections.singleton(ExtendedSysState.class), false, false, true,
+						MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
+				
+				if (payload.isPresent()) {
+					ExtendedSysState ess = (ExtendedSysState) payload.get();
+					this.airborneStateTime = ZonedDateTime.now();
+					this.airborne = ess.landedState().flagsEnabled(
+							MavLandedState.MAV_LANDED_STATE_IN_AIR)
+							|| ess.landedState().flagsEnabled(
+									MavLandedState.MAV_LANDED_STATE_TAKEOFF)
+							|| ess.landedState().flagsEnabled(
+									MavLandedState.MAV_LANDED_STATE_LANDING);
+				} else {
+					Logging.logger().warning("mavlink datalink received no extended system state");
+				}
 			} else {
-				Logging.logger().warning("mavlink datalink received no extended system state");
+				Logging.logger().warning("mavlink datalink is disconnected");
 			}
-		} else {
-			Logging.logger().warning("mavlink datalink is disconnected");
 		}
 		
-		return airborne;
+		return this.airborne;
 	}
 	
 	/**
@@ -1149,7 +1183,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(VfrHud.class), false, true,
+					Collections.singleton(VfrHud.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -1202,7 +1236,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(VfrHud.class), false, true,
+					Collections.singleton(VfrHud.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -1256,7 +1290,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(VfrHud.class), false, true,
+					Collections.singleton(VfrHud.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -1310,7 +1344,7 @@ public class MavlinkDatalink extends Datalink {
 		
 		if (this.isConnected()) {
 			Optional<?> payload = this.receiveMessage(
-					Collections.singleton(VfrHud.class), false, true,
+					Collections.singleton(VfrHud.class), false, true, false,
 					MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 			
 			if (payload.isPresent()) {
@@ -1382,7 +1416,7 @@ public class MavlinkDatalink extends Datalink {
 			
 			boolean uploading = true;
 			while (uploading) {	
-				Optional<?> payload = this.receiveMessage(payloads, true, false,
+				Optional<?> payload = this.receiveMessage(payloads, true, false, false,
 						MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 				
 				if (payload.isPresent()) {
@@ -1508,7 +1542,7 @@ public class MavlinkDatalink extends Datalink {
 				int seq = 0, size = 0;
 				boolean downloading = true;
 				while (downloading) {	
-					Optional<?> payload = this.receiveMessage(payloads, true, false,
+					Optional<?> payload = this.receiveMessage(payloads, true, false, false,
 							MavlinkDatalinkProperties.MAVLINK_DEFAULT_SCAN_LIMIT);
 					
 					if (payload.isPresent()) {

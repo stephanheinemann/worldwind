@@ -314,7 +314,7 @@ public class AircraftTrackPoint extends BasicMarker implements TrackPoint {
 	public boolean isOld() {
 		ZonedDateTime now = ZonedDateTime.now(ZoneId.of("UTC"));
 		Duration age = Duration.between(this.time, now);
-		return (1 == age.compareTo(this.maxAge));
+		return (0 < age.compareTo(this.maxAge));
 	}
 	
 	/**
@@ -354,6 +354,23 @@ public class AircraftTrackPoint extends BasicMarker implements TrackPoint {
 	public void render(DrawContext dc, Vec4 point, double radius, boolean isRelative) {
 		this.updateOpacity();
 		super.render(dc, point, radius, isRelative);
+	}
+	
+	/**
+	 * Gets the string representation of this aircraft track point.
+	 * 
+	 * @return the string representation of this aircraft track point
+	 */
+	@Override
+	public String toString() {
+		return "(("
+				+ this.getLatitude() + ", "
+				+ this.getLongitude() + ", "
+				+ this.getElevation() + "), ("
+				+ this.getPitch() + ", "
+				+ this.getBank() + ", "
+				+ this.getYaw() + "), "
+				+ this.getTime() + ")";
 	}
 	
 }

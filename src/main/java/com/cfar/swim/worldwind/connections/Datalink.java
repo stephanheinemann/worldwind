@@ -51,6 +51,7 @@ import com.google.common.collect.Iterables;
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.Path;
+import gov.nasa.worldwind.util.Logging;
 
 /**
  * Abstracts a datalink connection to connect to and communicate with aircraft.
@@ -64,7 +65,7 @@ public abstract class Datalink implements Connection {
 	private final PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 	
 	/** the downlink (monitoring) period of this datalink */
-	private Duration downlinkPeriod = Duration.ofMillis(1000);
+	private Duration downlinkPeriod = Duration.ofSeconds(1);
 	
 	/** the cached mission of this datalink */
 	private Path mission = new Path(new ArrayList<>());
@@ -539,7 +540,7 @@ public abstract class Datalink implements Connection {
 			emitHeartbeat();
 			
 			// clean up old track points
-			if (!track.isEmpty() && track.peekFirst().isOld()) {
+			while (!track.isEmpty() && track.peekFirst().isOld()) {
 				track.removeFirst();
 			}
 			
@@ -549,6 +550,7 @@ public abstract class Datalink implements Connection {
 				track.add(trackPoint);
 				pcs.firePropertyChange("track", null, track);
 			}
+			Logging.logger().info("datalink trackpoints: " + track.size());
 			// TODO: extend monitored properties
 		}
 	}

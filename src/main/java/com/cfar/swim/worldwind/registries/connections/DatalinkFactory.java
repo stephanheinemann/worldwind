@@ -90,7 +90,7 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 		if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_SIMULATED_ID)) {
 			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) this.getSpecification().getProperties();
 			connection = new SimulatedDatalink();
-			connection.setDownlinkPeriod(Duration.ofMillis(properties.getDownlinkPeriod()));
+			connection.setDownlinkPeriod(Duration.ofSeconds(properties.getDownlinkPeriod()));
 			((SimulatedDatalink) connection).setUplinkDelay(Duration.ofMillis(properties.getUplinkDelay()));
 			AircraftTrackError maxTrackError = new AircraftTrackError();
 			maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
@@ -102,12 +102,12 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 		} else if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID)) {
 			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) this.getSpecification().getProperties();
 			connection = new DronekitDatalink(properties.getHost(), properties.getPort());
-			connection.setDownlinkPeriod(Duration.ofMillis(properties.getDownlinkPeriod()));
+			connection.setDownlinkPeriod(Duration.ofSeconds(properties.getDownlinkPeriod()));
 		} else if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_MAVLINK_ID)) {
 			MavlinkDatalinkProperties properties = (MavlinkDatalinkProperties) this.getSpecification().getProperties();
 			connection = new MavlinkDatalink(properties.getHost(), properties.getPort(),
 					properties.getSourceId(), properties.getTargetId());
-			connection.setDownlinkPeriod(Duration.ofMillis(properties.getDownlinkPeriod()));
+			connection.setDownlinkPeriod(Duration.ofSeconds(properties.getDownlinkPeriod()));
 		}
 		
 		return connection;

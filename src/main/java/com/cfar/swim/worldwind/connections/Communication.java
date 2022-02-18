@@ -29,6 +29,9 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Abstracts a communication via a connection.
  * 
@@ -40,6 +43,12 @@ public abstract class Communication<C extends Connection> {
 
 	/** the connection of this communication */
 	private final C connection;
+	
+	/** the communicator of this communication */
+	private final ExecutorService communicator = Executors.newSingleThreadExecutor();
+	
+	/** indicates whether or not this communication is communicating */
+	private boolean isCommunicating = false;
 	
 	/**
 	 * Constructs a new communication based on a connection.
@@ -60,6 +69,33 @@ public abstract class Communication<C extends Connection> {
 	 */
 	protected C getConnection() {
 		return this.connection;
+	}
+	
+	/**
+	 * Gets the communicator of this communication.
+	 * 
+	 * @return the communicator this communication
+	 */
+	protected ExecutorService getCommunicator() {
+		return this.communicator;
+	}
+	
+	/**
+	 * Sets whether or not this communication is communicating.
+	 * 
+	 * @param isCommunicating true if this communication is communicating
+	 */
+	public synchronized void setCommunicating(boolean isCommunicating) {
+		this.isCommunicating = isCommunicating;
+	}
+	
+	/**
+	 * Determines whether or not this communication is communicating.
+	 * 
+	 * @return true if this communication is communicating, false otherwise
+	 */
+	public synchronized boolean isCommunicating() {
+		return this.isCommunicating;
 	}
 	
 	/**
