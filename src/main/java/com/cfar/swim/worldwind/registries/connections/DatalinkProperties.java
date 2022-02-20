@@ -57,7 +57,7 @@ public abstract class DatalinkProperties implements Properties<Datalink> {
 	/**
 	 * Gets the downlink (monitoring) period of this datalink properties bean.
 	 * 
-	 * @return the downlink period of this datalink properties bean in milliseconds
+	 * @return the downlink period of this datalink properties bean in seconds
 	 */
 	public long getDownlinkPeriod() {
 		return this.downlinkPeriod;
@@ -66,7 +66,7 @@ public abstract class DatalinkProperties implements Properties<Datalink> {
 	/**
 	 * Sets the downlink (monitoring) period of this datalink properties bean.
 	 * 
-	 * @param downlinkPeriod the downlink period to be set in milliseconds
+	 * @param downlinkPeriod the downlink period to be set in seconds
 	 */
 	public void setDownlinkPeriod(long downlinkPeriod) {
 		this.downlinkPeriod = downlinkPeriod;
