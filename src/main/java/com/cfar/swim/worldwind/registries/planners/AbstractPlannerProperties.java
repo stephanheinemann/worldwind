@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,6 +31,8 @@ package com.cfar.swim.worldwind.registries.planners;
 
 import java.util.Objects;
 
+import javax.validation.constraints.NotNull;
+
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.Properties;
@@ -45,11 +47,16 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 
 	// TODO: maximum slot time (departure or waypoint in general)
 	
+	/** the default serial identification of this abstract planner properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the cost policy of this planner properties bean */
-	CostPolicy costPolicy;
+	@NotNull
+	private CostPolicy costPolicy;
 	
 	/** the risk policy of this planner properties bean */
-	RiskPolicy riskPolicy;
+	@NotNull
+	private RiskPolicy riskPolicy;
 	
 	/**
 	 * Constructs a new planner properties bean using default cost and risk
@@ -157,10 +164,10 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 		
 		if (this == o) {
 			equals = true;
-		} else if ((null != o) && (o instanceof AbstractPlannerProperties)) {
-			AbstractPlannerProperties fasp = (AbstractPlannerProperties) o;
-			equals = (this.costPolicy.equals(fasp.costPolicy))
-					&& (this.riskPolicy.equals(fasp.riskPolicy));
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			AbstractPlannerProperties app = (AbstractPlannerProperties) o;
+			equals = (this.costPolicy.equals(app.costPolicy))
+					&& (this.riskPolicy.equals(app.riskPolicy));
 		}
 		
 		return equals;
@@ -178,6 +185,20 @@ public abstract class AbstractPlannerProperties implements PlannerProperties {
 	@Override
 	public int hashCode() {
 		return Objects.hash(this.costPolicy, this.riskPolicy);
+	}
+	
+	/**
+	 * Gets the string representation of this abstract planner properties bean.
+	 * 
+	 * @return the string representation of this abstract planner properties
+	 *         bean
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return "costPolicy=" + this.getCostPolicy() + ", "
+				+ "riskPolicy=" + this.getRiskPolicy();
 	}
 	
 }

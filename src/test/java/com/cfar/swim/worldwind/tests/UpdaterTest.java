@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -33,13 +33,16 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
-import com.cfar.swim.worldwind.iwxxm.IwxxmUpdater;
-
+/**
+ * Performs SWIM Updater test.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class UpdaterTest {
 
 	@Test
 	public void test() {
-		
 		//IwxxmUpdater iwxxmUpdater = new IwxxmUpdater(new RegularGrid());
 		assertTrue(true);
 	}

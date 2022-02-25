@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -43,7 +43,12 @@ public class PrecisionPosition extends Position implements Precision, Comparable
 	/**
 	 * the precision of this precision position
 	 */
-	private int precision = Precision.PRECISION;
+	private int precision = Precision.DECA_MICRO;
+	
+	/**
+	 * the altitude precision of this precision position
+	 */
+	private int altPrecision = Precision.CENTI;
 	
 	/**
 	 * the original position of this precision position
@@ -56,14 +61,15 @@ public class PrecisionPosition extends Position implements Precision, Comparable
 	 * 
 	 * @param position the position
 	 * 
-	 * @see Precision#PRECISION
+	 * @see PrecisionDouble
+	 * @see Position
 	 */
 	public PrecisionPosition(Position position) {
 		// TODO: the correct default precision should probably be a function (percentage) of the value
 		super(
-			Angle.fromDegrees((new PrecisionDouble(position.latitude.degrees, Precision.PRECISION)).doubleValue()),
-			Angle.fromDegrees((new PrecisionDouble(position.longitude.degrees, Precision.PRECISION)).doubleValue()),
-			(new PrecisionDouble(position.elevation, Precision.PRECISION)).doubleValue());
+			Angle.fromDegrees((new PrecisionDouble(position.latitude.degrees, Precision.DECA_MICRO)).doubleValue()),
+			Angle.fromDegrees((new PrecisionDouble(position.longitude.degrees, Precision.DECA_MICRO)).doubleValue()),
+			(new PrecisionDouble(position.elevation, Precision.CENTI)).doubleValue());
 		this.original = position;
 	}
 
@@ -73,6 +79,9 @@ public class PrecisionPosition extends Position implements Precision, Comparable
 	 * 
 	 * @param position the position
 	 * @param precision the precision
+	 * 
+	 * @see PrecisionDouble
+	 * @see Position
 	 */
 	public PrecisionPosition(Position position, int precision) {
 		super(
@@ -80,13 +89,35 @@ public class PrecisionPosition extends Position implements Precision, Comparable
 			Angle.fromDegrees((new PrecisionDouble(position.longitude.degrees, precision)).doubleValue()),
 			(new PrecisionDouble(position.elevation, precision)).doubleValue());
 		this.precision = precision;
+		this.altPrecision = precision;
 		this.original = position;
 	}
 	
 	/**
-	 * Gets the precision of this precision position.
+	 * Constructs a new precision position from a position using specified
+	 * location and altitude precisions.
 	 * 
-	 * @return the precision of this precision position
+	 * @param position the position
+	 * @param locPrecision the location precision
+	 * @param altPrecision the altitude precision
+	 * 
+	 * @see PrecisionDouble
+	 * @see Position
+	 */
+	public PrecisionPosition(Position position, int locPrecision, int altPrecision) {
+		super(
+			Angle.fromDegrees((new PrecisionDouble(position.latitude.degrees, locPrecision)).doubleValue()),
+			Angle.fromDegrees((new PrecisionDouble(position.longitude.degrees, locPrecision)).doubleValue()),
+			(new PrecisionDouble(position.elevation, altPrecision)).doubleValue());
+		this.precision = locPrecision;
+		this.altPrecision = altPrecision;
+		this.original = position;
+	}
+	
+	/**
+	 * Gets the location precision of this precision position.
+	 * 
+	 * @return the location precision of this precision position
 	 * 
 	 * @see Precision#getPrecision()
 	 */
@@ -94,9 +125,11 @@ public class PrecisionPosition extends Position implements Precision, Comparable
 	public int getPrecision() {
 		return this.precision;
 	}
-
+	
 	/**
 	 * Sets the precision of this precision position.
+	 * 
+	 * @param precision the precision to be set
 	 * 
 	 * @return a new precision position with the set precision
 	 * 
@@ -105,6 +138,27 @@ public class PrecisionPosition extends Position implements Precision, Comparable
 	@Override
 	public PrecisionPosition setPrecision(int precision) {
 		return new PrecisionPosition(this.original, precision);
+	}
+	
+	/**
+	 * Gets the altitude precision of this precision position.
+	 * 
+	 * @return the altitude precision of this precision position
+	 */
+	public int getAltitudePrecision() {
+		return this.altPrecision;
+	}
+	
+	/**
+	 * Sets the precisions of this precision position.
+	 * 
+	 * @param locPrecision the location precision to be set
+	 * @param altPrecision the altitude precision to be set
+	 * 
+	 * @return a new precision position with the set precisions
+	 */
+	public PrecisionPosition setPrecisions(int locPrecision, int altPrecision) {
+		return new PrecisionPosition(this.original, locPrecision, altPrecision);
 	}
 	
 	/**

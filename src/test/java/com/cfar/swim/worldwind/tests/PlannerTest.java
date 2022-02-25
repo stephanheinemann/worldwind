@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -39,13 +39,13 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.cfar.swim.worldwind.ai.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
+import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.Neighborhood;
+import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
 import com.cfar.swim.worldwind.planning.CostInterval;
-import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.google.common.collect.Iterables;
 
@@ -54,14 +54,23 @@ import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.render.Path;
 
+/**
+ * Performs planner tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class PlannerTest {
 
+	/**
+	 * Tests a forward A* planner.
+	 */
 	@Test
 	@SuppressWarnings("unchecked")
 	public void forwardAStarTest() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
         // the reference cube has to be offset from the origin for the position computation to work
-		Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1);
+		Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1d);
         PlanningGrid planningGrid = new PlanningGrid(cube, 2, 2, 2);
         planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
         planningGrid.setGlobe(new Earth());

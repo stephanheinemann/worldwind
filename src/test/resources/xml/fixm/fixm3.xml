@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fx:Flight xmlns:fb="http://www.fixm.aero/base/4.2"
+	xmlns:fx="http://www.fixm.aero/flight/4.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.fixm.aero/flight/4.2 ../../../main/resources/xsd/flight/Flight.xsd ">
+	<fx:aircraft>
+		<fx:aircraftType>
+			<fx:type>
+				<fx:icaoAircraftTypeDesignator>H135</fx:icaoAircraftTypeDesignator>
+			</fx:type>
+		</fx:aircraftType>
+	</fx:aircraft>
+	<fx:arrival>
+		<fx:arrivalAerodrome>
+			<fb:iataDesignator>YYJ</fb:iataDesignator>
+			<fb:referencePoint
+				srsName="urn:ogc:def:crs:EPSG::4326">
+				<fb:pos>48.6480578 -123.4274429</fb:pos>
+			</fb:referencePoint>
+		</fx:arrivalAerodrome>
+	</fx:arrival>
+	<fx:departure>
+		<fx:aerodrome>
+			<fb:iataDesignator>YYJ</fb:iataDesignator>
+			<fb:referencePoint
+				srsName="urn:ogc:def:crs:EPSG::4326">
+				<fb:pos>48.6480578 -123.4274429</fb:pos>
+			</fb:referencePoint>
+		</fx:aerodrome>
+	</fx:departure>
+	<fx:flightIdentification>
+		<fx:aircraftIdentification>CFAR003</fx:aircraftIdentification>
+	</fx:flightIdentification>
+	<fx:operator>
+		<fb:designatorIcao>UVC</fb:designatorIcao>
+	</fx:operator>
+	<fx:routeTrajectoryGroup>
+		<fx:current>
+			<fx:element>
+				<fx:point4D>
+					<fx:level>
+						<fb:altitude uom="FT">300</fb:altitude>
+					</fx:level>
+					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
+						<fb:pos>48.55516067199049 -123.38786713547844</fb:pos>
+					</fx:position>
+					<fx:time>
+						<fx:absoluteTime>2021-11-12T18:00:00Z</fx:absoluteTime>
+					</fx:time>
+				</fx:point4D>
+			</fx:element>
+			<fx:element>
+				<fx:point4D>
+					<fx:level>
+						<fb:altitude uom="FT">100</fb:altitude>
+					</fx:level>
+					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
+						<fb:pos>48.55698120613266 -123.38325116264346</fb:pos>
+					</fx:position>
+					<fx:time>
+						<fx:absoluteTime>2021-11-12T18:02:00Z</fx:absoluteTime>
+					</fx:time>
+				</fx:point4D>
+			</fx:element>
+			<fx:element>
+				<fx:point4D>
+					<fx:level>
+						<fb:altitude uom="FT">500</fb:altitude>
+					</fx:level>
+					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
+						<fb:pos>48.554550827619586 -123.3767082181261</fb:pos>
+					</fx:position>
+					<fx:time>
+						<fx:absoluteTime>2021-11-12T18:05:00Z</fx:absoluteTime>
+					</fx:time>
+				</fx:point4D>
+			</fx:element>
+		</fx:current>
+	</fx:routeTrajectoryGroup>
+</fx:Flight>

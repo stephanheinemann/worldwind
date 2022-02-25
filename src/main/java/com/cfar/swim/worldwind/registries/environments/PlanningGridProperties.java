@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.registries.environments;
 
 import java.util.Objects;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 /**
  * Realizes the properties bean of a planning grid environment.
  * 
@@ -39,7 +42,12 @@ import java.util.Objects;
  */
 public class PlanningGridProperties extends EnvironmentProperties {
 
+	/** the default serial identification of this planning grid properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the longest axis division of this planning grid properties bean */
+	@Min(value = 1, message = "{property.environment.grid.division.min}")
+	@Max(value = Integer.MAX_VALUE, message = "{property.environment.grid.division.max}")
 	private int division;
 	
 	/**
@@ -67,7 +75,7 @@ public class PlanningGridProperties extends EnvironmentProperties {
 	 * @return the division for the longest axis of this planning grid
 	 *         properties bean
 	 */
-	public int getDivsion() {
+	public int getDivision() {
 		return this.division;
 	}
 	
@@ -77,7 +85,7 @@ public class PlanningGridProperties extends EnvironmentProperties {
 	 * 
 	 * @param division the division for the longest axis to be set
 	 */
-	public void setDivsion(int division) {
+	public void setDivision(int division) {
 		this.division = division;
 	}
 	

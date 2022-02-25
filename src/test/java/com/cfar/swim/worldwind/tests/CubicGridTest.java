@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -42,8 +42,17 @@ import gov.nasa.worldwind.geom.Intersection;
 import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Vec4;
 
+/**
+ * Performs cubic grid tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class CubicGridTest {
 	
+	/**
+	 * Tests cubic grid structures.
+	 */
 	@Test
 	public void testStructure() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
@@ -76,6 +85,9 @@ public class CubicGridTest {
         assertEquals(1, cubicGrid.getAll().size());
 	}
 	
+	/**
+	 * Tests cubic grid normalizers.
+	 */
 	@Test
 	public void testNormalizer() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
@@ -83,28 +95,31 @@ public class CubicGridTest {
         CubicGrid cubicGrid = new CubicGrid(cube, 10, 5, 5);
         
         for (CubicGrid grid : cubicGrid.getAll()) {
-        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
+        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.UNIT_DECA_MICRO);
         }
         
         cubicGrid.getChild(0, 0, 0).addChildren(0.5d);
         
         for (CubicGrid grid : cubicGrid.getAll()) {
-        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
+        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.UNIT_DECA_MICRO);
         }
         
         cubicGrid.getChild(0, 0, 1).addChildren(2);
         
         for (CubicGrid grid : cubicGrid.getAll()) {
-        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
+        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.UNIT_DECA_MICRO);
         }
 		
         cubicGrid.removeChildren();
         
         for (CubicGrid grid : cubicGrid.getAll()) {
-        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.EPSILON);
+        	assertEquals(cube.getDiameter(), grid.getNormalizer(), PrecisionDouble.UNIT_DECA_MICRO);
         }
 	}
 	
+	/**
+	 * Tests cubic grid intersections.
+	 */
 	@Test
 	public void testIntersections() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,11 +29,17 @@
  */
 package com.cfar.swim.worldwind.registries.connections;
 
+import java.time.Duration;
+
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.DronekitDatalink;
+import com.cfar.swim.worldwind.connections.MavlinkDatalink;
 import com.cfar.swim.worldwind.connections.SimulatedDatalink;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.tracks.AircraftTrackError;
+
+import gov.nasa.worldwind.geom.Angle;
 
 
 /**
@@ -73,7 +79,7 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 	 * Creates a new datalink according to the customized datalink
 	 * specification of this datalink factory.
 	 * 
-	 * @return the created datalink
+	 * @return the created datalink, or null if no datalink could be created
 	 * 
 	 * @see AbstractFactory#createInstance()
 	 */
@@ -81,14 +87,27 @@ public class DatalinkFactory extends AbstractFactory<Datalink> {
 	public Datalink createInstance() {
 		Datalink connection = null;
 		
-		if (this.specification.getId().equals(Specification.DATALINK_SIMULATED)) {
-			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) this.specification.getProperties();
+		if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_SIMULATED_ID)) {
+			SimulatedDatalinkProperties properties = (SimulatedDatalinkProperties) this.getSpecification().getProperties();
 			connection = new SimulatedDatalink();
-			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
-		} else if (this.specification.getId().equals(Specification.DATALINK_DRONEKIT)) {			
-			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) this.specification.getProperties();
+			connection.setDownlinkPeriod(Duration.ofSeconds(properties.getDownlinkPeriod()));
+			((SimulatedDatalink) connection).setUplinkDelay(Duration.ofMillis(properties.getUplinkDelay()));
+			AircraftTrackError maxTrackError = new AircraftTrackError();
+			maxTrackError.setCrossTrackError(properties.getMaxCrossTrackError());
+			maxTrackError.setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+			maxTrackError.setOpeningBearingError(Angle.POS90);
+			maxTrackError.setClosingBearingError(Angle.POS90);
+			((SimulatedDatalink) connection).setMaxTrackError(maxTrackError);
+			((SimulatedDatalink) connection).setErrorProbablity(properties.getErrorProbability());
+		} else if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_DRONEKIT_ID)) {
+			DronekitDatalinkProperties properties = (DronekitDatalinkProperties) this.getSpecification().getProperties();
 			connection = new DronekitDatalink(properties.getHost(), properties.getPort());
-			connection.setDownlinkPeriod(properties.getDownlinkPeriod());
+			connection.setDownlinkPeriod(Duration.ofSeconds(properties.getDownlinkPeriod()));
+		} else if (this.getSpecification().getId().equals(Specification.CONNECTION_DATALINK_MAVLINK_ID)) {
+			MavlinkDatalinkProperties properties = (MavlinkDatalinkProperties) this.getSpecification().getProperties();
+			connection = new MavlinkDatalink(properties.getHost(), properties.getPort(),
+					properties.getSourceId(), properties.getTargetId());
+			connection.setDownlinkPeriod(Duration.ofSeconds(properties.getDownlinkPeriod()));
 		}
 		
 		return connection;

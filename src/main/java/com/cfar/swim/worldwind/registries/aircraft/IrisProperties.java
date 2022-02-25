@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -40,6 +40,9 @@ import com.cfar.swim.worldwind.aircraft.Iris;
  */
 public class IrisProperties extends AircraftProperties {
 
+	/** the default serial identification of this Iris aircraft properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/**
 	 * Constructs a new Iris aircraft properties bean.
 	 */

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,6 +31,9 @@ package com.cfar.swim.worldwind.registries.connections;
 
 import java.util.Objects;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.registries.Properties;
 
@@ -43,13 +46,18 @@ import com.cfar.swim.worldwind.registries.Properties;
  */
 public abstract class DatalinkProperties implements Properties<Datalink> {
 	
+	/** the default serial identification of this datalink properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the downlink period of this datalink properties bean */
-	private long downlinkPeriod = 1000; // ms
+	@Min(value = 1, message = "{property.connection.datalink.downlinkPeriod.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.connection.datalink.downlinkPeriod.max}")
+	private long downlinkPeriod = 1; // s
 	
 	/**
 	 * Gets the downlink (monitoring) period of this datalink properties bean.
 	 * 
-	 * @return the downlink period of this datalink properties bean in milliseconds
+	 * @return the downlink period of this datalink properties bean in seconds
 	 */
 	public long getDownlinkPeriod() {
 		return this.downlinkPeriod;
@@ -58,7 +66,7 @@ public abstract class DatalinkProperties implements Properties<Datalink> {
 	/**
 	 * Sets the downlink (monitoring) period of this datalink properties bean.
 	 * 
-	 * @param downlinkPeriod the downlink period to be set in milliseconds
+	 * @param downlinkPeriod the downlink period to be set in seconds
 	 */
 	public void setDownlinkPeriod(long downlinkPeriod) {
 		this.downlinkPeriod = downlinkPeriod;
@@ -100,7 +108,7 @@ public abstract class DatalinkProperties implements Properties<Datalink> {
 		
 		if (this == o) {
 			equals = true;
-		} else if ((null != o) && (o instanceof DatalinkProperties)) {
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
 			equals = (this.downlinkPeriod == ((DatalinkProperties) o).downlinkPeriod);
 		}
 			

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -271,6 +271,20 @@ public class CostInterval extends TimeInterval implements Identifiable, Enableab
 				super.hashCode(),
 				this.id,
 				this.cost);
+	}
+	
+	/**
+	 * Gets the string representation of this cost interval.
+	 * 
+	 * @return the string representation of this cost interval
+	 *
+	 * @see TimeInterval#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.getId() + ": "
+				+ super.toString() + ": " + this.getCost()
+				+ (this.isEnabled() ? " (E)" : " (D)");
 	}
 	
 }

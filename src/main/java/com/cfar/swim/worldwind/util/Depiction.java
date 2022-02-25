@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -94,6 +94,15 @@ public class Depiction implements Renderable, Movable {
 		depiction.getAttributes().setTextModifierMaterial(Material.WHITE);
 		depiction.setAltitudeMode(WorldWind.ABSOLUTE);
 		depiction.setVisible(false);
+	}
+	
+	/**
+	 * Gets the tactical depiction of this depiction.
+	 * 
+	 * @return the tactical depiction of this depiction
+	 */
+	public Renderable getTacticalDepiction() {
+		return this.depiction;
 	}
 	
 	/**
@@ -201,6 +210,23 @@ public class Depiction implements Renderable, Movable {
 	 */
 	public boolean hasAnnotation() {
 		return (null != this.annotation);
+	}
+	
+	/**
+	 * Gets the symbol identifier of this depiction.
+	 * 
+	 * @return the symbol identifier of this depiction
+	 */
+	public String getSymbolIdentifier() {
+		String sidc = null;
+		
+		if (this.depiction instanceof TacticalGraphic) {
+			sidc = ((TacticalGraphic) this.depiction).getIdentifier();
+		} else if (this.depiction instanceof TacticalSymbol) {
+			sidc = ((TacticalSymbol) this.depiction).getIdentifier();
+		}
+		
+		return sidc;
 	}
 	
 	/**

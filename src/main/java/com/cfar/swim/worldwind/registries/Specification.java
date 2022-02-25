@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,10 +29,12 @@
  */
 package com.cfar.swim.worldwind.registries;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 import com.cfar.swim.worldwind.util.Customizable;
 import com.cfar.swim.worldwind.util.Identifiable;
+import com.cfar.swim.worldwind.util.ResourceBundleLoader;
 
 /**
  * Realizes a generic customizable specification. Specifications can be passed
@@ -46,49 +48,218 @@ import com.cfar.swim.worldwind.util.Identifiable;
  * @see Factory
  * @see Registry
  */
-public class Specification<Registree> implements Identifiable, Customizable<Registree>, Comparable<Specification<Registree>> {
+public class Specification<Registree>
+implements Identifiable, Customizable<Registree>, Comparable<Specification<Registree>>, Serializable {
 	
-	/** the identifier of an Iris aircraft */
-	public static final String AIRCRAFT_IRIS_ID = "Iris";
-	
-	/** the identifier of an A320 aircraft */
+	/** the default serial identification of this specification */
+	private static final long serialVersionUID = 1L;
+
+	/** the identifier of an A320 aircraft specification */
 	public static final String AIRCRAFT_A320_ID = "A320";
 	
-	/** the identifier of a planning grid environment */
-	public static final String PLANNING_GRID_ID = "Planning Grid";
+	/** the description of an A320 aircraft specification */
+	public static final String AIRCRAFT_A320_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.aircraft.a320.description");
 	
-	/** the identifier of a planning roadmap environment */
-	public static final String PLANNING_ROADMAP_ID = "Planning Roadmap";
+	/** the identifier of an H135 aircraft specification */
+	public static final String AIRCRAFT_H135_ID = "H135";
 	
-	/** the identifier of a planning continuum environment */
-	public static final String PLANNING_CONTINUUM_ID = "Planning Continuum";
+	/** the description of an H135 aircraft specification */
+	public static final String AIRCRAFT_H135_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.aircraft.h135.description");
 	
-	/** the identifier of a forward A* planner */
+	/** the identifier of an Iris aircraft specification */
+	public static final String AIRCRAFT_IRIS_ID = "IRIS";
+	
+	/** the description of an Iris aircraft specification */
+	public static final String AIRCRAFT_IRIS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.aircraft.iris.description");
+	
+	/** the identifier of a planning grid environment specification */
+	public static final String ENVIRONMENT_PLANNING_GRID_ID = "Planning Grid";
+	
+	/** the description of a planning grid environment specification */
+	public static final String ENVIRONMENT_PLANNING_GRID_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.environment.grid.description");
+	
+	/** the identifier of a planning roadmap environment specification */
+	public static final String ENVIRONMENT_PLANNING_ROADMAP_ID = "Planning Roadmap";
+	
+	/** the identifier of a planning continuum environment specification */
+	public static final String ENVIRONMENT_PLANNING_CONTINUUM_ID = "Planning Continuum";
+	
+	/** the description of a planning continuum environment specification */
+	public static final String ENVIRONMENT_PLANNING_CONTINUUM_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.environment.continuum.description");
+	
+	/** the identifier of a forward A* planner specification */
 	public static final String PLANNER_FAS_ID = "Forward A*";
 	
-	/** the identifier of a Theta* planner */
+	/** the description of a forward A* planner specification */
+	public static final String PLANNER_FAS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.fas.description");
+	
+	/** the identifier of a Theta* planner specification */
 	public static final String PLANNER_TS_ID = "Theta*";
 	
-	/** the identifier of an ARA* planner */
+	/** the description of a Theta* planner specification */
+	public static final String PLANNER_TS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.ts.description");
+	
+	/** the identifier of an ARA* planner specification */
 	public static final String PLANNER_ARAS_ID = "ARA*";
 	
-	/** the identifier of an AD* planner */
+	/** the description of an ARA* planner specification */
+	public static final String PLANNER_ARAS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.aras.description");
+	
+	/** the identifier of an AD* planner specification */
 	public static final String PLANNER_ADS_ID = "AD*";
 	
-	/** the identifier of a dronekit datalink */
-	public static final String DATALINK_DRONEKIT = "Dronekit Datalink";
+	/** the description of an AD* planner specification */
+	public static final String PLANNER_ADS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.ads.description");
 	
-	/** the identifier of a simulated datalink */
-	public static final String DATALINK_SIMULATED = "Simulated Datalink";
+	/** the identifier of an OAD* planner specification */
+	public static final String PLANNER_OADS_ID = "OAD*";
 	
-	/** the identifier of a live SWIM connection */
-	public static final String SWIM_LIVE = "Live SWIM";
+	/** the description of an OAD* planner specification */
+	public static final String PLANNER_OADS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.oads.description");
 	
-	/** the identifier of a simulated SWIM connection */
-	public static final String SWIM_SIMULATED = "Simulated SWIM";
+	/** the identifier of a managed grid planner specification */
+	public static final String PLANNER_MGP_ID = "MGP";
+	
+	/** the identifier of an RRT planner specification */
+	public static final String PLANNER_RRT_ID = "RRT";
+	
+	/** the description of an RRT planner specification */
+	public static final String PLANNER_RRT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.rrt.description");
+	
+	/** the identifier of an RRT* planner specification */
+	public static final String PLANNER_RRTS_ID = "RRT*";
+	
+	/** the description of an RRT* planner specification */
+	public static final String PLANNER_RRTS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.rrts.description");
+	
+	/** the identifier of an hRRT planner specification */
+	public static final String PLANNER_HRRT_ID = "hRRT";
+	
+	/** the description of an hRRT planner specification */
+	public static final String PLANNER_HRRT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.hrrt.description");
+	
+	/** the identifier of an ARRT planner specification */
+	public static final String PLANNER_ARRT_ID = "ARRT";
+	
+	/** the description of an ARRT planner specification */
+	public static final String PLANNER_ARRT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.arrt.description");
+	
+	/** the identifier of a DRRT planner specification */
+	public static final String PLANNER_DRRT_ID = "DRRT";
+	
+	/** the description of a DRRT planner specification */
+	public static final String PLANNER_DRRT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.drrt.description");
+	
+	/** the identifier of an ADRRT planner specification */
+	public static final String PLANNER_ADRRT_ID = "ADRRT";
+	
+	/** the description of an ADRRT planner specification */
+	public static final String PLANNER_ADRRT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.adrrt.description");
+	
+	/** the identifier of an OADRRT planner specification */
+	public static final String PLANNER_OADRRT_ID = "OADRRT";
+	
+	/** the description of an OADRRT planner specification */
+	public static final String PLANNER_OADRRT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.oadrrt.description");
+	
+	/** the identifier of a managed tree planner specification */
+	public static final String PLANNER_MTP_ID = "MTP";
+	
+	/** the identifier of a dronekit datalink specification */
+	public static final String CONNECTION_DATALINK_DRONEKIT_ID = "Dronekit Datalink";
+	
+	/** the description of a dronekit datalink specification */
+	public static final String CONNECTION_DATALINK_DRONEKIT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.connection.datalink.dronekit.description");
+	
+	/** the identifier of a mavlink datalink specification */
+	public static final String CONNECTION_DATALINK_MAVLINK_ID = "Mavlink Datalink";
+	
+	/** the description of a mavlink datalink specification */
+	public static final String CONNECTION_DATALINK_MAVLINK_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.connection.datalink.mavlink.description");
+	
+	/** the identifier of a simulated datalink specification */
+	public static final String CONNECTION_DATALINK_SIMULATED_ID = "Simulated Datalink";
+	
+	/** the description of a simulated datalink specification */
+	public static final String CONNECTION_DATALINK_SIMULATED_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.connection.datalink.simulated.description");
+	
+	/** the identifier of a live SWIM connection specification */
+	public static final String CONNECTION_SWIM_LIVE_ID = "Live SWIM";
+	
+	/** the description of a live SWIM connection specification */
+	public static final String CONNECTION_SWIM_LIVE_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.connection.swim.live.description");
+	
+	/** the identifier of a simulated SWIM connection specification */
+	public static final String CONNECTION_SWIM_SIMULATED_ID = "Simulated SWIM";
+	
+	/** the description of a simulated SWIM connection specification */
+	public static final String CONNECTION_SWIM_SIMULATED_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.connection.swim.simulated.description");
+	
+	/** the identifier of a heuristic manager specification */
+	public static final String MANAGER_HEURISTIC_ID = "Heuristic Autonomic Manager";
+	
+	/** the description of a heuristic manager specification */
+	public static final String MANAGER_HEURISTIC_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.manager.heuristic.description");
+	
+	/** the identifier of a SMAC manager specification */
+	public static final String MANAGER_SMAC_ID = "SMAC Autonomic Manager";
+	
+	/** the description of a SMAC manager specification */
+	public static final String MANAGER_SMAC_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.manager.smac.description");
 	
 	/** the identifier of this specification */
 	private final String id;
+	
+	/** the description of this specification */
+	private final String description;
 	
 	/** the properties bean of this specification */
 	private Properties<Registree> properties;
@@ -100,16 +271,35 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	 */
 	public Specification(String id) {
 		this.id = id;
+		this.description = "";
 	}
 	
 	/**
-	 * Constructs a new Specification with an identifier and properties bean.
+	 * Constructs a new specification with an identifier and properties bean.
 	 * 
 	 * @param id the identifier of this specification
 	 * @param properties the properties bean of this specification
 	 */
 	public Specification(String id, Properties<Registree> properties) {
 		this.id = id;
+		this.description = "";
+		this.properties = properties;
+	}
+	
+	/**
+	 * Constructs a new specification with an identifier, description and
+	 * properties bean.
+	 * 
+	 * @param id the identifier of this specification
+	 * @param description the description of this specification
+	 * @param properties the properties bean of this specification
+	 */
+	public Specification(
+			String id,
+			String description,
+			Properties<Registree> properties) {
+		this.id = id;
+		this.description = description;
 		this.properties = properties;
 	}
 	
@@ -123,6 +313,15 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	@Override
 	public String getId() {
 		return this.id;
+	}
+	
+	/**
+	 * Gets the description of this specification.
+	 * 
+	 * @return the description of this specification
+	 */
+	public String getDescription() {
+		return this.description;
 	}
 	
 	/**
@@ -187,7 +386,9 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 			equals = true;
 		} else if ((null != o) && (o instanceof Specification)) {
 			Specification<?> s = (Specification<?>) o;
-			equals = (this.id.equals(s.id) && this.properties.equals(s.properties));
+			equals = (this.id.equals(s.id)
+					&& this.description.equals(s.description)
+					&& this.properties.equals(s.properties));
 		}
 		
 		return equals;
@@ -204,7 +405,7 @@ public class Specification<Registree> implements Identifiable, Customizable<Regi
 	 */
 	@Override
 	public final int hashCode() {
-		return Objects.hash(this.id, this.properties);
+		return Objects.hash(this.id, this.description, this.properties);
 	}
 
 }

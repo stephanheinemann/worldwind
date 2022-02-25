@@ -44,7 +44,7 @@
     <iwxxm:validPeriod>
         <gml:TimePeriod gml:id="tp-20210301T1200Z-20210301T1600Z">
             <gml:beginPosition>2021-03-01T12:00:00Z</gml:beginPosition>
-            <gml:endPosition>2012-03-01T16:00:00Z</gml:endPosition>
+            <gml:endPosition>2021-03-01T16:00:00Z</gml:endPosition>
         </gml:TimePeriod>
     </iwxxm:validPeriod>
 

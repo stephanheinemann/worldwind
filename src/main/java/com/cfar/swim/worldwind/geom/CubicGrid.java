@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -52,7 +52,7 @@ public class CubicGrid extends RegularGrid {
 	/**
 	 * the normalizer for distances of this cubic grid
 	 */
-	protected double normalizer = Double.NaN;
+	private double normalizer = Double.NaN;
 	
 	/**
 	 * Constructs a new cubic grid from a geometric cube without any children. 
@@ -109,12 +109,27 @@ public class CubicGrid extends RegularGrid {
 	}
 	
 	/**
-	 * Gets the normalizer of this cubic grid.
+	 * Gets the distance normalizer of this cubic grid.
 	 * 
-	 * @return the normalizer of this cubic grid
+	 * @return the distance normalizer of this cubic grid
 	 */
 	public double getNormalizer() {
 		return this.normalizer;
+	}
+	
+	/**
+	 * Sets the normalizer of this cubic grid.
+	 * 
+	 * @param normalizer the normalizer to be set
+	 * 
+	 * @throws IllegalArgumentException if the normalizer is less than 1
+	 */
+	public void setNormalizer(double normalizer) {
+		if (1d > normalizer) {
+			throw new IllegalArgumentException("invalid normalizer");
+		}
+		this.normalizer = normalizer;
+		this.updateNormalizer();
 	}
 	
 	/**

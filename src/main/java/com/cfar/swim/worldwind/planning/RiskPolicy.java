@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -37,26 +37,36 @@ package com.cfar.swim.worldwind.planning;
  *
  */
 public enum RiskPolicy {
+	
 	/**
 	 * Avoids all local risk
 	 */
-	AVOIDANCE(1d),
+	AVOIDANCE(0d),
+	
 	/**
 	 * Accepts a maximum of 25% local risk
 	 */
 	PROBE(25d),
+	
 	/**
 	 * Accepts a maximum of 50% local risk
 	 */
 	SAFETY(50d),
+	
 	/**
 	 * Accepts a maximum of 75% local risk
 	 */
 	EFFECTIVENESS(75d),
+	
 	/**
-	 * Ignores all local risk
+	 * Ignores a maximum of 100% local risk
 	 */
-	IGNORANCE(100d);
+	IGNORANCE(100d),
+	
+	/**
+	 * Ignores all accumulated local risk
+	 */
+	INSANITY(Double.POSITIVE_INFINITY);
 	
 	/** the threshold cost of this risk policy */
 	private double thresholdCost = 0d;
@@ -88,6 +98,33 @@ public enum RiskPolicy {
 	 */
 	public boolean satisfies(double cost) {
 		return this.thresholdCost >= cost;
+	}
+	
+	/**
+	 * Adjusts a risk policy to satisfy a cost.
+	 * 
+	 * @param cost the cost to be satisfied
+	 * 
+	 * @return the risk policy satisfying the cost
+	 */
+	public static RiskPolicy adjustTo(double cost) {
+		RiskPolicy adjusted = RiskPolicy.AVOIDANCE;
+		
+		if (RiskPolicy.AVOIDANCE.satisfies(cost)) {
+			adjusted = RiskPolicy.AVOIDANCE;
+		} else if (RiskPolicy.PROBE.satisfies(cost)) {
+			adjusted = RiskPolicy.PROBE;
+		} else if (RiskPolicy.SAFETY.satisfies(cost)) {
+			adjusted = RiskPolicy.SAFETY;
+		} else if (RiskPolicy.EFFECTIVENESS.satisfies(cost)) {
+			adjusted = RiskPolicy.EFFECTIVENESS;
+		} else if (RiskPolicy.IGNORANCE.satisfies(cost)) {
+			adjusted = RiskPolicy.IGNORANCE;
+		} else {
+			adjusted = RiskPolicy.INSANITY;
+		}
+		
+		return adjusted;
 	}
 	
 }

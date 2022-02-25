@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -66,7 +66,7 @@ public abstract class Quadcopter extends Aircraft {
 	public Quadcopter(Position position, double radius, CombatIdentification cid) {
 		super(position, radius, cid);
 		this.depiction = new Depiction(new MilStd2525TacticalSymbol(this.getSymbolIdentifier(cid), position));
-		this.getAttributes().setMaterial(this.getMaterial(cid));
+		this.getAttributes().setInteriorMaterial(this.getMaterial(cid));
 		
 		// TODO: use actual live data for symbol annotations...
 		this.getDepiction().setModifier(SymbologyConstants.ALTITUDE_DEPTH, position.getAltitude());

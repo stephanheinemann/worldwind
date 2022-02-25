@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -35,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.render.annotations.DepictionAnnotation;
 import com.cfar.swim.worldwind.util.Depictable;
@@ -358,7 +359,7 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 			if (interpolant.getDepiction().hasAnnotation()) {
 				interpolant.getDepiction().getAnnotation().setText(costInterval.getId());
 			} else {
-				interpolant.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), interpolant.getReferencePosition()));
+				interpolant.getDepiction().setAnnotation(new DepictionAnnotation(costInterval.getId(), interpolant.getCenter()));
 			}
 		}
 		
@@ -392,6 +393,17 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	}
 	
 	/**
+	 * Gets the center of this obstacle cylinder.
+	 * 
+	 * @return the center of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		return this.centerPosition;
+	}
+	
+	/**
 	 * Gets the geometric extent of this obstacle cylinder for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
@@ -402,7 +414,39 @@ public class ObstacleCylinder extends VerticalCylinder implements Obstacle {
 	 */
 	@Override
 	public Extent getExtent(Globe globe) {
-		return super.getExtent(globe, 1d);
+		return this.toGeometricCylinder(globe);
+		// TODO: return super.getExtent(globe, 1d);
+	}
+	
+	/**
+	 * Gets the volume of the extent of this obstacle cylinder for a specified
+	 * globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getVolume(Globe)
+	 */
+	@Override
+	public double getVolume(Globe globe) {
+		// TODO: use globe extent?
+		return Math.PI * this.getRadius() * this.getRadius() * this.getHeight();
+	}
+	
+	/**
+	 * Determines whether or not this obstacle cylinder intersects another
+	 * obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param obstacle the other obstacle
+	 * 
+	 * @see Obstacle#intersects(Globe, Obstacle)
+	 */
+	@Override
+	public boolean intersects(Globe globe, Obstacle obstacle) {
+		return (this == obstacle) || Collisions.collide(
+				this.getExtent(globe), obstacle.getExtent(globe));
 	}
 	
 	/**

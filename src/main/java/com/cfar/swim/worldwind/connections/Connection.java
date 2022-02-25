@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.Duration;
+
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 
 /**
@@ -56,5 +58,12 @@ public interface Connection extends FactoryProduct {
 	 * @return true if this connection is connected, false otherwise
 	 */
 	public boolean isConnected();
+	
+	/**
+	 * Gets the roundtrip delay of this connection.
+	 * 
+	 * @return the roundtrip delay of this connection
+	 */
+	public Duration getRoundtripDelay();
 	
 }

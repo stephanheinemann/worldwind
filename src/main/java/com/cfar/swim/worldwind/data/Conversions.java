@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,10 +29,13 @@
  */
 package com.cfar.swim.worldwind.data;
 
+import gov.nasa.worldwind.util.WWMath;
+
 public class Conversions {
 	
 	public static final String UOM_DEGREE = "deg";
 	public static final String UOM_FLIGHT_LEVEL = "fl";
+	public static final String UOM_FEET = "ft";
 	public static final String UOM_KNOT = "[kn_i]";
 	public static final String UOM_METER = "m";
 	public static final String UOM_METER_PER_SECOND = "m/s";
@@ -78,7 +81,9 @@ public class Conversions {
 	
 	public static double toMeters(double distance, String uom) {
 		if (!uom.equalsIgnoreCase(Conversions.UOM_METER)) {
-			if (uom.equalsIgnoreCase(Conversions.UOM_FLIGHT_LEVEL)) {
+			if (uom.equalsIgnoreCase(Conversions.UOM_FEET)) {
+				distance = WWMath.convertFeetToMeters(distance);
+			} else if (uom.equalsIgnoreCase(Conversions.UOM_FLIGHT_LEVEL)) {
 				distance = Conversions.flightLevelsToMeters(distance);
 			} else if (uom.equalsIgnoreCase(Conversions.UOM_NAUTICAL_MILE)) {
 				distance = Conversions.nauticalMilesToMeters(distance);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -30,7 +30,11 @@
 package com.cfar.swim.worldwind.planning;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Objects;
 
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
@@ -103,6 +107,46 @@ public class Trajectory extends Path implements Depictable {
 	 */
 	public int getWaypointsLength() {
 		return Iterables.size(this.getWaypoints());
+	}
+	
+	/**
+	 * Gets the POIs of this trajectory.
+	 * 
+	 * @return the POIs of this trajectory
+	 */
+	public List<Waypoint> getPois() {
+		List<Waypoint> pois = new ArrayList<>();
+		for (Waypoint waypoint : this.getWaypoints()) {
+			if (waypoint.isPoi()) {
+				pois.add(waypoint);
+			}
+		}
+		
+		return pois;
+	}
+	
+	/**
+	 * Gets a sub-trajectory of this trajectory from its start POI up to an end
+	 * POI index.
+	 * 
+	 * @param poiIndex the end POI index
+	 * 
+	 * @return the sub-trajectory of this trajectory from its start POI up to
+	 *         the end POI index
+	 */
+	public Trajectory getSubTrajectory(int poiIndex) {
+		List<Waypoint> subWaypoints = new ArrayList<>();
+		Iterator<? extends Waypoint> waypoints = this.getWaypoints().iterator();
+		
+		while ((0 <= poiIndex) && waypoints.hasNext()) {
+			Waypoint waypoint = waypoints.next();
+			subWaypoints.add(waypoint);
+			if (waypoint.isPoi()) {
+				poiIndex--;
+			}
+		}
+		
+		return new Trajectory(subWaypoints);
 	}
 	
 	/**
@@ -281,6 +325,71 @@ public class Trajectory extends Path implements Depictable {
 				waypoint.render(dc);
 			}
 		}
+	}
+	
+	/**
+	 * Determines whether the waypoints of this trajectory equal the waypoints
+	 * of another one.
+	 * 
+	 * @param o the other trajectory
+	 * 
+	 * @return true if the waypoints of this trajectory equal the waypoints of
+	 *         the other trajectory, false otherwise
+	 * 
+	 * @see Object#equals(Object)
+	 */
+	@Override
+	public boolean equals(Object o) {
+		boolean equals = false;
+
+		if (this == o) {
+			equals = true;
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
+			Trajectory ot = (Trajectory) o;
+			equals = true;
+			Iterator<? extends Waypoint> oti = ot.getWaypoints().iterator();
+			Iterator<? extends Waypoint> tti = this.getWaypoints().iterator();
+			while (equals && oti.hasNext() && tti.hasNext()) {
+				if (!oti.next().equals(tti.next())) {
+					equals = false;
+				}
+			}
+			if (!equals || oti.hasNext() || tti.hasNext()) {
+				equals = false;
+			}
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this trajectory based on its waypoints.
+	 * 
+	 * @return the hash code of this trajectory based on its waypoints
+	 * 
+	 * @see Object#hashCode()
+	 */
+	@Override
+	public int hashCode() {
+		return Objects.hash(this.getWaypoints());
+	}
+	
+	/**
+	 * Obtains the string representation of this trajectory.
+	 * 
+	 * @return the string representation of this trajectory
+	 * 
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		String ts = "[ ";
+		
+		for (Waypoint waypoint : this.getWaypoints()) {
+			ts += (waypoint.toString() + " ");
+		}
+		
+		return (ts + "]");
 	}
 	
 }

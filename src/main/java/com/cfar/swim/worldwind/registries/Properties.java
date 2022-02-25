@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,6 +29,8 @@
  */
 package com.cfar.swim.worldwind.registries;
 
+import java.io.Serializable;
+
 /**
  * Describes the properties bean of a registered customizable item.
  * 
@@ -38,7 +40,7 @@ package com.cfar.swim.worldwind.registries;
  * 
  * @see Specification
  */
-public interface Properties<Registree> extends Cloneable {
+public interface Properties<Registree> extends Cloneable, Serializable {
 	
 	/**
 	 * Clones this properties bean.

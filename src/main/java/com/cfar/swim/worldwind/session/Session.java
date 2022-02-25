@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -36,20 +36,23 @@ import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
 
-import com.cfar.swim.worldwind.ai.Planner;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.connections.Datalink;
 import com.cfar.swim.worldwind.connections.SwimConnection;
-import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.managers.AutonomicManager;
+import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.registries.Factory;
 import com.cfar.swim.worldwind.registries.Registry;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.aircraft.A320Properties;
 import com.cfar.swim.worldwind.registries.aircraft.AircraftFactory;
+import com.cfar.swim.worldwind.registries.aircraft.H135Properties;
 import com.cfar.swim.worldwind.registries.aircraft.IrisProperties;
 import com.cfar.swim.worldwind.registries.connections.DatalinkFactory;
 import com.cfar.swim.worldwind.registries.connections.DronekitDatalinkProperties;
 import com.cfar.swim.worldwind.registries.connections.LiveSwimConnectionProperties;
+import com.cfar.swim.worldwind.registries.connections.MavlinkDatalinkProperties;
 import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
 import com.cfar.swim.worldwind.registries.connections.SimulatedSwimConnectionProperties;
 import com.cfar.swim.worldwind.registries.connections.SwimConnectionFactory;
@@ -57,11 +60,21 @@ import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties;
-import com.cfar.swim.worldwind.registries.planners.ADStarProperties;
-import com.cfar.swim.worldwind.registries.planners.ARAStarProperties;
-import com.cfar.swim.worldwind.registries.planners.ForwardAStarProperties;
+import com.cfar.swim.worldwind.registries.managers.HeuristicManagerProperties;
+import com.cfar.swim.worldwind.registries.managers.ManagerFactory;
+import com.cfar.swim.worldwind.registries.managers.SmacManagerProperties;
 import com.cfar.swim.worldwind.registries.planners.PlannerFactory;
-import com.cfar.swim.worldwind.registries.planners.ThetaStarProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.ADStarProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.ARAStarProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.ForwardAStarProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.OADStarProperties;
+import com.cfar.swim.worldwind.registries.planners.cgs.ThetaStarProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.ADRRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.ARRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.DRRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.Configuration;
@@ -109,13 +122,16 @@ public class Session implements Identifiable {
 	private Registry<Environment> environmentRegistry = new Registry<>();
 	
 	/** the environment factory of this session */
-	private EnvironmentFactory environmentFactory = new EnvironmentFactory(this.activeScenario);
+	private EnvironmentFactory environmentFactory = new EnvironmentFactory(this.getActiveScenario());
 	
 	/** the planner registry of this session */
 	private Registry<Planner> plannerRegistry = new Registry<>();
 	
+	/** the managed planner registry of this session */
+	private Registry<Planner> managedPlannerRegistry = new Registry<>();
+	
 	/** the planner factory of this session */
-	private PlannerFactory plannerFactory = new PlannerFactory(this.activeScenario);
+	private PlannerFactory plannerFactory = new PlannerFactory(this.getActiveScenario());
 	
 	/** the datalink registry of this session */
 	private Registry<Datalink> datalinkRegistry = new Registry<>();
@@ -129,8 +145,17 @@ public class Session implements Identifiable {
 	/** the SWIM connection factory of this session */
 	private SwimConnectionFactory swimConnectionFactory = new SwimConnectionFactory();
 	
+	/** the manager registry of this session */
+	private Registry<AutonomicManager> managerRegistry = new Registry<>();
+	
+	/** the manager factory of this session */
+	private ManagerFactory managerFactory = new ManagerFactory(this.getActiveScenario());
+	
 	/** the setup of this session */
 	private Setup setup;
+	
+	/** the autonomic manager of this session */
+	private AutonomicManager manager = null;
 	
 	/**
 	 * Constructs and initializes a default session.
@@ -173,41 +198,63 @@ public class Session implements Identifiable {
 		
 		// aircraft
 		this.aircraftRegistry.clearSpecifications();
-		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_IRIS_ID, new IrisProperties()));
-		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_A320_ID, new A320Properties()));
+		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_IRIS_ID, Specification.AIRCRAFT_IRIS_DESCRIPTION, new IrisProperties()));
+		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_A320_ID, Specification.AIRCRAFT_A320_DESCRIPTION, new A320Properties()));
+		this.aircraftRegistry.addSpecification(new Specification<Aircraft>(Specification.AIRCRAFT_H135_ID, Specification.AIRCRAFT_H135_DESCRIPTION, new H135Properties()));
 		
 		// environments
 		this.environmentRegistry.clearSpecifications();
-		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_GRID_ID, new PlanningGridProperties()));
-		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
-		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.PLANNING_CONTINUUM_ID, new PlanningContinuumProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_GRID_ID, Specification.ENVIRONMENT_PLANNING_GRID_DESCRIPTION, new PlanningGridProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID, Specification.ENVIRONMENT_PLANNING_CONTINUUM_DESCRIPTION, new PlanningContinuumProperties()));
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		
 		// planners
 		this.plannerRegistry.clearSpecifications();
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAS_ID, new ForwardAStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, new ThetaStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, new ARAStarProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADS_ID, new ADStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_FAS_ID, Specification.PLANNER_FAS_DESCRIPTION, new ForwardAStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_TS_ID, Specification.PLANNER_TS_DESCRIPTION, new ThetaStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARAS_ID, Specification.PLANNER_ARAS_DESCRIPTION, new ARAStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADS_ID, Specification.PLANNER_ADS_DESCRIPTION, new ADStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_OADS_ID, Specification.PLANNER_OADS_DESCRIPTION, new OADStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRT_ID, Specification.PLANNER_RRT_DESCRIPTION, new RRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_RRTS_ID, Specification.PLANNER_RRTS_DESCRIPTION, new RRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_HRRT_ID, Specification.PLANNER_HRRT_DESCRIPTION, new HRRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ARRT_ID, Specification.PLANNER_ARRT_DESCRIPTION, new ARRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DRRT_ID, Specification.PLANNER_DRRT_DESCRIPTION, new DRRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, Specification.PLANNER_ADRRT_DESCRIPTION, new ADRRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_OADRRT_ID, Specification.PLANNER_OADRRT_DESCRIPTION, new OADRRTreeProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
+		
+		// managed planners
+		this.managedPlannerRegistry.clearSpecifications();
+		this.managedPlannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_MGP_ID, this.plannerRegistry.getSpecification(Specification.PLANNER_OADS_ID).getProperties()));
+		this.managedPlannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_MTP_ID, this.plannerRegistry.getSpecification(Specification.PLANNER_OADRRT_ID).getProperties()));
 		
 		// datalinks
 		this.datalinkRegistry.clearSpecifications();
-		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.DATALINK_DRONEKIT, new DronekitDatalinkProperties()));
-		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.DATALINK_SIMULATED, new SimulatedDatalinkProperties()));
+		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_MAVLINK_ID, Specification.CONNECTION_DATALINK_MAVLINK_DESCRIPTION, new MavlinkDatalinkProperties()));
+		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_DRONEKIT_ID, Specification.CONNECTION_DATALINK_DRONEKIT_DESCRIPTION, new DronekitDatalinkProperties()));
+		this.datalinkRegistry.addSpecification(new Specification<Datalink>(Specification.CONNECTION_DATALINK_SIMULATED_ID, Specification.CONNECTION_DATALINK_SIMULATED_DESCRIPTION, new SimulatedDatalinkProperties()));
 		
 		// SWIM connections
 		this.swimConnectionRegistry.clearSpecifications();
-		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_LIVE, new LiveSwimConnectionProperties()));
-		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.SWIM_SIMULATED, new SimulatedSwimConnectionProperties()));
+		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.CONNECTION_SWIM_LIVE_ID, Specification.CONNECTION_SWIM_LIVE_DESCRIPTION, new LiveSwimConnectionProperties()));
+		this.swimConnectionRegistry.addSpecification(new Specification<SwimConnection>(Specification.CONNECTION_SWIM_SIMULATED_ID, Specification.CONNECTION_SWIM_SIMULATED_DESCRIPTION, new SimulatedSwimConnectionProperties()));
+		
+		// autonomic managers
+		this.managerRegistry.clearSpecifications();
+		this.managerRegistry.addSpecification(new Specification<AutonomicManager>(Specification.MANAGER_HEURISTIC_ID, Specification.MANAGER_HEURISTIC_DESCRIPTION, new HeuristicManagerProperties()));
+		this.managerRegistry.addSpecification(new Specification<AutonomicManager>(Specification.MANAGER_SMAC_ID, Specification.MANAGER_SMAC_DESCRIPTION, new SmacManagerProperties()));
+		this.addActiveScenarioChangeListener(this.managerFactory.getActiveScenarioChangeListener());
 		
 		// modifications on setup shall always be reflected in the registries
 		this.setup = new Setup();
 		this.setup.setAircraftSpecification(this.aircraftRegistry.getSpecification(Specification.AIRCRAFT_IRIS_ID));
-		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.PLANNING_GRID_ID));
+		this.setup.setEnvironmentSpecification(this.environmentRegistry.getSpecification(Specification.ENVIRONMENT_PLANNING_GRID_ID));
 		this.setup.setPlannerSpecification(this.plannerRegistry.getSpecification(Specification.PLANNER_FAS_ID));
-		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.DATALINK_SIMULATED));
-		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.SWIM_SIMULATED));
+		this.setup.setDatalinkSpecification(this.datalinkRegistry.getSpecification(Specification.CONNECTION_DATALINK_SIMULATED_ID));
+		this.setup.setSwimConnectionSpecification(this.swimConnectionRegistry.getSpecification(Specification.CONNECTION_SWIM_SIMULATED_ID));
+		this.setup.setManagerSpecification(this.managerRegistry.getSpecification(Specification.MANAGER_HEURISTIC_ID));
 	}
 	
 	/**
@@ -494,6 +541,37 @@ public class Session implements Identifiable {
 	}
 	
 	/**
+	 * Gets the managed planner specifications of this session.
+	 * 
+	 * @return the managed planner specifications of this session
+	 */
+	public Set<Specification<Planner>> getManagedPlannerSpecifications() {
+		return this.managedPlannerRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified managed planner specification from this session.
+	 * 
+	 * @param id the managed planner specification identifier
+	 * 
+	 * @return the identified managed planner specification, or null otherwise
+	 */
+	public Specification<Planner> getManagedPlannerSpecification(String id) {
+		Specification<Planner> plannerSpec = null;
+		Optional<Specification<Planner>> optSpec =
+				this.managedPlannerRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			plannerSpec = optSpec.get();
+		}
+		
+		return plannerSpec;
+	}
+	
+	/**
 	 * Gets the planner factory of this session.
 	 * 
 	 * @return the planner factory of this session
@@ -582,6 +660,45 @@ public class Session implements Identifiable {
 		return this.swimConnectionFactory;
 	}
 	
+	/**
+	 * Gets the manager specifications of this session.
+	 * 
+	 * @return the manager specifications of this session
+	 */
+	public Set<Specification<AutonomicManager>> getManagerSpecifications() {
+		return this.managerRegistry.getSpecifications();
+	}
+	
+	/**
+	 * Gets an identified manager specification from this session.
+	 * 
+	 * @param id the manager specification identifier
+	 * 
+	 * @return the identified manager specification, or null otherwise
+	 */
+	public Specification<AutonomicManager> getManagerSpecification(String id) {
+		Specification<AutonomicManager> managerSpec = null;
+		Optional<Specification<AutonomicManager>> optSpec =
+				this.managerRegistry.getSpecifications()
+				.stream()
+				.filter(s -> s.getId().equals(id))
+				.findFirst();
+		
+		if (optSpec.isPresent()) {
+			managerSpec = optSpec.get();
+		}
+		
+		return managerSpec;
+	}
+	
+	/**
+	 * Gets the manager factory of this session.
+	 * 
+	 * @return the manager factory of this session
+	 */
+	public Factory<AutonomicManager> getManagerFactory() {
+		return this.managerFactory;
+	}
 	
 	/**
 	 * Gets the setup of this session.
@@ -599,6 +716,33 @@ public class Session implements Identifiable {
 	 */
 	public void setSetup(Setup setup) {
 		this.setup = setup;
+	}
+	
+	/**
+	 * Gets the autonomic manager of this session.
+	 * 
+	 * @return the autonomic manager of this session
+	 */
+	public AutonomicManager getManager() {
+		return this.manager;
+	}
+	
+	/**
+	 * Sets the autonomic manager of this session.
+	 * 
+	 * @param manager the autonomic manager of this session
+	 */
+	public void setManager(AutonomicManager manager) {
+		this.manager = manager;
+	}
+	
+	/**
+	 * Determines whether or not this session has an autonomic manager.
+	 * 
+	 * @return true if this session has an autonomic manager, false otherwise
+	 */
+	public boolean hasManager() {
+		return (null != this.manager);
 	}
 	
 	/**

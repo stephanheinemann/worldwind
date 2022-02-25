@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -36,7 +36,7 @@ import java.util.List;
 import javax.xml.bind.JAXBException;
 
 import com.cfar.swim.iwxxm.bind.IwxxmUnmarshaller;
-import com.cfar.swim.worldwind.iwxxm.IwxxmSigmetReference;
+import com.cfar.swim.worldwind.data.iwxxm.IwxxmSigmetReference;
 import com.cfar.swim.worldwind.planning.TimeInterval;
 
 import aero.aixm.AirspaceTimeSlicePropertyType;

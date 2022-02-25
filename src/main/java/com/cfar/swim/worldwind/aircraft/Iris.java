@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,8 +29,9 @@
  */
 package com.cfar.swim.worldwind.aircraft;
 
-import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -43,8 +44,6 @@ import gov.nasa.worldwind.symbology.SymbologyConstants;
  *
  */
 public class Iris extends Quadcopter {
-
-	// TODO: use environment AirDataIntervals
 	
 	/** the maximum angle of climb speed of this Iris in m/s */
 	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 10d;
@@ -88,7 +87,7 @@ public class Iris extends Quadcopter {
 	/** the maximum rate of descent of this Iris in m/s */
 	public static final double MAX_RATE_OF_DESCENT = 10d;
 	
-	/** the maximum angle of climb of this A320 in degrees */
+	/** the maximum angle of climb of this Iris in degrees */
 	public static final Angle MAX_ANGLE_OF_CLIMB = Angle.POS90;
 
 	// TODO: horizontal versus, vertical separation
@@ -96,7 +95,7 @@ public class Iris extends Quadcopter {
 	// compute horizontal separation from separation times and cruise speed
 	
 	/** the separation radius of this Iris */
-	public static final double SEPARATION_RADIUS = 500d;
+	public static final double SEPARATION_RADIUS = 50d;
 	
 	/**
 	 * Constructs a new Iris at a specified position with a specified
@@ -110,41 +109,57 @@ public class Iris extends Quadcopter {
 		super(position, radius, cid);
 		
 		this.capabilities = new Capabilities();
-		this.capabilities.setMaximumAngleOfClimbSpeed(Iris.MAX_ANGLE_OF_CLIMB_SPEED);
-		this.capabilities.setMaximumRateOfClimb(Iris.MAX_RATE_OF_CLIMB);
-		this.capabilities.setCruiseClimbSpeed(Iris.CRUISE_CLIMB_SPEED);
-		this.capabilities.setCruiseSpeed(Iris.CRUISE_SPEED);
-		this.capabilities.setCruiseDescentSpeed(Iris.CRUISE_DESCENT_SPEED);
+		
+		this.capabilities.setApproachRateOfDescent(Iris.APPROACH_RATE_OF_DESCENT);
 		this.capabilities.setApproachSpeed(Iris.APPROACH_SPEED);
-		this.capabilities.setMaximumGlideSpeed(Iris.MAX_GLIDE_SPEED);
-		this.capabilities.setMaximumRateOfDescentSpeed(Iris.MAX_RATE_OF_DESCENT_SPEED);
-		this.capabilities.setMaximumSpeed(Iris.MAX_SPEED);
-		this.capabilities.setMaximumRateOfClimb(Iris.MAX_RATE_OF_CLIMB);
+		this.capabilities.setCruiseClimbSpeed(Iris.CRUISE_CLIMB_SPEED);
+		this.capabilities.setCruiseDescentSpeed(Iris.CRUISE_DESCENT_SPEED);
 		this.capabilities.setCruiseRateOfClimb(Iris.CRUISE_RATE_OF_CLIMB);
 		this.capabilities.setCruiseRateOfDescent(Iris.CRUISE_RATE_OF_DESCENT);
-		this.capabilities.setApproachRateOfDescent(Iris.APPROACH_RATE_OF_DESCENT);
-		this.capabilities.setMaximumRateOfDescent(Iris.MAX_RATE_OF_DESCENT);
+		this.capabilities.setCruiseSpeed(Iris.CRUISE_SPEED);
 		this.capabilities.setMaximumAngleOfClimb(Iris.MAX_ANGLE_OF_CLIMB);
+		this.capabilities.setMaximumAngleOfClimbSpeed(Iris.MAX_ANGLE_OF_CLIMB_SPEED);
+		this.capabilities.setMaximumGlideSpeed(Iris.MAX_GLIDE_SPEED);
+		this.capabilities.setMaximumRateOfClimb(Iris.MAX_RATE_OF_CLIMB);
+		this.capabilities.setMaximumRateOfClimbSpeed(Iris.MAX_RATE_OF_CLIMB_SPEED);
+		this.capabilities.setMaximumRateOfDescent(Iris.MAX_RATE_OF_DESCENT);
+		this.capabilities.setMaximumRateOfDescentSpeed(Iris.MAX_RATE_OF_DESCENT_SPEED);
+		this.capabilities.setMaximumSpeed(Iris.MAX_SPEED);
 	
 		// TODO: use actual live data for symbol annotations...
 		this.getDepiction().setModifier(SymbologyConstants.SPEED, Iris.CRUISE_SPEED);
 	}
-
+	
 	/**
-	 * Determines whether or not this Iris matches a specification.
+	 * Gets the identifier of this Iris.
 	 * 
-	 * @param specification the specification to be matched
+	 * @return the identifier of this Iris
 	 * 
-	 * @return true if the this Iris matches the specification,
-	 *         false otherwise
-	 * 
-	 * @see Quadcopter#matches(Specification)
+	 * @see Identifiable#getId()
 	 */
 	@Override
-	public final boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = super.matches(specification);
-		matches &= specification.getId().equals(Specification.AIRCRAFT_IRIS_ID);
-		return matches;
+	public String getId() {
+		return Specification.AIRCRAFT_IRIS_ID;
+	}
+	
+	/**
+	 * Interpolates the midpoint Iris between this and another Iris. The
+	 * interpolation considers the spatial and temporal attributes and modifies
+	 * this Iris accordingly.
+	 * 
+	 * @param other the other Iris
+	 * 
+	 * @return the interpolated midpoint Iris between this and the other Iris
+	 * 
+	 * @see ObstacleSphere#interpolate(ObstacleSphere)
+	 */
+	@Override
+	public Iris interpolate(ObstacleSphere other) {
+		ObstacleSphere interpolant = super.interpolate(other);
+		Iris iris = new Iris(interpolant.getCenter(),
+				interpolant.getRadius(), this.getCombatIdentification());
+		iris.setCostInterval(interpolant.getCostInterval());
+		return iris;
 	}
 	
 }

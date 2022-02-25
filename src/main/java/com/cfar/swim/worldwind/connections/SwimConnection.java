@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,9 +29,10 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.Duration;
 import java.util.HashSet;
 
-import com.cfar.swim.worldwind.data.SwimData;
+import com.cfar.swim.worldwind.data.SwimProtocol;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.registries.connections.SwimConnectionProperties;
@@ -47,13 +48,10 @@ import com.cfar.swim.worldwind.session.ObstacleProvider;
 public abstract class SwimConnection implements Connection, ObstacleProvider {
 	
 	/** the SWIM subscriptions of this SWIM connection */
-	private HashSet<SwimData> subscriptions = new HashSet<SwimData>();
+	private HashSet<SwimProtocol> subscriptions = new HashSet<>();
 	
 	/** this obstacle manager of this SWIM connection */
 	private ObstacleManager obstacleManager = null;
-	
-	/** indicates whether or not this SWIM connection automatically commits obstacle changes */
-	private boolean autoCommit = false;
 	
 	/**
 	 * Connects this SWIM connection.
@@ -77,11 +75,21 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	public abstract boolean isConnected();
 	
 	/**
+	 * Gets the roundtrip delay of this SWIM connection.
+	 * 
+	 * @return the roundtrip delay of this SWIM connection
+	 */
+	@Override
+	public Duration getRoundtripDelay() {
+		return Duration.ZERO;
+	}
+	
+	/**
 	 * Subscribes this connection to a specified SWIM data protocol.
 	 * 
 	 * @param protocol the SWIM data protocol to be subscribed to
 	 */
-	public synchronized void subscribe(SwimData protocol) {
+	public synchronized void subscribe(SwimProtocol protocol) {
 		this.subscriptions.add(protocol);
 	}
 	
@@ -90,7 +98,7 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	 * 
 	 * @param protocol the SWIM data protocol to be unsubscribed from
 	 */
-	public synchronized void unsubscribe(SwimData protocol) {
+	public synchronized void unsubscribe(SwimProtocol protocol) {
 		this.subscriptions.remove(protocol);
 	}
 	
@@ -103,8 +111,17 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	 * @return true if this SWIM connection has subscribed to the specified
 	 *         SWIM data protocol
 	 */
-	public synchronized boolean hasSubscribed(SwimData protocol) {
+	public synchronized boolean hasSubscribed(SwimProtocol protocol) {
 		return this.subscriptions.contains(protocol);
+	}
+	
+	/**
+	 * Determines whether or not this SWIM connection has subscriptions.
+	 * 
+	 * @return true if this SWIM connection has subscriptions, false otherwise
+	 */
+	public synchronized boolean hasSubscriptions() {
+		return !this.subscriptions.isEmpty();
 	}
 	
 	/**
@@ -143,33 +160,6 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	public synchronized boolean hasObstacleManager() {
 		return (null != this.obstacleManager);
 	}
-	/**
-	 * Gets whether or not this SWIM connection automatically commits obstacle
-	 * changes.
-	 * 
-	 * @return true if this SWIM connection automatically commits obstacle
-	 *         changes, false otherwise
-	 * 
-	 * @see ObstacleProvider#getAutoCommit()
-	 */
-	@Override
-	public synchronized boolean getAutoCommit() {
-		return this.autoCommit;
-	}
-	
-	/**
-	 * Sets whether or not this SWIM connection automatically commits obstacle
-	 * changes.
-	 * 
-	 * @param autoCommit true if this SWIM connection automatically commits
-	 *                   obstacle changes, false otherwise
-	 * 
-	 * @see ObstacleProvider#setAutoCommit(boolean)
-	 */
-	@Override
-	public synchronized void setAutoCommit(boolean autoCommit) {
-		this.autoCommit = autoCommit;
-	}
 	
 	/**
 	 * Determines whether or not this SWIM connection matches a specification.
@@ -179,23 +169,60 @@ public abstract class SwimConnection implements Connection, ObstacleProvider {
 	 * @return true if the this SWIM connection matches the specification,
 	 *         false otherwise
 	 * 
-	 * @see Connection#matches(Specification)
+	 * @see FactoryProduct#matches(Specification)
 	 */
 	@Override
 	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = false;
 		
-		if ((null != specification) && (specification.getProperties() instanceof SwimConnectionProperties)) {
-			SwimConnectionProperties scp = (SwimConnectionProperties) specification.getProperties();
-			matches = (this.hasSubscribed(SwimData.AIXM) == scp.getSubscribesAIXM()
-					&& (this.hasSubscribed(SwimData.AMXM) == scp.getSubscribesAMXM())
-					&& (this.hasSubscribed(SwimData.FIXM) == scp.getSubscribesFIXM())
-					&& (this.hasSubscribed(SwimData.IWXXM) == scp.getSubscribesIWXXM())
-					&& (this.hasSubscribed(SwimData.WXXM) == scp.getSubscribesWXXM())
-					&& (this.autoCommit == scp.getAutoCommit()));
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof SwimConnectionProperties)) {
+			
+			SwimConnectionProperties properties = (SwimConnectionProperties) specification.getProperties();
+			matches = (this.hasSubscribed(SwimProtocol.AIXM) == properties.getSubscribesAIXM()
+					&& (this.hasSubscribed(SwimProtocol.AMXM) == properties.getSubscribesAMXM())
+					&& (this.hasSubscribed(SwimProtocol.FIXM) == properties.getSubscribesFIXM())
+					&& (this.hasSubscribed(SwimProtocol.IWXXM) == properties.getSubscribesIWXXM())
+					&& (this.hasSubscribed(SwimProtocol.WXXM) == properties.getSubscribesWXXM()));
 		}
 		
 		return matches;
+	}
+	
+	/**
+	 * Updates this SWIM connection according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this SWIM connection has been updated, false otherwise
+	 * 
+	 * @see FactoryProduct#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = false;
+		
+		if ((null != specification)
+				&& specification.getId().equals(this.getId())
+				&& (specification.getProperties() instanceof SwimConnectionProperties)
+				&& !this.matches(specification)) {
+			
+			SwimConnectionProperties properties = (SwimConnectionProperties) specification.getProperties();
+			if (properties.getSubscribesAIXM())
+				this.subscribe(SwimProtocol.AIXM);
+			if (properties.getSubscribesFIXM())
+				this.subscribe(SwimProtocol.FIXM);
+			if (properties.getSubscribesWXXM())
+				this.subscribe(SwimProtocol.WXXM);
+			if (properties.getSubscribesIWXXM())
+				this.subscribe(SwimProtocol.IWXXM);
+			if (properties.getSubscribesAMXM())
+				this.subscribe(SwimProtocol.AMXM);
+			updated = true;
+		}
+		
+		return updated;
 	}
 	
 }

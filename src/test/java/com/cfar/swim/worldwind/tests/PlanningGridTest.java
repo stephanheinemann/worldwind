@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -35,20 +35,29 @@ import java.time.ZonedDateTime;
 
 import org.junit.Test;
 
+import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.geom.Neighborhood;
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.PlanningGrid;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 
+/**
+ * Performs planning grid tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class PlanningGridTest {
 
+	/**
+	 * Tests planning grid structures.
+	 */
 	@Test
 	public void testStructure() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
@@ -99,66 +108,95 @@ public class PlanningGridTest {
         assertEquals(true, planningGrid.areNeighbors(child.getCornerPositions()[0], child.getCornerPositions()[1]));
 	}
 	
+	/**
+	 * Tests planning grid costs.
+	 */
 	@Test
 	public void testCosts() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
 		// the reference cube has to be offset from the origin for the position computation to work
-        Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1);
+        Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1d);
         PlanningGrid planningGrid = new PlanningGrid(cube, 10, 5, 5);
         planningGrid.setGlobe(new Earth());
-        assertEquals(1d, planningGrid.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
+        assertEquals(planningGrid.getBaseCost(),
+        		planningGrid.getCost(ZonedDateTime.now()), PrecisionDouble.UNIT_DECA_MICRO);
         
         PlanningGrid child = planningGrid.getChild(0, 0, 0);
-        assertEquals(1d, child.getCost(ZonedDateTime.now()), PrecisionDouble.EPSILON);
-        assertEquals(1d / child.getNormalizer(), child.getLegCost(
-        		child.getCornerPositions()[0],
-        		child.getCornerPositions()[1],
-        		ZonedDateTime.now().minusYears(10),
-        		ZonedDateTime.now().plusYears(10),
-        		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
+        assertEquals(child.getBaseCost(),
+        		child.getCost(ZonedDateTime.now()), PrecisionDouble.UNIT_DECA_MICRO);
+        assertEquals(child.getBaseCost() / child.getNormalizer(),
+        		child.getLegCost(
+        				child.getCornerPositions()[0],
+        				child.getCornerPositions()[1],
+        				ZonedDateTime.now().minusYears(10),
+        				ZonedDateTime.now().plusYears(10),
+        				CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE),
+        		PrecisionDouble.UNIT_DECA_MICRO);
         
-        child.addCostInterval(new CostInterval("obstacle1", ZonedDateTime.now(), ZonedDateTime.now(), 50d));
-        assertEquals(Double.POSITIVE_INFINITY, child.getLegCost(
-        		child.getCornerPositions()[0],
-        		child.getCornerPositions()[1],
-        		ZonedDateTime.now().minusYears(10),
-        		ZonedDateTime.now().plusYears(10),
-        		CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE), PrecisionDouble.EPSILON);
-        assertEquals(51d / child.getNormalizer(), child.getLegCost(
-        		child.getCornerPositions()[0],
-        		child.getCornerPositions()[1],
-        		ZonedDateTime.now().minusYears(10),
-        		ZonedDateTime.now().plusYears(10),
-        		CostPolicy.AVERAGE, RiskPolicy.SAFETY), PrecisionDouble.EPSILON);
-        
-        child.addCostInterval(new CostInterval("obstacle1", ZonedDateTime.now(), ZonedDateTime.now(), 50d));
-        child.addCostInterval(new CostInterval("obstacle2", ZonedDateTime.now(), ZonedDateTime.now(), 30d));
-        assertEquals(Double.POSITIVE_INFINITY, child.getLegCost(
-        		child.getCornerPositions()[0],
-        		child.getCornerPositions()[1],
-        		ZonedDateTime.now().minusYears(10),
-        		ZonedDateTime.now().plusYears(10),
-        		CostPolicy.AVERAGE, RiskPolicy.EFFECTIVENESS), PrecisionDouble.EPSILON);
-        assertEquals(81d / child.getNormalizer(), child.getLegCost(
-        		child.getCornerPositions()[0],
-        		child.getCornerPositions()[1],
-        		ZonedDateTime.now().minusYears(10),
-        		ZonedDateTime.now().plusYears(10),
-        		CostPolicy.AVERAGE, RiskPolicy.IGNORANCE), PrecisionDouble.EPSILON);
-        assertEquals(1d / child.getNormalizer(), child.getNormalizedDistance(
-        		child.getCornerPositions()[0],
-        		child.getCornerPositions()[1]),
-        		PrecisionDouble.EPSILON);
+        child.addCostInterval(new CostInterval("obstacle1",
+        		ZonedDateTime.now(), ZonedDateTime.now(), 50d));
+        assertEquals(Double.POSITIVE_INFINITY,
+        		child.getLegCost(
+        				child.getCornerPositions()[0],
+        				child.getCornerPositions()[1],
+        				ZonedDateTime.now().minusYears(10),
+        				ZonedDateTime.now().plusYears(10),
+        				CostPolicy.AVERAGE, RiskPolicy.AVOIDANCE),
+        		PrecisionDouble.UNIT_DECA_MICRO);
+        assertEquals(child.getBaseCost() / child.getNormalizer(),
+        		child.getLegCost(
+        				child.getCornerPositions()[0],
+        				child.getCornerPositions()[1],
+        				ZonedDateTime.now().minusYears(10),
+        				ZonedDateTime.now().plusYears(10),
+        				CostPolicy.AVERAGE, RiskPolicy.SAFETY),
+        		PrecisionDouble.UNIT_DECA_MICRO);
+        assertEquals(child.getBaseCost() + 50d / child.getNormalizer(),
+        		child.getLegCost(
+        				child.getCornerPositions()[0],
+        				child.getCornerPositions()[1],
+        				ZonedDateTime.now().minusYears(10),
+        				ZonedDateTime.now().plusYears(10),
+        				CostPolicy.MAXIMUM, RiskPolicy.SAFETY),
+        		1.0d);
+        child.addCostInterval(new CostInterval("obstacle1",
+        		ZonedDateTime.now().minusMinutes(1l),
+        		ZonedDateTime.now().plusMinutes(1l), 50d));
+        child.addCostInterval(new CostInterval("obstacle2",
+        		ZonedDateTime.now().minusMinutes(1l),
+        		ZonedDateTime.now().plusMinutes(1l), 30d));
+        assertEquals(Double.POSITIVE_INFINITY,
+        		child.getLegCost(
+        				child.getCornerPositions()[0],
+        				child.getCornerPositions()[1],
+        				ZonedDateTime.now().minusYears(10),
+        				ZonedDateTime.now().plusYears(10),
+        				CostPolicy.AVERAGE, RiskPolicy.EFFECTIVENESS),
+        		PrecisionDouble.UNIT_DECA_MICRO);
+        assertEquals(child.getBaseCost() + 80d / child.getNormalizer(),
+        		child.getLegCost(
+        				child.getCornerPositions()[0],
+        				child.getCornerPositions()[1],
+        				ZonedDateTime.now().minusYears(10),
+        				ZonedDateTime.now().plusYears(10),
+        				CostPolicy.MAXIMUM, RiskPolicy.IGNORANCE),
+        		1.0d);
+        assertEquals(child.getBaseCost() / child.getNormalizer(),
+        		child.getNormalizedDistance(
+        				child.getCornerPositions()[0],
+        				child.getCornerPositions()[1]),
+        		PrecisionDouble.UNIT_DECA_MICRO);
         
         child.addChildren(2);
         assertEquals(true, child.hasChildren());
         assertEquals(true, child.hasChild(0, 0, 0));
         
         PlanningGrid grandChild = child.getChild(0, 0, 0);
-        assertEquals(0.5d / grandChild.getNormalizer(), grandChild.getNormalizedDistance(
-        		grandChild.getCornerPositions()[0],
-        		grandChild.getCornerPositions()[1]),
-        		PrecisionDouble.EPSILON);
+        assertEquals(0.5d * grandChild.getBaseCost() / grandChild.getNormalizer(),
+        		grandChild.getNormalizedDistance(
+        				grandChild.getCornerPositions()[0],
+        				grandChild.getCornerPositions()[1]),
+        		PrecisionDouble.UNIT_DECA_MICRO);
         
 	}
 

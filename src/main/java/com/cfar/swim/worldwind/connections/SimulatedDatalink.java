@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,12 +29,20 @@
  */
 package com.cfar.swim.worldwind.connections;
 
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Iterator;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.registries.connections.SimulatedDatalinkProperties;
+import com.cfar.swim.worldwind.tracks.AircraftTrackError;
+import com.cfar.swim.worldwind.tracks.AircraftTrackPoint;
+import com.cfar.swim.worldwind.util.Identifiable;
+
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Earth;
@@ -48,6 +56,32 @@ import gov.nasa.worldwind.render.Path;
  *
  */
 public class SimulatedDatalink extends Datalink {
+	
+	/** the unknown status of an aircraft connected via a simulated datalink */
+	public static final String STATUS_UNKNOWN = "UNKNOWN";
+	
+	/** the active status of an aircraft connected via a simulated datalink */
+	public static final String STATUS_ACTIVE = "ACTIVE";
+	
+	/** the unknown mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_UNKNOWN = "UNKNOWN";
+	
+	/** the auto mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_AUTO = "AUTO";
+	
+	/** the land mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_LAND = "LAND";
+	
+	/** the return to land mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_RTL = "RTL";
+	
+	/** the stabilize mode of an aircraft connected via a simulated datalink */
+	public static final String MODE_STABILIZE = "STABILIZE";
+	
+	// TODO: available status and mode constants (consider enum)
+	
+	/** the uplink delay of this simulated datalink */
+	private Duration uplinkDelay = Duration.ofMillis(500);
 	
 	/** the gobe of this simulated datalink */
 	private Globe globe = new Earth();
@@ -70,11 +104,17 @@ public class SimulatedDatalink extends Datalink {
 	/** the planned flight path iterator of this simulated datalink source */
 	private Iterator<? extends Position> positionIterator = null;
 	
-	/** the estimated time on a leg of the planned flight path */
-	private double ete = 0d;
+	/** the index of the next position in the planned flight path */
+	private int positionIndex = 0;
 	
-	/** the actual time on a leg of the planned flight path */
-	private double ate = 0d;
+	/** the last reporting time of this simulated datalink */
+	private ZonedDateTime reportingTime = ZonedDateTime.now(ZoneId.of("UTC"));
+	
+	/** the estimated time over the next position in the planned flight path */
+	private ZonedDateTime eto = ZonedDateTime.now(ZoneId.of("UTC"));
+	
+	/** the estimated time enroute on the current leg in the planned flight path */
+	private Duration ete = Duration.ZERO;
 	
 	/** indicates whether or not the source of this simulated datalink is airborne */
 	private boolean isAirborne = false;
@@ -85,11 +125,63 @@ public class SimulatedDatalink extends Datalink {
 	/** indicates whether or not the source of this simulated datalink is armed */
 	private boolean isArmed = false;
 	
-	/** indicates whether or not the source of this simulated datalink is safe */
-	private boolean isAircraftSafetyEnabled = true;
+	/** indicates whether or not the source of this simulated datalink is guided */
+	private boolean isAircraftGuidanceEnabled = true;
+	
+	/** the aircraft status of this simulated datalink source */
+	private String aircraftStatus = SimulatedDatalink.STATUS_UNKNOWN;
 	
 	/** the aircraft mode of this simulated datalink source */
-	private String aircraftMode = "UNKNOWN";
+	private String aircraftMode = SimulatedDatalink.MODE_UNKNOWN;
+	
+	/** the maximum aircraft track error of this simulated datalink source */
+	private AircraftTrackError maxTrackError = AircraftTrackError.ZERO;
+	
+	/** the error probability of this simulated datalink source */
+	private float errorProbability = 0f;
+	
+	/**
+	 * Constructs a new simulated datatlink.
+	 */
+	public SimulatedDatalink() {
+		this.getAircraftTrack().setName("Simulated Iris");
+	}
+	
+	/**
+	 * Gets the identifier of this simulated datalink.
+	 * 
+	 * @return the identifier of this simulated datalink
+	 * 
+	 * @see Identifiable#getId()
+	 */
+	@Override
+	public String getId() {
+		return Specification.CONNECTION_DATALINK_SIMULATED_ID;
+	}
+	
+	/**
+	 * Gets the uplink delay of this simulated datalink.
+	 * 
+	 * @return the uplink delay of this simulated datalink
+	 */
+	public Duration getUplinkDelay() {
+		return this.uplinkDelay;
+	}
+	
+	/**
+	 * Sets the uplink delay of this simulated datalink.
+	 * 
+	 * @param uplinkDelay the uplink delay to be set
+	 * 
+	 * @throws IllegalArgumentException if the uplink delay is invalid
+	 */
+	public void setUplinkDelay(Duration uplinkDelay) {
+		if ((null == uplinkDelay) || uplinkDelay.isNegative()
+				|| uplinkDelay.isZero()) {
+			throw new IllegalArgumentException("uplink delay is invalid");
+		}
+		this.uplinkDelay = uplinkDelay;
+	}
 	
 	/**
 	 * Connects this simulated datalink.
@@ -112,7 +204,7 @@ public class SimulatedDatalink extends Datalink {
 	}
 	
 	/**
-	 * Indicates whether or not this simulated datalink is connected.
+	 * Determines whether or not this simulated datalink is connected.
 	 * 
 	 * @return true if this simulated datalink is connected, false otherwise
 	 * 
@@ -123,13 +215,29 @@ public class SimulatedDatalink extends Datalink {
 		return this.isConnected;
 	}
 	
+	// TODO: check isConnected for entire logic!
+	
+	/**
+	 * Gets the aircraft status via this simulated datalink.
+	 * 
+	 * @return the aircraft status obtained via this simulated datalink
+	 * 
+	 * @see Datalink#getAircraftStatus()
+	 */
+	@Override
+	public synchronized String getAircraftStatus() {
+		return this.aircraftStatus;
+	}
+	
 	/**
 	 * Gets the aircraft mode via this simulated datalink.
+	 * 
+	 * @return the aircraft mode obtained via this simulated datalink
 	 * 
 	 * @see Datalink#getAircraftMode()
 	 */
 	@Override
-	public String getAircraftMode() {
+	public synchronized String getAircraftMode() {
 		return this.aircraftMode;
 	}
 	
@@ -141,184 +249,8 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAircraftMode()
 	 */
 	@Override
-	public void setAircraftMode(String aircraftMode) {
+	public synchronized void setAircraftMode(String aircraftMode) {
 		this.aircraftMode = aircraftMode;
-	}
-	
-	/**
-	 * Gets the aircraft position via this simulated datalink.
-	 * 
-	 * @return the aircraft position obtained via this simulated datalink
-	 * 
-	 * @see Datalink#getAircraftPosition()
-	 */
-	@Override
-	public Position getAircraftPosition() {
-		Position currentPosition = this.iris.getReferencePosition();
-		
-		if ((null != this.flightPath) && this.isAirborne) {
-			if (this.ate >= this.ete) {
-				this.lastPosition = this.nextPosition;
-				if (this.positionIterator.hasNext()) {
-					this.nextPosition = this.positionIterator.next();
-					this.ete = this.iris.getCapabilities().getEstimatedDuration(
-							lastPosition, nextPosition, this.globe).getSeconds();
-					this.ate = 0d;
-				}
-			}
-			double slice = ((double) this.getDownlinkPeriod() / 1000d);
-			this.ate += slice;
-			if (this.ate > this.ete) this.ate = this.ete;
-			double ratio = this.ate / this.ete;
-			currentPosition = Position.interpolate(ratio, lastPosition, nextPosition);
-			this.iris.moveTo(currentPosition);
-		}
-		
-		return currentPosition;
-	}
-	
-	/**
-	 * Arms the aircraft via this simulated datalink.
-	 * 
-	 * @see Datalink#armAircraft()
-	 */
-	@Override
-	public void armAircraft() {
-		this.isArmed = true;
-	}
-	
-	/**
-	 * Disarms the aircraft via this simulated datalink.
-	 * 
-	 * @see Datalink#disarmAircraft()
-	 */
-	@Override
-	public void disarmAircraft() {
-		this.isArmed = false;
-	}
-	
-	/**
-	 * Indicates whether or not the aircraft connected via this simulated
-	 * datalink is armed.
-	 * 
-	 * @return true if the aircraft is armed, false otherwise
-	 * 
-	 * @see Datalink#isAircraftArmed()
-	 */
-	@Override
-	public boolean isAircraftArmed() {
-		return this.isArmed;
-	}
-	
-	/**
-	 * Uploads a flight path to the aircraft connected via this simulated
-	 * datalink.
-	 * 
-	 * @param flightPath the flight path to be uploaded
-	 * 
-	 * @see Datalink#uploadFlightPath(Path)
-	 */
-	@Override
-	public void uploadFlightPath(Path flightPath) {
-		this.flightPath = flightPath;
-		this.positionIterator = this.flightPath.getPositions().iterator();
-		if (this.positionIterator.hasNext()) {
-			this.homePosition = this.positionIterator.next();
-			this.lastPosition = this.homePosition;
-			this.nextPosition = this.homePosition;
-			this.iris.moveTo(this.homePosition);
-		}
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Enables the aircraft safety via this simulated datalink.
-	 * 
-	 * @see Datalink#enableAircraftSafety()
-	 */
-	@Override
-	public void enableAircraftSafety() {
-		this.isAircraftSafetyEnabled = true;
-	}
-	
-	/**
-	 * Disables the aircraft safety via this simulated datalink.
-	 * 
-	 * @see Datalink#disableAircraftSafety()
-	 */
-	@Override
-	public void disableAircraftSafety() {
-		this.isAircraftSafetyEnabled = false;
-	}
-	
-	/**
-	 * Indicates whether or not the aircraft safety is enabled for the aircraft
-	 * connected via this simulated datalink.
-	 * 
-	 * @return true if the aircraft safety is enabled, false otherwise
-	 * 
-	 * @see Datalink#isAircraftSafetyEnabled()
-	 */
-	@Override
-	public boolean isAircraftSafetyEnabled() {
-		return this.isAircraftSafetyEnabled;
-	}
-	
-	/**
-	 * Initiates a take-off for the aircraft connected via this simulated
-	 * datalink.
-	 * 
-	 * @see Datalink#takeOff()
-	 */
-	@Override
-	public void takeOff() {
-		this.setAircraftMode("AUTO");
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.isAirborne = true;
-	}
-	
-	/**
-	 * Initiates a landing for the aircraft connected via this simulated
-	 * datalink.
-	 * 
-	 * @see Datalink#land()
-	 */
-	@Override
-	public void land() {
-		this.setAircraftMode("LAND");
-		this.nextPosition = this.iris.getReferencePosition();
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.isAirborne = false;
-	}
-	
-	/**
-	 * Initiates a return to and landing at the launch position for the
-	 * aircraft connected via this simulated datalink.
-	 * 
-	 * @see Datalink#returnToLaunch()
-	 */
-	@Override
-	public void returnToLaunch() {
-		this.setAircraftMode("RTL");
-		this.nextPosition = this.homePosition;
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-		this.isAirborne = false;
 	}
 	
 	/**
@@ -329,8 +261,8 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#getAircraftHeading()
 	 */
 	@Override
-	public Angle getAircraftHeading() {
-		return Position.linearAzimuth(this.iris.getReferencePosition(), this.nextPosition);
+	public synchronized Angle getAircraftHeading() {
+		return Position.linearAzimuth(this.iris.getCenter(), this.nextPosition);
 	}
 	
 	/**
@@ -370,6 +302,457 @@ public class SimulatedDatalink extends Datalink {
 	}
 	
 	/**
+	 * Gets the aircraft position via this simulated datalink.
+	 * 
+	 * @return the aircraft position obtained via this simulated datalink
+	 * 
+	 * @see Datalink#getAircraftPosition()
+	 */
+	@Override
+	public synchronized Position getAircraftPosition() {
+		Position currentPosition = this.iris.getCenter();
+		this.reportingTime = ZonedDateTime.now(ZoneId.of("UTC"));
+		
+		if ((null != this.flightPath) && this.isAirborne) {
+			// progress mission
+			while (!this.reportingTime.isBefore(this.eto) || (-1 == this.positionIndex)) {
+				this.lastPosition = this.nextPosition;
+				if (this.positionIterator.hasNext()) {
+					this.positionIndex++;
+					this.nextPosition = this.positionIterator.next();
+					this.ete = this.iris.getCapabilities().getEstimatedDuration(
+							lastPosition, nextPosition, this.globe);
+					
+					if (0 == this.positionIndex) {
+						// updated mission
+						this.eto = this.reportingTime.plus(ete);
+					} else {
+						// existing mission
+						this.eto = this.eto.plus(ete);
+					}
+				} else {
+					break;
+				}
+			}
+			
+			// determine current position
+			Duration ttg = Duration.between(this.reportingTime, this.eto);
+			if (!ttg.isNegative() && !this.ete.isZero()) {
+				double ratio = ((double) ttg.toSeconds()) / ((double) this.ete.toSeconds());
+				currentPosition = Position.interpolate(ratio, this.nextPosition, this.lastPosition);
+			}
+			
+			// initiate return to land auto-land
+			if (this.lastPosition.equals(this.nextPosition)
+					&& this.lastPosition.equals(this.homePosition)
+					&& this.getAircraftMode().equals(SimulatedDatalink.MODE_RTL)) {
+				this.isAirborne = false;
+				this.setAircraftMode(SimulatedDatalink.MODE_UNKNOWN);
+			}
+			
+			// TODO: introduce probabilistic errors
+			/*
+			double xte = this.getMaxTrackError().getCrossTrackError() *
+					Math.random() * this.getErrorProbablilty();
+			currentPosition = new Position(
+					currentPosition.latitude,
+					currentPosition.longitude,
+					currentPosition.elevation + xte);
+			*/
+			
+		} else if (!this.isAirborne) {
+			double elevation = this.globe.getElevationModel()
+					.getElevation(currentPosition.latitude, currentPosition.longitude);
+			currentPosition = new Position(
+					currentPosition.latitude, currentPosition.longitude, elevation);
+		}
+		
+		this.iris.moveTo(currentPosition);
+		
+		// TODO: observed invalid position (NaN or Infinite components)
+		return currentPosition;
+	}
+	
+	/**
+	 * Gets an aircraft track point via this simulated datalink.
+	 * 
+	 * @return an aircraft track point obtained via this simulated datalink
+	 * 
+	 * @see Datalink#getAircraftTrackPoint()
+	 */
+	@Override
+	public synchronized AircraftTrackPoint getAircraftTrackPoint() {
+		AircraftTrackPoint trackPoint = new AircraftTrackPoint(this.getAircraftPosition());
+		trackPoint.setPitch(this.getAircraftPitch());
+		trackPoint.setBank(this.getAircraftBank());
+		trackPoint.setHeading(this.getAircraftHeading());
+		trackPoint.setAto(this.reportingTime);
+		return trackPoint;
+	}
+	
+	/**
+	 * Enables the aircraft guidance via this simulated datalink.
+	 * 
+	 * @see Datalink#enableAircraftGuidance()
+	 */
+	@Override
+	public synchronized void enableAircraftGuidance() {
+		this.isAircraftGuidanceEnabled = true;
+	}
+	
+	/**
+	 * Disables the aircraft guidance via this simulated datalink.
+	 * 
+	 * @see Datalink#disableAircraftGuidance()
+	 */
+	@Override
+	public synchronized void disableAircraftGuidance() {
+		this.isAircraftGuidanceEnabled = false;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft guidance is enabled for the
+	 * aircraft connected via this simulated datalink.
+	 * 
+	 * @return true if the aircraft guidance is enabled, false otherwise
+	 * 
+	 * @see Datalink#isAircraftGuidanceEnabled()
+	 */
+	@Override
+	public synchronized boolean isAircraftGuidanceEnabled() {
+		return this.isAircraftGuidanceEnabled;
+	}
+	
+	/**
+	 * Arms the aircraft via this simulated datalink.
+	 * 
+	 * @see Datalink#armAircraft()
+	 */
+	@Override
+	public synchronized void armAircraft() {
+		this.isArmed = true;
+	}
+	
+	/**
+	 * Disarms the aircraft via this simulated datalink.
+	 * 
+	 * @see Datalink#disarmAircraft()
+	 */
+	@Override
+	public synchronized void disarmAircraft() {
+		this.isArmed = false;
+	}
+	
+	/**
+	 * Determines whether or not the aircraft connected via this simulated
+	 * datalink is armed.
+	 * 
+	 * @return true if the aircraft is armed, false otherwise
+	 * 
+	 * @see Datalink#isAircraftArmed()
+	 */
+	@Override
+	public synchronized boolean isAircraftArmed() {
+		return this.isArmed;
+	}
+	
+	/**
+	 * Uploads a mission flight path to the aircraft connected via this
+	 * simulated datalink.
+	 * 
+	 * @param mission the mission flight path to be uploaded
+	 *
+	 * @see Datalink#uploadMission(Path)
+	 */
+	@Override
+	public synchronized void uploadMission(Path mission) {
+		super.uploadMission(mission);
+		
+		if (!this.isAirborne) {
+			// upload mission before flight
+			this.flightPath = new Path(mission.getPositions());
+			this.positionIndex = 0;
+			this.positionIterator = this.flightPath.getPositions().iterator();
+			if (this.positionIterator.hasNext()) {
+				this.homePosition = this.positionIterator.next();
+				this.lastPosition = this.homePosition;
+				this.nextPosition = this.homePosition;
+				this.iris.moveTo(this.homePosition);
+			}
+		} else {
+			// upload mission during flight
+			this.lastPosition = this.getAircraftPosition();
+			this.nextPosition = this.lastPosition;
+			this.flightPath = new Path(mission.getPositions());
+			this.positionIndex = -1;
+			this.positionIterator = this.flightPath.getPositions().iterator();
+		}
+		
+		try {
+			Thread.sleep(this.getUplinkDelay().toMillis());
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Downloads a mission flight path from the aircraft connected via this
+	 * simulated datalink.
+	 * 
+	 * @param cached indicates whether or not the mission cache is used
+	 * 
+	 * @return the downloaded mission flight path
+	 * 
+	 * @see Datalink#downloadMission(boolean)
+	 */
+	@Override
+	public synchronized Path downloadMission(boolean cached) {
+		return cached ? super.downloadMission(cached) : this.flightPath;
+	}
+	
+	/**
+	 * Gets the next position of the mission flight path from the aircraft
+	 * connected via this datalink.
+	 * 
+	 * @return the next position of the mission flight path
+	 * 
+	 * @see Datalink#getNextMissionPosition()
+	 */
+	@Override
+	public synchronized Position getNextMissionPosition() {
+		return this.nextPosition;
+	}
+	
+	/**
+	 * Gets the index of the next position of the mission flight path from
+	 * the aircraft connected via this simulated datalink.
+	 * 
+	 * @return the index of the next position of the mission flight path
+	 * 
+	 * @see Datalink#getNextMissionPositionIndex()
+	 */
+	@Override
+	public synchronized int getNextMissionPositionIndex() {
+		return this.positionIndex;
+	}
+	
+	/**
+	 * Initiates a take-off for the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @see Datalink#takeOff()
+	 */
+	@Override
+	public synchronized void takeOff() {
+		if (!this.isAirborne()) {
+			this.setAircraftMode(SimulatedDatalink.MODE_AUTO);
+			this.eto = ZonedDateTime.now(ZoneId.of("UTC"));
+			this.ete = Duration.ZERO;
+			try {
+				Thread.sleep(this.getUplinkDelay().toMillis());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.isAirborne = true;
+		}
+	}
+	
+	/**
+	 * Initiates a landing for the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @see Datalink#land()
+	 */
+	@Override
+	public synchronized void land() {
+		if (this.isAirborne) {
+			this.setAircraftMode(SimulatedDatalink.MODE_LAND);
+			this.nextPosition = this.iris.getCenter();
+			try {
+				Thread.sleep(this.getUplinkDelay().toMillis());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			this.isAirborne = false;
+		}
+	}
+	
+	/**
+	 * Initiates a return to and landing at the launch position for the
+	 * aircraft connected via this simulated datalink.
+	 * 
+	 * @see Datalink#returnToLaunch()
+	 */
+	@Override
+	public synchronized void returnToLaunch() {
+		if (this.isAirborne()) {
+			this.setAircraftMode(SimulatedDatalink.MODE_RTL);
+			Path rtl = new Path(this.getAircraftPosition(), this.homePosition);
+			this.uploadMission(rtl);
+			try {
+				Thread.sleep(this.getUplinkDelay().toMillis());
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	/**
+	 * Determines whether or not the aircraft connected via this simulated
+	 * datalink is airborne.
+	 * 
+	 * @return true if the aircraft is airborne, false otherwise
+	 * 
+	 * @see Datalink#isAirborne()
+	 */
+	@Override
+	public synchronized boolean isAirborne() {
+		return this.isAirborne;
+	}
+	
+	/**
+	 * Gets the airspeed of the aircraft connected via this simulated datalink.
+	 * 
+	 * @return the airspeed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getAirspeed()
+	 */
+	@Override
+	public synchronized int getAirspeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseSpeed());
+	}
+	
+	/**
+	 * Sets the airspeed of the aircraft connected via this simulated datalink.
+	 * 
+	 * @param airspeed the airspeed to be set
+	 * 
+	 * @see Datalink#setAirspeed(int)
+	 */
+	@Override
+	public synchronized void setAirspeed(int airspeed) {
+		this.iris.getCapabilities().setCruiseSpeed(airspeed);
+	}
+	
+	/**
+	 * Gets the ground speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the ground speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getGroundSpeed()
+	 */
+	@Override
+	public synchronized int getGroundSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseSpeed());
+	}
+	
+	/**
+	 * Sets the ground speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param groundSpeed the ground speed to be set
+	 * 
+	 * @see Datalink#setGroundSpeed(int)
+	 */
+	@Override
+	public synchronized void setGroundSpeed(int groundSpeed) {
+		this.iris.getCapabilities().setCruiseSpeed(groundSpeed);
+	}
+	
+	/**
+	 * Gets the climb speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the climb speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getClimbSpeed()
+	 */
+	@Override
+	public synchronized int getClimbSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseClimbSpeed());
+	}
+	
+	/**
+	 * Sets the climb speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param climbSpeed the climb speed to be set
+	 * 
+	 * @see Datalink#setClimbSpeed(int)
+	 */
+	@Override
+	public synchronized void setClimbSpeed(int climbSpeed) {
+		this.iris.getCapabilities().setCruiseClimbSpeed(climbSpeed);
+	}
+	
+	/**
+	 * Gets the descent speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @return the descent speed of the aircraft connected via this simulated
+	 *         datalink
+	 * 
+	 * @see Datalink#getDescentSpeed()
+	 */
+	@Override
+	public synchronized int getDescentSpeed() {
+		return (int) Math.round(this.iris.getCapabilities().getCruiseDescentSpeed());
+	}
+	
+	/**
+	 * Sets the descent speed of the aircraft connected via this simulated
+	 * datalink.
+	 * 
+	 * @param descentSpeed the descent speed to be set
+	 * 
+	 * @see Datalink#setDescentSpeed(int)
+	 */
+	@Override
+	public synchronized void setDescentSpeed(int descentSpeed) {
+		this.iris.getCapabilities().setCruiseDescentSpeed(descentSpeed);
+	}
+	
+	/**
+	 * Gets the maximum track error of this simulated datalink.
+	 * 
+	 * @return the maximum track error of this simulated datalink
+	 */
+	public AircraftTrackError getMaxTrackError() {
+		return this.maxTrackError;
+	}
+	
+	/**
+	 * Sets the maximum track error of this simulated datalink.
+	 * 
+	 * @param maxTrackError the maximum track error to be set
+	 */
+	public void setMaxTrackError(AircraftTrackError maxTrackError) {
+		this.maxTrackError = maxTrackError;
+	}
+	
+	/**
+	 * Gets the error probability of this simulated datalink.
+	 * 
+	 * @return the error probability of this simulated datalink
+	 */
+	public float getErrorProbablilty() {
+		return this.errorProbability;
+	}
+	
+	/**
+	 * Sets the error probablity of this simulated datalink.
+	 * 
+	 * @param errorProbablity the error probablity to be set
+	 */
+	public void setErrorProbablity(float errorProbablity) {
+		this.errorProbability = errorProbablity;
+	}
+	
+	/**
 	 * Determines whether or not this simulated datalink matches a specification.
 	 * 
 	 * @param specification the specification to be matched
@@ -380,10 +763,45 @@ public class SimulatedDatalink extends Datalink {
 	 * @see Datalink#matches(Specification)
 	 */
 	@Override
-	public final boolean matches(Specification<? extends FactoryProduct> specification) {
+	public boolean matches(Specification<? extends FactoryProduct> specification) {
 		boolean matches = super.matches(specification);
-		matches &= (specification.getId().equals(Specification.DATALINK_SIMULATED));
+		
+		if (matches && (specification.getProperties() instanceof SimulatedDatalinkProperties)) {
+			SimulatedDatalinkProperties properties =
+					(SimulatedDatalinkProperties) specification.getProperties();
+			matches = (this.getUplinkDelay().toMillis() == properties.getUplinkDelay())
+					&& (this.maxTrackError.getCrossTrackError() == properties.getMaxCrossTrackError())
+					&& (this.maxTrackError.getTimingError().equals(properties.getMaxTimingError()))
+					&& (this.errorProbability == properties.getErrorProbability());
+		}
+		
 		return matches;
+	}
+	
+	/**
+	 * Updates this simulated datalink according to a specification.
+	 * 
+	 * @param specification the specification to be used for the update
+	 * 
+	 * @return true if this simulated datalink has been updated,
+	 *         false otherwise
+	 * 
+	 * @see Datalink#update(Specification)
+	 */
+	@Override
+	public boolean update(Specification<? extends FactoryProduct> specification) {
+		boolean updated = super.update(specification);
+		
+		if (updated && (specification.getProperties() instanceof SimulatedDatalinkProperties)) {
+			SimulatedDatalinkProperties properties =
+					(SimulatedDatalinkProperties) specification.getProperties();
+			this.setUplinkDelay(Duration.ofMillis(properties.getUplinkDelay()));
+			this.getMaxTrackError().setCrossTrackError(properties.getMaxCrossTrackError());
+			this.getMaxTrackError().setTimingError(Duration.ofSeconds(properties.getMaxTimingError()));
+			this.setErrorProbablity(properties.getErrorProbability());
+		}
+		
+		return updated;
 	}
 	
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,11 +29,84 @@
  */
 package com.cfar.swim.worldwind.registries.environments;
 
+import java.util.Objects;
+
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+
 /**
  * Realizes the properties bean of a planning continuum environment.
  * 
+ * @author Manuel Rosa
+ * @author Henrique Ferreira
  * @author Stephan Heinemann
  *
  */
 public class PlanningContinuumProperties extends EnvironmentProperties {
+	
+	/** the default serial identification of this planning continuum properties bean */
+	private static final long serialVersionUID = 1L;
+	
+	/** the resolution of this planning continuum properties bean */
+	@DecimalMin(value = "0", message = "{property.environment.continuum.resolution.min}")
+	@DecimalMax(value = "100000", message = "{property.environment.continuum.resolution.max}")
+    private double resolution = 50d;
+
+    /**
+     * Gets the resolution of this planning continuum properties bean.
+     * 
+     * @return the resolution of this planning continuum properties bean
+     */
+    public double getResolution() {
+            return resolution;
+    }
+
+    /**
+     * Sets the resolution of this planning continuum properties bean.
+     * 
+     * @param resolution the resolution to be set
+     */
+    public void setResolution(double resolution) {
+            this.resolution = resolution;
+    }
+    
+    /**
+	 * Determines whether or not this planning continuum properties bean equals
+	 * another planning continuum properties bean based on their aggregated
+	 * properties.
+	 * 
+	 * @param o the other planning continuum properties bean
+	 * 
+	 * @return true, if the aggregated properties of this planning continuum
+	 *         properties bean equal the aggregated properties of the other
+	 *         planning continuum properties bean, false otherwise
+	 * 
+	 * @see EnvironmentProperties#equals(Object)
+	 */
+	@Override
+	public final boolean equals(Object o) {
+		boolean equals = super.equals(o);
+		
+		if (equals && (o instanceof PlanningContinuumProperties)) {
+			PlanningContinuumProperties pcp = (PlanningContinuumProperties) o;
+			equals = (this.resolution == pcp.resolution);
+		}
+		
+		return equals;
+	}
+	
+	/**
+	 * Gets the hash code of this planning continuum properties bean based on
+	 * its aggregated properties.
+	 * 
+	 * @return the hash code of this planning continuum properties bean based
+	 *         on its aggregated properties
+	 * 
+	 * @see EnvironmentProperties#hashCode()
+	 */
+	@Override
+	public final int hashCode() {
+		return Objects.hash(super.hashCode(), this.resolution);
+	}
+	
 }

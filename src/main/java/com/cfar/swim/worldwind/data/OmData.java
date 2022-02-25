@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -176,7 +176,7 @@ public class OmData {
 		for (Airspace airspace : airspaces) {
 			LatLon location = airspace.getGroundReference();
 			if (airspace instanceof CappedCylinder) {
-				location = ((CappedCylinder) airspace).getReferencePosition();
+				location = ((CappedCylinder) airspace).getCenter();
 			}
 			double bottom = airspace.getAltitudes()[0];
 			double top = airspace.getAltitudes()[1];

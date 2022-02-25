@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -35,6 +35,7 @@ import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 
 /**
@@ -47,6 +48,13 @@ import gov.nasa.worldwind.globes.Globe;
 public interface Obstacle extends Movable, TimedRenderable, ThresholdRenderable, Enableable, Depictable {
 	
 	// TODO: all obstacles should be highlightable and able to change opacity when highlighted
+	
+	/**
+	 * Gets the center of this obstacle.
+	 * 
+	 * @return the center of this obstacle
+	 */
+	public Position getCenter();
 	
 	/**
 	 * Gets the cost interval of this obstacle.
@@ -70,5 +78,26 @@ public interface Obstacle extends Movable, TimedRenderable, ThresholdRenderable,
 	 * @return the geometric extent of this obstacle
 	 */
 	public Extent getExtent(Globe globe);
+	
+	/**
+	 * Gets the volume of the extent of this obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle
+	 */
+	public double getVolume(Globe globe);
+	
+	/**
+	 * Determines whether or not this obstacle intersects another obstacle for
+	 * a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param obstacle the other obstacle
+	 * 
+	 * @return true if this obstacle intersects the other obstacle,
+	 *         false otherwise
+	 */
+	public boolean intersects(Globe globe, Obstacle obstacle);
 	
 }

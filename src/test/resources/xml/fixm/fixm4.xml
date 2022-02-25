@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fx:Flight xmlns:fb="http://www.fixm.aero/base/4.2"
+	xmlns:fx="http://www.fixm.aero/flight/4.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.fixm.aero/flight/4.2 ../../../main/resources/xsd/flight/Flight.xsd ">
+	<fx:aircraft>
+		<fx:aircraftType>
+			<fx:type>
+				<fx:icaoAircraftTypeDesignator>H135</fx:icaoAircraftTypeDesignator>
+			</fx:type>
+		</fx:aircraftType>
+	</fx:aircraft>
+	<fx:arrival>
+		<fx:arrivalAerodrome>
+			<fb:iataDesignator>YYJ</fb:iataDesignator>
+			<fb:referencePoint
+				srsName="urn:ogc:def:crs:EPSG::4326">
+				<fb:pos>48.6480578 -123.4274429</fb:pos>
+			</fb:referencePoint>
+		</fx:arrivalAerodrome>
+	</fx:arrival>
+	<fx:departure>
+		<fx:aerodrome>
+			<fb:iataDesignator>YYJ</fb:iataDesignator>
+			<fb:referencePoint
+				srsName="urn:ogc:def:crs:EPSG::4326">
+				<fb:pos>48.6480578 -123.4274429</fb:pos>
+			</fb:referencePoint>
+		</fx:aerodrome>
+	</fx:departure>
+	<fx:flightIdentification>
+		<fx:aircraftIdentification>CFAR004</fx:aircraftIdentification>
+	</fx:flightIdentification>
+	<fx:operator>
+		<fb:designatorIcao>UVC</fb:designatorIcao>
+	</fx:operator>
+	<fx:routeTrajectoryGroup>
+		<fx:current>
+			<fx:element>
+				<fx:point4D>
+					<fx:level>
+						<fb:altitude uom="M">60</fb:altitude>
+					</fx:level>
+					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
+						<fb:pos>48.55821998077949 -123.3754553095237</fb:pos>
+					</fx:position>
+					<fx:time>
+						<fx:absoluteTime>2021-12-01T18:00:00Z</fx:absoluteTime>
+					</fx:time>
+				</fx:point4D>
+			</fx:element>
+			<fx:element>
+				<fx:point4D>
+					<fx:level>
+						<fb:altitude uom="M">60</fb:altitude>
+					</fx:level>
+					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
+						<fb:pos>48.554225130711494 -123.38721812784367</fb:pos>
+					</fx:position>
+					<fx:time>
+						<fx:absoluteTime>2021-12-01T18:08:00Z</fx:absoluteTime>
+					</fx:time>
+				</fx:point4D>
+			</fx:element>
+		</fx:current>
+	</fx:routeTrajectoryGroup>
+</fx:Flight>

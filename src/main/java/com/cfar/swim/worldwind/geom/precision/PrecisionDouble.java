@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.geom.precision;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 /**
  * Realizes a double value with a specified numerical precision.
@@ -39,12 +40,13 @@ import java.math.BigDecimal;
  */
 public class PrecisionDouble extends BigDecimal implements Precision {
 	
+	/** the default serial version identifier  */
 	private static final long serialVersionUID = 1L;
 	
 	/**
 	 * the precision of this precision double
 	 */
-	private int precision = Precision.PRECISION;
+	private int precision = Precision.DECA_MICRO;
 	
 	/**
 	 * the original double of this precision double
@@ -57,11 +59,12 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 * 
 	 * @param d the double value
 	 * 
-	 * @see Precision#PRECISION
+	 * @see Precision
+	 * @see BigDecimal
 	 */
 	public PrecisionDouble(double d) {
 		// TODO: the correct default precision should probably be a function (percentage) of the value
-		this(new BigDecimal(d).setScale(Precision.PRECISION, BigDecimal.ROUND_HALF_UP));
+		this(new BigDecimal(d).setScale(Precision.DECA_MICRO, RoundingMode.HALF_UP));
 		this.original = d;
 	}
 	
@@ -71,9 +74,12 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 * 
 	 * @param d the double value
 	 * @param precision the precision
+	 * 
+	 * @see Precision
+	 * @see BigDecimal
 	 */
 	public PrecisionDouble(double d, int precision) {
-		this(new BigDecimal(d).setScale(precision, BigDecimal.ROUND_HALF_UP));
+		this(new BigDecimal(d).setScale(precision, RoundingMode.HALF_UP));
 		this.precision = precision;
 		this.original = d;
 	}
@@ -82,6 +88,9 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 * Construct a new precision double from a big decimal (base class).
 	 * 
 	 * @param d the big decimal
+	 * 
+	 * @see Precision
+	 * @see BigDecimal
 	 */
 	protected PrecisionDouble(BigDecimal d) {
 		super(d.doubleValue());
@@ -137,7 +146,7 @@ public class PrecisionDouble extends BigDecimal implements Precision {
 	 */
 	@Override
 	public Double getOriginal() {
-		return new Double(this.original);
+		return Double.valueOf(this.original);
 	}
 	
 	// TODO: override arithmetic operations to propagate

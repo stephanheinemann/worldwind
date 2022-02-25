@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -41,7 +41,10 @@ import com.cfar.swim.worldwind.registries.Properties;
  *
  */
 public abstract class SwimConnectionProperties implements Properties<SwimConnection> {
-
+	
+	/** the default serial identification of this SWIM connection properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the AIXM subscription status of this SWIM connection properties bean */
 	private boolean subscribesAIXM = false;
 	
@@ -56,9 +59,6 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 	
 	/** the AMXM subscription status of this SWIM connection properties bean */
 	private boolean subscribesAMXM = false;
-	
-	/** the auto commit status of this SWIM connection properties bean */
-	private boolean autoCommit = false;
 	
 	/**
 	 * Gets the AIXM subscription status of this SWIM connection properties bean.
@@ -151,24 +151,6 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 	}
 	
 	/**
-	 * Gets the auto commit status of this SWIM connection properties bean.
-	 * 
-	 * @return the auto commit status of this SWIM connection properties bean
-	 */
-	public boolean getAutoCommit() {
-		return this.autoCommit;
-	}
-	
-	/**
-	 * Sets the auto commit status of this SWIM connection properties bean.
-	 * 
-	 * @param autoCommit the auto commit status of this SWIM connection properties bean
-	 */
-	public void setAutoCommit(boolean autoCommit) {
-		this.autoCommit = autoCommit;
-	}
-	
-	/**
 	 * Clones this SWIM connection properties bean.
 	 * 
 	 * @return a clone of this SWIM connection properties bean
@@ -205,14 +187,13 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 		
 		if (this == o) {
 			equals = true;
-		} else if ((null != o) && (o instanceof SwimConnectionProperties)) {
+		} else if ((null != o) && (this.getClass() == o.getClass())) {
 			SwimConnectionProperties scp = (SwimConnectionProperties) o;
 			equals = (this.subscribesAIXM == scp.subscribesAIXM)
 					&& (this.subscribesAMXM == scp.subscribesAMXM)
 					&& (this.subscribesFIXM == scp.subscribesFIXM)
 					&& (this.subscribesIWXXM == scp.subscribesIWXXM)
-					&& (this.subscribesWXXM == scp.subscribesWXXM)
-					&& (this.autoCommit == scp.autoCommit);
+					&& (this.subscribesWXXM == scp.subscribesWXXM);
 		}
 		
 		return equals;
@@ -234,8 +215,7 @@ public abstract class SwimConnectionProperties implements Properties<SwimConnect
 				this.subscribesAMXM,
 				this.subscribesFIXM,
 				this.subscribesIWXXM,
-				this.subscribesWXXM,
-				this.autoCommit);
+				this.subscribesWXXM);
 	}
 	
 }

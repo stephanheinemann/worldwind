@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.registries.aircraft;
 
 import com.cfar.swim.worldwind.aircraft.A320;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
+import com.cfar.swim.worldwind.aircraft.H135;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -76,7 +77,7 @@ public class AircraftFactory extends AbstractFactory<Aircraft> {
 	 * Creates a new aircraft according to the customized aircraft
 	 * specification of this aircraft factory.
 	 * 
-	 * @return the created aircraft
+	 * @return the created aircraft, or null if no aircraft could be created
 	 * 
 	 * @see AbstractFactory#createInstance()
 	 */
@@ -85,12 +86,14 @@ public class AircraftFactory extends AbstractFactory<Aircraft> {
 		Aircraft aircraft = null;
 		
 		if (this.hasSpecification()) {
-			AircraftProperties properties = (AircraftProperties) this.specification.getProperties();
+			AircraftProperties properties = (AircraftProperties) this.getSpecification().getProperties();
 			
-			if (this.specification.getId().equals(Specification.AIRCRAFT_IRIS_ID)) {
+			if (this.getSpecification().getId().equals(Specification.AIRCRAFT_IRIS_ID)) {
 				aircraft = new Iris(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
-			} else if (this.specification.getId().equals(Specification.AIRCRAFT_A320_ID)) {
+			} else if (this.getSpecification().getId().equals(Specification.AIRCRAFT_A320_ID)) {
 				aircraft = new A320(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
+			} else if (this.getSpecification().getId().equals(Specification.AIRCRAFT_H135_ID)) {
+				aircraft = new H135(Position.ZERO, properties.getSeparationRadius(), properties.getCombatIdentification());
 			}
 			
 			aircraft.getCapabilities().setApproachRateOfDescent(properties.getApproachRateOfDescent());

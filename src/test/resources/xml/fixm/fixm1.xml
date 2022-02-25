@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fx:Flight xmlns:fb="http://www.fixm.aero/base/4.2"
+	xmlns:fx="http://www.fixm.aero/flight/4.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.fixm.aero/flight/4.2 ../../../main/resources/xsd/flight/Flight.xsd ">
+	<fx:aircraft>
+		<fx:aircraftType>
+			<fx:type>
+				<fx:icaoAircraftTypeDesignator>A320</fx:icaoAircraftTypeDesignator>
+			</fx:type>
+		</fx:aircraftType>
+	</fx:aircraft>
+	<fx:arrival>
+		<fx:arrivalAerodrome>
+			<fb:iataDesignator>YYJ</fb:iataDesignator>
+			<fb:referencePoint
+				srsName="urn:ogc:def:crs:EPSG::4326">
+				<fb:pos>48.6480578 -123.4274429</fb:pos>
+			</fb:referencePoint>
+		</fx:arrivalAerodrome>
+	</fx:arrival>
+	<fx:departure>
+		<fx:aerodrome>
+			<fb:referencePoint
+				srsName="urn:ogc:def:crs:EPSG::4326">
+				<fb:pos>49.1947222 -123.1838889</fb:pos>
+			</fb:referencePoint>
+		</fx:aerodrome>
+	</fx:departure>
+	<fx:flightIdentification>
+		<fx:aircraftIdentification>WS1234</fx:aircraftIdentification>
+	</fx:flightIdentification>
+	<fx:operator>
+		<fb:designatorIcao>WJA</fb:designatorIcao>
+	</fx:operator>
+	<fx:routeTrajectoryGroup>
+		<fx:current>
+			<fx:element>
+				<fx:point4D>
+					<fx:level>
+						<fb:altitude uom="FT">3000</fb:altitude>
+					</fx:level>
+					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
+						<fb:pos>49.1947222 -123.1838889</fb:pos>
+					</fx:position>
+					<fx:time>
+						<fx:absoluteTime>2021-11-10T18:00:00Z</fx:absoluteTime>
+					</fx:time>
+				</fx:point4D>
+			</fx:element>
+			<fx:element>
+				<fx:point4D>
+					<fx:level>
+						<fb:altitude uom="FT">3000</fb:altitude>
+					</fx:level>
+					<fx:position srsName="urn:ogc:def:crs:EPSG::4326">
+						<fb:pos>48.6480578 -123.4274429</fb:pos>
+					</fx:position>
+					<fx:time>
+						<fx:absoluteTime>2021-11-10T20:00:00Z</fx:absoluteTime>
+					</fx:time>
+				</fx:point4D>
+			</fx:element>
+		</fx:current>
+	</fx:routeTrajectoryGroup>
+</fx:Flight>

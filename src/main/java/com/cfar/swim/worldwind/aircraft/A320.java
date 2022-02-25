@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,8 +29,9 @@
  */
 package com.cfar.swim.worldwind.aircraft;
 
-import com.cfar.swim.worldwind.registries.FactoryProduct;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
+import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Position;
@@ -43,8 +44,6 @@ import gov.nasa.worldwind.symbology.SymbologyConstants;
  *
  */
 public class A320 extends FixedWingCivilAircraft {
-
-	// TODO: use environment AirDataIntervals (otherwise very simplified)
 	
 	/** the maximum angle of climb speed of this A320 in m/s */
 	public static final double MAX_ANGLE_OF_CLIMB_SPEED = 113d; // m/s = 220 KTAS
@@ -109,41 +108,57 @@ public class A320 extends FixedWingCivilAircraft {
 	public A320(Position position, double radius, CombatIdentification cid) {
 		super(position, radius, cid);
 		this.capabilities = new Capabilities();
-		this.capabilities.setMaximumAngleOfClimbSpeed(A320.MAX_ANGLE_OF_CLIMB_SPEED);
-		this.capabilities.setMaximumRateOfClimb(A320.MAX_RATE_OF_CLIMB);
-		this.capabilities.setCruiseClimbSpeed(A320.CRUISE_CLIMB_SPEED);
-		this.capabilities.setCruiseSpeed(A320.CRUISE_SPEED);
-		this.capabilities.setCruiseDescentSpeed(A320.CRUISE_DESCENT_SPEED);
+		
+		this.capabilities.setApproachRateOfDescent(A320.APPROACH_RATE_OF_DESCENT);
 		this.capabilities.setApproachSpeed(A320.APPROACH_SPEED);
-		this.capabilities.setMaximumGlideSpeed(A320.MAX_GLIDE_SPEED);
-		this.capabilities.setMaximumRateOfDescentSpeed(A320.MAX_RATE_OF_DESCENT_SPEED);
-		this.capabilities.setMaximumSpeed(A320.MAX_SPEED);
-		this.capabilities.setMaximumRateOfClimb(A320.MAX_RATE_OF_CLIMB);
+		this.capabilities.setCruiseClimbSpeed(A320.CRUISE_CLIMB_SPEED);
+		this.capabilities.setCruiseDescentSpeed(A320.CRUISE_DESCENT_SPEED);
 		this.capabilities.setCruiseRateOfClimb(A320.CRUISE_RATE_OF_CLIMB);
 		this.capabilities.setCruiseRateOfDescent(A320.CRUISE_RATE_OF_DESCENT);
-		this.capabilities.setApproachRateOfDescent(A320.APPROACH_RATE_OF_DESCENT);
-		this.capabilities.setMaximumRateOfDescent(A320.MAX_RATE_OF_DESCENT);
+		this.capabilities.setCruiseSpeed(A320.CRUISE_SPEED);
 		this.capabilities.setMaximumAngleOfClimb(A320.MAX_ANGLE_OF_CLIMB);
+		this.capabilities.setMaximumAngleOfClimbSpeed(A320.MAX_ANGLE_OF_CLIMB_SPEED);
+		this.capabilities.setMaximumGlideSpeed(A320.MAX_GLIDE_SPEED);
+		this.capabilities.setMaximumRateOfClimb(A320.MAX_RATE_OF_CLIMB);
+		this.capabilities.setMaximumRateOfClimbSpeed(A320.MAX_RATE_OF_CLIMB_SPEED);
+		this.capabilities.setMaximumRateOfDescent(A320.MAX_RATE_OF_DESCENT);
+		this.capabilities.setMaximumRateOfDescentSpeed(A320.MAX_RATE_OF_DESCENT_SPEED);
+		this.capabilities.setMaximumSpeed(A320.MAX_SPEED);
 		
 		// TODO: use actual live data for symbol annotations...
 		this.getDepiction().setModifier(SymbologyConstants.SPEED, A320.CRUISE_SPEED);
 	}
-
+	
 	/**
-	 * Determines whether or not this A320 matches a specification.
+	 * Gets the identifier of this A320.
 	 * 
-	 * @param specification the specification to be matched
+	 * @return the identifier of this A320
 	 * 
-	 * @return true if the this A320 matches the specification,
-	 *         false otherwise
-	 * 
-	 * @see FixedWingCivilAircraft#matches(Specification)
+	 * @see Identifiable#getId()
 	 */
 	@Override
-	public final boolean matches(Specification<? extends FactoryProduct> specification) {
-		boolean matches = super.matches(specification);
-		matches &= specification.getId().equals(Specification.AIRCRAFT_A320_ID);
-		return matches;
+	public String getId() {
+		return Specification.AIRCRAFT_A320_ID;
+	}
+	
+	/**
+	 * Interpolates the midpoint A320 between this and another A320. The
+	 * interpolation considers the spatial and temporal attributes and modifies
+	 * this A320 accordingly.
+	 * 
+	 * @param other the other A320
+	 * 
+	 * @return the interpolated midpoint A320 between this and the other A320
+	 * 
+	 * @see ObstacleSphere#interpolate(ObstacleSphere)
+	 */
+	@Override
+	public A320 interpolate(ObstacleSphere other) {
+		ObstacleSphere interpolant = super.interpolate(other);
+		A320 a320 = new A320(interpolant.getCenter(),
+				interpolant.getRadius(), this.getCombatIdentification());
+		a320.setCostInterval(interpolant.getCostInterval());
+		return a320;
 	}
 	
 }

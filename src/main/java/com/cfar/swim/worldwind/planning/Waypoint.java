@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -29,6 +29,7 @@
  */
 package com.cfar.swim.worldwind.planning;
 
+import java.time.Duration;
 import java.time.ZonedDateTime;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
@@ -39,7 +40,6 @@ import com.cfar.swim.worldwind.util.Designatable;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.render.Renderable;
-import java.time.Duration;
 
 /**
  * Realizes a waypoint of a trajectory featuring estimates for costs and time.
@@ -85,6 +85,9 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	
 	/** the precision position of this waypoint */
 	private PrecisionPosition position = null;
+	
+	/** determines whether or not this waypoint is a POI */
+	private boolean isPoi = false;
 	
 	/** the estimated cost of this waypoint in a trajectory */ 
 	private double cost = Double.POSITIVE_INFINITY;
@@ -145,6 +148,24 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	}
 	
 	/**
+	 * Sets whether or not this waypoint is a POI.
+	 * 
+	 * @param isPoi true if this waypoint is a POI, false otherwise
+	 */
+	public void setPoi(boolean isPoi) {
+		this.isPoi = isPoi;
+	}
+	
+	/**
+	 * Determines whether or not this waypoint is a POI.
+	 * 
+	 * @return true if this waypoint is a POI, false otherwise
+	 */
+	public boolean isPoi() {
+		return this.isPoi;
+	}
+	
+	/**
 	 * Gets the precision position of this waypoint.
 	 * 
 	 * @return the precision position of this waypoint
@@ -169,6 +190,23 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	 */
 	public void setCost(double cost) {
 		this.cost = cost;
+	}
+	
+	/**
+	 * Sets the estimated cost of this waypoint in a trajectory to infinity.
+	 */
+	public void setInfiniteCost() {
+		this.cost = Double.POSITIVE_INFINITY;
+	}
+	
+	/**
+	 * Determines whether or not this waypoint has an infinite estimated cost.
+	 * 
+	 * @return true if this waypoint has an infinite estimated cost,
+	 *         false otherwise
+	 */
+	public boolean hasInfiniteCost() {
+		return (Double.POSITIVE_INFINITY == this.getCost());
 	}
 	
 	/**
@@ -335,6 +373,8 @@ implements Cloneable, Comparable<Waypoint>, Depictable, Designatable {
 	/**
 	 * Compares this waypoint to another waypoint based on their actual time
 	 * over (primary), estimated time over (secondary), position (tertiary).
+	 * Note that this implementation is *not* consistent with equals and,
+	 * therefore, sorted sets cannot be used with waypoints.
 	 * 
 	 * @param waypoint the other waypoint
 	 * 

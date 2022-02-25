@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -36,15 +36,12 @@ import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import com.jogamp.opengl.GL2;
-
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
 
 import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.DrawContext;
-import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
  * Realizes a hierarchical regular three-dimensional grid.
@@ -68,16 +65,6 @@ public class RegularGrid extends Box {
 	 * the neighborhood of this regular grid
 	 */
 	protected Neighborhood neighborhood = Neighborhood.VERTEX_26;
-	
-	/**
-	 * the drawing color of this regular grid
-	 */
-	private float[] color = {1.0f, 1.0f, 1.0f, 1.0f};
-	
-	/**
-	 * the visibility state of this regular grid
-	 */
-	protected boolean visible = true;
 	
 	/**
 	 * Constructs a new regular grid from a geometric box without any children.
@@ -246,9 +233,9 @@ public class RegularGrid extends Box {
 	 */
 	public void addChildren(double rLength, double sLength, double tLength) {
 		if ((this.rLength >= rLength) && (this.sLength >= sLength) && (this.tLength >= tLength)) {
-			int rCells = (int) Math.round(this.rLength / rLength);
-			int sCells = (int) Math.round(this.sLength / sLength);
-			int tCells = (int) Math.round(this.tLength / tLength);
+			int rCells = Math.max(1, (int) Math.round(this.rLength / rLength));
+			int sCells = Math.max(1, (int) Math.round(this.sLength / sLength));
+			int tCells = Math.max(1, (int) Math.round(this.tLength / tLength));
 			
 			this.addChildren(rCells, sCells, tCells);
 		} else {
@@ -916,8 +903,8 @@ public class RegularGrid extends Box {
 	}
 	
 	/**
-	 * Renders this regular grid. If a grid cell has children, then only the
-	 * children are rendered.
+	 * Renders this regular grid using a drawing context. If a grid cell has
+	 * children, then only the children are rendered.
 	 * 
 	 * @param dc the drawing context
 	 */
@@ -936,75 +923,6 @@ public class RegularGrid extends Box {
 				super.render(dc);
 			}
 		}
-	}
-	
-	/**
-	 * Draws this regular grid.
-	 * 
-	 * @see gov.nasa.worldwind.geom.Box
-	 */
-	@Override
-	protected void drawBox(DrawContext dc, Vec4 a, Vec4 b, Vec4 c, Vec4 d)
-    {
-        Vec4 e = a.add3(r);
-        Vec4 f = d.add3(r);
-        GL2 gl = dc.getGL().getGL2(); // GL initialization checks for GL2 compatibility.
-
-        dc.getView().pushReferenceCenter(dc, bottomCenter);
-        OGLStackHandler ogsh = new OGLStackHandler();
-        ogsh.pushModelview(gl);
-        try
-        {
-        	gl.glColor4f(this.color[0], this.color[1], this.color[2], this.color[3]);
-        	this.drawOutline(dc, a, b, c, d);
-        	gl.glTranslated(r.x, r.y, r.z);
-        	this.drawOutline(dc, a, b, c, d);
-        	gl.glPopMatrix();
-            gl.glPushMatrix();
-            this.drawOutline(dc, a, e, f, d);
-        	gl.glTranslated(s.x, s.y, s.z);
-        	this.drawOutline(dc, a, e, f, d);
-        }
-        finally
-        {
-            ogsh.pop(gl);
-            dc.getView().popReferenceCenter(dc);
-        }
-    }
-	
-	/**
-	 * Sets the drawing color of this regular grid.
-	 * 
-	 * @param red the red color component between 0.0 and 1.0
-	 * @param green the green color component between 0.0 and 1.0
-	 * @param blue the blue color component between 0.0 and 1.0
-	 * @param alpha the alpha component between 0.0 and 1.0
-	 */
-	public void setColor(float red, float green, float blue, float alpha) {
-		this.color[0] = red;
-		this.color[1] = green;
-		this.color[2] = blue;
-		this.color[3] = alpha;
-	}
-	
-	/**
-	 * Sets the visibility state of this regular grid.
-	 * 
-	 * @param visible true if this regular grid is visible, false otherwise
-	 */
-	public void setVisible(boolean visible) {
-		this.visible = visible;
-	}
-	
-	// TODO: remove if not needed
-	protected void drawQuad(DrawContext dc, Vec4 a, Vec4 b, Vec4 c, Vec4 d) {
-		GL2 gl = dc.getGL().getGL2();
-		gl.glBegin(GL2.GL_QUADS);
-		gl.glVertex3d(a.x, a.y, a.z);
-        gl.glVertex3d(b.x, b.y, b.z);
-        gl.glVertex3d(c.x, c.y, c.z);
-        gl.glVertex3d(d.x, d.y, d.z);
-		gl.glEnd();
 	}
 	
 }

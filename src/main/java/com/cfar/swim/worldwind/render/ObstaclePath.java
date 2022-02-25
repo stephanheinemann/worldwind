@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.render;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 
+import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.util.Depictable;
 import com.cfar.swim.worldwind.util.Depiction;
@@ -40,8 +41,11 @@ import com.cfar.swim.worldwind.util.Enableable;
 import gov.nasa.worldwind.Movable;
 import gov.nasa.worldwind.WorldWind;
 import gov.nasa.worldwind.avlist.AVKey;
+import gov.nasa.worldwind.geom.Box;
 import gov.nasa.worldwind.geom.Extent;
+import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
+import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.BasicShapeAttributes;
 import gov.nasa.worldwind.render.DrawContext;
@@ -315,6 +319,27 @@ public class ObstaclePath extends Path implements Obstacle {
 	}
 	
 	/**
+	 * Gets the center of this obstacle path.
+	 * 
+	 * @return the center of this obstacle path
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		LatLon centerLocation = Sector.boundingSector(this.getPositions()).getCentroid();
+		double centerAltitude = 0d;
+		int positions = 0;
+		for (Position position : this.getPositions()) {
+			centerAltitude += position.getAltitude();
+			positions++;
+		}
+		if (0 < positions) {
+			centerAltitude = centerAltitude / positions;
+		}
+		return new Position(centerLocation, centerAltitude);
+	}
+	
+	/**
 	 * Gets the geometric extent of this obstacle path for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
@@ -325,7 +350,46 @@ public class ObstaclePath extends Path implements Obstacle {
 	 */
 	@Override
 	public Extent getExtent(Globe globe) {
-		return super.getExtent(globe, 1d);
+		return super.computeExtentFromPositions(globe, 1d, this.getPositions());
+		// TODO: return super.getExtent(globe, 1d);
+	}
+	
+	/**
+	 * Gets the volume of the extent of this obstacle path for a specified
+	 * globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle path
+	 * 
+	 * @see Obstacle#getVolume(Globe)
+	 */
+	@Override
+	public double getVolume(Globe globe) {
+		double volume = 0d;
+		
+		Extent extent = this.getExtent(globe);
+		if ((null != extent) && (extent instanceof Box)) {
+			Box box = (Box) extent;
+			volume = box.getRLength() * box.getSLength() * box.getTLength();
+		}
+		
+		return volume;
+	}
+	
+	/**
+	 * Determines whether or not this obstacle path (its bounding box)
+	 * intersects another obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param obstacle the other obstacle
+	 * 
+	 * @see Obstacle#intersects(Globe, Obstacle)
+	 */
+	@Override
+	public boolean intersects(Globe globe, Obstacle obstacle) {
+		return (this == obstacle) || Collisions.collide(
+				this.getExtent(globe), obstacle.getExtent(globe));
 	}
 	
 	/**

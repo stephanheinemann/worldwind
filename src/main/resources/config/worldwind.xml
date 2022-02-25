@@ -124,4 +124,5 @@
          Examples: http://myserver.com/milstd2525/   (web server)
                    jar:file:milstd2525-symbols.zip!  (local zip archive)  -->
     <Property name="gov.nasa.worldwind.avkey.MilStd2525IconRetrieverPath" value="classpath:"/>
+    <Property name="com.cfar.swim.worldwind.avkey.Locale" value="en"/>
 </WorldWindConfiguration>

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -35,6 +35,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.cfar.swim.worldwind.geom.Collisions;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.ObstacleColor;
@@ -45,6 +46,7 @@ import com.cfar.swim.worldwind.util.Depiction;
 import com.cfar.swim.worldwind.util.Enableable;
 
 import gov.nasa.worldwind.Movable;
+import gov.nasa.worldwind.avlist.AVKey;
 import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
@@ -93,7 +95,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	public ObstacleCylinder(LatLon location, double bottom, double top, double radius) {
 		super(location, radius);
 		this.setAltitudes(bottom, top);
-		this.getAttributes().setOpacity(0.25);
+		this.getAttributes().setInteriorOpacity(0.25);
 		this.getAttributes().setDrawInterior(true);
 		this.getAttributes().setDrawOutline(false);
 	}
@@ -303,11 +305,11 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 * Updates the appearance of this obstacle cylinder.
 	 */
 	protected void updateAppearance() {
-		this.getAttributes().setMaterial(new Material(ObstacleColor.getColor(activeCost)));
+		this.getAttributes().setInteriorMaterial(new Material(ObstacleColor.getColor(activeCost)));
 		if (0 > this.activeCost) {
-			this.getAttributes().setOpacity(1.0);
+			this.getAttributes().setInteriorOpacity(1.0);
 		} else {
-			this.getAttributes().setOpacity(0.5);
+			this.getAttributes().setInteriorOpacity(0.5);
 		}
 		// TODO: elements could change color, transparency or even an associated image/icon 
 	}
@@ -335,17 +337,17 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	 *         the other obstacle cylinder
 	 */
 	public ObstacleCylinder interpolate(ObstacleCylinder other) {
-		Position center = Position.interpolateGreatCircle(0.5d, this.getReferencePosition(), other.getReferencePosition());
+		Position center = Position.interpolateGreatCircle(0.5d, this.getCenter(), other.getCenter());
 		LatLon location = new LatLon(center.getLatitude(), center.getLongitude());
 		
-		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5;
-		double top = (this.getAltitudes()[1] + other.getAltitudes()[1]) * 0.5;
-		double radius = (this.getRadii()[1] + other.getRadii()[1]) * 0.5;
+		double bottom = (this.getAltitudes()[0] + other.getAltitudes()[0]) * 0.5d;
+		double top = (this.getAltitudes()[1] + other.getAltitudes()[1]) * 0.5d;
+		double radius = (this.getRadii()[1] + other.getRadii()[1]) * 0.5d;
 		
 		ObstacleCylinder interpolant = new ObstacleCylinder(location, bottom, top, radius);
 		
 		Duration startDuration = Duration.between(this.costInterval.getLower(), other.costInterval.getLower());
-		startDuration = startDuration.dividedBy(2);
+		startDuration = startDuration.dividedBy(2l);
 		ZonedDateTime start = this.costInterval.getLower().plus(startDuration);
 		
 		// ZonedDateTime end = this.costInterval.getUpper();
@@ -354,7 +356,7 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 		
 		/*
 		Duration endDuration = Duration.between(this.costInterval.getUpper(), other.costInterval.getUpper());
-		endDuration = endDuration.dividedBy(2);
+		endDuration = endDuration.dividedBy(2l);
 		ZonedDateTime end = this.costInterval.getUpper().plus(endDuration);
 		*/
 		
@@ -394,6 +396,20 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	}
 	
 	/**
+	 * Gets the center of this obstacle cylinder.
+	 * 
+	 * @return the center of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getCenter()
+	 */
+	public Position getCenter() {
+		LatLon centerLocation = super.getCenter();
+		double centerAltitude = this.getAltitudes()[0]
+				+ ((this.getAltitudes()[1] - this.getAltitudes()[0]) * 0.5d);
+		return new Position(centerLocation, centerAltitude);
+	}
+	
+	/**
 	 * Gets the geometric extent of this obstacle cylinder for a specified globe.
 	 * 
 	 * @param globe the globe to be used for the conversion
@@ -406,15 +422,57 @@ public class ObstacleCylinder extends CappedCylinder implements Obstacle {
 	public Cylinder getExtent(Globe globe) {
 		Position bcp = new Position(this.getCenter(), this.getAltitudes()[0]);
 		Position tcp = new Position(this.getCenter(), this.getAltitudes()[1]);
+		
+		double bce = globe.getElevation(bcp.getLatitude(), bcp.getLongitude());
+		double tce = globe.getElevation(tcp.getLatitude(), tcp.getLongitude());
+		
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[0])) {
+			bcp = new Position(bcp, bcp.getAltitude() + bce);
+		}
+		if (AVKey.ABOVE_GROUND_LEVEL.equals(this.getAltitudeDatum()[1])) {
+			tcp = new Position(tcp, tcp.getAltitude() + tce);
+		}
+		
 		Vec4 bottomCenter = globe.computePointFromPosition(bcp);
 		Vec4 topCenter = globe.computePointFromPosition(tcp);
-		double radius = this.getRadii()[1];
+		double radius = Math.max(this.getRadii()[0], this.getRadii()[1]);
 		
 		return new Cylinder(bottomCenter, topCenter, radius);
-		// TODO: check available method
-		//return super.getExtent(globe, 1d);
+		// TODO: return super.getExtent(globe, 1d);
 	}
-
+	
+	/**
+	 * Gets the volume of the extent of this obstacle cylinder for a specified
+	 * globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * 
+	 * @return the volume of the geometric extent of this obstacle cylinder
+	 * 
+	 * @see Obstacle#getVolume(Globe)
+	 */
+	@Override
+	public double getVolume(Globe globe) {
+		Cylinder cylinder = (Cylinder) this.getExtent(globe);
+		return Math.PI * cylinder.getCylinderRadius()
+				* cylinder.getCylinderRadius() * cylinder.getCylinderHeight();
+	}
+	
+	/**
+	 * Determines whether or not this obstacle cylinder intersects another
+	 * obstacle for a specified globe.
+	 * 
+	 * @param globe the globe to be used for the conversion
+	 * @param obstacle the other obstacle
+	 * 
+	 * @see Obstacle#intersects(Globe, Obstacle)
+	 */
+	@Override
+	public boolean intersects(Globe globe, Obstacle obstacle) {
+		return (this == obstacle) || Collisions.collide(
+				this.getExtent(globe), obstacle.getExtent(globe));
+	}
+	
 	/**
 	 * Determines whether or not this obstacle cylinder equals another one
 	 * based on their cost intervals.

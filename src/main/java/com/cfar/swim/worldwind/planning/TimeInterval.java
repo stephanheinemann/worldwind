@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -235,6 +235,18 @@ public class TimeInterval implements Interval<ChronoZonedDateTime<?>> {
 	@Override
 	public int hashCode() {
 		return Objects.hash(this.start, this.end);
+	}
+	
+	/**
+	 * Gets the string representation of this time interval.
+	 * 
+	 * @return the string representation of this time interval
+	 *
+	 * @see Object#toString()
+	 */
+	@Override
+	public String toString() {
+		return this.getLower() + " -> " + this.getUpper();
 	}
 	
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,6 +31,11 @@ package com.cfar.swim.worldwind.registries.connections;
 
 import java.util.Objects;
 
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 /**
  * Realizes the properties bean of a dronekit datalink.
  * 
@@ -39,6 +44,9 @@ import java.util.Objects;
  */
 public class DronekitDatalinkProperties extends DatalinkProperties {
 	
+	/** the default serial identification of this dronekit datalink properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the standard localhost of a dronekit datalink properties bean */
 	public static final String DATALINK_LOCALHOST = "localhost";
 	
@@ -46,9 +54,13 @@ public class DronekitDatalinkProperties extends DatalinkProperties {
 	public static final int DATALINK_GRPCPORT = 50051;
 	
 	/** the remote host of this dronekit datalink properties bean */
+	@NotNull(message = "{property.connection.datalink.dronekit.host.null}")
+	@NotEmpty(message = "{property.connection.datalink.dronekit.host.empty}")
 	private String host;
 	
 	/** the remote port of this dronekit datalink properties bean */
+	@Min(value = 1024, message = "{property.connection.datalink.dronekit.port.min}")
+	@Max(value = 65535, message = "{property.connection.datalink.dronekit.port.max}")
 	private int port;
 	
 	/**
@@ -109,10 +121,10 @@ public class DronekitDatalinkProperties extends DatalinkProperties {
 	 * @see DatalinkProperties#equals(Object)
 	 */
 	@Override
-	public final boolean equals(Object o) {
+	public boolean equals(Object o) {
 		boolean equals = super.equals(o);
 		
-		if (equals && (o instanceof DronekitDatalinkProperties)) {
+		if (equals) {
 			DronekitDatalinkProperties ddlp = (DronekitDatalinkProperties) o;
 			equals = (this.host.equals(ddlp.host) && (this.port == ddlp.port));
 		}

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -36,15 +36,59 @@ package com.cfar.swim.worldwind.geom.precision;
  */
 public interface Precision {
 	
-	/**
-	 * the default precision used to compensate for numerical inaccuracies
-	 */
-	public static final int PRECISION = 5;
+	/** the deci precision */
+	public static final short DECI = 1;
 	
-	/**
-	 * the default epsilon used to compensate for numerical inaccuracies
-	 */
-	public static final double EPSILON = 1E-5;
+	/** the centi precision */
+	public static final short CENTI = 2;
+	
+	/** the milli precision */
+	public static final short MILLI = 3;
+	
+	/** the hecto-micro precision */
+	public static final short HECTO_MICRO = 4;
+	
+	/** the deca-micro precision */
+	public static final short DECA_MICRO = 5;
+	
+	/** the micro precision */
+	public static final short MICRO = 6;
+	
+	/** the hecto-nano precision */
+	public static final short HECTO_NANO = 7;
+	
+	/** the deca-nano precision */
+	public static final short DECA_NANO = 8;
+	
+	/** the nano precision */
+	public static final short NANO = 9;
+	
+	/** the deci unit */
+	public static final double UNIT_DECI = 1E-1d;
+	
+	/** the centi unit */
+	public static final double UNIT_CENTI = 1E-2d;
+	
+	/** the milli unit */
+	public static final double UNIT_MILLI = 1E-3d;
+	
+	/** the hecto-micro unit */
+	public static final double UNIT_HECTO_MICRO = 1E-4d;
+	
+	/** the deca-micro unit */
+	public static final double UNIT_DECA_MICRO = 1E-5d;
+	
+	/** the micro unit */
+	public static final double UNIT_MICRO = 1E-6d;
+	
+	/** the hecto-nano unit */
+	public static final double UNIT_HECTO_NANO = 1E-7d;
+	
+	/** the deca-nano unit */
+	public static final double UNIT_DECA_NANO = 1E-8d;
+	
+	/** the nano unit */
+	public static final double UNIT_NANO = 1E-9d;
 	
 	/**
 	 * Gets the precision of this numerical object.

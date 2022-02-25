@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,6 +31,13 @@ package com.cfar.swim.worldwind.registries.connections;
 
 import java.util.Objects;
 
+import javax.validation.constraints.DecimalMax;
+import javax.validation.constraints.DecimalMin;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
+
 /**
  * Realizes the properties bean of a simulation SWIM connection.
  * 
@@ -38,12 +45,15 @@ import java.util.Objects;
  *
  */
 public class SimulatedSwimConnectionProperties extends SwimConnectionProperties {
-
+	
+	/** the default serial identification of this simulated SWIM connection properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the default resource directory of this simulated SWIM connection properties bean */
 	public static final String SWIM_RESOURCE_DIRECTORY = "swim/xml";
 	
 	/** the default update period of this simulated SWIM connection properties bean */
-	public static final int SWIM_UPDATE_PERIOD = 5000;
+	public static final long SWIM_UPDATE_PERIOD = 5000l;
 	
 	/** the default update probability of this simulated SWIM connection properties bean */
 	public static final float SWIM_UPDATE_PROBABILITY = 0.5f;
@@ -52,15 +62,23 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	public static final int SWIM_UPDATE_QUANTITY = 1;
 	
 	/** the resource directory of this simulated SWIM connection properties bean */
+	@NotNull
+	@NotEmpty
 	private String resourceDirectory;
 	
 	/** the update period of this simulated SWIM connection properties bean */
+	@Min(value = 1, message = "{property.connection.swim.simulated.updatePeriod.min}")
+	@Max(value = Long.MAX_VALUE, message = "{property.connection.swim.simulated.updatePeriod.max}")
 	private long updatePeriod; // ms
 	
 	/** the update probability of this simulated SWIM connection properties bean */
+	@DecimalMin(value = "0", message = "{property.connection.swim.simulated.updateProbability.min}")
+	@DecimalMax(value = "1", message = "{property.connection.swim.simulated.updateProbability.max}")
 	private float updateProbability;
 	
 	/** the update quantity of this simulated SWIM connection properties bean */
+	@Min(value = 0, message = "{property.connection.swim.simulated.updateQuantity.min}")
+	@Max(value = Integer.MAX_VALUE, message = "{property.connection.swim.simulated.updateQuantity.max}")
 	private int updateQuantity;
 	
 	/**
@@ -160,10 +178,10 @@ public class SimulatedSwimConnectionProperties extends SwimConnectionProperties 
 	 * @see SwimConnectionProperties#equals(Object)
 	 */
 	@Override
-	public final boolean equals(Object o) {
+	public boolean equals(Object o) {
 		boolean equals = super.equals(o);
 		
-		if (equals && (o instanceof SimulatedSwimConnectionProperties)) {
+		if (equals) {
 			SimulatedSwimConnectionProperties sscp = (SimulatedSwimConnectionProperties) o;
 			equals = (this.resourceDirectory.equals(sscp.resourceDirectory))
 					&& (this.updatePeriod == sscp.updatePeriod)

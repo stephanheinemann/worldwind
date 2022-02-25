@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -43,8 +43,20 @@ import gov.nasa.worldwind.avlist.AVList;
 import gov.nasa.worldwind.avlist.AVListImpl;
 import gov.nasa.worldwind.symbology.milstd2525.MilStd2525IconRetriever;
 
+/**
+ * Performs depiction tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class DepictionTest {
 
+	/**
+	 * Tests military standard 2525 symbol resources.
+	 * 
+	 * @throws IOException if symbols cannot be loaded
+	 * @throws URISyntaxException if the symbol resource URI is incorrect
+	 */
 	@Test
 	public void testMilStd2525() throws IOException, URISyntaxException {
 		String path = Configuration.getStringValue(AVKey.MIL_STD_2525_ICON_RETRIEVER_PATH);

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,16 +31,17 @@ package com.cfar.swim.worldwind.geom;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionDouble;
 import com.cfar.swim.worldwind.geom.precision.PrecisionVec4;
+import com.jogamp.opengl.GL2;
 
-import gov.nasa.worldwind.geom.Cylinder;
 import gov.nasa.worldwind.geom.Extent;
 import gov.nasa.worldwind.geom.Frustum;
-import gov.nasa.worldwind.geom.Line;
 import gov.nasa.worldwind.geom.Matrix;
 import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.TransformationMatrix;
 import gov.nasa.worldwind.geom.Vec4;
+import gov.nasa.worldwind.render.DrawContext;
 import gov.nasa.worldwind.util.Logging;
+import gov.nasa.worldwind.util.OGLStackHandler;
 
 /**
  * Realizes a geometric box that allows for convenient containment and
@@ -100,6 +101,16 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * the local transformation matrix of this box
 	 */
 	protected Matrix toLocalOrigin = null;
+	
+	/**
+	 * the drawing color of this box
+	 */
+	private float[] color = {1.0f, 1.0f, 1.0f, 1.0f};
+	
+	/**
+	 * the visibility state of this box
+	 */
+	protected boolean visible = true;
 	
 	/**
 	 * {@inheritDoc}
@@ -267,7 +278,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates equals the
+	 * Determines whether or not a point in world model coordinates equals the
 	 * origin of this box considering numerical inaccuracies.
 	 * 
 	 * @param point the point in world model coordinates
@@ -282,7 +293,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates equals the
+	 * Determines whether or not a point in world model coordinates equals the
 	 * center of this box considering numerical inaccuracies.
 	 * 
 	 * @param point the point in world model coordinates
@@ -297,7 +308,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates equals a
+	 * Determines whether or not a point in world model coordinates equals a
 	 * corner of this box considering numerical inaccuracies. 
 	 * 
 	 * @param point the point in world model coordinates
@@ -479,6 +490,18 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
+	 * Transforms a box vector into a Cartesian world model vector using the
+	 * first corner of this box as origin.
+	 * 
+	 * @param boxPoint the box vector
+	 * 
+	 * @return the box world model vector
+	 */
+	public Vec4 transformBoxOriginToModel(Vec4 boxPoint) {
+		return boxPoint.transformBy4(this.toLocalOrigin.getInverse());
+	}
+	
+	/**
 	 * Transforms a Cartesian world model vector into a box vector using the
 	 * center of this box as origin.
 	 * 
@@ -487,13 +510,14 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @return the box vector
 	 */
 	public Vec4 transformModelToBoxCenter(Vec4 modelPoint) {
-		Matrix transformMatrix = TransformationMatrix.toLocalOrientation(this.getCenter(), this.getAxes());
+		Matrix transformMatrix = TransformationMatrix.toLocalOrientation(
+				this.getCenter(), this.getAxes());
 		return modelPoint.transformBy4(transformMatrix);
 	}
 	
 	/**
-	 * Indicates whether or not a value lies on the <code>R</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Determines whether or not a value lies on the <code>R</code> axis of
+	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param r the value
 	 * 
@@ -505,8 +529,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a value lies on the <code>S</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Determines whether or not a value lies on the <code>S</code> axis of
+	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param s the value
 	 * 
@@ -518,8 +542,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a value lies on the <code>T</code> axis of this
-	 * box considering numerical inaccuracies.
+	 * Determines whether or not a value lies on the <code>T</code> axis of
+	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param t the value
 	 * 
@@ -531,7 +555,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a vector in box coordinates is contained in
+	 * Determines whether or not a vector in box coordinates is contained in
 	 * this box considering numerical inaccuracies.
 	 * 
 	 * @param v the vector in box coordinates
@@ -543,8 +567,8 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a point in world model coordinates is contained
-	 * in this box.
+	 * Determines whether or not a point in world model coordinates is
+	 * contained in this box.
 	 * 
 	 * @param modelPoint the point in world model coordinates
 	 * 
@@ -562,7 +586,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a line segment intersects this box when
+	 * Determines whether or not a line segment intersects this box when
 	 * expanding its sides with an expansion vector.
 	 * 
 	 * @param p0 the first point of the line segment
@@ -599,9 +623,9 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 			return false; // segment cannot intersect on z axis
 		
 		halfSegmentLength = halfSegmentLength.add3(
-			PrecisionDouble.EPSILON,
-			PrecisionDouble.EPSILON,
-			PrecisionDouble.EPSILON);
+			PrecisionDouble.UNIT_DECA_MICRO,
+			PrecisionDouble.UNIT_DECA_MICRO,
+			PrecisionDouble.UNIT_DECA_MICRO);
 		
 		// cross products of segment direction vector with coordinate axes
 		if (Math.abs((midpoint.y * halfSegment.z) - (midpoint.z * halfSegment.y)) >
@@ -618,7 +642,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not a line segment intersects this box.
+	 * Determines whether or not a line segment intersects this box.
 	 * 
 	 * @param p0 the first point of the line segment
 	 * @param p1 the second point of the line segment
@@ -630,33 +654,12 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not (the bounding box of) a cylinder intersects this
-	 * box. 
-	 * 
-	 * @param cylinder the cylinder
-	 * 
-	 * @return true if the (bounding box of the) cylinder intersects this box,
-	 *         false otherwise
-	 */
-	public boolean intersectsCylinder(Cylinder cylinder) {
-		// expand box by effective cylinder radii
-		double rx = cylinder.getEffectiveRadius(this.planes[0]); // r-min plane
-		double ry = cylinder.getEffectiveRadius(this.planes[2]); // s-min plane
-		double rz = cylinder.getEffectiveRadius(this.planes[4]); // t-min plane
-		// the expansion includes the bounding box of the cylinder
-		Vec4 expansion = new Vec4(rx, ry, rz);
-		// perform the conservatively approximate (cylinder bounding box) intersection check
-		return this.intersectsLineSegment(cylinder.getBottomCenter(), cylinder.getTopCenter(), expansion);
-	}
-	
-	/**
 	 * Gets a frustum representation of this box which is slightly expanded
 	 * to account for numerical inaccuracies.
 	 * 
 	 * @return a frustum representation of this box
 	 */
 	public Frustum getFrustum() {
-		// TODO: other intersection methods can be removed
 		Plane[] frustumPlanes = new Plane[6];
 		
 		// frustum planes point inwards, box planes point outwards
@@ -671,7 +674,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 					-planeNormal.x,
 					-planeNormal.y,
 					-planeNormal.z,
-					-planeNormal.w + (PrecisionDouble.EPSILON * 0.001d));
+					-planeNormal.w + PrecisionDouble.UNIT_DECA_NANO);
 		}
 		
 	    return new Frustum(
@@ -684,7 +687,7 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	}
 	
 	/**
-	 * Indicates whether or not an extent intersects this box.
+	 * Determines whether or not an extent intersects this box.
 	 * 
 	 * @param extent the extent
 	 * 
@@ -693,45 +696,83 @@ public class Box extends gov.nasa.worldwind.geom.Box {
 	 * @see Frustum#intersects(Extent)
 	 */
 	public boolean intersects(Extent extent) {
-		return extent.intersects(this.getFrustum());
+		boolean intersects = false;
+		
+		if (this == extent) {
+			intersects = true;
+		} else if (extent.intersects(this.getFrustum())) {
+			intersects = Collisions.collide(this, extent);
+		}
+		
+		return intersects;
 	}
 	
 	/**
-	 * Indicates whether or not a line segment intersects this box.
+	 * Sets the drawing color of this box.
 	 * 
-	 * @param pa one end of the line segment
-	 * @param pb the other end of the line segment
-	 *  
-	 * @return true if the line segment intersects or is contained in this box,
-	 *         false otherwise
-	 * 
-	 * @see Frustum#intersectsSegment(Vec4, Vec4)
+	 * @param red the red color component between 0.0 and 1.0
+	 * @param green the green color component between 0.0 and 1.0
+	 * @param blue the blue color component between 0.0 and 1.0
+	 * @param alpha the alpha component between 0.0 and 1.0
 	 */
-	public boolean intersectsSegment(Vec4 pa, Vec4 pb) {
-		// TODO: file bug report for worldwind 2.0 
-		// gov.nasa.worldwind.geom.Frustum#intersectsSegment(Vec4)
-		// detects false intersects since one successful plane clip is not sufficient
-		//return this.getFrustum().intersectsSegment(pa, pb);
-		return (null != Line.clipToFrustum(pa, pb, this.getFrustum()));
+	public void setColor(float red, float green, float blue, float alpha) {
+		this.color[0] = red;
+		this.color[1] = green;
+		this.color[2] = blue;
+		this.color[3] = alpha;
 	}
 	
-	/*
-	@Override
-	public Intersection[] intersect(Line line) {
-		Plane[] boxPlanes = new Plane[6];
-		
-		for (int index = 0; index < this.planes.length; index++) {
-			Vec4 planeNormal = this.planes[index].getNormal();
-			// expand box by epsilon for intersection		
-			boxPlanes[index] = new Plane(
-					planeNormal.x,
-					planeNormal.y,
-					planeNormal.z,
-					planeNormal.w - (PrecisionDouble.EPSILON * 0.001d));
-		}
-		
-		return WWMath.polytopeIntersect(line, boxPlanes);
+	/**
+	 * Sets the visibility state of this box.
+	 * 
+	 * @param visible true if this box is visible, false otherwise
+	 */
+	public void setVisible(boolean visible) {
+		this.visible = visible;
 	}
-	*/
+	
+	/**
+	 * Renders this box using a drawing context.
+	 * 
+	 * @param dc the drawing context
+	 * 
+	 * @see gov.nasa.worldwind.geom.Box#render(DrawContext)
+	 */
+	@Override
+	public void render(DrawContext dc) {
+		if (this.visible) {
+			super.render(dc);
+		}
+	}
+	
+	/**
+	 * Draws this box using a drawing context.
+	 * 
+	 * @see gov.nasa.worldwind.geom.Box
+	 */
+	@Override
+	protected void drawBox(DrawContext dc, Vec4 a, Vec4 b, Vec4 c, Vec4 d) {
+		Vec4 e = a.add3(r);
+		Vec4 f = d.add3(r);
+		GL2 gl = dc.getGL().getGL2();
+
+		dc.getView().pushReferenceCenter(dc, bottomCenter);
+		OGLStackHandler ogsh = new OGLStackHandler();
+		ogsh.pushModelview(gl);
+		try {
+			gl.glColor4f(this.color[0], this.color[1], this.color[2], this.color[3]);
+			this.drawOutline(dc, a, b, c, d);
+			gl.glTranslated(r.x, r.y, r.z);
+			this.drawOutline(dc, a, b, c, d);
+			gl.glPopMatrix();
+			gl.glPushMatrix();
+			this.drawOutline(dc, a, e, f, d);
+			gl.glTranslated(s.x, s.y, s.z);
+			this.drawOutline(dc, a, e, f, d);
+		} finally {
+			ogsh.pop(gl);
+			dc.getView().popReferenceCenter(dc);
+		}
+	}
 	
 }

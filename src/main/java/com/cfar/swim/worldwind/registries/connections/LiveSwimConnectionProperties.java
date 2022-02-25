@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -36,4 +36,8 @@ package com.cfar.swim.worldwind.registries.connections;
  *
  */
 public class LiveSwimConnectionProperties extends SwimConnectionProperties {
+	
+	/** the default serial identification of this live SWIM connection properties bean */
+	private static final long serialVersionUID = 1L;
+	
 }

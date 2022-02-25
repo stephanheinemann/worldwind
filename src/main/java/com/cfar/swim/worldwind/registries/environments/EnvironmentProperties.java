@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -31,7 +31,7 @@ package com.cfar.swim.worldwind.registries.environments;
 
 import java.util.Objects;
 
-import com.cfar.swim.worldwind.planning.Environment;
+import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.registries.Properties;
 
 /**
@@ -40,8 +40,12 @@ import com.cfar.swim.worldwind.registries.Properties;
  * @author Stephan Heinemann
  *
  */
+@EnvironmentValidBoundaries
 public abstract class EnvironmentProperties implements Properties<Environment> {
 
+	/** the default serial identification of this environment properties bean */
+	private static final long serialVersionUID = 1L;
+	
 	/** the floor of this environment properties bean */
 	protected double floor;
 	

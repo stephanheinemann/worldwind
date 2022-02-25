@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2016, Stephan Heinemann (UVic Center for Aerospace Research)
+ * Copyright (c) 2021, Stephan Heinemann (UVic Center for Aerospace Research)
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -47,8 +47,17 @@ import gov.nasa.worldwind.geom.Sector;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 
+/**
+ * Performs box tests.
+ * 
+ * @author Stephan Heinemann
+ *
+ */
 public class BoxTest {
 
+	/**
+	 * Tests box structures.
+	 */
 	@Test
 	public void testStructure() {
 		//Vec4[] axes = { Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z };
@@ -133,6 +142,9 @@ public class BoxTest {
 		assertTrue(box6.intersects(box5));
 	}
 	
+	/**
+	 * Tests box intersections.
+	 */
 	@Test
 	public void testIntersections() {
 		//Vec4[] axes = { Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z };
@@ -158,6 +170,9 @@ public class BoxTest {
 		assertEquals(box1.getCorners()[1], intersections[1].getIntersectionPoint());
 	}
 	
+	/**
+	 * Tests box transformations.
+	 */
 	@Test
 	public void testTransformations() {
 		Sector sector = new Sector(
@@ -180,7 +195,7 @@ public class BoxTest {
         Vec4 hd = ld.multiply3(0.5d);
         Vec4 nhd = hd.getNegative3();
         Vec4 gd = box.getRAxis().add3(box.getSAxis()).add3(box.getTAxis());
-        assertEquals(ld.getLength3(), box.getDiameter(), PrecisionDouble.EPSILON);
+        assertEquals(ld.getLength3(), box.getDiameter(), PrecisionDouble.UNIT_DECA_MICRO);
         assertEquals(new PrecisionVec4(box.getOrigin().add3(gd)), new PrecisionVec4(corners[6]));
         assertEquals(new PrecisionVec4(Vec4.ZERO), new PrecisionVec4(box.transformModelToBoxCenter(box.getCenter())));
         assertEquals(new PrecisionVec4(nhd) , new PrecisionVec4(box.transformModelToBoxCenter(box.getOrigin())));
