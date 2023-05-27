@@ -39,6 +39,7 @@ import com.cfar.swim.worldwind.planners.cgs.oadstar.OADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedTreePlanner;
+import com.cfar.swim.worldwind.planners.rl.brp.BasicReinforcmentLearningPlanner;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
@@ -320,6 +321,11 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				maxLandingError.setHorizontalError(properties.getMaxLandingHorizontalError());
 				maxLandingError.setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
 				((OADRRTreePlanner) planner).setMaxLandingError(maxLandingError);
+			} else if (this.getSpecification().getId().equals(Specification.PLANNER_BRP_ID)) {
+				ForwardAStarProperties properties = (ForwardAStarProperties) this.getSpecification().getProperties();
+				planner = new BasicReinforcmentLearningPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
 			} else if (this.getSpecification().getId().equals(Specification.PLANNER_MTP_ID)) {
 				OADRRTreeProperties properties = (OADRRTreeProperties) this.getSpecification().getProperties();
 				planner = new ManagedTreePlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());

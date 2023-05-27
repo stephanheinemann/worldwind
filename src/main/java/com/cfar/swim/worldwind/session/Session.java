@@ -223,6 +223,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DRRT_ID, Specification.PLANNER_DRRT_DESCRIPTION, new DRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, Specification.PLANNER_ADRRT_DESCRIPTION, new ADRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_OADRRT_ID, Specification.PLANNER_OADRRT_DESCRIPTION, new OADRRTreeProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_BRP_ID, Specification.PLANNER_BRP_DESCRIPTION, new ForwardAStarProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		// managed planners

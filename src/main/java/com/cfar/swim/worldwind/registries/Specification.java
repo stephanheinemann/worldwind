@@ -196,6 +196,14 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getDictionaryBundle()
 			.getString("specification.planner.oadrrt.description");
 	
+	/** the identifier of a basic reinforcement learning planner specification */
+	public static final String PLANNER_BRP_ID = "BRP";
+	
+	/** the description of a basic reinforcement learning planner specification */
+	public static final String PLANNER_BRP_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.brp.description");
+	
 	/** the identifier of a managed tree planner specification */
 	public static final String PLANNER_MTP_ID = "MTP";
 	
