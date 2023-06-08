@@ -321,9 +321,9 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				maxLandingError.setHorizontalError(properties.getMaxLandingHorizontalError());
 				maxLandingError.setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
 				((OADRRTreePlanner) planner).setMaxLandingError(maxLandingError);
-			} else if (this.getSpecification().getId().equals(Specification.PLANNER_BRP_ID)) {
+			} else if (this.getSpecification().getId().equals(Specification.PLANNER_QLP_ID)) {
 				ForwardAStarProperties properties = (ForwardAStarProperties) this.getSpecification().getProperties();
-				planner = new BasicReinforcmentLearningPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
+				planner = new QLearningPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
 			} else if (this.getSpecification().getId().equals(Specification.PLANNER_MTP_ID)) {
