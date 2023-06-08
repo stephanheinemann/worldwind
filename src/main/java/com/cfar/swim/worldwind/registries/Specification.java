@@ -202,7 +202,7 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 	/** the description of a Q learning planner specification */
 	public static final String PLANNER_QLP_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
-			.getString("specification.planner.brp.description");
+			.getString("specification.planner.qlp.description");
 	
 	/** the identifier of a managed tree planner specification */
 	public static final String PLANNER_MTP_ID = "MTP";

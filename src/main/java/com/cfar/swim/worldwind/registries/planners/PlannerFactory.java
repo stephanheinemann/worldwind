@@ -39,7 +39,7 @@ import com.cfar.swim.worldwind.planners.cgs.oadstar.OADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedTreePlanner;
-import com.cfar.swim.worldwind.planners.rl.brp.BasicReinforcmentLearningPlanner;
+import com.cfar.swim.worldwind.planners.rl.qlearning.QLearningPlanner;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.brrt.RRTreePlanner;
