@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.registries.planners;
 
 import java.time.Duration;
 
+
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
@@ -60,6 +61,7 @@ import com.cfar.swim.worldwind.registries.planners.rrt.DRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.QLearningProperties;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
@@ -322,7 +324,7 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				maxLandingError.setTimingError(Duration.ofSeconds(properties.getMaxLandingTimingError()));
 				((OADRRTreePlanner) planner).setMaxLandingError(maxLandingError);
 			} else if (this.getSpecification().getId().equals(Specification.PLANNER_QLP_ID)) {
-				ForwardAStarProperties properties = (ForwardAStarProperties) this.getSpecification().getProperties();
+				QLearningProperties properties = (QLearningProperties) this.getSpecification().getProperties();
 				planner = new QLearningPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());

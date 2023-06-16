@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.session;
 
 import java.beans.PropertyChangeListener;
+
 import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -75,6 +76,7 @@ import com.cfar.swim.worldwind.registries.planners.rrt.DRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.QLearningProperties;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.Configuration;
@@ -223,7 +225,7 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DRRT_ID, Specification.PLANNER_DRRT_DESCRIPTION, new DRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_ADRRT_ID, Specification.PLANNER_ADRRT_DESCRIPTION, new ADRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_OADRRT_ID, Specification.PLANNER_OADRRT_DESCRIPTION, new OADRRTreeProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_BRP_ID, Specification.PLANNER_BRP_DESCRIPTION, new ForwardAStarProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_QLP_ID, Specification.PLANNER_QLP_DESCRIPTION, new QLearningProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		// managed planners

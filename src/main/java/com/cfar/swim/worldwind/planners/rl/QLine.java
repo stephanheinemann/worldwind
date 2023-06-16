@@ -2,6 +2,7 @@ package com.cfar.swim.worldwind.planners.rl;
 
 import java.util.Arrays;
 import java.util.Random;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Realizes an entry line of the Q-table, corresponding to one state. Saves the Q-values for each
@@ -21,6 +22,9 @@ public class QLine {
 	
 	/** array of Q-values */
 	private double[] qValues;
+	
+	/** random number */
+	Random rand = new Random();
 	
 	
 	/** Constructs a Q-table entry, with an array of Q-values that has as 
@@ -51,6 +55,15 @@ public class QLine {
 	 */
 	public void setState(RLWaypoint state) {
 		this.state = state;
+	}
+	
+	/**
+	 * Gets the number of actions for this Q-line's state.
+	 * 
+	 * @return the number of actions
+	 */
+	public int getActions() {
+		return actions;
 	}
 	
 	/** Initializes all Q-values as zero 
@@ -92,11 +105,25 @@ public class QLine {
 				maxQValue = qValues[i];
 				index = i;
 			}
-			if (qValues[i] == maxQValue) {
-				 Random rand = new Random();
+			else if (qValues[i] == maxQValue) {
 				 double r = rand.nextDouble();
 				 if (r>0.5) index = i;
 			}
+		}
+		return index;
+	}
+	
+	/** Gets action index correspondent to max Q-value. Random in case of tie.
+	 * 
+	 * @return action index correspondent to the max Q-value
+	 */
+	public int getEGreedyAction(double epsilon) {
+		int index = 0;
+		double r = rand.nextDouble();
+		if (r<epsilon) {
+			index = ThreadLocalRandom.current().nextInt(0, this.actions);
+		} else {
+			index = getMaxQValue();
 		}
 		return index;
 	}

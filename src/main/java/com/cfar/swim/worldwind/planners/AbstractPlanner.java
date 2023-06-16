@@ -71,7 +71,7 @@ public abstract class AbstractPlanner implements Planner {
 	/** the risk policy of this abstract planner */
 	private RiskPolicy riskPolicy = RiskPolicy.SAFETY;
 	
-	/** the computed plan of this abstact planner */
+	/** the computed plan of this abstract planner */
 	private final LinkedList<Waypoint> plan = new LinkedList<>();
 	
 	/** the plan revision listeners of this abstract planner */
@@ -101,6 +101,10 @@ public abstract class AbstractPlanner implements Planner {
 	@Override
 	public Aircraft getAircraft() {
 		return this.aircraft;
+	}
+	
+	protected LinkedList<Waypoint> getPlan() {
+		return this.plan;
 	}
 	
 	/**

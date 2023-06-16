@@ -17,7 +17,14 @@ import gov.nasa.worldwind.geom.Position;
 public class RLWaypoint extends Waypoint {
 	
 	/** the children RRT waypoints of this RRT waypoint in a tree */
-	private Set<Position> neighbors = new LinkedHashSet<Position>();
+	private Set<RLWaypoint> neighbors = new LinkedHashSet<RLWaypoint>();
+	
+	/** int to ID the waypoint */
+	private int id = 0;
+
+	/** the cost associated to this waypoint */
+	private double cost = 0;
+
 
 	/**
 	 * Constructs a RL waypoint at a specified position.
@@ -35,12 +42,39 @@ public class RLWaypoint extends Waypoint {
 	 * 
 	 * @param set of waypoint's neighbors
 	 */
-	public void setNeighbors(Set<Position> neighbors) {
-		Iterator<Position> neighborsIterator = neighbors.iterator();
+	public void setNeighbors(Set<RLWaypoint> neighbors) {
+		Iterator<RLWaypoint> neighborsIterator = neighbors.iterator();
 		while (neighborsIterator.hasNext()) {
-			Position p = neighborsIterator.next();
+			RLWaypoint p = neighborsIterator.next();
 			this.neighbors.add(p);
 		}
+	}
+	
+	/**
+	 * Gets the RL waypoint's neighbor set.
+	 * 
+	 * @param set of waypoint's neighbors
+	 */
+	public Set<RLWaypoint>  getNeighbors() {
+		return neighbors;
+	}
+	
+	/**
+	 * Sets the RL waypoint's cost.
+	 * 
+	 * @param cost waypoint's cost
+	 */
+	public void  setCost(double cost) {
+		this.cost = cost;
+	}
+	
+	/**
+	 * Gets the RL waypoint's cost.
+	 * 
+	 * @return waypoint's cost
+	 */
+	public double getCost() {
+		return this.cost;
 	}
 	
 	/**
@@ -48,14 +82,74 @@ public class RLWaypoint extends Waypoint {
 	 * 
 	 * @param chosen action index
 	 * 
-	 * @return neighbor posiition
+	 * @return neighbor position
 	 */
-	public Position getNeighbor(int index) {
-		Iterator<Position> neighborsIterator = neighbors.iterator();
+	public RLWaypoint getNeighbor(int index) {
+		Iterator<RLWaypoint> neighborsIterator = neighbors.iterator();
 		int i = 0;
-		while (neighborsIterator.hasNext() || i < index) {
+		while (neighborsIterator.hasNext() && i < index) {
+			neighborsIterator.next();
 			i++;
 		}
 		return neighborsIterator.next();
+	}
+	
+	/**
+	 * Sets the RL waypoint's ID.
+	 * 
+	 * @param id waypoint's ID
+	 */
+	public void setId(int id) {
+		this.id = id;
+	}
+	
+	
+	/**
+	 * Gets the RL waypoint's ID.
+	 * 
+	 * @return id waypoint's ID
+	 */
+	public int getId() {
+		return this.id;
+	}
+	
+	
+	/**
+	 * Compares this RL waypoint to another waypoint based on their position.
+	 * Note that this implementation is *not* consistent with equals and,
+	 * therefore, sorted sets cannot be used with waypoints.
+	 * 
+	 * @param RL waypoint the other RL waypoint
+	 * 
+	 * @return -1, 0, 1, if this waypoint is less than, equal, or greater,
+	 *         respectively, than the other waypoint based on their position
+	 * 
+	 * @see Comparable#compareTo(Object)
+	 */
+	@Override
+	public int compareTo(Waypoint waypoint) {
+		int compareTo = 0;
+		
+		compareTo = this.getPrecisionPosition().compareTo(waypoint.getPrecisionPosition());
+		
+		return compareTo;
+	}
+	
+	/**
+	 * Gets the distance between this RL Waypoint's coordinates and another's in km.
+	 * 
+	 * @param RL waypoint the other RL waypoint
+	 * 
+	 * @return the distance in km
+	 * 
+	 * @see Comparable#compareTo(Object)
+	 */
+	public double getDistance(Waypoint waypoint) {
+		double p = Math.PI/180;
+		double a = 0.5 - Math.cos((this.getLatitude().radians - waypoint.getLatitude().radians)*p)/2 +
+				Math.cos(waypoint.getLatitude().radians * p) * Math.cos(this.getLatitude().radians * p) *
+				(1 - Math.cos((this.getLongitude().radians - waypoint.getLongitude().radians)*p))/2;
+		
+		return 12742 * Math.asin(Math.sqrt(a));
 	}
 }
