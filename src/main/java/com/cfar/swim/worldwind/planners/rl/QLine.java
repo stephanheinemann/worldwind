@@ -1,6 +1,7 @@
 package com.cfar.swim.worldwind.planners.rl;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -111,6 +112,26 @@ public class QLine {
 			}
 		}
 		return index;
+	}
+	
+	/** Gets action index correspondent to the i'th max Q-value. For example, i=1
+	 * returns max qValue, while i=2 returns second max qValue, and so on
+	 * 
+	 * @return action index correspondent to the i'th max Q-value
+	 */
+	public int getMaxQValue(int i) {
+		int orderedActions[] = new int[actions];
+		for (int j=0; j<actions; orderedActions[j] = j++);
+		for (int m=0; m<orderedActions.length-1; m++) {
+			for (int n=0; n<orderedActions.length-m-1; n++) {
+				if(qValues[orderedActions[n]] > qValues[orderedActions[n+1]]) {
+					int temp = orderedActions[n];
+					orderedActions[n] = orderedActions[n+1];
+					orderedActions[n+1] = temp;
+				}
+			}
+		}
+		return orderedActions[actions-i];
 	}
 	
 	/** Gets action index correspondent to max Q-value. Random in case of tie.

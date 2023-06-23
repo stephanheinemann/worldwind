@@ -21,10 +21,9 @@ public class RLWaypoint extends Waypoint {
 	
 	/** int to ID the waypoint */
 	private int id = 0;
-
-	/** the cost associated to this waypoint */
-	private double cost = 0;
-
+	
+	/** indicates if waypoint is already in the plan*/
+	boolean visited;
 
 	/**
 	 * Constructs a RL waypoint at a specified position.
@@ -57,24 +56,6 @@ public class RLWaypoint extends Waypoint {
 	 */
 	public Set<RLWaypoint>  getNeighbors() {
 		return neighbors;
-	}
-	
-	/**
-	 * Sets the RL waypoint's cost.
-	 * 
-	 * @param cost waypoint's cost
-	 */
-	public void  setCost(double cost) {
-		this.cost = cost;
-	}
-	
-	/**
-	 * Gets the RL waypoint's cost.
-	 * 
-	 * @return waypoint's cost
-	 */
-	public double getCost() {
-		return this.cost;
 	}
 	
 	/**
@@ -113,6 +94,25 @@ public class RLWaypoint extends Waypoint {
 		return this.id;
 	}
 	
+	/**
+	 * Sets the RL waypoint's ID.
+	 * 
+	 * @param id waypoint's ID
+	 */
+	public void setVisited(boolean v) {
+		this.visited = v;
+	}
+	
+	
+	/**
+	 * Gets the RL waypoint's ID.
+	 * 
+	 * @return id waypoint's ID
+	 */
+	public boolean isVisited() {
+		return this.visited;
+	}
+	
 	
 	/**
 	 * Compares this RL waypoint to another waypoint based on their position.
@@ -135,21 +135,5 @@ public class RLWaypoint extends Waypoint {
 		return compareTo;
 	}
 	
-	/**
-	 * Gets the distance between this RL Waypoint's coordinates and another's in km.
-	 * 
-	 * @param RL waypoint the other RL waypoint
-	 * 
-	 * @return the distance in km
-	 * 
-	 * @see Comparable#compareTo(Object)
-	 */
-	public double getDistance(Waypoint waypoint) {
-		double p = Math.PI/180;
-		double a = 0.5 - Math.cos((this.getLatitude().radians - waypoint.getLatitude().radians)*p)/2 +
-				Math.cos(waypoint.getLatitude().radians * p) * Math.cos(this.getLatitude().radians * p) *
-				(1 - Math.cos((this.getLongitude().radians - waypoint.getLongitude().radians)*p))/2;
-		
-		return 12742 * Math.asin(Math.sqrt(a));
-	}
+
 }

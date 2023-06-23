@@ -1,12 +1,15 @@
 package com.cfar.swim.worldwind.planners.rl.qlearning;
 
 import java.util.ArrayList;
+
+
 import java.awt.Color;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalUnit;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 import java.util.PriorityQueue;
@@ -24,12 +27,13 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
+import com.cfar.swim.worldwind.planners.rl.Plot;
 import com.cfar.swim.worldwind.planners.rl.QLine;
 import com.cfar.swim.worldwind.planners.rl.RLWaypoint;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.tests.Plot;
+//import com.cfar.swim.worldwind.tests.Plot;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
@@ -47,7 +51,7 @@ import gov.nasa.worldwind.render.Path;
 public class QLearningPlanner extends AbstractPlanner {
 	
 	/** the Q-table map, where each element represents a line corresponding to a state; the key is the state */
-	protected Map<RLWaypoint, QLine> qTable = new TreeMap<>();
+	protected Map<String, QLine> qTable = new TreeMap<>();
 	
 	/** the set of already discovered waypoints */
 	protected Set<RLWaypoint> discovered = new HashSet<>();
@@ -117,6 +121,14 @@ public class QLearningPlanner extends AbstractPlanner {
 	}
 	
 	/**
+	 * Clears the discovered waypoints set
+	 */
+	protected void clearDiscovered() {
+		this.discovered.clear();
+		wpId = 0;
+	}
+	
+	/**
 	 * Creates a waypoint at a specified position
 	 * 
 	 * @param position the position
@@ -130,7 +142,8 @@ public class QLearningPlanner extends AbstractPlanner {
 		if (discoveredWaypoint.isPresent()) {
 			wp = discoveredWaypoint.get();
 		} else {
-			wp.setId(wpId);
+			wp.setDesignator(String.valueOf(wpId));
+			wp.setCost(0);
 			wpId++;
 			discovered.add(wp);
 		} 
@@ -398,6 +411,7 @@ public class QLearningPlanner extends AbstractPlanner {
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
 		this.setStart(null);
 		this.setGoal(null);
+		this.qTable.clear();
 		
 		this.setStart(this.createWaypoint(origin));
 		this.getStart().setEto(etd);
@@ -429,20 +443,40 @@ public class QLearningPlanner extends AbstractPlanner {
 	 */
 	protected void addQTable(RLWaypoint wp) {
 		// only adds new waypoint to the Q-table if it is not there yet
-		if (!(qTable.containsKey(wp))) {
+		if (!(qTable.containsKey(wp.getDesignator()))) {
 			Set<RLWaypoint> neighbors = getNeighbors(wp);
 			wp.setNeighbors(neighbors);
 			QLine newLine =  new QLine(wp, neighbors.size());
 			newLine.initQValues();
-			qTable.put(wp, newLine);
+			qTable.put(wp.getDesignator(), newLine);
 		} else {
 		// if waypoint already exists in qTable, set new waypoint to that
-			wp = qTable.get(wp).getState();
+			wp = qTable.get(wp.getDesignator()).getState();
 		}
 	}
 	
+//	/**
+//	 * Computes the estimated ETO of a specified source RL Waypoint when travelling
+//	 * from a source RL Waypoint
+//	 * 
+//	 * @param source the source RL waypoint in globe coordinates
+//	 * @param target the target RL waypoint in globe coordinates
+//	 */
+//	protected double computeCost(RLWaypoint source, RLWaypoint target) {
+//		Path leg = new Path(source, target);
+//		Capabilities capabilities = this.getAircraft().getCapabilities();
+//		Globe globe = this.getEnvironment().getGlobe();
+//		ZonedDateTime end = capabilities.getEstimatedTime(leg, globe, source.getEto());
+//		double cost = this.getEnvironment().getStepCost(
+//				source, target,
+//				source.getEto(), end,
+//				this.getCostPolicy(), this.getRiskPolicy());
+//		
+//		return cost;
+//	}
+	
 	/**
-	 * Computes the estimated ETO of a specified source RL Waypoint when travelling
+	 * Computes the estimated costof a specified source RL Waypoint when travelling
 	 * from a source RL Waypoint
 	 * 
 	 * @param source the source RL waypoint in globe coordinates
@@ -469,9 +503,12 @@ public class QLearningPlanner extends AbstractPlanner {
 			setReward(100);
 			return;
 		}
-		// Gets distance from state and next_state to goal
-		double d1 = this.state.getDistance(this.goal);
-		double d2 = this.nextState.getDistance(this.goal);
+		
+		// If it exceeds risk, the reward is -100
+		if (this.nextState.hasInfiniteCost()) {
+			setReward(-1000);
+			return;
+		}
 		
 		ZonedDateTime end1 = computeEto(this.state, this.goal);
 		ZonedDateTime end2 = computeEto(this.nextState, this.goal);
@@ -479,28 +516,12 @@ public class QLearningPlanner extends AbstractPlanner {
 		// If goal's ETO is higher for the nextState then for state, reward is -10, else it is 0
 		if (end2.isAfter(end1)) {
 			long amount = end1.until(end2, ChronoUnit.NANOS);
-			setReward(-0.01*amount);
+			setReward(-0.000001*amount - this.nextState.getCost());
+			//setReward(-0.000001*amount);
 		} else {
-			setReward(0);
+			setReward(-this.nextState.getCost());
+			//setReward(0);
 		}
-		
-		
-//		// Calculate distance from state and next_state to goal
-//		Path leg1 = new Path(this.state, this.goal);
-//		Path leg2 = new Path(this.nextState, this.goal);
-////		Capabilities capabilities = this.getAircraft().getCapabilities();
-////		Globe globe = this.getEnvironment().getGlobe();
-////		ZonedDateTime end1 = capabilities.getEstimatedTime(leg1, globe, this.state.getEto());
-////		ZonedDateTime end2 = capabilities.getEstimatedTime(leg2, globe, this.nextState.getEto());
-//		
-//		// If distance of next_state is higher, reward is -10, else it is 0
-//		double a = leg2.getLength();
-//		double b = leg1.getLength();
-//		if (leg2.getLength()>leg1.getLength()) {
-//			setReward(-10);
-//		} else {
-//			setReward(0);
-//		}
 	}
 	
 	/**
@@ -510,10 +531,10 @@ public class QLearningPlanner extends AbstractPlanner {
 	 */
 	public void updateQ() {
 		// Calculates new Q value for state and action pair
-		double newQ = (1-this.alpha)*qTable.get(this.state).getQValue(this.action) + this.alpha 
-				* (this.gamma * (this.reward + qTable.get(this.nextState).getMaxQValue()));
+		double newQ = (1-this.alpha)*qTable.get(this.state.getDesignator()).getQValue(this.action) + this.alpha 
+				* (this.gamma * (this.reward + qTable.get(this.nextState.getDesignator()).getMaxQValue()));
 		// Updates the corresponding Q-table entry
-		qTable.get(this.state).updateQValue(this.action, newQ);
+		qTable.get(this.state.getDesignator()).updateQValue(this.action, newQ);
 	}
 	
 	/**
@@ -524,15 +545,16 @@ public class QLearningPlanner extends AbstractPlanner {
 		RLWaypoint ns = start;
 		int ep = 0;
 		while (ep < this.maxEpisodes) {
-			System.out.println("EPISODE " + ep);
+			// System.out.println("EPISODE " + ep);
 			setState(this.getStart());
 			// Loop to go from start to goal
 			for (int j = 0; j < this.maxSteps; j++) {
 				// Chooses action according to e-greedy policy
-				setAction(this.qTable.get(this.state).getEGreedyAction(this.epsilon));
+				setAction(this.qTable.get(this.state.getDesignator()).getEGreedyAction(this.epsilon));
 				// Updates next state
 				ns = createWaypoint(this.state.getNeighbor(getAction()));
 				ns.setEto(computeEto(this.state, ns));
+				this.computeCost(this.state, ns);
 				setNextState(ns);
 				// Adds next state to Q-table if it isn't there yet
 				addQTable(this.nextState);
@@ -540,7 +562,7 @@ public class QLearningPlanner extends AbstractPlanner {
 				calculateReward();
 				// Updates Q-Table
 				updateQ();
-				System.out.println("State: " + this.state.getId() + " Action: " + this.action + " Reward: " + this.reward + " Next State:" + this.nextState.getId());
+				// System.out.println("State: " + this.state.getId() + " Action: " + this.action + " Reward: " + this.reward + " Next State:" + this.nextState.getId());
 				// Checks if it reached goal and, if yes, finish loop and increments ep
 				if (isInGoalRegion(this.nextState.getPrecisionPosition())) {
 					break;
@@ -550,6 +572,11 @@ public class QLearningPlanner extends AbstractPlanner {
 			ep++;
 			// Updates epsilon for next episode
 			this.epsilon = this.minEpsilon + (this.maxEpsilon - this.minEpsilon)*Math.exp(-(1/this.maxEpisodes)*this.epsilon);
+			// Sets waypoints cost back to 0 and visited to false for next episode
+			for (Map.Entry<String, QLine> entry : qTable.entrySet()) {
+				entry.getValue().getState().setCost(0);
+				entry.getValue().getState().setVisited(false);
+			}
 		}
 		
 	}
@@ -558,29 +585,55 @@ public class QLearningPlanner extends AbstractPlanner {
 	 * Computes a plan according to the trained Q-Table.
 	 */
 	protected void compute() {
-		this.clearWaypoints();
-		this.getWaypoints().addLast(this.start);
+		//this.clearWaypoints();
+		// Only adds start to plan if it is not already there from the previous part
+		if (this.getWaypoints().isEmpty()) {
+			this.getWaypoints().addLast(this.start);
+		}
+		if(!(this.getWaypoints().getLast().equals(this.start))){
+			this.getWaypoints().addLast(this.start);
+		}
 		RLWaypoint ns = start;
 		setState(this.getStart());
-		// if plan is empty then
+		state.setVisited(true);
 		int steps = 0;
 		// Prints to console the final Q-table before compute
 		System.out.println("Q-TABLE");
 		String line;
-		for (Map.Entry<RLWaypoint, QLine> entry : qTable.entrySet()) {
-			line = "State: " + String.valueOf(entry.getKey().getId()) + " Values:";
+		for (Map.Entry<String, QLine> entry : qTable.entrySet()) {
+			line = "State: " + String.valueOf(entry.getValue().getState().getDesignator()) + " Values:";
 			for(int i=0; i<entry.getValue().getActions(); i++) {
-				line = line + " " + String.valueOf(entry.getValue().getQValue(i));
+				line = line + " " + entry.getValue().getState().getNeighbor(i).getDesignator() + "-" + String.valueOf(entry.getValue().getQValue(i));
 			}
 			System.out.println(line);
 		}
 		System.out.println("FINAL PLAN ");
 		while (steps<this.maxSteps) {
-			// Chooses action according to Q-table
-			setAction(this.qTable.get(this.state).getMaxQValue());
-			// Updates next state
-			ns = createWaypoint(this.state.getNeighbor(getAction()));
+			// Chooses action according to Q-table and avoids states already in the plan or with infinite costs
+			int a = 1;
+			boolean notInfinite = false;
+			while((ns.isVisited() || ns.hasInfiniteCost())  && a<this.state.getNeighbors().size()+1) {
+				setAction(this.qTable.get(this.state.getDesignator()).getMaxQValue(a));
+				// Updates next state
+				ns = createWaypoint(this.state.getNeighbor(getAction()));
+				this.computeCost(this.state, ns);
+				if (!ns.hasInfiniteCost()) notInfinite = true;
+				a++;
+			}
+			// If there is no neighbor that doesn't have infinite cost it stops computing and returns no trajectory
+			if (!notInfinite) {
+				this.clearWaypoints();
+				break;
+			}
+			// If all neighbors have already been visited, then it chooses the one with max Q value
+			if (ns.isVisited()) {
+				setAction(this.qTable.get(this.state.getDesignator()).getMaxQValue());
+				// Updates next state
+				ns = createWaypoint(this.state.getNeighbor(getAction()));
+			}
+			ns.setVisited(true);
 			ns.setEto(computeEto(this.state, ns));
+//			this.computeCost(this.state, ns);
 			this.getWaypoints().addLast(ns);
 			setNextState(ns);
 			// Adds next state to Q-table if it isn't there yet
@@ -589,13 +642,19 @@ public class QLearningPlanner extends AbstractPlanner {
 			calculateReward();
 			// Updates Q-Table
 			updateQ();
-			System.out.println("State: " + this.state.getId() + " Action: " + this.action + " Reward: " + this.reward + " Next State:" + this.nextState.getId());
 			// Checks if it reached goal and, if yes, finish loop
 			if (isInGoalRegion(this.nextState.getPrecisionPosition())) {
+				if(!(this.getWaypoints().getLast().equals(this.goal))){
+					goal.setEto(computeEto(this.nextState, goal));
+					this.getWaypoints().addLast(this.goal);
+				}
 				break;
 			}
 			setState(ns);
 			steps++;
+		}
+		for(int i=0; i<this.getWaypoints().size(); i++) {
+			System.out.println("State: " + this.getWaypoints().get(i).getDesignator() + " ETO: " + this.getWaypoints().get(i).getEto());
 		}
 	}
 	
@@ -608,42 +667,41 @@ public class QLearningPlanner extends AbstractPlanner {
 	 * 
 	 */
 	protected Trajectory planPart(int partIndex) {
-		this.train();
-		// Starts plot
-		Plot plot = new Plot("Hey", 88.1470000, 88.153000, 0.000001, 44.900000, 45.1000000, 0.00001);
-		plot.setPointSize(6);
-		plot.setPointShape(Plot.CIRCLE);
-		plot.setBackground(Color.white);
-		// Prints start in red
-		plot.setColor(Color.red);
-		plot.addPoint(start.latitude.degrees, start.longitude.degrees, String.valueOf(start.getId()));
-//		// Prints start's neighbors in red
-//		Iterator<RLWaypoint> neighborsIterator = this.start.getNeighbors().iterator();
-//		while (neighborsIterator.hasNext()) {
-//			RLWaypoint p = neighborsIterator.next();
-//			plot.addPoint(p.latitude.degrees, p.longitude.degrees, String.valueOf(p.getId()));
-//		}
-		// Prints goal in green
-		plot.setColor(Color.green);
-		plot.addPoint(goal.latitude.degrees, goal.longitude.degrees, String.valueOf(goal.getId()));
-//		// Prints goal's neighbors in green
-//		neighborsIterator = this.goal.getNeighbors().iterator();
-//		while (neighborsIterator.hasNext()) {
-//			RLWaypoint p = neighborsIterator.next();
-//			plot.addPoint(p.latitude.degrees, p.longitude.degrees, String.valueOf(p.getId()));
-//		}
+//		// Starts plot
+//		Plot plot = new Plot("Hey", 88.1470000, 88.153000, 0.000001, 44.900000, 45.1000000, 0.00001);
+//		plot.setPointSize(6);
+//		plot.setPointShape(Plot.CIRCLE);
+//		plot.setBackground(Color.white);
+//		// Prints start in red
+//		plot.setColor(Color.red);
+//		plot.addPoint(start.latitude.degrees, start.longitude.degrees, String.valueOf(start.getId()));
+////		// Prints start's neighbors in red
+////		Iterator<RLWaypoint> neighborsIterator = this.start.getNeighbors().iterator();
+////		while (neighborsIterator.hasNext()) {
+////			RLWaypoint p = neighborsIterator.next();
+////			plot.addPoint(p.latitude.degrees, p.longitude.degrees, String.valueOf(p.getId()));
+////		}
+//		// Prints goal in green
+//		plot.setColor(Color.green);
+//		plot.addPoint(goal.latitude.degrees, goal.longitude.degrees, String.valueOf(goal.getId()));
+////		// Prints goal's neighbors in green
+////		neighborsIterator = this.goal.getNeighbors().iterator();
+////		while (neighborsIterator.hasNext()) {
+////			RLWaypoint p = neighborsIterator.next();
+////			plot.addPoint(p.latitude.degrees, p.longitude.degrees, String.valueOf(p.getId()));
+////		}
 		this.compute();
 		// Prints all discovered points in cyan
-		plot.setColor(Color.cyan);
-		for (Map.Entry<RLWaypoint, QLine> entry : qTable.entrySet()) {
-			plot.addPoint(entry.getKey().latitude.degrees, entry.getKey().longitude.degrees, String.valueOf(entry.getKey().getId()));
-		}
-		// Prints final plan in black
-		plot.setColor(Color.black);
-		for (int i=0; i<this.getPlan().size(); i++) {
-			plot.setConnected(true);
-			plot.addPoint(this.getPlan().get(i).latitude.degrees, this.getPlan().get(i).longitude.degrees, "");
-		}
+//		plot.setColor(Color.cyan);
+//		for (Map.Entry<RLWaypoint, QLine> entry : qTable.entrySet()) {
+//			plot.addPoint(entry.getKey().latitude.degrees, entry.getKey().longitude.degrees, String.valueOf(entry.getKey().getId()));
+//		}
+//		// Prints final plan in black
+//		plot.setColor(Color.black);
+//		for (int i=0; i<this.getPlan().size(); i++) {
+//			plot.setConnected(true);
+//			plot.addPoint(this.getPlan().get(i).latitude.degrees, this.getPlan().get(i).longitude.degrees, "");
+//		}
 		return this.createTrajectory();
 	}
 	
@@ -664,9 +722,36 @@ public class QLearningPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
+		this.clearWaypoints();
+		this.clearDiscovered();
 		this.initialize(origin, destination, etd);
+		this.train();
 		Trajectory trajectory = this.planPart(0);
 		this.revisePlan(trajectory);
+//		// Starts plot
+//		Plot plot = new Plot("Hey", 88.1470000, 88.153000, 0.000001, 44.900000, 45.1000000, 0.00001);
+//		plot.setPointSize(6);
+//		plot.setPointShape(Plot.CIRCLE);
+//		plot.setBackground(Color.white);
+//		// Prints all discovered points in cyan
+//		plot.setColor(Color.cyan);
+//		for (Map.Entry<String, QLine> entry : qTable.entrySet()) {
+//			plot.addPoint(entry.getValue().getState().latitude.degrees, entry.getValue().getState().longitude.degrees, "");
+//			System.out.println("Cost of point " + entry.getKey() + ": " + entry.getValue().getState().getCost());
+//		}
+//		// Prints final plan in black
+//		plot.setColor(Color.black);
+//		for (int i=0; i<this.getPlan().size(); i++) {
+//			plot.addPoint(this.getPlan().get(i).latitude.degrees, this.getPlan().get(i).longitude.degrees, "");
+//			plot.setConnected(true);
+//		}
+//		plot.setConnected(false);
+//		// Prints start in red
+//		plot.setColor(Color.red);
+//		plot.addPoint(origin.latitude.degrees, origin.longitude.degrees, "");
+//		// Prints goal in green
+//		plot.setColor(Color.green);
+//		plot.addPoint(destination.latitude.degrees, destination.longitude.degrees, "");
 		return trajectory;
 	}
 	
@@ -686,6 +771,8 @@ public class QLearningPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
+		this.clearWaypoints();
+		this.clearDiscovered();
 		RLWaypoint currentOrigin = new RLWaypoint(origin);
 		ZonedDateTime currentEtd = etd;
 		
@@ -715,7 +802,7 @@ public class QLearningPlanner extends AbstractPlanner {
 				
 				// plan partial trajectory
 				this.initialize(currentOrigin, currentDestination, currentEtd);
-				
+				this.train();
 				this.planPart(partIndex);
 				
 				if ((!this.hasWaypoints())
@@ -732,7 +819,7 @@ public class QLearningPlanner extends AbstractPlanner {
 				}
 			}
 		}
-		
+
 		return this.createTrajectory();
 	}
 	
