@@ -48,7 +48,7 @@ import gov.nasa.worldwind.render.Path;
 *
 */
 
-public class QLearningPlanner extends AbstractPlanner {
+public class QLearningPlanner2 extends AbstractPlanner {
 	
 	/** the Q-table map, where each element represents a line corresponding to a state; the key is the state */
 	protected Map<String, QLine> qTable = new TreeMap<>();
@@ -113,9 +113,8 @@ public class QLearningPlanner extends AbstractPlanner {
 	 * 
 	 * @see AbstractPlanner#AbstractPlanner(Aircraft, Environment)
 	 */
-	public QLearningPlanner(Aircraft aircraft, Environment environment) {
+	public QLearningPlanner2(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		// TODO Auto-generated constructor stub
 	}
 	
 	@Override
@@ -406,6 +405,42 @@ public class QLearningPlanner extends AbstractPlanner {
 	 */
 	protected boolean isInGoalRegion(Position position) {
 		return this.goalRegion.contains(position);
+	}
+	
+	/**
+	 * Gets the number of training episodes of this  planner.
+	 * 
+	 * @return the number of training episodes of this planner
+	 */
+	protected int getMaxEpisodes() {
+		return this.maxEpisodes;
+	}
+	
+	/**
+	 * Sets the number of training episodes of this  planner.
+	 * 
+	 * @param max the number of training episodes of this planner
+	 */
+	protected void setMaxEpisodes(int max) {
+		this.maxEpisodes = max;
+	}
+	
+	/**
+	 * Gets the max number of steps during training and computing of this  planner.
+	 * 
+	 * @return the max number of steps during training and computing of this planner
+	 */
+	protected int getMaxSteps() {
+		return this.maxSteps;
+	}
+	
+	/**
+	 * Sets the max number of steps during training and computing of this  planner.
+	 * 
+	 * @param max max number of steps during training and computing of this planner
+	 */
+	protected void setMaxSteps(int max) {
+		this.maxSteps = max;
 	}
 	
 	/**

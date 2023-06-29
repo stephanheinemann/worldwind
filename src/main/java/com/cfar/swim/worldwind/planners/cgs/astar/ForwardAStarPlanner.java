@@ -728,30 +728,6 @@ public class ForwardAStarPlanner extends AbstractPlanner {
 		this.initialize(origin, destination, etd);
 		Trajectory trajectory = this.planPart(0);
 		this.revisePlan(trajectory);
-		// Starts plot
-		Plot plot = new Plot("Hey", 88.1470000, 88.153000, 0.000001, 44.900000, 45.1000000, 0.00001);
-		plot.setPointSize(6);
-		plot.setPointShape(Plot.CIRCLE);
-		plot.setBackground(Color.white);
-		// Prints all discovered points in cyan
-		plot.setColor(Color.cyan);
-		for (AStarWaypoint entry : visited) {
-			plot.addPoint(entry.latitude.degrees, entry.longitude.degrees, "");
-			System.out.println("Cost of point " + entry.getDesignator() + ": " + entry.getCost());
-		}
-		// Prints final plan in black
-		plot.setColor(Color.black);
-		plot.setConnected(true);
-		for (int i=0; i<this.getPlan().size(); i++) {
-			plot.addPoint(this.getPlan().get(i).latitude.degrees, this.getPlan().get(i).longitude.degrees, "");
-		}
-		plot.setConnected(false);
-		// Prints start in red
-		plot.setColor(Color.red);
-		plot.addPoint(origin.latitude.degrees, origin.longitude.degrees, "");
-		// Prints goal in green
-		plot.setColor(Color.green);
-		plot.addPoint(destination.latitude.degrees, destination.longitude.degrees, "");
 		return trajectory;
 	}
 	
