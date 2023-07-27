@@ -22,6 +22,9 @@ public class RLWaypoint extends Waypoint {
 	/** int to ID the waypoint */
 	private int id = 0;
 	
+	/** the state to which this waypoint corresponds */
+	private State state = null;
+	
 	/** indicates if waypoint is already in the plan*/
 	boolean visited;
 
@@ -92,6 +95,25 @@ public class RLWaypoint extends Waypoint {
 	 */
 	public int getId() {
 		return this.id;
+	}
+	
+	/**
+	 * Sets the RL waypoint's state.
+	 * 
+	 * @param id waypoint's state
+	 */
+	public void setState(State state) {
+		this.state = state;
+	}
+	
+	
+	/**
+	 * Gets the RL waypoint's state.
+	 * 
+	 * @return id waypoint's state
+	 */
+	public State getState() {
+		return this.state;
 	}
 	
 	/**

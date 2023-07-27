@@ -3,6 +3,7 @@ package com.cfar.swim.worldwind.planners.rl.qlearning;
 import java.util.ArrayList;
 
 
+
 import java.awt.Color;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -27,9 +28,7 @@ import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
-import com.cfar.swim.worldwind.planners.rl.Plot;
-import com.cfar.swim.worldwind.planners.rl.QLine;
-import com.cfar.swim.worldwind.planners.rl.RLWaypoint;
+import com.cfar.swim.worldwind.planners.rl.*;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -51,7 +50,7 @@ import gov.nasa.worldwind.render.Path;
 public class QLearningPlanner extends AbstractPlanner {
 	
 	/** the Q-table map, where each element represents a line corresponding to a state; the key is the state */
-	protected Map<String, QLine> qTable = new TreeMap<>();
+	protected Map<String, OgQLine> qTable = new TreeMap<>();
 	
 	/** the set of already discovered waypoints */
 	protected Set<RLWaypoint> discovered = new HashSet<>();
@@ -468,7 +467,7 @@ public class QLearningPlanner extends AbstractPlanner {
 		if (!(qTable.containsKey(wp.getDesignator()))) {
 			Set<RLWaypoint> neighbors = getNeighbors(wp);
 			wp.setNeighbors(neighbors);
-			QLine newLine =  new QLine(wp, neighbors.size());
+			OgQLine newLine =  new OgQLine(wp, neighbors.size());
 			newLine.initQValues();
 			qTable.put(wp.getDesignator(), newLine);
 		} else {
@@ -601,7 +600,7 @@ public class QLearningPlanner extends AbstractPlanner {
 			// Updates epsilon for next episode
 			this.epsilon = this.minEpsilon + (this.maxEpsilon - this.minEpsilon)*Math.exp(-(2/this.maxEpisodes)*this.epsilon);
 			// Sets waypoints cost back to 0 and visited to false for next episode
-			for (Map.Entry<String, QLine> entry : qTable.entrySet()) {
+			for (Map.Entry<String, OgQLine> entry : qTable.entrySet()) {
 				entry.getValue().getState().setCost(0);
 				entry.getValue().getState().setVisited(false);
 			}
