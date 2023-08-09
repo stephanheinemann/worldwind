@@ -502,58 +502,68 @@ public class QLearningPlanner2 extends AbstractPlanner {
 		} else {
 			wp.setDesignator(String.valueOf(wpId));
 			wp.setCost(0);
+			// If this is goal, send wp position twice
+			if (this.getGoal()==null) {
+				State state = new State(wp.getPrecisionPosition(), wp, this.getEnvironment().getGlobe(), this.stateId);
+			} else {
+				State state = new State(wp.getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId);
+			}
+			if (this.qTable.containsKey(state)) {
+				state = this.qTable.get(state).getState();
+			}
+			this.stateId++;
 			wpId++;
 			addDiscovered(wp);
 		} 
 		return wp;
 	}
 	
-	/**
-	 * Gets the neighbors of an RL Waypoint in the environment.
-	 * 
-	 * @param waypoint the RL waypoint 
-	 * 
-	 * @return the neighbors of the RL waypoint
-	 */
-	protected Set<RLWaypoint> getNeighbors(RLWaypoint waypoint) {
-		Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
-
-		// if a start has no neighbors, then it is not a waypoint in the
-		// environment and its adjacent waypoints have to be determined for
-		// initial expansion
-		if (neighbors.isEmpty()) {
-			neighbors = this.getEnvironment().getAdjacentWaypointPositions(waypoint);
-		}
-		
-		// create neighborhood of waypoints with precision positions
-		Set<RLWaypoint> neighborhood =
-				neighbors.stream()
-				.map(n -> this.createWaypoint(n)).collect(Collectors.toSet());
-		
-		// replace start and goal in neighborhood to avoid duplication
-		if (neighborhood.remove(this.getStart())) {
-			neighborhood.add(this.getStart());
-		}
-		if (neighborhood.remove(this.getGoal())) {
-			neighborhood.add(this.getGoal());
-		}
-
-		// expand start region position towards the start
-		if ((!waypoint.equals(this.getStart())) &&
-				this.isInStartRegion(waypoint.getPrecisionPosition())) {
-			// TODO: possible feasibility / capability issues
-			neighborhood.add(this.getStart());
-		}
-
-		// expand a goal region position towards the goal
-		if ((!waypoint.equals(this.getGoal())) &&
-				this.isInGoalRegion(waypoint.getPrecisionPosition())) {
-			// TODO: possible feasibility / capability issues
-			neighborhood.add(this.getGoal());
-		}
-		
-		return neighborhood;
-	}
+//	/**
+//	 * Gets the neighbors of an RL Waypoint in the environment.
+//	 * 
+//	 * @param waypoint the RL waypoint 
+//	 * 
+//	 * @return the neighbors of the RL waypoint
+//	 */
+//	protected Set<RLWaypoint> getNeighbors(RLWaypoint waypoint) {
+//		Set<Position> neighbors = this.getEnvironment().getNeighbors(waypoint);
+//
+//		// if a start has no neighbors, then it is not a waypoint in the
+//		// environment and its adjacent waypoints have to be determined for
+//		// initial expansion
+//		if (neighbors.isEmpty()) {
+//			neighbors = this.getEnvironment().getAdjacentWaypointPositions(waypoint);
+//		}
+//		
+//		// create neighborhood of waypoints with precision positions
+//		Set<RLWaypoint> neighborhood =
+//				neighbors.stream()
+//				.map(n -> this.createWaypoint(n)).collect(Collectors.toSet());
+//		
+//		// replace start and goal in neighborhood to avoid duplication
+//		if (neighborhood.remove(this.getStart())) {
+//			neighborhood.add(this.getStart());
+//		}
+//		if (neighborhood.remove(this.getGoal())) {
+//			neighborhood.add(this.getGoal());
+//		}
+//
+//		// expand start region position towards the start
+//		if ((!waypoint.equals(this.getStart())) &&
+//				this.isInStartRegion(waypoint.getPrecisionPosition())) {
+//			// TODO: possible feasibility / capability issues
+//			neighborhood.add(this.getStart());
+//		}
+//
+//		// expand a goal region position towards the goal
+//		if ((!waypoint.equals(this.getGoal())) &&
+//				this.isInGoalRegion(waypoint.getPrecisionPosition())) {
+//			// TODO: possible feasibility / capability issues
+//			neighborhood.add(this.getGoal());
+//		}
+//		
+//		return neighborhood;
+//	}
 	
 	
 	/**
@@ -568,31 +578,20 @@ public class QLearningPlanner2 extends AbstractPlanner {
 		this.setStart(null);
 		this.setGoal(null);
 
-		this.setStart(this.createWaypoint(origin));
-		this.getStart().setEto(etd);
-		this.getStart().setPoi(true);
-		
+		// Goal is created first to calculate start state when initializing the start waypoint
 		this.setGoal(this.createWaypoint(destination));
 		this.getGoal().setPoi(true);
 		
-		// creates the start and goal states
+		this.setStart(this.createWaypoint(origin));
+		this.getStart().setEto(etd);
+		this.getStart().setPoi(true);
+	
+		
+		// creates the start and goal states, and adds them to the Q table
 		this.getStart().setState(new State(this.getStart().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
 		this.stateId ++;
 		this.getGoal().setState(new State(this.getGoal().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
 		this.stateId ++;
-		
-		// the adjacent waypoints to the origin
-		this.setStartRegion(this.getEnvironment().getAdjacentWaypointPositions(origin)
-				.stream()
-				.map(PrecisionPosition::new)
-				.collect(Collectors.toSet()));
-		
-		// the adjacent waypoints to the destination
-		this.setGoalRegion(this.getEnvironment().getAdjacentWaypointPositions(destination)
-				.stream()
-				.map(PrecisionPosition::new)
-				.collect(Collectors.toSet()));
-		
 		this.addQTable(this.getStart().getState());
 		this.addQTable(this.getGoal().getState());
 	}
@@ -607,48 +606,48 @@ public class QLearningPlanner2 extends AbstractPlanner {
 	 * @param etd the estimated time of departure
 	 */
 	protected void initialize(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		this.setStart(null);
-		this.setGoal(null);
-		clearInterWaypoints();
-
-		this.setStart(this.createWaypoint(origin));
-		this.getStart().setEto(etd);
-		this.getStart().setPoi(true);
-		
-		this.setGoal(this.createWaypoint(destination));
-		this.getGoal().setPoi(true);
-		
-		// creates the start and goal states, and adds them to the Q table
-		this.getStart().setState(new State(this.getStart().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
-		this.stateId ++;
-		this.getGoal().setState(new State(this.getGoal().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
-		this.stateId ++;
-		this.addQTable(this.getStart().getState());
-		this.addQTable(this.getGoal().getState());
-		
-		RLWaypoint wp;
-		for (Position position : waypoints) {
-			wp = this.createWaypoint(position);
-			wp.setState(new State(wp.getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
-			this.stateId ++;
-			this.addInterWaypoint(wp);
-			this.addQTable(wp.getState());
-		}
-		
-		this.interWaypoints.remove(this.getStart());
-		this.addInterWaypoint(this.getGoal());
-		
-		// the adjacent waypoints to the origin
-		this.setStartRegion(this.getEnvironment().getAdjacentWaypointPositions(origin)
-				.stream()
-				.map(PrecisionPosition::new)
-				.collect(Collectors.toSet()));
-		
-		// the adjacent waypoints to the destination
-		this.setGoalRegion(this.getEnvironment().getAdjacentWaypointPositions(destination)
-				.stream()
-				.map(PrecisionPosition::new)
-				.collect(Collectors.toSet()));
+//		this.setStart(null);
+//		this.setGoal(null);
+//		clearInterWaypoints();
+//
+//		this.setStart(this.createWaypoint(origin));
+//		this.getStart().setEto(etd);
+//		this.getStart().setPoi(true);
+//		
+//		this.setGoal(this.createWaypoint(destination));
+//		this.getGoal().setPoi(true);
+//		
+//		// creates the start and goal states, and adds them to the Q table
+//		this.getStart().setState(new State(this.getStart().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
+//		this.stateId ++;
+//		this.getGoal().setState(new State(this.getGoal().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
+//		this.stateId ++;
+//		this.addQTable(this.getStart().getState());
+//		this.addQTable(this.getGoal().getState());
+//		
+//		RLWaypoint wp;
+//		for (Position position : waypoints) {
+//			wp = this.createWaypoint(position);
+//			wp.setState(new State(wp.getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
+//			this.stateId ++;
+//			this.addInterWaypoint(wp);
+//			this.addQTable(wp.getState());
+//		}
+//		
+//		this.interWaypoints.remove(this.getStart());
+//		this.addInterWaypoint(this.getGoal());
+//		
+//		// the adjacent waypoints to the origin
+//		this.setStartRegion(this.getEnvironment().getAdjacentWaypointPositions(origin)
+//				.stream()
+//				.map(PrecisionPosition::new)
+//				.collect(Collectors.toSet()));
+//		
+//		// the adjacent waypoints to the destination
+//		this.setGoalRegion(this.getEnvironment().getAdjacentWaypointPositions(destination)
+//				.stream()
+//				.map(PrecisionPosition::new)
+//				.collect(Collectors.toSet()));
 	}
 	
 	/**
@@ -657,17 +656,9 @@ public class QLearningPlanner2 extends AbstractPlanner {
 	 * @param wp the waypoint
 	 */
 	protected void addQTable(State state) {
-		// only adds new state to the Q-table if it is not there yet
-		// when adding, searches for the neighbors as well, in order to add them as actions
-		if (!(qTable.containsKey(state.getId()))) {
-			QLine newLine =  new QLine(state);
-			newLine.initQValues();
-			qTable.put(state.getId(), newLine);
-		}
-//		} else {
-//		// if waypoint already exists in qTable, set new waypoint to that
-//			wp = qTable.get(wp.getDesignator()).getState();
-//		}
+		QLine newLine =  new QLine(state);
+		newLine.initQValues();
+		qTable.put(state.getId(), newLine);
 	}
 	
 	/**

@@ -385,6 +385,16 @@
 			<artifactId>mavlink</artifactId>
 			<version>1.1.9</version>
 		</dependency>
+		<dependency>
+			<groupId>ai.djl</groupId>
+			<artifactId>api</artifactId>
+			<version>0.23.0</version>
+		</dependency>
+		<dependency>
+			<groupId>ai.djl.pytorch</groupId>
+			<artifactId>pytorch-engine</artifactId>
+			<version>0.23.0</version>
+		</dependency>
 	</dependencies>
 
 </project>
