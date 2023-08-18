@@ -42,38 +42,41 @@ public enum Action {
 	/**
 	 * Direct flight towards target
 	 */
-	DIRECT(0),
+	DIRECT(0, 0),
 	
 	/**
 	 * Turns right at a 45 degree angle
 	 */
-	RIGHT45(45),
+	RIGHT45(1, 45),
 
 	/**
 	 * Turns right at a 60 degree angle
 	 */
-	RIGHT60(60),
+	RIGHT60(2, 60),
 	
 	/**
 	 * Turns left at a 45 degree angle
 	 */
-	LEFT45(45),
+	LEFT45(3, 45),
 	
 	/**
 	 * Turns left at a 60 degree angle
 	 */
-	LEFT60(60),
+	LEFT60(4, 60),
 	
 	/**
 	 * Climbs at a 45 degree angle
 	 */
-	CLIMB45(45),
+	CLIMB45(5, 45),
 	
 	/**
 	 * Descends at a 45 degree angle
 	 */
-	DESCEND45(45);
+	DESCEND45(6, 45);
 	
+	
+	/** The action id */
+	public int id;
 	
 	/** The angle associated with each action */
 	public int angle;
@@ -83,7 +86,8 @@ public enum Action {
 	 * 
 	 * @param the associated angle
 	 */
-	private  Action (int angle) {
+	private  Action (int id, int angle) {
+		this.id = id;
 		this.angle = angle;
 	}
 	
@@ -95,6 +99,14 @@ public enum Action {
 	public static Action getRandom() {
 		Random random = new Random();
 		return values()[random.nextInt(values().length)];
+	}
+	
+	/** Gets the action's id.
+	 * 
+	 * @return the action's id
+	 */
+	public int getId() {
+		return this.id;
 	}
 
 }

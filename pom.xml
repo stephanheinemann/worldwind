@@ -395,6 +395,13 @@
 			<artifactId>pytorch-engine</artifactId>
 			<version>0.23.0</version>
 		</dependency>
+		<dependency>
+			<groupId>ai.djl.pytorch</groupId>
+			<artifactId>pytorch-native-cpu</artifactId>
+			<version>1.6.0</version>
+			<classifier>linux-x86_64</classifier>
+			<scope>runtime</scope>
+		</dependency>
 	</dependencies>
 
 </project>
