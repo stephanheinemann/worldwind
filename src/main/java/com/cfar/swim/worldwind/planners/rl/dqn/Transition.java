@@ -26,7 +26,7 @@ public class Transition {
 	private int nextState =  0;
 	
 	/** the reward */
-	private float reward = 0;
+	private double reward = 0;
 	
 	/** indicates if it reached goal or not, true if it has */
 	private boolean done = false;
@@ -39,11 +39,12 @@ public class Transition {
 	 * @param the next state
 	 * @param the reward
 	 */
-	public Transition(int state, int action, int nextState, float reward) {
+	public Transition(int state, int action, int nextState, double reward, boolean done) {
 		this.state = state;
 		this.action = action;
 		this.nextState = nextState;
 		this.reward = reward;
+		this.done = done;
 	}
 	
 	/**
@@ -78,7 +79,7 @@ public class Transition {
 	 * 
 	 * @return the reward
 	 */
-	public float getReward() {
+	public double getReward() {
 		return this.reward;
 	}
 	

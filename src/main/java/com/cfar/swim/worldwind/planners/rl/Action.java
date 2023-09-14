@@ -47,36 +47,36 @@ public enum Action {
 	/**
 	 * Turns right at a 45 degree angle
 	 */
-	RIGHT45(1, 45),
+	RIGHT45(0, 45),
 
 	/**
 	 * Turns right at a 60 degree angle
 	 */
-	RIGHT60(2, 60),
+	RIGHT60(0, 60),
 	
 	/**
 	 * Turns left at a 45 degree angle
 	 */
-	LEFT45(3, 45),
+	LEFT45(0, -45),
 	
 	/**
 	 * Turns left at a 60 degree angle
 	 */
-	LEFT60(4, 60),
+	LEFT60(0, -60),
 	
 	/**
 	 * Climbs at a 45 degree angle
 	 */
-	CLIMB45(5, 45),
+	CLIMB45(1, 45),
 	
 	/**
 	 * Descends at a 45 degree angle
 	 */
-	DESCEND45(6, 45);
+	DESCEND45(2, 45);
 	
 	
-	/** The action id */
-	public int id;
+	/** The action type (0 - turn, 1 - climb, 2 - descend)*/
+	public int type;
 	
 	/** The angle associated with each action */
 	public int angle;
@@ -86,8 +86,8 @@ public enum Action {
 	 * 
 	 * @param the associated angle
 	 */
-	private  Action (int id, int angle) {
-		this.id = id;
+	private  Action (int type, int angle) {
+		this.type = type;
 		this.angle = angle;
 	}
 	
@@ -101,12 +101,12 @@ public enum Action {
 		return values()[random.nextInt(values().length)];
 	}
 	
-	/** Gets the action's id.
+	/** Gets the action's type (0 - turn, 1 - climb, 2 - descend)
 	 * 
-	 * @return the action's id
+	 * @return the action's type
 	 */
-	public int getId() {
-		return this.id;
+	public int getType() {
+		return this.type;
 	}
 
 }

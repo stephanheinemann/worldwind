@@ -26,14 +26,14 @@ public class Memory {
 	/** the array to store transitions*/
 	private Transition[] memory;
 	
-	/** stores the current state's ID*/
-	private int state;
+	/** stores the previous state's ID*/
+	private int state_prev;
 	
-	/** stores the most recent chosen action's ID*/
+	/** stores the most recent chosen action's index*/
 	private int action;
 	
 	/** stores the most recent received reward*/
-	private float reward;
+	private double reward;
 	
 	/** indicates if agent has reached the goal, true if yes*/
 	private boolean done;
@@ -62,9 +62,9 @@ public class Memory {
 	 * @param the current state
 	 */
 	public void setState(int state) {
-		if (this.state != -1)
-			add(new Transition(this.state, action, state, reward));
-		this.state = state;
+		if (state_prev != -1)
+			add(new Transition(state_prev, action, state, reward, done));
+		state_prev = state;
 	}
 	
 	/**
@@ -81,9 +81,15 @@ public class Memory {
 	 * 
 	 * @param the reward
 	 */
-	public void setReward(float reward, boolean done) {
+	public void setReward(double reward, boolean done) {
 		this.reward = reward;
 		this.done = done;
+		
+		if(done) {
+			add(new Transition (state_prev, action, -1, reward, done));
+			state_prev = -1;
+			action = -1;
+		}
 	}
 	
 	/**
@@ -99,12 +105,12 @@ public class Memory {
 	 * Resets the replay memory.
 	 */
 	public void reset() {
-		this.state = -1;
-		this.action = -1;
-		this.reward = 0;
-		this.done = false;
-		this.head = -1;
-		this.size = 0;
+		state_prev = -1;
+		action = -1;
+		reward = 0;
+		done = false;
+		head = -1;
+		size = 0;
 	}
 	
 	/**
@@ -154,7 +160,7 @@ public class Memory {
 		int[] states = new int[batchSize];
 		int[] actions = new int[batchSize];
 		int[] nextStates = new int[batchSize];
-		float[] rewards = new float[batchSize];
+		double[] rewards = new double[batchSize];
 		boolean [] dones = new boolean[batchSize];
 		
 		int index = head;

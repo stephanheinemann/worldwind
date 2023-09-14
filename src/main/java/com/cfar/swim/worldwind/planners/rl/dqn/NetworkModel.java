@@ -21,14 +21,8 @@ import ai.djl.util.PairList;
  *
  */
 
-public class ScoreModel extends AbstractBlock {
-	
-	/**  */
-	private static final byte VERSION = 2;
-	
-	/**  */
-	private final NDManager manager;
-	
+public class NetworkModel extends BaseModel {
+
 	/**  */
 	private final Block linearInput;
 	
@@ -48,24 +42,14 @@ public class ScoreModel extends AbstractBlock {
 	 * @param the hidden size
 	 * @param the output size
 	 */
-	public ScoreModel(NDManager manager, int hiddenSize, int outputSize) {
-		super(VERSION);
-		this.manager = manager;
+	public NetworkModel(NDManager manager, int hiddenSize, int outputSize) {
+		super(manager);
 		
 		this.linearInput = addChildBlock("linear_input", Linear.builder().setUnits(hiddenSize).build());
 		this.linearOutput = addChildBlock("linear_output", Linear.builder().setUnits(outputSize).build());
 		
 		this.hiddenSize = hiddenSize;
 		this.outputSize = outputSize;
-	}
-	
-	
-	/** Gets this model's manager
-	 * 
-	 * @return the manager
-	 */
-	public NDManager getManager() {
-		return manager;
 	}
 	
 	
@@ -79,9 +63,9 @@ public class ScoreModel extends AbstractBlock {
 	public static Model newModel(NDManager manager, int inputSize, int hiddenSize, int outputSize) {
 		
 		Model model = Model.newInstance("ScoreModel");
-		ScoreModel net = new ScoreModel(manager, hiddenSize, outputSize);
-		net.initialize(net.getManager(), DataType.FLOAT32, new Shape(inputSize));
-		model.setBlock(net);
+		NetworkModel network = new NetworkModel(manager, hiddenSize, outputSize);
+		network.initialize(network.getManager(), DataType.FLOAT32, new Shape(inputSize));
+		model.setBlock(network);
 		
 		return model;
 	}
@@ -98,7 +82,7 @@ public class ScoreModel extends AbstractBlock {
 		
 		NDList hidden = new NDList(Activation.relu(linearInput.forward(parameterStore, inputs, training).singletonOrThrow()));
 		
-		return linearOutput.forward(parameterStore, inputs, training);
+		return linearOutput.forward(parameterStore, hidden, training);
 	}
 	
 	/** 
@@ -108,6 +92,7 @@ public class ScoreModel extends AbstractBlock {
 	 * 
 	 * @return array with the output shapes
 	 */
+	@Override
 	public Shape[] getOutputShapes(Shape[] inputShape) {
 		
 		return new Shape[] { new Shape(outputSize) };
@@ -119,6 +104,7 @@ public class ScoreModel extends AbstractBlock {
 	 * @param the data type
 	 * @param the input shapes
 	 */
+	@Override
 	public void initializeChildBlocks(NDManager manager, DataType dataType, Shape... inputShapes) {
 		setInitializer(new XavierInitializer(), Parameter.Type.WEIGHT);
 		linearInput.initialize(manager, dataType, inputShapes[0]);

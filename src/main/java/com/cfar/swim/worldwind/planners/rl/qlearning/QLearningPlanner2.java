@@ -504,9 +504,9 @@ public class QLearningPlanner2 extends AbstractPlanner {
 			wp.setCost(0);
 			// If this is goal, send wp position twice
 			if (this.getGoal()==null) {
-				State state = new State(wp.getPrecisionPosition(), wp, this.getEnvironment().getGlobe(), this.stateId);
+				//State state = new State(wp.getPrecisionPosition(), wp, this.getEnvironment().getGlobe(), this.stateId);
 			} else {
-				State state = new State(wp.getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId);
+				//State state = new State(wp.getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId);
 			}
 			if (this.qTable.containsKey(state)) {
 				state = this.qTable.get(state).getState();
@@ -588,9 +588,9 @@ public class QLearningPlanner2 extends AbstractPlanner {
 	
 		
 		// creates the start and goal states, and adds them to the Q table
-		this.getStart().setState(new State(this.getStart().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
+		//this.getStart().setState(new State(this.getStart().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
 		this.stateId ++;
-		this.getGoal().setState(new State(this.getGoal().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
+		// this.getGoal().setState(new State(this.getGoal().getPrecisionPosition(), this.getGoal(), this.getEnvironment().getGlobe(), this.stateId));
 		this.stateId ++;
 		this.addQTable(this.getStart().getState());
 		this.addQTable(this.getGoal().getState());

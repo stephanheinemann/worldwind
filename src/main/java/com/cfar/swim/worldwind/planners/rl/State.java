@@ -47,17 +47,29 @@ public class State {
 	boolean visited;
 
 	/**
-	 * Constructs a RL waypoint at a specified position.
+	 * Constructs a state with characteristics relative to the goal.
 	 * 
-	 * @param position the position in globe coordinates
+	 * @param position the state's position in globe coordinates
+	 * @param goal the foal's position in globe coordinates
+	 * @param globe the globe
+	 * @param id the state's id
 	 * 
-	 * @see Waypoint#Waypoint(Position)
 	 */
-	public State(PrecisionPosition position, RLWaypoint goal, Globe globe, int id) {
-		this.id = id;
+	public State(Position position, Position goal, Globe globe) {
 		Vec4 statePoint = globe.computePointFromPosition(position);
-		Vec4 goalPoint = globe.computePointFromPosition(goal.getPrecisionPosition());
+		Vec4 goalPoint = globe.computePointFromPosition(goal);
 		this.relativeVector = goalPoint.subtract3(statePoint);
+		this.distanceToGoal = this.relativeVector.getLength3();
+	}
+	
+	/**
+	 * Constructs a state with characteristics relative to the goal.
+	 * 
+	 * @param the vector relative to the goal
+	 * 
+	 */
+	public State(Vec4 relativeVector) {
+		this.relativeVector = relativeVector;
 		this.distanceToGoal = this.relativeVector.getLength3();
 	}
 	

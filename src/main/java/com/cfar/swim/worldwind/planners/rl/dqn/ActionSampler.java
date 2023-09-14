@@ -22,11 +22,11 @@ public class ActionSampler {
 	 * @return the index of the chosen action
 	 * 
 	 */
-	public static int epsilonGreedy(NDArray distribution, Random rand, float epsilon) {
+	public static int epsilonGreedy(NDArray qValues, Random rand, float epsilon) {
 		if (rand.nextFloat() < epsilon) {
-			return rand.nextInt((int) distribution.size());
+			return rand.nextInt((int) qValues.size());
 		} else {
-			return greedy(distribution);
+			return greedy(qValues);
 		}
 	}
 	
@@ -37,8 +37,8 @@ public class ActionSampler {
 	 * @return the index of the chosen action
 	 * 
 	 */
-	public static int greedy(NDArray distribution) {
-		return (int) distribution.argMax().getLong();
+	public static int greedy(NDArray qValues) {
+		return (int) qValues.argMax().getLong();
 	}
 
 }
