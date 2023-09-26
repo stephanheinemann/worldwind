@@ -45,18 +45,18 @@ public class DQNProperties extends AbstractPlannerProperties {
 	private static final long serialVersionUID = 1L;
 	
 	/**
-	 * Constructs a new Q-Learning planner properties bean.
+	 * Constructs a new DQN planner properties bean.
 	 */
 	public DQNProperties() {
 		super();
 	}
 
 	/**
-	 * Constructs a new forward A* planner properties bean with
+	 * Constructs a new DQN planner properties bean with
 	 * specified cost and risk policy property values.
 	 * 
-	 * @param costPolicy the cost policy of this Q-Learning planner properties bean
-	 * @param riskPolicy the risk policy of this Q-Learning planner properties bean
+	 * @param costPolicy the cost policy of this DQN planner properties bean
+	 * @param riskPolicy the risk policy of this DQN planner properties bean
 	 */
 	public DQNProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
