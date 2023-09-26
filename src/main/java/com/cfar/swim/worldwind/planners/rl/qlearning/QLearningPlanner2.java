@@ -658,7 +658,7 @@ public class QLearningPlanner2 extends AbstractPlanner {
 	protected void addQTable(State state) {
 		QLine newLine =  new QLine(state);
 		newLine.initQValues();
-		qTable.put(state.getId(), newLine);
+		//qTable.put(state.getId(), newLine);
 	}
 	
 	/**

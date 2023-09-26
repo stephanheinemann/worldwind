@@ -22,8 +22,11 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public class State {
 	
-	/** int to ID the state */
-	private int id = 0;
+	/** the size of the state ID */
+	public static int ID_SIZE = 4;
+	
+	/** array that represents the state's ID */
+	private float[] id = new float[ID_SIZE];
 	
 //	/** the position relative to the current goal */
 //	private PrecisionPosition position;
@@ -32,7 +35,7 @@ public class State {
 	private Vec4 relativeVector = null;
 	
 	/** the distance from this state to the goal (vector length)*/
-	private double distanceToGoal = 0;
+	private float distanceToGoal = 0f;
 	
 	/** the estimated time over of this state */
 	private ZonedDateTime eto;
@@ -47,10 +50,10 @@ public class State {
 	boolean visited;
 
 	/**
-	 * Constructs a state with characteristics relative to the goal.
+	 * Constructs a state of a reinforcement learning planner from a position.
 	 * 
 	 * @param position the state's position in globe coordinates
-	 * @param goal the foal's position in globe coordinates
+	 * @param goal the goal's position in globe coordinates
 	 * @param globe the globe
 	 * @param id the state's id
 	 * 
@@ -59,18 +62,19 @@ public class State {
 		Vec4 statePoint = globe.computePointFromPosition(position);
 		Vec4 goalPoint = globe.computePointFromPosition(goal);
 		this.relativeVector = goalPoint.subtract3(statePoint);
-		this.distanceToGoal = this.relativeVector.getLength3();
+		this.distanceToGoal = (float) this.relativeVector.getLength3();
+		this.createId();
 	}
 	
 	/**
-	 * Constructs a state with characteristics relative to the goal.
+	 * Constructs a state of a reinforcement learning planner from a relative position vector.
 	 * 
 	 * @param the vector relative to the goal
 	 * 
 	 */
 	public State(Vec4 relativeVector) {
 		this.relativeVector = relativeVector;
-		this.distanceToGoal = this.relativeVector.getLength3();
+		this.distanceToGoal = (float) this.relativeVector.getLength3();
 	}
 	
 	/**
@@ -92,21 +96,11 @@ public class State {
 	}
 	
 	/**
-	 * Sets the state's ID.
-	 * 
-	 * @param id state's ID
-	 */
-	public void setId(int id) {
-		this.id = id;
-	}
-	
-	
-	/**
 	 * Gets the state's ID.
 	 * 
 	 * @return the state's ID
 	 */
-	public int getId() {
+	public float[] getId() {
 		return this.id;
 	}
 	
@@ -167,18 +161,28 @@ public class State {
 		return this.visited;
 	}
 	
+	/**
+	 * Creates the state's ID based on the stored information
+	 */
+	public void createId() {
+		id[0] = (float) this.getRelativeVector().x;
+		id[1] = (float) this.getRelativeVector().y;
+		id[2] = (float) this.getRelativeVector().z;
+		id[3] = (float) this.getDistanceToGoal();
+	}
 	
 	/**
-	 * Compares this state to another state based on their relative position to the goal.
+	 * Compares this state to another state based on their IDs.
 	 * 
 	 * @param state the other state
 	 * 
-	 * @return true if their relative position is the same, false otherwise
+	 * @return true if their ID is the same, false otherwise
 	 */
 	public boolean equals(State state) {
 
-		return this.getRelativeVector().equals(state.getRelativeVector());
+		return this.getId().equals(state.getId());
 	}
+	
 	
 
 }

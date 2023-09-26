@@ -15,35 +15,44 @@ import ai.djl.training.initializer.XavierInitializer;
 import ai.djl.util.PairList;
 
 /**
- * Realizes a Score Model
+ * Realizes a model for the neural network that is used to train the Deep Reinforcement Learning Planner
  * 
  * @author Rafaela Seguro
  *
  */
 
-public class NetworkModel extends BaseModel {
+public class NetworkModel extends AbstractBlock {
+	
+	/** the version of the block, used to track changes to the architecture or behavior */
+	private static final byte VERSION = 1;
+	
+	/** NDArray manager */
+	private final NDManager manager;
 
-	/**  */
+	/** input layer block */
 	private final Block linearInput;
 	
-	/**  */
+	/** output layer block */
 	private final Block linearOutput;
 	
-	/**  */
+	/** the number of hidden units in the neural network */
 	private final int hiddenSize;
 	
-	/**  */
+	/** the number of output units in the neural network */
 	private final int outputSize;
 	
 	
-	/** Constructs a score model
+	/** 
+	 * Constructs a neural network model
 	 * 
-	 * @param the manager
-	 * @param the hidden size
-	 * @param the output size
+	 * @param the manager for NDArray operations
+	 * @param the number of hidden units in the neural network
+	 * @param the number of output units in the neural network
 	 */
 	public NetworkModel(NDManager manager, int hiddenSize, int outputSize) {
-		super(manager);
+		super(VERSION);
+		
+		this.manager = manager;
 		
 		this.linearInput = addChildBlock("linear_input", Linear.builder().setUnits(hiddenSize).build());
 		this.linearOutput = addChildBlock("linear_output", Linear.builder().setUnits(outputSize).build());
@@ -54,11 +63,24 @@ public class NetworkModel extends BaseModel {
 	
 	
 	/** 
+	 * Gets the manager for this network
 	 * 
-	 * @param the manager
-	 * @param the input size
-	 * @param the hidden size
-	 * @param the output size
+	 * @return the manager
+	 */
+	public NDManager getManager() {
+		return manager;
+	}
+	
+	
+	/** 
+	 * Method to create a new neural network model
+	 * 
+	 * @param the manager for NDArray operations
+	 * @param the size of the input data
+	 * @param the number of hidden units in the neural network
+	 * @param the number of output units in the neural network
+	 * 
+	 * @return a new NetowrkModel instance
 	 */
 	public static Model newModel(NDManager manager, int inputSize, int hiddenSize, int outputSize) {
 		
@@ -72,13 +94,17 @@ public class NetworkModel extends BaseModel {
 	
 	
 	/** 
+	 * Forward pass of the neural network
 	 * 
-	 * @param the parameter store
-	 * @param the inputs list
-	 * @param boolean that indicates if model is training
-	 * @param 
+	 * @param the parameter store for the model
+	 * @param a list of input NDArrays
+	 * @param boolean that indicates if model is in training mode
+	 * @param a list of additional parameters
+	 * 
+	 * @return the output of the forward pass
 	 */
-	public NDList forward2(ParameterStore parameterStore, NDList inputs, boolean training, PairList<String, Object> params) {
+	@Override
+	public NDList forwardInternal(ParameterStore parameterStore, NDList inputs, boolean training, PairList<String, Object> params) {
 		
 		NDList hidden = new NDList(Activation.relu(linearInput.forward(parameterStore, inputs, training).singletonOrThrow()));
 		
@@ -86,9 +112,10 @@ public class NetworkModel extends BaseModel {
 	}
 	
 	/** 
+	 * Gets the output shapes of the neural network
 	 * 
-	 * @param the manager
-	 * @param the input shape
+	 * @param the manager for NDArray operations
+	 * @param an array of input shapes
 	 * 
 	 * @return array with the output shapes
 	 */
@@ -99,10 +126,11 @@ public class NetworkModel extends BaseModel {
 	}
 	
 	/** 
+	 * Initializes the child blocks (layer or sequence of layers) of the neural network
 	 * 
-	 * @param the manager
-	 * @param the data type
-	 * @param the input shapes
+	 * @param the manager for NDArray operations
+	 * @param the data type to use for initialization
+	 * @param an array of input shapes
 	 */
 	@Override
 	public void initializeChildBlocks(NDManager manager, DataType dataType, Shape... inputShapes) {
@@ -111,12 +139,5 @@ public class NetworkModel extends BaseModel {
 		linearOutput.initialize(manager, dataType, new Shape(hiddenSize));
 	}
 
-
-	@Override
-	protected NDList forwardInternal(ParameterStore parameterStore, NDList inputs, boolean training,
-			PairList<String, Object> params) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
 }

@@ -27,7 +27,7 @@ public class Memory {
 	private Transition[] memory;
 	
 	/** stores the previous state's ID*/
-	private int state_prev;
+	private float[] state_prev;
 	
 	/** stores the most recent chosen action's index*/
 	private int action;
@@ -61,8 +61,8 @@ public class Memory {
 	 * 
 	 * @param the current state
 	 */
-	public void setState(int state) {
-		if (state_prev != -1)
+	public void setState(float[] state) {
+		if (state_prev != null)
 			add(new Transition(state_prev, action, state, reward, done));
 		state_prev = state;
 	}
@@ -86,8 +86,8 @@ public class Memory {
 		this.done = done;
 		
 		if(done) {
-			add(new Transition (state_prev, action, -1, reward, done));
-			state_prev = -1;
+			add(new Transition (state_prev, action, null, reward, done));
+			state_prev = null;
 			action = -1;
 		}
 	}
@@ -105,7 +105,7 @@ public class Memory {
 	 * Resets the replay memory.
 	 */
 	public void reset() {
-		state_prev = -1;
+		state_prev = null;
 		action = -1;
 		reward = 0;
 		done = false;
@@ -146,35 +146,35 @@ public class Memory {
 	}
 	
 	/**
-	 * Converts an array of transitions to a MemoryBatch, with the given size and manager
+	 * Creates a batch of training data from a set of transitions
 	 * 
 	 * @param the array of transitions
-	 * @param the NDArray manager
+	 * @param the manager for NDArray operations
 	 * @param the size of the batch
 	 * 
 	 * @return the memory batch
 	 */
 	public MemoryBatch getBatch(Transition[] transitions, NDManager manager, int batchSize) {
 		
-		// Initiate arrays that will be then converted to NDArrays
-		int[] states = new int[batchSize];
+		// Initiate arrays to store batch data
+		float[][] states = new float[batchSize][];
 		int[] actions = new int[batchSize];
-		int[] nextStates = new int[batchSize];
+		float[][] nextStates = new float[batchSize][];
 		double[] rewards = new double[batchSize];
 		boolean [] dones = new boolean[batchSize];
 		
 		int index = head;
-		// Fills arrays with information from the array of transitions
+		// Fills arrays with information from the circular buffer of transitions
 		for (int i = 0; i< batchSize; i++) {
 			index++;
-			// Can't understand why, they are in random order in the array of transitions
+			// If it reaches the end of the buffer, it goes back to the beggining since it is circular
 			if (index >= batchSize)
 				index = 0;
-			// Nao sei se vai funcionar com os IDs mas nao sei criar um NDArray de states
 			states[i] = transitions[index].getState();
 			actions[i] = transitions[index].getAction();
-			// Eles fazem um check com o next state que eu nao percebo
-			nextStates[i] = transitions[index].getNextState();
+			// If next state is null (transition where episode ended), create array of zeros
+			float[] nextState = transitions[index].getNextState();
+			nextStates[i] = nextState != null ? nextState : new float[states[i].length];
 			rewards[i] = transitions[index].getReward();
 			dones[i] = transitions[index].isDone();
 		}
@@ -187,7 +187,7 @@ public class Memory {
 	 * Samples a random memory batch
 	 * 
 	 * @param the sample size
-	 * @param the batch manager
+	 * @param the manager for NDArray operations
 	 * 
 	 * @return the memory batch
 	 */
@@ -199,7 +199,7 @@ public class Memory {
 	/**
 	 * Gets all the transitions in memory in batch format
 	 * 
-	 * @param the batch manager
+	 * @param the manager for NDArray operations
 	 * 
 	 * @return the memory batch
 	 */

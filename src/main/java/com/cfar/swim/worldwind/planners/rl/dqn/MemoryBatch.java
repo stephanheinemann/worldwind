@@ -19,8 +19,6 @@ import ai.djl.ndarray.NDList;
 
 public class MemoryBatch extends NDList{
 	
-	private static final long serialVersionUID = 1L;	
-	
 	/** Constructs a memory batch
 	 * 
 	 * @param arrays

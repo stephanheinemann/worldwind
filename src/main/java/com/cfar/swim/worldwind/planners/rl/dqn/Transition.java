@@ -17,13 +17,13 @@ import com.cfar.swim.worldwind.planners.rl.State;
 public class Transition {
 	
 	/** the state*/     
-	private int state = 0;
+	private float[] state = new float[State.ID_SIZE];
 	
 	/** the action */
 	private int action = 0;
 	
 	/** the next state */
-	private int nextState =  0;
+	private float[] nextState =  new float[State.ID_SIZE];
 	
 	/** the reward */
 	private double reward = 0;
@@ -39,7 +39,7 @@ public class Transition {
 	 * @param the next state
 	 * @param the reward
 	 */
-	public Transition(int state, int action, int nextState, double reward, boolean done) {
+	public Transition(float[] state, int action, float[] nextState, double reward, boolean done) {
 		this.state = state;
 		this.action = action;
 		this.nextState = nextState;
@@ -52,7 +52,7 @@ public class Transition {
 	 * 
 	 * @return the state
 	 */
-	public int getState() {
+	public float[] getState() {
 		return this.state;
 	}
 	
@@ -70,7 +70,7 @@ public class Transition {
 	 * 
 	 * @return the next state
 	 */
-	public int getNextState() {
+	public float[] getNextState() {
 		return this.nextState;
 	}
 	

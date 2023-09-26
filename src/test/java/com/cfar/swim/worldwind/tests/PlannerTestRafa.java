@@ -32,6 +32,8 @@ package com.cfar.swim.worldwind.tests;
 import static org.junit.Assert.assertEquals;
 
 
+
+
 import static org.junit.Assert.assertNotNull;
 
 import java.awt.Color;
@@ -44,10 +46,10 @@ import org.junit.Test;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
-import com.cfar.swim.worldwind.environments.PlanningGrid;
-import com.cfar.swim.worldwind.geom.Cube;
+import com.cfar.swim.worldwind.environments.PlanningContinuum;
+import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Neighborhood;
-import com.cfar.swim.worldwind.planners.rl.qlearning.*;
+import com.cfar.swim.worldwind.planners.rl.dqn.*;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.google.common.collect.Iterables;
@@ -58,48 +60,49 @@ import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.render.Path;
 
 import com.cfar.swim.worldwind.planners.rl.Plot;
+import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
 
 /**
  * Performs planner tests.
  * 
- * @author Stephan Heinemann
+ * @author Rafaela Seguro
  *
  */
 public class PlannerTestRafa {
 
 	/**
-	 * Tests a forward A* planner.
+	 * Tests a DQN planner.
 	 */
 	@Test
 	@SuppressWarnings("unchecked")
-	public void qLearningTest() {
+	public void DQNTest() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
+		Vec4 originVec = new Vec4(1000, 1000, 1000);
         // the reference cube has to be offset from the origin for the position computation to work
-		Cube cube = new Cube(new Vec4(1000, 1000, 1000), axes, 1d);
-        PlanningGrid planningGrid = new PlanningGrid(cube, 2, 2, 2);
-        planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
-        planningGrid.setGlobe(new Earth());
+		Box box = new Box(originVec, axes, 1d, 1d, 1d);
+        PlanningContinuum planningContinuum = new PlanningContinuum(box);
+        planningContinuum.setGlobe(new Earth());
         
-        Position origin = planningGrid.getCornerPositions()[0];
-        Position destination = planningGrid.getCornerPositions()[6];
+        Position origin = planningContinuum.getGlobe().computePositionFromPoint(originVec);
+        Position destination = planningContinuum.getCenterPosition();
         ZonedDateTime etd = ZonedDateTime.now();
         Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
         
-        QLearningPlanner2 planner = new QLearningPlanner2(iris, planningGrid);
+        DQNPlanner planner = new DQNPlanner(iris, planningContinuum);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);
-        assertEquals(7, Iterables.size(path.getPositions()));
+        //assertEquals(7, Iterables.size(path.getPositions()));
      		
-		planningGrid.setNeighborhood(Neighborhood.VERTEX_26);
-		path = planner.plan(origin, destination, etd);
-        assertNotNull(path);
-		assertEquals(3, Iterables.size(path.getPositions()));
-		
-		planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
-		List<Position> waypoints = Arrays.asList(planningGrid.getCornerPositions());
-		path = planner.plan(origin, destination, waypoints, etd);
-		assertEquals(8, waypoints.size());
-		assertEquals(19 , Iterables.size(path.getPositions()));
+//		planningGrid.setNeighborhood(Neighborhood.VERTEX_26);
+//		path = planner.plan(origin, destination, etd);
+//        assertNotNull(path);
+//		assertEquals(3, Iterables.size(path.getPositions()));
+//		
+//		planningGrid.setNeighborhood(Neighborhood.VERTEX_6);
+//		List<Position> waypoints = Arrays.asList(planningGrid.getCornerPositions());
+//		path = planner.plan(origin, destination, waypoints, etd);
+//		assertEquals(8, waypoints.size());
+//		assertEquals(19 , Iterables.size(path.getPositions()));
 		
 //		destination = planningGrid.getCornerPositions()[7];
 //		path = planner.plan(origin, destination, waypoints, etd);

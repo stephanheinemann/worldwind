@@ -398,9 +398,7 @@
 		<dependency>
 			<groupId>ai.djl.pytorch</groupId>
 			<artifactId>pytorch-native-cpu</artifactId>
-			<version>1.6.0</version>
-			<classifier>linux-x86_64</classifier>
-			<scope>runtime</scope>
+			<version>2.0.1</version>
 		</dependency>
 	</dependencies>
 
