@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.registries.planners;
 import java.time.Duration;
 
 
+
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
@@ -40,6 +41,7 @@ import com.cfar.swim.worldwind.planners.cgs.oadstar.OADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedTreePlanner;
+import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
 import com.cfar.swim.worldwind.planners.rl.qlearning.QLearningPlanner;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
@@ -62,6 +64,7 @@ import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rl.QLearningProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.DQNProperties;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
@@ -326,6 +329,11 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 			} else if (this.getSpecification().getId().equals(Specification.PLANNER_QLP_ID)) {
 				QLearningProperties properties = (QLearningProperties) this.getSpecification().getProperties();
 				planner = new QLearningPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+			} else if (this.getSpecification().getId().equals(Specification.PLANNER_DQN_ID)) {
+				DQNProperties properties = (DQNProperties) this.getSpecification().getProperties();
+				planner = new DQNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
 			} else if (this.getSpecification().getId().equals(Specification.PLANNER_MTP_ID)) {

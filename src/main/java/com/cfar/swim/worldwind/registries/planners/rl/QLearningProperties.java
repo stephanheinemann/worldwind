@@ -52,7 +52,7 @@ public class QLearningProperties extends AbstractPlannerProperties {
 	}
 
 	/**
-	 * Constructs a new forward A* planner properties bean with
+	 * Constructs a new forward Q-Learning planner properties bean with
 	 * specified cost and risk policy property values.
 	 * 
 	 * @param costPolicy the cost policy of this Q-Learning planner properties bean

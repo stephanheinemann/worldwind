@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.registries;
 
 import java.io.Serializable;
 
+
 import java.util.Objects;
 
 import com.cfar.swim.worldwind.util.Customizable;
@@ -205,10 +206,10 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getDictionaryBundle()
 			.getString("specification.planner.qlp.description");
 	
-	/** the identifier of a Q Learning planner specification */
+	/** the identifier of a DQN planner specification */
 	public static final String PLANNER_DQN_ID = "DQN";
 	
-	/** the description of a Q learning planner specification */
+	/** the description of a DQN planner specification */
 	public static final String PLANNER_DQN_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
 			.getString("specification.planner.dqn.description");
