@@ -201,6 +201,9 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 	/** the identifier of a Q Learning planner specification */
 	public static final String PLANNER_QLP_ID = "QLearningP";
 	
+	/** the identifier of a Q Learning planner specification */
+	public static final String PLANNER_QLP2_ID = "QLearningP2";
+	
 	/** the description of a Q learning planner specification */
 	public static final String PLANNER_QLP_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()

@@ -135,7 +135,7 @@ public class QLearningPlanner2 extends AbstractPlanner {
 	@Override
 	public String getId() {
 		// TODO Auto-generated method stub
-		return Specification.PLANNER_QLP_ID;
+		return Specification.PLANNER_QLP2_ID;
 	}
 	
 	/**
