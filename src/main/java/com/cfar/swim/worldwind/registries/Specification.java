@@ -212,6 +212,9 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 	/** the identifier of a DQN planner specification */
 	public static final String PLANNER_DQN_ID = "DQN";
 	
+	/** the identifier of a DQN planner specification */
+	public static final String PLANNER_DQN_NOCOSTS_ID = "DQN2";
+	
 	/** the description of a DQN planner specification */
 	public static final String PLANNER_DQN_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()

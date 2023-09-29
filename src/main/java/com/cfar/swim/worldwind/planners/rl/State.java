@@ -1,12 +1,16 @@
 package com.cfar.swim.worldwind.planners.rl;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
+import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.planners.rl.dqn.DQNObstacle;
 
 import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.LatLon;
@@ -22,47 +26,48 @@ import gov.nasa.worldwind.globes.Globe;
  */
 public class State {
 	
+	/** the number of considered obstacles for the ID out of the set of close obstacles */
+	public static int CONSIDERED_OBSTACLES = 3;
+	
 	/** the size of the state ID */
-	public static int ID_SIZE = 4;
+	public static int ID_SIZE = 5 + 3*CONSIDERED_OBSTACLES;
 	
 	/** array that represents the state's ID */
 	private float[] id = new float[ID_SIZE];
 	
-//	/** the position relative to the current goal */
-//	private PrecisionPosition position;
-	
 	/** vector that points from state to goal*/
-	private Vec4 relativeVector = null;
+	private Vec4 relativeToGoal = null;
 	
 	/** the distance from this state to the goal (vector length)*/
 	private float distanceToGoal = 0f;
 	
-	/** the estimated time over of this state */
-	private ZonedDateTime eto;
+	/** the set of obstacles from the environment in close proximity to the state*/
+	private Set<DQNObstacle> obstacles = new TreeSet<DQNObstacle>(Comparator.comparingDouble(DQNObstacle::getDistanceToState));
 	
-	/** the cost of this state */
-	private double cost;
-	
-	/**Something to describe the surrounding cost intervals*/
-	// TODO: add more environment info
+	/** the applicable cost policy*/
+	private CostPolicy costPolicy = CostPolicy.AVERAGE;
 	
 	/** indicates if the state has been visited*/
 	boolean visited;
+	
 
 	/**
 	 * Constructs a state of a reinforcement learning planner from a position.
 	 * 
 	 * @param position the state's position in globe coordinates
 	 * @param goal the goal's position in globe coordinates
+	 * @param obstacles the set of obstacles from the environment in close proximity to the state
+	 * @param costPolicy the DQN planner's cost policy
 	 * @param globe the globe
-	 * @param id the state's id
 	 * 
 	 */
-	public State(Position position, Position goal, Globe globe) {
+	public State(Position position, Position goal, Set<DQNObstacle> obstacles, CostPolicy costPolicy, Globe globe) {
 		Vec4 statePoint = globe.computePointFromPosition(position);
 		Vec4 goalPoint = globe.computePointFromPosition(goal);
-		this.relativeVector = goalPoint.subtract3(statePoint);
-		this.distanceToGoal = (float) this.relativeVector.getLength3();
+		this.relativeToGoal = goalPoint.subtract3(statePoint);
+		this.distanceToGoal = (float) this.relativeToGoal.getLength3();
+		this.obstacles = obstacles;
+		this.costPolicy = costPolicy;
 		this.createId();
 	}
 	
@@ -70,11 +75,16 @@ public class State {
 	 * Constructs a state of a reinforcement learning planner from a relative position vector.
 	 * 
 	 * @param the vector relative to the goal
+	 * @param obstacles the set of obstacles from the environment in close proximity to the state
+	 * @param costPolicy the DQN planner's cost policy
 	 * 
 	 */
-	public State(Vec4 relativeVector) {
-		this.relativeVector = relativeVector;
-		this.distanceToGoal = (float) this.relativeVector.getLength3();
+	public State(Vec4 relativeToGoal, Set<DQNObstacle> obstacles, CostPolicy costPolicy) {
+		this.relativeToGoal = relativeToGoal;
+		this.distanceToGoal = (float) this.relativeToGoal.getLength3();
+		this.obstacles = obstacles;
+		this.costPolicy = costPolicy;
+		this.createId();
 	}
 	
 	/**
@@ -82,8 +92,8 @@ public class State {
 	 * 
 	 * @return the vector that points from state to goal
 	 */
-	public Vec4 getRelativeVector() {
-		return this.relativeVector;
+	public Vec4 getrelativeToGoal() {
+		return this.relativeToGoal;
 	}
 	
 	/**
@@ -104,42 +114,24 @@ public class State {
 		return this.id;
 	}
 	
+	
 	/**
-	 * Sets the state's ETO.
+	 * Gets the set of obstacles from the environment in close proximity to the state.
 	 * 
-	 * @param eto state's ETO
+	 * @return the set of obstacles from the environment in close proximity to the state
 	 */
-	public void setEto(ZonedDateTime eto) {
-		this.eto = eto;
+	public Set<DQNObstacle> getObstacles() {
+		return this.obstacles;
 	}
-	
-	
-	/**
-	 * Gets the state's ETO.
-	 * 
-	 * @return the state's ETO
-	 */
-	public ZonedDateTime getEto() {
-		return this.eto;
-	}
+
 	
 	/**
-	 * Sets the state's cost.
+	 * Gets the applicable cost policy.
 	 * 
-	 * @param cost state's cost
+	 * @return the applicable cost policy
 	 */
-	public void setCost(double cost) {
-		this.cost = cost;
-	}
-	
-	
-	/**
-	 * Gets the state's cost.
-	 * 
-	 * @return the state's cost
-	 */
-	public double getCost() {
-		return this.cost;
+	public CostPolicy getCostPolicy() {
+		return this.costPolicy;
 	}
 	
 	/**
@@ -165,10 +157,33 @@ public class State {
 	 * Creates the state's ID based on the stored information
 	 */
 	public void createId() {
-		id[0] = (float) this.getRelativeVector().x;
-		id[1] = (float) this.getRelativeVector().y;
-		id[2] = (float) this.getRelativeVector().z;
-		id[3] = (float) this.getDistanceToGoal();
+		
+		// Applicable cost policy
+		id[0] = (float) costPolicy.getFeatureValue();
+		
+		// Relative position and distance to goal
+		id[1] = (float) this.getrelativeToGoal().x;
+		id[2] = (float) this.getrelativeToGoal().y;
+		id[3] = (float) this.getrelativeToGoal().z;
+		id[4] = (float) this.getDistanceToGoal();
+
+		// Adds the obstacles. Puts zero if there are less obstacles than CONSIDERED_OBSTACLES
+		Iterator<DQNObstacle> itr = obstacles.iterator();
+		DQNObstacle current = null;
+		for (int i=0; i < CONSIDERED_OBSTACLES; i++) {
+			if(itr.hasNext()) {
+				current =itr.next();
+				id[5+(4*i)] = (float) current.getrelativeToState().x;
+				id[6+(4*i)] = (float) current.getrelativeToState().y;
+				id[7+(4*i)] = (float) current.getrelativeToState().z;
+				id[8+(4*i)] = (float) current.getDistanceToState();
+			} else {
+				id[5+(4*i)] = 0.0f;
+				id[6+(4*i)] = 0.0f;
+				id[7+(4*i)] = 0.0f;
+				id[8+(4*i)] = 0.0f;
+			}
+		}
 	}
 	
 	/**

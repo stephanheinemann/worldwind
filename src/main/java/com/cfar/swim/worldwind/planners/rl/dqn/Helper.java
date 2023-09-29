@@ -1,10 +1,19 @@
 package com.cfar.swim.worldwind.planners.rl.dqn;
 
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.TreeSet;
 import java.util.Random;
+import java.util.Set;
+
+import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.planning.RiskPolicy;
+import com.cfar.swim.worldwind.render.Obstacle;
+import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.types.Shape;
+import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
@@ -71,8 +80,10 @@ public final class Helper {
 		listOfActions.add(new Vec4(0,0,0));
 		
 		// The rest of the list is populated with all possible actions with angles 0, 22.5, 45, 67.5 and 90
-		double[] thetaValues = {0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180};
-		double[] alphaValues = {0, 22.5, 45, 67.5, 90};
+//		double[] thetaValues = {0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180};
+//		double[] alphaValues = {0, 22.5, 45, 67.5, 90};
+		double[] thetaValues = {0, 45, 90, 135, 180};
+		double[] alphaValues = {0, 45, 90};
 		double x, y, z;
 		
 		for (double theta : thetaValues){
@@ -86,6 +97,44 @@ public final class Helper {
 		}
 		
 		return listOfActions;
+	}
+	
+	/** 
+	 * Creates a set of the obstacles that are in close proximity to the current state
+	 * and don't satisfy the current risk policy. 
+	 * 
+	 * @param the state's position
+	 * @param the aircraft's radius
+	 * @param the environment
+	 * @param the risk policy
+	 * 
+	 * @return the set of DQN obstacles ordered by their distance to the state
+	 * 
+	 */
+	public static Set<DQNObstacle> getCloseObstacles(Position position, double aircraftRadius, Environment environment,
+			RiskPolicy riskPolicy) {
+		
+		Set<DQNObstacle> interferingObstacles = new TreeSet<DQNObstacle>(Comparator.comparingDouble(DQNObstacle::getDistanceToState));
+		
+		// Creates a new sphere obstacle with center in the state's position and triple the aircraft's radius
+		ObstacleSphere stateObstacle = new ObstacleSphere(position, 3*aircraftRadius);
+		
+		// Goes through all the obstacles in the environment
+		for (Obstacle obstacle : environment.getObstacles()) {
+			
+			// Checks if it interferes with the obstacle representing the state
+			if (obstacle.intersects(environment.getGlobe(), stateObstacle)) {
+				
+				// Checks if the cost obstacle satisfies the risk policy
+				if (!riskPolicy.satisfies(obstacle.getCostInterval().getCost())) {
+					
+					DQNObstacle newObstacle = new DQNObstacle(position, obstacle, environment.getGlobe());
+					interferingObstacles.add(newObstacle);
+				}
+			}
+		}
+		
+		return interferingObstacles;
 	}
 
 }

@@ -2,6 +2,7 @@ package com.cfar.swim.worldwind.planners.rl.dqn;
 
 import java.util.ArrayList;
 
+
 import java.util.Arrays;
 import java.awt.Color;
 import java.time.ZonedDateTime;
@@ -31,12 +32,11 @@ import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.rl.Plot;
 import com.cfar.swim.worldwind.planners.rl.RLWaypoint;
-import com.cfar.swim.worldwind.planners.rl.State;
+import com.cfar.swim.worldwind.planners.rl.StateNoCosts;
 import com.cfar.swim.worldwind.planners.rl.dqn.Memory;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
-import com.cfar.swim.worldwind.render.Obstacle;
 //import com.cfar.swim.worldwind.tests.Plot;
 import com.cfar.swim.worldwind.util.Identifiable;
 
@@ -59,14 +59,14 @@ import ai.djl.translate.NoopTranslator;
 
 /**
 * Realizes a deep reinforcement learning planner, using a Deep Q-Network, that plans a trajectory of an aircraft
-* in an environment considering a local cost and risk policy.
+* in an environment without considering the local cost and risk policy.
 * 
 * @author Rafaela Seguro
 *
 */
 
-public class DQNPlanner extends AbstractPlanner {
-	
+public class DQNPlannerNoCosts extends AbstractPlanner {
+
 	/** the minimum exploration rate used during training */
 	private static final float MIN_EXPLORE_RATE = 0.0f; 
 	
@@ -89,7 +89,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private final Memory memory = new Memory(4096);
 	
 	/** maps states to their IDs */
-	protected Map<float[], State> stateMap = new TreeMap<>(new FloatArrayComparator());
+	protected Map<float[], StateNoCosts> stateMap = new TreeMap<>(new FloatArrayComparator());
 	
 	/** dimension of a space ID (input of the neural network) */
 	private int dimOfSpace;
@@ -145,16 +145,16 @@ public class DQNPlanner extends AbstractPlanner {
 	private final L2Loss lossFunc = new L2Loss();
 	
 	/** the planner's start state */
-	private State start = null;
+	private StateNoCosts start = null;
 	
 	/** the planner's goal state */
-	private State goal = null;
+	private StateNoCosts goal = null;
 	
 	/** the current state */
-	private State state = null;
+	private StateNoCosts state = null;
 	
 	/** the next state */
-	private State nextState = null;
+	private StateNoCosts nextState = null;
 	
 	/** the index of the chosen action */
 	private int action = 0;
@@ -190,9 +190,9 @@ public class DQNPlanner extends AbstractPlanner {
 	 * @param the aircraft
 	 * @param the environment
 	 */
-	public DQNPlanner(Aircraft aircraft, Environment environment) {
+	public DQNPlannerNoCosts(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		this.dimOfSpace = State.ID_SIZE;
+		this.dimOfSpace = StateNoCosts.ID_SIZE;
 		this.listOfActions = Helper.listOfActions();
 		this.numOfActions = listOfActions.size();
 		
@@ -209,7 +209,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public String getId() {
-		return Specification.PLANNER_DQN_NOCOSTS_ID;
+		return Specification.PLANNER_DQN_ID;
 	}
 	
 	/**
@@ -265,7 +265,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @return the start state of this planner
 	 */
-	protected State getStart() {
+	protected StateNoCosts getStart() {
 		return this.start;
 	}
 	
@@ -274,7 +274,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @param start the start state of this planner
 	 */
-	protected void setStart(State start) {
+	protected void setStart(StateNoCosts start) {
 		this.start = start;
 	}
 
@@ -283,7 +283,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @return the goal state of this planner
 	 */
-	protected State getGoal() {
+	protected StateNoCosts getGoal() {
 		return this.goal;
 	}
 	
@@ -292,7 +292,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @param goal the goal state of this planner
 	 */
-	protected void setGoal(State goal) {
+	protected void setGoal(StateNoCosts goal) {
 		this.goal = goal;
 	}
 	
@@ -301,7 +301,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @return the state 
 	 */
-	protected State getState() {
+	protected StateNoCosts getState() {
 		return this.state;
 	}
 	
@@ -310,7 +310,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @param state the current state
 	 */
-	protected void setState(State state) {
+	protected void setState(StateNoCosts state) {
 		this.state = state;
 	}
 	
@@ -319,7 +319,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @return the next state
 	 */
-	protected State getNextState() {
+	protected StateNoCosts getNextState() {
 		return this.nextState;
 	}
 
@@ -328,7 +328,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @param nextState the next state of this planner
 	 */
-	protected void setNextState(State nextState) {
+	protected void setNextState(StateNoCosts nextState) {
 		this.nextState = nextState;
 	}
 	
@@ -558,10 +558,8 @@ public class DQNPlanner extends AbstractPlanner {
 		int step;
 		
 		// Creates the start and goal states and adds them to the state map
-		Set<DQNObstacle> obstacles = Helper.getCloseObstacles(origin, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setStart(this.addState(new State(origin, destination, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
-		obstacles = Helper.getCloseObstacles(destination, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setGoal(this.addState(new State(destination, destination, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
+		this.setStart(this.addState(new StateNoCosts(origin, destination, this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new StateNoCosts(destination, destination, this.getEnvironment().getGlobe())));
 		
 		System.out.print("Episode " + episode + "\r");
 		
@@ -608,19 +606,9 @@ public class DQNPlanner extends AbstractPlanner {
 		while (goalPosition == startPosition)
 			goalPosition = this.getPlanningContinuum().sampleRandomUniformPosition();
 		
-		// Adds obstacles to the environment
-		//TODO: create function to randomize obstacles and policies and add them to the environment
-		
 		// Creates the start and goal states and adds them to the state map
-		Set<DQNObstacle> obstacles = Helper.getCloseObstacles(startPosition, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setStart(this.addState(new State(startPosition, goalPosition, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
-		obstacles = Helper.getCloseObstacles(goalPosition, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setGoal(this.addState(new State(goalPosition, goalPosition, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
-		
-		// Sets the start and goal position and goal point
-		this.setStartPosition(startPosition);
-		this.setGoalPosition(goalPosition);
-		this.setGoalPoint(this.getEnvironment().getGlobe().computePointFromPosition(goalPosition));
+		this.setStart(this.addState(new StateNoCosts(startPosition, goalPosition, this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new StateNoCosts(goalPosition, goalPosition, this.getEnvironment().getGlobe())));
 		
 		// Sets the state as the start
 		this.setState(this.getStart());
@@ -628,6 +616,7 @@ public class DQNPlanner extends AbstractPlanner {
 		// Sets the "done" boolean to false
 		this.setDone(false);
 		
+		//TODO: adicionar obstaculos e treinar para policies diferentes -> tem que ser adicionados tambem na definicao do estado e na comparacao
 	}
 
 	/**
@@ -637,7 +626,7 @@ public class DQNPlanner extends AbstractPlanner {
 		
 		if (stateMap.isEmpty())
 			return;
-		for (Map.Entry<float[], State> s : stateMap.entrySet()) {
+		for (Map.Entry<float[], StateNoCosts> s : stateMap.entrySet()) {
 			s.getValue().setVisited(false);
 		}
 	
@@ -650,10 +639,10 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @return the state
 	 */
-	protected State addState(State state) {
+	protected StateNoCosts addState(StateNoCosts state) {
 		boolean exists = false;
 		
-		for (Map.Entry<float[], State> s : stateMap.entrySet()) {
+		for (Map.Entry<float[], StateNoCosts> s : stateMap.entrySet()) {
 			if (s.getValue().equals(state)) {
 				exists = true;
 				return s.getValue();
@@ -720,14 +709,12 @@ public class DQNPlanner extends AbstractPlanner {
 		Vec4 movVector;
 		if (action == 0) {
 			// If the action index is 0, the action corresponds to just flying in the direction of the goal
-			movVector = this.getState().getrelativeToGoal().normalize3().multiply3(stepSize);
+			movVector = this.getState().getRelativeVector().normalize3().multiply3(stepSize);
 		} else {
 			movVector = listOfActions.get(action).multiply3(stepSize);
 		}
-		Position nextStatePosition = this.getEnvironment().getGlobe().computePositionFromPoint(this.getGoalPoint()
-				.subtract3(this.getState().getrelativeToGoal().subtract3(movVector)));
-		Set<DQNObstacle> obstacles = Helper.getCloseObstacles(nextStatePosition, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		State nextState = new State(nextStatePosition, this.getGoalPosition(), obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe());
+		Vec4 relativeVector = this.getState().getRelativeVector().subtract3(movVector);
+		StateNoCosts nextState = new StateNoCosts(relativeVector);
 		this.addState(nextState);
 		this.setNextState(nextState);
 		
@@ -753,7 +740,6 @@ public class DQNPlanner extends AbstractPlanner {
 		}
 		
 		// If the cost is exceeded
-		//TODO: Consider costs 
 		
 		// If the state is repeated -100
 		if (this.getNextState().isVisited())
@@ -865,10 +851,8 @@ public class DQNPlanner extends AbstractPlanner {
 		this.setGoalPoint(this.getEnvironment().getGlobe().computePointFromPosition(destination));
 		
 		// Creates the start and goal states and adds them to the state map
-		Set<DQNObstacle> obstacles = Helper.getCloseObstacles(origin, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setStart(this.addState(new State(origin, destination, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
-		obstacles = Helper.getCloseObstacles(destination, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setGoal(this.addState(new State(destination, destination, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
+		this.setStart(this.addState(new StateNoCosts(origin, destination, this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new StateNoCosts(destination, destination, this.getEnvironment().getGlobe())));
 		
 		// Sets the state as the start
 		this.setState(this.getStart());
@@ -913,7 +897,7 @@ public class DQNPlanner extends AbstractPlanner {
 			
 			// Adds the next waypoint to the trajectory
 			// Creates waypoint by subtracting the next state's relative vector to the goal
-			this.getWaypoints().addLast(this.createWaypoint(globe.computePositionFromPoint(this.getGoalPoint().subtract3(this.getNextState().getrelativeToGoal()))));
+			this.getWaypoints().addLast(this.createWaypoint(globe.computePositionFromPoint(this.getGoalPoint().subtract3(this.getNextState().getRelativeVector()))));
 			
 			// Sets the state as the next state
 			this.setState(this.getNextState());
