@@ -32,6 +32,7 @@ import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.rl.Plot;
 import com.cfar.swim.worldwind.planners.rl.RLWaypoint;
+import com.cfar.swim.worldwind.planners.rl.State;
 import com.cfar.swim.worldwind.planners.rl.StateNoCosts;
 import com.cfar.swim.worldwind.planners.rl.dqn.Memory;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -68,16 +69,19 @@ import ai.djl.translate.NoopTranslator;
 public class DQNPlannerNoCosts extends AbstractPlanner {
 
 	/** the minimum exploration rate used during training */
-	private static final float MIN_EXPLORE_RATE = 0.0f; 
+	private static final float MIN_EXPLORE_RATE = 0.1f; 
 	
 	/** the rate at which the exploration rate decays over time */
-	private static final float DECAY_EXPLORE_RATE = 0.9f;
+	private static final float DECAY_EXPLORE_RATE = 0.99f;
+	
+	/** the initial value of epsilon */
+	private static final float INITIAL_EPSILON = 0.7f;
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 2000;
+	private static final int NUM_GLOBAL_EPS = 5000;
 	
 	/** maximum number of steps per episode */
-	private static final int MAX_STEPS = 200;
+	private static final int MAX_STEPS = 100;
 	
 	/** indicates if the DQN has been trained or not */
 	private boolean trained = false;
@@ -101,16 +105,19 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	private final int numOfActions;
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int hiddenSize = 64;
+	private final int[] hiddenSize = {64, 128, 128, 64};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.001f;
+	private final float learningRate = 0.0025f;
 	
 	/** the size of the mini-batch of transitions used for training */
 	protected final int batchSize = 32;
 	
+	/** the number of iterations between each train of the policy network */
+	protected final int trainNetInterval = 2;
+	
 	/** the number of iterations between each sync of the target and policy networks */
-	protected final int syncNetInterval = 10;
+	protected final int syncNetInterval = 50;
 	
 	/** gamma factor for the Bellman equation */
 	protected final float gamma = 0.99f;
@@ -139,7 +146,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	/** the minimum, maximum and current epsilon value to implement decaying e-greedy */
 //	private float minEpsilon = 0.0f; 
 //	private float maxEpsilon = 1.0f; 
-	private float epsilon = 1.0f; 
+	private float epsilon = INITIAL_EPSILON; 
 	
 	/** the loss function */
 	private final L2Loss lossFunc = new L2Loss();
@@ -160,10 +167,16 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	private int action = 0;
 	
 	/** the received reward */
-	private double reward = 0;
+	private double reward = 0.0;
 	
 	/** indicates if it reached goal or not, true if it has */
 	private boolean done = false;
+	
+	/** indicates if it reached goal or not, true if it has */
+	private boolean failure = false;
+	
+	/** indicates the result of a training episode: -1 if failure, 0 if ran out of steps, 1 if reached goal */
+	private int episodeResult = 0;
 	
 	/** the radius of the sphere defining the goal region of this DQN planner */
 	private double goalThreshold = 10d; // (0, Double.MAX_Value]
@@ -182,6 +195,16 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	
 	/** stores the plan's ETD */
 	private ZonedDateTime etd;
+	
+	/** times */
+	long reactTime = 0;
+	long stepTime = 0;
+	long chooseActionTime = 0;
+	long updateModelTime = 0;
+	long gradientUpdateTime = 0;
+	long resetEnvironmentTime = 0;
+	long syncNetworksTime = 0;
+	long addStateTime = 0;
 	
 	
 	/** Constructs a planner trained by a Deep Q-Network for a specified aircraft and
@@ -209,7 +232,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 */
 	@Override
 	public String getId() {
-		return Specification.PLANNER_DQN_ID;
+		return Specification.PLANNER_DQN_NOCOSTS_ID;
 	}
 	
 	/**
@@ -383,7 +406,45 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * @param the boolean value
 	 */
 	protected void setDone(boolean done) {
+		
+		
 		this.done = done;
+	}
+	
+	/**
+	 * Checks if the planner has failed
+	 * 
+	 * @return true if it failed, false otherwise
+	 */
+	protected boolean failed() {
+		return this.failure;
+	}
+	
+	/**
+	 * Sets the boolean that indicates if the planner has failed.
+	 * 
+	 * @param true if it failed, false otherwise
+	 */
+	protected void setFailure(boolean failure) {
+		this.failure = failure;
+	}
+	
+	/**
+	 * Gets the result of the current training episode
+	 * 
+	 * @return the result of the episode: -1 if failure, 0 if ran out of steps, 1 if reached goal
+	 */
+	protected int getEpisodeResult() {
+		return this.episodeResult;
+	}
+	
+	/**
+	 * Sets the result of the current training episode.
+	 * 
+	 * @param the result: -1 if failure, 0 if ran out of steps, 1 if reached goal
+	 */
+	protected void setEpisodeResult(int result) {
+		this.episodeResult = result;
 	}
 	
 	/**
@@ -502,45 +563,83 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 */
 	protected void trainGlobal() {
 		
+		long start = System.nanoTime() / 100000;
+		
 		System.out.println("TRAINING GLOBAL");
+		System.out.println();
 		
 		// Sets epsilon to one, for zero exploitation
 		this.epsilon = 1.0f;
 		
+		double decay = 0.000;
 		int episode = 0;
 		int step;
+		double score;
 		
 		// For each episode
 		while (episode < NUM_GLOBAL_EPS) {
 			// Reset environment 
 			episode++;
 			step = 0;
+			score = 0;
 			resetEnvironment();
 			resetVisitedStates();
 			
-			System.out.print("Episode " + episode + "\r");
-		
+//			System.out.print("Episode " + episode + "\r");
+			long startEpisode = System.nanoTime() / 100000;
+			
 			// For each time step
-			while (!this.isDone() && step < MAX_STEPS) {
+			while (!this.isDone() && !this.failed() && step < MAX_STEPS) {
 				// Sets the state to visited
-				this.stateMap.get(this.getState().getId()).setVisited(true);
+				//this.stateMap.get(this.getState().getId()).setVisited(true);
 				// Saves state in memory; Updates the network; Selects the next action and saves it in memory
 				this.react();
 				// Execute action and get next state and reward; Checks if the goal has been reached
 				this.step();
+				//System.out.println("State: " + this.getState().getDistanceToGoal() + " Action: " + this.getAction() + " Reward:" + this.getReward());
 				// Stores the reward and the "done" boolean in memory
 				this.collect();
+				score += this.getReward();
 				// Sets the state as the next state
 				this.setState(this.getNextState());
 				step++;
 			}
-			// Updates epsilon for next episode
-//			if (this.isDone()) {
-//				System.out.println("Episode " + episode + " reached goal after " + step + " steps");
-//			} else {
-//				System.out.println("Episode " + episode + " did not reach goal");
-//			}
+			// Update epsilon for next episode
+			decay = Math.min(((double) episode / NUM_GLOBAL_EPS), 1.0);
+			epsilon = (float) (INITIAL_EPSILON - (INITIAL_EPSILON - MIN_EXPLORE_RATE) * decay);
+			long endEpisode = System.nanoTime() / 100000;
+			long episodeTime = endEpisode - startEpisode;
+			if (this.isDone()) {
+				//System.out.println("-------------------------------------------------------------------------------------");
+				System.out.println("Episode " + episode + " had score " + score + " and reached GOAL after " + step + " steps");
+			} else if (this.failed()) {
+				System.out.println("Episode " + episode + " had score " + score + "  and failed");
+			} else {
+				System.out.println("Episode " + episode + " had score " + score + "  and did not reach goal");
+			} 
+//			System.out.println("Total episode time: " + episodeTime);
+//			System.out.println("Time in react: " + reactTime);
+//			System.out.println("Time in step: " + stepTime);
+//			System.out.println("Time in chooseAction: " + chooseActionTime);
+//			System.out.println("Time in updateModel: " + updateModelTime);
+//			System.out.println("Time in gradientUpdate: " + gradientUpdateTime);
+//			System.out.println("Time in resetEnvironment: " + resetEnvironmentTime);
+//			System.out.println("Time in syncNetworks: " + syncNetworksTime);
+//			System.out.println("Time in addState: " + addStateTime);
+			reactTime = 0;
+			stepTime = 0;
+			chooseActionTime = 0;
+			updateModelTime = 0;
+			gradientUpdateTime = 0;
+			resetEnvironmentTime = 0;
+			syncNetworksTime = 0;
+			addStateTime = 0;
+			
 		}
+		
+		long end = System.nanoTime() / 100000;
+		long trainTime = (end - start);
+		System.out.println("Total training time: " + trainTime);
 	}
 	
 	
@@ -558,10 +657,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		int step;
 		
 		// Creates the start and goal states and adds them to the state map
-		this.setStart(this.addState(new StateNoCosts(origin, destination, this.getEnvironment().getGlobe())));
-		this.setGoal(this.addState(new StateNoCosts(destination, destination, this.getEnvironment().getGlobe())));
-		
-		System.out.print("Episode " + episode + "\r");
+		this.setStart(this.addState(new StateNoCosts(origin, destination, this.getPlanningContinuum().getCorners(), this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new StateNoCosts(destination, destination, this.getPlanningContinuum().getCorners(), this.getEnvironment().getGlobe())));
+
 		
 		// For each episode
 		while (episode < numEpisodes) {
@@ -571,11 +669,13 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 			episode++;
 			step = 0;
 			this.setState(this.getStart());
+			
+			System.out.print("Episode " + episode + "\r");
 		
 			// For each time step
 			while (!this.isDone() && step < MAX_STEPS) {
 				// Sets the state to visited
-				this.stateMap.get(this.getState().getId()).setVisited(true);
+				this.stateMap.get(Helper.flattenArray(this.getState().getId())).setVisited(true);
 				// Saves state in memory; Updates the network; Selects the next action and saves it in memory
 				this.react();
 				// Execute action and get next state and reward; Checks if the goal has been reached
@@ -599,6 +699,8 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 */
 	protected void resetEnvironment() {
 		
+		long start = System.nanoTime() / 100000;
+		
 		// Starts by sampling random positions for the start and goal, following a uniform distribution
 		Position startPosition = this.getPlanningContinuum().sampleRandomUniformPosition();
 		Position goalPosition = startPosition;
@@ -607,14 +709,23 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 			goalPosition = this.getPlanningContinuum().sampleRandomUniformPosition();
 		
 		// Creates the start and goal states and adds them to the state map
-		this.setStart(this.addState(new StateNoCosts(startPosition, goalPosition, this.getEnvironment().getGlobe())));
-		this.setGoal(this.addState(new StateNoCosts(goalPosition, goalPosition, this.getEnvironment().getGlobe())));
+		this.setStart(this.addState(new StateNoCosts(startPosition, goalPosition, this.getPlanningContinuum().getCorners(), this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new StateNoCosts(goalPosition, goalPosition, this.getPlanningContinuum().getCorners(), this.getEnvironment().getGlobe())));
+		
+		// Sets the start and goal position and goal point
+		this.setStartPosition(startPosition);
+		this.setGoalPosition(goalPosition);
+		this.setGoalPoint(this.getEnvironment().getGlobe().computePointFromPosition(goalPosition));	
 		
 		// Sets the state as the start
 		this.setState(this.getStart());
 		
 		// Sets the "done" boolean to false
 		this.setDone(false);
+		this.setFailure(false);
+		
+		long end = System.nanoTime() / 100000;
+		resetEnvironmentTime += (end - start);
 		
 		//TODO: adicionar obstaculos e treinar para policies diferentes -> tem que ser adicionados tambem na definicao do estado e na comparacao
 	}
@@ -640,18 +751,19 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * @return the state
 	 */
 	protected StateNoCosts addState(StateNoCosts state) {
-		boolean exists = false;
-		
-		for (Map.Entry<float[], StateNoCosts> s : stateMap.entrySet()) {
-			if (s.getValue().equals(state)) {
-				exists = true;
-				return s.getValue();
-			}
-		}
-		
-		if (!exists) {
-			stateMap.put(state.getId(), state);
-		}
+//		boolean exists = false;
+//		
+//		for (Map.Entry<float[], StateNoCosts> s : stateMap.entrySet()) {
+//			if (s.getValue().equals(state)) {
+//				exists = true;
+//				return s.getValue();
+//			}
+//		}
+//		
+//		if (!exists) {
+//			stateMap.put(state.getId(), state);
+//		}
+		stateMap.put(Helper.flattenArray(state.getId()), state);
 		
 		return state;
 		
@@ -661,15 +773,26 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * Reacts to the current state, updating the memory and choosing the next action
 	 */
 	protected void react() {
+		
+		long start = System.nanoTime() / 100000;
+		
 		int action;
 		try (NDManager submanager = manager.newSubManager()) {
 			
-			memory.setState(this.getState().getId());
+			memory.setState(Helper.flattenArray(this.getState().getId()));
 			
-			if (memory.getSize() > batchSize)
+			// Trains every n iterations only
+			if (iteration++ % trainNetInterval == 0  && memory.getSize()>batchSize)
 				updateModel(submanager);
 			
-			action = chooseAction(submanager, this.getState().getId());
+			// Syncs networks and updates every n iterations
+			if (iteration % syncNetInterval == 0) {
+//				epsilon *= DECAY_EXPLORE_RATE;
+				syncNetworks();
+			}
+			
+			action = chooseAction(submanager, Helper.flattenArray(this.getState().getId()));
+			//System.out.println("Action is " + action);
 			
 			memory.setAction(action);
 			
@@ -677,7 +800,10 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 			throw new IllegalStateException(e);
 		}
 		
-		this.setAction(action);;
+		this.setAction(action);
+		
+		long end = System.nanoTime() / 100000;
+		reactTime += (end - start);
 	}
 
 	/** 
@@ -689,32 +815,48 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * @return the chosen action
 	 */
 	protected int chooseAction(NDManager manager, float[] state) throws TranslateException {
-		
+				
 		// Gets the predicted Q-values from the target network
 		NDArray qValues = targetPredictor.predict(new NDList(manager.create(state))).singletonOrThrow();
+		//System.out.println("Q-values: " + qValues);
 		// Chooses the action using the epsilon greedy policy and the predicted Q-values
 		return ActionSampler.epsilonGreedy(qValues, rand, Math.max(MIN_EXPLORE_RATE, epsilon));
+		
 	}
 
 	/** 
 	 * Determines the next state based on the chosen action
 	 */
 	protected void step() {
+		long start = System.nanoTime() / 100000;
 		
 		int action = this.getAction();
 		double stepSize = 2 * this.getAircraft().getCapabilities().getCruiseSpeed();
 		
-		// Determines next state based on action
-		// It is considered that one time step corresponds to 1s
+		// Determines the movement from the current state to the next based on action
 		Vec4 movVector;
 		if (action == 0) {
 			// If the action index is 0, the action corresponds to just flying in the direction of the goal
-			movVector = this.getState().getRelativeVector().normalize3().multiply3(stepSize);
+			movVector = this.getState().getRelativeToGoal().normalize3().multiply3(stepSize);
 		} else {
 			movVector = listOfActions.get(action).multiply3(stepSize);
 		}
-		Vec4 relativeVector = this.getState().getRelativeVector().subtract3(movVector);
-		StateNoCosts nextState = new StateNoCosts(relativeVector);
+		
+		// Computes the next state's position
+		Position nextStatePosition = this.getEnvironment().getGlobe().computePositionFromPoint(this.getGoalPoint()
+				.subtract3(this.getState().getRelativeToGoal().subtract3(movVector)));
+		
+		// If the next state is outside the environment, stays in place
+		if (!this.getEnvironment().contains(nextStatePosition))
+			nextStatePosition = this.getState().getPosition();
+		
+		// Faria sentido mas so se o estado guardasse informacao do terreno tambem
+//		// If the next state collides with terrain, it stays in place
+//		if (this.getEnvironment().collidesTerrain(this.getState().getPosition(), nextStatePosition))
+//			nextStatePosition = this.getState().getPosition();
+		
+		// Creates the next state and adds it to the map
+		StateNoCosts nextState = new StateNoCosts(nextStatePosition, this.getGoalPosition(), this.getPlanningContinuum().getCorners(), this.getEnvironment().getGlobe());
 		this.addState(nextState);
 		this.setNextState(nextState);
 		
@@ -722,8 +864,15 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		if (this.getNextState().getDistanceToGoal() <= stepSize)
 			this.setDone(true);
 		
+//		// If the next state is outside the environment, it fails
+//		if (!this.getEnvironment().contains(nextStatePosition))
+//			this.setFailure(true);
+		
 		// Calculates reward
 		this.calculateReward();
+		
+		long end = System.nanoTime() / 100000;
+		stepTime += (end-start);
 	}
 
 	/**
@@ -731,25 +880,33 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 */
 	protected void calculateReward() {
 		
-		int reward = 0;
+		double reward = 0;
 		
 		// If the goal has been reached
-		if (done) {
+		if (this.isDone()) {
 			this.setReward(1000);
+			this.setEpisodeResult(1);
+			return;
+		}
+		
+		// If it failed
+		if (this.failed()){
+			this.setReward(-50);
 			return;
 		}
 		
 		// If the cost is exceeded
 		
-		// If the state is repeated -100
-		if (this.getNextState().isVisited())
-			reward += -50;
+//		// If the state is repeated -100
+//		if (this.getNextState().isVisited())
+//			reward += -50;
 		
-		// Otherwise: -10 for step + 10 * distance difference
-		reward += -10;
-		reward += 10 * (this.getState().getDistanceToGoal() - this.getNextState().getDistanceToGoal());
+		// Otherwise: step penalty +  distance to goal penalty/reward 
+		reward += -1;
+		reward += 10 * (this.getState().getDistanceToGoal() - this.getNextState().getDistanceToGoal()) / this.getState().getDistanceToGoal();
 		
 		this.setReward(reward);
+		//System.out.println("Reward is " + reward);
 	
 	}
 
@@ -758,7 +915,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 */
 	protected void collect() {
 		if(!isTrained())
-			memory.setReward(this.getReward(), this.isDone());
+			memory.setReward(this.getReward()*10, this.isDone(), this.failed());
 	}
 
 	/** 
@@ -768,6 +925,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * @param manager the memory space manager
 	 */
 	protected void updateModel(NDManager manager) throws TranslateException {
+		
+		long start = System.nanoTime() / 100000;
+		
 		// Samples a batch of transitions from memory
 		MemoryBatch batch = memory.sampleBatch(batchSize, manager);
 		
@@ -787,6 +947,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		loss.setRequiresGradient(true);
 		
 		gradientUpdate(loss);
+		
+		long end = System.nanoTime() / 100000;
+		updateModelTime += (end-start);
 	}
 
 	/** 
@@ -796,6 +959,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * @param loss the loss
 	 */
 	protected void gradientUpdate(NDArray loss) {
+		
+		long start = System.nanoTime() / 100000;
+		
 		try (GradientCollector collector = Engine.getInstance().newGradientCollector()) {
 			collector.backward(loss);
 			for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
@@ -803,16 +969,21 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 				optimizer.update(params.getKey(), paramsArr, paramsArr.getGradient());
 			}
 		}
-		if (iteration++ % syncNetInterval == 0) {
-			epsilon *= DECAY_EXPLORE_RATE;
-			syncNetworks();
-		}
+//		if (iteration % syncNetInterval == 0) {
+//			epsilon *= DECAY_EXPLORE_RATE;
+//			syncNetworks();
+//		}
+		
+		long end = System.nanoTime() / 100000;
+		gradientUpdateTime += (end-start);
 	}
 
 	/** 
 	 * Copies the weights from the main network to the target network
 	 */
 	protected void syncNetworks() {
+		
+		long start = System.nanoTime() / 100000;
 	
 		for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
 			NDArray policyArray = params.getValue().getArray();
@@ -823,6 +994,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		}
 
 		targetPredictor = targetNet.newPredictor(new NoopTranslator());
+		
+		long end = System.nanoTime() / 100000;
+		syncNetworksTime += (end-start);
 	}
 
 	/**
@@ -851,14 +1025,15 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		this.setGoalPoint(this.getEnvironment().getGlobe().computePointFromPosition(destination));
 		
 		// Creates the start and goal states and adds them to the state map
-		this.setStart(this.addState(new StateNoCosts(origin, destination, this.getEnvironment().getGlobe())));
-		this.setGoal(this.addState(new StateNoCosts(destination, destination, this.getEnvironment().getGlobe())));
+		this.setStart(this.addState(new StateNoCosts(origin, destination, this.getPlanningContinuum().getCorners(), this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new StateNoCosts(destination, destination, this.getPlanningContinuum().getCorners(), this.getEnvironment().getGlobe())));
 		
 		// Sets the state as the start
 		this.setState(this.getStart());
 		
 		// Sets the "done" boolean to false
 		this.setDone(false);
+		this.setFailure(false);
 	
 	}
 
@@ -870,21 +1045,21 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		
 		Globe globe = this.getEnvironment().getGlobe();
 		
-		// Sets epsilon to zero, for zero exploration
-		this.epsilon = 0f;
-		
 		// Adds the start waypoint to the trajectory if this is the first part
 		if (this.getWaypoints().isEmpty()) {
 			this.getWaypoints().addLast(this.getNewestWaypoint());
 		}
 		
+		int step = 0;
+		
 		// Until the goal is reached
-		while(!this.isDone()) {
+		while(!this.isDone() && !this.failed() && step < MAX_STEPS) {
 			
 			// Chooses the action
 			try (NDManager submanager = manager.newSubManager()) {
 				
-				this.setAction(chooseAction(submanager, this.getState().getId()));
+				NDArray qValues = targetPredictor.predict(new NDList(submanager.create(Helper.flattenArray(this.getState().getId())))).singletonOrThrow();
+				this.setAction(ActionSampler.greedy(qValues));
 				
 			} catch (TranslateException e) {
 				throw new IllegalStateException(e);
@@ -897,11 +1072,20 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 			
 			// Adds the next waypoint to the trajectory
 			// Creates waypoint by subtracting the next state's relative vector to the goal
-			this.getWaypoints().addLast(this.createWaypoint(globe.computePositionFromPoint(this.getGoalPoint().subtract3(this.getNextState().getRelativeVector()))));
+			this.getWaypoints().addLast(this.createWaypoint(globe.computePositionFromPoint(this.getGoalPoint().subtract3(this.getNextState().getRelativeToGoal()))));
 			
 			// Sets the state as the next state
 			this.setState(this.getNextState());
+			
+			step++;
 		}
+		
+		// If it finished without reaching the goal (because it reached the maximum number of steps
+		// or failed) returns an empty trajectory
+//		if (!this.isDone()) {
+//			this.clearWaypoints();
+//			return;
+//		}
 		
 		// Adds the goal to the trajectory if it is not already there
 		RLWaypoint goalWaypoint = this.createWaypoint(this.getGoalPosition());
@@ -976,7 +1160,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		this.clearWaypoints();
 		
 		//TODO: find metric to decide number of episodes for local training depending on case
-		//this.trainLocal(200, origin, destination);
+		//this.trainLocal(500, origin, destination);
 		
 		this.initialize(origin, destination, etd);
 		

@@ -38,6 +38,9 @@ public class Memory {
 	/** indicates if agent has reached the goal, true if yes*/
 	private boolean done;
 	
+	/** indicates if agent has failed, true if yes*/
+	private boolean failure;
+	
 	/** keeps track of the last added transition position*/
 	private int head;
 	
@@ -63,7 +66,7 @@ public class Memory {
 	 */
 	public void setState(float[] state) {
 		if (state_prev != null)
-			add(new Transition(state_prev, action, state, reward, done));
+			add(new Transition(state_prev, action, state, reward, done || failure));
 		state_prev = state;
 	}
 	
@@ -81,12 +84,13 @@ public class Memory {
 	 * 
 	 * @param the reward
 	 */
-	public void setReward(double reward, boolean done) {
+	public void setReward(double reward, boolean done, boolean failure) {
 		this.reward = reward;
 		this.done = done;
+		this.failure = failure;
 		
-		if(done) {
-			add(new Transition (state_prev, action, null, reward, done));
+		if(done || failure) {
+			add(new Transition (state_prev, action, null, reward, done || failure));
 			state_prev = null;
 			action = -1;
 		}
@@ -109,6 +113,7 @@ public class Memory {
 		action = -1;
 		reward = 0;
 		done = false;
+		failure = false;
 		head = -1;
 		size = 0;
 	}

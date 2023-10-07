@@ -23,9 +23,12 @@ public class ActionSampler {
 	 * 
 	 */
 	public static int epsilonGreedy(NDArray qValues, Random rand, float epsilon) {
-		if (rand.nextFloat() < epsilon) {
+		float random = rand.nextFloat();
+		if (random < epsilon) {
+			//System.out.println("Epsilon is " + epsilon + " rand is " + random + " and action will be random");
 			return rand.nextInt((int) qValues.size());
 		} else {
+			//System.out.println("Epsilon is " + epsilon + " rand is " + random + " and action will be greedy");
 			return greedy(qValues);
 		}
 	}

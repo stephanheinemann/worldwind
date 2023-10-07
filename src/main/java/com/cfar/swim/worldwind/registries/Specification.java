@@ -220,6 +220,11 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getDictionaryBundle()
 			.getString("specification.planner.dqn.description");
 	
+	/** the description of a DQN planner specification */
+	public static final String PLANNER_DQN_NOCOSTS_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.dqnnocosts.description");
+	
 	/** the identifier of a managed tree planner specification */
 	public static final String PLANNER_MTP_ID = "MTP";
 	

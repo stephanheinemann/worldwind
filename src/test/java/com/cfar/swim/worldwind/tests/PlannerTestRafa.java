@@ -34,6 +34,8 @@ import static org.junit.Assert.assertEquals;
 
 
 
+
+
 import static org.junit.Assert.assertNotNull;
 
 import java.awt.Color;
@@ -59,7 +61,6 @@ import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.render.Path;
 
-import com.cfar.swim.worldwind.planners.rl.Plot;
 import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
 
 /**
@@ -88,7 +89,7 @@ public class PlannerTestRafa {
         ZonedDateTime etd = ZonedDateTime.now();
         Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
         
-        DQNPlanner planner = new DQNPlanner(iris, planningContinuum);
+        DQNPlannerNoCosts planner = new DQNPlannerNoCosts(iris, planningContinuum);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);
         //assertEquals(7, Iterables.size(path.getPositions()));

@@ -28,7 +28,7 @@ public class Transition {
 	/** the reward */
 	private double reward = 0;
 	
-	/** indicates if it reached goal or not, true if it has */
+	/** indicates if it is a terminal state or not */
 	private boolean done = false;
 	
 	

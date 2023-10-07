@@ -30,10 +30,16 @@ public class State {
 	public static int CONSIDERED_OBSTACLES = 3;
 	
 	/** the size of the state ID */
-	public static int ID_SIZE = 5 + 3*CONSIDERED_OBSTACLES;
+	public static int ID_SIZE = 5 + 4*CONSIDERED_OBSTACLES;
 	
 	/** array that represents the state's ID */
 	private float[] id = new float[ID_SIZE];
+	
+	/** store's the state's position*/
+	private Position position = null;
+	
+	/** store's the state's ETO*/
+	private ZonedDateTime eto = null;
 	
 	/** vector that points from state to goal*/
 	private Vec4 relativeToGoal = null;
@@ -61,7 +67,9 @@ public class State {
 	 * @param globe the globe
 	 * 
 	 */
-	public State(Position position, Position goal, Set<DQNObstacle> obstacles, CostPolicy costPolicy, Globe globe) {
+	public State(Position position, Position goal, Set<DQNObstacle> obstacles, CostPolicy costPolicy, ZonedDateTime eto, Globe globe) {
+		this.position = position;
+		this.eto = eto;
 		Vec4 statePoint = globe.computePointFromPosition(position);
 		Vec4 goalPoint = globe.computePointFromPosition(goal);
 		this.relativeToGoal = goalPoint.subtract3(statePoint);
@@ -72,20 +80,23 @@ public class State {
 	}
 	
 	/**
-	 * Constructs a state of a reinforcement learning planner from a relative position vector.
+	 * Gets the state's position
 	 * 
-	 * @param the vector relative to the goal
-	 * @param obstacles the set of obstacles from the environment in close proximity to the state
-	 * @param costPolicy the DQN planner's cost policy
-	 * 
+	 * @return the state's position
 	 */
-	public State(Vec4 relativeToGoal, Set<DQNObstacle> obstacles, CostPolicy costPolicy) {
-		this.relativeToGoal = relativeToGoal;
-		this.distanceToGoal = (float) this.relativeToGoal.getLength3();
-		this.obstacles = obstacles;
-		this.costPolicy = costPolicy;
-		this.createId();
+	public Position getPosition() {
+		return this.position;
 	}
+	
+	/**
+	 * Gets the state's ETO
+	 * 
+	 * @return the state's ETO
+	 */
+	public ZonedDateTime getEto() {
+		return this.eto;
+	}
+	
 	
 	/**
 	 * Gets the vector that points from state to goal

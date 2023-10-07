@@ -82,8 +82,8 @@ public final class Helper {
 		// The rest of the list is populated with all possible actions with angles 0, 22.5, 45, 67.5 and 90
 //		double[] thetaValues = {0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180};
 //		double[] alphaValues = {0, 22.5, 45, 67.5, 90};
-		double[] thetaValues = {0, 45, 90, 135, 180};
-		double[] alphaValues = {0, 45, 90};
+		double[] thetaValues = {0, 90, 180};
+		double[] alphaValues = {0, 90};
 		double x, y, z;
 		
 		for (double theta : thetaValues){
@@ -136,5 +136,39 @@ public final class Helper {
 		
 		return interferingObstacles;
 	}
+	
+	/** 
+	 * Flattens an array of arrays of floats 
+	 * 
+	 * @param the array of arrays
+	 * 
+	 * @return the flattened array
+	 * 
+	 */
+	public static float[] flattenArray(float[][] nestedArray) {
+	    int totalLength = 0;
+
+	    // Calculate the total length of the flat array
+	    for (float[] arr : nestedArray) {
+	        totalLength += arr.length;
+	    }
+
+	    // Create the flat array with the calculated length
+	    float[] flatArray = new float[totalLength];
+
+	    int flatIndex = 0;
+
+	    // Iterate through the nested arrays and copy elements to the flat array
+	    for (float[] arr : nestedArray) {
+	        for (float value : arr) {
+	            flatArray[flatIndex] = value;
+	            flatIndex++;
+	        }
+	    }
+
+	    return flatArray;
+	}
 
 }
+
+

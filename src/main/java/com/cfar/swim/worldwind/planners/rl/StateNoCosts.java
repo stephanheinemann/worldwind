@@ -1,9 +1,13 @@
 package com.cfar.swim.worldwind.planners.rl;
 
 import java.time.ZonedDateTime;
+
+
 import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.List;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.Waypoint;
@@ -23,16 +27,22 @@ import gov.nasa.worldwind.globes.Globe;
 public class StateNoCosts {
 	
 	/** the size of the state ID */
-	public static int ID_SIZE = 4;
+	public static int ID_SIZE = 36;
 	
 	/** array that represents the state's ID */
-	private float[] id = new float[ID_SIZE];
+	private float[][] id = new float[9][4];
 	
-//	/** the position relative to the current goal */
-//	private PrecisionPosition position;
+	/** store's the state's position*/
+	private Position position = null;
+	
+	/** the distance to the environment's corners */
+	private List<Vec4> envCorners = new ArrayList<>();
 	
 	/** vector that points from state to goal*/
 	private Vec4 relativeVector = null;
+	
+	/** vector that points from state to goal*/
+	private Vec4 normalizedRelativeVector = null;
 	
 	/** the distance from this state to the goal (vector length)*/
 	private float distanceToGoal = 0f;
@@ -58,24 +68,41 @@ public class StateNoCosts {
 	 * @param id the state's id
 	 * 
 	 */
-	public StateNoCosts(Position position, Position goal, Globe globe) {
+	public StateNoCosts(Position position, Position goal, Vec4[] envCorners, Globe globe) {
+		this.position = position;
 		Vec4 statePoint = globe.computePointFromPosition(position);
 		Vec4 goalPoint = globe.computePointFromPosition(goal);
 		this.relativeVector = goalPoint.subtract3(statePoint);
+		this.normalizedRelativeVector = this.relativeVector.normalize3();
 		this.distanceToGoal = (float) this.relativeVector.getLength3();
+		int i = 0;
+		for (Vec4 corner : envCorners) {
+			this.envCorners.add(statePoint.subtract3(corner));
+			i++;
+		}
 		this.createId();
 	}
 	
+//	/**
+//	 * Constructs a state of a reinforcement learning planner from a relative position vector.
+//	 * 
+//	 * @param the vector relative to the goal
+//	 * 
+//	 */
+//	public StateNoCosts(Vec4 relativeVector) {
+//		this.relativeVector = relativeVector;
+//		this.normalizedRelativeVector = this.relativeVector.normalize3();
+//		this.distanceToGoal = (float) this.relativeVector.getLength3();
+//		this.createId();
+//	}
+	
 	/**
-	 * Constructs a state of a reinforcement learning planner from a relative position vector.
+	 * Gets the state's position
 	 * 
-	 * @param the vector relative to the goal
-	 * 
+	 * @return the state's position
 	 */
-	public StateNoCosts(Vec4 relativeVector) {
-		this.relativeVector = relativeVector;
-		this.distanceToGoal = (float) this.relativeVector.getLength3();
-		this.createId();
+	public Position getPosition() {
+		return this.position;
 	}
 	
 	/**
@@ -83,8 +110,17 @@ public class StateNoCosts {
 	 * 
 	 * @return the vector that points from state to goal
 	 */
-	public Vec4 getRelativeVector() {
+	public Vec4 getRelativeToGoal() {
 		return this.relativeVector;
+	}
+	
+	/**
+	 * Gets the vector that points from state to goal normalized
+	 * 
+	 * @return the vector that points from state to goal normalized
+	 */
+	public Vec4 getNormalizedRelativeVector() {
+		return this.normalizedRelativeVector;
 	}
 	
 	/**
@@ -101,7 +137,7 @@ public class StateNoCosts {
 	 * 
 	 * @return the state's ID
 	 */
-	public float[] getId() {
+	public float[][] getId() {
 		return this.id;
 	}
 	
@@ -166,11 +202,22 @@ public class StateNoCosts {
 	 * Creates the state's ID based on the stored information
 	 */
 	public void createId() {
-		// Relative position and distance to goal
-		id[0] = (float) this.getRelativeVector().x;
-		id[1] = (float) this.getRelativeVector().y;
-		id[2] = (float) this.getRelativeVector().z;
-		id[3] = (float) this.getDistanceToGoal();
+		// Relative position and distance to goal rounded up to two decimal places
+		//id[0] = BigDecimal.valueOf(this.envCorners[0]).setScale(7, RoundingMode.HALF_EVEN).floatValue();
+		int index = 0;
+		// Environment corners
+		for (int i = 0; i < envCorners.size(); i++) {
+			id[index][0] = (float) this.envCorners.get(i).x;
+			id[index][1] = (float) this.envCorners.get(i).y;
+			id[index][2] = (float) this.envCorners.get(i).z;
+			index++;
+		}
+		// Goal
+		id[index][0] = (float) this.getRelativeToGoal().x;
+		id[index][1] = (float) this.getRelativeToGoal().y;
+		id[index][2] = (float) this.getRelativeToGoal().z;
+		id[index][3] = (float) this.getDistanceToGoal();
+		
 	}
 	
 	/**

@@ -74,7 +74,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private static final float DECAY_EXPLORE_RATE = 0.9f;
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 2000;
+	private static final int NUM_GLOBAL_EPS = 1000;
 	
 	/** maximum number of steps per episode */
 	private static final int MAX_STEPS = 200;
@@ -101,7 +101,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private final int numOfActions;
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int hiddenSize = 64;
+	private final int[] hiddenSize = {64, 128, 128, 64};
 	
 	/** learning rate used by the optimizer during training */
 	private final float learningRate = 0.001f;
@@ -165,6 +165,9 @@ public class DQNPlanner extends AbstractPlanner {
 	/** indicates if it reached goal or not, true if it has */
 	private boolean done = false;
 	
+	/** indicates if it reached goal or not, true if it has */
+	private boolean failure = false;
+	
 	/** the radius of the sphere defining the goal region of this DQN planner */
 	private double goalThreshold = 10d; // (0, Double.MAX_Value]
 	
@@ -181,7 +184,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private Position goalPosition = null;
 	
 	/** stores the plan's ETD */
-	private ZonedDateTime etd;
+	private ZonedDateTime etd = ZonedDateTime.now();
 	
 	
 	/** Constructs a planner trained by a Deep Q-Network for a specified aircraft and
@@ -209,7 +212,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public String getId() {
-		return Specification.PLANNER_DQN_NOCOSTS_ID;
+		return Specification.PLANNER_DQN_ID;
 	}
 	
 	/**
@@ -362,7 +365,7 @@ public class DQNPlanner extends AbstractPlanner {
 	/**
 	 * Sets the reward.
 	 * 
-	 * @param d the reward
+	 * @param the reward
 	 */
 	protected void setReward(double reward) {
 		this.reward = reward;
@@ -371,7 +374,7 @@ public class DQNPlanner extends AbstractPlanner {
 	/**
 	 * Checks if the planner has reached the goal
 	 * 
-	 * @return the reward
+	 * @return true if it reached the goal, false otherwise
 	 */
 	protected boolean isDone() {
 		return this.done;
@@ -380,10 +383,28 @@ public class DQNPlanner extends AbstractPlanner {
 	/**
 	 * Sets the boolean that indicates if the planner has reached the goal.
 	 * 
-	 * @param the boolean value
+	 * @param true if it reached the goal, false otherwise
 	 */
 	protected void setDone(boolean done) {
 		this.done = done;
+	}
+	
+	/**
+	 * Checks if the planner has failed
+	 * 
+	 * @return true if it failed, false otherwise
+	 */
+	protected boolean failed() {
+		return this.failure;
+	}
+	
+	/**
+	 * Sets the boolean that indicates if the planner has failed.
+	 * 
+	 * @param true if it failed, false otherwise
+	 */
+	protected void setFailure(boolean failure) {
+		this.failure = failure;
 	}
 	
 	/**
@@ -547,7 +568,7 @@ public class DQNPlanner extends AbstractPlanner {
 	/**
 	 * Runs the training of the Deep Q-Network for a specific start and goal
 	 */
-	protected void trainLocal(int numEpisodes, Position origin, Position destination) {
+	protected void trainLocal(int numEpisodes, Position origin, Position destination, ZonedDateTime etd) {
 		
 		System.out.println("TRAINING LOCAL");
 		
@@ -559,9 +580,9 @@ public class DQNPlanner extends AbstractPlanner {
 		
 		// Creates the start and goal states and adds them to the state map
 		Set<DQNObstacle> obstacles = Helper.getCloseObstacles(origin, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setStart(this.addState(new State(origin, destination, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
+		this.setStart(this.addState(new State(origin, destination, obstacles, this.getCostPolicy(), etd, this.getEnvironment().getGlobe())));
 		obstacles = Helper.getCloseObstacles(destination, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setGoal(this.addState(new State(destination, destination, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new State(destination, destination, obstacles, this.getCostPolicy(), null, this.getEnvironment().getGlobe())));
 		
 		System.out.print("Episode " + episode + "\r");
 		
@@ -613,9 +634,9 @@ public class DQNPlanner extends AbstractPlanner {
 		
 		// Creates the start and goal states and adds them to the state map
 		Set<DQNObstacle> obstacles = Helper.getCloseObstacles(startPosition, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setStart(this.addState(new State(startPosition, goalPosition, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
+		this.setStart(this.addState(new State(startPosition, goalPosition, obstacles, this.getCostPolicy(), this.getEtd(), this.getEnvironment().getGlobe())));
 		obstacles = Helper.getCloseObstacles(goalPosition, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setGoal(this.addState(new State(goalPosition, goalPosition, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new State(goalPosition, goalPosition, obstacles, this.getCostPolicy(), null, this.getEnvironment().getGlobe())));
 		
 		// Sets the start and goal position and goal point
 		this.setStartPosition(startPosition);
@@ -643,6 +664,7 @@ public class DQNPlanner extends AbstractPlanner {
 	
 	}
 
+	
 	/** 
 	 * Adds a new state to the state map if it still doesn't exist
 	 * 
@@ -651,18 +673,23 @@ public class DQNPlanner extends AbstractPlanner {
 	 * @return the state
 	 */
 	protected State addState(State state) {
-		boolean exists = false;
+//		boolean exists = false;
+//		
+//		for (Map.Entry<float[], State> s : stateMap.entrySet()) {
+//			if (s.getValue().equals(state)) {
+//				exists = true;
+//				// Stores most recent state
+//				s.getKey().;
+//				return s.getValue();
+//			}
+//		}
+//		
+//		if (!exists) {
+//			stateMap.put(state.getId(), state);
+//		}
 		
-		for (Map.Entry<float[], State> s : stateMap.entrySet()) {
-			if (s.getValue().equals(state)) {
-				exists = true;
-				return s.getValue();
-			}
-		}
-		
-		if (!exists) {
-			stateMap.put(state.getId(), state);
-		}
+		// Should be enough since it is a tree map, already does this check and stores the most recent one
+		stateMap.put(state.getId(), state);
 		
 		return state;
 		
@@ -715,8 +742,7 @@ public class DQNPlanner extends AbstractPlanner {
 		int action = this.getAction();
 		double stepSize = 2 * this.getAircraft().getCapabilities().getCruiseSpeed();
 		
-		// Determines next state based on action
-		// It is considered that one time step corresponds to 1s
+		// Determines the movement from the current state to the next based on action
 		Vec4 movVector;
 		if (action == 0) {
 			// If the action index is 0, the action corresponds to just flying in the direction of the goal
@@ -724,10 +750,20 @@ public class DQNPlanner extends AbstractPlanner {
 		} else {
 			movVector = listOfActions.get(action).multiply3(stepSize);
 		}
+		
+		// Computes the next state's position
 		Position nextStatePosition = this.getEnvironment().getGlobe().computePositionFromPoint(this.getGoalPoint()
 				.subtract3(this.getState().getrelativeToGoal().subtract3(movVector)));
+		
+		// Gets the set of surrounding obstacles of the next state
 		Set<DQNObstacle> obstacles = Helper.getCloseObstacles(nextStatePosition, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		State nextState = new State(nextStatePosition, this.getGoalPosition(), obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe());
+		
+		// Computes the next state's ETO
+		Path leg = new Path(this.getState().getPosition(), nextStatePosition);
+		ZonedDateTime eto = this.getAircraft().getCapabilities().getEstimatedTime(leg, this.getEnvironment().getGlobe(), this.getState().getEto());
+		
+		// Creates the next state and adds it to the map
+		State nextState = new State(nextStatePosition, this.getGoalPosition(), obstacles, this.getCostPolicy(), eto, this.getEnvironment().getGlobe());
 		this.addState(nextState);
 		this.setNextState(nextState);
 		
@@ -753,7 +789,13 @@ public class DQNPlanner extends AbstractPlanner {
 		}
 		
 		// If the cost is exceeded
-		//TODO: Consider costs 
+		double cost = this.getEnvironment().getStepCost(this.getState().getPosition(), this.getNextState().getPosition(), this.getState().getEto(), 
+				this.getNextState().getEto(), getCostPolicy(), getRiskPolicy());
+		if (Double.POSITIVE_INFINITY == cost) {
+			this.setReward(-1000);
+			this.setFailure(true);
+			return;
+		}
 		
 		// If the state is repeated -100
 		if (this.getNextState().isVisited())
@@ -772,7 +814,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 */
 	protected void collect() {
 		if(!isTrained())
-			memory.setReward(this.getReward(), this.isDone());
+			memory.setReward(this.getReward()*100, this.isDone(), this.failed());
 	}
 
 	/** 
@@ -866,9 +908,9 @@ public class DQNPlanner extends AbstractPlanner {
 		
 		// Creates the start and goal states and adds them to the state map
 		Set<DQNObstacle> obstacles = Helper.getCloseObstacles(origin, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setStart(this.addState(new State(origin, destination, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
+		this.setStart(this.addState(new State(origin, destination, obstacles, this.getCostPolicy(), etd, this.getEnvironment().getGlobe())));
 		obstacles = Helper.getCloseObstacles(destination, this.getAircraft().getRadius(), this.getEnvironment(), this.getRiskPolicy());
-		this.setGoal(this.addState(new State(destination, destination, obstacles, this.getCostPolicy(), this.getEnvironment().getGlobe())));
+		this.setGoal(this.addState(new State(destination, destination, obstacles, this.getCostPolicy(), null, this.getEnvironment().getGlobe())));
 		
 		// Sets the state as the start
 		this.setState(this.getStart());
