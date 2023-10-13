@@ -18,7 +18,7 @@ import ai.djl.ndarray.NDManager;
 public class Memory {
 	
 	/** random number */
-	private final Random rand = new Random();
+	private final Random rand = new Random(0);
 	
 	/** the memory's capacity */
 	private int capacity = 0;
@@ -47,6 +47,9 @@ public class Memory {
 	/** keeps track of how many memory positions are occupied*/
 	private int size;
 	
+	/** keeps track of the current stage in the creation of a new transition*/
+	private int stage;
+	
 	
 	/** Constructs a replay memory object
 	 * 
@@ -65,8 +68,9 @@ public class Memory {
 	 * @param the current state
 	 */
 	public void setState(float[] state) {
+		assertStage(0);
 		if (state_prev != null)
-			add(new Transition(state_prev, action, state, reward, done || failure));
+			add(new Transition(state_prev, state, action, reward, done || failure));
 		state_prev = state;
 	}
 	
@@ -76,6 +80,7 @@ public class Memory {
 	 * @param the action
 	 */
 	public void setAction(int action) {
+		assertStage(1);
 		this.action = action;
 	}
 	
@@ -85,12 +90,13 @@ public class Memory {
 	 * @param the reward
 	 */
 	public void setReward(double reward, boolean done, boolean failure) {
+		assertStage(2);
 		this.reward = reward;
 		this.done = done;
 		this.failure = failure;
 		
 		if(done || failure) {
-			add(new Transition (state_prev, action, null, reward, done || failure));
+			add(new Transition (state_prev, null, action, reward, done || failure));
 			state_prev = null;
 			action = -1;
 		}
@@ -116,6 +122,7 @@ public class Memory {
 		failure = false;
 		head = -1;
 		size = 0;
+		stage = 0;
 	}
 	
 	/**
@@ -133,6 +140,35 @@ public class Memory {
 		
 		if (size < capacity)
 			size++;
+	}
+	
+	/**
+	 * Checks that the setters for the state, action and reward are called in the correct order.
+	 */
+	public void assertStage(int s) {
+		
+		if (s != stage) {
+			String info;
+			switch (stage) {
+			case 0:
+				info = "State";
+				break;
+			case 1:
+				info = "Action";
+				break;
+			case 2:
+				info = "Reward and Done";
+				break;
+			default:
+				info = null;
+			}
+			throw new IllegalStateException("Expected information:"  + info);
+			
+		} else {
+			stage++;
+			if (stage > 2)
+				stage = 0;
+		}
 	}
 	
 	/**
@@ -163,8 +199,8 @@ public class Memory {
 		
 		// Initiate arrays to store batch data
 		float[][] states = new float[batchSize][];
-		int[] actions = new int[batchSize];
 		float[][] nextStates = new float[batchSize][];
+		int[] actions = new int[batchSize];
 		double[] rewards = new double[batchSize];
 		boolean [] dones = new boolean[batchSize];
 		
@@ -172,19 +208,19 @@ public class Memory {
 		// Fills arrays with information from the circular buffer of transitions
 		for (int i = 0; i< batchSize; i++) {
 			index++;
-			// If it reaches the end of the buffer, it goes back to the beggining since it is circular
+			// If it reaches the end of the buffer, it goes back to the beginning since it is circular
 			if (index >= batchSize)
 				index = 0;
 			states[i] = transitions[index].getState();
-			actions[i] = transitions[index].getAction();
 			// If next state is null (transition where episode ended), create array of zeros
 			float[] nextState = transitions[index].getNextState();
 			nextStates[i] = nextState != null ? nextState : new float[states[i].length];
+			actions[i] = transitions[index].getAction();
 			rewards[i] = transitions[index].getReward();
 			dones[i] = transitions[index].isDone();
 		}
 		
-		return new MemoryBatch(manager.create(states), manager.create(actions), manager.create(nextStates), manager.create(rewards), manager.create(dones));
+		return new MemoryBatch(manager.create(states), manager.create(nextStates), manager.create(actions), manager.create(rewards), manager.create(dones));
 	}
 	
 	

@@ -37,20 +37,20 @@ public class MemoryBatch extends NDList{
 	}
 	
 	/**
-	 * Gets the actions.
-	 * 
-	 * @return the actions
-	 */
-	public NDArray getActions() {
-		return get(1);
-	}
-	
-	/**
 	 * Gets the next states.
 	 * 
 	 * @return the next states
 	 */
 	public NDArray getNextStates() {
+		return get(1);
+	}
+	
+	/**
+	 * Gets the actions.
+	 * 
+	 * @return the actions
+	 */
+	public NDArray getActions() {
 		return get(2);
 	}
 	

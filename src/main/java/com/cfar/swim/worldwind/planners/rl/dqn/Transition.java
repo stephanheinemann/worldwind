@@ -19,11 +19,11 @@ public class Transition {
 	/** the state*/     
 	private float[] state = new float[State.ID_SIZE];
 	
-	/** the action */
-	private int action = 0;
-	
 	/** the next state */
 	private float[] nextState =  new float[State.ID_SIZE];
+
+	/** the action */
+	private int action = 0;
 	
 	/** the reward */
 	private double reward = 0;
@@ -39,10 +39,10 @@ public class Transition {
 	 * @param the next state
 	 * @param the reward
 	 */
-	public Transition(float[] state, int action, float[] nextState, double reward, boolean done) {
+	public Transition(float[] state, float[] nextState, int action, double reward, boolean done) {
 		this.state = state;
-		this.action = action;
 		this.nextState = nextState;
+		this.action = action;
 		this.reward = reward;
 		this.done = done;
 	}
@@ -57,21 +57,21 @@ public class Transition {
 	}
 	
 	/**
-	 * Gets the action stored in this transition.
-	 * 
-	 * @return the action
-	 */
-	public int getAction() {
-		return this.action;
-	}
-	
-	/**
 	 * Gets the next state stored in this transition.
 	 * 
 	 * @return the next state
 	 */
 	public float[] getNextState() {
 		return this.nextState;
+	}
+	
+	/**
+	 * Gets the action stored in this transition.
+	 * 
+	 * @return the action
+	 */
+	public int getAction() {
+		return this.action;
 	}
 	
 	/**

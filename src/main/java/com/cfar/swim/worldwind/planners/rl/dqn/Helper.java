@@ -51,7 +51,7 @@ public final class Helper {
 	}
 	
 	/** 
-	 * Method to broadcast and NDArray to match a specified shape
+	 * Method to broadcast an NDArray to match a specified shape
 	 * 
 	 * @param arr the NDArray
 	 * @param shape the specified shape
@@ -78,23 +78,30 @@ public final class Helper {
 		
 		// The action with index 0 corresponds to going in the direction of the goal
 		listOfActions.add(new Vec4(0,0,0));
+		// The rest of the list is populated with all possible in simple grid movement
+		listOfActions.add(new Vec4(1,0,0));
+		listOfActions.add(new Vec4(-1,0,0));
+		listOfActions.add(new Vec4(0,1,0));
+		listOfActions.add(new Vec4(0,-1,0));
+		listOfActions.add(new Vec4(0,0,1));
+		listOfActions.add(new Vec4(0,0,-1));
 		
 		// The rest of the list is populated with all possible actions with angles 0, 22.5, 45, 67.5 and 90
 //		double[] thetaValues = {0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180};
 //		double[] alphaValues = {0, 22.5, 45, 67.5, 90};
-		double[] thetaValues = {0, 90, 180};
-		double[] alphaValues = {0, 90};
-		double x, y, z;
-		
-		for (double theta : thetaValues){
-			for (double alpha : alphaValues) {
-				x = Math.sin(alpha) * Math.cos(theta);
-				y = Math.sin(alpha) * Math.sin(theta);
-				z = Math.cos(alpha);
-				
-				listOfActions.add(new Vec4(x, y, z));
-			}
-		}
+//		double[] thetaValues = {0, 90, 180};
+//		double[] alphaValues = {0, 90};
+//		double x, y, z;
+//		
+//		for (double theta : thetaValues){
+//			for (double alpha : alphaValues) {
+//				x = Math.sin(Math.toRadians(alpha)) * Math.cos(Math.toRadians(theta));
+//				y = Math.sin(Math.toRadians(alpha)) * Math.sin(Math.toRadians(theta));
+//				z = Math.cos(Math.toRadians(alpha));
+//				
+//				listOfActions.add(new Vec4(x, y, z));
+//			}
+//		}
 		
 		return listOfActions;
 	}
@@ -135,38 +142,6 @@ public final class Helper {
 		}
 		
 		return interferingObstacles;
-	}
-	
-	/** 
-	 * Flattens an array of arrays of floats 
-	 * 
-	 * @param the array of arrays
-	 * 
-	 * @return the flattened array
-	 * 
-	 */
-	public static float[] flattenArray(float[][] nestedArray) {
-	    int totalLength = 0;
-
-	    // Calculate the total length of the flat array
-	    for (float[] arr : nestedArray) {
-	        totalLength += arr.length;
-	    }
-
-	    // Create the flat array with the calculated length
-	    float[] flatArray = new float[totalLength];
-
-	    int flatIndex = 0;
-
-	    // Iterate through the nested arrays and copy elements to the flat array
-	    for (float[] arr : nestedArray) {
-	        for (float value : arr) {
-	            flatArray[flatIndex] = value;
-	            flatIndex++;
-	        }
-	    }
-
-	    return flatArray;
 	}
 
 }

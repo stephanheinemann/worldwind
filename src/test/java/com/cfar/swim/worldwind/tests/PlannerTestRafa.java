@@ -78,13 +78,13 @@ public class PlannerTestRafa {
 	@SuppressWarnings("unchecked")
 	public void DQNTest() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
-		Vec4 originVec = new Vec4(1000, 1000, 1000);
+		Vec4 originVec = new Vec4(0, 0, 0);
         // the reference cube has to be offset from the origin for the position computation to work
-		Box box = new Box(originVec, axes, 1d, 1d, 1d);
+		Box box = new Box(originVec, axes, 50d, 50d, 50d);
         PlanningContinuum planningContinuum = new PlanningContinuum(box);
         planningContinuum.setGlobe(new Earth());
         
-        Position origin = planningContinuum.getGlobe().computePositionFromPoint(originVec);
+        Position origin = planningContinuum.getGlobe().computePositionFromPoint(new Vec4(1, 1, 1));
         Position destination = planningContinuum.getCenterPosition();
         ZonedDateTime etd = ZonedDateTime.now();
         Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND);

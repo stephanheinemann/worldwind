@@ -133,14 +133,14 @@ public class NetworkModel extends AbstractBlock {
 
 		NDList current = inputs;
 	    
-	    // Forward pass through hidden layers, whic includes the input layer
+	    // Forward pass through hidden layers, which includes the input layer
 	    for (Block layer : hiddenLayers) {
-	    	current = layer.forward(parameterStore, current, training);
+	    	current = layer.forward(parameterStore, current, true);
 	        current = new NDList(Activation.relu(current.singletonOrThrow()));
 	    }
 	    
 	    // Forward pass through output layer
-	    current = linearOutput.forward(parameterStore, current, training);
+	    current = linearOutput.forward(parameterStore, current, true);
 	    
 	    return current;
 	}
@@ -171,7 +171,7 @@ public class NetworkModel extends AbstractBlock {
 	 */
 	@Override
 	public void initializeChildBlocks(NDManager manager, DataType dataType, Shape... inputShapes) {
-//		//setInitializer(new XavierInitializer(), Parameter.Type.WEIGHT);
+		setInitializer(new XavierInitializer(), Parameter.Type.WEIGHT);
 //		linearInput.initialize(manager, dataType, inputShapes[0]);
 //		linearOutput.initialize(manager, dataType, new Shape(hiddenSize[3]));
 		
