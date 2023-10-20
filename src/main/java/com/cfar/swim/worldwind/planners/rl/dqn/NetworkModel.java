@@ -84,6 +84,7 @@ public class NetworkModel extends AbstractBlock {
 		
 		// Create and add the output layer
 		this.linearOutput = addChildBlock("linear_output", Linear.builder().setUnits(outputSize).build());
+		
 	}
 	
 	
@@ -109,7 +110,7 @@ public class NetworkModel extends AbstractBlock {
 	 */
 	public static Model newModel(NDManager manager, int inputSize, int[] hiddenSize, int outputSize) {
 		
-		Model model = Model.newInstance("ScoreModel");
+		Model model = Model.newInstance("NetworkModel");
 		NetworkModel network = new NetworkModel(manager, hiddenSize, outputSize);
 		network.initialize(network.getManager(), DataType.FLOAT32, new Shape(inputSize));
 		model.setBlock(network);

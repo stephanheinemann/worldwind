@@ -2,11 +2,13 @@ package com.cfar.swim.worldwind.planners.rl.dqn;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.TreeSet;
 import java.util.Random;
 import java.util.Set;
 
 import com.cfar.swim.worldwind.environments.Environment;
+import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
@@ -66,45 +68,108 @@ public final class Helper {
 		return arr.broadcast(shape);
 	}
 	
-	/** 
-	 * Creates the list of possible actions the agent can take
-	 * 
-	 * @return the list of possible actions
-	 * 
-	 */
-	public static ArrayList<Vec4>  listOfActions() {
-		
-		ArrayList<Vec4> listOfActions = new ArrayList<Vec4> ();
-		
-		// The action with index 0 corresponds to going in the direction of the goal
-		listOfActions.add(new Vec4(0,0,0));
-		// The rest of the list is populated with all possible in simple grid movement
-		listOfActions.add(new Vec4(1,0,0));
-		listOfActions.add(new Vec4(-1,0,0));
-		listOfActions.add(new Vec4(0,1,0));
-		listOfActions.add(new Vec4(0,-1,0));
-		listOfActions.add(new Vec4(0,0,1));
-		listOfActions.add(new Vec4(0,0,-1));
-		
-		// The rest of the list is populated with all possible actions with angles 0, 22.5, 45, 67.5 and 90
-//		double[] thetaValues = {0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180};
-//		double[] alphaValues = {0, 22.5, 45, 67.5, 90};
-//		double[] thetaValues = {0, 90, 180};
-//		double[] alphaValues = {0, 90};
-//		double x, y, z;
+//	/** 
+//	 * Creates the list of possible actions the agent can take
+//	 * 
+//	 * @return the list of possible actions
+//	 * 
+//	 */
+//	public static ArrayList<Vec4>  listOfActions() {
 //		
-//		for (double theta : thetaValues){
-//			for (double alpha : alphaValues) {
-//				x = Math.sin(Math.toRadians(alpha)) * Math.cos(Math.toRadians(theta));
-//				y = Math.sin(Math.toRadians(alpha)) * Math.sin(Math.toRadians(theta));
-//				z = Math.cos(Math.toRadians(alpha));
-//				
-//				listOfActions.add(new Vec4(x, y, z));
-//			}
-//		}
+//		ArrayList<Vec4> listOfActions = new ArrayList<Vec4> ();
+//		
+//		// Keep direction
+//		listOfActions.add(new Vec4(0,0,0));
+//		// Climb 45 degrees
+//		listOfActions.add(new Vec4(0,0,1));
+//		// Descend 45 degrees
+//		listOfActions.add(new Vec4(0,0,-1));
+//		// Turn left 45 degrees
+//		listOfActions.add(new Vec4(0,1,0));
+//		// Turn left 60 degrees
+//		listOfActions.add(new Vec4(0,-1,0));
+//		listOfActions.add(new Vec4(0,0,1));
+//		listOfActions.add(new Vec4(0,0,-1));
+//		
+//		// The rest of the list is populated with all possible actions with angles 0, 22.5, 45, 67.5 and 90
+////		double[] thetaValues = {0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180};
+////		double[] alphaValues = {0, 22.5, 45, 67.5, 90};
+////		double[] thetaValues = {0, 90, 180};
+////		double[] alphaValues = {0, 90};
+////		double x, y, z;
+////		
+////		for (double theta : thetaValues){
+////			for (double alpha : alphaValues) {
+////				x = Math.sin(Math.toRadians(alpha)) * Math.cos(Math.toRadians(theta));
+////				y = Math.sin(Math.toRadians(alpha)) * Math.sin(Math.toRadians(theta));
+////				z = Math.cos(Math.toRadians(alpha));
+////				
+////				listOfActions.add(new Vec4(x, y, z));
+////			}
+////		}
+//		
+//		return listOfActions;
+//	}
+	
+	/** 
+	 * Calculates the new movVector depending on the chosen action
+	 * 
+	 * @param the original move vector
+	 * @param the action
+	 * 
+	 * @return the new movVector (normalized)
+	 */
+	public static Vec4 getNewMoveVector (Vec4 originalVector, int action) {
 		
-		return listOfActions;
+		// TODO: create movements considering aircraft capabilities and not for 45 and 60 fixed angles
+
+		double x = originalVector.x;
+		double y = originalVector.y;
+		double z = originalVector.z;
+		double newX = x;
+		double newY = y;
+		double newZ = z;
+		
+		switch(action) {
+			// Go in direction of goal (original vector)
+			case 0: 
+				break;
+			// Turn right 45 degrees
+			case 1: 
+				newX = x * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
+				newY = -x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
+				break;
+			// Turn right 60 degrees
+			case 2: 
+				newX = x * Math.cos(Math.toRadians(60)) + y * Math.sin(Math.toRadians(60));
+				newY = -x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
+				break;
+			// Turn left 45 degrees
+			case 3: 
+				newX = x * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
+				newY = x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
+				break;
+			// Turn left 60 degrees
+			case 4: 
+				newX = x * Math.cos(Math.toRadians(60)) - y * Math.sin(Math.toRadians(60));
+				newY = x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
+				break;
+			// Turn climb 45 degrees
+			case 5: 
+				newZ = z + Math.tan(Math.toRadians(45));
+				break;
+			// Descend 45 degrees
+			case 6:
+				newZ = z - Math.tan(Math.toRadians(45));
+				break;
+			default:
+		}
+		
+		Vec4 newVector = new Vec4(newX, newY, newZ);
+		
+		return newVector.normalize3();
 	}
+	
 	
 	/** 
 	 * Creates a set of the obstacles that are in close proximity to the current state
@@ -118,27 +183,30 @@ public final class Helper {
 	 * @return the set of DQN obstacles ordered by their distance to the state
 	 * 
 	 */
-	public static Set<DQNObstacle> getCloseObstacles(Position position, double aircraftRadius, Environment environment,
-			RiskPolicy riskPolicy) {
+	public static TreeSet<DQNObstacle> getCloseObstacles(Position position, PlanningContinuum environment,
+			HashSet<Obstacle> trainingObstacles ,RiskPolicy riskPolicy) {
 		
-		Set<DQNObstacle> interferingObstacles = new TreeSet<DQNObstacle>(Comparator.comparingDouble(DQNObstacle::getDistanceToState));
+		TreeSet<DQNObstacle> interferingObstacles = new TreeSet<DQNObstacle>(Comparator.comparingDouble(DQNObstacle::getDistanceToState));
 		
-		// Creates a new sphere obstacle with center in the state's position and triple the aircraft's radius
-		ObstacleSphere stateObstacle = new ObstacleSphere(position, 3*aircraftRadius);
+//		// Creates a new sphere obstacle with center in the state's position and triple the aircraft's radius
+//		ObstacleSphere stateObstacle = new ObstacleSphere(position, 3*aircraftRadius);
 		
-		// Goes through all the obstacles in the environment
+		trainingObstacles.addAll(environment.getObstacles());
+		
+		
+		// Goes through all the obstacles in the environment + the random ones
 		for (Obstacle obstacle : environment.getObstacles()) {
 			
-			// Checks if it interferes with the obstacle representing the state
-			if (obstacle.intersects(environment.getGlobe(), stateObstacle)) {
+//			// Checks if it interferes with the obstacle representing the state
+//			if (obstacle.intersects(environment.getGlobe(), stateObstacle)) {
 				
-				// Checks if the cost obstacle satisfies the risk policy
+				// Checks if the cost obstacle satisfies the risk policy and adds to set if it doesn't
 				if (!riskPolicy.satisfies(obstacle.getCostInterval().getCost())) {
 					
-					DQNObstacle newObstacle = new DQNObstacle(position, obstacle, environment.getGlobe());
+					DQNObstacle newObstacle = new DQNObstacle(position, obstacle, environment);
 					interferingObstacles.add(newObstacle);
 				}
-			}
+//			}
 		}
 		
 		return interferingObstacles;

@@ -36,6 +36,8 @@ import static org.junit.Assert.assertEquals;
 
 
 
+
+
 import static org.junit.Assert.assertNotNull;
 
 import java.awt.Color;
@@ -63,6 +65,9 @@ import gov.nasa.worldwind.render.Path;
 
 import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
 
+import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
+import com.cfar.swim.worldwind.render.*;
+
 /**
  * Performs planner tests.
  * 
@@ -70,12 +75,12 @@ import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
  *
  */
 public class PlannerTestRafa {
-
+ 
 	/**
 	 * Tests a DQN planner.
 	 */
 	@Test
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("unchecked")    
 	public void DQNTest() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
 		Vec4 originVec = new Vec4(0, 0, 0);
@@ -85,11 +90,19 @@ public class PlannerTestRafa {
         planningContinuum.setGlobe(new Earth());
         
         Position origin = planningContinuum.getGlobe().computePositionFromPoint(new Vec4(1, 1, 1));
-        Position destination = planningContinuum.getCenterPosition();
+        Position destination = planningContinuum.getGlobe().computePositionFromPoint(new Vec4(50, 50, 50));
         ZonedDateTime etd = ZonedDateTime.now();
         Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
         
-        DQNPlannerNoCosts planner = new DQNPlannerNoCosts(iris, planningContinuum);
+        ObstacleCylinder o = new ObstacleCylinder(planningContinuum.getCenterPosition(), 30d, 10d);
+        ZonedDateTime start = ZonedDateTime.now().minusYears(1);
+		ZonedDateTime end = ZonedDateTime.now().plusYears(1);
+		o.setCostInterval(new CostInterval("ci1", start, end, 25d));
+		planningContinuum.embed(o);
+        
+        DQNPlanner planner = new DQNPlanner(iris, planningContinuum);
+		//DQNPlannerNoCosts planner = new DQNPlannerNoCosts(iris, planningContinuum);
+        planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);
         //assertEquals(7, Iterables.size(path.getPositions()));

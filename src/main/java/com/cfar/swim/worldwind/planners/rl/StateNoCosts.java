@@ -39,17 +39,17 @@ public class StateNoCosts {
 	/** store's the state's position*/
 	private Position position = null;
 	
-	/** store's the state's point in box coordinates*/
-	private Vec4 boxStatePoint = null;
+	/** store's the state's cartesian point */
+	private Vec4 statePoint = null;
 	
 	/** the distance to the environment's axes normalized by their lengths */
 	private float[] distanceToEnv = new float[6];
 	
-	/** vector that points from state to goal*/
-	private Vec4 relativeVector = null;
+	/** vector that points from goal to state */
+	private Vec4 relativeGoal = null;
 	
-	/** vector that points from state to goal*/
-	private Vec4 normalizedRelativeVector = null;
+	/** vector that points from goal to state */
+	private Vec4 normalizedRelativeGoal = null;
 	
 	/** the distance from this state to the goal (vector length) */
 	private float distanceToGoal = 0f;
@@ -57,14 +57,8 @@ public class StateNoCosts {
 	/** the distance from this state to the goal normalized by the maximum distance */
 	private float normalizedDistanceToGoal = 0f;
 	
-	/** the estimated time over of this state */
-	private ZonedDateTime eto;
-	
-	/** the cost of this state */
-	private double cost;
-	
-	/**Something to describe the surrounding cost intervals*/
-	// TODO: add more environment info
+	/** the vector that represents the current movement direction */
+	private Vec4 movVector = null;
 	
 
 	/**
@@ -76,39 +70,33 @@ public class StateNoCosts {
 	 * @param id the state's id
 	 * 
 	 */
-	public StateNoCosts(Position position, Position goal, PlanningContinuum env) {
+	public StateNoCosts(Position position, Position goal, PlanningContinuum env, Vec4 movVector) {
+		
 		this.position = position;
-		Vec4 statePoint = env.getGlobe().computePointFromPosition(position);
-		boxStatePoint = env.transformModelToBoxOrigin(statePoint);
+		
+		this.statePoint = env.getGlobe().computePointFromPosition(position);
 		Vec4 goalPoint = env.getGlobe().computePointFromPosition(goal);
-		Vec4 boxGoalPoint = env.transformModelToBoxOrigin(goalPoint);
-		this.relativeVector = boxGoalPoint.subtract3(boxStatePoint);
-		this.normalizedRelativeVector = this.relativeVector.normalize3();
-		this.distanceToGoal = (float) this.relativeVector.getLength3();
+		this.relativeGoal = this.statePoint.subtract3(goalPoint);
+		this.normalizedRelativeGoal = this.relativeGoal.normalize3();
+		this.distanceToGoal = (float) this.relativeGoal.getLength3();
 		this.normalizedDistanceToGoal = (float) (this.distanceToGoal / env.getDiameter());
 		
+		// If it is the first state, the movVector points to the goal
+		if(movVector == null) 
+			movVector = this.normalizedRelativeGoal.getNegative3();
+				
+		this.movVector = movVector;
+		
 		// Gets distance to environment axes
-		this.distanceToEnv[0] = (float) (boxStatePoint.x / env.getRLength());
-		this.distanceToEnv[1] = (float) ((env.getRLength() - boxStatePoint.x) / env.getRLength());
-		this.distanceToEnv[2] = (float) (boxStatePoint.y / env.getSLength());
-		this.distanceToEnv[3] = (float) ((env.getSLength() - boxStatePoint.y) / env.getSLength());
-		this.distanceToEnv[4] = (float) (boxStatePoint.z / env.getTLength());
-		this.distanceToEnv[5] = (float) ((env.getTLength() - boxStatePoint.z) / env.getTLength());
+		this.distanceToEnv[0] = (float) (this.statePoint.x / env.getDiameter());
+		this.distanceToEnv[1] = (float) ((env.getRLength() - this.statePoint.x) / env.getDiameter());
+		this.distanceToEnv[2] = (float) (this.statePoint.y / env.getDiameter());
+		this.distanceToEnv[3] = (float) ((env.getSLength() - this.statePoint.y) / env.getDiameter());
+		this.distanceToEnv[4] = (float) (this.statePoint.z / env.getDiameter());
+		this.distanceToEnv[5] = (float) ((env.getTLength() - this.statePoint.z) / env.getDiameter());
 		this.createId();
 	}
 	
-//	/**
-//	 * Constructs a state of a reinforcement learning planner from a relative position vector.
-//	 * 
-//	 * @param the vector relative to the goal
-//	 * 
-//	 */
-//	public StateNoCosts(Vec4 relativeVector) {
-//		this.relativeVector = relativeVector;
-//		this.normalizedRelativeVector = this.relativeVector.normalize3();
-//		this.distanceToGoal = (float) this.relativeVector.getLength3();
-//		this.createId();
-//	}
 	
 	/**
 	 * Gets the state's position
@@ -120,21 +108,21 @@ public class StateNoCosts {
 	}
 	
 	/**
-	 * Gets the state's position
+	 * Gets the state's point in cartesian coordinates
 	 * 
-	 * @return the state's position
+	 * @return the state's point in cartesian coordinates
 	 */
-	public Vec4 getBoxStatePoint() {
-		return this.boxStatePoint;
+	public Vec4 getStatePoint() {
+		return this.statePoint;
 	}
 	
 	/**
-	 * Gets the vector that points from state to goal
+	 * Gets the vector that points from goal to state
 	 * 
-	 * @return the vector that points from state to goal
+	 * @return the vector that points from goal to state
 	 */
-	public Vec4 getRelativeVector() {
-		return this.relativeVector;
+	public Vec4 getRelativeGoal() {
+		return this.relativeGoal;
 	}
 	
 	/**
@@ -142,8 +130,8 @@ public class StateNoCosts {
 	 * 
 	 * @return the vector that points from state to goal normalized
 	 */
-	public Vec4 getNormalizedRelativeVector() {
-		return this.normalizedRelativeVector;
+	public Vec4 getNormalizedRelativeGoal() {
+		return this.normalizedRelativeGoal;
 	}
 	
 	/**
@@ -165,6 +153,15 @@ public class StateNoCosts {
 	}
 	
 	/**
+	 * Gets the vector that represents the current movement direction
+	 * 
+	 * @return the vector that represents the current movement direction
+	 */
+	public Vec4 getMovVector() {
+		return this.movVector;
+	}
+	
+	/**
 	 * Gets the state's ID.
 	 * 
 	 * @return the state's ID
@@ -173,43 +170,7 @@ public class StateNoCosts {
 		return this.id;
 	}
 	
-	/**
-	 * Sets the state's ETO.
-	 * 
-	 * @param eto state's ETO
-	 */
-	public void setEto(ZonedDateTime eto) {
-		this.eto = eto;
-	}
-	
-	
-	/**
-	 * Gets the state's ETO.
-	 * 
-	 * @return the state's ETO
-	 */
-	public ZonedDateTime getEto() {
-		return this.eto;
-	}
-	
-	/**
-	 * Sets the state's cost.
-	 * 
-	 * @param cost state's cost
-	 */
-	public void setCost(double cost) {
-		this.cost = cost;
-	}
-	
-	
-	/**
-	 * Gets the state's cost.
-	 * 
-	 * @return the state's cost
-	 */
-	public double getCost() {
-		return this.cost;
-	}
+
 	
 	/**
 	 * Creates the state's ID based on the stored information
@@ -225,9 +186,9 @@ public class StateNoCosts {
 			index++;
 		}
 		// Information relative to goal
-		id[index] = (float) this.getNormalizedRelativeVector().x;
-		id[index+1] = (float) this.getNormalizedRelativeVector().y;
-		id[index+2] = (float) this.getNormalizedRelativeVector().z;
+		id[index] = (float) this.getNormalizedRelativeGoal().x;
+		id[index+1] = (float) this.getNormalizedRelativeGoal().y;
+		id[index+2] = (float) this.getNormalizedRelativeGoal().z;
 		id[index+3] = (float) this.getNormalizedDistanceToGoal();
 		
 	}
