@@ -85,7 +85,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private static final float INITIAL_EPSILON = 1.0f;
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 1000;
+	private static final int NUM_GLOBAL_EPS = 10000;
 	
 	/** maximum number of steps per episode */
 	private static final int MAX_STEPS = 100;
@@ -109,7 +109,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private final int[] hiddenSize = {64, 128, 256, 128, 64};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.001f;
+	private final float learningRate = 0.01f;
 	
 	/** the size of the mini-batch of transitions used for training */
 	protected final int batchSize = 32;
@@ -518,15 +518,15 @@ public class DQNPlanner extends AbstractPlanner {
 			while (!this.isDone() && !this.failed()) {
 				// Saves state in memory; Updates the network; Selects the next action and saves it in memory
 				this.react();
-				System.out.println("STATE " + (step + 1));
-				System.out.println("Cost Policy: " + state.getId()[0] + "; Step size: " + state.getId()[1]);
-				System.out.println("Distance to axes: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4] 
-						+ "; " + state.getId()[5] + "; " + state.getId()[6] + "; " + state.getId()[7]);
-				System.out.println("Relative to goal: " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10] + "; " + state.getId()[11]);
-				System.out.println("Obstacle 1: " + state.getId()[12] + "; " + state.getId()[13] + "; " + state.getId()[14] + "; " + state.getId()[15]);
-				System.out.println("Obstacle 2: " + state.getId()[16] + "; " + state.getId()[17] + "; " + state.getId()[18] + "; " + state.getId()[19]);
-				System.out.println("Obstacle 3: " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22] + "; " + state.getId()[23]);
-				System.out.println("Action: " + action);
+//				System.out.println("STATE " + (step + 1));
+//				System.out.println("Cost Policy: " + state.getId()[0] + "; Step size: " + state.getId()[1]);
+//				System.out.println("Distance to axes: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4] 
+//						+ "; " + state.getId()[5] + "; " + state.getId()[6] + "; " + state.getId()[7]);
+//				System.out.println("Relative to goal: " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10] + "; " + state.getId()[11]);
+//				System.out.println("Obstacle 1: " + state.getId()[12] + "; " + state.getId()[13] + "; " + state.getId()[14] + "; " + state.getId()[15]);
+//				System.out.println("Obstacle 2: " + state.getId()[16] + "; " + state.getId()[17] + "; " + state.getId()[18] + "; " + state.getId()[19]);
+//				System.out.println("Obstacle 3: " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22] + "; " + state.getId()[23]);
+//				System.out.println("Action: " + action);
 				// Execute action and get next state and reward; Checks if the goal has been reached
 				this.step();
 				// Reaching maximum number of steps counts as failure
@@ -541,6 +541,7 @@ public class DQNPlanner extends AbstractPlanner {
 			// Updates epsilon for next episode
 			decay = Math.exp(-episode * 1.0 / (NUM_GLOBAL_EPS));
 			epsilon = (float) (MIN_EXPLORE_RATE + (INITIAL_EPSILON - MIN_EXPLORE_RATE) * decay);
+//			epsilon = INITIAL_EPSILON - (episode / NUM_GLOBAL_EPS)*(INITIAL_EPSILON - MIN_EXPLORE_RATE);
 			
 //			if(this.isDone())
 //				successfulEpisodes ++;
@@ -684,12 +685,12 @@ public class DQNPlanner extends AbstractPlanner {
 		ZonedDateTime t1 = this.getEtd().minusYears(1);
 		ZonedDateTime t2 = this.getEtd().plusYears(1);
 		
-		int numberOfObstacles = rand.nextInt(State.CONSIDERED_OBSTACLES);
+		int numberOfObstacles = rand.nextInt(State.CONSIDERED_OBSTACLES-1);
 		
 		// Creates random obstacles and adds them to set
 		for (int i=0; i<numberOfObstacles; i++) {
 			
-			Position center = this.getPlanningContinuum().sampleRandomUniformPosition();
+			PrecisionPosition center = new PrecisionPosition(this.getPlanningContinuum().sampleRandomUniformPosition());
 			double radius = rand.nextDouble() * (this.getPlanningContinuum().getRadius() / 5);
 			// TODO: add other types of obstacles, for now it is only sphere since it is the simplest to create
 			ObstacleSphere obstacle = new ObstacleSphere(center, radius);
@@ -700,27 +701,28 @@ public class DQNPlanner extends AbstractPlanner {
 			this.getTrainingObstacles().add(obstacle);
 		}
 		
-		// 1/3 of the times, there is an obstacle right between start and goal, to make sure it learns to go around
-//		if (true) {
-//			
-//			Globe globe = this.getEnvironment().getGlobe();
-//			Vec4 startPoint = this.getPlanningContinuum().transformModelToBoxOrigin(globe.computePointFromPosition(start));
-//			Vec4 goalPoint = this.getPlanningContinuum().transformModelToBoxOrigin(globe.computePointFromPosition(goal));
-//			Vec4 halfStartToGoal = goalPoint.subtract3(startPoint).divide3(2d);
-//			Vec4 e = startPoint.add3(halfStartToGoal);
-//			Position center = globe.computePositionFromPoint(this.getPlanningContinuum().transformBoxOriginToModel(startPoint.add3(halfStartToGoal)));
-//			//Vec4 obstaclePoint = t.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(obstacle.getCenter()));
-//
-//			double radius = rand.nextDouble() * (this.getPlanningContinuum().getRadius() / 5);
-//			double height = rand.nextDouble() * (this.getPlanningContinuum().getTLength());
-//			ObstacleCylinder obstacle = new ObstacleCylinder(center, 0, height, radius);
-//			
-//			double cost = rand.nextDouble() * 100;
-//			obstacle.setCostInterval(new CostInterval("ci", t1, t2, cost));
-//			
-//			this.getTrainingObstacles().add(obstacle);
-//			
-//		}
+		 //1/3 of the times, there is an obstacle right between start and goal, to make sure it learns to go around
+		if (rand.nextInt(3) == 0) {
+			
+			Globe globe = this.getEnvironment().getGlobe();
+			Vec4 startPoint = this.getPlanningContinuum().transformModelToBoxOrigin(globe.computePointFromPosition(start));
+			Vec4 goalPoint = this.getPlanningContinuum().transformModelToBoxOrigin(globe.computePointFromPosition(goal));
+			Vec4 halfStartToGoal = goalPoint.subtract3(startPoint).divide3(2d);
+			Vec4 e = startPoint.add3(halfStartToGoal);
+			PrecisionPosition center = new PrecisionPosition(globe.computePositionFromPoint(this.getPlanningContinuum().
+					transformBoxOriginToModel(startPoint.add3(halfStartToGoal))));
+			// Ate aqui esta bem
+			Vec4 obstaclePoint = this.getPlanningContinuum().transformModelToBoxOrigin(globe.computePointFromPosition(center));
+
+			double radius = rand.nextDouble() * (this.getPlanningContinuum().getRadius() / 5);
+			ObstacleSphere obstacle = new ObstacleSphere(center, radius);
+			
+			double cost = rand.nextDouble() * 100;
+			obstacle.setCostInterval(new CostInterval("ci", t1, t2, cost));
+			
+			this.getTrainingObstacles().add(obstacle);
+			
+		}
 		
 		// Sets random cost policy
 		int costPolicy = rand.nextInt(2);
@@ -787,7 +789,7 @@ public class DQNPlanner extends AbstractPlanner {
 		//double stepSize = this.getStart().getdistan;
 		
 		// Determines the movement from the current state to the next based on action
-		Vec4 movVector = Helper.getNewMoveVector(this.getState().getNormalizedRelativeGoal().getNegative3(), action);
+		Vec4 movVector = Helper.getNewMoveVector(this.getState().getMovVector(), this.getState().getNormalizedRelativeGoal().getNegative3(), action);
 				
 //		if (action == 0) {
 //			// If the action index is 0, the action corresponds to just flying in the direction of the goal
@@ -797,7 +799,7 @@ public class DQNPlanner extends AbstractPlanner {
 //		}
 		
 		// Computes the next state's position
-		Vec4 boxNextStatePoint = this.getPlanningContinuum().transformModelToBoxOrigin(this.getState().getStatePoint().add3(movVector.multiply3(this.getStepSize())));
+		Vec4 boxNextStatePoint = this.getState().getStatePoint().add3(movVector.multiply3(this.getStepSize()));
 		Vec4 nextStatePoint = this.getPlanningContinuum().transformBoxOriginToModel(boxNextStatePoint);
 		PrecisionPosition nextStatePosition = new PrecisionPosition(this.getEnvironment().getGlobe().computePositionFromPoint(nextStatePoint));
 		
@@ -956,7 +958,7 @@ public class DQNPlanner extends AbstractPlanner {
 		this.setStepSize(distance / STEP_DIVISION);
 		
 		// Creates the start and goal states 
-		TreeSet<DQNObstacle> obstacles = Helper.getCloseObstacles(origin, this.getPlanningContinuum(), this.getTrainingObstacles(), this.getRiskPolicy());
+		TreeSet<DQNObstacle> obstacles = Helper.getCloseObstacles(pOrigin, this.getPlanningContinuum(), this.getTrainingObstacles(), this.getRiskPolicy());
 		this.setStart(new State(pOrigin, pDestination, this.getPlanningContinuum(), obstacles, this.getCostPolicy(), etd, this.getStepSize(), null));
 		this.setGoalPosition(pDestination);
 		
@@ -990,11 +992,11 @@ public class DQNPlanner extends AbstractPlanner {
 				
 				NDArray qValues = targetPredictor.predict(new NDList(submanager.create(this.getState().getId()))).singletonOrThrow();
 				// DEBUG
-				System.out.print("Q VALUES: ");
-				for (int i=0; i<qValues.size(); i++) {
-					System.out.print(qValues.getFloat(i) + "; ");
-				}
-				System.out.println();
+//				System.out.print("Q VALUES: ");
+//				for (int i=0; i<qValues.size(); i++) {
+//					System.out.print(qValues.getFloat(i) + "; ");
+//				}
+//				System.out.println();
 				this.setAction(ActionSampler.greedy(qValues));
 				
 			} catch (TranslateException e) {

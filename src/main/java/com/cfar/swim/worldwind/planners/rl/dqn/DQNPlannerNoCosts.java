@@ -85,10 +85,13 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	private static final float INITIAL_EPSILON = 1.0f;
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 6000;
+	private static final int NUM_GLOBAL_EPS = 1000;
 	
 	/** maximum number of steps per episode */
-	private static final int MAX_STEPS = 100;
+	private static final int MAX_STEPS = 200;
+	
+	/** in how many steps to divide from start to goal */
+	private static final int STEP_DIVISION = 20;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -106,10 +109,10 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	private final int numOfActions = 7;
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {64, 128, 128, 64};
+	private final int[] hiddenSize = {64, 128, 64};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.0001f;
+	private final float learningRate = 0.08f;
 	
 	/** the size of the mini-batch of transitions used for training */
 	protected final int batchSize = 32;
@@ -174,6 +177,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	/** indicates if it reached goal or not, true if it has */
 	private boolean failure = false;
 	
+	/** stores the step size of the planner */
+	private double stepSize = 0.0;
+	
 	/** saves the most recent waypoint added to the trajectory */
 	private RLWaypoint newestWaypoint = null;
 	
@@ -189,6 +195,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	public List<Double> rewards4 = new ArrayList<>();
 	public List<Double> rewards5 = new ArrayList<>();
 	public List<Double> rewards6 = new ArrayList<>();
+	
+	/** Stores episode results */
+	public boolean[] episodeResults = new boolean[1000000];
 	
 	/** Constructs a planner trained by a Deep Q-Network for a specified aircraft and
 	 * environment using default local cost and risk policies.
@@ -392,6 +401,24 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	}
 	
 	/**
+	 * Gets the planner's step size.
+	 * 
+	 * @return the planner's step size
+	 */
+	protected double getStepSize() {
+		return this.stepSize;
+	}
+	
+	/**
+	 * Sets the planner's step size.
+	 * 
+	 * @param stepSize the planner's step size
+	 */
+	protected void setStepSize(double stepSize) {
+		this.stepSize = stepSize;
+	}
+	
+	/**
 	 * Gets the newest RL waypoint added to the trajectory.
 	 * 
 	 * @return the newest RL waypoint added to the trajectory
@@ -457,7 +484,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	protected void trainGlobal() {
 		
 		double decay = 0;
-		int episode = 0;
+		int episode = -1;
 		int step;
 		double score;
 		double agentPerformance = 0;
@@ -479,34 +506,53 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 				// Execute action and get next state and reward; Checks if the goal has been reached
 				this.step();
 				//System.out.println("State: " + this.getState().getDistanceToGoal() + " Action: " + this.getAction() + " Reward:" + this.getReward());
+//				System.out.println("State: (" + this.getState().getId()[0] + "; " + this.getState().getId()[1] + "; " +
+//						this.getState().getId()[2] + "; " + this.getState().getId()[3] + "; " + this.getState().getId()[4] + "; " +
+//						this.getState().getId()[5] + "; " + this.getState().getId()[6] + "; " + this.getState().getId()[7] + "; " +
+//						this.getState().getId()[8] + "; " + this.getState().getId()[9] + "; " + this.getState().getId()[10] + ") " + ": Action:" + this.getAction());
 				// Reaching maximum number of steps counts as failure
 				if (step >= MAX_STEPS)
 					this.setFailure(true);
 				// Stores the reward and the "done" boolean in memory
-				memory.setReward(this.getReward(), this.isDone(), this.failed());
+				memory.setReward(0.1*this.getReward(), this.isDone(), this.failed());
 				score += this.getReward();
 				// Sets the state as the next state
 				this.setState(this.getNextState());
 				step++;
 			}
 			// Update epsilon for next episode
-			decay = Math.exp(-episode * 1.0 / (NUM_GLOBAL_EPS-100));
+			decay = Math.exp(-episode * 1.0 / (NUM_GLOBAL_EPS));
 			epsilon = (float) (MIN_EXPLORE_RATE + (INITIAL_EPSILON - MIN_EXPLORE_RATE) * decay);
 			
-			if(this.isDone())
-				successfulEpisodes ++;
-			agentPerformance = successfulEpisodes / episode;
+//			if(this.isDone())
+//				successfulEpisodes ++;
+//			agentPerformance = successfulEpisodes / episode;
+			episodeResults[episode] = this.isDone();
+			successfulEpisodes = 0;
+			if (episode > 1000) {
+				for (int i=0; i<1000; i++) {
+					if (episodeResults[episode - 1000 + i])
+						successfulEpisodes++;
+				}
+				agentPerformance = successfulEpisodes / 1000;
+			} else {
+				for (int i=0; i<episode; i++) {
+					if (episodeResults[i])
+						successfulEpisodes++;
+				}
+				agentPerformance = successfulEpisodes / (episode+1);
+			}
 			
 			if (this.isDone()) {
 				System.out.println("Episode " + episode + " -----------------------> GOAL");
 			} else if (this.failed()) {
 				if (step >= MAX_STEPS ) {
 					System.out.println("Episode " + episode + " did too many steps");
-				} else if (this.getReward()==-50){
+				} else {
 					System.out.println("Episode " + episode + " left environment");
 				}
 			}
-			System.out.println("Performance " + agentPerformance);
+			//System.out.println("Episode " + episode + " -----> Performance " + agentPerformance);
 		}
 	}
 	
@@ -582,8 +628,13 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		while (goalPosition == startPosition)
 			goalPosition = this.getPlanningContinuum().sampleRandomUniformPosition();
 		
+		// Sets the step size
+		double distance = this.getPlanningContinuum().getGlobe().computePointFromPosition(goalPosition).
+				subtract3(this.getPlanningContinuum().getGlobe().computePointFromPosition(startPosition)).getLength3();
+		this.setStepSize(distance / STEP_DIVISION);
+		
 		// Creates the start and goal states
-		this.setStart(new StateNoCosts(startPosition, goalPosition, this.getPlanningContinuum(), null));
+		this.setStart(new StateNoCosts(startPosition, goalPosition, this.getPlanningContinuum(), null, this.getStepSize()));
 		this.setGoalPosition(goalPosition);
 		
 		this.setState(this.getStart());
@@ -648,9 +699,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		
 		int action = this.getAction();
 		//double stepSize = 2 * this.getAircraft().getCapabilities().getCruiseSpeed();
-		double stepSize = this.getStart().getDistanceToGoal() / 10;
+		//double stepSize = this.getStart().getDistanceToGoal() / 10;
 		
-		Vec4 movVector = Helper.getNewMoveVector(this.getState().getNormalizedRelativeGoal().getNegative3(), action);
+		Vec4 movVector = Helper.getNewMoveVector(this.getState().getMovVector(), this.getState().getNormalizedRelativeGoal().getNegative3(), action);
 		
 //		if (action == 0) {
 //			// If the action index is 0, the action corresponds to just flying in the direction of the goal
@@ -660,7 +711,8 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 //		}
 		
 		// Computes the next state's position
-		Vec4 nextStatePoint = this.getState().getStatePoint().add3(movVector.multiply3(stepSize));
+		Vec4 boxNextStatePoint = this.getState().getBoxStatePoint().add3(movVector.multiply3(this.getStepSize()));
+		Vec4 nextStatePoint = this.getPlanningContinuum().transformBoxOriginToModel(boxNextStatePoint);
 		Position nextStatePosition = this.getEnvironment().getGlobe().computePositionFromPoint(nextStatePoint);
 				
 		// If the next state is outside the environment, stays in place, and fails
@@ -670,7 +722,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		}
 		
 		// Creates the next state
-		this.setNextState(new StateNoCosts(nextStatePosition, this.getGoalPosition(), this.getPlanningContinuum(), movVector));
+		this.setNextState(new StateNoCosts(nextStatePosition, this.getGoalPosition(), this.getPlanningContinuum(), movVector, this.getStepSize()));
 		
 		// Checks if it has reached goal
 		if (this.getNextState().getDistanceToGoal() <= stepSize)
@@ -717,7 +769,13 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 			return;
 		}
 		
-		// If the cost is exceeded
+//		// If it gets too close to environment limits
+//		for (int i=0; i<6; i++) {
+//			if (this.getNextState().getDistanceToEnv()[i] < this.getNextState().getStepSize()) {
+//				reward += -10;
+//				break;
+//			}
+//		}
 		
 		// Otherwise: step penalty +  distance to goal penalty/reward 
 		reward += -5;
@@ -798,8 +856,13 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		this.getNewestWaypoint().setEto(etd);
 		this.getNewestWaypoint().setPoi(true);
 		
+		// Sets the step size
+		double distance = this.getPlanningContinuum().getGlobe().computePointFromPosition(destination).
+				subtract3(this.getPlanningContinuum().getGlobe().computePointFromPosition(origin)).getLength3();
+		this.setStepSize(distance / STEP_DIVISION);
+		
 		// Creates the start and goal states 
-		this.setStart(new StateNoCosts(origin, destination, this.getPlanningContinuum(), null));
+		this.setStart(new StateNoCosts(origin, destination, this.getPlanningContinuum(), null, this.getStepSize()));
 		this.setGoalPosition(destination);
 		
 		// Sets the state as the start
@@ -825,33 +888,33 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		
 		// DEBUG
 		double sum = 0;
-		for (Double n : rewards0)
-			sum += n;
-		System.out.println("Average rewards of action 0:" + (sum/rewards0.size()));
-		sum = 0;
-		for (Double n : rewards1)
-			sum += n;
-		System.out.println("Average rewards of action 1:" + (sum/rewards1.size()));
-		sum = 0;
-		for (Double n : rewards2)
-			sum += n;
-		System.out.println("Average rewards of action 2:" + (sum/rewards2.size()));
-		sum = 0;
-		for (Double n : rewards3)
-			sum += n;
-		System.out.println("Average rewards of action 3:" + (sum/rewards3.size()));
-		sum = 0;
-		for (Double n : rewards4)
-			sum += n;
-		System.out.println("Average rewards of action 4:" + (sum/rewards4.size()));
-		sum = 0;
-		for (Double n : rewards5)
-			sum += n;
-		System.out.println("Average rewards of action 5:" + (sum/rewards5.size()));
-		sum = 0;
-		for (Double n : rewards6)
-			sum += n;
-		System.out.println("Average rewards of action 6:" + (sum/rewards6.size()));
+//		for (Double n : rewards0)
+//			sum += n;
+//		System.out.println("Average rewards of action 0:" + (sum/rewards0.size()));
+//		sum = 0;
+//		for (Double n : rewards1)
+//			sum += n;
+//		System.out.println("Average rewards of action 1:" + (sum/rewards1.size()));
+//		sum = 0;
+//		for (Double n : rewards2)
+//			sum += n;
+//		System.out.println("Average rewards of action 2:" + (sum/rewards2.size()));
+//		sum = 0;
+//		for (Double n : rewards3)
+//			sum += n;
+//		System.out.println("Average rewards of action 3:" + (sum/rewards3.size()));
+//		sum = 0;
+//		for (Double n : rewards4)
+//			sum += n;
+//		System.out.println("Average rewards of action 4:" + (sum/rewards4.size()));
+//		sum = 0;
+//		for (Double n : rewards5)
+//			sum += n;
+//		System.out.println("Average rewards of action 5:" + (sum/rewards5.size()));
+//		sum = 0;
+//		for (Double n : rewards6)
+//			sum += n;
+//		System.out.println("Average rewards of action 6:" + (sum/rewards6.size()));
 		
 		int step = 0;
 		
@@ -863,21 +926,24 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 				
 				NDArray qValues = targetPredictor.predict(new NDList(submanager.create(this.getState().getId()))).singletonOrThrow();
 				// DEBUG
-				System.out.print("Q VALUES: ");
-				for (int i=0; i<qValues.size(); i++) {
-					System.out.print(qValues.getFloat(i) + "; ");
-				}
-				System.out.println();
+//				System.out.print("Q VALUES: ");
+//				for (int i=0; i<qValues.size(); i++) {
+//					System.out.print(qValues.getFloat(i) + "; ");
+//				}
+//				System.out.println();
 				this.setAction(ActionSampler.greedy(qValues));
 				
 			} catch (TranslateException e) {
 				throw new IllegalStateException(e);
 			}
 			
+//			System.out.println("State: (" + this.getState().getId()[0] + "; " + this.getState().getId()[1] + "; " +
+//					this.getState().getId()[2] + "; " + this.getState().getId()[3] + "; " + this.getState().getId()[4] + "; " +
+//					this.getState().getId()[5] + "; " + this.getState().getId()[6] + "; " + this.getState().getId()[7] + "; " +
+//					this.getState().getId()[8] + "; " + this.getState().getId()[9] + ") " + ": Action:" + this.getAction());
+			
 			System.out.println("State: (" + this.getState().getId()[0] + "; " + this.getState().getId()[1] + "; " +
-					this.getState().getId()[2] + "; " + this.getState().getId()[3] + "; " + this.getState().getId()[4] + "; " +
-					this.getState().getId()[5] + "; " + this.getState().getId()[6] + "; " + this.getState().getId()[7] + "; " +
-					this.getState().getId()[8] + "; " + this.getState().getId()[9] + ") " + ": Action:" + this.getAction());
+					this.getState().getId()[2] + "; " + this.getState().getId()[3] + ")" + ": Action:" + this.getAction());
 			
 			// Execute action and get next state and reward; Checks if the goal has been reached
 			this.step();
@@ -894,7 +960,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		// If it finished without reaching the goal (because it reached the maximum number of steps
 		// or failed) returns an empty trajectory
 		if (!this.isDone()) {
-			this.clearWaypoints();
+			//this.clearWaypoints();
 			return;
 		}
 		

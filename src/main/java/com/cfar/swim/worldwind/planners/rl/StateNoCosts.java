@@ -31,7 +31,7 @@ import gov.nasa.worldwind.globes.Globe;
 public class StateNoCosts {
 	
 	/** the size of the state ID */
-	public static int ID_SIZE = 10;
+	public static int ID_SIZE = 11;
 	
 	/** array that represents the state's ID */
 	private float[] id = new float[ID_SIZE];
@@ -40,7 +40,7 @@ public class StateNoCosts {
 	private Position position = null;
 	
 	/** store's the state's cartesian point */
-	private Vec4 statePoint = null;
+	private Vec4 boxStatePoint = null;
 	
 	/** the distance to the environment's axes normalized by their lengths */
 	private float[] distanceToEnv = new float[6];
@@ -60,6 +60,9 @@ public class StateNoCosts {
 	/** the vector that represents the current movement direction */
 	private Vec4 movVector = null;
 	
+	/** the current step size (normalized) */
+	private float stepSize = 0;
+	
 
 	/**
 	 * Constructs a state of a reinforcement learning planner from a position.
@@ -70,13 +73,14 @@ public class StateNoCosts {
 	 * @param id the state's id
 	 * 
 	 */
-	public StateNoCosts(Position position, Position goal, PlanningContinuum env, Vec4 movVector) {
+	public StateNoCosts(Position position, Position goal, PlanningContinuum env, Vec4 movVector, double stepSize) {
 		
 		this.position = position;
+		this.stepSize = (float) (stepSize / env.getDiameter());
 		
-		this.statePoint = env.getGlobe().computePointFromPosition(position);
-		Vec4 goalPoint = env.getGlobe().computePointFromPosition(goal);
-		this.relativeGoal = this.statePoint.subtract3(goalPoint);
+		this.boxStatePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(position));
+		Vec4 boxGoalPoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(goal));
+		this.relativeGoal = this.boxStatePoint.subtract3(boxGoalPoint);
 		this.normalizedRelativeGoal = this.relativeGoal.normalize3();
 		this.distanceToGoal = (float) this.relativeGoal.getLength3();
 		this.normalizedDistanceToGoal = (float) (this.distanceToGoal / env.getDiameter());
@@ -88,12 +92,12 @@ public class StateNoCosts {
 		this.movVector = movVector;
 		
 		// Gets distance to environment axes
-		this.distanceToEnv[0] = (float) (this.statePoint.x / env.getDiameter());
-		this.distanceToEnv[1] = (float) ((env.getRLength() - this.statePoint.x) / env.getDiameter());
-		this.distanceToEnv[2] = (float) (this.statePoint.y / env.getDiameter());
-		this.distanceToEnv[3] = (float) ((env.getSLength() - this.statePoint.y) / env.getDiameter());
-		this.distanceToEnv[4] = (float) (this.statePoint.z / env.getDiameter());
-		this.distanceToEnv[5] = (float) ((env.getTLength() - this.statePoint.z) / env.getDiameter());
+		this.distanceToEnv[0] = (float) (this.boxStatePoint.x / env.getDiameter());
+		this.distanceToEnv[1] = (float) ((env.getRLength() - this.boxStatePoint.x) / env.getDiameter());
+		this.distanceToEnv[2] = (float) (this.boxStatePoint.y / env.getDiameter());
+		this.distanceToEnv[3] = (float) ((env.getSLength() - this.boxStatePoint.y) / env.getDiameter());
+		this.distanceToEnv[4] = (float) (this.boxStatePoint.z / env.getDiameter());
+		this.distanceToEnv[5] = (float) ((env.getTLength() - this.boxStatePoint.z) / env.getDiameter());
 		this.createId();
 	}
 	
@@ -112,8 +116,8 @@ public class StateNoCosts {
 	 * 
 	 * @return the state's point in cartesian coordinates
 	 */
-	public Vec4 getStatePoint() {
-		return this.statePoint;
+	public Vec4 getBoxStatePoint() {
+		return this.boxStatePoint;
 	}
 	
 	/**
@@ -162,6 +166,24 @@ public class StateNoCosts {
 	}
 	
 	/**
+	 * Gets the step size.
+	 * 
+	 * @return the step size
+	 */
+	public float getStepSize() {
+		return this.stepSize;
+	}
+	
+	/**
+	 * Gets the distance to the environment's axes normalized by their lengths.
+	 * 
+	 * @return the distance to the environment's axes normalized by their lengths
+	 */
+	public float[] getDistanceToEnv() {
+		return this.distanceToEnv;
+	}
+	
+	/**
 	 * Gets the state's ID.
 	 * 
 	 * @return the state's ID
@@ -179,6 +201,9 @@ public class StateNoCosts {
 		// Relative position and distance to goal rounded up to two decimal places
 		//id[0] = BigDecimal.valueOf(this.envCorners[0]).setScale(7, RoundingMode.HALF_EVEN).floatValue();
 		int index = 0;
+		
+		id[index] = stepSize;
+		index++;
 		
 		// Distance to environment axes
 		for (int i = 0; i < distanceToEnv.length; i++) {

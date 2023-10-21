@@ -51,7 +51,7 @@ public class DQNObstacle implements Comparable<DQNObstacle>{
 	 * @param the globe
 	 * 
 	 */
-	public DQNObstacle(Position position, Obstacle obstacle, PlanningContinuum env) {
+	public DQNObstacle(PrecisionPosition position, Obstacle obstacle, PlanningContinuum env) {
 		
 		Vec4 statePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(position));
 		Vec4 obstaclePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(obstacle.getCenter()));

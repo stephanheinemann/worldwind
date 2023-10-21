@@ -80,7 +80,7 @@ public class PlannerTestRafa {
 	 * Tests a DQN planner.
 	 */
 	@Test
-	@SuppressWarnings("unchecked")    
+	@SuppressWarnings("unchecked")      
 	public void DQNTest() {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
 		Vec4 originVec = new Vec4(0, 0, 0);

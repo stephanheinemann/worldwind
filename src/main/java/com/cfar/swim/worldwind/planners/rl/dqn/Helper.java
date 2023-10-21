@@ -9,6 +9,7 @@ import java.util.Set;
 
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
+import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
@@ -119,7 +120,7 @@ public final class Helper {
 	 * 
 	 * @return the new movVector (normalized)
 	 */
-	public static Vec4 getNewMoveVector (Vec4 originalVector, int action) {
+	public static Vec4 getNewMoveVector (Vec4 originalVector, Vec4 relativeGoal, int action) {
 		
 		// TODO: create movements considering aircraft capabilities and not for 45 and 60 fixed angles
 
@@ -131,36 +132,57 @@ public final class Helper {
 		double newZ = z;
 		
 		switch(action) {
-			// Go in direction of goal (original vector)
+			// Go in direction of goal 
 			case 0: 
+				newX = relativeGoal.x;
+				newY = relativeGoal.y;
+				newZ = relativeGoal.z;
 				break;
 			// Turn right 45 degrees
 			case 1: 
 				newX = x * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
 				newY = -x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
+//				newX = 1;
+//				newY = 0;
+//				newZ = 0;
 				break;
 			// Turn right 60 degrees
 			case 2: 
 				newX = x * Math.cos(Math.toRadians(60)) + y * Math.sin(Math.toRadians(60));
 				newY = -x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
+//				newX = -1;
+//				newY = 0;
+//				newZ = 0;
 				break;
 			// Turn left 45 degrees
 			case 3: 
 				newX = x * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
 				newY = x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
+//				newX = 0;
+//				newY = 1;
+//				newZ = 0;
 				break;
 			// Turn left 60 degrees
 			case 4: 
 				newX = x * Math.cos(Math.toRadians(60)) - y * Math.sin(Math.toRadians(60));
 				newY = x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
+//				newX = 0;
+//				newY = -1;
+//				newZ = 0;
 				break;
-			// Turn climb 45 degrees
+			 // Climb 45 degrees
 			case 5: 
 				newZ = z + Math.tan(Math.toRadians(45));
+//				newX = 0;
+//				newY = 0;
+//				newZ = 1;
 				break;
 			// Descend 45 degrees
 			case 6:
 				newZ = z - Math.tan(Math.toRadians(45));
+//				newX = 0;
+//				newY = 0;
+//				newZ = -1;
 				break;
 			default:
 		}
@@ -183,19 +205,16 @@ public final class Helper {
 	 * @return the set of DQN obstacles ordered by their distance to the state
 	 * 
 	 */
-	public static TreeSet<DQNObstacle> getCloseObstacles(Position position, PlanningContinuum environment,
+	public static TreeSet<DQNObstacle> getCloseObstacles(PrecisionPosition position, PlanningContinuum environment,
 			HashSet<Obstacle> trainingObstacles ,RiskPolicy riskPolicy) {
 		
 		TreeSet<DQNObstacle> interferingObstacles = new TreeSet<DQNObstacle>(Comparator.comparingDouble(DQNObstacle::getDistanceToState));
-		
-//		// Creates a new sphere obstacle with center in the state's position and triple the aircraft's radius
-//		ObstacleSphere stateObstacle = new ObstacleSphere(position, 3*aircraftRadius);
 		
 		trainingObstacles.addAll(environment.getObstacles());
 		
 		
 		// Goes through all the obstacles in the environment + the random ones
-		for (Obstacle obstacle : environment.getObstacles()) {
+		for (Obstacle obstacle : trainingObstacles) {
 			
 //			// Checks if it interferes with the obstacle representing the state
 //			if (obstacle.intersects(environment.getGlobe(), stateObstacle)) {
