@@ -20,6 +20,9 @@ import java.util.TreeSet;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+
 import java.nio.Buffer;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -28,13 +31,19 @@ import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.environments.PlanningRoadmap;
+import com.cfar.swim.worldwind.environments.RLEnvironment;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
+import com.cfar.swim.worldwind.planners.rl.ActionSampler;
+import com.cfar.swim.worldwind.planners.rl.Helper;
+import com.cfar.swim.worldwind.planners.rl.Memory;
+import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
+import com.cfar.swim.worldwind.planners.rl.RLObstacle;
+import com.cfar.swim.worldwind.planners.rl.Snapshot;
 import com.cfar.swim.worldwind.planners.rl.Plot;
-import com.cfar.swim.worldwind.planners.rl.RLWaypoint;
 import com.cfar.swim.worldwind.planners.rl.State;
-import com.cfar.swim.worldwind.planners.rl.dqn.Memory;
+import com.cfar.swim.worldwind.planners.rl.qlearning.RLWaypoint;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
@@ -66,8 +75,8 @@ import ai.djl.util.Pair;
 import ai.djl.translate.NoopTranslator;
 
 /**
-* Realizes a deep reinforcement learning planner, using a Deep Q-Network, that plans a trajectory of an aircraft
-* in an environment considering a local cost and risk policy.
+* Realizes a deep reinforcement learning planner, using a Double Deep Q-Network, that plans a trajectory 
+* of an aircarft in an environment considering a local cost and risk policy.
 * 
 * @author Rafaela Seguro
 *
@@ -85,13 +94,10 @@ public class DQNPlanner extends AbstractPlanner {
 	private static final float INITIAL_EPSILON = 1.0f;
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 10000;
+	private static final int NUM_GLOBAL_EPS = 500;
 	
 	/** maximum number of steps per episode */
 	private static final int MAX_STEPS = 100;
-	
-	/** in how many steps to divide from start to goal */
-	private static final int STEP_DIVISION = 10;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -99,20 +105,17 @@ public class DQNPlanner extends AbstractPlanner {
 	/** replay memory */
 	private final Memory memory = new Memory(4096);
 	
-	/** dimension of a state ID (input of the neural network) */
-	private int dimOfState;
-	
 	/** the number of available actions in each state */
 	private final int numOfActions = 7;
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {64, 128, 256, 128, 64};
+	private final int[] hiddenSize = {128, 256, 512, 256, 128};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.01f;
+	private final float learningRate = 0.008f;
 	
 	/** the size of the mini-batch of transitions used for training */
-	protected final int batchSize = 32;
+	protected final int batchSize = 80;
 	
 	/** the number of iterations between each train of the policy network */
 	protected final int trainNetInterval = 1;
@@ -150,41 +153,11 @@ public class DQNPlanner extends AbstractPlanner {
 	/** the loss function */
 	private final Loss lossFunc = Loss.l2Loss();
 	
-	/** the planner's start state */
-	private State start = null;
-	
-	/** the planner's goal position */
-	private PrecisionPosition goalPosition = null;
-	
-	/** the current state */
-	private State state = null;
-	
-	/** the next state */
-	private State nextState = null;
-	
-	/** the index of the chosen action */
-	private int action = 0;
-	
-	/** the received reward */
-	private double reward = 0.0;
-	
-	/** indicates if it reached goal or not, true if it has */
-	private boolean done = false;
-	
-	/** indicates if it reached goal or not, true if it has */
-	private boolean failure = false;
-	
 	/** saves the most recent waypoint added to the trajectory */
-	private RLWaypoint newestWaypoint = null;
+	private Waypoint newestWaypoint = null;
 	
 	/** stores the plan's ETD */
-	private ZonedDateTime etd = ZonedDateTime.now();
-	
-	/** stores the step size of the planner */
-	private double stepSize = 0.0;
-	
-	/** set of random obstacles for training */
-	private HashSet<Obstacle> trainingObstacles = new HashSet<>();
+	private ZonedDateTime etd;
 	
 	/** saves the actual cost policy for when training ends*/
 	private CostPolicy actualCostPolicy = null;
@@ -193,7 +166,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private RiskPolicy actualRiskPolicy = null;
 	
 	/** Stores episode results */
-	public boolean[] episodeResults = new boolean[NUM_GLOBAL_EPS+1];
+	public CircularFifoQueue<Integer> episodeResults = new CircularFifoQueue<Integer>(500);
 	
 	
 	/** Constructs a planner trained by a Deep Q-Network for a specified aircraft and
@@ -204,14 +177,12 @@ public class DQNPlanner extends AbstractPlanner {
 	 */
 	public DQNPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
-		this.dimOfState = State.ID_SIZE;
-//		this.listOfActions = Helper.listOfActions();
-//		this.numOfActions = listOfActions.size();
 		this.actualCostPolicy = this.getCostPolicy();
 		this.actualRiskPolicy = this.getRiskPolicy();
+		this.etd = environment.getTime();
 		
 		resetAgent();
-		trainGlobal();
+		train();
 		syncNetworks();
 	}
 	
@@ -228,184 +199,24 @@ public class DQNPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Gets the planning continuum of this DQN planner.
+	 * Gets the RL environment of this DQN planner.
 	 * 
-	 * @return the planning continuum of this DQN planner
+	 * @return the RL environment of this DQN planner
 	 * 
 	 * @see AbstractPlanner#getEnvironment()
 	 */
-	public PlanningContinuum getPlanningContinuum() {
-		return (PlanningContinuum) super.getEnvironment();
+	public RLEnvironment getRLEnvironment() {
+		return (RLEnvironment) super.getEnvironment();
 	}
 	
-	/**
-	 * Gets the size of a state's ID, which is the size of the network input.
-	 * 
-	 * @return the size of a state's ID
-	 */
-	protected int getDimOfState() {
-		return this.dimOfState;
-	}
-	
-	/**
-	 * Gets the number of available actions.
-	 * 
-	 * @return the number of available actions
-	 */
-	protected int getNumOfActions() {
-		return this.numOfActions;
-	}
-	
-	/**
-	 * Gets the start state of this  planner.
-	 * 
-	 * @return the start state of this planner
-	 */
-	protected State getStart() {
-		return this.start;
-	}
-	
-	/**
-	 * Sets the start state of this  planner.
-	 * 
-	 * @param start the start state of this planner
-	 */
-	protected void setStart(State start) {
-		this.start = start;
-	}
 
-	/**
-	 * Gets the goal position of this planner.
-	 * 
-	 * @return the goal position of this planner
-	 */
-	protected PrecisionPosition getGoalPosition() {
-		return this.goalPosition;
-	}
-	
-	/**
-	 * Sets the goal position of this planner.
-	 * 
-	 * @param goal the goal position of this planner
-	 */
-	protected void setGoalPosition(PrecisionPosition goal) {
-		this.goalPosition = goal;
-	}
-	
-	/**
-	 * Gets the current state.
-	 * 
-	 * @return the state 
-	 */
-	protected State getState() {
-		return this.state;
-	}
-	
-	/**
-	 * Sets the current state.
-	 * 
-	 * @param state the current state
-	 */
-	protected void setState(State state) {
-		this.state = state;
-	}
-	
-	/**
-	 * Gets the next state.
-	 * 
-	 * @return the next state
-	 */
-	protected State getNextState() {
-		return this.nextState;
-	}
-
-	/**
-	 * Sets the next state of this planner.
-	 * 
-	 * @param nextState the next state of this planner
-	 */
-	protected void setNextState(State nextState) {
-		this.nextState = nextState;
-	}
-	
-	/**
-	 * Gets the chosen action.
-	 * 
-	 * @return the chosen action
-	 */
-	protected int getAction() {
-		return this.action;
-	}
-	
-	/**
-	 * Sets the chosen action.
-	 * 
-	 * @param action the chosen action
-	 */
-	protected void setAction(int action) {
-		this.action = action;
-	}
-	
-	/**
-	 * Gets the reward.
-	 * 
-	 * @return the reward
-	 */
-	protected double getReward() {
-		return this.reward;
-	}
-	
-	/**
-	 * Sets the reward.
-	 * 
-	 * @param the reward
-	 */
-	protected void setReward(double reward) {
-		this.reward = reward;
-	}
-	
-	/**
-	 * Checks if the planner has reached the goal
-	 * 
-	 * @return true if it reached the goal, false otherwise
-	 */
-	protected boolean isDone() {
-		return this.done;
-	}
-	
-	/**
-	 * Sets the boolean that indicates if the planner has reached the goal.
-	 * 
-	 * @param true if it reached the goal, false otherwise
-	 */
-	protected void setDone(boolean done) {
-		this.done = done;
-	}
-	
-	/**
-	 * Checks if the planner has failed
-	 * 
-	 * @return true if it failed, false otherwise
-	 */
-	protected boolean failed() {
-		return this.failure;
-	}
-	
-	/**
-	 * Sets the boolean that indicates if the planner has failed.
-	 * 
-	 * @param true if it failed, false otherwise
-	 */
-	protected void setFailure(boolean failure) {
-		this.failure = failure;
-	}
 	
 	/**
 	 * Gets the newest RL waypoint added to the trajectory.
 	 * 
 	 * @return the newest RL waypoint added to the trajectory
 	 */
-	protected RLWaypoint getNewestWaypoint() {
+	protected Waypoint getNewestWaypoint() {
 		return this.newestWaypoint;
 	}
 	
@@ -414,7 +225,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @param newestWaypoint the newest RL waypoint added to the trajectory
 	 */
-	protected void setNewestWaypoint(RLWaypoint newestWaypoint) {
+	protected void setNewestWaypoint(Waypoint newestWaypoint) {
 		this.newestWaypoint = newestWaypoint;
 	}
 	
@@ -436,41 +247,6 @@ public class DQNPlanner extends AbstractPlanner {
 		this.etd = etd;
 	}
 	
-	/**
-	 * Gets the planner's step size.
-	 * 
-	 * @return the planner's step size
-	 */
-	protected double getStepSize() {
-		return this.stepSize;
-	}
-	
-	/**
-	 * Sets the planner's step size.
-	 * 
-	 * @param stepSize the planner's step size
-	 */
-	protected void setStepSize(double stepSize) {
-		this.stepSize = stepSize;
-	}
-
-	/**
-	 * Gets the planner's step size.
-	 * 
-	 * @return the planner's step size
-	 */
-	protected HashSet<Obstacle> getTrainingObstacles() {
-		return this.trainingObstacles;
-	}
-	
-	/**
-	 * Sets the planner's step size.
-	 * 
-	 * @param stepSize the planner's step size
-	 */
-	protected void setTrainingObstacles(HashSet<Obstacle> obs) {
-		this.trainingObstacles = obs;
-	}
 
 	
 	/** Resets the DQN agent before training
@@ -483,12 +259,12 @@ public class DQNPlanner extends AbstractPlanner {
 		}
 		manager = NDManager.newBaseManager();
 		
-		policyNet = NetworkModel.newModel(manager, dimOfState, hiddenSize, numOfActions);
+		policyNet = NetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, numOfActions);
 		//Sets require gradient to true for the policy network's parameters
 		for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
 			params.getValue().getArray().setRequiresGradient(true);
 		}
-		targetNet = NetworkModel.newModel(manager, dimOfState, hiddenSize, numOfActions);
+		targetNet = NetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, numOfActions);
 		
 		policyPredictor = policyNet.newPredictor(new NoopTranslator());
 		syncNetworks();
@@ -497,13 +273,12 @@ public class DQNPlanner extends AbstractPlanner {
 	/**
 	 * Runs the training of the Deep Q-Network for random environment configurations
 	 */
-	protected void trainGlobal() {
+	protected void train() {
 		
 		double decay = 0;
 		int episode = -1;
 		int step;
 		double agentPerformance = 0;
-		double successfulEpisodes = 0;
 		//|| agentPerformance < 0.9
 		
 		// For each episode
@@ -512,12 +287,15 @@ public class DQNPlanner extends AbstractPlanner {
 			episode++;
 			step = 0;
 			
-			resetEnvironment();
+			this.getRLEnvironment().resetRandom();
+			State state = this.getRLEnvironment().getStart();
+			int action = 0;
+			Snapshot snapshot = null;
 		
 			// For each time step
-			while (!this.isDone() && !this.failed()) {
+			while (!this.getRLEnvironment().isDone() && !this.getRLEnvironment().failed() && step < MAX_STEPS) {
 				// Saves state in memory; Updates the network; Selects the next action and saves it in memory
-				this.react();
+				action = this.react(state);
 //				System.out.println("STATE " + (step + 1));
 //				System.out.println("Cost Policy: " + state.getId()[0] + "; Step size: " + state.getId()[1]);
 //				System.out.println("Distance to axes: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4] 
@@ -528,14 +306,14 @@ public class DQNPlanner extends AbstractPlanner {
 //				System.out.println("Obstacle 3: " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22] + "; " + state.getId()[23]);
 //				System.out.println("Action: " + action);
 				// Execute action and get next state and reward; Checks if the goal has been reached
-				this.step();
-				// Reaching maximum number of steps counts as failure
-				if (step >= MAX_STEPS)
-					this.setFailure(true);
+				snapshot = this.getRLEnvironment().step(action, this.getAircraft());
+//				// Reaching maximum number of steps counts as failure
+//				if (step >= MAX_STEPS)
+//					this.setFailure(true);
 				// Stores the reward and the "done" boolean in memory
-				memory.setReward(this.getReward(), this.isDone(), this.failed());
+				memory.setReward(snapshot.getReward(), snapshot.isDone(), snapshot.failed());
 				// Sets the state as the next state
-				this.setState(this.getNextState());
+				state = snapshot.getState();
 				step++;
 			}
 			// Updates epsilon for next episode
@@ -547,34 +325,27 @@ public class DQNPlanner extends AbstractPlanner {
 //				successfulEpisodes ++;
 //			agentPerformance = successfulEpisodes / episode;
 			
-			episodeResults[episode] = this.isDone();
-			successfulEpisodes = 0;
-			if (episode > 1000) {
-				for (int i=0; i<1000; i++) {
-					if (episodeResults[episode - 1000 + i])
-						successfulEpisodes++;
-				}
-				agentPerformance = successfulEpisodes / 1000;
+			if(snapshot.isDone()) {
+				episodeResults.add(1);
 			} else {
-				for (int i=0; i<episode; i++) {
-					if (episodeResults[i])
-						successfulEpisodes++;
-				}
-				agentPerformance = successfulEpisodes / episode;
+				episodeResults.add(0);
 			}
+			double sum = (episodeResults.stream().mapToInt(Integer::intValue).sum());
+			double size = episodeResults.size();
+			agentPerformance =  sum / size;
 			
-			if (this.isDone()) {
+			if (snapshot.isDone()) {
 				System.out.println("Episode " + episode + " -----------------------> GOAL");
-			} else if (this.failed()) {
+			} else if (snapshot.failed()) {
 				if (step >= MAX_STEPS ) {
 					System.out.println("Episode " + episode + " did too many steps");
-				} else if (this.getReward()==-100){
+				} else if (snapshot.getReward()==-100){
 					System.out.println("Episode " + episode + " hit an OBSTACLE");
-				} else if (this.getReward()==-50){
+				} else if (snapshot.getReward()==-90){
 					System.out.println("Episode " + episode + " left environment");
 				}
 			}
-			System.out.println("Performance " + agentPerformance);
+			System.out.printf("Performance %,.3f %n", agentPerformance);
 		}
 	}
 	
@@ -636,114 +407,23 @@ public class DQNPlanner extends AbstractPlanner {
 //		}
 //	}
 
-	/** 
-	 * Resets the environment with a new random start and goal
-	 */
-	protected void resetEnvironment() {
-		
-		// Starts by sampling random positions for the start and goal, following a uniform distribution
-		PrecisionPosition startPosition = new PrecisionPosition(this.getPlanningContinuum().sampleRandomUniformPosition());
-		PrecisionPosition goalPosition = startPosition;
-		// Makes sure the start and goal are different
-		while (goalPosition == startPosition)
-			goalPosition = new PrecisionPosition(this.getPlanningContinuum().sampleRandomUniformPosition());
-		
-		// Sets the step size
-		double distance = this.getPlanningContinuum().getGlobe().computePointFromPosition(goalPosition).
-				subtract3(this.getPlanningContinuum().getGlobe().computePointFromPosition(startPosition)).getLength3();
-		this.setStepSize(distance / STEP_DIVISION);
-		
-		// Adds obstacles to the environment
-		this.createRandomObstacles(startPosition, goalPosition);
-		
-		// Creates the start state
-		TreeSet<DQNObstacle> obstacles = Helper.getCloseObstacles(startPosition, this.getPlanningContinuum(), this.getTrainingObstacles(), this.getRiskPolicy());
-		this.setStart(new State(startPosition, goalPosition, this.getPlanningContinuum(), obstacles, this.getCostPolicy(), 
-				this.getEtd(), this.getStepSize() , null));
-		
-		// Sets the goal position
-		this.setGoalPosition(goalPosition);
-		
-		// Sets the state as the start
-		this.setState(this.getStart());
-		
-		// Sets the "done" and "failure" booleans to false
-		this.setDone(false);
-		this.setFailure(false);
-		
-	}
-	
-	
-	/** 
-	 * Creates random obstacles and adds them to the planning continuum. Also sets a random cost and risk policy
-	 */
-	protected void createRandomObstacles(Position start, Position goal) {
-		
-		this.getTrainingObstacles().clear();
-		
-		// TODO: maybe add dynamic obstacles but for now they are static
-		ZonedDateTime t1 = this.getEtd().minusYears(1);
-		ZonedDateTime t2 = this.getEtd().plusYears(1);
-		
-		int numberOfObstacles = rand.nextInt(State.CONSIDERED_OBSTACLES-1);
-		
-		// Creates random obstacles and adds them to set
-		for (int i=0; i<numberOfObstacles; i++) {
-			
-			PrecisionPosition center = new PrecisionPosition(this.getPlanningContinuum().sampleRandomUniformPosition());
-			double radius = rand.nextDouble() * (this.getPlanningContinuum().getRadius() / 5);
-			// TODO: add other types of obstacles, for now it is only sphere since it is the simplest to create
-			ObstacleSphere obstacle = new ObstacleSphere(center, radius);
-			
-			double cost = rand.nextDouble() * 100;
-			obstacle.setCostInterval(new CostInterval("ci", t1, t2, cost));
-			
-			this.getTrainingObstacles().add(obstacle);
-		}
-		
-		 //1/3 of the times, there is an obstacle right between start and goal, to make sure it learns to go around
-		if (rand.nextInt(3) == 0) {
-			
-			Globe globe = this.getEnvironment().getGlobe();
-			Vec4 startPoint = this.getPlanningContinuum().transformModelToBoxOrigin(globe.computePointFromPosition(start));
-			Vec4 goalPoint = this.getPlanningContinuum().transformModelToBoxOrigin(globe.computePointFromPosition(goal));
-			Vec4 halfStartToGoal = goalPoint.subtract3(startPoint).divide3(2d);
-			Vec4 e = startPoint.add3(halfStartToGoal);
-			PrecisionPosition center = new PrecisionPosition(globe.computePositionFromPoint(this.getPlanningContinuum().
-					transformBoxOriginToModel(startPoint.add3(halfStartToGoal))));
-			// Ate aqui esta bem
-			Vec4 obstaclePoint = this.getPlanningContinuum().transformModelToBoxOrigin(globe.computePointFromPosition(center));
 
-			double radius = rand.nextDouble() * (this.getPlanningContinuum().getRadius() / 5);
-			ObstacleSphere obstacle = new ObstacleSphere(center, radius);
-			
-			double cost = rand.nextDouble() * 100;
-			obstacle.setCostInterval(new CostInterval("ci", t1, t2, cost));
-			
-			this.getTrainingObstacles().add(obstacle);
-			
-		}
-		
-		// Sets random cost policy
-		int costPolicy = rand.nextInt(2);
-		this.setCostPolicy(CostPolicy.values()[costPolicy]);
-		
-		// Sets random risk policy
-		int riskPolicy = rand.nextInt(4);
-		//this.setRiskPolicy(RiskPolicy.values()[riskPolicy]);
-		this.setRiskPolicy(RiskPolicy.AVOIDANCE);
-	}
 
 
 	/** 
 	 * Reacts to the current state, updating the memory and choosing the next action
+	 * 
+	 * @param the state
+	 * 
+	 * @return the action
 	 */
-	protected void react() {
+	protected int react(State state) {
 		
+		int action;
 		iteration++;
 		try (NDManager submanager = manager.newSubManager()) {
 			
-			memory.setState(this.getState().getId());
+			memory.setState(state.getId());
 			
 			// Trains every n iterations only
 			if (iteration % trainNetInterval == 0  && memory.getSize()>batchSize)
@@ -754,13 +434,15 @@ public class DQNPlanner extends AbstractPlanner {
 				syncNetworks();
 			}
 			
-			this.setAction(chooseAction(submanager, this.getState().getId())) ;
+			action = chooseAction(submanager, state.getId());
 			
-			memory.setAction(this.getAction());
+			memory.setAction(action);
 			
 		} catch (TranslateException e) {
 			throw new IllegalStateException(e);
 		}
+		
+		return action;
 	}
 
 	/** 
@@ -780,100 +462,7 @@ public class DQNPlanner extends AbstractPlanner {
 	}
 
 	
-	/** 
-	 * Determines the next state based on the chosen action
-	 */
-	protected void step() {
-		
-		int action = this.getAction();
-		//double stepSize = this.getStart().getdistan;
-		
-		// Determines the movement from the current state to the next based on action
-		Vec4 movVector = Helper.getNewMoveVector(this.getState().getMovVector(), this.getState().getNormalizedRelativeGoal().getNegative3(), action);
-				
-//		if (action == 0) {
-//			// If the action index is 0, the action corresponds to just flying in the direction of the goal
-//			movVector = this.getState().getNormalizedRelativeToGoal().getNegative3().multiply3(this.getStepSize());
-//		} else {
-//			movVector = listOfActions.get(action).multiply3(this.getStepSize());
-//		}
-		
-		// Computes the next state's position
-		Vec4 boxNextStatePoint = this.getState().getStatePoint().add3(movVector.multiply3(this.getStepSize()));
-		Vec4 nextStatePoint = this.getPlanningContinuum().transformBoxOriginToModel(boxNextStatePoint);
-		PrecisionPosition nextStatePosition = new PrecisionPosition(this.getEnvironment().getGlobe().computePositionFromPoint(nextStatePoint));
-		
-		// If the next state is outside the environment, stays in place, and fails
-		if (!this.getEnvironment().contains(nextStatePosition)) {
-			nextStatePosition = this.getState().getPosition();
-			this.setFailure(true);
-		}
-		
-		// Gets the set of surrounding obstacles of the next state
-		TreeSet<DQNObstacle> obstacles = Helper.getCloseObstacles(nextStatePosition, this.getPlanningContinuum(), this.getTrainingObstacles(), this.getRiskPolicy());
-		
-		// Computes the next state's ETO
-		Path leg = new Path(this.getState().getPosition(), nextStatePosition);
-		ZonedDateTime eto = this.getAircraft().getCapabilities().getEstimatedTime(leg, this.getEnvironment().getGlobe(), this.getState().getEto());
-		
-		// Creates the next state and adds it to the map
-		this.setNextState(new State(nextStatePosition, this.getGoalPosition(), this.getPlanningContinuum(), obstacles, 
-				this.getCostPolicy(), eto, this.getStepSize(), movVector));
-		
-		// Checks if it has reached goal
-		if (this.getNextState().getDistanceToGoal() <= this.getStepSize())
-			this.setDone(true);
-		
-		// Calculates reward
-		this.calculateReward();
-	}
 
-	/**
-	 * Calculates the reward based on the next state
-	 */
-	protected void calculateReward() {
-		
-		double reward = 0;
-		
-		// If the goal has been reached
-		if (this.isDone()) {
-			this.setReward(100);
-			return;
-		}
-		
-		// If it failed for leaving the environment
-		if (this.failed()){
-			this.setReward(-50);
-			return;
-		}
-		
-		// If the cost is exceeded
-		double cost = this.getEnvironment().getLegCost(this.getState().getPosition(), this.getNextState().getPosition(), this.getState().getEto(), 
-				this.getNextState().getEto(), getCostPolicy(), getRiskPolicy());
-		if (Double.POSITIVE_INFINITY == cost) {
-			this.setFailure(true);
-			this.setReward(-100);
-			return;
-		}
-		
-		// If it gets too close to obstacle
-		Iterator<DQNObstacle> itr = this.getNextState().getObstacles().iterator();
-		DQNObstacle current = null;
-		while(itr.hasNext()) {
-			current =itr.next();
-			if (current.getDistanceToState() <= this.getState().getStepSize()) {
-				reward += -40;
-				break;
-			}
-		}
-		
-		// Otherwise: step penalty +  distance to goal penalty/reward 
-		reward += -5;
-		reward += this.getState().getDistanceToGoal() - this.getNextState().getDistanceToGoal();
-		
-		this.setReward(reward);;
-	
-	}
 
 
 	/** 
@@ -935,39 +524,19 @@ public class DQNPlanner extends AbstractPlanner {
 	 * @param destination the destination in globe coordinates
 	 * @param etd the estimated time of departure
 	 */
-	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {
+	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {                                                                                                                                                              
 		
 		this.setEtd(etd);
-		this.setCostPolicy(actualCostPolicy);
-		this.setRiskPolicy(actualRiskPolicy);
-		
-		PrecisionPosition pOrigin = new PrecisionPosition(origin);
-		PrecisionPosition pDestination = new PrecisionPosition(destination);
-		
-		// Clears the trainingObstacles set 
-		this.getTrainingObstacles().clear();
+//		this.setCostPolicy(actualCostPolicy);
+//		this.setRiskPolicy(actualRiskPolicy);
 		
 		// Creates the start waypoint 
 		this.setNewestWaypoint(this.createWaypoint(origin));
 		this.getNewestWaypoint().setEto(etd);
 		this.getNewestWaypoint().setPoi(true);
 		
-		// Sets the step size
-		double distance = this.getPlanningContinuum().getGlobe().computePointFromPosition(destination).
-				subtract3(this.getPlanningContinuum().getGlobe().computePointFromPosition(origin)).getLength3();
-		this.setStepSize(distance / STEP_DIVISION);
-		
-		// Creates the start and goal states 
-		TreeSet<DQNObstacle> obstacles = Helper.getCloseObstacles(pOrigin, this.getPlanningContinuum(), this.getTrainingObstacles(), this.getRiskPolicy());
-		this.setStart(new State(pOrigin, pDestination, this.getPlanningContinuum(), obstacles, this.getCostPolicy(), etd, this.getStepSize(), null));
-		this.setGoalPosition(pDestination);
-		
-		// Sets the state as the start
-		this.setState(this.getStart());
-		
-		// Sets the "done" and "failure" booleans to false
-		this.setDone(false);
-		this.setFailure(false);
+		// Initializes the RLEnvironment
+		this.getRLEnvironment().initializeEnvironment(origin, destination, this.getRiskPolicy(), this.getCostPolicy(), etd);
 	
 	}
 
@@ -983,21 +552,24 @@ public class DQNPlanner extends AbstractPlanner {
 		}
 		
 		int step = 0;
+		State state = this.getRLEnvironment().getStart();
+		int action = 0;
+		Snapshot snapshot = null;
 		
 		// Until the goal is reached, the planner fails, or does the max steps
-		while(!this.isDone() && !this.failed() && step < MAX_STEPS) {
+		while(!this.getRLEnvironment().isDone() && !this.getRLEnvironment().failed() && step < MAX_STEPS) {
 			
 			// Chooses the action
 			try (NDManager submanager = manager.newSubManager()) {
 				
-				NDArray qValues = targetPredictor.predict(new NDList(submanager.create(this.getState().getId()))).singletonOrThrow();
+				NDArray qValues = targetPredictor.predict(new NDList(submanager.create(state.getId()))).singletonOrThrow();
 				// DEBUG
 //				System.out.print("Q VALUES: ");
 //				for (int i=0; i<qValues.size(); i++) {
 //					System.out.print(qValues.getFloat(i) + "; ");
 //				}
 //				System.out.println();
-				this.setAction(ActionSampler.greedy(qValues));
+				action = ActionSampler.greedy(qValues);
 				
 			} catch (TranslateException e) {
 				throw new IllegalStateException(e);
@@ -1014,33 +586,32 @@ public class DQNPlanner extends AbstractPlanner {
 			System.out.println("Action: " + action);
 			
 			// Execute action and get next state and reward; Checks if the goal has been reached
-			this.step();
+			snapshot = this.getRLEnvironment().step(action, this.getAircraft());
 			
 			// Adds the next waypoint to the trajectory
-			this.getWaypoints().addLast(this.createWaypoint(this.getNextState().getPosition()));
+			this.getWaypoints().addLast(this.createWaypoint(snapshot.getState().getPosition()));
 			
 			// Sets the state as the next state
-			this.setState(this.getNextState());
+			state = snapshot.getState();
 			
 			step++;
 		}
 		
 		// If it finished without reaching the goal (because it reached the maximum number of steps
 		// or failed) returns an empty trajectory
-		if (!this.isDone()) {
-			this.clearWaypoints();
+		if (!this.getRLEnvironment().isDone()) {
+			// this.clearWaypoints();
 			if (step >= MAX_STEPS ) {
 				System.out.println("Did too many steps");
-			} else if (this.getReward()==-100){
-				System.out.println("Hit an obstacle");
-			} else {
+			} else if (snapshot.getReward()==-100){
+				System.out.println("Hit an OBSTACLE");
+			} else if (snapshot.getReward()==-90){
 				System.out.println("Left environment");
 			}
-			return;
 		}
 		
 		// Adds the goal to the trajectory if it is not already there
-		RLWaypoint goalWaypoint = this.createWaypoint(this.getGoalPosition());
+		Waypoint goalWaypoint = this.createWaypoint(this.getRLEnvironment().getGoalPosition());
 		if(this.getWaypoints().getLast() != goalWaypoint) {
 			this.getWaypoints().addLast(goalWaypoint);
 		}
@@ -1060,9 +631,9 @@ public class DQNPlanner extends AbstractPlanner {
 	 * 
 	 * @return the waypoint at the specified position
 	 */
-	protected RLWaypoint createWaypoint(Position position) {
+	protected Waypoint createWaypoint(Position position) {
 		
-		RLWaypoint wp = new RLWaypoint(position);
+		Waypoint wp = new Waypoint(position);
 		
 		// If it is not the start
 		if(this.getNewestWaypoint() != null) {
@@ -1150,10 +721,10 @@ public class DQNPlanner extends AbstractPlanner {
 		ZonedDateTime currentEtd = etd;
 		
 //		// collect intermediate destinations
-//		ArrayList<RLWaypoint> destinations = waypoints.stream()
-//				.map(RLWaypoint::new)
+//		ArrayList<Waypoint> destinations = waypoints.stream()
+//				.map(Waypoint::new)
 //				.collect(Collectors.toCollection(ArrayList::new));
-//		destinations.add(new RLWaypoint(destination));
+//		destinations.add(new Waypoint(destination));
 		
 		waypoints.add(destination);
 
@@ -1180,7 +751,7 @@ public class DQNPlanner extends AbstractPlanner {
 				this.initialize(currentOrigin, currentDestination, currentEtd);
 				this.planPart(partIndex);
 				
-				if ((!this.hasWaypoints()) || !(this.getWaypoints().getLast().equals(new RLWaypoint(currentDestination)))) {
+				if ((!this.hasWaypoints()) || !(this.getWaypoints().getLast().equals(new Waypoint(currentDestination)))) {
 					// if no plan could be found, return an empty trajectory
 					Trajectory empty = new Trajectory();
 					this.revisePlan(empty);
@@ -1212,7 +783,7 @@ public class DQNPlanner extends AbstractPlanner {
 		boolean supports = super.supports(environment);
 		
 		if (supports) {
-			supports = (environment instanceof PlanningContinuum);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+			supports = (environment instanceof RLEnvironment);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
 		}
 		
 		return supports;

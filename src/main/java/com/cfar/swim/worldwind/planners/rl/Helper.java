@@ -1,6 +1,8 @@
-package com.cfar.swim.worldwind.planners.rl.dqn;
+package com.cfar.swim.worldwind.planners.rl;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.TreeSet;
@@ -11,6 +13,7 @@ import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
+import com.cfar.swim.worldwind.planning.TimeInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 
@@ -111,125 +114,7 @@ public final class Helper {
 //		
 //		return listOfActions;
 //	}
-	
-	/** 
-	 * Calculates the new movVector depending on the chosen action
-	 * 
-	 * @param the original move vector
-	 * @param the action
-	 * 
-	 * @return the new movVector (normalized)
-	 */
-	public static Vec4 getNewMoveVector (Vec4 originalVector, Vec4 relativeGoal, int action) {
-		
-		// TODO: create movements considering aircraft capabilities and not for 45 and 60 fixed angles
 
-		double x = originalVector.x;
-		double y = originalVector.y;
-		double z = originalVector.z;
-		double newX = x;
-		double newY = y;
-		double newZ = z;
-		
-		switch(action) {
-			// Go in direction of goal 
-			case 0: 
-				newX = relativeGoal.x;
-				newY = relativeGoal.y;
-				newZ = relativeGoal.z;
-				break;
-			// Turn right 45 degrees
-			case 1: 
-				newX = x * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
-				newY = -x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
-//				newX = 1;
-//				newY = 0;
-//				newZ = 0;
-				break;
-			// Turn right 60 degrees
-			case 2: 
-				newX = x * Math.cos(Math.toRadians(60)) + y * Math.sin(Math.toRadians(60));
-				newY = -x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
-//				newX = -1;
-//				newY = 0;
-//				newZ = 0;
-				break;
-			// Turn left 45 degrees
-			case 3: 
-				newX = x * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
-				newY = x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
-//				newX = 0;
-//				newY = 1;
-//				newZ = 0;
-				break;
-			// Turn left 60 degrees
-			case 4: 
-				newX = x * Math.cos(Math.toRadians(60)) - y * Math.sin(Math.toRadians(60));
-				newY = x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
-//				newX = 0;
-//				newY = -1;
-//				newZ = 0;
-				break;
-			 // Climb 45 degrees
-			case 5: 
-				newZ = z + Math.tan(Math.toRadians(45));
-//				newX = 0;
-//				newY = 0;
-//				newZ = 1;
-				break;
-			// Descend 45 degrees
-			case 6:
-				newZ = z - Math.tan(Math.toRadians(45));
-//				newX = 0;
-//				newY = 0;
-//				newZ = -1;
-				break;
-			default:
-		}
-		
-		Vec4 newVector = new Vec4(newX, newY, newZ);
-		
-		return newVector.normalize3();
-	}
-	
-	
-	/** 
-	 * Creates a set of the obstacles that are in close proximity to the current state
-	 * and don't satisfy the current risk policy. 
-	 * 
-	 * @param the state's position
-	 * @param the aircraft's radius
-	 * @param the environment
-	 * @param the risk policy
-	 * 
-	 * @return the set of DQN obstacles ordered by their distance to the state
-	 * 
-	 */
-	public static TreeSet<DQNObstacle> getCloseObstacles(PrecisionPosition position, PlanningContinuum environment,
-			HashSet<Obstacle> trainingObstacles ,RiskPolicy riskPolicy) {
-		
-		TreeSet<DQNObstacle> interferingObstacles = new TreeSet<DQNObstacle>(Comparator.comparingDouble(DQNObstacle::getDistanceToState));
-		
-		trainingObstacles.addAll(environment.getObstacles());
-		
-		
-		// Goes through all the obstacles in the environment + the random ones
-		for (Obstacle obstacle : trainingObstacles) {
-			
-//			// Checks if it interferes with the obstacle representing the state
-//			if (obstacle.intersects(environment.getGlobe(), stateObstacle)) {
-				
-				// Checks if the cost obstacle satisfies the risk policy and adds to set if it doesn't
-				if (!riskPolicy.satisfies(obstacle.getCostInterval().getCost())) {
-					
-					DQNObstacle newObstacle = new DQNObstacle(position, obstacle, environment);
-					interferingObstacles.add(newObstacle);
-				}
-//			}
-		}
-		
-		return interferingObstacles;
-	}
 
 }
 

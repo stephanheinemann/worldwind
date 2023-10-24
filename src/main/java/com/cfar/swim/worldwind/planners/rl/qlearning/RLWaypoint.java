@@ -1,9 +1,10 @@
-package com.cfar.swim.worldwind.planners.rl;
+package com.cfar.swim.worldwind.planners.rl.qlearning;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+import com.cfar.swim.worldwind.planners.rl.State;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Position;

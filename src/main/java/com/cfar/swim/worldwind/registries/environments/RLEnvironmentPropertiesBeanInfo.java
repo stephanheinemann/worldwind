@@ -27,86 +27,58 @@
  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-package com.cfar.swim.worldwind.planners.rl;
+package com.cfar.swim.worldwind.registries.environments;
 
-import java.util.*;
+import java.beans.IntrospectionException;
+import java.beans.PropertyDescriptor;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 /**
- * Enumerates the possible actions for an RL planner.
- * 
- * @author Rafaela Seguro
- *
- */
-public enum Action {
+* Realizes a planning continuum properties bean information customizing the
+* descriptors for each property.
+* 
+* @author Rafaela Seguro
+*
+*/
+public class RLEnvironmentPropertiesBeanInfo extends EnvironmentPropertiesBeanInfo {
 
 	/**
-	 * Direct flight towards target
+	 * Constructs a planning continuum properties bean information.
 	 */
-	DIRECT(0, 0),
-	
-	/**
-	 * Turns right at a 45 degree angle
-	 */
-	RIGHT45(0, 45),
-
-	/**
-	 * Turns right at a 60 degree angle
-	 */
-	RIGHT60(0, 60),
-	
-	/**
-	 * Turns left at a 45 degree angle
-	 */
-	LEFT45(0, -45),
-	
-	/**
-	 * Turns left at a 60 degree angle
-	 */
-	LEFT60(0, -60),
-	
-	/**
-	 * Climbs at a 45 degree angle
-	 */
-	CLIMB45(1, 45),
-	
-	/**
-	 * Descends at a 45 degree angle
-	 */
-	DESCEND45(2, 45);
-	
-	
-	/** The action type (0 - turn, 1 - climb, 2 - descend)*/
-	public int type;
-	
-	/** The angle associated with each action */
-	public int angle;
-	
-	
-	/** Construtcs an action element with the associated angle.
-	 * 
-	 * @param the associated angle
-	 */
-	private  Action (int type, int angle) {
-		this.type = type;
-		this.angle = angle;
+	public RLEnvironmentPropertiesBeanInfo() {
+		super(RLEnvironmentProperties.class);
 	}
 	
-	
-	/** Gets a random action from the available options.
+	/**
+	 * Customizes the property descriptors for each property of a RL
+	 * environment properties bean.
 	 * 
-	 * @return a random action
-	 */
-	public static Action getRandom() {
-		Random random = new Random();
-		return values()[random.nextInt(values().length)];
-	}
-	
-	/** Gets the action's type (0 - turn, 1 - climb, 2 - descend)
+	 * @return the array of customized property descriptors
 	 * 
-	 * @return the action's type
+	 * @see java.beans.SimpleBeanInfo#getPropertyDescriptors()
 	 */
-	public int getType() {
-		return this.type;
+	@Override
+	public PropertyDescriptor[] getPropertyDescriptors() {
+		PropertyDescriptor[] descriptors = super.getPropertyDescriptors();
+		
+		try {
+			PropertyDescriptor resolution = this.createPropertyDescriptor(
+					"resolution",
+					this.dictionary.getString("property.environment.rlenv.resolution.name"),
+					this.dictionary.getString("property.environment.rlenv.resolution.description"),
+					this.dictionary.getString("property.environment.category.resolution"));
+		
+			PropertyDescriptor[] gridDescriptors = new PropertyDescriptor[] {
+					resolution};
+			descriptors = Stream.concat(
+					Arrays.stream(descriptors), Arrays.stream(gridDescriptors))
+					.toArray(PropertyDescriptor[]::new);
+		
+		} catch (IntrospectionException e) {
+			e.printStackTrace();
+		}
+		
+		return descriptors;
 	}
-
 }

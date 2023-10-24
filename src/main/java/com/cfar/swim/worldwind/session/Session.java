@@ -33,6 +33,7 @@ import java.beans.PropertyChangeListener;
 
 
 
+
 import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -63,6 +64,7 @@ import com.cfar.swim.worldwind.registries.environments.EnvironmentFactory;
 import com.cfar.swim.worldwind.registries.environments.PlanningContinuumProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningGridProperties;
 import com.cfar.swim.worldwind.registries.environments.PlanningRoadmapProperties;
+import com.cfar.swim.worldwind.registries.environments.RLEnvironmentProperties;
 import com.cfar.swim.worldwind.registries.managers.HeuristicManagerProperties;
 import com.cfar.swim.worldwind.registries.managers.ManagerFactory;
 import com.cfar.swim.worldwind.registries.managers.SmacManagerProperties;
@@ -213,6 +215,7 @@ public class Session implements Identifiable {
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_GRID_ID, Specification.ENVIRONMENT_PLANNING_GRID_DESCRIPTION, new PlanningGridProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID, new PlanningRoadmapProperties()));
 		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_PLANNING_CONTINUUM_ID, Specification.ENVIRONMENT_PLANNING_CONTINUUM_DESCRIPTION, new PlanningContinuumProperties()));
+		this.environmentRegistry.addSpecification(new Specification<Environment>(Specification.ENVIRONMENT_RL_ENVIRONMENT_ID, Specification.ENVIRONMENT_RL_ENVIRONMENT_DESCRIPTION, new RLEnvironmentProperties()));
 		this.addActiveScenarioChangeListener(this.environmentFactory.getActiveScenarioChangeListener());
 		
 		// planners

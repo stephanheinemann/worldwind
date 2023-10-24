@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.registries.environments;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.environments.PlanningGrid;
+import com.cfar.swim.worldwind.environments.RLEnvironment;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Cube;
 import com.cfar.swim.worldwind.registries.AbstractFactory;
@@ -116,6 +117,16 @@ public class EnvironmentFactory extends AbstractFactory<Environment> {
 				environment.setNormalizer(bb.getDiameter());
 				((PlanningContinuum) environment).setResolution(properties.getResolution());
 				((PlanningContinuum) environment).addStructuralChangeListener(this.getScenario()); 
+			} else if (this.getSpecification().getId().equals(Specification.ENVIRONMENT_RL_ENVIRONMENT_ID)) {
+				RLEnvironmentProperties properties = (RLEnvironmentProperties) this.getSpecification().getProperties();
+				gov.nasa.worldwind.geom.Box bb = Sector.computeBoundingBox(this.getScenario().getGlobe(), 1d, this.getScenario().getSector(), properties.getFloor(), properties.getCeiling());
+				Box envBox = new Box(bb);
+				environment = new RLEnvironment(envBox);
+				environment.setThreshold(this.getScenario().getThreshold());
+				environment.setGlobe(this.getScenario().getGlobe());
+				environment.setNormalizer(bb.getDiameter());
+				((RLEnvironment) environment).setResolution(properties.getResolution());
+				((RLEnvironment) environment).addStructuralChangeListener(this.getScenario()); 
 			} else if (this.getSpecification().getId().equals(Specification.ENVIRONMENT_PLANNING_ROADMAP_ID)) {
 				// TODO: implement
 			}

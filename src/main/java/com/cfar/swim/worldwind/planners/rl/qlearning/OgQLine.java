@@ -1,4 +1,4 @@
-package com.cfar.swim.worldwind.planners.rl;
+package com.cfar.swim.worldwind.planners.rl.qlearning;
 
 import java.util.Arrays;
 import java.util.Collections;

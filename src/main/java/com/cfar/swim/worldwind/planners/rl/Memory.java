@@ -1,10 +1,9 @@
-package com.cfar.swim.worldwind.planners.rl.dqn;
+package com.cfar.swim.worldwind.planners.rl;
 
 import java.util.Arrays;
 import java.util.Random;
 
-import com.cfar.swim.worldwind.planners.rl.Action;
-import com.cfar.swim.worldwind.planners.rl.State;
+import com.cfar.swim.worldwind.planners.rl.qlearning.Action;
 
 import ai.djl.ndarray.NDManager;
 

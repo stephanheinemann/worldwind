@@ -1,4 +1,4 @@
-package com.cfar.swim.worldwind.planners.rl.dqn;
+package com.cfar.swim.worldwind.planners.rl;
 
 import java.util.Random;
 
@@ -43,5 +43,16 @@ public class ActionSampler {
 	public static int greedy(NDArray qValues) {
 		return (int) qValues.argMax().getLong();
 	}
+	
+//	/** Chooses the second best action according to the greedy policy
+//	 * 
+//	 * @param the array of possible action indices
+//	 * 
+//	 * @return the index of the chosen action
+//	 * 
+//	 */
+//	public static int retryGreedy(NDArray qValues, int retry) {
+//		return (int) qValues.argSort().get(qValues.size()-1-retry).getLong();
+//	}
 
 }

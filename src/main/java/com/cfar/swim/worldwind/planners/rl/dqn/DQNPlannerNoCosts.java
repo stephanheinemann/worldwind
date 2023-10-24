@@ -22,6 +22,9 @@ import java.util.Set;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import org.apache.commons.collections4.queue.CircularFifoQueue;
+
 import java.nio.Buffer;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -30,14 +33,16 @@ import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.environments.PlanningGrid;
 import com.cfar.swim.worldwind.environments.PlanningRoadmap;
+import com.cfar.swim.worldwind.environments.RLEnvironment;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.rl.Plot;
-import com.cfar.swim.worldwind.planners.rl.RLWaypoint;
 import com.cfar.swim.worldwind.planners.rl.State;
-import com.cfar.swim.worldwind.planners.rl.StateNoCosts;
-import com.cfar.swim.worldwind.planners.rl.dqn.Memory;
+import com.cfar.swim.worldwind.planners.rl.ActionSampler;
+import com.cfar.swim.worldwind.planners.rl.Helper;
+import com.cfar.swim.worldwind.planners.rl.Memory;
+import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
@@ -85,7 +90,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	private static final float INITIAL_EPSILON = 1.0f;
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 1000;
+	private static final int NUM_GLOBAL_EPS = 10;
 	
 	/** maximum number of steps per episode */
 	private static final int MAX_STEPS = 200;
@@ -109,7 +114,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	private final int numOfActions = 7;
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {64, 128, 64};
+	private final int[] hiddenSize = {64, 128, 128, 64};
 	
 	/** learning rate used by the optimizer during training */
 	private final float learningRate = 0.08f;
@@ -181,7 +186,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	private double stepSize = 0.0;
 	
 	/** saves the most recent waypoint added to the trajectory */
-	private RLWaypoint newestWaypoint = null;
+	private Waypoint newestWaypoint = null;
 	
 	/** stores the plan's ETD */
 	private ZonedDateTime etd;
@@ -197,7 +202,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	public List<Double> rewards6 = new ArrayList<>();
 	
 	/** Stores episode results */
-	public boolean[] episodeResults = new boolean[1000000];
+	public CircularFifoQueue<Integer> episodeResults = new CircularFifoQueue<Integer>(1000);
 	
 	/** Constructs a planner trained by a Deep Q-Network for a specified aircraft and
 	 * environment using default local cost and risk policies.
@@ -423,7 +428,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * 
 	 * @return the newest RL waypoint added to the trajectory
 	 */
-	protected RLWaypoint getNewestWaypoint() {
+	protected Waypoint getNewestWaypoint() {
 		return this.newestWaypoint;
 	}
 	
@@ -432,7 +437,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * 
 	 * @param newestWaypoint the newest RL waypoint added to the trajectory
 	 */
-	protected void setNewestWaypoint(RLWaypoint newestWaypoint) {
+	protected void setNewestWaypoint(Waypoint newestWaypoint) {
 		this.newestWaypoint = newestWaypoint;
 	}
 
@@ -514,34 +519,41 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 				if (step >= MAX_STEPS)
 					this.setFailure(true);
 				// Stores the reward and the "done" boolean in memory
-				memory.setReward(0.1*this.getReward(), this.isDone(), this.failed());
+				memory.setReward(0.01*this.getReward(), this.isDone(), this.failed());
 				score += this.getReward();
 				// Sets the state as the next state
 				this.setState(this.getNextState());
 				step++;
 			}
 			// Update epsilon for next episode
-			decay = Math.exp(-episode * 1.0 / (NUM_GLOBAL_EPS));
+			decay = Math.exp(-episode * 1.0 / (NUM_GLOBAL_EPS * 0.9));
 			epsilon = (float) (MIN_EXPLORE_RATE + (INITIAL_EPSILON - MIN_EXPLORE_RATE) * decay);
 			
-//			if(this.isDone())
-//				successfulEpisodes ++;
-//			agentPerformance = successfulEpisodes / episode;
-			episodeResults[episode] = this.isDone();
-			successfulEpisodes = 0;
-			if (episode > 1000) {
-				for (int i=0; i<1000; i++) {
-					if (episodeResults[episode - 1000 + i])
-						successfulEpisodes++;
-				}
-				agentPerformance = successfulEpisodes / 1000;
+			if(this.isDone()) {
+				episodeResults.add(1);
 			} else {
-				for (int i=0; i<episode; i++) {
-					if (episodeResults[i])
-						successfulEpisodes++;
-				}
-				agentPerformance = successfulEpisodes / (episode+1);
+				episodeResults.add(0);
 			}
+			double sum = (episodeResults.stream().mapToInt(Integer::intValue).sum());
+			double size = episodeResults.size();
+			agentPerformance =  sum / size;
+			double e = (episodeResults.stream().mapToInt(Integer::intValue).sum()) / (episodeResults.size());
+//			agentPerformance = successfulEpisodes / episode;
+//			episodeResults[episode] = this.isDone();
+//			successfulEpisodes = 0;
+//			if (episode > 1000) {
+//				for (int i=0; i<1000; i++) {
+//					if (episodeResults[episode - 1000 + i])
+//						successfulEpisodes++;
+//				}
+//				agentPerformance = successfulEpisodes / 1000;
+//			} else {
+//				for (int i=0; i<episode; i++) {
+//					if (episodeResults[i])
+//						successfulEpisodes++;
+//				}
+//				agentPerformance = successfulEpisodes / (episode+1);
+//			}
 			
 			if (this.isDone()) {
 				System.out.println("Episode " + episode + " -----------------------> GOAL");
@@ -552,7 +564,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 					System.out.println("Episode " + episode + " left environment");
 				}
 			}
-			//System.out.println("Episode " + episode + " -----> Performance " + agentPerformance);
+			System.out.printf("Performance %,.3f %n", agentPerformance);
 		}
 	}
 	
@@ -629,8 +641,11 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 			goalPosition = this.getPlanningContinuum().sampleRandomUniformPosition();
 		
 		// Sets the step size
-		double distance = this.getPlanningContinuum().getGlobe().computePointFromPosition(goalPosition).
-				subtract3(this.getPlanningContinuum().getGlobe().computePointFromPosition(startPosition)).getLength3();
+		Vec4 startBoxPoint = this.getPlanningContinuum().transformModelToBoxOrigin(this.getPlanningContinuum().getGlobe()
+				.computePointFromPosition(startPosition));
+		Vec4 goalBoxPoint = this.getPlanningContinuum().transformModelToBoxOrigin(this.getPlanningContinuum().getGlobe()
+				.computePointFromPosition(goalPosition));
+		double distance = startBoxPoint.subtract3(goalBoxPoint).getLength3();
 		this.setStepSize(distance / STEP_DIVISION);
 		
 		// Creates the start and goal states
@@ -691,6 +706,86 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		
 	}
 	
+	/** 
+	 * Calculates the new movVector depending on the chosen action
+	 * 
+	 * @param the original move vector
+	 * @param the action
+	 * 
+	 * @return the new movVector (normalized)
+	 */
+	public Vec4 getNewMoveVector (Vec4 originalVector, Vec4 relativeGoal, int action) {
+		
+		// TODO: create movements considering aircraft capabilities and not for 45 and 60 fixed angles
+
+		double x = originalVector.x;
+		double y = originalVector.y;
+		double z = originalVector.z;
+		double newX = x;
+		double newY = y;
+		double newZ = z;
+		
+		switch(action) {
+			// Go in direction of goal 
+			case 0: 
+				newX = relativeGoal.x;
+				newY = relativeGoal.y;
+				newZ = relativeGoal.z;
+				break;
+			// Turn right 45 degrees
+			case 1: 
+				newX = x * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
+				newY = -x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
+//				newX = 1;
+//				newY = 0;
+//				newZ = 0;
+				break;
+			// Turn right 60 degrees
+			case 2: 
+				newX = x * Math.cos(Math.toRadians(60)) + y * Math.sin(Math.toRadians(60));
+				newY = -x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
+//				newX = -1;
+//				newY = 0;
+//				newZ = 0;
+				break;
+			// Turn left 45 degrees
+			case 3: 
+				newX = x * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
+				newY = x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
+//				newX = 0;
+//				newY = 1;
+//				newZ = 0;
+				break;
+			// Turn left 60 degrees
+			case 4: 
+				newX = x * Math.cos(Math.toRadians(60)) - y * Math.sin(Math.toRadians(60));
+				newY = x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
+//				newX = 0;
+//				newY = -1;
+//				newZ = 0;
+				break;
+			 // Climb 45 degrees
+			case 5: 
+				newZ = z + Math.tan(Math.toRadians(45));
+//				newX = 0;
+//				newY = 0;
+//				newZ = 1;
+				break;
+			// Descend 45 degrees
+			case 6:
+				newZ = z - Math.tan(Math.toRadians(45));
+//				newX = 0;
+//				newY = 0;
+//				newZ = -1;
+				break;
+			default:
+		}
+		
+		Vec4 newVector = new Vec4(newX, newY, newZ);
+		
+		return newVector.normalize3();
+	}
+	
 
 	/** 
 	 * Determines the next state based on the chosen action
@@ -701,7 +796,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		//double stepSize = 2 * this.getAircraft().getCapabilities().getCruiseSpeed();
 		//double stepSize = this.getStart().getDistanceToGoal() / 10;
 		
-		Vec4 movVector = Helper.getNewMoveVector(this.getState().getMovVector(), this.getState().getNormalizedRelativeGoal().getNegative3(), action);
+		Vec4 movVector = this.getNewMoveVector(this.getState().getMovVector(), this.getState().getNormalizedRelativeGoal().getNegative3(), action);
 		
 //		if (action == 0) {
 //			// If the action index is 0, the action corresponds to just flying in the direction of the goal
@@ -857,8 +952,11 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		this.getNewestWaypoint().setPoi(true);
 		
 		// Sets the step size
-		double distance = this.getPlanningContinuum().getGlobe().computePointFromPosition(destination).
-				subtract3(this.getPlanningContinuum().getGlobe().computePointFromPosition(origin)).getLength3();
+		Vec4 startBoxPoint = this.getPlanningContinuum().transformModelToBoxOrigin(this.getPlanningContinuum().getGlobe()
+				.computePointFromPosition(origin));
+		Vec4 goalBoxPoint = this.getPlanningContinuum().transformModelToBoxOrigin(this.getPlanningContinuum().getGlobe()
+				.computePointFromPosition(destination));
+		double distance = startBoxPoint.subtract3(goalBoxPoint).getLength3();
 		this.setStepSize(distance / STEP_DIVISION);
 		
 		// Creates the start and goal states 
@@ -885,6 +983,8 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		if (this.getWaypoints().isEmpty()) {
 			this.getWaypoints().addLast(this.getNewestWaypoint());
 		}
+		
+		int retry = 0;
 		
 		// DEBUG
 		double sum = 0;
@@ -938,15 +1038,15 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 			}
 			
 //			System.out.println("State: (" + this.getState().getId()[0] + "; " + this.getState().getId()[1] + "; " +
-//					this.getState().getId()[2] + "; " + this.getState().getId()[3] + "; " + this.getState().getId()[4] + "; " +
-//					this.getState().getId()[5] + "; " + this.getState().getId()[6] + "; " + this.getState().getId()[7] + "; " +
-//					this.getState().getId()[8] + "; " + this.getState().getId()[9] + ") " + ": Action:" + this.getAction());
-			
-			System.out.println("State: (" + this.getState().getId()[0] + "; " + this.getState().getId()[1] + "; " +
-					this.getState().getId()[2] + "; " + this.getState().getId()[3] + ")" + ": Action:" + this.getAction());
+//					this.getState().getId()[2] + "; " + this.getState().getId()[3] + ")" + ": Action:" + this.getAction());
 			
 			// Execute action and get next state and reward; Checks if the goal has been reached
 			this.step();
+			
+			System.out.println("State: (" + this.getState().getId()[0] + "; " + this.getState().getId()[1] + "; " +
+					this.getState().getId()[2] + "; " + this.getState().getId()[3] + "; " + this.getState().getId()[4] + "; " +
+					this.getState().getId()[5] + "; " + this.getState().getId()[6] + "; " + this.getState().getId()[7] + "; " +
+					this.getState().getId()[8] + "; " + this.getState().getId()[9] + "; " + this.getState().getId()[10] + ") " + ": Action:" + this.getAction());
 			
 			// Adds the next waypoint to the trajectory
 			this.getWaypoints().addLast(this.createWaypoint(this.getNextState().getPosition()));
@@ -965,7 +1065,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		}
 		
 		// Adds the goal to the trajectory if it is not already there
-		RLWaypoint goalWaypoint = this.createWaypoint(this.getGoalPosition());
+		Waypoint goalWaypoint = this.createWaypoint(this.getGoalPosition());
 		if(this.getWaypoints().getLast() != goalWaypoint) {
 			this.getWaypoints().addLast(goalWaypoint);
 		}
@@ -985,9 +1085,9 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	 * 
 	 * @return the waypoint at the specified position
 	 */
-	protected RLWaypoint createWaypoint(Position position) {
+	protected Waypoint createWaypoint(Position position) {
 		
-		RLWaypoint wp = new RLWaypoint(position);
+		Waypoint wp = new Waypoint(position);
 		
 		// If it is not the start
 		if(this.getNewestWaypoint() != null) {
@@ -1098,7 +1198,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 				this.initialize(currentOrigin, currentDestination, currentEtd);
 				this.planPart(partIndex);
 				
-				if ((!this.hasWaypoints()) || !(this.getWaypoints().getLast().equals(new RLWaypoint(currentDestination)))) {
+				if ((!this.hasWaypoints()) || !(this.getWaypoints().getLast().equals(new Waypoint(currentDestination)))) {
 					// if no plan could be found, return an empty trajectory
 					Trajectory empty = new Trajectory();
 					this.revisePlan(empty);

@@ -1,4 +1,4 @@
-package com.cfar.swim.worldwind.planners.rl.dqn;
+package com.cfar.swim.worldwind.planners.rl;
 
 import java.time.ZonedDateTime;
 
@@ -27,7 +27,7 @@ import gov.nasa.worldwind.globes.Globe;
  * @author Rafaela Seguro
  *
  */
-public class DQNObstacle implements Comparable<DQNObstacle>{
+public class RLObstacle implements Comparable<RLObstacle>{
 	
 	/** vector that points from the obstacle center to the state*/
 	private Vec4 relativeToState = null;
@@ -51,7 +51,7 @@ public class DQNObstacle implements Comparable<DQNObstacle>{
 	 * @param the globe
 	 * 
 	 */
-	public DQNObstacle(PrecisionPosition position, Obstacle obstacle, PlanningContinuum env) {
+	public RLObstacle(Position position, Obstacle obstacle, PlanningContinuum env) {
 		
 		Vec4 statePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(position));
 		Vec4 obstaclePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(obstacle.getCenter()));
@@ -77,7 +77,7 @@ public class DQNObstacle implements Comparable<DQNObstacle>{
 	 * @param the distance from the obstacle's closest point to the state normalized by the environment size
 	 * 
 	 */
-	public DQNObstacle(Vec4 normalizedRelativeToState, float distanceToState, float normalizedDistanceToState) {
+	public RLObstacle(Vec4 normalizedRelativeToState, float distanceToState, float normalizedDistanceToState) {
 		
 		this.normalizedRelativeToState = normalizedRelativeToState;
 		this.distanceToState = distanceToState;
@@ -119,7 +119,7 @@ public class DQNObstacle implements Comparable<DQNObstacle>{
 	 * greater than 0 if the other obstacle is closer to the state.
 	 */
 	@Override
-	public int compareTo(DQNObstacle obstacle) {
+	public int compareTo(RLObstacle obstacle) {
 		
 		return Double.compare(distanceToState, obstacle.getDistanceToState());
 	}

@@ -1,4 +1,4 @@
-package com.cfar.swim.worldwind.planners.rl;
+package com.cfar.swim.worldwind.planners.rl.dqn;
 
 import java.time.ZonedDateTime;
 
@@ -12,7 +12,6 @@ import java.math.RoundingMode;
 
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
-import com.cfar.swim.worldwind.planners.rl.dqn.Helper;
 import com.cfar.swim.worldwind.planning.Waypoint;
 
 import gov.nasa.worldwind.geom.Angle;

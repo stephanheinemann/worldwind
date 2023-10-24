@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 
 
 
+
 import static org.junit.Assert.assertNotNull;
 
 import java.awt.Color;
@@ -51,6 +52,7 @@ import org.junit.Test;
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
+import com.cfar.swim.worldwind.environments.RLEnvironment;
 import com.cfar.swim.worldwind.geom.Box;
 import com.cfar.swim.worldwind.geom.Neighborhood;
 import com.cfar.swim.worldwind.planners.rl.dqn.*;
@@ -82,30 +84,49 @@ public class PlannerTestRafa {
 	@Test
 	@SuppressWarnings("unchecked")      
 	public void DQNTest() {
-		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W};
+		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W}; 
+		Earth globe = new Earth();  
 		Vec4 originVec = new Vec4(0, 0, 0);
-        // the reference cube has to be offset from the origin for the position computation to work
 		Box box = new Box(originVec, axes, 50d, 50d, 50d);
-        PlanningContinuum planningContinuum = new PlanningContinuum(box);
-        planningContinuum.setGlobe(new Earth());
+		
+		/** Test for DQNPlanner */ 
+        RLEnvironment env = new RLEnvironment(box);
+        env.setGlobe(globe);
         
-        Position origin = planningContinuum.getGlobe().computePositionFromPoint(new Vec4(1, 1, 1));
-        Position destination = planningContinuum.getGlobe().computePositionFromPoint(new Vec4(50, 50, 50));
+        Position origin = env.getGlobe().computePositionFromPoint(new Vec4(1, 1, 1));
+        Position destination = env.getGlobe().computePositionFromPoint(new Vec4(40, 40, 40));
         ZonedDateTime etd = ZonedDateTime.now();
         Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
         
-        ObstacleCylinder o = new ObstacleCylinder(planningContinuum.getCenterPosition(), 30d, 10d);
+        ObstacleCylinder o = new ObstacleCylinder(env.getCenterPosition(), 30d, 10d);
         ZonedDateTime start = ZonedDateTime.now().minusYears(1);
 		ZonedDateTime end = ZonedDateTime.now().plusYears(1);
 		o.setCostInterval(new CostInterval("ci1", start, end, 25d));
-		planningContinuum.embed(o);
+		env.embed(o); 
         
-        DQNPlanner planner = new DQNPlanner(iris, planningContinuum);
-		//DQNPlannerNoCosts planner = new DQNPlannerNoCosts(iris, planningContinuum);
+        DQNPlanner planner = new DQNPlanner(iris, env); 
         planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);
+        
+        /** Test for DQNPlanner no costs */
+//        PlanningContinuum env = new RLEnvironment(box);
+//        env.setGlobe(globe);
+//        
+//        Position origin = env.getGlobe().computePositionFromPoint(new Vec4(1, 1, 1));
+//        Position destination = env.getGlobe().computePositionFromPoint(new Vec4(40, 40, 40));
+//        ZonedDateTime etd = ZonedDateTime.now();
+//        Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
+//        
+//		DQNPlannerNoCosts planner = new DQNPlannerNoCosts(iris, env);
+//        planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
+//        Path path = planner.plan(origin, destination, etd);
+//        assertNotNull(path);
+        
+		
+		/** Other stuff */
         //assertEquals(7, Iterables.size(path.getPositions()));
+
      		
 //		planningGrid.setNeighborhood(Neighborhood.VERTEX_26);
 //		path = planner.plan(origin, destination, etd);

@@ -99,6 +99,14 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getDictionaryBundle()
 			.getString("specification.environment.continuum.description");
 	
+	/** the identifier of a planning continuum environment specification */
+	public static final String ENVIRONMENT_RL_ENVIRONMENT_ID = "Reinforcement Learning Environment";
+	
+	/** the description of a planning continuum environment specification */
+	public static final String ENVIRONMENT_RL_ENVIRONMENT_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.environment.rlenv.description");
+	
 	/** the identifier of a forward A* planner specification */
 	public static final String PLANNER_FAS_ID = "Forward A*";
 	
