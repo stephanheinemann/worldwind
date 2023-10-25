@@ -55,6 +55,9 @@ public class RLObstacle implements Comparable<RLObstacle>{
 		
 		Vec4 statePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(position));
 		Vec4 obstaclePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(obstacle.getCenter()));
+		
+//		Vec4 statePoint = env.getGlobe().computePointFromPosition(position);
+//		Vec4 obstaclePoint = env.getGlobe().computePointFromPosition(obstacle.getCenter());
 		 
 		this.relativeToState = statePoint.subtract3(obstaclePoint);
 		this.normalizedRelativeToState = this.relativeToState.normalize3();
@@ -66,22 +69,6 @@ public class RLObstacle implements Comparable<RLObstacle>{
 			this.distanceToState = (float) (this.relativeToState.getLength3() - obstacle.getExtent(env.getGlobe()).getRadius());
 		}
 		this.normalizedDistanceToState = (float) (this.distanceToState / env.getDiameter());
-	}
-	
-	/**
-	 * Constructs an obstacle instance to be used by a DQN planner. It's characteristics 
-	 * are defined relative to a state and are normalized
-	 * 
-	 * @param the normalized vector that points from the obstacle center to the state
-	 * @param the distance from the obstacle's closest point to the state
-	 * @param the distance from the obstacle's closest point to the state normalized by the environment size
-	 * 
-	 */
-	public RLObstacle(Vec4 normalizedRelativeToState, float distanceToState, float normalizedDistanceToState) {
-		
-		this.normalizedRelativeToState = normalizedRelativeToState;
-		this.distanceToState = distanceToState;
-		this.normalizedDistanceToState = normalizedDistanceToState;
 	}
 	
 	

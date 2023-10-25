@@ -29,62 +29,26 @@
  */
 package com.cfar.swim.worldwind.environments;
 
-import java.awt.Color;
-import java.time.Duration;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.chrono.ChronoZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.concurrent.CopyOnWriteArraySet;
-import java.util.function.BiFunction;
-import java.util.stream.Collectors;
-
-import com.binarydreamers.trees.Interval;
-import com.binarydreamers.trees.IntervalTree;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.geom.Box;
-import com.cfar.swim.worldwind.geom.precision.Precision;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
-import com.cfar.swim.worldwind.planners.rl.Helper;
 import com.cfar.swim.worldwind.planners.rl.RLObstacle;
 import com.cfar.swim.worldwind.planners.rl.Snapshot;
 import com.cfar.swim.worldwind.planners.rl.State;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.CostPolicy;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.planning.WeightedCostInterval;
 import com.cfar.swim.worldwind.render.Obstacle;
-import com.cfar.swim.worldwind.render.ObstacleColor;
-import com.cfar.swim.worldwind.render.ThresholdRenderable;
-import com.cfar.swim.worldwind.render.TimedRenderable;
 import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
-import com.cfar.swim.worldwind.planners.rl.State;
-
-import gov.nasa.worldwind.avlist.AVKey;
-import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.PolarPoint;
 import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.geom.Quaternion;
 import gov.nasa.worldwind.geom.Vec4;
-import gov.nasa.worldwind.globes.Globe;
-import gov.nasa.worldwind.render.BasicShapeAttributes;
-import gov.nasa.worldwind.render.DrawContext;
-import gov.nasa.worldwind.render.Ellipsoid;
-import gov.nasa.worldwind.render.Material;
 import gov.nasa.worldwind.render.Path;
-import gov.nasa.worldwind.render.RigidShape;
-import gov.nasa.worldwind.terrain.HighResolutionTerrain;
-import gov.nasa.worldwind.util.measure.LengthMeasurer;
 
 /**
  * Realizes a RL environment that can be sampled by sampling based motion
@@ -118,8 +82,8 @@ public class RLEnvironment extends PlanningContinuum {
 	/** the next state */
 	private State nextState = null;
 	
-	/** the index of the chosen action */
-	private int action = 0;
+//	/** the index of the chosen action */
+//	private int action = 0;
 	
 	/** the received reward */
 	private double reward = 0.0;
@@ -243,7 +207,10 @@ public class RLEnvironment extends PlanningContinuum {
 	 * */
 	public double calculateStepSize(Position start, Position goal) {
 		
-		double distance = this.getGlobe().computePointFromPosition(goal).subtract3(this.getGlobe().computePointFromPosition(start)).getLength3();
+		Vec4 goalPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(goal));
+		Vec4 startPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(start));
+		
+		double distance = goalPoint.subtract3(startPoint).getLength3();
 		this.stepSize = distance / STEP_DIVISION;
 		
 		return this.stepSize;
@@ -311,17 +278,19 @@ public class RLEnvironment extends PlanningContinuum {
 		
 		this.unembedTrainingObstacles();
 		
+		// Sets the risk and cost policies
+		this.riskPolicy = riskPolicy;
+		this.costPolicy = costPolicy;
+		
 		this.goalPosition = destination;
 		
 		// Sets the step size
 		this.calculateStepSize(origin, this.goalPosition);
 		
-		// Adds obstacles to the environment
-		this.createRandomObstacles(origin, this.goalPosition);
-		
 		// Creates the start state
 		TreeSet<RLObstacle> obstacles = this.getCloseObstacles(origin, etd);
 		this.start = new State(origin, this.goalPosition, this, obstacles, etd, null);
+
 		
 		// Sets the state as the start
 		this.state = this.start;
@@ -444,6 +413,8 @@ public class RLEnvironment extends PlanningContinuum {
 			this.unembed(o);
 		}
 		
+		Set<Obstacle> os = this.getObstacles();
+		
 		this.trainingObstacles.clear();
 	}
 	
@@ -476,8 +447,8 @@ public class RLEnvironment extends PlanningContinuum {
 			this.trainingObstacles.add(obstacle);
 		}
 		
-		 //1/3 of the times, there is an obstacle right between start and goal, to make sure it learns to go around
-		if (rand.nextInt(2) == 0) {
+		 //1/2 of the times, there is an obstacle right between start and goal, to make sure it learns to go around
+		if (rand.nextInt(1) == 0) {
 			
 			Vec4 startPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(start));
 			Vec4 goalPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(goal));
@@ -498,6 +469,8 @@ public class RLEnvironment extends PlanningContinuum {
 		for (Obstacle o : this.trainingObstacles) {
 			this.embed(o);
 		}
+		
+		Set<Obstacle> os = this.getObstacles();
 		
 		// Sets random cost policy
 		int costPolicy = rand.nextInt(2);
@@ -536,33 +509,33 @@ public class RLEnvironment extends PlanningContinuum {
 				newY = relativeGoal.y;
 				newZ = relativeGoal.z;
 				break;
-			// Turn right 45 degrees
-			case 1: 
-				newX = x * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
-				newY = -x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
-				break;
-			// Turn right 60 degrees
-			case 2: 
-				newX = x * Math.cos(Math.toRadians(60)) + y * Math.sin(Math.toRadians(60));
-				newY = -x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
-				break;
 			// Turn left 45 degrees
-			case 3: 
-				newX = x * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
-				newY = x * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
+			case 1: 
+				newZ = z * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
+				newY = -z * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
 				break;
 			// Turn left 60 degrees
+			case 2: 
+				newZ = z * Math.cos(Math.toRadians(60)) + y * Math.sin(Math.toRadians(60));
+				newY = -z * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
+				break;
+			// Turn right 45 degrees
+			case 3: 
+				newZ = z * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
+				newY = z * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
+				break;
+			// Turn right 60 degrees
 			case 4: 
-				newX = x * Math.cos(Math.toRadians(60)) - y * Math.sin(Math.toRadians(60));
-				newY = x * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
+				newZ = z * Math.cos(Math.toRadians(60)) - y * Math.sin(Math.toRadians(60));
+				newY = z * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
 				break;
 			 // Climb 45 degrees
 			case 5: 
-				newZ = z + Math.tan(Math.toRadians(45));
+				newX = x + Math.tan(Math.toRadians(45));
 				break;
 			// Descend 45 degrees
 			case 6:
-				newZ = z - Math.tan(Math.toRadians(45));
+				newX = x - Math.tan(Math.toRadians(45));
 				break;
 			default:
 		}
@@ -619,10 +592,13 @@ public class RLEnvironment extends PlanningContinuum {
 	 */
 	public Vec4 getRelativeVector(Position origin, Position other) {
 		
-		Vec4 boxOriginPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(origin));
-		Vec4 boxOtherPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(other));
+		Vec4 originPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(origin));
+		Vec4 otherPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(other));
 		
-		Vec4 relativeVector = boxOriginPoint.subtract3(boxOtherPoint);
+//		Vec4 originPoint = this.getGlobe().computePointFromPosition(origin);
+//		Vec4 otherPoint = this.getGlobe().computePointFromPosition(other);
+		
+		Vec4 relativeVector = originPoint.subtract3(otherPoint);
 		
 		return relativeVector;
 	}
@@ -638,10 +614,13 @@ public class RLEnvironment extends PlanningContinuum {
 	 */
 	public double getNormalizedBoxDistance(Position p1, Position p2) {
 		
-		Vec4 boxPoint1 = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(p1));
-		Vec4 boxPoint2 = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(p2));
+		Vec4 point1 = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(p1));
+		Vec4 point2 = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(p2));
+
+//		Vec4 point1 = this.getGlobe().computePointFromPosition(p1);
+//		Vec4 point2 = this.getGlobe().computePointFromPosition(p2);
 		
-		Vec4 relativeVector = boxPoint1.subtract3(boxPoint2);
+		Vec4 relativeVector = point1.subtract3(point2);
 		
 		double distance = relativeVector.getLength3();
 		
@@ -658,9 +637,9 @@ public class RLEnvironment extends PlanningContinuum {
 	 */
 	public float[] getDistancesToEnv(Position position) {
 		
-		Vec4 boxPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(position));
-		
 		float[] distancesToEnv = new float[6];
+		
+		Vec4 boxPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(position));
 		
 		distancesToEnv[0] = (float) this.toNormalizedDistance(boxPoint.x);
 		distancesToEnv[1] = (float) this.toNormalizedDistance(this.getRLength() - boxPoint.x);
@@ -668,6 +647,18 @@ public class RLEnvironment extends PlanningContinuum {
 		distancesToEnv[3] = (float) this.toNormalizedDistance(this.getSLength() - boxPoint.y);
 		distancesToEnv[4] = (float) this.toNormalizedDistance(boxPoint.z);
 		distancesToEnv[5] = (float) this.toNormalizedDistance(this.getTLength() - boxPoint.z);
+		
+//		Vec4[] corners = this.getCorners();
+//		Vec4 min = corners[0];
+//		Vec4 max = corners[6];
+//		Vec4 point = this.getGlobe().computePointFromPosition(position);
+//		
+//		distancesToEnv[0] = (float) this.toNormalizedDistance(point.x - min.x);
+//		distancesToEnv[1] = (float) this.toNormalizedDistance(max.x - point.x);
+//		distancesToEnv[2] = (float) this.toNormalizedDistance(point.y - min.y);
+//		distancesToEnv[3] = (float) this.toNormalizedDistance(max.y - point.y);
+//		distancesToEnv[4] = (float) this.toNormalizedDistance(point.z - min.z);
+//		distancesToEnv[5] = (float) this.toNormalizedDistance(max.z - point.z);
 		
 		return distancesToEnv;
 	}
@@ -683,8 +674,15 @@ public class RLEnvironment extends PlanningContinuum {
 	 */
 	public Position getNewPosition(Position position, Vec4 move) {
 		
-		Vec4 boxPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(position));
-		Position newPosition = this.getGlobe().computePositionFromPoint(this.transformBoxOriginToModel(boxPoint.add3(move)));
+		Vec4 point = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(position));
+		Vec4 point2 = point.add3(move);
+//		Vec4 goalPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(goalPosition));
+
+//		Vec4 point = this.getGlobe().computePointFromPosition(position);
+//		Vec4 point2 = point.add3(move);
+		
+	//	Position newPosition = this.getGlobe().computePositionFromPoint(point.add3(move));
+		Position newPosition = this.getGlobe().computePositionFromPoint(this.transformBoxOriginToModel(point.add3(move)));
 		
 		return newPosition;
 	}

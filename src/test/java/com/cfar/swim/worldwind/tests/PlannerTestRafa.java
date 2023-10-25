@@ -122,7 +122,7 @@ public class PlannerTestRafa {
 //        planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
 //        Path path = planner.plan(origin, destination, etd);
 //        assertNotNull(path);
-        
+          
 		
 		/** Other stuff */
         //assertEquals(7, Iterables.size(path.getPositions()));

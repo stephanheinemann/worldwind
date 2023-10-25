@@ -94,7 +94,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private static final float INITIAL_EPSILON = 1.0f;
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 500;
+	private static final int NUM_GLOBAL_EPS = 50000;
 	
 	/** maximum number of steps per episode */
 	private static final int MAX_STEPS = 100;
@@ -112,16 +112,16 @@ public class DQNPlanner extends AbstractPlanner {
 	private final int[] hiddenSize = {128, 256, 512, 256, 128};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.008f;
+	private final float learningRate = 0.01f;
 	
 	/** the size of the mini-batch of transitions used for training */
-	protected final int batchSize = 80;
+	protected final int batchSize = 32;
 	
 	/** the number of iterations between each train of the policy network */
 	protected final int trainNetInterval = 1;
 	
 	/** the number of iterations between each sync of the target and policy networks */
-	protected final int syncNetInterval = 200;
+	protected final int syncNetInterval = 300;
 	
 	/** gamma factor for the Bellman equation */
 	protected final float gamma = 0.9f;
@@ -579,7 +579,7 @@ public class DQNPlanner extends AbstractPlanner {
 			System.out.println("Cost Policy: " + state.getId()[0] + "; Step size: " + state.getId()[1]);
 			System.out.println("Distance to axes: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4] 
 					+ "; " + state.getId()[5] + "; " + state.getId()[6] + "; " + state.getId()[7]);
-			System.out.println("Relative to goal: " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10] + "; " + state.getId()[11]);
+			System.out.println("Relative goal: " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10] + "; " + state.getId()[11]);
 			System.out.println("Obstacle 1: " + state.getId()[12] + "; " + state.getId()[13] + "; " + state.getId()[14] + "; " + state.getId()[15]);
 			System.out.println("Obstacle 2: " + state.getId()[16] + "; " + state.getId()[17] + "; " + state.getId()[18] + "; " + state.getId()[19]);
 			System.out.println("Obstacle 3: " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22] + "; " + state.getId()[23]);
@@ -589,7 +589,9 @@ public class DQNPlanner extends AbstractPlanner {
 			snapshot = this.getRLEnvironment().step(action, this.getAircraft());
 			
 			// Adds the next waypoint to the trajectory
-			this.getWaypoints().addLast(this.createWaypoint(snapshot.getState().getPosition()));
+			if (!this.getRLEnvironment().failed()) {
+				this.getWaypoints().addLast(this.createWaypoint(snapshot.getState().getPosition()));
+			}
 			
 			// Sets the state as the next state
 			state = snapshot.getState();
