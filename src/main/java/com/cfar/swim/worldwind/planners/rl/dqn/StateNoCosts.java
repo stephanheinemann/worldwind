@@ -1,25 +1,9 @@
 package com.cfar.swim.worldwind.planners.rl.dqn;
 
-import java.time.ZonedDateTime;
-
-
-import java.util.Iterator;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
-
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
-import com.cfar.swim.worldwind.planning.Waypoint;
-
-import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.LatLon;
-import gov.nasa.worldwind.geom.Plane;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
-import gov.nasa.worldwind.globes.Globe;
 
 /**
  * Realizes a state of an RL planner.

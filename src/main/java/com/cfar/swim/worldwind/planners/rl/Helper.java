@@ -1,26 +1,7 @@
 package com.cfar.swim.worldwind.planners.rl;
 
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.TreeSet;
-import java.util.Random;
-import java.util.Set;
-
-import com.cfar.swim.worldwind.environments.Environment;
-import com.cfar.swim.worldwind.environments.PlanningContinuum;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.cfar.swim.worldwind.planning.TimeInterval;
-import com.cfar.swim.worldwind.render.Obstacle;
-import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
-
 import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.types.Shape;
-import gov.nasa.worldwind.geom.Position;
-import gov.nasa.worldwind.geom.Vec4;
 
 /**
  * Defines a class containing extra methods that are called by the DQN planner

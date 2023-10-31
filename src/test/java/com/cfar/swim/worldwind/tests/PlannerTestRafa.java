@@ -29,48 +29,29 @@
  */
 package com.cfar.swim.worldwind.tests;
 
-import static org.junit.Assert.assertEquals;
-
-
-
-
-
-
-
-
-
 import static org.junit.Assert.assertNotNull;
 
-import java.awt.Color;
-import java.time.ZonedDateTime;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
 
+import java.time.ZonedDateTime;
 import org.junit.Test;
 
 import com.cfar.swim.worldwind.aircraft.CombatIdentification;
 import com.cfar.swim.worldwind.aircraft.Iris;
-import com.cfar.swim.worldwind.environments.PlanningContinuum;
-import com.cfar.swim.worldwind.environments.RLEnvironment;
+import com.cfar.swim.worldwind.environments.*;
 import com.cfar.swim.worldwind.geom.Box;
-import com.cfar.swim.worldwind.geom.Neighborhood;
-import com.cfar.swim.worldwind.planners.rl.dqn.*;
 import com.cfar.swim.worldwind.planning.CostInterval;
 import com.cfar.swim.worldwind.planning.RiskPolicy;
-import com.google.common.collect.Iterables;
-
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.render.Path;
 
-import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
+import com.cfar.swim.worldwind.planners.rl.dqn.*;
+import com.cfar.swim.worldwind.planners.rl.d3qn.*;
 
-import com.cfar.swim.worldwind.render.airspaces.ObstacleSphere;
 import com.cfar.swim.worldwind.render.*;
 
-/**
+/** 
  * Performs planner tests.
  * 
  * @author Rafaela Seguro
@@ -102,7 +83,7 @@ public class PlannerTestRafa {
         ZonedDateTime start = ZonedDateTime.now().minusYears(1);
 		ZonedDateTime end = ZonedDateTime.now().plusYears(1);
 		o.setCostInterval(new CostInterval("ci1", start, end, 25d));
-		env.embed(o); 
+		env.embed(o);  
         
         DQNPlanner planner = new DQNPlanner(iris, env); 
         planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
@@ -110,7 +91,7 @@ public class PlannerTestRafa {
         assertNotNull(path);
         
         /** Test for DQNPlanner no costs */
-//        PlanningContinuum env = new RLEnvironment(box);
+//        PlanningContinuum env = new PlanningContinuum(box);
 //        env.setGlobe(globe);
 //        
 //        Position origin = env.getGlobe().computePositionFromPoint(new Vec4(1, 1, 1));

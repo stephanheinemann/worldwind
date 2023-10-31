@@ -4,16 +4,12 @@ import java.util.ArrayList;
 
 
 
-import java.awt.Color;
+
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
 import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.Map;
 import java.util.TreeMap;
@@ -27,14 +23,8 @@ import com.cfar.swim.worldwind.environments.PlanningRoadmap;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planners.cgs.astar.AStarWaypoint;
-import com.cfar.swim.worldwind.planners.rl.*;
 import com.cfar.swim.worldwind.planning.Trajectory;
-import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
-//import com.cfar.swim.worldwind.tests.Plot;
-import com.cfar.swim.worldwind.util.Identifiable;
-
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;

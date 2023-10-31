@@ -1,26 +1,16 @@
 package com.cfar.swim.worldwind.planners.rl;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-
 import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Iterator;
-import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
-import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.environments.RLEnvironment;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planning.CostPolicy;
-import com.cfar.swim.worldwind.planning.Waypoint;
-
-import gov.nasa.worldwind.geom.Angle;
-import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
-import gov.nasa.worldwind.globes.Globe;
 
 /**
  * Realizes a state of an RL planner.
@@ -34,7 +24,7 @@ public class State {
 	public static int CONSIDERED_OBSTACLES = 3;
 	
 	/** the size of the state ID */
-	public static int ID_SIZE = 12 + 4*CONSIDERED_OBSTACLES;
+	public static int ID_SIZE = 15 + 4*CONSIDERED_OBSTACLES;
 	
 	/** store's the state's position*/
 	private Position position = null;
@@ -92,7 +82,7 @@ public class State {
 		
 		// If it is the first state, the movVector points to the goal
 		if(movVector == null) 
-			movVector = this.normalizedRelativeGoal.getNegative3();
+			movVector = this.normalizedRelativeGoal;
 				
 		this.movVector = movVector;
 		
@@ -209,6 +199,14 @@ public class State {
 		// Normalized step size
 		id[index] = (float) stepSize;
 		index++;
+		
+		// Current orientation
+		id[index] = (float) this.getMovVector().x;
+		id[index+1] = (float) this.getMovVector().y;
+		id[index+2] = (float) this.getMovVector().z;
+		
+		index = index + 3;
+
 		
 		// Distance to environment axes
 		for (int i = 0; i < distancesToEnv.length; i++) {

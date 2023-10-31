@@ -3,66 +3,35 @@ package com.cfar.swim.worldwind.planners.rl.dqn;
 import java.util.ArrayList;
 
 
-import java.util.Arrays;
 
-import static org.assertj.core.api.Assertions.assertThatIllegalStateException;
-
-import java.awt.Color;
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalUnit;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
-import java.util.PriorityQueue;
 import java.util.Random;
-import java.util.Set;
-import java.util.Map;
-import java.util.TreeMap;
-import java.util.stream.Collectors;
-
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 
-import java.nio.Buffer;
-
 import com.cfar.swim.worldwind.aircraft.Aircraft;
-import com.cfar.swim.worldwind.aircraft.Capabilities;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
-import com.cfar.swim.worldwind.environments.PlanningGrid;
-import com.cfar.swim.worldwind.environments.PlanningRoadmap;
-import com.cfar.swim.worldwind.environments.RLEnvironment;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planners.rl.Plot;
-import com.cfar.swim.worldwind.planners.rl.State;
 import com.cfar.swim.worldwind.planners.rl.ActionSampler;
 import com.cfar.swim.worldwind.planners.rl.Helper;
 import com.cfar.swim.worldwind.planners.rl.Memory;
 import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
-import com.cfar.swim.worldwind.planning.RiskPolicy;
+import com.cfar.swim.worldwind.planners.rl.d3qn.DuelingNetworkModel;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
-//import com.cfar.swim.worldwind.tests.Plot;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
-import gov.nasa.worldwind.globes.Globe;
-import gov.nasa.worldwind.render.Path;
 import ai.djl.Model;
 import ai.djl.engine.Engine;
 import ai.djl.inference.Predictor;
 import ai.djl.ndarray.*;
-import ai.djl.ndarray.types.DataType;
 import ai.djl.nn.Parameter;
 import ai.djl.training.GradientCollector;
-import ai.djl.training.Trainer;
-import ai.djl.training.loss.L2Loss;
 import ai.djl.training.loss.Loss;
 import ai.djl.training.optimizer.Optimizer;
 import ai.djl.training.tracker.Tracker;
@@ -90,7 +59,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	private static final float INITIAL_EPSILON = 1.0f;
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 10;
+	private static final int NUM_GLOBAL_EPS = 3000;
 	
 	/** maximum number of steps per episode */
 	private static final int MAX_STEPS = 200;
@@ -217,7 +186,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 //		this.numOfActions = listOfActions.size();
 		
 		resetAgent();
-		trainGlobal();
+		//trainGlobal();
 	}
 	
 	/**
@@ -569,64 +538,71 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 	}
 	
 	
-//	/**
-//	 * Runs the training of the Deep Q-Network for a specific start and goal
-//	 */
-//	protected void trainLocal(int numEpisodes, Position origin, Position destination) {
-//		
-//		System.out.println("TRAINING LOCAL");
-//		
-//		double decay = 0;
-//		int episode = 0;
-//		int step;
-//		double score;
-//		
-//		// Creates the start and goal states
-//		this.setStart(new StateNoCosts(origin, destination, this.getPlanningContinuum()));
-//		this.setGoal(new StateNoCosts(destination, destination, this.getPlanningContinuum()));
-//		
-//		// For each episode
-//		while (episode < numEpisodes) {
-//			
-//			episode++;
-//			step = 1;
-//			score = 0;
-//			// Reset environment 
-//			this.setDone(false);
-//			this.setFailure(false);
-//			this.setState(this.getStart());
-//		
-//			// For each time step, until it reaches goal or failure
-//			while (!this.isDone() && !this.failed()) {
-//				// Saves state in memory; Updates the network; Selects the next action and saves it in memory
-//				this.react();
-//				// Execute action and get next state and reward; Checks if the goal has been reached
-//				this.step();
-//				// Reaching maximum number of steps counts as failure
-//				if (step >= MAX_STEPS)
-//					this.setFailure(true);
-//				// Stores the reward and the "done" boolean in memory
-//				memory.setReward(this.getReward(), this.isDone(), this.failed());
-//				score += this.getReward();
-//				// Sets the state as the next state
-//				this.setState(this.getNextState());
-//				step++;
-//			}
-//			// Update epsilon for next episode
-//			decay = Math.min(((double) episode / NUM_GLOBAL_EPS), 1.0);
-//			epsilon = (float) (INITIAL_EPSILON - (INITIAL_EPSILON - MIN_EXPLORE_RATE) * decay);
-//			
-//			if (this.isDone()) {
-//				System.out.println("Episode " + episode + " had score " + score + " and reached GOAL after " + step + " steps");
-//			} else if (this.failed()) {
-//				if (step >= MAX_STEPS ) {
-//					System.out.println("Episode " + episode + " had score " + score + "  but did too many steps");
-//				} else {
-//					System.out.println("Episode " + episode + " had score " + score + "  but left environment");
-//				}
-//			} 
-//		}
-//	}
+	/**
+	 * Runs the training of the Deep Q-Network for a specific start and goal
+	 */
+	protected void trainLocal(int numEpisodes, Position origin, Position destination, ZonedDateTime etd) {
+		
+		System.out.println("TRAINING LOCAL");
+		
+		double decay = 0;
+		int episode = 0;
+		int step;
+		double score;
+		double agentPerformance = 0;
+		
+		// For each episode
+		while (episode < numEpisodes) {
+			
+			episode++;
+			step = 1;
+			score = 0;
+			// Reset environment 
+			this.initialize(origin, destination, etd);
+		
+			// For each time step, until it reaches goal or failure
+			while (!this.isDone() && !this.failed()) {
+				// Saves state in memory; Updates the network; Selects the next action and saves it in memory
+				this.react();
+				// Execute action and get next state and reward; Checks if the goal has been reached
+				this.step();
+				// Reaching maximum number of steps counts as failure
+				if (step >= MAX_STEPS)
+					this.setFailure(true);
+				// Stores the reward and the "done" boolean in memory
+				memory.setReward(this.getReward(), this.isDone(), this.failed());
+				score += this.getReward();
+				// Sets the state as the next state
+				this.setState(this.getNextState());
+				step++;
+			}
+			// Update epsilon for next episode
+			decay = Math.exp(-episode * 1.0 / (NUM_GLOBAL_EPS * 0.9));
+			epsilon = (float) (MIN_EXPLORE_RATE + (INITIAL_EPSILON - MIN_EXPLORE_RATE) * decay);
+			
+			if(this.isDone()) {
+				episodeResults.add(1);
+			} else {
+				episodeResults.add(0);
+			}
+			double sum = (episodeResults.stream().mapToInt(Integer::intValue).sum());
+			double size = episodeResults.size();
+			agentPerformance =  sum / size;
+			double e = (episodeResults.stream().mapToInt(Integer::intValue).sum()) / (episodeResults.size());
+			
+			if (this.isDone()) {
+				System.out.println("Episode " + episode + " -----------------------> GOAL");
+			} else if (this.failed()) {
+				if (step >= MAX_STEPS ) {
+					System.out.println("Episode " + episode + " did too many steps");
+				} else {
+					System.out.println("Episode " + episode + " left environment");
+				}
+			}
+			System.out.printf("Performance %,.3f %n", agentPerformance);
+		} 
+	}
+	
 
 	/** 
 	 * Resets the environment with a new random start and goal
@@ -1134,7 +1110,7 @@ public class DQNPlannerNoCosts extends AbstractPlanner {
 		
 		this.clearWaypoints();
 		
-//		this.trainLocal(3000, origin, destination);
+		this.trainLocal(3000, origin, destination, etd);
 		
 		this.initialize(origin, destination, etd);
 		

@@ -1,25 +1,10 @@
 package com.cfar.swim.worldwind.planners.rl;
 
-import java.time.ZonedDateTime;
-
-import java.util.Iterator;
-import java.util.LinkedHashSet;
-import java.util.Set;
-
-import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
-import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.render.Obstacle;
-import com.cfar.swim.worldwind.render.airspaces.ObstacleBox;
-import com.cfar.swim.worldwind.render.airspaces.ObstacleCylinder;
-
-import gov.nasa.worldwind.geom.Angle;
 import gov.nasa.worldwind.geom.Cylinder;
-import gov.nasa.worldwind.geom.LatLon;
 import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
-import gov.nasa.worldwind.globes.Globe;
 
 /**
  * Realizes an obstacle to be used by the DQN planner.

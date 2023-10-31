@@ -1,11 +1,5 @@
 package com.cfar.swim.worldwind.planners.rl;
 
-import java.util.Map;
-import java.util.Random;
-
-import com.cfar.swim.worldwind.planners.rl.qlearning.Action;
-import com.cfar.swim.worldwind.planners.rl.qlearning.RLWaypoint;
-
 /**
  * Realizes a transition object to store a state, action, next state and reward tuple
  * 
