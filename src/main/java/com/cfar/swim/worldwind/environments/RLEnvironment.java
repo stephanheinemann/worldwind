@@ -389,14 +389,14 @@ public class RLEnvironment extends PlanningContinuum {
 				break;
 			}
 		}
-//		
-//		// If it gets too close to environment boundary
-//		for(int i = 0; i < 6; i++) {
-//			if (this.nextState.getDistanceToEnv()[i] <= this.nextState.getStepSize()) {
-//				reward += -10;
-//				break;
-//			}
-//		}
+		
+		// If it gets too close to environment boundary
+		for(int i = 0; i < 6; i++) {
+			if (this.nextState.getDistanceToEnv()[i] <= this.nextState.getStepSize()) {
+				reward += -10;
+				break;
+			}
+		}
 		
 		// Otherwise: step penalty +  distance to goal penalty/reward 
 		reward += -10;

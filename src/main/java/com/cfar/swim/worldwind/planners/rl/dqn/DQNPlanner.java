@@ -22,6 +22,7 @@ import com.cfar.swim.worldwind.planners.rl.Memory;
 import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
 import com.cfar.swim.worldwind.planners.rl.Snapshot;
 import com.cfar.swim.worldwind.planners.rl.State;
+import com.cfar.swim.worldwind.planners.rl.d3qn.DuelingNetworkModel;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -59,10 +60,10 @@ public class DQNPlanner extends AbstractPlanner {
 	private static final float MIN_EPSILON = 0.1f; 
 	
 	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 10000;
+	private static final int NUM_GLOBAL_EPS = 15000;
 	
 	/** maximum number of steps per episode */
-	private static final int MAX_STEPS = 100;
+	private static final int MAX_STEPS = 200;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -70,17 +71,14 @@ public class DQNPlanner extends AbstractPlanner {
 	/** replay memory */
 	private final Memory memory = new Memory(4096);
 	
-//	/** the number of available actions in each state */
-//	private final int numOfActions = 7;
-	
 	/** the number of hidden units (neurons) in the neural network */
 	private final int[] hiddenSize = {128, 256, 128};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.00005f;
+	private final float learningRate = 0.0001f;
 	
 	/** the size of the mini-batch of transitions used for training */
-	protected final int batchSize = 250 ;
+	protected final int batchSize = 32;
 	
 	/** the number of iterations between each train of the policy network */
 	protected final int trainNetInterval = 1;
@@ -253,14 +251,15 @@ public class DQNPlanner extends AbstractPlanner {
 		
 		// For each episode
 		while (episode < NUM_GLOBAL_EPS ) {
-			if(episode == NUM_GLOBAL_EPS /2 ) {
+			
+			// Adds obstacles to the training 
+			if(episode == NUM_GLOBAL_EPS / 2) {
 				addObstacles = true;
 				if(obstacles!=null) {
 					for (Obstacle o : obstacles) {
 						this.getRLEnvironment().embed(o);
 					}
 				}
-				//epsilon = 1.0f;
 			} 
 			// Reset environment 
 			episode++;
