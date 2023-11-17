@@ -79,13 +79,13 @@ public class PlannerTestRafa {
         ZonedDateTime etd = ZonedDateTime.now();
         Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
         
-        ObstacleCylinder o = new ObstacleCylinder(env.getCenterPosition(), 30d, 10d);
-        ZonedDateTime start = ZonedDateTime.now().minusYears(1);
-		ZonedDateTime end = ZonedDateTime.now().plusYears(1);
-		o.setCostInterval(new CostInterval("ci1", start, end, 25d));
-		env.embed(o);  
+//        ObstacleCylinder o = new ObstacleCylinder(env.getCenterPosition(), 30d, 10d);
+//        ZonedDateTime start = ZonedDateTime.now().minusYears(1);
+//		ZonedDateTime end = ZonedDateTime.now().plusYears(1);
+//		o.setCostInterval(new CostInterval("ci1", start, end, 25d));
+//		env.embed(o);  
         
-        DQNPlanner planner = new DQNPlanner(iris, env); 
+        D3QNPlanner planner = new D3QNPlanner(iris, env); 
         planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);

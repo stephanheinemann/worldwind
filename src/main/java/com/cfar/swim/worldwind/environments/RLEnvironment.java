@@ -453,7 +453,7 @@ public class RLEnvironment extends PlanningContinuum {
 			this.trainingObstacles.add(obstacle);
 		}
 		
-		 // 1/3 of the times, there is an obstacle right between start and goal, to make sure it learns to go around
+		 // 1/2 of the times, there is an obstacle right between start and goal, to make sure it learns to go around
 		if (rand.nextInt(1)==0) {
 			
 			Vec4 startPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(start));

@@ -1,7 +1,7 @@
 package com.cfar.swim.worldwind.planners.rl.dqn;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -13,7 +13,6 @@ import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Environment;
 import com.cfar.swim.worldwind.environments.PlanningContinuum;
 import com.cfar.swim.worldwind.environments.RLEnvironment;
-import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.rl.ActionSampler;
@@ -22,7 +21,6 @@ import com.cfar.swim.worldwind.planners.rl.Memory;
 import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
 import com.cfar.swim.worldwind.planners.rl.Snapshot;
 import com.cfar.swim.worldwind.planners.rl.State;
-import com.cfar.swim.worldwind.planners.rl.d3qn.DuelingNetworkModel;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
@@ -54,16 +52,19 @@ import ai.djl.translate.NoopTranslator;
 public class DQNPlanner extends AbstractPlanner {
 	
 	/** the initial value of epsilon */
-	private static final float INITIAL_EPSILON = 1.0f;
+	private static final float INITIAL_EPSILON = 0.8f;
 	
 	/** the minimum value of epsilon during training */
 	private static final float MIN_EPSILON = 0.1f; 
 	
-	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 15000;
+	/** number of total training episodes */
+	private static final int NUM_GLOBAL_EPS = 3000;
+	
+	/** number of episodes it trains without obstacles first */
+	private static final int NO_OBS_EPS = 3000;
 	
 	/** maximum number of steps per episode */
-	private static final int MAX_STEPS = 200;
+	private static final int MAX_STEPS = 150;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -237,10 +238,10 @@ public class DQNPlanner extends AbstractPlanner {
 		double decay = 0;
 		int episode = -1;
 		int step;
+		int numOfEpisodes = NO_OBS_EPS;
 		double agentPerformance = 0;
 		boolean addObstacles = false;
 		Set<Obstacle> obstacles = new HashSet<>();
-		//|| agentPerformance < 0.9
 		
 		if(this.getRLEnvironment().getObstacles()!=null) {
 			obstacles.addAll(this.getRLEnvironment().getObstacles());
@@ -253,13 +254,15 @@ public class DQNPlanner extends AbstractPlanner {
 		while (episode < NUM_GLOBAL_EPS ) {
 			
 			// Adds obstacles to the training 
-			if(episode == NUM_GLOBAL_EPS / 2) {
+			if(episode == NO_OBS_EPS) {
 				addObstacles = true;
-				if(obstacles!=null) {
-					for (Obstacle o : obstacles) {
-						this.getRLEnvironment().embed(o);
-					}
-				}
+				epsilon = INITIAL_EPSILON;
+				numOfEpisodes = NUM_GLOBAL_EPS - NO_OBS_EPS;
+//				if(obstacles!=null) {
+//					for (Obstacle o : obstacles) {
+//						this.getRLEnvironment().embed(o);
+//					}
+//				}
 			} 
 			// Reset environment 
 			episode++;
@@ -279,9 +282,9 @@ public class DQNPlanner extends AbstractPlanner {
 				snapshot = this.getRLEnvironment().step(action, this.getAircraft());
 				// Stores the reward and the "done" boolean in memory; too many steps counts as failure
 				if (step >= MAX_STEPS) {
-					memory.setReward(0.1*(-50), false, true);
+					memory.setReward((-50), false, true);
 				} else {
-					memory.setReward(0.1*snapshot.getReward(), snapshot.isDone(), snapshot.failed());
+					memory.setReward(snapshot.getReward(), snapshot.isDone(), snapshot.failed());
 				}
 				// Sets the state as the next state
 				state = snapshot.getState();
@@ -302,7 +305,7 @@ public class DQNPlanner extends AbstractPlanner {
 			// Updates epsilon for next episode
 //			decay = episode / NUM_GLOBAL_EPS;
 //			epsilon = (float) (INITIAL_EPSILON - ((INITIAL_EPSILON - MIN_EPSILON) * decay));
-			decay = Math.exp(-episode * 1.0 / (NUM_GLOBAL_EPS));
+			decay = Math.exp(-episode * 1.0 / numOfEpisodes);
 			epsilon = (float) (MIN_EPSILON + (INITIAL_EPSILON - MIN_EPSILON) * decay);
 			
 			if(snapshot.isDone()) {
@@ -324,6 +327,11 @@ public class DQNPlanner extends AbstractPlanner {
 			System.out.printf("Performance %,.3f %n", agentPerformance);
 		}
 		//this.getRLEnvironment().embed(obstacle);
+		if(obstacles!=null) {
+			for (Obstacle o : obstacles) {
+				this.getRLEnvironment().embed(o);
+			}
+		}
 	}
 	
 	
@@ -583,7 +591,7 @@ public class DQNPlanner extends AbstractPlanner {
 		// If it finished without reaching the goal (because it reached the maximum number of steps
 		// or failed) returns an empty trajectory
 		if (!this.getRLEnvironment().isDone()) {
-			//this.clearWaypoints();
+			this.clearWaypoints();
 			if (step >= MAX_STEPS ) {
 				System.out.println("Did too many steps");
 			} else if (snapshot.getReward()==-100){

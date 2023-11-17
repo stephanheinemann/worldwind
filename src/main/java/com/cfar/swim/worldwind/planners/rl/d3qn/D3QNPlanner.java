@@ -1,9 +1,12 @@
 package com.cfar.swim.worldwind.planners.rl.d3qn;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
+
+import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
+import java.util.Set;
+
 import org.apache.commons.collections4.queue.CircularFifoQueue;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -21,6 +24,7 @@ import com.cfar.swim.worldwind.planners.rl.State;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
+import com.cfar.swim.worldwind.render.*;
 //import com.cfar.swim.worldwind.tests.Plot;
 import com.cfar.swim.worldwind.util.Identifiable;
 import gov.nasa.worldwind.geom.Position;
@@ -53,8 +57,11 @@ public class D3QNPlanner extends AbstractPlanner {
 	/** the minimum value of epsilon during training */
 	private static final float MIN_EPSILON = 0.1f; 
 	
-	/** number of episodes for the global training */
-	private static final int NUM_GLOBAL_EPS = 20000;
+	/** number of total training episodes */
+	private static final int NUM_GLOBAL_EPS = 3000;
+	
+	/** number of episodes it trains without obstacles first */
+	private static final int NO_OBS_EPS = 3000;
 	
 	/** maximum number of steps per episode */
 	private static final int MAX_STEPS = 150;
@@ -65,23 +72,20 @@ public class D3QNPlanner extends AbstractPlanner {
 	/** replay memory */
 	private final Memory memory = new Memory(4096);
 	
-	/** the number of available actions in each state */
-	private final int numOfActions = 7;
-	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {128, 256, 256};
+	private final int[] hiddenSize = {128, 256, 128};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.001f;
+	private final float learningRate = 0.0005f;
 	
 	/** the size of the mini-batch of transitions used for training */
-	protected final int batchSize = 256;
+	protected final int batchSize = 32;
 	
 	/** the number of iterations between each train of the policy network */
 	protected final int trainNetInterval = 1;
 	
 	/** the number of iterations between each sync of the target and policy networks */
-	protected final int syncNetInterval = 250;
+	protected final int syncNetInterval = 200;
 	
 	/** gamma factor for the Bellman equation */
 	protected final float gamma = 0.99f;
@@ -215,12 +219,12 @@ public class D3QNPlanner extends AbstractPlanner {
 		}
 		manager = NDManager.newBaseManager();
 		
-		policyNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, numOfActions);
+		policyNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
 		//Sets require gradient to true for the policy network's parameters
 		for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
 			params.getValue().getArray().setRequiresGradient(true);
 		}
-		targetNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, numOfActions);
+		targetNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
 		
 		policyPredictor = policyNet.newPredictor(new NoopTranslator());
 		syncNetworks();
@@ -234,16 +238,39 @@ public class D3QNPlanner extends AbstractPlanner {
 		double decay = 0;
 		int episode = -1;
 		int step;
+		int numOfEpisodes = NO_OBS_EPS;
 		double agentPerformance = 0;
+		boolean addObstacles = false;
+		Set<Obstacle> obstacles = new HashSet<>();
 		//|| agentPerformance < 0.9
+		
+		if(this.getRLEnvironment().getObstacles()!=null) {
+			obstacles.addAll(this.getRLEnvironment().getObstacles());
+			for (Obstacle o : obstacles) {
+				this.getRLEnvironment().unembed(o);
+			}
+		}
 		
 		// For each episode
 		while (episode < NUM_GLOBAL_EPS ) {
+			
+			// Adds obstacles to the training 
+			if(episode == NO_OBS_EPS) {
+				addObstacles = true;
+				epsilon = INITIAL_EPSILON;
+				numOfEpisodes = NUM_GLOBAL_EPS - NO_OBS_EPS;
+//				if(obstacles!=null) {
+//					for (Obstacle o : obstacles) {
+//						this.getRLEnvironment().embed(o);
+//					}
+//				}
+			} 
 			// Reset environment 
 			episode++;
 			step = 0;
 			
-			this.getRLEnvironment().resetRandom(true);
+			this.getRLEnvironment().resetRandom(addObstacles);
+//			this.getRLEnvironment().initializeEnvironment(origin, destination, getRiskPolicy(), getCostPolicy(), etd);
 			State state = this.getRLEnvironment().getStart();
 			int action = 0;
 			Snapshot snapshot = null;
@@ -254,19 +281,33 @@ public class D3QNPlanner extends AbstractPlanner {
 				action = this.react(state);
 				// Execute action and get next state and reward; Checks if the goal has been reached
 				snapshot = this.getRLEnvironment().step(action, this.getAircraft());
-//				// Reaching maximum number of steps counts as failure
-//				if (step >= MAX_STEPS)
-//					this.setFailure(true);
-				// Stores the reward and the "done" boolean in memory
-				memory.setReward(snapshot.getReward(), snapshot.isDone(), snapshot.failed());
+				// Stores the reward and the "done" boolean in memory; too many steps counts as failure
+				if (step >= MAX_STEPS) {
+					memory.setReward((-50), false, true);
+				} else {
+					memory.setReward(snapshot.getReward(), snapshot.isDone(), snapshot.failed());
+				}
 				// Sets the state as the next state
 				state = snapshot.getState();
+
+//				System.out.println("STATE " + (step + 1));
+//				System.out.println("Cost Policy: " + state.getId()[0] + "; Step size: " + state.getId()[1]);
+//				System.out.println("Distance to axes: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4] 
+//						+ "; " + state.getId()[5] + "; " + state.getId()[6] + "; " + state.getId()[7]);
+//				System.out.println("Relative goal: " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10] + "; " + state.getId()[11]);
+//				System.out.println("Obstacle 1: " + state.getId()[12] + "; " + state.getId()[13] + "; " + state.getId()[14] + "; " + state.getId()[15]);
+//				System.out.println("Obstacle 2: " + state.getId()[16] + "; " + state.getId()[17] + "; " + state.getId()[18] + "; " + state.getId()[19]);
+//				System.out.println("Obstacle 3: " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22] + "; " + state.getId()[23]);
+//				System.out.println("Action: " + action);
+//				System.out.println("Reward " + snapshot.getReward());
 
 				step++;
 			}
 			// Updates epsilon for next episode
-			decay = episode / NUM_GLOBAL_EPS;
-			epsilon = (float) (INITIAL_EPSILON - ((INITIAL_EPSILON - MIN_EPSILON) * decay));
+//			decay = episode / (0.8* numOfEpisodes);
+//			epsilon = (float) (INITIAL_EPSILON - ((INITIAL_EPSILON - MIN_EPSILON) * decay));
+			decay = Math.exp(-episode * 1.0 / numOfEpisodes);
+			epsilon = (float) (MIN_EPSILON + (INITIAL_EPSILON - MIN_EPSILON) * decay);
 			
 			if(snapshot.isDone()) {
 				episodeResults.add(1);
@@ -278,17 +319,19 @@ public class D3QNPlanner extends AbstractPlanner {
 			agentPerformance =  sum / size;
 			
 			if (snapshot.isDone()) {
-				System.out.println("Episode " + episode + " -----------------------> GOAL");
+				System.out.println("Episode " + episode + " -----------------------> GOAL in " + step + " steps");
 			} else if (snapshot.failed()) {
-				if (snapshot.getReward()==-100){
-					System.out.println("Episode " + episode + " hit an OBSTACLE");
-				} else if (snapshot.getReward()==-90){
-					System.out.println("Episode " + episode + " left environment");
-				} 
+				System.out.println("Episode " + episode + " hit an OBSTACLE");
 			} else if (step >= MAX_STEPS) {
 				System.out.println("Episode " + episode + " did too many steps");
 			}
 			System.out.printf("Performance %,.3f %n", agentPerformance);
+		}
+		//this.getRLEnvironment().embed(obstacle);
+		if(obstacles!=null) {
+			for (Obstacle o : obstacles) {
+				this.getRLEnvironment().embed(o);
+			}
 		}
 	}
 	
@@ -521,12 +564,13 @@ public class D3QNPlanner extends AbstractPlanner {
 			
 			System.out.println("STATE " + (step + 1));
 			System.out.println("Cost Policy: " + state.getId()[0] + "; Step size: " + state.getId()[1]);
-			System.out.println("Distance to axes: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4] 
-					+ "; " + state.getId()[5] + "; " + state.getId()[6] + "; " + state.getId()[7]);
-			System.out.println("Relative goal: " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10] + "; " + state.getId()[11]);
-			System.out.println("Obstacle 1: " + state.getId()[12] + "; " + state.getId()[13] + "; " + state.getId()[14] + "; " + state.getId()[15]);
-			System.out.println("Obstacle 2: " + state.getId()[16] + "; " + state.getId()[17] + "; " + state.getId()[18] + "; " + state.getId()[19]);
-			System.out.println("Obstacle 3: " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22] + "; " + state.getId()[23]);
+			System.out.println("Move vector: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4]);
+			System.out.println("Distance to axes: " + state.getId()[5] + "; " + state.getId()[6] + "; " + state.getId()[7] 
+					+ "; " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10]);
+			System.out.println("Relative goal: " + state.getId()[11] + "; " + state.getId()[12] + "; " + state.getId()[13] + "; " + state.getId()[14]);
+			System.out.println("Obstacle 1: " + state.getId()[15] + "; " + state.getId()[16] + "; " + state.getId()[17] + "; " + state.getId()[18]);
+			System.out.println("Obstacle 2: " + state.getId()[19] + "; " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22]);
+			System.out.println("Obstacle 3: " + state.getId()[23] + "; " + state.getId()[24] + "; " + state.getId()[25] + "; " + state.getId()[26]);
 			System.out.println("Action: " + action);
 			
 			// Execute action and get next state and reward; Checks if the goal has been reached
@@ -534,7 +578,9 @@ public class D3QNPlanner extends AbstractPlanner {
 			
 			// Adds the next waypoint to the trajectory
 			if (!this.getRLEnvironment().failed()) {
-				this.getWaypoints().addLast(this.createWaypoint(snapshot.getState().getPosition()));
+				// Only adds if the position is different to the previous one
+				//if (this.getWaypoints().getLast().getPrecisionPosition() != new PrecisionPosition(snapshot.getState().getPosition()))
+					this.getWaypoints().addLast(this.createWaypoint(snapshot.getState().getPosition()));
 			}
 			
 			// Sets the state as the next state
@@ -546,12 +592,12 @@ public class D3QNPlanner extends AbstractPlanner {
 		// If it finished without reaching the goal (because it reached the maximum number of steps
 		// or failed) returns an empty trajectory
 		if (!this.getRLEnvironment().isDone()) {
-			// this.clearWaypoints();
+			this.clearWaypoints();
 			if (step >= MAX_STEPS ) {
 				System.out.println("Did too many steps");
 			} else if (snapshot.getReward()==-100){
 				System.out.println("Hit an OBSTACLE");
-			} else if (snapshot.getReward()==-90){
+			} else if (snapshot.getReward()==-50){
 				System.out.println("Left environment");
 			}
 		}
@@ -624,11 +670,6 @@ public class D3QNPlanner extends AbstractPlanner {
 	@Override
 	public Trajectory plan(Position origin, Position destination, ZonedDateTime etd) {
 		
-		if (!this.trainEnvironment.equals(this.getRLEnvironment())) {
-			this.trainEnvironment = this.getRLEnvironment();
-			train();
-		}
-		
 		this.clearWaypoints();
 		
 		this.syncNetworks();
@@ -657,11 +698,6 @@ public class D3QNPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public Trajectory plan(Position origin, Position destination, List<Position> waypoints, ZonedDateTime etd) {
-		
-		if (!this.trainEnvironment.equals(this.getRLEnvironment())) {
-			this.trainEnvironment = this.getRLEnvironment();
-			train();
-		}
 		
 		this.clearWaypoints();
 		
