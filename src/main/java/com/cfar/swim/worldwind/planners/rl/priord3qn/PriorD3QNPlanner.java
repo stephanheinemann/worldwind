@@ -1,6 +1,7 @@
-package com.cfar.swim.worldwind.planners.rl.dqn;
+package com.cfar.swim.worldwind.planners.rl.priord3qn;
 
 import java.time.ZonedDateTime;
+
 
 import java.util.HashSet;
 import java.util.List;
@@ -17,13 +18,14 @@ import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.rl.ActionSampler;
 import com.cfar.swim.worldwind.planners.rl.Helper;
-import com.cfar.swim.worldwind.planners.rl.Memory;
 import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
 import com.cfar.swim.worldwind.planners.rl.NetworkModel;
 import com.cfar.swim.worldwind.planners.rl.Snapshot;
 import com.cfar.swim.worldwind.planners.rl.State;
+import com.cfar.swim.worldwind.planners.rl.d3qn.DuelingNetworkModel;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
+import com.cfar.swim.worldwind.planners.rl.priordqn.*;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.render.*;
 //import com.cfar.swim.worldwind.tests.Plot;
@@ -43,20 +45,23 @@ import ai.djl.util.Pair;
 import ai.djl.translate.NoopTranslator;
 
 /**
-* Realizes a deep reinforcement learning planner, using a Double Deep Q-Network, that plans a trajectory 
-* of an aircraft in an environment considering a local cost and risk policy.
+* Realizes a deep reinforcement learning planner, using a Double Deep Q-Network with Prioritized Experience Replay, 
+* that plans a trajectory of an aircraft in an environment considering a local cost and risk policy.
 * 
 * @author Rafaela Seguro
 *
 */
 
-public class DQNPlanner extends AbstractPlanner {
+public class PriorD3QNPlanner extends AbstractPlanner {
 	
 	/** the initial value of epsilon */
 	private static final float INITIAL_EPSILON = 0.8f;
 	
 	/** the minimum value of epsilon during training */
 	private static final float MIN_EPSILON = 0.1f; 
+	
+	/** the initial value of beta */
+	private static final double INITIAL_BETA = 0.4;
 	
 	/** number of total training episodes */
 	private static final int NUM_GLOBAL_EPS = 3000;
@@ -70,14 +75,11 @@ public class DQNPlanner extends AbstractPlanner {
 	/** random number */
 	private final Random rand = new Random();
 	
-	/** replay memory */
-	private final Memory memory = new Memory(4096);
-	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {128, 256, 128};
+	private final int[] hiddenSize = {256, 512, 256};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.0001f;
+	private final float learningRate = 0.0007f;
 	
 	/** the size of the mini-batch of transitions used for training */
 	protected final int batchSize = 32;
@@ -90,6 +92,15 @@ public class DQNPlanner extends AbstractPlanner {
 	
 	/** gamma factor for the Bellman equation */
 	protected final float gamma = 0.99f;
+	
+	/** parameter that determines how much prioritization is used in prioritized experience replay*/
+	protected final double alpha = 0.6;
+	
+	/** parameter to balance importance sampling*/
+	private double beta = INITIAL_BETA;
+	
+	/** replay memory */
+	private final PrioritizedMemory memory = new PrioritizedMemory(4096, alpha);
 	
 	/** the optimizer used for updating the network parameters during training */
 	private Optimizer optimizer;
@@ -131,13 +142,13 @@ public class DQNPlanner extends AbstractPlanner {
 	private RLEnvironment trainEnvironment = null;
 	
 	
-	/** Constructs a planner trained by a Double Deep Q-Network for a specified aircraft and
-	 * environment using default local cost and risk policies.
+	/** Constructs a planner trained by a Double Deep Q-Network with Prioritized Experience Replay 
+	 * for a specified aircraft and environment using default local cost and risk policies.
 	 * 
 	 * @param the aircraft
 	 * @param the environment
 	 */
-	public DQNPlanner(Aircraft aircraft, Environment environment) {
+	public PriorD3QNPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 		this.etd = environment.getTime();
 		
@@ -156,7 +167,7 @@ public class DQNPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public String getId() {
-		return Specification.PLANNER_DQN_ID;
+		return Specification.PLANNER_PRIORD3QN_ID;
 	}
 	
 	/**
@@ -220,12 +231,12 @@ public class DQNPlanner extends AbstractPlanner {
 		}
 		manager = NDManager.newBaseManager();
 		
-		policyNet = NetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
+		policyNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
 		//Sets require gradient to true for the policy network's parameters
 		for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
 			params.getValue().getArray().setRequiresGradient(true);
 		}
-		targetNet = NetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
+		targetNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
 		
 		policyPredictor = policyNet.newPredictor(new NoopTranslator());
 		syncNetworks();
@@ -243,6 +254,7 @@ public class DQNPlanner extends AbstractPlanner {
 		double agentPerformance = 0;
 		boolean addObstacles = false;
 		Set<Obstacle> obstacles = new HashSet<>();
+		//|| agentPerformance < 0.9
 		
 		if(this.getRLEnvironment().getObstacles()!=null) {
 			obstacles.addAll(this.getRLEnvironment().getObstacles());
@@ -303,9 +315,9 @@ public class DQNPlanner extends AbstractPlanner {
 
 				step++;
 			}
-			// Updates epsilon for next episode
-//			decay = episode / NUM_GLOBAL_EPS;
-//			epsilon = (float) (INITIAL_EPSILON - ((INITIAL_EPSILON - MIN_EPSILON) * decay));
+			// Updates beta and epsilon for next episode
+			decay = episode / (numOfEpisodes);
+			beta = (INITIAL_BETA + ((1 - INITIAL_BETA) * decay));
 			decay = Math.exp(-episode * 1.0 / numOfEpisodes);
 			epsilon = (float) (MIN_EPSILON + (INITIAL_EPSILON - MIN_EPSILON) * decay);
 			
@@ -334,66 +346,6 @@ public class DQNPlanner extends AbstractPlanner {
 			}
 		}
 	}
-	
-	
-//	/**
-//	 * Runs the training of the Deep Q-Network for a specific start and goal
-//	 */
-//	protected void trainLocal(int numEpisodes, Position origin, Position destination) {
-//		
-//		double decay = 0;
-//		int episode = 0;
-//		int step;
-//		double score;
-//		
-//		initialize(origin, destination, etd);
-//		
-//		// For each episode
-//		while (episode < numEpisodes) {
-//			
-//			episode++;
-//			step = 1;
-//			score = 0;
-//			// Reset environment 
-//			this.setDone(false);
-//			this.setFailure(false);
-//			this.setState(this.getStart());
-//		
-//			// For each time step, until it reaches goal or failure
-//			while (!this.isDone() && !this.failed()) {
-//				// Saves state in memory; Updates the network; Selects the next action and saves it in memory
-//				this.react();
-//				// Execute action and get next state and reward; Checks if the goal has been reached
-//				this.step();
-//				// Reaching maximum number of steps counts as failure
-//				if (step >= MAX_STEPS)
-//					this.setFailure(true);
-//				// Stores the reward and the "done" boolean in memory
-//				memory.setReward(this.getReward(), this.isDone(), this.failed());
-//				score += this.getReward();
-//				// Sets the state as the next state
-//				this.setState(this.getNextState());
-//				step++;
-//			}
-//			// Update epsilon for next episode
-//			decay = Math.exp(-episode * 1.0 / (NUM_GLOBAL_EPS-100));
-//			epsilon = (float) (INITIAL_EPSILON - (INITIAL_EPSILON - MIN_EXPLORE_RATE) * decay);
-//			
-//			if (this.isDone()) {
-//				System.out.println("Episode " + episode + " had score " + score + " and reached GOAL after " + step + " steps");
-//			} else if (this.failed()) {
-//				if (step >= MAX_STEPS ) {
-//					System.out.println("Episode " + episode + " had score " + score + "  but did too many steps");
-//				} else if (this.getReward()==-100){
-//					System.out.println("Episode " + episode + " had score " + score + "  but hit an obstacle");
-//				} else {
-//					System.out.println("Episode " + episode + " had score " + score + "  but left environment");
-//				}
-//			} 
-//		}
-//	}
-
-
 
 
 	/** 
@@ -447,9 +399,6 @@ public class DQNPlanner extends AbstractPlanner {
 		return ActionSampler.epsilonGreedy(qValues, rand, epsilon);
 	}
 
-	
-
-
 
 	/** 
 	 * Gets a batch of transitions from memory, calculates the loss based on the predicted Q-values and the actual rewards and 
@@ -473,12 +422,19 @@ public class DQNPlanner extends AbstractPlanner {
 			// Calculates the target Q-values for the current states using the Bellman equation
 			NDArray nextReturns = batch.getRewards().add(target.max(new int[] { 1 }).mul(batch.getDones().logicalNot()).mul(gamma));
 			
+			// Computes new priorities from the TD errors
+			NDArray tdErrors = nextReturns.sub(expectedReturns);
+			NDArray newPriorities = tdErrors.abs().add(0.001);
+			
+			// Updates transition data in memory and gets the importance sampling weights
+			 NDArray importanceWeights = manager.create(memory.updateTransitionData(batch.getIndices().toDoubleArray(), newPriorities.toDoubleArray(), beta));
+			
 			// Calculates the loss (mean squared error)
-			NDArray loss = lossFunc.evaluate(new NDList(expectedReturns), new NDList(nextReturns));
-			loss.setRequiresGradient(true);
+			NDArray weightedLoss = lossFunc.evaluate(new NDList(expectedReturns), new NDList(nextReturns)).mul(importanceWeights);
+			weightedLoss.setRequiresGradient(true);
 			
 			//Performs the backpropagation and calculates the gradients
-			collector.backward(loss);
+			collector.backward(weightedLoss);
 
 			// Updates the policy network's parameters
 			for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
@@ -487,6 +443,7 @@ public class DQNPlanner extends AbstractPlanner {
 			}
 		}
 	}
+
 
 
 	/** 
@@ -595,11 +552,12 @@ public class DQNPlanner extends AbstractPlanner {
 			this.clearWaypoints();
 			if (step >= MAX_STEPS ) {
 				System.out.println("Did too many steps");
-			} else if (snapshot.getReward()==-100){
+			} else if (snapshot.getReward()==-150){
 				System.out.println("Hit an OBSTACLE");
 			} else if (snapshot.getReward()==-50){
 				System.out.println("Left environment");
 			}
+			
 		} else {
 		
 			// Adds the goal to the trajectory if it is not already there
@@ -706,12 +664,6 @@ public class DQNPlanner extends AbstractPlanner {
 		
 		Position currentOrigin = origin;
 		ZonedDateTime currentEtd = etd;
-		
-//		// collect intermediate destinations
-//		ArrayList<Waypoint> destinations = waypoints.stream()
-//				.map(Waypoint::new)
-//				.collect(Collectors.toCollection(ArrayList::new));
-//		destinations.add(new Waypoint(destination));
 		
 		waypoints.add(destination);
 

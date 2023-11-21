@@ -24,6 +24,12 @@ public class Transition {
 	/** indicates if it is a terminal state or not */
 	private boolean done = false;
 	
+	/** stores the transition's index in memory */
+	private int index = 0;
+	
+//	/** stores the transition's priority */
+//	private double priority = 0.0;
+	
 	
 	/** Constructs a transition tuple
 	 * 
@@ -84,5 +90,41 @@ public class Transition {
 	public boolean isDone() {
 		return this.done;
 	}
+	
+	/**
+	 * Sets the transition's index in memory.
+	 * 
+	 * @param the index
+	 */
+	public void setIndex(int index) {
+		this.index = index;
+	}
+	
+	/**
+	 * Gets the transition's index in memory.
+	 * 
+	 * @return the index
+	 */
+	public int getIndex() {
+		return this.index;
+	}
+	
+//	/**
+//	 * Sets the transition's priority.
+//	 * 
+//	 * @param the priority
+//	 */
+//	public void setPriority(double priority) {
+//		this.priority = priority;
+//	}
+//	
+//	/**
+//	 * Gets the transition's priority.
+//	 * 
+//	 * @return the priority
+//	 */
+//	public double getPriority() {
+//		return this.priority;
+//	}
 
 }

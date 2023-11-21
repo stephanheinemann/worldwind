@@ -34,6 +34,7 @@ import java.time.Duration;
 
 
 
+
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
@@ -42,8 +43,11 @@ import com.cfar.swim.worldwind.planners.cgs.oadstar.OADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedTreePlanner;
+import com.cfar.swim.worldwind.planners.rl.d3qn.D3QNPlanner;
 import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
 import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlannerNoCosts;
+import com.cfar.swim.worldwind.planners.rl.priord3qn.PriorD3QNPlanner;
+import com.cfar.swim.worldwind.planners.rl.priordqn.PriorDQNPlanner;
 import com.cfar.swim.worldwind.planners.rl.qlearning.QLearningPlanner;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
@@ -67,7 +71,9 @@ import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rl.QLearningProperties;
 import com.cfar.swim.worldwind.registries.planners.rl.DQNProperties;
-import com.cfar.swim.worldwind.registries.planners.rl.DQNProperties2;
+import com.cfar.swim.worldwind.registries.planners.rl.D3QNProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.PriorDQNProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.PriorD3QNProperties;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
 import com.cfar.swim.worldwind.tracks.AircraftTrackPointError;
@@ -339,9 +345,19 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				planner = new DQNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
-			} else if (this.getSpecification().getId().equals(Specification.PLANNER_DQN_NOCOSTS_ID)) {
-				DQNProperties2 properties = (DQNProperties2) this.getSpecification().getProperties();
-				planner = new DQNPlannerNoCosts(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
+			} else if (this.getSpecification().getId().equals(Specification.PLANNER_D3QN_ID)) {
+				D3QNProperties properties = (D3QNProperties) this.getSpecification().getProperties();
+				planner = new D3QNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+			} else if (this.getSpecification().getId().equals(Specification.PLANNER_PRIORDQN_ID)) {
+				PriorDQNProperties properties = (PriorDQNProperties) this.getSpecification().getProperties();
+				planner = new PriorDQNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
+				planner.setCostPolicy(properties.getCostPolicy());
+				planner.setRiskPolicy(properties.getRiskPolicy());
+			} else if (this.getSpecification().getId().equals(Specification.PLANNER_PRIORD3QN_ID)) {
+				PriorD3QNProperties properties = (PriorD3QNProperties) this.getSpecification().getProperties();
+				planner = new PriorD3QNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
 			} else if (this.getSpecification().getId().equals(Specification.PLANNER_MTP_ID)) {

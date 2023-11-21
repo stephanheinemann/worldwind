@@ -42,8 +42,8 @@ import ai.djl.util.Pair;
 import ai.djl.translate.NoopTranslator;
 
 /**
-* Realizes a deep reinforcement learning planner, using a Double Deep Q-Network, that plans a trajectory 
-* of an aircarft in an environment considering a local cost and risk policy.
+* Realizes a deep reinforcement learning planner, using a Double Dueling Deep Q-Network, that plans a trajectory 
+* of an aircraft in an environment considering a local cost and risk policy.
 * 
 * @author Rafaela Seguro
 *
@@ -73,10 +73,10 @@ public class D3QNPlanner extends AbstractPlanner {
 	private final Memory memory = new Memory(4096);
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {128, 256, 128};
+	private final int[] hiddenSize = {256, 512, 256};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.0005f;
+	private final float learningRate = 0.0007f;
 	
 	/** the size of the mini-batch of transitions used for training */
 	protected final int batchSize = 32;
@@ -130,7 +130,7 @@ public class D3QNPlanner extends AbstractPlanner {
 	private RLEnvironment trainEnvironment = null;
 	
 	
-	/** Constructs a planner trained by a Double Deep Q-Network for a specified aircraft and
+	/** Constructs a planner trained by a Double Dueling Deep Q-Network for a specified aircraft and
 	 * environment using default local cost and risk policies.
 	 * 
 	 * @param the aircraft
@@ -155,7 +155,7 @@ public class D3QNPlanner extends AbstractPlanner {
 	 */
 	@Override
 	public String getId() {
-		return Specification.PLANNER_DQN_ID;
+		return Specification.PLANNER_D3QN_ID;
 	}
 	
 	/**
@@ -595,23 +595,24 @@ public class D3QNPlanner extends AbstractPlanner {
 			this.clearWaypoints();
 			if (step >= MAX_STEPS ) {
 				System.out.println("Did too many steps");
-			} else if (snapshot.getReward()==-100){
+			} else if (snapshot.getReward()==-150){
 				System.out.println("Hit an OBSTACLE");
 			} else if (snapshot.getReward()==-50){
 				System.out.println("Left environment");
 			}
-		}
+		} else {
 		
-		// Adds the goal to the trajectory if it is not already there
-		Waypoint goalWaypoint = this.createWaypoint(this.getRLEnvironment().getGoalPosition());
-		if(this.getWaypoints().getLast() != goalWaypoint) {
-			this.getWaypoints().addLast(goalWaypoint);
-		}
-		
-	    // Sets ETOs correctly
-		this.getWaypoints().getFirst().setEto(getEtd());
-		for (int i=1; i< this.getWaypoints().size(); ++i) {
-			computeEto(this.getWaypoints().get(i-1), this.getWaypoints().get(i));
+			// Adds the goal to the trajectory if it is not already there
+			Waypoint goalWaypoint = this.createWaypoint(this.getRLEnvironment().getGoalPosition());
+			if(this.getWaypoints().getLast() != goalWaypoint) {
+				this.getWaypoints().addLast(goalWaypoint);
+			}
+			
+		    // Sets ETOs correctly
+			this.getWaypoints().getFirst().setEto(getEtd());
+			for (int i=1; i< this.getWaypoints().size(); ++i) {
+				computeEto(this.getWaypoints().get(i-1), this.getWaypoints().get(i));
+			}
 		}
 	}
 	

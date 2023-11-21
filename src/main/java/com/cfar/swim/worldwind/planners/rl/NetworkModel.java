@@ -1,4 +1,4 @@
-package com.cfar.swim.worldwind.planners.rl.dqn;
+package com.cfar.swim.worldwind.planners.rl;
 
 import java.util.List;
 import java.util.ArrayList;

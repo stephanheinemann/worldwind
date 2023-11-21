@@ -32,6 +32,7 @@ package com.cfar.swim.worldwind.tests;
 import static org.junit.Assert.assertNotNull;
 
 
+
 import java.time.ZonedDateTime;
 import org.junit.Test;
 
@@ -48,6 +49,8 @@ import gov.nasa.worldwind.render.Path;
 
 import com.cfar.swim.worldwind.planners.rl.dqn.*;
 import com.cfar.swim.worldwind.planners.rl.d3qn.*;
+import com.cfar.swim.worldwind.planners.rl.priordqn.*;
+import com.cfar.swim.worldwind.planners.rl.priord3qn.*;
 
 import com.cfar.swim.worldwind.render.*;
 
@@ -68,14 +71,14 @@ public class PlannerTestRafa {
 		Vec4[] axes = new Vec4[] {Vec4.UNIT_X, Vec4.UNIT_Y, Vec4.UNIT_Z, Vec4.UNIT_W}; 
 		Earth globe = new Earth();  
 		Vec4 originVec = new Vec4(0, 0, 0);
-		Box box = new Box(originVec, axes, 50d, 50d, 50d);
+		Box box = new Box(originVec, axes, 200d, 200d, 200d);
 		
 		/** Test for DQNPlanner */ 
         RLEnvironment env = new RLEnvironment(box);
         env.setGlobe(globe);
         
         Position origin = env.getGlobe().computePositionFromPoint(new Vec4(1, 1, 1));
-        Position destination = env.getGlobe().computePositionFromPoint(new Vec4(40, 40, 40));
+        Position destination = env.getGlobe().computePositionFromPoint(new Vec4(190, 190, 190));
         ZonedDateTime etd = ZonedDateTime.now();
         Iris iris = new Iris(origin, 5000, CombatIdentification.FRIEND);
         
@@ -85,7 +88,10 @@ public class PlannerTestRafa {
 //		o.setCostInterval(new CostInterval("ci1", start, end, 25d));
 //		env.embed(o);  
         
-        D3QNPlanner planner = new D3QNPlanner(iris, env); 
+        PriorD3QNPlanner planner = new PriorD3QNPlanner(iris, env); 
+//		PriorDQNPlanner planner = new PriorDQNPlanner(iris, env); 
+//		D3QNPlanner planner = new D3QNPlanner(iris, env); 
+//		DQNPlanner planner = new DQNPlanner(iris, env); 
         planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);

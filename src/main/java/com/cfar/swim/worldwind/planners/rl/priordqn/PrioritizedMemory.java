@@ -1,7 +1,12 @@
-package com.cfar.swim.worldwind.planners.rl;
+package com.cfar.swim.worldwind.planners.rl.priordqn;
 
+import java.util.Arrays;
 import java.util.Random;
 
+import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
+import com.cfar.swim.worldwind.planners.rl.Transition;
+
+import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDManager;
 
 /**
@@ -11,7 +16,7 @@ import ai.djl.ndarray.NDManager;
  *
  */
 
-public class Memory {
+public class PrioritizedMemory {
 	
 	/** random number */
 	private final Random rand = new Random(0);
@@ -21,6 +26,9 @@ public class Memory {
 	
 	/** the array to store transitions*/
 	private Transition[] memory;
+	
+	/** stores the data associated to the stored transitions*/
+	private TransitionData[] memoryData;
 	
 	/** stores the previous state's ID*/
 	private float[] state_prev;
@@ -40,20 +48,41 @@ public class Memory {
 	/** keeps track of the last added transition position*/
 	private int head;
 	
+	/** keeps track of the total amount of transitions that have been stored*/
+	private int totalTransitions;
+	
 	/** keeps track of how many memory positions are occupied*/
 	private int size;
 	
 	/** keeps track of the current stage in the creation of a new transition*/
 	private int stage;
 	
+	/** parameter that determines how much prioritization is used*/
+	private double alpha;
+	
+	/** the sum of the priorities of the stored transitions (with exponent alpha)*/
+	private double prioritySum = 0;
+	
+	/** the max of the priorities of the stored transitions*/
+	private double priorityMax = 1.0;
+	
+	/** the max of the weights of the stored transitions*/
+	private double weightMax = 0.0;
+	
+//	/** max initial priority for newly added transitions*/
+//	private final double maxPriority = 1.0;
+	
 	
 	/** Constructs a replay memory object
 	 * 
 	 * @param the memory's capacity
+	 * @param the alpha parameter
 	 */
-	public Memory(int capacity) {
+	public PrioritizedMemory(int capacity, double alpha) {
 		this.capacity = capacity;
+		this.alpha = alpha;
 		this.memory = new Transition[capacity];
+		this.memoryData = new TransitionData[capacity];
 		
 		reset();
 	}
@@ -116,7 +145,7 @@ public class Memory {
 		reward = 0;
 		done = false;
 		failure = false;
-		head = -1;
+		totalTransitions = -1;
 		size = 0;
 		stage = 0;
 	}
@@ -127,12 +156,37 @@ public class Memory {
 	 * @param the transition
 	 */
 	public void add(Transition transition) {
-		head += 1;
-		// If memory is full it goes back to the beginning and starts replacing older transitions
-		if (head >= capacity)
-			head = 0;
 		
+		@SuppressWarnings("unused")
+		TransitionData temp = null;
+		
+		totalTransitions += 1;
+		head = totalTransitions % capacity;
+		
+		// If memory is full the new transition replaces an old one and the new max might need to be found
+		if (totalTransitions > capacity) {
+			
+			temp = memoryData[head];
+			prioritySum -= Math.pow(temp.getPriority(), alpha);
+			
+			if (temp.getPriority() == priorityMax) {
+				memoryData[head].setPriority(0);
+				priorityMax = Arrays.stream(memoryData).mapToDouble(TransitionData::getPriority).max().orElseThrow();
+			}
+			if (temp.getWeight() == weightMax) {
+				memoryData[head].setWeight(0);
+				weightMax = Arrays.stream(memoryData).mapToDouble(TransitionData::getWeight).max().orElseThrow();
+			}
+		}
+		
+		double priority = priorityMax;
+		double weight = weightMax;
+		prioritySum += Math.pow(priority, alpha);
+		double probability = Math.pow(priority, alpha) / prioritySum;
+		
+		transition.setIndex(head);
 		memory[head] = transition;
+		memoryData[head] = new TransitionData(head, priority, probability, weight);
 		
 		if (size < capacity)
 			size++;
@@ -168,16 +222,38 @@ public class Memory {
 	}
 	
 	/**
-	 * Samples a chunk of transitions from the memory with the size indicated
+	 * Samples a chunk of transitions from the memory with the size indicated, using
+	 * proportional prioritization
 	 * 
 	 * @param the size of the sample
+	 * @param the priority scale (value that controls the impact of priorities on the sampling distribution)
 	 * 
-	 * @return the sample
+	 * @return the sample and the transition's indices in memory
 	 */
 	public Transition[] sample(int sampleSize) {
+		
 		Transition[] sample = new Transition[sampleSize];
+		double totalProbability = 0.0;
+		double probability = 0.0;
+		for (int j = 0; j < size; j++) {
+			probability = Math.pow(memoryData[j].getPriority(), alpha) / prioritySum;
+			memoryData[j].setProbability(probability);
+			totalProbability += probability;
+		}
+		
 		for (int i = 0; i<sampleSize; i++) {
-			sample[i] = memory[rand.nextInt(size)];
+			double samplePoint = rand.nextDouble() * totalProbability;
+			int transitionIndex = -1;
+			double currentSum = 0;
+			
+			for (int j = 0; j < size; j++) {
+				currentSum += memoryData[j].getProbability();
+				if (currentSum >= samplePoint) {
+					transitionIndex = j;
+					break;
+				}
+			}
+			sample[i] = memory[transitionIndex];
 		}
 		return sample;
 	}
@@ -199,6 +275,7 @@ public class Memory {
 		int[] actions = new int[batchSize];
 		double[] rewards = new double[batchSize];
 		boolean [] dones = new boolean[batchSize];
+		double[] indices = new double[batchSize];
 		
 		// Fills arrays with information from the circular buffer of transitions
 		for (int i = 0; i< batchSize; i++) {
@@ -210,9 +287,11 @@ public class Memory {
 			actions[i] = transitions[i].getAction();
 			rewards[i] = transitions[i].getReward();
 			dones[i] = transitions[i].isDone();
+			indices[i] = transitions[i].getIndex();
 		}
 		
-		return new MemoryBatch(manager.create(states), manager.create(nextStates), manager.create(actions), manager.create(rewards), manager.create(dones));
+		return new MemoryBatch(manager.create(states), manager.create(nextStates), manager.create(actions), manager.create(rewards), 
+				manager.create(dones), manager.create(indices));
 	}
 	
 	
@@ -220,6 +299,7 @@ public class Memory {
 	 * Samples a random memory batch
 	 * 
 	 * @param the sample size
+	 * @param the priority scale (value that controls the impact of priorities on the sampling distribution)
 	 * @param the manager for NDArray operations
 	 * 
 	 * @return the memory batch
@@ -253,6 +333,52 @@ public class Memory {
 			throw new ArrayIndexOutOfBoundsException("Index out of bound " + index);
 		
 		return memory[index];
+	}
+	
+	
+
+	
+	/**
+	 * Updates the data of the sampled transitions
+	 * 
+	 * @param the indices of the transitions
+	 * @param the new priority values
+	 * @param beta
+	 * 
+	 * @return the new values for the weights
+	 */
+	public double[] updateTransitionData(double[] indices, double[] newPriorities, double beta) {
+		
+		double[] newWeights = new double[indices.length];
+		TransitionData temp;
+		int j = 0;
+		
+		for (double index : indices) {
+			
+			int i = (int) index;
+			temp = memoryData[i];
+			
+			prioritySum -= Math.pow(memoryData[i].getPriority(), alpha);
+			memoryData[i].setPriority(newPriorities[j]);
+			prioritySum += Math.pow(memoryData[i].getPriority(), alpha);
+			double newProbability = Math.pow(newPriorities[j], alpha) / prioritySum;
+			memoryData[i].setProbability(newProbability);
+			newWeights[j] = Math.pow((size * newProbability), -beta);
+			memoryData[i].setWeight(newWeights[j]);
+			
+			// Updates max values in case they were changed
+			if (temp.getPriority() == priorityMax) {
+				priorityMax = Arrays.stream(memoryData).mapToDouble(TransitionData::getPriority).max().orElseThrow();
+			}
+			if (temp.getWeight() == weightMax) {
+				weightMax = Arrays.stream(memoryData).mapToDouble(TransitionData::getWeight).max().orElseThrow();
+			}
+			
+			j++;
+			
+		}
+		
+		return newWeights;
 	}
 	
 

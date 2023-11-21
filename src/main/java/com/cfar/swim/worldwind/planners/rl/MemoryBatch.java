@@ -64,5 +64,14 @@ public class MemoryBatch extends NDList{
 	public NDArray getDones() {
 		return get(4);
 	}
+	
+	/**
+	 * Gets the indices of the sampled transitions in memory.
+	 * 
+	 * @return the indices
+	 */
+	public NDArray getIndices() {
+		return get(5);
+	}
 
 }

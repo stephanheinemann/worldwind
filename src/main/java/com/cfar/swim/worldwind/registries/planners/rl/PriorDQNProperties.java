@@ -34,31 +34,31 @@ import com.cfar.swim.worldwind.planning.RiskPolicy;
 import com.cfar.swim.worldwind.registries.planners.AbstractPlannerProperties;
 
 /**
- * Realizes the properties bean of a Q-Learning planner.
+ * Realizes the properties bean of a PriorDQN planner.
  * 
  * @author Rafaela Seguro
  *
  */
-public class DQNProperties2 extends AbstractPlannerProperties {
+public class PriorDQNProperties extends AbstractPlannerProperties {
 	
-	/** the default serial identification of this Q-Learning planner properties bean */
+	/** the default serial identification of this PiorDQN planner properties bean */
 	private static final long serialVersionUID = 1L;
 	
 	/**
-	 * Constructs a new DQN planner properties bean.
+	 * Constructs a new PriorDQN planner properties bean.
 	 */
-	public DQNProperties2() {
+	public PriorDQNProperties() {
 		super();
 	}
 
 	/**
-	 * Constructs a new DQN planner properties bean with
+	 * Constructs a new PriorDQN planner properties bean with
 	 * specified cost and risk policy property values.
 	 * 
-	 * @param costPolicy the cost policy of this DQN planner properties bean
-	 * @param riskPolicy the risk policy of this DQN planner properties bean
+	 * @param costPolicy the cost policy of this PriorDQN planner properties bean
+	 * @param riskPolicy the risk policy of this PriorDQN planner properties bean
 	 */
-	public DQNProperties2(CostPolicy costPolicy, RiskPolicy riskPolicy) {
+	public PriorDQNProperties(CostPolicy costPolicy, RiskPolicy riskPolicy) {
 		super(costPolicy, riskPolicy);
 	}
 	

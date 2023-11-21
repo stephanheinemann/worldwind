@@ -207,10 +207,10 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getString("specification.planner.oadrrt.description");
 	
 	/** the identifier of a Q Learning planner specification */
-	public static final String PLANNER_QLP_ID = "QLearningP";
+	public static final String PLANNER_QLP_ID = "QLearning";
 	
 	/** the identifier of a Q Learning planner specification */
-	public static final String PLANNER_QLP2_ID = "QLearningP2";
+	public static final String PLANNER_QLP2_ID = "QLearning2";
 	
 	/** the description of a Q learning planner specification */
 	public static final String PLANNER_QLP_DESCRIPTION = ResourceBundleLoader
@@ -228,10 +228,29 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getDictionaryBundle()
 			.getString("specification.planner.dqn.description");
 	
-	/** the description of a DQN planner specification */
-	public static final String PLANNER_DQN_NOCOSTS_DESCRIPTION = ResourceBundleLoader
+	/** the identifier of a D3QN planner specification */
+	public static final String PLANNER_D3QN_ID = "D3QN";
+	
+	/** the description of a D3QN planner specification */
+	public static final String PLANNER_D3QN_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
-			.getString("specification.planner.dqnnocosts.description");
+			.getString("specification.planner.d3qn.description");
+	
+	/** the identifier of a PriorDQN planner specification */
+	public static final String PLANNER_PRIORDQN_ID = "PriorDQN";
+	
+	/** the description of a PriorDQN planner specification */
+	public static final String PLANNER_PRIORDQN_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.priordqn.description");
+	
+	/** the identifier of a PriorD3QN planner specification */
+	public static final String PLANNER_PRIORD3QN_ID = "PriorD3QN";
+	
+	/** the description of a PriorD3QN planner specification */
+	public static final String PLANNER_PRIORD3QN_DESCRIPTION = ResourceBundleLoader
+			.getDictionaryBundle()
+			.getString("specification.planner.priord3qn.description");
 	
 	/** the identifier of a managed tree planner specification */
 	public static final String PLANNER_MTP_ID = "MTP";

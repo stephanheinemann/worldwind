@@ -18,6 +18,7 @@ import com.cfar.swim.worldwind.planners.rl.ActionSampler;
 import com.cfar.swim.worldwind.planners.rl.Helper;
 import com.cfar.swim.worldwind.planners.rl.Memory;
 import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
+import com.cfar.swim.worldwind.planners.rl.NetworkModel;
 import com.cfar.swim.worldwind.planners.rl.d3qn.DuelingNetworkModel;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;

@@ -34,6 +34,7 @@ import java.beans.PropertyChangeListener;
 
 
 
+
 import java.beans.PropertyChangeSupport;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -82,7 +83,9 @@ import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rl.QLearningProperties;
 import com.cfar.swim.worldwind.registries.planners.rl.DQNProperties;
-import com.cfar.swim.worldwind.registries.planners.rl.DQNProperties2;
+import com.cfar.swim.worldwind.registries.planners.rl.D3QNProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.PriorDQNProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.PriorD3QNProperties;
 import com.cfar.swim.worldwind.util.Identifiable;
 
 import gov.nasa.worldwind.Configuration;
@@ -234,7 +237,9 @@ public class Session implements Identifiable {
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_OADRRT_ID, Specification.PLANNER_OADRRT_DESCRIPTION, new OADRRTreeProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_QLP_ID, Specification.PLANNER_QLP_DESCRIPTION, new QLearningProperties()));
 		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DQN_ID, Specification.PLANNER_DQN_DESCRIPTION, new DQNProperties()));
-		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_DQN_NOCOSTS_ID, Specification.PLANNER_DQN_NOCOSTS_DESCRIPTION, new DQNProperties2()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_D3QN_ID, Specification.PLANNER_D3QN_DESCRIPTION, new D3QNProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_PRIORDQN_ID, Specification.PLANNER_PRIORDQN_DESCRIPTION, new PriorDQNProperties()));
+		this.plannerRegistry.addSpecification(new Specification<Planner>(Specification.PLANNER_PRIORD3QN_ID, Specification.PLANNER_PRIORD3QN_DESCRIPTION, new PriorD3QNProperties()));
 		this.addActiveScenarioChangeListener(this.plannerFactory.getActiveScenarioChangeListener());
 		
 		// managed planners
