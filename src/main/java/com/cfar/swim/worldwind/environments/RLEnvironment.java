@@ -30,11 +30,11 @@
 package com.cfar.swim.worldwind.environments;
 
 import java.time.ZonedDateTime;
+
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Random;
-import java.util.Set;
 import java.util.TreeSet;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.geom.Box;
@@ -59,7 +59,7 @@ import gov.nasa.worldwind.render.Path;
 public class RLEnvironment extends PlanningContinuum {
 	
 	/** in how many steps to divide from start to goal */
-	private static final int STEP_DIVISION = 10;
+	private static final int STEP_DIVISION = 8;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -140,6 +140,13 @@ public class RLEnvironment extends PlanningContinuum {
 	}
 	
 	/**
+	 * Sets the current state as the start.
+	 */
+	public void setStateToStart() {
+		this.state = this.start;
+	}
+	
+	/**
 	 * Gets the goal position.
 	 * 
 	 * @return the goal position
@@ -185,12 +192,30 @@ public class RLEnvironment extends PlanningContinuum {
 	}
 	
 	/**
+	 * Sets the done boolean
+	 * 
+	 * @param the done boolean value
+	 */
+	public void setDone(boolean done) {
+		this.done = done;
+	}
+	
+	/**
 	 * Checks if the planner has reached the goal
 	 * 
 	 * @return true if it reached the goal, false otherwise
 	 */
 	public boolean isDone() {
 		return this.done;
+	}
+	
+	/**
+	 * Sets the failure boolean
+	 * 
+	 * @param the failure boolean value
+	 */
+	public void setFailure(boolean failure) {
+		this.failure = failure;
 	}
 	
 	/**
@@ -261,7 +286,7 @@ public class RLEnvironment extends PlanningContinuum {
 		this.start = new State(startPosition, this.goalPosition, this, obstacles, this.getTime(), null);
 		
 		// Sets the state as the start
-		this.state = this.start;
+		this.setStateToStart();
 		
 		// Sets the "done" and "failure" booleans to false
 		this.done = false;
@@ -294,10 +319,9 @@ public class RLEnvironment extends PlanningContinuum {
 		// Creates the start state
 		TreeSet<RLObstacle> obstacles = this.getCloseObstacles(origin, etd);
 		this.start = new State(origin, this.goalPosition, this, obstacles, etd, null);
-
 		
 		// Sets the state as the start
-		this.state = this.start;
+		this.setStateToStart();
 		
 		// Sets the "done" and "failure" booleans to false
 		this.done = false;
@@ -375,37 +399,32 @@ public class RLEnvironment extends PlanningContinuum {
 				this.nextState.getEto(), this.costPolicy, this.riskPolicy);
 		if (Double.POSITIVE_INFINITY == cost) {
 			this.failure = true;
-			this.reward = -150;
+			this.reward = -200;
 			return;
 		}
 		
-		// If it gets too close to obstacle
-		Iterator<RLObstacle> itr = this.nextState.getObstacles().iterator();
-		RLObstacle current = null;
-		while(itr.hasNext()) {
-			current = itr.next();
-			if (current.getDistanceToState() <= 2*this.nextState.getStepSize()) {
-				reward += -10;
-				break;
-			}
-		}
-		
-		// If it gets too close to environment boundary
-		for(int i = 0; i < 6; i++) {
-			if (this.nextState.getDistanceToEnv()[i] <= this.nextState.getStepSize()) {
-				reward += -10;
-				break;
-			}
-		}
+//		// If it gets too close to obstacle
+//		Iterator<RLObstacle> itr = this.nextState.getObstacles().iterator();
+//		RLObstacle current = null;
+//		while(itr.hasNext()) {
+//			current = itr.next();
+//			if (current.getDistanceToState() <= 2*this.nextState.getStepSize()) {
+//				reward += -10;
+//				break;
+//			}
+//		}
+//		
+//		// If it gets too close to environment boundary
+//		for(int i = 0; i < 6; i++) {
+//			if (this.nextState.getDistanceToEnv()[i] <= this.nextState.getStepSize()) {
+//				reward += -10;
+//				break;
+//			}
+//		}
 		
 		// Otherwise: step penalty +  distance to goal penalty/reward 
 		reward += -10;
-//		if (this.state.getNormalizedDistanceToGoal() <= this.nextState.getNormalizedDistanceToGoal()) {
-//			reward += -10;
-//		} else {
-//			reward += 10;
-//		}
-		reward += 1 * (this.toDistance((this.state.getNormalizedDistanceToGoal() - this.nextState.getNormalizedDistanceToGoal())));
+		reward += 300 * (this.state.getNormalizedDistanceToGoal() - this.nextState.getNormalizedDistanceToGoal());
 		
 		this.reward = reward;
 	
@@ -506,64 +525,58 @@ public class RLEnvironment extends PlanningContinuum {
 		double newY = y;
 		double newZ = z;
 		
-		switch(action+1) {
-//			// Go in direction of goal
-//			case 0: 
-//				newX = relativeGoal.x;
-//				newY = relativeGoal.y;
-//				newZ = relativeGoal.z;
-//				break;
+		switch(action) {
 			// Go in same direction as previous
-			case 1: 
+			case 0: 
 				break;
 			// Turn left 45 degrees
-			case 2: 
+			case 1: 
 				newZ = z * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
 				newY = -z * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
 				break;
 			// Turn left 60 degrees
-			case 3: 
+			case 2: 
 				newZ = z * Math.cos(Math.toRadians(60)) + y * Math.sin(Math.toRadians(60));
 				newY = -z * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
 				break;
 			// Turn right 45 degrees
-			case 4: 
+			case 3: 
 				newZ = z * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
 				newY = z * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
 				break;
 			// Turn right 60 degrees
-			case 5: 
+			case 4: 
 				newZ = z * Math.cos(Math.toRadians(60)) - y * Math.sin(Math.toRadians(60));
 				newY = z * Math.sin(Math.toRadians(60)) + y * Math.cos(Math.toRadians(60));
 				break;
 			// Climb 45 degrees
-			case 6: 
+			case 5: 
 				newX = x + Math.tan(Math.toRadians(45));
 				break;
 			// Descend 45 degrees
-			case 7:
+			case 6:
 				newX = x - Math.tan(Math.toRadians(45));
 				break;
 			// Up/Left 45 degrees
-			case 8: 
+			case 7: 
 				newX = x + Math.tan(Math.toRadians(45));
 				newZ = z * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
 				newY = -z * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
 				break;	
 			// Up/Right 45 degrees
-			case 9: 
+			case 8: 
 				newX = x + Math.tan(Math.toRadians(45));
 				newZ = z * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
 				newY = z * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
 				break;	
 			// Down/Left 45 degrees
-			case 10:
+			case 9:
 				newX = x - Math.tan(Math.toRadians(45));
 				newZ = z * Math.cos(Math.toRadians(45)) + y * Math.sin(Math.toRadians(45));
 				newY = -z * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));
 				break;	
 			// Down/Right 45 degrees
-			case 11:
+			case 10:
 				newX = x - Math.tan(Math.toRadians(45));
 				newZ = z * Math.cos(Math.toRadians(45)) - y * Math.sin(Math.toRadians(45));
 				newY = z * Math.sin(Math.toRadians(45)) + y * Math.cos(Math.toRadians(45));

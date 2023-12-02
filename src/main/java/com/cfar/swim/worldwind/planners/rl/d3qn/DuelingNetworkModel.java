@@ -75,38 +75,38 @@ public class DuelingNetworkModel extends AbstractBlock {
 		linearInput = Linear.builder().setUnits(hiddenSize[0]).build();
 		this.hiddenLayers.add(addChildBlock("linear_input", linearInput));
 		
-//		// Create and add the hidden layers for the advantage stream
-//		for (int i = 1; i < hiddenSize.length; i++) {
-//			Block hiddenLayer = Linear.builder().setUnits(hiddenSize[i]).build();
-//			this.hiddenLayers.add(addChildBlock("advantage_hidden_" + i, hiddenLayer));
-//		}
-//		linearAdvantage = Linear.builder().setUnits(this.outputSize).build();
-//		this.hiddenLayers.add(addChildBlock("advantage_output", linearAdvantage));
-//		
-//		// Create and add the hidden layers for the state value stream
-//		for (int i = 1; i < hiddenSize.length; i++) {
-//			Block hiddenLayer = Linear.builder().setUnits(hiddenSize[i]).build();
-//			this.hiddenLayers.add(addChildBlock("value_hidden_" + i, hiddenLayer));
-//		}
-//		linearValue = Linear.builder().setUnits(1).build();
-//		this.hiddenLayers.add(addChildBlock("value_output", linearValue));
-		
-		// Create and add the hidden layers 
-		for (int i = 1; i < (hiddenSize.length); i++) {
+		// Create and add the hidden layers for the advantage stream
+		for (int i = 1; i < hiddenSize.length; i++) {
 			Block hiddenLayer = Linear.builder().setUnits(hiddenSize[i]).build();
-			this.hiddenLayers.add(addChildBlock("hidden_layer_" + i, hiddenLayer));
-		}	
-		
-		// The last hidden layer is separated into the value and advantage stream
-//		Block hiddenLayer = Linear.builder().setUnits(hiddenSize[hiddenSize.length - 1]).build();
-//		this.hiddenLayers.add(addChildBlock("advantage_hidden_" , hiddenLayer));
+			this.hiddenLayers.add(addChildBlock("advantage_hidden_" + i, hiddenLayer));
+		}
 		linearAdvantage = Linear.builder().setUnits(this.outputSize).build();
-		this.hiddenLayers.add(addChildBlock("advantage_stream", linearAdvantage));
+		this.hiddenLayers.add(addChildBlock("advantage_output", linearAdvantage));
 		
-//		hiddenLayer = Linear.builder().setUnits(hiddenSize[hiddenSize.length - 1]).build();
-//		this.hiddenLayers.add(addChildBlock("value_hidden_" , hiddenLayer));
+		// Create and add the hidden layers for the state value stream
+		for (int i = 1; i < hiddenSize.length; i++) {
+			Block hiddenLayer = Linear.builder().setUnits(hiddenSize[i]).build();
+			this.hiddenLayers.add(addChildBlock("value_hidden_" + i, hiddenLayer));
+		}
 		linearValue = Linear.builder().setUnits(1).build();
-		this.hiddenLayers.add(addChildBlock("value_stream", linearValue));
+		this.hiddenLayers.add(addChildBlock("value_output", linearValue));
+		
+//		// Create and add the hidden layers 
+//		for (int i = 1; i < (hiddenSize.length); i++) {
+//			Block hiddenLayer = Linear.builder().setUnits(hiddenSize[i]).build();
+//			this.hiddenLayers.add(addChildBlock("hidden_layer_" + i, hiddenLayer));
+//		}	
+		
+//		// The last hidden layer is separated into the value and advantage stream
+////		Block hiddenLayer = Linear.builder().setUnits(hiddenSize[hiddenSize.length - 1]).build();
+////		this.hiddenLayers.add(addChildBlock("advantage_hidden_" , hiddenLayer));
+//		linearAdvantage = Linear.builder().setUnits(this.outputSize).build();
+//		this.hiddenLayers.add(addChildBlock("advantage_stream", linearAdvantage));
+//		
+////		hiddenLayer = Linear.builder().setUnits(hiddenSize[hiddenSize.length - 1]).build();
+////		this.hiddenLayers.add(addChildBlock("value_hidden_" , hiddenLayer));
+//		linearValue = Linear.builder().setUnits(1).build();
+//		this.hiddenLayers.add(addChildBlock("value_stream", linearValue));
 		
 		// Create and add the output layer
 		linearOutput = Linear.builder().setUnits(this.outputSize).build();
@@ -167,32 +167,21 @@ public class DuelingNetworkModel extends AbstractBlock {
         
         NDList current = initial;
 	    
-//	    // Forward pass through advantage layers
-//	    for (int i = 1; i < (hiddenSize.length); i++) {
-//	    	current = hiddenLayers.get(i).forward(parameterStore, current, true);
-//	        current = new NDList(Activation.relu(current.singletonOrThrow()));
-//	    }
-//	    NDArray advantageStream = linearAdvantage.forward(parameterStore, current, training).singletonOrThrow();
-//	    
-//	    current = initial;
-//
-//	    // Forward pass through value layers
-//	    for (int i = 1; i < (hiddenSize.length); i++) {
-//	    	current = hiddenLayers.get(i+hiddenSize.length).forward(parameterStore, current, true);
-//	        current = new NDList(Activation.relu(current.singletonOrThrow()));
-//	    }
-//	    NDArray valueStream = linearValue.forward(parameterStore, current, training).singletonOrThrow();
-        
-        // Forward pass through hidden layers
-        for (int i = 1; i < (hiddenSize.length); i++) {
+	    // Forward pass through advantage layers
+	    for (int i = 1; i < (hiddenSize.length); i++) {
 	    	current = hiddenLayers.get(i).forward(parameterStore, current, true);
 	        current = new NDList(Activation.relu(current.singletonOrThrow()));
-        }
-        
-        // Forward pass through advantage and value stream 
-        NDArray advantageStream = linearAdvantage.forward(parameterStore, current, training).singletonOrThrow();
-        
-        NDArray valueStream = linearValue.forward(parameterStore, current, training).singletonOrThrow();
+	    }
+	    NDArray advantageStream = linearAdvantage.forward(parameterStore, current, training).singletonOrThrow();
+	    
+	    current = initial;
+
+	    // Forward pass through value layers
+	    for (int i = 1; i < (hiddenSize.length); i++) {
+	    	current = hiddenLayers.get(i+hiddenSize.length).forward(parameterStore, current, true);
+	        current = new NDList(Activation.relu(current.singletonOrThrow()));
+	    }
+	    NDArray valueStream = linearValue.forward(parameterStore, current, training).singletonOrThrow();
 	    
         // Output calculation
 	    NDArray qValues = valueStream.add(advantageStream.sub(advantageStream.mean(new int[]{0}, false)));
@@ -234,27 +223,27 @@ public class DuelingNetworkModel extends AbstractBlock {
  		hiddenLayers.get(0).initialize(manager, dataType, inputShapes[0]);
  		linearOutput.initialize(manager, dataType, new Shape(outputSize));
 	 	
-	 	// Initialize hidden layers 
-	    for (int i = 1; i < (hiddenSize.length); i++) {
-            hiddenLayers.get(i).initialize(manager, dataType, new Shape(hiddenSize[i - 1]));
-	    }
-		   
-		// Initialize layers for the advantage stream
-	    hiddenLayers.get(hiddenSize.length).initialize(manager, dataType, new Shape(hiddenSize[hiddenSize.length - 1]));
-	    
-	    // Initialize layers for the value stream
-	    hiddenLayers.get(hiddenSize.length+1).initialize(manager, dataType, new Shape(hiddenSize[hiddenSize.length - 1]));
-	    
-//	    // Initialize hidden layers for the advantage stream
-//	    for (int i = 1; i < (hiddenSize.length+1); i++) {
-//            // Initialize subsequent hidden layers
+//	 	// Initialize hidden layers 
+//	    for (int i = 1; i < (hiddenSize.length); i++) {
 //            hiddenLayers.get(i).initialize(manager, dataType, new Shape(hiddenSize[i - 1]));
 //	    }
-//	    // Initialize hidden layers for the advantage stream
-//	    for (int i = 1; i < (hiddenSize.length+1); i++) {
-//            // Initialize subsequent hidden layers
-//            hiddenLayers.get(i+hiddenSize.length).initialize(manager, dataType, new Shape(hiddenSize[i - 1]));
-//	    }
+//		   
+//		// Initialize layers for the advantage stream
+//	    hiddenLayers.get(hiddenSize.length).initialize(manager, dataType, new Shape(hiddenSize[hiddenSize.length - 1]));
+//	    
+//	    // Initialize layers for the value stream
+//	    hiddenLayers.get(hiddenSize.length+1).initialize(manager, dataType, new Shape(hiddenSize[hiddenSize.length - 1]));
+	    
+	    // Initialize hidden layers for the advantage stream
+	    for (int i = 1; i < (hiddenSize.length+1); i++) {
+            // Initialize subsequent hidden layers
+            hiddenLayers.get(i).initialize(manager, dataType, new Shape(hiddenSize[i - 1]));
+	    }
+	    // Initialize hidden layers for the advantage stream
+	    for (int i = 1; i < (hiddenSize.length+1); i++) {
+            // Initialize subsequent hidden layers
+            hiddenLayers.get(i+hiddenSize.length).initialize(manager, dataType, new Shape(hiddenSize[i - 1]));
+	    }
 	}
 
 

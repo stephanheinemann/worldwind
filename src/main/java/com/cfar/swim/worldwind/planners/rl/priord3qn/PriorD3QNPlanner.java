@@ -1,9 +1,12 @@
 package com.cfar.swim.worldwind.planners.rl.priord3qn;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
 import java.time.ZonedDateTime;
 
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
@@ -55,31 +58,34 @@ import ai.djl.translate.NoopTranslator;
 public class PriorD3QNPlanner extends AbstractPlanner {
 	
 	/** the initial value of epsilon */
-	private static final float INITIAL_EPSILON = 0.8f;
+	private static final float INITIAL_EPSILON = 1.0f;
 	
 	/** the minimum value of epsilon during training */
-	private static final float MIN_EPSILON = 0.1f; 
+	private static final float MIN_EPSILON = 0.01f; 
 	
 	/** the initial value of beta */
 	private static final double INITIAL_BETA = 0.4;
 	
 	/** number of total training episodes */
-	private static final int NUM_GLOBAL_EPS = 3000;
+	private static final int NUM_GLOBAL_EPS = 10000;
 	
 	/** number of episodes it trains without obstacles first */
-	private static final int NO_OBS_EPS = 3000;
+	private static final int NO_OBS_EPS = 0;
+	
+	/** number of episodes it trains without obstacles first */
+	private static final int EPSILON_DECAY_EPS = 500;
 	
 	/** maximum number of steps per episode */
-	private static final int MAX_STEPS = 150;
+	private static final int MAX_STEPS = 100;
 	
 	/** random number */
 	private final Random rand = new Random();
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {256, 512, 256};
+	private final int[] hiddenSize = {512, 512, 256};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.0007f;
+	private final float learningRate = 0.0001f;
 	
 	/** the size of the mini-batch of transitions used for training */
 	protected final int batchSize = 32;
@@ -135,11 +141,8 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 	/** stores the plan's ETD */
 	private ZonedDateTime etd;
 	
-	/** Stores episode results */
-	private CircularFifoQueue<Integer> episodeResults = new CircularFifoQueue<Integer>(1000);
-	
-	/** Stores the environment for which the training was performed*/
-	private RLEnvironment trainEnvironment = null;
+	/** list to store loss value over an episode*/
+	List<Number> lossArray = new LinkedList<>();
 	
 	
 	/** Constructs a planner trained by a Double Deep Q-Network with Prioritized Experience Replay 
@@ -153,7 +156,6 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 		this.etd = environment.getTime();
 		
 		resetAgent();
-		this.trainEnvironment = this.getRLEnvironment();
 		train();
 		syncNetworks();
 	}
@@ -247,14 +249,24 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 	 */
 	protected void train() {
 		
+		PrintWriter outputFile = null;
+		try {
+			outputFile = new PrintWriter("newfile");
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		outputFile.println("Episode, Cumulative Reward, Loss, Steps, Result, Agent Performance");
+		
 		double decay = 0;
-		int episode = -1;
-		int step;
-		int numOfEpisodes = NO_OBS_EPS;
+		int episode = 0;
+		int step = 0;
 		double agentPerformance = 0;
+		double cumulativeReward = 0.0;
+		double lossAverage = 0.0;
+		String result = " ";
+		int successCount = 0;
 		boolean addObstacles = false;
 		Set<Obstacle> obstacles = new HashSet<>();
-		//|| agentPerformance < 0.9
 		
 		if(this.getRLEnvironment().getObstacles()!=null) {
 			obstacles.addAll(this.getRLEnvironment().getObstacles());
@@ -269,20 +281,14 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 			// Adds obstacles to the training 
 			if(episode == NO_OBS_EPS) {
 				addObstacles = true;
-				epsilon = INITIAL_EPSILON;
-				numOfEpisodes = NUM_GLOBAL_EPS - NO_OBS_EPS;
-//				if(obstacles!=null) {
-//					for (Obstacle o : obstacles) {
-//						this.getRLEnvironment().embed(o);
-//					}
-//				}
 			} 
 			// Reset environment 
 			episode++;
 			step = 0;
+			cumulativeReward = 0.0;
+			lossArray.clear();
 			
 			this.getRLEnvironment().resetRandom(addObstacles);
-//			this.getRLEnvironment().initializeEnvironment(origin, destination, getRiskPolicy(), getCostPolicy(), etd);
 			State state = this.getRLEnvironment().getStart();
 			int action = 0;
 			Snapshot snapshot = null;
@@ -295,51 +301,38 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 				snapshot = this.getRLEnvironment().step(action, this.getAircraft());
 				// Stores the reward and the "done" boolean in memory; too many steps counts as failure
 				if (step >= MAX_STEPS) {
-					memory.setReward((-50), false, true);
+					memory.setReward(-50, false, true);
+					cumulativeReward += -50;
 				} else {
 					memory.setReward(snapshot.getReward(), snapshot.isDone(), snapshot.failed());
+					cumulativeReward += snapshot.getReward();
 				}
 				// Sets the state as the next state
 				state = snapshot.getState();
-
-//				System.out.println("STATE " + (step + 1));
-//				System.out.println("Cost Policy: " + state.getId()[0] + "; Step size: " + state.getId()[1]);
-//				System.out.println("Distance to axes: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4] 
-//						+ "; " + state.getId()[5] + "; " + state.getId()[6] + "; " + state.getId()[7]);
-//				System.out.println("Relative goal: " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10] + "; " + state.getId()[11]);
-//				System.out.println("Obstacle 1: " + state.getId()[12] + "; " + state.getId()[13] + "; " + state.getId()[14] + "; " + state.getId()[15]);
-//				System.out.println("Obstacle 2: " + state.getId()[16] + "; " + state.getId()[17] + "; " + state.getId()[18] + "; " + state.getId()[19]);
-//				System.out.println("Obstacle 3: " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22] + "; " + state.getId()[23]);
-//				System.out.println("Action: " + action);
-//				System.out.println("Reward " + snapshot.getReward());
-
+				
 				step++;
 			}
-			// Updates beta and epsilon for next episode
-			decay = episode / (numOfEpisodes);
-			beta = (INITIAL_BETA + ((1 - INITIAL_BETA) * decay));
-			decay = Math.exp(-episode * 1.0 / numOfEpisodes);
-			epsilon = (float) (MIN_EPSILON + (INITIAL_EPSILON - MIN_EPSILON) * decay);
-			
-			if(snapshot.isDone()) {
-				episodeResults.add(1);
-			} else {
-				episodeResults.add(0);
+			// Updates epsilon for next episode
+			if (episode < EPSILON_DECAY_EPS) {
+				decay = ((double) episode) / ((double) EPSILON_DECAY_EPS);
+				epsilon = (float) (INITIAL_EPSILON - ((INITIAL_EPSILON - MIN_EPSILON) * decay));
 			}
-			double sum = (episodeResults.stream().mapToInt(Integer::intValue).sum());
-			double size = episodeResults.size();
-			agentPerformance =  sum / size;
 			
 			if (snapshot.isDone()) {
-				System.out.println("Episode " + episode + " -----------------------> GOAL in " + step + " steps");
+				result = "done";
+				successCount++;
 			} else if (snapshot.failed()) {
-				System.out.println("Episode " + episode + " hit an OBSTACLE");
+				result = "obstacle";
 			} else if (step >= MAX_STEPS) {
-				System.out.println("Episode " + episode + " did too many steps");
+				result = "steps";
 			}
-			System.out.printf("Performance %,.3f %n", agentPerformance);
+			lossAverage = lossArray.stream().mapToDouble(a -> (double) a).average().orElse(0);
+			agentPerformance = (double) successCount / episode;
+			System.out.println(episode + ", " + cumulativeReward + ", " + lossAverage + ", " + step + ", " + result + ", " + agentPerformance);
+			outputFile.println(episode + ", " + cumulativeReward + ", " + lossAverage + ", " + step + ", " + result + ", " + agentPerformance);
 		}
-		//this.getRLEnvironment().embed(obstacle);
+		outputFile.close();
+
 		if(obstacles!=null) {
 			for (Obstacle o : obstacles) {
 				this.getRLEnvironment().embed(o);
@@ -424,13 +417,14 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 			
 			// Computes new priorities from the TD errors
 			NDArray tdErrors = nextReturns.sub(expectedReturns);
-			NDArray newPriorities = tdErrors.abs().add(0.001);
+			NDArray newPriorities = tdErrors.abs().add(0.00001);
 			
 			// Updates transition data in memory and gets the importance sampling weights
-			 NDArray importanceWeights = manager.create(memory.updateTransitionData(batch.getIndices().toDoubleArray(), newPriorities.toDoubleArray(), beta));
+			NDArray importanceWeights = manager.create(memory.updateTransitionData(batch.getIndices().toDoubleArray(), newPriorities.toDoubleArray(), beta));
 			
 			// Calculates the loss (mean squared error)
 			NDArray weightedLoss = lossFunc.evaluate(new NDList(expectedReturns), new NDList(nextReturns)).mul(importanceWeights);
+			lossArray.add(weightedLoss.toArray()[0]);
 			weightedLoss.setRequiresGradient(true);
 			
 			//Performs the backpropagation and calculates the gradients
@@ -470,8 +464,6 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 	protected void initialize(Position origin, Position destination, ZonedDateTime etd) {                                                                                                                                                              
 		
 		this.setEtd(etd);
-//		this.setCostPolicy(actualCostPolicy);
-//		this.setRiskPolicy(actualRiskPolicy);
 		
 		// Creates the start waypoint 
 		this.setNewestWaypoint(this.createWaypoint(origin));
@@ -506,12 +498,6 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 			try (NDManager submanager = manager.newSubManager()) {
 				
 				NDArray qValues = targetPredictor.predict(new NDList(submanager.create(state.getId()))).singletonOrThrow();
-				// DEBUG
-//				System.out.print("Q VALUES: ");
-//				for (int i=0; i<qValues.size(); i++) {
-//					System.out.print(qValues.getFloat(i) + "; ");
-//				}
-//				System.out.println();
 				
 				action = ActionSampler.greedy(qValues);
 				
@@ -519,25 +505,12 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 				throw new IllegalStateException(e);
 			}
 			
-			System.out.println("STATE " + (step + 1));
-			System.out.println("Cost Policy: " + state.getId()[0] + "; Step size: " + state.getId()[1]);
-			System.out.println("Move vector: " + state.getId()[2] + "; " + state.getId()[3] + "; " + state.getId()[4]);
-			System.out.println("Distance to axes: " + state.getId()[5] + "; " + state.getId()[6] + "; " + state.getId()[7] 
-					+ "; " + state.getId()[8] + "; " + state.getId()[9] + "; " + state.getId()[10]);
-			System.out.println("Relative goal: " + state.getId()[11] + "; " + state.getId()[12] + "; " + state.getId()[13] + "; " + state.getId()[14]);
-			System.out.println("Obstacle 1: " + state.getId()[15] + "; " + state.getId()[16] + "; " + state.getId()[17] + "; " + state.getId()[18]);
-			System.out.println("Obstacle 2: " + state.getId()[19] + "; " + state.getId()[20] + "; " + state.getId()[21] + "; " + state.getId()[22]);
-			System.out.println("Obstacle 3: " + state.getId()[23] + "; " + state.getId()[24] + "; " + state.getId()[25] + "; " + state.getId()[26]);
-			System.out.println("Action: " + action);
-			
 			// Execute action and get next state and reward; Checks if the goal has been reached
 			snapshot = this.getRLEnvironment().step(action, this.getAircraft());
 			
 			// Adds the next waypoint to the trajectory
 			if (!this.getRLEnvironment().failed()) {
-				// Only adds if the position is different to the previous one
-				//if (this.getWaypoints().getLast().getPrecisionPosition() != new PrecisionPosition(snapshot.getState().getPosition()))
-					this.getWaypoints().addLast(this.createWaypoint(snapshot.getState().getPosition()));
+				this.getWaypoints().addLast(this.createWaypoint(snapshot.getState().getPosition()));
 			}
 			
 			// Sets the state as the next state
@@ -552,11 +525,9 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 			this.clearWaypoints();
 			if (step >= MAX_STEPS ) {
 				System.out.println("Did too many steps");
-			} else if (snapshot.getReward()==-150){
+			} else if (snapshot.getReward()==-200){
 				System.out.println("Hit an OBSTACLE");
-			} else if (snapshot.getReward()==-50){
-				System.out.println("Left environment");
-			}
+			} 
 			
 		} else {
 		
@@ -727,9 +698,6 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 		
 		return supports;
 	}
-
-
-
 
 
 	
