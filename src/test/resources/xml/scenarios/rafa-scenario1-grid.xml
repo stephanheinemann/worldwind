@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<safcs:scenario
+	xmlns:safcs="https://github.com/stephanheinemann/worldwind-jaxb/tree/master/src/main/resources/xsd"
+	id="Rafa's Scenario 1 - Grid" time="2023-12-06T18:01:41.497Z"
+	threshold="2.7397260273972677" globe="Earth">
+	<safcs:environment>
+		<safcs:grid division="50"
+			bottom="0" top="200">
+			<safcs:southWest latitude="48.470"
+				longitude="-123.26" />
+			<safcs:northEast latitude="48.475"
+				longitude="-123.25" />
+		</safcs:grid>
+	</safcs:environment>
+	<safcs:obstacles>
+		<safcs:sphere radius="50.0">
+			<safcs:center altitude="120"
+				latitude="48.4737" longitude="-123.2574" />
+			<safcs:costInterval id="CFAR001" cost="80.0"
+				enabled="true" start="2023-12-05T18:01:41.497Z"
+				end="2023-12-07T18:01:41.497Z" />
+			<safcs:depiction symbology="TacticalSymbol"
+				sidc="SNGPUCVUR------" />
+		</safcs:sphere>
+		<safcs:cylinder radius="130.0" bottom="0.0" top='200.0'>
+			<safcs:location latitude="48.4716" 
+				longitude="-123.2528" />
+			<safcs:costInterval id="airspace1" cost="40.0"
+				enabled="true" start="2023-12-05T18:01:41.497Z"
+				end="2023-12-07T18:01:41.497Z" />
+		</safcs:cylinder>
+	</safcs:obstacles>
+	<safcs:planner riskPolicy="SAFETY" costPolicy="AVERAGE">
+		<safcs:astar />
+	</safcs:planner>
+	<safcs:datalink downlinkPeriod="PT1S">
+		<safcs:simulated uplinkDelay="PT0.5S"
+			errorProbability="0.0">
+			<safcs:errors>
+				<safcs:maxTrackError crossTrackError="0.0"
+					altitudeError="0.0" openingBearingError="0.0"
+					closingBearingError="0.0" timingError="PT0S" />
+				<safcs:maxTakeOffError horizontalError="0.0"
+					verticalError="0.0" timingError="PT0S" />
+				<safcs:maxLandingError horizontalError="0.0"
+					verticalError="0.0" timingError="PT0S" />
+			</safcs:errors>
+		</safcs:simulated>
+	</safcs:datalink>
+	<safcs:swim>
+		<safcs:simulated updatePeriod="PT5S"
+			updateProbability="0.5" updateQuantity="1"
+			resourceDirectory="swim/xml" />
+	</safcs:swim>
+</safcs:scenario>

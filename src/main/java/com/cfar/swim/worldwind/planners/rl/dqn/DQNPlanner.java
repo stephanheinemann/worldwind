@@ -71,7 +71,7 @@ public class DQNPlanner extends AbstractPlanner {
 	private static final int EPSILON_DECAY_EPS = 500;
 	
 	/** maximum number of steps per episode */
-	private static final int MAX_STEPS = 300;
+	private static final int MAX_STEPS = 500;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -144,8 +144,13 @@ public class DQNPlanner extends AbstractPlanner {
 		super(aircraft, environment);
 		this.etd = environment.getTime();
 		
+//		for (int i = 4; i<10; i++) {
+//			resetAgent();
+//			train(i+1);
+//			syncNetworks();
+//		}
 		resetAgent();
-		train();
+		train(0);
 		syncNetworks();
 	}
 	
@@ -235,11 +240,13 @@ public class DQNPlanner extends AbstractPlanner {
 	/**
 	 * Runs the training of the Deep Q-Network for random environment configurations
 	 */
-	protected void train() {
+	protected void train(int test) {
 		
 		PrintWriter outputFile = null;
+		//String name = "final_dqn_0" + test;
+		String name = "DQN_training_results";
 		try {
-			outputFile = new PrintWriter("newfile");
+			outputFile = new PrintWriter(name);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -581,10 +588,11 @@ public class DQNPlanner extends AbstractPlanner {
 				this.getWaypoints().addLast(goalWaypoint);
 			}
 			
-		    // Sets ETOs correctly
+		    // Sets ETOs and costs correctly
 			this.getWaypoints().getFirst().setEto(getEtd());
 			for (int i=1; i< this.getWaypoints().size(); ++i) {
 				computeEto(this.getWaypoints().get(i-1), this.getWaypoints().get(i));
+				computeCost(this.getWaypoints().get(i-1), this.getWaypoints().get(i));
 			}
 		}
 	}
@@ -600,6 +608,7 @@ public class DQNPlanner extends AbstractPlanner {
 	protected Waypoint createWaypoint(Position position) {
 		
 		Waypoint wp = new Waypoint(position);
+		wp.setCost(0);
 		
 		// If it is not the start
 		if(!this.getWaypoints().isEmpty()) {
@@ -628,9 +637,9 @@ public class DQNPlanner extends AbstractPlanner {
 		int i = 0;
 		
 		// If compute returned an empty trajectory, retrains for the fixed environment and computes again
-		while(this.getWaypoints().isEmpty() && i<10) {
+		while(this.getWaypoints().isEmpty() && i<5) {
 			
-			System.out.printf("Failed to compute, retraining (Attempt %d) %n", i);
+			System.out.printf("Failed to compute, retraining (Attempt %d) %n", i+1);
 			
 			this.trainFixed();
 			this.syncNetworks();

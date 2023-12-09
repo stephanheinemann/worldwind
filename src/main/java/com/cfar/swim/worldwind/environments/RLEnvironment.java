@@ -59,7 +59,7 @@ import gov.nasa.worldwind.render.Path;
 public class RLEnvironment extends PlanningContinuum {
 	
 	/** in how many steps to divide from start to goal */
-	private static final int STEP_DIVISION = 8;
+	private static final int STEP_DIVISION = 16;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -403,25 +403,6 @@ public class RLEnvironment extends PlanningContinuum {
 			return;
 		}
 		
-//		// If it gets too close to obstacle
-//		Iterator<RLObstacle> itr = this.nextState.getObstacles().iterator();
-//		RLObstacle current = null;
-//		while(itr.hasNext()) {
-//			current = itr.next();
-//			if (current.getDistanceToState() <= 2*this.nextState.getStepSize()) {
-//				reward += -10;
-//				break;
-//			}
-//		}
-//		
-//		// If it gets too close to environment boundary
-//		for(int i = 0; i < 6; i++) {
-//			if (this.nextState.getDistanceToEnv()[i] <= this.nextState.getStepSize()) {
-//				reward += -10;
-//				break;
-//			}
-//		}
-		
 		// Otherwise: step penalty +  distance to goal penalty/reward 
 		reward += -10;
 		reward += 300 * (this.state.getNormalizedDistanceToGoal() - this.nextState.getNormalizedDistanceToGoal());
@@ -592,8 +573,8 @@ public class RLEnvironment extends PlanningContinuum {
 	
 	
 	/** 
-	 * Creates a set of the obstacles that are in close proximity to the current state
-	 * and don't satisfy the current risk policy. 
+	 * Creates a set of the obstacles embedded in the environment that don't satisfy the current risk policy
+	 * and orders them by their distance to the state. 
 	 * 
 	 * @param the state's position
 	 * @param the aircraft's radius
@@ -640,9 +621,6 @@ public class RLEnvironment extends PlanningContinuum {
 		Vec4 originPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(origin));
 		Vec4 otherPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(other));
 		
-//		Vec4 originPoint = this.getGlobe().computePointFromPosition(origin);
-//		Vec4 otherPoint = this.getGlobe().computePointFromPosition(other);
-		
 		Vec4 relativeVector = otherPoint.subtract3(originPoint);
 		
 		return relativeVector;
@@ -661,9 +639,6 @@ public class RLEnvironment extends PlanningContinuum {
 		
 		Vec4 point1 = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(p1));
 		Vec4 point2 = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(p2));
-
-//		Vec4 point1 = this.getGlobe().computePointFromPosition(p1);
-//		Vec4 point2 = this.getGlobe().computePointFromPosition(p2);
 		
 		Vec4 relativeVector = point1.subtract3(point2);
 		
@@ -693,18 +668,6 @@ public class RLEnvironment extends PlanningContinuum {
 		distancesToEnv[4] = (float) this.toNormalizedDistance(boxPoint.z);
 		distancesToEnv[5] = (float) this.toNormalizedDistance(this.getTLength() - boxPoint.z);
 		
-//		Vec4[] corners = this.getCorners();
-//		Vec4 min = corners[0];
-//		Vec4 max = corners[6];
-//		Vec4 point = this.getGlobe().computePointFromPosition(position);
-//		
-//		distancesToEnv[0] = (float) this.toNormalizedDistance(point.x - min.x);
-//		distancesToEnv[1] = (float) this.toNormalizedDistance(max.x - point.x);
-//		distancesToEnv[2] = (float) this.toNormalizedDistance(point.y - min.y);
-//		distancesToEnv[3] = (float) this.toNormalizedDistance(max.y - point.y);
-//		distancesToEnv[4] = (float) this.toNormalizedDistance(point.z - min.z);
-//		distancesToEnv[5] = (float) this.toNormalizedDistance(max.z - point.z);
-		
 		return distancesToEnv;
 	}
 	
@@ -720,15 +683,47 @@ public class RLEnvironment extends PlanningContinuum {
 	public Position getNewPosition(Position position, Vec4 move) {
 		
 		Vec4 point = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(position));
-//		Vec4 goalPoint = this.transformModelToBoxOrigin(this.getGlobe().computePointFromPosition(goalPosition));
-
-//		Vec4 point = this.getGlobe().computePointFromPosition(position);
-//		Vec4 point2 = point.add3(move);
-		
-	//	Position newPosition = this.getGlobe().computePositionFromPoint(point.add3(move));
 		Position newPosition = this.getGlobe().computePositionFromPoint(this.transformBoxOriginToModel(point.add3(move)));
 		
 		return newPosition;
 	}
+	
+	/**
+	 * Gets the step cost from an origin to a destination position within this
+	 * RL Environment between a start and an end time given a cost policy
+	 * and risk policy.
+	 * 
+	 * @param origin the origin position in globe coordinates
+	 * @param destination the destination position in globe coordinates
+	 * @param start the start time
+	 * @param end the end time
+	 * @param costPolicy the cost policy
+	 * @param riskPolicy the risk policy
+	 * 
+	 * @return the step cost from the origin to the destination position
+	 * 
+	 * @see Environment#getStepCost(Position, Position, ZonedDateTime, ZonedDateTime, CostPolicy, RiskPolicy)
+	 */
+	@Override
+	public double getStepCost(
+			Position origin, Position destination,
+			ZonedDateTime start, ZonedDateTime end,
+			CostPolicy costPolicy, RiskPolicy riskPolicy) {
+		
+		double stepCost = Double.POSITIVE_INFINITY;
+		
+		if (origin.equals(destination)) {
+			stepCost = 0;
+			return stepCost;
+		}
+		Edge step = new Edge(this, origin, destination);
+		double distance = this.getNormalizedDistance(origin, destination);
+		double cost = step.getCost(start, end, costPolicy, riskPolicy);
+		stepCost = distance * cost;
+			
+		return stepCost;
+	}
+	
+	
 	
 }

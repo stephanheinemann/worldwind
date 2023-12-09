@@ -59,7 +59,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	private static final float MIN_EPSILON = 0.01f; 
 	
 	/** the initial value of beta */
-	private static final double INITIAL_BETA = 0.5;
+	private static final double INITIAL_BETA = 0.4;
 	
 	/** number of total training episodes */
 	private static final int NUM_GLOBAL_EPS = 10000;
@@ -74,7 +74,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	private static final int EPSILON_DECAY_EPS = 500;
 	
 	/** maximum number of steps per episode */
-	private static final int MAX_STEPS = 300;
+	private static final int MAX_STEPS = 500;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -83,7 +83,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	private final int[] hiddenSize = {256, 512, 256};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.0001f;
+	private final float learningRate = 0.00025f;
 	
 	/** the size of the mini-batch of transitions used for training */
 	protected final int batchSize = 32;
@@ -153,8 +153,13 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		super(aircraft, environment);
 		this.etd = environment.getTime();
 		
+//		for (int i = 0; i<10; i++) {
+//			resetAgent();
+//			train(i+1);
+//			syncNetworks();
+//		}
 		resetAgent();
-		train();
+		train(0);
 		syncNetworks();
 	}
 	
@@ -222,6 +227,10 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	/** Resets the DQN agent before training
 	 */
 	protected void resetAgent() {
+		
+		epsilon = INITIAL_EPSILON;
+		beta = INITIAL_BETA;
+		
 		optimizer = Optimizer.adam().optLearningRateTracker(Tracker.fixed(learningRate)).build();
 		
 		if (manager != null) {
@@ -244,11 +253,12 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	/**
 	 * Runs the training of the Deep Q-Network for random environment configurations
 	 */
-	protected void train() {
+	protected void train(int test) {
 		
 		PrintWriter outputFile = null;
+		String name = "PriorDQN_training_results";
 		try {
-			outputFile = new PrintWriter("newfile");
+			outputFile = new PrintWriter(name);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -602,10 +612,11 @@ public class PriorDQNPlanner extends AbstractPlanner {
 				this.getWaypoints().addLast(goalWaypoint);
 			}
 			
-		    // Sets ETOs correctly
+		    // Sets ETOs and costs correctly
 			this.getWaypoints().getFirst().setEto(getEtd());
 			for (int i=1; i< this.getWaypoints().size(); ++i) {
 				computeEto(this.getWaypoints().get(i-1), this.getWaypoints().get(i));
+				computeCost(this.getWaypoints().get(i-1), this.getWaypoints().get(i));
 			}
 		}
 	}
@@ -621,6 +632,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	protected Waypoint createWaypoint(Position position) {
 		
 		Waypoint wp = new Waypoint(position);
+		wp.setCost(0);
 		
 		// If it is not the start
 		if(!this.getWaypoints().isEmpty()) {
@@ -649,9 +661,9 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		int i = 0;
 		
 		// If compute returned an empty trajectory, retrains for the fixed environment and computes again
-		while(this.getWaypoints().isEmpty() && i<10) {
+		while(this.getWaypoints().isEmpty() && i<5) {
 			
-			System.out.printf("Failed to compute, retraining (Attempt %d) %n", i);
+			System.out.printf("Failed to compute, retraining (Attempt %d) %n", i+1);
 			
 			this.trainFixed();
 			this.syncNetworks();

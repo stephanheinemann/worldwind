@@ -85,7 +85,7 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 	private final int[] hiddenSize = {512, 512, 256};
 	
 	/** learning rate used by the optimizer during training */
-	private final float learningRate = 0.0001f;
+	private final float learningRate = 0.00025f;
 	
 	/** the size of the mini-batch of transitions used for training */
 	protected final int batchSize = 32;
@@ -155,9 +155,11 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 		super(aircraft, environment);
 		this.etd = environment.getTime();
 		
-		resetAgent();
-		train();
-		syncNetworks();
+		for (int i = 0; i<10; i++) {
+			resetAgent();
+			train(i+1);
+			syncNetworks();
+		}
 	}
 	
 	/**
@@ -226,6 +228,10 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 	/** Resets the DQN agent before training
 	 */
 	protected void resetAgent() {
+		
+		epsilon = INITIAL_EPSILON;
+		beta = INITIAL_BETA;
+		
 		optimizer = Optimizer.adam().optLearningRateTracker(Tracker.fixed(learningRate)).build();
 		
 		if (manager != null) {
@@ -247,11 +253,12 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 	/**
 	 * Runs the training of the Deep Q-Network for random environment configurations
 	 */
-	protected void train() {
+	protected void train(int test) {
 		
 		PrintWriter outputFile = null;
+		String name = "final_priord3qn_0" + test;
 		try {
-			outputFile = new PrintWriter("newfile");
+			outputFile = new PrintWriter(name);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -537,10 +544,11 @@ public class PriorD3QNPlanner extends AbstractPlanner {
 				this.getWaypoints().addLast(goalWaypoint);
 			}
 			
-		    // Sets ETOs correctly
+		    // Sets ETOs and costs correctly
 			this.getWaypoints().getFirst().setEto(getEtd());
 			for (int i=1; i< this.getWaypoints().size(); ++i) {
 				computeEto(this.getWaypoints().get(i-1), this.getWaypoints().get(i));
+				computeCost(this.getWaypoints().get(i-1), this.getWaypoints().get(i));
 			}
 		}
 	}

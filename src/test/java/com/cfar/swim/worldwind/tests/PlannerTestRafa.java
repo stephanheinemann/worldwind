@@ -89,9 +89,9 @@ public class PlannerTestRafa {
 		env.embed(o);  
         
 //        PriorD3QNPlanner planner = new PriorD3QNPlanner(iris, env); 
-		PriorDQNPlanner planner = new PriorDQNPlanner(iris, env);  
+//		PriorDQNPlanner planner = new PriorDQNPlanner(iris, env);  
 //		D3QNPlanner planner = new D3QNPlanner(iris, env); 
-//		DQNPlanner planner = new DQNPlanner(iris, env); 
+		DQNPlanner planner = new DQNPlanner(iris, env); 
         planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);
