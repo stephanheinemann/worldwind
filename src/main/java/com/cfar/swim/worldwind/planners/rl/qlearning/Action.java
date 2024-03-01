@@ -32,7 +32,7 @@ package com.cfar.swim.worldwind.planners.rl.qlearning;
 import java.util.*;
 
 /**
- * Enumerates the possible actions for an RL planner.
+ * Enumerates the possible actions for a Q-Learning planner.
  * 
  * @author Rafaela Seguro
  *

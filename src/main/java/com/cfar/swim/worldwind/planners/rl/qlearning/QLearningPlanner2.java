@@ -31,6 +31,8 @@ import gov.nasa.worldwind.globes.Globe;
 import gov.nasa.worldwind.render.Path;
 
 /**
+* SECOND ATTEMPT - Not functional
+* 
 * Realizes a basic reinforcement learning planner, using Q-Learning that plans a trajectory of an aircraft
 * in an environment considering a local cost and risk policy.
 * 

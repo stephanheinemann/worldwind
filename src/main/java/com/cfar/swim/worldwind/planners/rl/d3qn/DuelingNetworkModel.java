@@ -19,7 +19,7 @@ import ai.djl.training.initializer.XavierInitializer;
 import ai.djl.util.PairList;
 
 /**
- * Realizes a model for the neural network that is used to train the Deep Reinforcement Learning Planner
+ * Realizes a model for a dueling neural network that is used to train the dueling DQN planners.
  * 
  * @author Rafaela Seguro
  *
@@ -68,7 +68,7 @@ public class DuelingNetworkModel extends AbstractBlock {
 		
 		this.manager = manager;
 		this.hiddenSize = hiddenSize;
-		this.hiddenLayers = new ArrayList<>();  // Initialize the list of hidden layers
+		this.hiddenLayers = new ArrayList<>();  
 		this.outputSize = outputSize;
 		
 		// Create and add the input layer
@@ -90,23 +90,6 @@ public class DuelingNetworkModel extends AbstractBlock {
 		}
 		linearValue = Linear.builder().setUnits(1).build();
 		this.hiddenLayers.add(addChildBlock("value_output", linearValue));
-		
-//		// Create and add the hidden layers 
-//		for (int i = 1; i < (hiddenSize.length); i++) {
-//			Block hiddenLayer = Linear.builder().setUnits(hiddenSize[i]).build();
-//			this.hiddenLayers.add(addChildBlock("hidden_layer_" + i, hiddenLayer));
-//		}	
-		
-//		// The last hidden layer is separated into the value and advantage stream
-////		Block hiddenLayer = Linear.builder().setUnits(hiddenSize[hiddenSize.length - 1]).build();
-////		this.hiddenLayers.add(addChildBlock("advantage_hidden_" , hiddenLayer));
-//		linearAdvantage = Linear.builder().setUnits(this.outputSize).build();
-//		this.hiddenLayers.add(addChildBlock("advantage_stream", linearAdvantage));
-//		
-////		hiddenLayer = Linear.builder().setUnits(hiddenSize[hiddenSize.length - 1]).build();
-////		this.hiddenLayers.add(addChildBlock("value_hidden_" , hiddenLayer));
-//		linearValue = Linear.builder().setUnits(1).build();
-//		this.hiddenLayers.add(addChildBlock("value_stream", linearValue));
 		
 		// Create and add the output layer
 		linearOutput = Linear.builder().setUnits(this.outputSize).build();
@@ -222,17 +205,6 @@ public class DuelingNetworkModel extends AbstractBlock {
 	    // Initialize input and output layers
  		hiddenLayers.get(0).initialize(manager, dataType, inputShapes[0]);
  		linearOutput.initialize(manager, dataType, new Shape(outputSize));
-	 	
-//	 	// Initialize hidden layers 
-//	    for (int i = 1; i < (hiddenSize.length); i++) {
-//            hiddenLayers.get(i).initialize(manager, dataType, new Shape(hiddenSize[i - 1]));
-//	    }
-//		   
-//		// Initialize layers for the advantage stream
-//	    hiddenLayers.get(hiddenSize.length).initialize(manager, dataType, new Shape(hiddenSize[hiddenSize.length - 1]));
-//	    
-//	    // Initialize layers for the value stream
-//	    hiddenLayers.get(hiddenSize.length+1).initialize(manager, dataType, new Shape(hiddenSize[hiddenSize.length - 1]));
 	    
 	    // Initialize hidden layers for the advantage stream
 	    for (int i = 1; i < (hiddenSize.length+1); i++) {

@@ -10,7 +10,7 @@ import com.cfar.swim.worldwind.planning.Waypoint;
 import gov.nasa.worldwind.geom.Position;
 
 /**
- * Realizes a RL waypoint of a trajectory planned by RL planners.
+ * Realizes a RL waypoint of a trajectory planned by the Q-learning planner.
  * 
  * @author Rafaela Seguro
  *

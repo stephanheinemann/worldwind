@@ -7,7 +7,7 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
- * Realizes an obstacle to be used by the DQN planner.
+ * Realizes an obstacle object as perceived by the DQN planners.
  * 
  * @author Rafaela Seguro
  *
@@ -40,9 +40,6 @@ public class RLObstacle implements Comparable<RLObstacle>{
 		
 		Vec4 statePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(position));
 		Vec4 obstaclePoint = env.transformModelToBoxOrigin(env.getGlobe().computePointFromPosition(obstacle.getCenter()));
-		
-//		Vec4 statePoint = env.getGlobe().computePointFromPosition(position);
-//		Vec4 obstaclePoint = env.getGlobe().computePointFromPosition(obstacle.getCenter());
 		 
 		this.relativeToState = statePoint.subtract3(obstaclePoint);
 		this.normalizedRelativeToState = this.relativeToState.normalize3();

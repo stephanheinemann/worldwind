@@ -29,12 +29,11 @@
  */
 package com.cfar.swim.worldwind.planners.cgs.astar;
 
-import java.awt.Color;
+
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Set;
@@ -48,8 +47,6 @@ import com.cfar.swim.worldwind.environments.PlanningRoadmap;
 import com.cfar.swim.worldwind.geom.precision.PrecisionPosition;
 import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
-import com.cfar.swim.worldwind.planners.rl.Plot;
-import com.cfar.swim.worldwind.planners.rl.qlearning.QLine;
 import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.util.Identifiable;

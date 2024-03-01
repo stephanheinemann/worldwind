@@ -35,6 +35,7 @@ import java.time.Duration;
 
 
 
+
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
@@ -45,7 +46,6 @@ import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedTreePlanner;
 import com.cfar.swim.worldwind.planners.rl.d3qn.D3QNPlanner;
 import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
-import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlannerNoCosts;
 import com.cfar.swim.worldwind.planners.rl.priord3qn.PriorD3QNPlanner;
 import com.cfar.swim.worldwind.planners.rl.priordqn.PriorDQNPlanner;
 import com.cfar.swim.worldwind.planners.rl.qlearning.QLearningPlanner;

@@ -52,50 +52,6 @@ public final class Helper {
 		}
 		return arr.broadcast(shape);
 	}
-	
-//	/** 
-//	 * Creates the list of possible actions the agent can take
-//	 * 
-//	 * @return the list of possible actions
-//	 * 
-//	 */
-//	public static ArrayList<Vec4>  listOfActions() {
-//		
-//		ArrayList<Vec4> listOfActions = new ArrayList<Vec4> ();
-//		
-//		// Keep direction
-//		listOfActions.add(new Vec4(0,0,0));
-//		// Climb 45 degrees
-//		listOfActions.add(new Vec4(0,0,1));
-//		// Descend 45 degrees
-//		listOfActions.add(new Vec4(0,0,-1));
-//		// Turn left 45 degrees
-//		listOfActions.add(new Vec4(0,1,0));
-//		// Turn left 60 degrees
-//		listOfActions.add(new Vec4(0,-1,0));
-//		listOfActions.add(new Vec4(0,0,1));
-//		listOfActions.add(new Vec4(0,0,-1));
-//		
-//		// The rest of the list is populated with all possible actions with angles 0, 22.5, 45, 67.5 and 90
-////		double[] thetaValues = {0, 22.5, 45, 67.5, 90, 112.5, 135, 157.5, 180};
-////		double[] alphaValues = {0, 22.5, 45, 67.5, 90};
-////		double[] thetaValues = {0, 90, 180};
-////		double[] alphaValues = {0, 90};
-////		double x, y, z;
-////		
-////		for (double theta : thetaValues){
-////			for (double alpha : alphaValues) {
-////				x = Math.sin(Math.toRadians(alpha)) * Math.cos(Math.toRadians(theta));
-////				y = Math.sin(Math.toRadians(alpha)) * Math.sin(Math.toRadians(theta));
-////				z = Math.cos(Math.toRadians(alpha));
-////				
-////				listOfActions.add(new Vec4(x, y, z));
-////			}
-////		}
-//		
-//		return listOfActions;
-//	}
-
 
 }
 

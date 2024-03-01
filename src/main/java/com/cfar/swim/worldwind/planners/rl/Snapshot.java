@@ -1,7 +1,7 @@
 package com.cfar.swim.worldwind.planners.rl;
 
 /**
- * Realizes a transition object to store a state, action, next state and reward tuple
+ * Realizes an object to store a state, reward and status boolean tuple.
  * 
  * @author Rafaela Seguro
  *
@@ -37,7 +37,7 @@ public class Snapshot {
 	}
 	
 	/**
-	 * Gets the state stored in this transition.
+	 * Gets the state stored in this snapshot.
 	 * 
 	 * @return the state
 	 */
@@ -46,7 +46,7 @@ public class Snapshot {
 	}
 	
 	/**
-	 * Gets the reward stored in this transition.
+	 * Gets the reward stored in this snapshot.
 	 * 
 	 * @return the reward
 	 */

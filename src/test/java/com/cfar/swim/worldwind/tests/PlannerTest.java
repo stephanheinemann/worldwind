@@ -31,6 +31,7 @@ package com.cfar.swim.worldwind.tests;
 
 import static org.junit.Assert.assertEquals;
 
+
 import static org.junit.Assert.assertNotNull;
 
 import java.awt.Color;
@@ -55,8 +56,6 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.render.Path;
-
-import com.cfar.swim.worldwind.planners.rl.Plot;
 
 /**
  * Performs planner tests.

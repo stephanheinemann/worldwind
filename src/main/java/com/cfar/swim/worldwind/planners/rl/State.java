@@ -13,7 +13,7 @@ import gov.nasa.worldwind.geom.Position;
 import gov.nasa.worldwind.geom.Vec4;
 
 /**
- * Realizes a state of an RL planner.
+ * Realizes a state of a DQN planner.
  * 
  * @author Rafaela Seguro
  *
@@ -26,16 +26,16 @@ public class State {
 	/** the size of the state ID */
 	public static int ID_SIZE = 15 + 4*CONSIDERED_OBSTACLES;
 	
-	/** store's the state's position*/
+	/** stores the state's position*/
 	private Position position = null;
 	
-	/** the distance to the environment's axes normalized by their lengths */
+	/** the distance to the environment's axes normalized by the environment's diameter */
 	private float[] distancesToEnv = new float[6];
 	
 	/** normalized vector from goal to state */
 	private Vec4 normalizedRelativeGoal = null;
 	
-	/** the distance from this state to the goal normalized by the maximum distance */
+	/** the distance from this state to the goal normalized by the environment's diameter */
 	private float normalizedDistanceToGoal = 0f;
 	
 	/** the estimated time over of this state */
@@ -118,6 +118,7 @@ public class State {
 		return this.normalizedRelativeGoal;
 	}
 	
+	
 	/**
 	 * Gets the distances from this state to the environment limits (normalized)
 	 * 
@@ -127,14 +128,16 @@ public class State {
 		return this.distancesToEnv;
 	}
 	
+	
 	/**
-	 * Gets the distance from this state to the goal normalized by the maximum distance
+	 * Gets the distance from this state to the goal normalized by the environment's diameter
 	 * 
-	 * @return the distance from this state to the goal normalized by the maximum distance
+	 * @return the distance from this state to the goal normalized by the environment's diameter
 	 */
 	public double getNormalizedDistanceToGoal() {
 		return this.normalizedDistanceToGoal;
 	}
+	
 	
 	/**
 	 * Gets the state's ID.
@@ -207,7 +210,6 @@ public class State {
 		
 		index = index + 3;
 
-		
 		// Distance to environment axes
 		for (int i = 0; i < distancesToEnv.length; i++) {
 			id[index] =  distancesToEnv[i];
@@ -220,7 +222,6 @@ public class State {
 		id[index+3] = (float) this.getNormalizedDistanceToGoal();
 		
 		index = index + 4;
-
 
 		// Adds the obstacles. Puts zero if there are less obstacles than CONSIDERED_OBSTACLES
 		Iterator<RLObstacle> itr = obstacles.iterator();

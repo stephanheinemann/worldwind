@@ -18,7 +18,7 @@ import ai.djl.training.initializer.XavierInitializer;
 import ai.djl.util.PairList;
 
 /**
- * Realizes a model for the neural network that is used to train the Deep Reinforcement Learning Planner
+ * Realizes a model for the neural network that is used to train the DQN planners
  * 
  * @author Rafaela Seguro
  *
@@ -56,15 +56,7 @@ public class NetworkModel extends AbstractBlock {
 	 * @param the number of output units in the neural network
 	 */
 	public NetworkModel(NDManager manager, int[] hiddenSize, int outputSize) {
-//		super(VERSION);
-//		
-//		this.manager = manager;
-//		
-//		this.linearInput = addChildBlock("linear_input", Linear.builder().setUnits(hiddenSize[0]).build());
-//		this.linearOutput = addChildBlock("linear_output", Linear.builder().setUnits(outputSize).build());
-//		
-//		this.hiddenSize = hiddenSize;
-//		this.outputSize = outputSize;
+
 		super(VERSION);
 		
 		this.manager = manager;
@@ -173,8 +165,6 @@ public class NetworkModel extends AbstractBlock {
 	@Override
 	public void initializeChildBlocks(NDManager manager, DataType dataType, Shape... inputShapes) {
 		setInitializer(new XavierInitializer(), Parameter.Type.WEIGHT);
-//		linearInput.initialize(manager, dataType, inputShapes[0]);
-//		linearOutput.initialize(manager, dataType, new Shape(hiddenSize[3]));
 		
 		// Initialize input and output layers
 		hiddenLayers.get(0).initialize(manager, dataType, inputShapes[0]);

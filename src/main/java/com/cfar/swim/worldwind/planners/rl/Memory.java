@@ -5,7 +5,7 @@ import java.util.Random;
 import ai.djl.ndarray.NDManager;
 
 /**
- * Realizes a replay memory object to store transitions and to be used by the Deep Neural Network
+ * Realizes a replay memory object to store transitions and to be used by the Deep Q-Network
  * 
  * @author Rafaela Seguro
  *
@@ -81,7 +81,7 @@ public class Memory {
 	}
 	
 	/**
-	 * Sets the most recent received reward.
+	 * Sets the most recent received reward. If it is a terminal state, adds transition to memory.
 	 * 
 	 * @param the reward
 	 */

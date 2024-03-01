@@ -1,7 +1,7 @@
 package com.cfar.swim.worldwind.planners.rl.priordqn;
 
 /**
- * Realizes a transition data object to the index in memory, the priority, the probability of being 
+ * Realizes a transition data object to store the index in memory, the priority, the probability of being 
  * sampled and the weight of a transition (to be used for Prioritized Experience Replay)
  * 
  * @author Rafaela Seguro

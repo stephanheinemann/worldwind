@@ -10,7 +10,8 @@ import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDManager;
 
 /**
- * Realizes a replay memory object to store transitions and to be used by the Deep Neural Network
+ * Realizes a replay memory object to store transitions alongside their priorities to be used by the 
+ * prioritized DQN planners.
  * 
  * @author Rafaela Seguro
  *
@@ -69,8 +70,6 @@ public class PrioritizedMemory {
 	/** the max of the weights of the stored transitions*/
 	private double weightMax = 0.0;
 	
-//	/** max initial priority for newly added transitions*/
-//	private final double maxPriority = 1.0;
 	
 	
 	/** Constructs a replay memory object

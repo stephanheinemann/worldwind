@@ -7,7 +7,7 @@ import com.cfar.swim.worldwind.planners.rl.State;
 
 /**
  * Realizes an entry line of the Q-table, corresponding to one state. Saves the Q-values for each
- * available action in one state
+ * available action in one state (second Q-learning attempt)
  * 
  * @author Rafaela Seguro
  *

@@ -3,6 +3,7 @@ package com.cfar.swim.worldwind.planners.rl.d3qn;
 import java.time.ZonedDateTime;
 
 
+
 import java.util.HashSet;
 import java.util.List;
 import java.util.Random;
@@ -20,6 +21,7 @@ import com.cfar.swim.worldwind.planners.rl.ActionSampler;
 import com.cfar.swim.worldwind.planners.rl.Helper;
 import com.cfar.swim.worldwind.planners.rl.Memory;
 import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
+import com.cfar.swim.worldwind.planners.rl.NetworkModel;
 import com.cfar.swim.worldwind.planners.rl.Snapshot;
 import com.cfar.swim.worldwind.planners.rl.State;
 import com.cfar.swim.worldwind.planning.Trajectory;
@@ -42,7 +44,7 @@ import ai.djl.util.Pair;
 import ai.djl.translate.NoopTranslator;
 
 /**
-* Realizes a deep reinforcement learning planner, using a Double Deep Q-Network, that plans a trajectory 
+* Realizes a deep reinforcement learning planner, using a Double Dueling Deep Q-Network, that plans a trajectory 
 * of an aircraft in an environment considering a local cost and risk policy.
 * 
 * @author Rafaela Seguro
@@ -58,13 +60,13 @@ public class D3QNPlanner extends AbstractPlanner {
 	private static final float MIN_EPSILON = 0.01f; 
 	
 	/** number of total training episodes */
-	private static final int NUM_GLOBAL_EPS = 15000;
+	private static final int NUM_GLOBAL_EPS = 10000;
 	
-	/** number of episodes it trains without obstacles first */
-	private static final int NO_OBS_EPS = 0;
+	/** number of extra training episodes for when trajectory computation fails */
+	private static final int NUM_EXTRA_EPS = 5;
 	
-	/** number of episodes it trains without obstacles first */
-	private static final int EPSILON_DECAY_EPS = 500;
+	/** number of episodes over which epsilon decays */
+	private static final int EPSILON_DECAY_EPS = 300;
 	
 	/** maximum number of steps per episode */
 	private static final int MAX_STEPS = 100;
@@ -76,18 +78,18 @@ public class D3QNPlanner extends AbstractPlanner {
 	private final Memory memory = new Memory(4096);
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {512, 512, 256};
+	private final int[] hiddenSize = {256, 512, 256};
 	
 	/** learning rate used by the optimizer during training */
 	private final float learningRate = 0.00025f;
 	
-	/** the size of the mini-batch of transitions used for training */
+	/** the size of the batch of transitions used for training */
 	protected final int batchSize = 32;
 	
-	/** the number of iterations between each train of the policy network */
+	/** the number of iterations between each train of the main network */
 	protected final int trainNetInterval = 1;
 	
-	/** the number of iterations between each sync of the target and policy networks */
+	/** the number of iterations between each sync of the target and main networks */
 	protected final int syncNetInterval = 200;
 	
 	/** gamma factor for the Bellman equation */
@@ -96,8 +98,8 @@ public class D3QNPlanner extends AbstractPlanner {
 	/** the optimizer used for updating the network parameters during training */
 	private Optimizer optimizer;
 	
-	/** the policy network, which predicts the Q-values */
-	private Model policyNet;
+	/** the main network, which predicts the Q-values */
+	private Model mainNet;
 	
 	/** the target network, used to stabilize training in DQN */
 	private Model targetNet;
@@ -105,8 +107,8 @@ public class D3QNPlanner extends AbstractPlanner {
 	/** used for managing NDArrays within the class */
 	protected NDManager manager;
 	
-	/** predictor for the policy network */
-	protected Predictor<NDList, NDList> policyPredictor;
+	/** predictor for the main network */
+	protected Predictor<NDList, NDList> mainPredictor;
 	
 	/** predictor for the target network */
 	protected Predictor<NDList, NDList> targetPredictor;
@@ -120,8 +122,8 @@ public class D3QNPlanner extends AbstractPlanner {
 	/** the loss function */
 	private final Loss lossFunc = Loss.l2Loss();
 	
-	/** saves the most recent waypoint added to the trajectory */
-	private Waypoint newestWaypoint = null;
+	/** saves the start waypoint */
+	private Waypoint startWaypoint = null;
 	
 	/** stores the plan's ETD */
 	private ZonedDateTime etd;
@@ -130,7 +132,7 @@ public class D3QNPlanner extends AbstractPlanner {
 	List<Number> lossArray = new LinkedList<>();
 	
 	
-	/** Constructs a planner trained by a Double Deep Q-Network for a specified aircraft and
+	/** Constructs a planner trained by a Double Dueling Deep Q-Network for a specified aircraft and
 	 * environment using default local cost and risk policies.
 	 * 
 	 * @param the aircraft
@@ -140,17 +142,15 @@ public class D3QNPlanner extends AbstractPlanner {
 		super(aircraft, environment);
 		this.etd = environment.getTime();
 		
-		for (int i = 0; i<10; i++) {
-			resetAgent();
-			train(i+1);
-			syncNetworks();
-		}
+		resetAgent();
+		train(0);
+		syncNetworks();
 	}
 	
 	/**
-	 * Gets the identifier of this DQN planner.
+	 * Gets the identifier of this D3QN planner.
 	 * 
-	 * @return the identifier of this DQN planner
+	 * @return the identifier of this D3QN planner
 	 * 
 	 * @see Identifiable#getId()
 	 */
@@ -160,9 +160,9 @@ public class D3QNPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Gets the RL environment of this DQN planner.
+	 * Gets the RL environment of this D3QN planner.
 	 * 
-	 * @return the RL environment of this DQN planner
+	 * @return the RL environment of this D3QN planner
 	 * 
 	 * @see AbstractPlanner#getEnvironment()
 	 */
@@ -170,24 +170,22 @@ public class D3QNPlanner extends AbstractPlanner {
 		return (RLEnvironment) super.getEnvironment();
 	}
 	
-
-	
 	/**
-	 * Gets the newest RL waypoint added to the trajectory.
+	 * Gets the start waypoint.
 	 * 
-	 * @return the newest RL waypoint added to the trajectory
+	 * @return the start waypoint
 	 */
-	protected Waypoint getNewestWaypoint() {
-		return this.newestWaypoint;
+	protected Waypoint getStartWaypoint() {
+		return this.startWaypoint;
 	}
 	
 	/**
-	 * Sets the newest RL waypoint added to the trajectory.
+	 * Sets the start waypoint.
 	 * 
-	 * @param newestWaypoint the newest RL waypoint added to the trajectory
+	 * @param the start waypoint
 	 */
-	protected void setNewestWaypoint(Waypoint newestWaypoint) {
-		this.newestWaypoint = newestWaypoint;
+	protected void setStartWaypoint(Waypoint startWaypoint) {
+		this.startWaypoint = startWaypoint;
 	}
 	
 	/**
@@ -210,11 +208,9 @@ public class D3QNPlanner extends AbstractPlanner {
 	
 
 	
-	/** Resets the DQN agent before training
+	/** Resets the D3QN agent before training
 	 */
 	protected void resetAgent() {
-		epsilon = INITIAL_EPSILON;
-		
 		optimizer = Optimizer.adam().optLearningRateTracker(Tracker.fixed(learningRate)).build();
 		
 		if (manager != null) {
@@ -222,24 +218,26 @@ public class D3QNPlanner extends AbstractPlanner {
 		}
 		manager = NDManager.newBaseManager();
 		
-		policyNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
-		//Sets require gradient to true for the policy network's parameters
-		for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
+		mainNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
+		
+		for (Pair<String, Parameter> params : mainNet.getBlock().getParameters()) {
 			params.getValue().getArray().setRequiresGradient(true);
 		}
 		targetNet = DuelingNetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
 		
-		policyPredictor = policyNet.newPredictor(new NoopTranslator());
+		mainPredictor = mainNet.newPredictor(new NoopTranslator());
 		syncNetworks();
 	}
 
+	
 	/**
 	 * Runs the training of the Deep Q-Network for random environment configurations
 	 */
 	protected void train(int test) {
 		
+		// The training results are stored in a file
 		PrintWriter outputFile = null;
-		String name = "final_d3qn_0" + test;
+		String name = "D3QN_training_results";
 		try {
 			outputFile = new PrintWriter(name);
 		} catch (FileNotFoundException e) {
@@ -255,9 +253,9 @@ public class D3QNPlanner extends AbstractPlanner {
 		double lossAverage = 0.0;
 		String result = " ";
 		int successCount = 0;
-		boolean addObstacles = false;
 		Set<Obstacle> obstacles = new HashSet<>();
 		
+		// Unembeds environment's obstacles for training with random configurations
 		if(this.getRLEnvironment().getObstacles()!=null) {
 			obstacles.addAll(this.getRLEnvironment().getObstacles());
 			for (Obstacle o : obstacles) {
@@ -268,17 +266,12 @@ public class D3QNPlanner extends AbstractPlanner {
 		// For each episode
 		while (episode < NUM_GLOBAL_EPS ) {
 			
-			// Adds obstacles to the training 
-			if(episode == NO_OBS_EPS) {
-				addObstacles = true;
-			} 
-			// Reset environment 
+			// Reset environment and variables
 			episode++;
 			step = 0;
 			cumulativeReward = 0.0;
 			lossArray.clear();
-			
-			this.getRLEnvironment().resetRandom(addObstacles);
+			this.getRLEnvironment().resetRandom();
 			State state = this.getRLEnvironment().getStart();
 			int action = 0;
 			Snapshot snapshot = null;
@@ -291,8 +284,8 @@ public class D3QNPlanner extends AbstractPlanner {
 				snapshot = this.getRLEnvironment().step(action, this.getAircraft());
 				// Stores the reward and the "done" boolean in memory; too many steps counts as failure
 				if (step >= MAX_STEPS) {
-					memory.setReward(-50, false, true);
-					cumulativeReward += -50;
+					memory.setReward(snapshot.getReward()-50, false, true);
+					cumulativeReward += snapshot.getReward()-50;
 				} else {
 					memory.setReward(snapshot.getReward(), snapshot.isDone(), snapshot.failed());
 					cumulativeReward += snapshot.getReward();
@@ -308,6 +301,7 @@ public class D3QNPlanner extends AbstractPlanner {
 				epsilon = (float) (INITIAL_EPSILON - ((INITIAL_EPSILON - MIN_EPSILON) * decay));
 			}
 			
+			// Training results calculation 
 			if (snapshot.isDone()) {
 				result = "done";
 				successCount++;
@@ -323,9 +317,55 @@ public class D3QNPlanner extends AbstractPlanner {
 		}
 		outputFile.close();
 
+		// Embeds the original environment obstacles at the end of training
 		if(obstacles!=null) {
 			for (Obstacle o : obstacles) {
 				this.getRLEnvironment().embed(o);
+			}
+		}
+	}
+	
+	
+	/**
+	 * Runs the training of the Deep Q-Network for a given environment configuration
+	 */
+	protected void trainFixed() {
+		
+		int episode = 0;
+		int step = 0;
+		
+		// For each episode
+		while (episode < NUM_EXTRA_EPS ) {
+			
+			// Reset environment 
+			episode++;
+			step = 0;
+			lossArray.clear();
+			
+			State state = this.getRLEnvironment().getStart();
+			this.getRLEnvironment().setDone(false);
+			this.getRLEnvironment().setFailure(false);
+			this.getRLEnvironment().setStateToStart();
+			
+			int action = 0;
+			Snapshot snapshot = null;
+		
+			// For each time step
+			while (!this.getRLEnvironment().isDone() && !this.getRLEnvironment().failed() && step < MAX_STEPS) {
+				// Saves state in memory; Updates the network; Selects the next action and saves it in memory
+				action = this.react(state);
+				// Execute action and get next state and reward; Checks if the goal has been reached
+				snapshot = this.getRLEnvironment().step(action, this.getAircraft());
+				// Stores the reward and the "done" boolean in memory; too many steps counts as failure
+				if (step >= MAX_STEPS) {
+					memory.setReward(snapshot.getReward()-50, false, true);
+				} else {
+					memory.setReward(snapshot.getReward(), snapshot.isDone(), snapshot.failed());
+				}
+				// Sets the state as the next state
+				state = snapshot.getState();
+				
+				step++;
 			}
 		}
 	}
@@ -333,7 +373,8 @@ public class D3QNPlanner extends AbstractPlanner {
 
 
 	/** 
-	 * Reacts to the current state, updating the memory and choosing the next action
+	 * Reacts to the current state, updating the memory and choosing the next action. Also responsible for
+	 * the update of the main and target networks.
 	 * 
 	 * @param the state
 	 * 
@@ -347,7 +388,7 @@ public class D3QNPlanner extends AbstractPlanner {
 			
 			memory.setState(state.getId());
 			
-			// Trains every n iterations only
+			// Updates main network 
 			if (iteration % trainNetInterval == 0  && memory.getSize()>batchSize)
 				updateModel(submanager);
 			
@@ -366,6 +407,7 @@ public class D3QNPlanner extends AbstractPlanner {
 		
 		return action;
 	}
+	
 
 	/** 
 	 * Chooses the action to perform using the epsilon greedy policy
@@ -377,19 +419,16 @@ public class D3QNPlanner extends AbstractPlanner {
 	 */
 	protected int chooseAction(NDManager manager, float[] state) throws TranslateException {
 		
-		// Gets the predicted Q-values from the main network (Double DQN)
-		NDArray qValues = policyPredictor.predict(new NDList(manager.create(state))).singletonOrThrow();
+		// Gets the predicted Q-values from the main network 
+		NDArray qValues = mainPredictor.predict(new NDList(manager.create(state))).singletonOrThrow();
 		// Chooses the action using the epsilon greedy policy and the predicted Q-values
 		return ActionSampler.epsilonGreedy(qValues, rand, epsilon);
 	}
 
-	
-
-
 
 	/** 
 	 * Gets a batch of transitions from memory, calculates the loss based on the predicted Q-values and the actual rewards and 
-	 * performs the gradient update through backpropagation
+	 * performs the gradient update through backpropagation. s
 	 * 
 	 * @param manager the memory space manager
 	 */
@@ -400,15 +439,16 @@ public class D3QNPlanner extends AbstractPlanner {
 			MemoryBatch batch = memory.sampleBatch(batchSize, manager);
 			
 			// Predicts the policy for the states in the batch
-			NDArray policy = policyPredictor.predict(new NDList(batch.getStates())).singletonOrThrow();
+			NDArray policy = mainPredictor.predict(new NDList(batch.getStates())).singletonOrThrow();
 			// Gather the predicted Q-values for the selected actions in the batch
 			NDArray expectedReturns = Helper.gather(policy, batch.getActions().toIntArray());
 			
+			//TODO: Revise difference between DQN and Double DQN
 			// Predicts the target Q-values for next the states in the batch
 			NDArray target = targetPredictor.predict(new NDList(batch.getNextStates())).singletonOrThrow().duplicate();
 			// Calculates the target Q-values for the current states using the Bellman equation
 			NDArray nextReturns = batch.getRewards().add(target.max(new int[] { 1 }).mul(batch.getDones().logicalNot()).mul(gamma));
-			
+						
 			// Calculates the loss (mean squared error)
 			NDArray loss = lossFunc.evaluate(new NDList(expectedReturns), new NDList(nextReturns));
 			lossArray.add(loss.toArray()[0]);
@@ -417,8 +457,8 @@ public class D3QNPlanner extends AbstractPlanner {
 			//Performs the backpropagation and calculates the gradients
 			collector.backward(loss);
 
-			// Updates the policy network's parameters
-			for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
+			// Updates the main network's parameters
+			for (Pair<String, Parameter> params : mainNet.getBlock().getParameters()) {
 				NDArray paramsArr = params.getValue().getArray();
 				optimizer.update(params.getKey(), paramsArr, paramsArr.getGradient());
 			}
@@ -431,7 +471,7 @@ public class D3QNPlanner extends AbstractPlanner {
 	 */
 	protected void syncNetworks() {
 	
-		for (Pair<String, Parameter> params : policyNet.getBlock().getParameters()) {
+		for (Pair<String, Parameter> params : mainNet.getBlock().getParameters()) {
 			NDArray targetArray = targetNet.getBlock().getParameters().get(params.getKey()).getArray();
 			params.getValue().getArray().copyTo(targetArray);
 		}
@@ -440,7 +480,7 @@ public class D3QNPlanner extends AbstractPlanner {
 	
 
 	/**
-	 * Initializes the DQN planner to plan from an origin to a destination at a
+	 * Initializes the D3QN planner to plan from an origin to a destination at a
 	 * specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
@@ -452,9 +492,9 @@ public class D3QNPlanner extends AbstractPlanner {
 		this.setEtd(etd);
 		
 		// Creates the start waypoint 
-		this.setNewestWaypoint(this.createWaypoint(origin));
-		this.getNewestWaypoint().setEto(etd);
-		this.getNewestWaypoint().setPoi(true);
+		this.setStartWaypoint(this.createWaypoint(origin));
+		this.getStartWaypoint().setEto(etd);
+		this.getStartWaypoint().setPoi(true);
 		
 		// Initializes the RLEnvironment
 		this.getRLEnvironment().initializeEnvironment(origin, destination, this.getRiskPolicy(), this.getCostPolicy(), etd);
@@ -462,14 +502,14 @@ public class D3QNPlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Computes a plan according to the learned policy in the DQN
+	 * Computes a plan according to the policy learned by the D3QN agent
 	 * @throws TranslateException 
 	 */
 	protected void compute() {
 		
 		// Adds the start waypoint to the trajectory if this is the first part
 		if (this.getWaypoints().isEmpty()) {
-			this.getWaypoints().addLast(this.getNewestWaypoint());
+			this.getWaypoints().addLast(this.getStartWaypoint());
 		}
 		
 		int step = 0;
@@ -505,7 +545,7 @@ public class D3QNPlanner extends AbstractPlanner {
 		}
 		
 		// If it finished without reaching the goal (because it reached the maximum number of steps
-		// or failed) returns an empty trajectory
+		// or failed) returns an empty trajectory 
 		if (!this.getRLEnvironment().isDone()) {
 			this.clearWaypoints();
 			if (step >= MAX_STEPS ) {
@@ -541,10 +581,11 @@ public class D3QNPlanner extends AbstractPlanner {
 	protected Waypoint createWaypoint(Position position) {
 		
 		Waypoint wp = new Waypoint(position);
+		wp.setCost(0);
 		
 		// If it is not the start
-		if(this.getNewestWaypoint() != null) {
-			computeEto(this.getNewestWaypoint(), wp);
+		if(!this.getWaypoints().isEmpty()) {
+			computeEto(this.getWaypoints().getLast(), wp);
 			wp.setPoi(true);
 		}
 		
@@ -563,7 +604,29 @@ public class D3QNPlanner extends AbstractPlanner {
 	 */
 	protected Trajectory planPart(int partIndex) {
 		this.compute();
+		
 		System.out.println("Computed trajectory:" + this.getWaypoints());
+		
+		int i = 0;
+		
+		// If compute returned an empty trajectory, retrains for the fixed environment and computes again
+		while(this.getWaypoints().isEmpty() && i<5) {
+			
+			System.out.printf("Failed to compute, retraining (Attempt %d) %n", i+1);
+			
+			this.trainFixed();
+			this.syncNetworks();
+			
+			this.getRLEnvironment().setDone(false);
+			this.getRLEnvironment().setFailure(false);
+			this.getRLEnvironment().setStateToStart();
+			this.compute();
+			
+			System.out.println("Computed trajectory:" + this.getWaypoints());
+			
+			i++;
+		}
+		
 		return this.createTrajectory();
 	}
 	
@@ -594,6 +657,7 @@ public class D3QNPlanner extends AbstractPlanner {
 		Trajectory trajectory = this.planPart(0);
 		
 		this.revisePlan(trajectory);
+		
 		return trajectory;		
 	}
 	
@@ -623,7 +687,6 @@ public class D3QNPlanner extends AbstractPlanner {
 		
 		waypoints.add(destination);
 
-		
 		// plan and concatenate partial trajectories
 		for (int partIndex = 0; partIndex < waypoints.size(); partIndex++) {
 			Position currentDestination = waypoints.get(partIndex);
@@ -664,7 +727,7 @@ public class D3QNPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Determines whether or not this DQN planner supports a specified
+	 * Determines whether or not this D3QN planner supports a specified
 	 * environment.
 	 * 
 	 * @param environment the environment

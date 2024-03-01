@@ -33,7 +33,6 @@ import java.time.ZonedDateTime;
 
 import java.util.Comparator;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Random;
 import java.util.TreeSet;
 import com.cfar.swim.worldwind.aircraft.Aircraft;
@@ -51,7 +50,7 @@ import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.render.Path;
 
 /**
- * Realizes a RL environment that can be sampled by sampling based motion
+ * Realizes a RL environment that can be used by MDP model based
  * planning algorithms.
  * 
  * @author Rafaela Seguro
@@ -59,7 +58,7 @@ import gov.nasa.worldwind.render.Path;
 public class RLEnvironment extends PlanningContinuum {
 	
 	/** in how many steps to divide from start to goal */
-	private static final int STEP_DIVISION = 16;
+	private static final int STEP_DIVISION = 8;
 	
 	/** random number */
 	private final Random rand = new Random();
@@ -82,16 +81,13 @@ public class RLEnvironment extends PlanningContinuum {
 	/** the next state */
 	private State nextState = null;
 	
-//	/** the index of the chosen action */
-//	private int action = 0;
-	
 	/** the received reward */
 	private double reward = 0.0;
 	
 	/** indicates if it reached goal or not, true if it has */
 	private boolean done = false;
 	
-	/** indicates if it reached goal or not, true if it has */
+	/** indicates if it failed or not, true if it has */
 	private boolean failure = false;
 	
 	/** stores the step size of the planner */
@@ -265,7 +261,7 @@ public class RLEnvironment extends PlanningContinuum {
 	/** 
 	 * Resets the environment with a new random start and goal
 	 */
-	public void resetRandom(boolean addObstacles) {
+	public void resetRandom() {
 		
 		// Starts by sampling random positions for the start and goal, following a uniform distribution
 		Position startPosition = this.sampleRandomUniformPosition();
@@ -278,8 +274,7 @@ public class RLEnvironment extends PlanningContinuum {
 		this.calculateStepSize(startPosition, this.goalPosition);
 		
 		// Adds obstacles to the environment
-		if(addObstacles)
-			this.createRandomObstacles(startPosition, this.goalPosition);
+		this.createRandomObstacles(startPosition, this.goalPosition);
 		
 		// Creates the start state
 		TreeSet<RLObstacle> obstacles = this.getCloseObstacles(startPosition, this.getTime());
@@ -340,16 +335,15 @@ public class RLEnvironment extends PlanningContinuum {
 	 */
 	public Snapshot step(int action, Aircraft aircraft) {
 		
-		// Determines the movement from the current state to the next based on action
+		// Determines the movement vector from the current state to the next based on action
 		Vec4 movVector = this.getNewMoveVector(this.state.getMovVector(), this.state.getNormalizedRelativeGoal(), action);
 		
 		// Computes the next state's position
 		Position nextStatePosition = this.getNewPosition(this.state.getPosition(), movVector.multiply3(this.stepSize));
 		
-		// If the next state is outside the environment, stays in place, and fails
+		// If the next state is outside the environment, stays in place
 		if (!this.contains(nextStatePosition)) {
 			nextStatePosition = this.state.getPosition();
-			//this.failure = true;
 		}
 		
 		// Computes the next state's ETO
@@ -359,7 +353,7 @@ public class RLEnvironment extends PlanningContinuum {
 		// Gets the set of surrounding obstacles of the next state
 		TreeSet<RLObstacle> obstacles = this.getCloseObstacles(nextStatePosition, eto);
 		
-		// Creates the next state and adds it to the map
+		// Creates the next state and sets it
 		this.nextState = new State(nextStatePosition, this.goalPosition, this, obstacles, eto, movVector);
 		
 		// Checks if it has reached goal
@@ -425,6 +419,7 @@ public class RLEnvironment extends PlanningContinuum {
 		this.trainingObstacles.clear();
 	}
 	
+	
 	/** 
 	 * Creates random obstacles and adds them to the planning continuum. Also sets a random cost and risk policy
 	 */
@@ -433,7 +428,6 @@ public class RLEnvironment extends PlanningContinuum {
 		// Starts by unembeding training obstacles from previous episode
 		this.unembedTrainingObstacles();
 		
-		// TODO: maybe add dynamic obstacles but for now they are static
 		ZonedDateTime t1 = this.getTime().minusYears(1);
 		ZonedDateTime t2 = this.getTime().plusYears(1);
 		
@@ -591,10 +585,10 @@ public class RLEnvironment extends PlanningContinuum {
 		// Goes through all the obstacles in the environment + the random ones
 		for (Obstacle obstacle : this.getObstacles()) {
 		
-			// Checks if it the obstacle's cost interval contains the state's eto
+			// Checks if the obstacle's cost interval contains the state's ETO
 			if(obstacle.getCostInterval().contains(eto)) {
 				
-				// Checks if the cost obstacle satisfies the risk policy and adds to set if it doesn't
+				// Checks if the obstacle's cost satisfies the risk policy and adds to set if it doesn't
 				if (!this.riskPolicy.satisfies(obstacle.getCostInterval().getCost())) {
 					
 					RLObstacle newObstacle = new RLObstacle(position, obstacle, this);
@@ -605,6 +599,7 @@ public class RLEnvironment extends PlanningContinuum {
 		
 		return interferingObstacles;
 	}
+	
 	
 	/** 
 	 * Gets the vector that points from one position to another, which represents
@@ -626,6 +621,7 @@ public class RLEnvironment extends PlanningContinuum {
 		return relativeVector;
 	}
 	
+	
 	/** 
 	 * Gets the normalized distance between two positions in box model
 	 * 
@@ -646,6 +642,7 @@ public class RLEnvironment extends PlanningContinuum {
 		
 		return this.toNormalizedDistance(distance);
 	}
+	
 	
 	/** 
 	 * Gets the normalized distances from a position in box model to the box axes
@@ -671,6 +668,7 @@ public class RLEnvironment extends PlanningContinuum {
 		return distancesToEnv;
 	}
 	
+	
 	/** 
 	 * Gets the new position when applying a movement vector to another position
 	 * 
@@ -687,6 +685,7 @@ public class RLEnvironment extends PlanningContinuum {
 		
 		return newPosition;
 	}
+	
 	
 	/**
 	 * Gets the step cost from an origin to a destination position within this
@@ -723,7 +722,6 @@ public class RLEnvironment extends PlanningContinuum {
 			
 		return stepCost;
 	}
-	
 	
 	
 }

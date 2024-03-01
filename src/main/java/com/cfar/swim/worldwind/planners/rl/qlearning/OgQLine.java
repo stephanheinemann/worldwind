@@ -5,7 +5,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Realizes an entry line of the Q-table, corresponding to one state. Saves the Q-values for each
- * available action in one state
+ * available action in one state (first Q-learning attempt)
  * 
  * @author Rafaela Seguro
  *

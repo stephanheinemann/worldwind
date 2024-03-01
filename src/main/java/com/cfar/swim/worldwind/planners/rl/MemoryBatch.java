@@ -4,7 +4,7 @@ import ai.djl.ndarray.NDArray;
 import ai.djl.ndarray.NDList;
 
 /**
- * Realizes a memory batch to be used in the training of the Deep Neural Network
+ * Realizes a memory batch to be used in the training of the Deep Q-Network
  * 
  * @author Rafaela Seguro
  *
@@ -12,6 +12,8 @@ import ai.djl.ndarray.NDList;
 
 public class MemoryBatch extends NDList{
 	
+	private static final long serialVersionUID = 1L;
+
 	/** Constructs a memory batch
 	 * 
 	 * @param arrays
@@ -57,7 +59,7 @@ public class MemoryBatch extends NDList{
 	}
 	
 	/**
-	 * Gets the booleans that indicate if it reached the goal or not.
+	 * Gets the booleans that indicate if it corresponds to a terminal transition or not.
 	 * 
 	 * @return the booleans
 	 */
