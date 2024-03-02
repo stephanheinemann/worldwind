@@ -443,7 +443,6 @@ public class D3QNPlanner extends AbstractPlanner {
 			// Gather the predicted Q-values for the selected actions in the batch
 			NDArray expectedReturns = Helper.gather(policy, batch.getActions().toIntArray());
 			
-			//TODO: Revise difference between DQN and Double DQN
 			// Predicts the target Q-values for next the states in the batch
 			NDArray target = targetPredictor.predict(new NDList(batch.getNextStates())).singletonOrThrow().duplicate();
 			// Calculates the target Q-values for the current states using the Bellman equation
