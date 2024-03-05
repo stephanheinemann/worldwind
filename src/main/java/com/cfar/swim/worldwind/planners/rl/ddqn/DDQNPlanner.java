@@ -1,14 +1,15 @@
-package com.cfar.swim.worldwind.planners.rl.priordqn;
+package com.cfar.swim.worldwind.planners.rl.ddqn;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
 import java.time.ZonedDateTime;
 
+
+
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.Set;
+import java.util.LinkedList;
+import java.io.*;
 
 import com.cfar.swim.worldwind.aircraft.Aircraft;
 import com.cfar.swim.worldwind.environments.Environment;
@@ -18,6 +19,7 @@ import com.cfar.swim.worldwind.planners.AbstractPlanner;
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.rl.ActionSampler;
 import com.cfar.swim.worldwind.planners.rl.Helper;
+import com.cfar.swim.worldwind.planners.rl.Memory;
 import com.cfar.swim.worldwind.planners.rl.MemoryBatch;
 import com.cfar.swim.worldwind.planners.rl.NetworkModel;
 import com.cfar.swim.worldwind.planners.rl.Snapshot;
@@ -26,7 +28,6 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.render.*;
-//import com.cfar.swim.worldwind.tests.Plot;
 import com.cfar.swim.worldwind.util.Identifiable;
 import gov.nasa.worldwind.geom.Position;
 import ai.djl.Model;
@@ -43,23 +44,20 @@ import ai.djl.util.Pair;
 import ai.djl.translate.NoopTranslator;
 
 /**
-* Realizes a deep reinforcement learning planner, using a Double Deep Q-Network with Prioritized Experience Replay, 
-* that plans a trajectory of an aircraft in an environment considering a local cost and risk policy.
+* Realizes a deep reinforcement learning planner, using a Double Deep Q-Network, that plans a trajectory 
+* of an aircraft in an environment considering a local cost and risk policy.
 * 
 * @author Rafaela Seguro
 *
 */
 
-public class PriorDQNPlanner extends AbstractPlanner {
+public class DDQNPlanner extends AbstractPlanner {
 	
 	/** the initial value of epsilon */
 	private static final float INITIAL_EPSILON = 1.0f;
 	
 	/** the minimum value of epsilon during training */
 	private static final float MIN_EPSILON = 0.01f; 
-	
-	/** the initial value of beta */
-	private static final double INITIAL_BETA = 0.4;
 	
 	/** number of total training episodes */
 	private static final int NUM_GLOBAL_EPS = 10000;
@@ -68,13 +66,16 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	private static final int NUM_EXTRA_EPS = 5;
 	
 	/** number of episodes over which epsilon decays */
-	private static final int EPSILON_DECAY_EPS = 500;
+	private static final int EPSILON_DECAY_EPS = 300;
 	
 	/** maximum number of steps per episode */
-	private static final int MAX_STEPS = 300;
+	private static final int MAX_STEPS = 500;
 	
 	/** random number */
 	private final Random rand = new Random();
+	
+	/** replay memory */
+	private final Memory memory = new Memory(4096);
 	
 	/** the number of hidden units (neurons) in the neural network */
 	private final int[] hiddenSize = {128, 256, 128};
@@ -93,15 +94,6 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	
 	/** gamma factor for the Bellman equation */
 	protected final float gamma = 0.99f;
-	
-	/** parameter that determines how much prioritization is used in prioritized experience replay*/
-	protected final double alpha = 0.6;
-	
-	/** parameter to balance importance sampling*/
-	private double beta = INITIAL_BETA;
-	
-	/** replay memory */
-	private final PrioritizedMemory memory = new PrioritizedMemory(4096, alpha);
 	
 	/** the optimizer used for updating the network parameters during training */
 	private Optimizer optimizer;
@@ -140,37 +132,37 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	List<Number> lossArray = new LinkedList<>();
 	
 	
-	/** Constructs a planner trained by a Double Deep Q-Network with Prioritized Experience Replay 
-	 * for a specified aircraft and environment using default local cost and risk policies.
+	/** Constructs a planner trained by a Double Deep Q-Network for a specified aircraft and
+	 * environment using default local cost and risk policies.
 	 * 
 	 * @param the aircraft
 	 * @param the environment
 	 */
-	public PriorDQNPlanner(Aircraft aircraft, Environment environment) {
+	public DDQNPlanner(Aircraft aircraft, Environment environment) {
 		super(aircraft, environment);
 		this.etd = environment.getTime();
-
+		
 		resetAgent();
 		train(0);
 		syncNetworks();
 	}
 	
 	/**
-	 * Gets the identifier of this PriorDQN planner.
+	 * Gets the identifier of this DQN planner.
 	 * 
-	 * @return the identifier of this PriorDQN planner
+	 * @return the identifier of this DQN planner
 	 * 
 	 * @see Identifiable#getId()
 	 */
 	@Override
 	public String getId() {
-		return Specification.PLANNER_PRIORDQN_ID;
+		return Specification.PLANNER_DDQN_ID;
 	}
 	
 	/**
-	 * Gets the RL environment of this PriorDQN planner.
+	 * Gets the RL environment of this DQN planner.
 	 * 
-	 * @return the RL environment of this PriorDQN planner
+	 * @return the RL environment of this DQN planner
 	 * 
 	 * @see AbstractPlanner#getEnvironment()
 	 */
@@ -216,13 +208,9 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	
 
 	
-	/** Resets the PriorDQN agent before training
+	/** Resets the DQN agent before training
 	 */
 	protected void resetAgent() {
-		
-		epsilon = INITIAL_EPSILON;
-		beta = INITIAL_BETA;
-		
 		optimizer = Optimizer.adam().optLearningRateTracker(Tracker.fixed(learningRate)).build();
 		
 		if (manager != null) {
@@ -231,6 +219,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		manager = NDManager.newBaseManager();
 		
 		mainNet = NetworkModel.newModel(manager, this.getRLEnvironment().getDimOfState(), hiddenSize, this.getRLEnvironment().getNumOfActions());
+		
 		for (Pair<String, Parameter> params : mainNet.getBlock().getParameters()) {
 			params.getValue().getArray().setRequiresGradient(true);
 		}
@@ -239,8 +228,8 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		mainPredictor = mainNet.newPredictor(new NoopTranslator());
 		syncNetworks();
 	}
-	
 
+	
 	/**
 	 * Runs the training of the Deep Q-Network for random environment configurations
 	 */
@@ -248,7 +237,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		
 		// The training results are stored in a file
 		PrintWriter outputFile = null;
-		String name = "PriorDQN_training_results";
+		String name = "DQN_training_results";
 		try {
 			outputFile = new PrintWriter(name);
 		} catch (FileNotFoundException e) {
@@ -381,10 +370,11 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		}
 	}
 
-	
+
 
 	/** 
-	 * Reacts to the current state, updating the memory and choosing the next action
+	 * Reacts to the current state, updating the memory and choosing the next action. Also responsible for
+	 * the update of the main and target networks.
 	 * 
 	 * @param the state
 	 * 
@@ -398,7 +388,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 			
 			memory.setState(state.getId());
 			
-			// Updates main network
+			// Updates main network 
 			if (iteration % trainNetInterval == 0  && memory.getSize()>batchSize)
 				updateModel(submanager);
 			
@@ -417,6 +407,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		
 		return action;
 	}
+	
 
 	/** 
 	 * Chooses the action to perform using the epsilon greedy policy
@@ -437,7 +428,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 
 	/** 
 	 * Gets a batch of transitions from memory, calculates the loss based on the predicted Q-values and the actual rewards and 
-	 * performs the gradient update through backpropagation
+	 * performs the gradient update through backpropagation. s
 	 * 
 	 * @param manager the memory space manager
 	 */
@@ -456,30 +447,22 @@ public class PriorDQNPlanner extends AbstractPlanner {
 			NDArray target = targetPredictor.predict(new NDList(batch.getNextStates())).singletonOrThrow().duplicate();
 			// Calculates the target Q-values for the current states using the Bellman equation
 			NDArray nextReturns = batch.getRewards().add(target.max(new int[] { 1 }).mul(batch.getDones().logicalNot()).mul(gamma));
-			
-			// Computes new priorities from the TD errors
-			NDArray tdErrors = nextReturns.sub(expectedReturns);
-			NDArray newPriorities = tdErrors.abs().add(0.00001);
-			
-			// Updates transition data in memory and gets the importance sampling weights
-			NDArray importanceWeights = manager.create(memory.updateTransitionData(batch.getIndices().toDoubleArray(), newPriorities.toDoubleArray(), beta));
-			
+						
 			// Calculates the loss (mean squared error)
-			NDArray weightedLoss = lossFunc.evaluate(new NDList(expectedReturns), new NDList(nextReturns)).mul(importanceWeights);
-			lossArray.add(weightedLoss.toArray()[0]);
-			weightedLoss.setRequiresGradient(true);
+			NDArray loss = lossFunc.evaluate(new NDList(expectedReturns), new NDList(nextReturns));
+			lossArray.add(loss.toArray()[0]);
+			loss.setRequiresGradient(true);
 			
 			//Performs the backpropagation and calculates the gradients
-			collector.backward(weightedLoss);
+			collector.backward(loss);
 
-			// Updates the policy network's parameters
+			// Updates the main network's parameters
 			for (Pair<String, Parameter> params : mainNet.getBlock().getParameters()) {
 				NDArray paramsArr = params.getValue().getArray();
 				optimizer.update(params.getKey(), paramsArr, paramsArr.getGradient());
 			}
 		}
 	}
-
 
 
 	/** 
@@ -496,7 +479,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	
 
 	/**
-	 * Initializes the PriorDQN planner to plan from an origin to a destination at a
+	 * Initializes the DQN planner to plan from an origin to a destination at a
 	 * specified estimated time of departure.
 	 * 
 	 * @param origin the origin in globe coordinates
@@ -508,9 +491,9 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		this.setEtd(etd);
 		
 		// Creates the start waypoint 
-				this.setStartWaypoint(this.createWaypoint(origin));
-				this.getStartWaypoint().setEto(etd);
-				this.getStartWaypoint().setPoi(true);
+		this.setStartWaypoint(this.createWaypoint(origin));
+		this.getStartWaypoint().setEto(etd);
+		this.getStartWaypoint().setPoi(true);
 		
 		// Initializes the RLEnvironment
 		this.getRLEnvironment().initializeEnvironment(origin, destination, this.getRiskPolicy(), this.getCostPolicy(), etd);
@@ -518,7 +501,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	}
 
 	/**
-	 * Computes a plan according to the policy learned by the PriorDQN agent
+	 * Computes a plan according to the policy learned by the DQN agent
 	 * @throws TranslateException 
 	 */
 	protected void compute() {
@@ -539,14 +522,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 			// Chooses the action
 			try (NDManager submanager = manager.newSubManager()) {
 				
-				NDArray qValues = targetPredictor.predict(new NDList(submanager.create(state.getId()))).singletonOrThrow();
-				// DEBUG
-//				System.out.print("Q VALUES: ");
-//				for (int i=0; i<qValues.size(); i++) {
-//					System.out.print(qValues.getFloat(i) + "; ");
-//				}
-//				System.out.println();
-				
+				NDArray qValues = targetPredictor.predict(new NDList(submanager.create(state.getId()))).singletonOrThrow();				
 				action = ActionSampler.greedy(qValues);
 				
 			} catch (TranslateException e) {
@@ -568,15 +544,14 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		}
 		
 		// If it finished without reaching the goal (because it reached the maximum number of steps
-		// or failed) returns an empty trajectory
+		// or failed) returns an empty trajectory 
 		if (!this.getRLEnvironment().isDone()) {
 			this.clearWaypoints();
 			if (step >= MAX_STEPS ) {
 				System.out.println("Did too many steps");
 			} else if (snapshot.getReward()==-200){
 				System.out.println("Hit an OBSTACLE");
-			}
-			
+			} 
 		} else {
 		
 			// Adds the goal to the trajectory if it is not already there
@@ -681,6 +656,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		Trajectory trajectory = this.planPart(0);
 		
 		this.revisePlan(trajectory);
+		
 		return trajectory;		
 	}
 	
@@ -710,7 +686,6 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		
 		waypoints.add(destination);
 
-		
 		// plan and concatenate partial trajectories
 		for (int partIndex = 0; partIndex < waypoints.size(); partIndex++) {
 			Position currentDestination = waypoints.get(partIndex);
@@ -751,7 +726,7 @@ public class PriorDQNPlanner extends AbstractPlanner {
 	}
 	
 	/**
-	 * Determines whether or not this PriorDQN planner supports a specified
+	 * Determines whether or not this DQN planner supports a specified
 	 * environment.
 	 * 
 	 * @param environment the environment
@@ -770,10 +745,6 @@ public class PriorDQNPlanner extends AbstractPlanner {
 		
 		return supports;
 	}
-
-
-
-
 
 	
 }

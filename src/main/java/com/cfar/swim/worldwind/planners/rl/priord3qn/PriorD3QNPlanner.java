@@ -1,6 +1,7 @@
 package com.cfar.swim.worldwind.planners.rl.priord3qn;
 
 import java.io.FileNotFoundException;
+
 import java.io.PrintWriter;
 import java.time.ZonedDateTime;
 
@@ -26,7 +27,7 @@ import com.cfar.swim.worldwind.planning.Trajectory;
 import com.cfar.swim.worldwind.planning.Waypoint;
 import com.cfar.swim.worldwind.registries.Specification;
 import com.cfar.swim.worldwind.render.*;
-import com.cfar.swim.worldwind.planners.rl.priordqn.*;
+import com.cfar.swim.worldwind.planners.rl.priorddqn.*;
 import com.cfar.swim.worldwind.planners.rl.d3qn.*;
 import com.cfar.swim.worldwind.util.Identifiable;
 import gov.nasa.worldwind.geom.Position;

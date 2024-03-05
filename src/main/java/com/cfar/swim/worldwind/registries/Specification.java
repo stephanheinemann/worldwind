@@ -218,13 +218,10 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getString("specification.planner.qlp.description");
 	
 	/** the identifier of a DQN planner specification */
-	public static final String PLANNER_DQN_ID = "DQN";
-	
-	/** the identifier of a DQN planner specification */
-	public static final String PLANNER_DQN_NOCOSTS_ID = "DQN2";
+	public static final String PLANNER_DDQN_ID = "DDQN";
 	
 	/** the description of a DQN planner specification */
-	public static final String PLANNER_DQN_DESCRIPTION = ResourceBundleLoader
+	public static final String PLANNER_DDQN_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
 			.getString("specification.planner.dqn.description");
 	
@@ -237,10 +234,10 @@ implements Identifiable, Customizable<Registree>, Comparable<Specification<Regis
 			.getString("specification.planner.d3qn.description");
 	
 	/** the identifier of a PriorDQN planner specification */
-	public static final String PLANNER_PRIORDQN_ID = "PriorDQN";
+	public static final String PLANNER_PRIORDDQN_ID = "PriorDDQN";
 	
 	/** the description of a PriorDQN planner specification */
-	public static final String PLANNER_PRIORDQN_DESCRIPTION = ResourceBundleLoader
+	public static final String PLANNER_PRIORDDQN_DESCRIPTION = ResourceBundleLoader
 			.getDictionaryBundle()
 			.getString("specification.planner.priordqn.description");
 	

@@ -1,4 +1,4 @@
-package com.cfar.swim.worldwind.planners.rl.priordqn;
+package com.cfar.swim.worldwind.planners.rl.priorddqn;
 
 /**
  * Realizes a transition data object to store the index in memory, the priority, the probability of being 

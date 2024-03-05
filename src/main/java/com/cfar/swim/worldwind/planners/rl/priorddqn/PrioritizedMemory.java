@@ -1,4 +1,4 @@
-package com.cfar.swim.worldwind.planners.rl.priordqn;
+package com.cfar.swim.worldwind.planners.rl.priorddqn;
 
 import java.util.Arrays;
 import java.util.Random;

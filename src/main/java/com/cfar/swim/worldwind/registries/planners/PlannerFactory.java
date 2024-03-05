@@ -36,6 +36,7 @@ import java.time.Duration;
 
 
 
+
 import com.cfar.swim.worldwind.planners.Planner;
 import com.cfar.swim.worldwind.planners.cgs.adstar.ADStarPlanner;
 import com.cfar.swim.worldwind.planners.cgs.arastar.ARAStarPlanner;
@@ -45,9 +46,9 @@ import com.cfar.swim.worldwind.planners.cgs.thetastar.ThetaStarPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedGridPlanner;
 import com.cfar.swim.worldwind.planners.managed.ManagedTreePlanner;
 import com.cfar.swim.worldwind.planners.rl.d3qn.D3QNPlanner;
-import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
+import com.cfar.swim.worldwind.planners.rl.ddqn.DDQNPlanner;
 import com.cfar.swim.worldwind.planners.rl.priord3qn.PriorD3QNPlanner;
-import com.cfar.swim.worldwind.planners.rl.priordqn.PriorDQNPlanner;
+import com.cfar.swim.worldwind.planners.rl.priorddqn.PriorDDQNPlanner;
 import com.cfar.swim.worldwind.planners.rl.qlearning.QLearningPlanner;
 import com.cfar.swim.worldwind.planners.rrt.adrrt.ADRRTreePlanner;
 import com.cfar.swim.worldwind.planners.rrt.arrt.ARRTreePlanner;
@@ -70,9 +71,9 @@ import com.cfar.swim.worldwind.registries.planners.rrt.HRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.OADRRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rrt.RRTreeProperties;
 import com.cfar.swim.worldwind.registries.planners.rl.QLearningProperties;
-import com.cfar.swim.worldwind.registries.planners.rl.DQNProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.DDQNProperties;
 import com.cfar.swim.worldwind.registries.planners.rl.D3QNProperties;
-import com.cfar.swim.worldwind.registries.planners.rl.PriorDQNProperties;
+import com.cfar.swim.worldwind.registries.planners.rl.PriorDDQNProperties;
 import com.cfar.swim.worldwind.registries.planners.rl.PriorD3QNProperties;
 import com.cfar.swim.worldwind.session.Scenario;
 import com.cfar.swim.worldwind.tracks.AircraftTrackError;
@@ -340,9 +341,9 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				planner = new QLearningPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
-			} else if (this.getSpecification().getId().equals(Specification.PLANNER_DQN_ID)) {
-				DQNProperties properties = (DQNProperties) this.getSpecification().getProperties();
-				planner = new DQNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
+			} else if (this.getSpecification().getId().equals(Specification.PLANNER_DDQN_ID)) {
+				DDQNProperties properties = (DDQNProperties) this.getSpecification().getProperties();
+				planner = new DDQNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
 			} else if (this.getSpecification().getId().equals(Specification.PLANNER_D3QN_ID)) {
@@ -350,9 +351,9 @@ public class PlannerFactory extends AbstractFactory<Planner> {
 				planner = new D3QNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
-			} else if (this.getSpecification().getId().equals(Specification.PLANNER_PRIORDQN_ID)) {
-				PriorDQNProperties properties = (PriorDQNProperties) this.getSpecification().getProperties();
-				planner = new PriorDQNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
+			} else if (this.getSpecification().getId().equals(Specification.PLANNER_PRIORDDQN_ID)) {
+				PriorDDQNProperties properties = (PriorDDQNProperties) this.getSpecification().getProperties();
+				planner = new PriorDDQNPlanner(this.getScenario().getAircraft(), this.getScenario().getEnvironment());
 				planner.setCostPolicy(properties.getCostPolicy());
 				planner.setRiskPolicy(properties.getRiskPolicy());
 			} else if (this.getSpecification().getId().equals(Specification.PLANNER_PRIORD3QN_ID)) {
