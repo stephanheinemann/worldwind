@@ -33,6 +33,7 @@ import static org.junit.Assert.assertNotNull;
 
 
 
+
 import java.time.ZonedDateTime;
 import org.junit.Test;
 
@@ -47,9 +48,9 @@ import gov.nasa.worldwind.geom.Vec4;
 import gov.nasa.worldwind.globes.Earth;
 import gov.nasa.worldwind.render.Path;
 
-import com.cfar.swim.worldwind.planners.rl.dqn.*;
+import com.cfar.swim.worldwind.planners.rl.ddqn.*;
 import com.cfar.swim.worldwind.planners.rl.d3qn.*;
-import com.cfar.swim.worldwind.planners.rl.priordqn.*;
+import com.cfar.swim.worldwind.planners.rl.priorddqn.*;
 import com.cfar.swim.worldwind.planners.rl.priord3qn.*;
 
 import com.cfar.swim.worldwind.render.*;
@@ -91,7 +92,7 @@ public class PlannerTestRafa {
 //        PriorD3QNPlanner planner = new PriorD3QNPlanner(iris, env); 
 //		PriorDQNPlanner planner = new PriorDQNPlanner(iris, env);  
 //		D3QNPlanner planner = new D3QNPlanner(iris, env); 
-		DQNPlanner planner = new DQNPlanner(iris, env); 
+		DDQNPlanner planner = new DDQNPlanner(iris, env); 
         planner.setRiskPolicy(RiskPolicy.AVOIDANCE);
         Path path = planner.plan(origin, destination, etd);
         assertNotNull(path);

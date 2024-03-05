@@ -78,7 +78,7 @@ public class DDQNPlanner extends AbstractPlanner {
 	private final Memory memory = new Memory(4096);
 	
 	/** the number of hidden units (neurons) in the neural network */
-	private final int[] hiddenSize = {128, 256, 128};
+	private final int[] hiddenSize = {256, 512, 256};
 	
 	/** learning rate used by the optimizer during training */
 	private final float learningRate = 0.00025f;

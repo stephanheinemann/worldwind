@@ -30,6 +30,7 @@
 package com.cfar.swim.worldwind.tests;
 
 import java.io.BufferedWriter;
+
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -40,8 +41,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import org.junit.Test;
 import com.cfar.swim.worldwind.planners.cgs.astar.ForwardAStarPlanner;
-import com.cfar.swim.worldwind.planners.rl.dqn.DQNPlanner;
-import com.cfar.swim.worldwind.planners.rl.priordqn.PriorDQNPlanner;
+import com.cfar.swim.worldwind.planners.rl.ddqn.DDQNPlanner;
+import com.cfar.swim.worldwind.planners.rl.priorddqn.PriorDDQNPlanner;
 import com.cfar.swim.worldwind.planners.rrt.Extension;
 import com.cfar.swim.worldwind.planners.rrt.Strategy;
 import com.cfar.swim.worldwind.planners.rrt.hrrt.HRRTreePlanner;
@@ -448,7 +449,7 @@ public class InterPlannerTestRafa {
 
 		System.out.println("DQN tester");
 
-		DQNPlanner plannerDQN;
+		DDQNPlanner plannerDQN;
 
 		Trajectory trajectory;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;
@@ -456,7 +457,7 @@ public class InterPlannerTestRafa {
 		long t0 = 0, t1 = 0;
 		
 		// Create planner (to train only once)
-		plannerDQN = new DQNPlanner(iris, rlEnvironment);
+		plannerDQN = new DDQNPlanner(iris, rlEnvironment);
 		plannerDQN.setCostPolicy(costPolicy);
 		plannerDQN.setRiskPolicy(risk);
 		
@@ -493,7 +494,7 @@ public class InterPlannerTestRafa {
 
 		System.out.println("PriorDQN tester");
 
-		PriorDQNPlanner plannerPriorDQN;
+		PriorDDQNPlanner plannerPriorDQN;
 
 		Trajectory trajectory;
 		double size = 0, waypoints = 0, cost = 0d, time = 0d;
@@ -501,7 +502,7 @@ public class InterPlannerTestRafa {
 		long t0 = 0, t1 = 0;
 		
 		// Create planner (to train only once)
-		plannerPriorDQN = new PriorDQNPlanner(iris, rlEnvironment);
+		plannerPriorDQN = new PriorDDQNPlanner(iris, rlEnvironment);
 		plannerPriorDQN.setCostPolicy(costPolicy);
 		plannerPriorDQN.setRiskPolicy(risk);
 		
